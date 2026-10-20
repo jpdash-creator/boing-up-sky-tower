@@ -2,7 +2,7 @@
 
 2D vertical-jumper for Android + iOS. Unity 6 LTS (C#), 2D URP. Data-driven: regions, levels, items and offers are JSON plus asset bundles, never hardcoded in scenes.
 
-**Design docs** (source of truth, read before changing rules or numbers): `E:\Source\Game Ideas\boing-tower-docs\docs\`. Doc 08 (rules addendum) wins over docs 01, 02, 05. Doc 09 records the accepted review decisions.
+**Design docs** (source of truth, read before changing rules or numbers): `E:\Source\Game Ideas\boing-up-sky-tower\docs\`. Doc 08 (rules addendum) wins over docs 01, 02, 05. Doc 09 records the accepted review decisions.
 
 ## CRITICAL REQUIREMENTS (owner, 2026-10-19): seamless gameplay, no improper overlap, accessibility
 User experience and accessibility are critical. Gameplay must be seamless and never choppy; screen items must never overlap improperly. The full mandatory rule set (CUX-1 to CUX-10) is in `.claude/rules/ux-gameplay-critical.md` (always loaded) and `docs/11-critical-ux-gameplay-requirements.md`. Headlines: 60 fps with fixed-step sim + interpolation, zero per-frame allocations, instant input, no overlapping or clipped UI on any aspect, 48 dp touch targets, readable contrast, no colour-only cues, reduced motion/haptics/left-handed options, clean sliced art. CUX tests (category `CriticalUX`) must stay green; a failing CUX test blocks a commit.
@@ -37,7 +37,7 @@ python Tools/content_cli/gen_content.py              # regenerate baseline conte
 `gen_content.py` regenerates generated files; if you hand-edit content, change the generator or stop using it for that file.
 
 ## Unity headless (Editor 6000.3.26f1 on E:)
-Run: `E:\Unity\Hub\Editor\6000.3.26f1\Editor\Unity.exe -batchmode -nographics -projectPath E:\Code\boing-tower-game -executeMethod <Class.Method> -logFile E:\Unity\logs\<name>.log` (add `-quit` unless the method exits itself). Tests: add `-runTests -testPlatform EditMode -testResults <xml>`. Needs an active Unity Personal license (Unity Hub signed in); exit code 198 means no license. Setup scripts are in `Assets/Editor/ProjectBootstrap/` (PackageInstaller, ProjectSetup, ArtImportPostprocessor). Final art lives under `Assets/Art/`; the 195-image candidate archive stays in `Art/_candidates/` (outside Unity, so it is not imported). Roadmap and status: `.claude/roadmap-5-regions.json`, `python Tools/status_ticker.py`.
+Run: `E:\Unity\Hub\Editor\6000.3.26f1\Editor\Unity.exe -batchmode -nographics -projectPath E:\Code\boing-up-sky-tower -executeMethod <Class.Method> -logFile E:\Unity\logs\<name>.log` (add `-quit` unless the method exits itself). Tests: add `-runTests -testPlatform EditMode -testResults <xml>`. Needs an active Unity Personal license (Unity Hub signed in); exit code 198 means no license. Setup scripts are in `Assets/Editor/ProjectBootstrap/` (PackageInstaller, ProjectSetup, ArtImportPostprocessor). Final art lives under `Assets/Art/`; the 195-image candidate archive stays in `Art/_candidates/` (outside Unity, so it is not imported). Roadmap and status: `.claude/roadmap-5-regions.json`, `python Tools/status_ticker.py`.
 
 ## Assets
 Full asset request catalog (367 requests, prompts, batches, credit estimates): `Content/assets/CATALOG.md`; workflow and roles: `Content/assets/README.md`. Regenerate with `python Tools/asset_cli/gen_asset_manifest.py`. All generation is gated by the OpenArt credit guardrail above.
