@@ -487,14 +487,14 @@ namespace BoingTower.Gameplay
             Background(ra != null ? ra.BgFar : null, new Color(0.1f, 0.14f, 0.25f, 1f));
             AddLevelsWallet(region);
             AddBack("Map", ShowMap);
-            // Region title below the back arrow and left of the wallet, so the wallet can be two columns wide.
-            Text hdr = UiKit.AddText(screen, "Header", region.Name, 44, Color.white, TextAnchor.UpperLeft, true);
+            // Region title centred in its own band under the back arrow and the wallet; the level circles start below it (owner list 10).
+            Text hdr = UiKit.AddText(screen, "Header", region.Name, 56, Color.white, TextAnchor.UpperCenter, true);
             var hrt = (RectTransform)hdr.transform;
             hrt.anchorMin = new Vector2(0f, 1f);
             hrt.anchorMax = new Vector2(1f, 1f);
-            hrt.pivot = new Vector2(0f, 1f);
-            hrt.offsetMin = new Vector2(24f, -304f);
-            hrt.offsetMax = new Vector2(-590f, -178f);
+            hrt.pivot = new Vector2(0.5f, 1f);
+            hrt.offsetMin = new Vector2(24f, -410f);
+            hrt.offsetMax = new Vector2(-24f, -318f);
 
             List<LevelDef> levels = repo.LevelsOf(region.Id);
             string currentId = null;
@@ -504,7 +504,7 @@ namespace BoingTower.Gameplay
             // bottom edge, whatever the screen shape: rows are spread and the circles shrink a little when the screen is short (LevelGridFit).
             RectTransform grid = UiKit.Rect(screen, "LevelGrid");
             UiKit.Stretch(grid);
-            grid.offsetMax = new Vector2(0f, -MapTopBar);
+            grid.offsetMax = new Vector2(0f, -(MapTopBar + 90f));
             var fit = grid.gameObject.AddComponent<LevelGridFit>();
             fit.Nodes = new RectTransform[levels.Count];
             fit.Cols = new int[levels.Count];

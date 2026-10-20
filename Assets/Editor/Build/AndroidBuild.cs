@@ -21,8 +21,7 @@ namespace BoingTower.Editor.Build
 
         static VersionInfo ReadVersion() { return JsonUtility.FromJson<VersionInfo>(File.ReadAllText(VersionFile)); }
 
-        static void WriteVersion(VersionInfo v) { File.WriteAllText(VersionFile, JsonUtility.ToJson(v, true) + "
-"); }
+        static void WriteVersion(VersionInfo v) { File.WriteAllText(VersionFile, JsonUtility.ToJson(v, true) + "\n"); }
 
         [MenuItem("Tools/Boing Tower/Build Android APK")]
         public static void BuildFromMenu() { Build(); }
@@ -59,10 +58,8 @@ namespace BoingTower.Editor.Build
             if (ok) File.Copy(versionedPath, OutputPath, true);
             string log = Path.Combine(ProjectRoot, "Content", "builds", "build_log.csv");
             Directory.CreateDirectory(Path.GetDirectoryName(log));
-            if (!File.Exists(log)) File.WriteAllText(log, "date,version,result,sizeMB,apk
-");
-            File.AppendAllText(log, DateTime.Now.ToString("yyyy-MM-dd HH:mm") + ",v" + versionName + "," + report.summary.result + "," + (report.summary.totalSize / (1024 * 1024)) + "," + versionedPath + "
-");
+            if (!File.Exists(log)) File.WriteAllText(log, "date,version,result,sizeMB,apk\n");
+            File.AppendAllText(log, DateTime.Now.ToString("yyyy-MM-dd HH:mm") + ",v" + versionName + "," + report.summary.result + "," + (report.summary.totalSize / (1024 * 1024)) + "," + versionedPath + "\n");
             return ok;
         }
     }
