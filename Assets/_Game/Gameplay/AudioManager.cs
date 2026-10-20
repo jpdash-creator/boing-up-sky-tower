@@ -22,6 +22,8 @@ namespace BoingUpSkyTower.Gameplay
         const float RunMusicVolume = 0.28f;
         const string SfxFolder = "Audio/sfx/";
         const string MusicLoopPath = "Audio/music/loop";
+        const string MusicRegionPath = "Audio/music/region_";   // region_1 .. region_5
+        const int RegionTracks = 5;
         const string MusicRunPath = "Audio/music/run";   // optional: when absent the run reuses the loop at a lower volume
 
         // Index = (int)Sfx. Same order as the enum.
@@ -59,11 +61,14 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>Selects the music bed (cross-fades). Honours GameSettings.Music.</summary>
-        public static void SetMusic(MusicTrack track)
+        public static void SetMusic(MusicTrack track) { SetMusic(track, 0); }
+
+        /// <summary>Selects the music bed; for the run, <paramref name="region"/> (1 to 5) picks that region's own track (falls back to the shared loop).</summary>
+        public static void SetMusic(MusicTrack track, int region)
         {
             if (!Application.isPlaying) return;
             AudioManager m = Instance;
-            if (m != null) m.SetTrack(track);
+            if (m != null) m.SetTrack(track, region);
         }
 
         /// <summary>Re-reads the sound and music settings (called by GameSettings when either changes).</summary>
@@ -83,6 +88,8 @@ namespace BoingUpSkyTower.Gameplay
         int active;
         MusicTrack wanted = MusicTrack.None;
         AudioClip loopClip, runClip;
+        AudioClip[] regionClips;
+        int wantedRegion;
 
         void Awake()
         {
@@ -99,6 +106,8 @@ namespace BoingUpSkyTower.Gameplay
             loopClip = Resources.Load<AudioClip>(MusicLoopPath);
             runClip = Resources.Load<AudioClip>(MusicRunPath);
             if (runClip == null) runClip = loopClip;
+            regionClips = new AudioClip[RegionTracks + 1];
+            for (int r = 1; r <= RegionTracks; r++) regionClips[r] = Resources.Load<AudioClip>(MusicRegionPath + r);   // null when missing: the shared loop plays
 
             pool = new AudioSource[PoolSize];
             for (int i = 0; i < PoolSize; i++) pool[i] = NewSource("Sfx" + i, false);
@@ -142,9 +151,10 @@ namespace BoingUpSkyTower.Gameplay
             src.Play();
         }
 
-        void SetTrack(MusicTrack track)
+        void SetTrack(MusicTrack track, int region)
         {
             wanted = track;
+            wantedRegion = region;
             ApplySettings();
         }
 
@@ -160,7 +170,11 @@ namespace BoingUpSkyTower.Gameplay
             AudioClip clip = null;
             float vol = 0f;
             if (musicOn && wanted == MusicTrack.Meta) { clip = loopClip; vol = MetaMusicVolume; }
-            else if (musicOn && wanted == MusicTrack.Run) { clip = runClip; vol = RunMusicVolume; }
+            else if (musicOn && wanted == MusicTrack.Run)
+            {
+                clip = wantedRegion >= 1 && wantedRegion <= RegionTracks && regionClips[wantedRegion] != null ? regionClips[wantedRegion] : runClip;
+                vol = RunMusicVolume;
+            }
 
             if (!musicOn)
             {

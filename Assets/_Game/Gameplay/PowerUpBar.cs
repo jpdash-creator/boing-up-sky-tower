@@ -69,6 +69,23 @@ namespace BoingUpSkyTower.Gameplay
                 Outline o2 = s.Count.GetComponent<Outline>(); if (o2 != null) o2.enabled = false;
                 UiKit.Place((RectTransform)s.Count.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -22f), new Vector2(ButtonSize - 12f, 56f));
 
+                Sprite iconArt = PowerUpUi.IconSprite(t);
+                if (iconArt != null)
+                {
+                    // Real art: the glossy icon is the button face; the code text is dropped and the count sits on a dark pill (readable on any art, CUX-5).
+                    s.Background.type = Image.Type.Simple;
+                    s.Background.sprite = iconArt;
+                    s.Background.preserveAspect = true;
+                    s.Code.gameObject.SetActive(false);
+                    Image pill = UiKit.AddImage(rt, "CountBacking", Theme.RoundSprite, new Color(Theme.Ink.r, Theme.Ink.g, Theme.Ink.b, 0.86f));
+                    pill.type = Image.Type.Sliced;
+                    pill.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / 28f);
+                    UiKit.Place(pill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(ButtonSize * 0.62f, 56f));
+                    s.Count.transform.SetParent(pill.transform, false);
+                    s.Count.color = Color.white;
+                    UiKit.Stretch((RectTransform)s.Count.transform);
+                }
+
                 Image track = UiKit.AddImage(rt, "Track", null, new Color(0.09f, 0.11f, 0.24f, 0.28f));
                 UiKit.Place(track.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(ButtonSize - 40f, 14f));
                 Image fill = UiKit.AddImage(track.transform, "Fill", null, Theme.Ink);

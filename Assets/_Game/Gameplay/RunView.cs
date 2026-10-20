@@ -206,7 +206,7 @@ namespace BoingUpSkyTower.Gameplay
             endless = s.IsEndless;
             builtVersion = s.WorldVersion;
             reduced = GameSettings.ReducedMotion;
-            AudioManager.SetMusic(MusicTrack.Run);
+            AudioManager.SetMusic(MusicTrack.Run, s.Region.Index);
             art = catalog;
             cam = camera;
             region = art != null ? art.ForRegion(s.Region.Index) : null;

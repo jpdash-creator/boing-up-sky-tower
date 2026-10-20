@@ -68,9 +68,47 @@ namespace BoingUpSkyTower.Gameplay
             return s + ", " + unitsLeft + " left";
         }
 
+        /// <summary>Icon file name (Assets/Resources/Art/PowerUps) for a power-up, or null when it has no art yet.</summary>
+        public static string IconName(PowerUp p)
+        {
+            switch (p)
+            {
+                case PowerUp.Flight: return "pw_flight";
+                case PowerUp.Rocket: return "pw_rocket";
+                case PowerUp.DoubleJump: return "pw_doublejump";
+                case PowerUp.WallStick: return "pw_wallstick";
+                case PowerUp.Shield: return "pw_shield";
+                case PowerUp.Magnet: return "pw_magnet";
+                case PowerUp.SlowTime: return "pw_slowtime";
+                default: return null;
+            }
+        }
+
+        static readonly System.Collections.Generic.Dictionary<PowerUp, Sprite> iconCache = new System.Collections.Generic.Dictionary<PowerUp, Sprite>();
+
+        /// <summary>The OpenArt icon sprite, loaded once; null when missing (the code badge is drawn instead, CUX-10).</summary>
+        public static Sprite IconSprite(PowerUp p)
+        {
+            Sprite s;
+            if (iconCache.TryGetValue(p, out s)) return s;
+            string n = IconName(p);
+            s = n != null ? Resources.Load<Sprite>("Art/PowerUps/" + n) : null;
+            iconCache[p] = s;
+            return s;
+        }
+
         /// <summary>Round badge with the power-up code in ink. The returned image is the badge; the code text is its child.</summary>
         public static Image AddIcon(Transform parent, string name, PowerUp p, Vector2 anchor, Vector2 pos, float size, bool dim)
         {
+            Sprite art = IconSprite(p);
+            if (art != null)
+            {
+                // Real art: the glossy badge itself. A dimmed icon (nothing in stock) is greyed; the name and count carry the meaning (CUX-6).
+                Image icon = UiKit.AddImage(parent, name, art, dim ? new Color(0.55f, 0.57f, 0.62f, 1f) : Color.white);
+                icon.preserveAspect = true;
+                UiKit.Place(icon.rectTransform, anchor, pos, new Vector2(size, size));
+                return icon;
+            }
             Image badge = UiKit.AddImage(parent, name, Theme.RoundSprite, dim ? new Color(0.82f, 0.84f, 0.9f, 1f) : Tint(p));
             badge.type = Image.Type.Sliced;
             badge.preserveAspect = false;

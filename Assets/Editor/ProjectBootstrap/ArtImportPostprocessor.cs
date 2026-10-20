@@ -51,11 +51,25 @@ namespace ProjectBootstrap
             }
         }
 
-        public override uint GetVersion() { return 3; }   // bump to re-import the art when the import rules change
+        public override uint GetVersion() { return 4; }   // bump to re-import the art when the import rules change
+
+        /// <summary>Small square icons (power-ups): a single sprite, no mipmaps, 256 px, compressed.</summary>
+        static void ApplyIcon(TextureImporter ti)
+        {
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.spritePixelsPerUnit = 100f;
+            ti.mipmapEnabled = false;
+            ti.filterMode = UnityEngine.FilterMode.Bilinear;
+            ti.alphaIsTransparency = true;
+            ti.maxTextureSize = 256;
+            ti.textureCompression = TextureImporterCompression.Compressed;
+        }
 
         void OnPreprocessTexture()
         {
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
+            if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (!assetPath.StartsWith("Assets/Art/")) return;
             var ti = (TextureImporter)assetImporter;
             ti.textureType = TextureImporterType.Sprite;
