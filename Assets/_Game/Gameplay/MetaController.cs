@@ -95,9 +95,15 @@ namespace BoingTower.Gameplay
             if (momo != null && !GameSettings.ReducedMotion) momo.anchoredPosition = momoBase + new Vector2(0f, Mathf.Sin(Time.unscaledTime * 2.2f) * 22f);
         }
 
-        /// <summary>Lays the 15 level circles out in 3 columns by 5 rows inside its rectangle (level 1 at the bottom) and scales them to fit.</summary>
+        /// <summary>
+        /// Lays out the level screen inside its rectangle (wallet above, Endless button below): the region title, then the 15 level circles
+        /// (3 columns x 5 rows, level 1 at the bottom). The gaps above the title, between title and circles and under the circles are equal, so
+        /// the title is centred between the top and the first circle and the circles are centred between the title and the Endless button, on
+        /// every screen shape. Circles are 150 units (never under 130, the 48 dp touch minimum) and their stars scale with them.
+        /// </summary>
         sealed class LevelGridFit : MonoBehaviour
         {
+            public RectTransform Title;
             public RectTransform[] Nodes;
             public int[] Cols, Rows;
             public bool[] Current;
@@ -110,17 +116,31 @@ namespace BoingTower.Gameplay
                 if (Nodes == null) return;
                 float h = ((RectTransform)transform).rect.height;
                 if (h < 10f) return;
-                const float bottom = 150f, top = 110f, cell = 245f;     // room under the first row for its stars, above the last row for its rim
-                float spacing = (h - bottom - top) / 4f;
-                float scale = Mathf.Clamp(spacing / cell, 0.6f, 1f);
+                const float titleH = 100f, gMin = 20f, rgMin = 8f, baseNode = 190f, starExtent = 50f / 190f;   // star rows hang 50 base units under a circle
+                float rowFactor = 1f + starExtent;                                  // row height (circle + stars) as a multiple of the circle size
+                float nodePx = Mathf.Clamp((h - titleH - 3f * gMin - 4f * rgMin) / (5f * rowFactor), 130f, 150f);
+                float rowCell = nodePx * rowFactor;
+                float spare = h - titleH - 5f * rowCell - 4f * rgMin;                  // what is left for the three equal gaps and wider row gaps
+                float g = Mathf.Clamp(spare / 3f, 6f, 90f);
+                float rg = rgMin + Mathf.Max(0f, spare - 3f * g) / 4f;
+                float pitch = rowCell + rg;
+                float k = nodePx / baseNode;
+                if (Title != null)
+                {
+                    Title.anchorMin = new Vector2(0f, 0f);
+                    Title.anchorMax = new Vector2(1f, 0f);
+                    Title.pivot = new Vector2(0.5f, 0.5f);
+                    Title.sizeDelta = new Vector2(-48f, titleH);
+                    Title.anchoredPosition = new Vector2(0f, h - g - titleH * 0.5f);
+                }
                 for (int i = 0; i < Nodes.Length; i++)
                 {
                     RectTransform rt = Nodes[i];
                     if (rt == null) continue;
                     rt.anchorMin = rt.anchorMax = new Vector2(0.2f + 0.3f * Cols[i], 0f);
                     rt.pivot = new Vector2(0.5f, 0.5f);
-                    rt.anchoredPosition = new Vector2(0f, bottom + Rows[i] * spacing);
-                    rt.localScale = Vector3.one * (scale * (Current[i] ? 1.12f : 1f));
+                    rt.anchoredPosition = new Vector2(0f, g + Rows[i] * pitch + nodePx * starExtent + nodePx * 0.5f);
+                    rt.localScale = Vector3.one * (k * (Current[i] ? 1.12f : 1f));
                 }
             }
         }
@@ -488,15 +508,6 @@ namespace BoingTower.Gameplay
             Background(ra != null ? ra.BgFar : null, new Color(0.1f, 0.14f, 0.25f, 1f));
             AddLevelsWallet(region);
             AddBack("Map", ShowMap);
-            // Region title centred in its own band under the back arrow and the wallet; the level circles start below it (owner list 10).
-            Text hdr = UiKit.AddText(screen, "Header", region.Name, 76, Color.white, TextAnchor.UpperCenter, true);
-            var hrt = (RectTransform)hdr.transform;
-            hrt.anchorMin = new Vector2(0f, 1f);
-            hrt.anchorMax = new Vector2(1f, 1f);
-            hrt.pivot = new Vector2(0.5f, 1f);
-            hrt.offsetMin = new Vector2(24f, -440f);
-            hrt.offsetMax = new Vector2(-24f, -312f);
-
             List<LevelDef> levels = repo.LevelsOf(region.Id);
             string currentId = null;
             foreach (LevelDef l in levels) if (progress.IsLevelUnlocked(l) && !progress.IsLevelCleared(l.Id)) { currentId = l.Id; break; }
@@ -505,9 +516,11 @@ namespace BoingTower.Gameplay
             // bottom edge, whatever the screen shape: rows are spread and the circles shrink a little when the screen is short (LevelGridFit).
             RectTransform grid = UiKit.Rect(screen, "LevelGrid");
             UiKit.Stretch(grid);
-            grid.offsetMax = new Vector2(0f, -(MapTopBar + 140f));
+            grid.offsetMax = new Vector2(0f, -(MapTopBar - 20f));
             grid.offsetMin = new Vector2(0f, EndlessBarHeight);   // the Endless button sits under the grid, never over a circle or its stars
             var fit = grid.gameObject.AddComponent<LevelGridFit>();
+            Text hdr = UiKit.AddText(grid, "Header", region.Name, 76, Color.white, TextAnchor.MiddleCenter, true);
+            fit.Title = (RectTransform)hdr.transform;
             fit.Nodes = new RectTransform[levels.Count];
             fit.Cols = new int[levels.Count];
             fit.Rows = new int[levels.Count];
@@ -579,8 +592,8 @@ namespace BoingTower.Gameplay
                 RectTransform srt = si.rectTransform;
                 srt.anchorMin = srt.anchorMax = new Vector2(0.5f, 0f);
                 srt.pivot = new Vector2(0.5f, 1f);
-                srt.anchoredPosition = new Vector2((s - 1) * 52f, -4f);
-                srt.sizeDelta = new Vector2(50f, 50f);
+                srt.anchoredPosition = new Vector2((s - 1) * 49f, -4f);
+                srt.sizeDelta = new Vector2(46f, 46f);
             }
             return rt;
         }

@@ -305,6 +305,15 @@ namespace BoingTower.Gameplay
             img.sprite = sprite;
             img.color = sprite != null ? tint : new Color(tint.r, tint.g, tint.b, 0.9f);
             img.type = Image.Type.Simple;
+            if (sprite != null && sprite.border.sqrMagnitude > 0.5f)
+            {
+                // 9-sliced art (the glossy buttons): the corners are drawn at about 38 percent of the button height, so a wide button is
+                // never a stretched square (owner list 11).
+                img.type = Image.Type.Sliced;
+                float corner = 0.38f * Mathf.Min(size.x, size.y);
+                float borderUnits = Mathf.Max(sprite.border.x, sprite.border.y) / (sprite.pixelsPerUnit / 100f);
+                img.pixelsPerUnitMultiplier = Mathf.Max(1f, borderUnits / corner);
+            }
             var btn = rt.gameObject.AddComponent<Button>();
             var colors = btn.colors;
             colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);

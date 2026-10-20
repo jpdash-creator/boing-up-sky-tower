@@ -51,6 +51,8 @@ namespace ProjectBootstrap
             }
         }
 
+        public override uint GetVersion() { return 3; }   // bump to re-import the art when the import rules change
+
         void OnPreprocessTexture()
         {
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
@@ -69,6 +71,15 @@ namespace ProjectBootstrap
                 ti.ReadTextureSettings(fs);
                 fs.spriteMeshType = SpriteMeshType.FullRect;
                 ti.SetTextureSettings(fs);
+            }
+            if (assetPath.Contains("ui_buttons_primary"))
+            {
+                // The four square glossy buttons are drawn as wide pills: 9-slice them (corners keep their shape, only the middle stretches).
+                ti.spriteBorder = new Vector4(200f, 200f, 200f, 200f);
+                var bs = new TextureImporterSettings();
+                ti.ReadTextureSettings(bs);
+                bs.spriteMeshType = SpriteMeshType.FullRect;
+                ti.SetTextureSettings(bs);
             }
             ti.mipmapEnabled = false;
             ti.filterMode = UnityEngine.FilterMode.Bilinear;
