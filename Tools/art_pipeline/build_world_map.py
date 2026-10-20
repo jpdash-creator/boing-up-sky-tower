@@ -31,15 +31,15 @@ def cloud_band(width, height, seed):
     puffs = []
     x = -80 * ss
     while x < W + 80 * ss:
-        r = int(rng.uniform(46, 84) * ss)
-        cy = int(H / 2 + np.sin(x / (170.0 * ss)) * H * 0.10 + rng.uniform(-0.12, 0.12) * H)
+        r = int(rng.uniform(0.15, 0.21) * height * ss)
+        cy = int(H / 2 + np.sin(x / (170.0 * ss)) * H * 0.05 + rng.uniform(-0.05, 0.05) * H)
         puffs.append((x, cy, r))
         if rng.rand() < 0.55:
-            puffs.append((x + int(rng.uniform(-30, 30) * ss), cy + int(rng.uniform(-40, 40) * ss), int(r * rng.uniform(0.5, 0.75))))
+            puffs.append((x + int(rng.uniform(-30, 30) * ss), cy + int(rng.uniform(-0.10, 0.10) * H), int(r * rng.uniform(0.6, 0.8))))
         x += int(r * rng.uniform(0.9, 1.5))
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    ol = 7 * ss // 2
+    ol = max(2, int(0.025 * height * ss))
     for (cx, cy, r) in puffs:                      # outline pass
         d.ellipse((cx - r - ol, cy - r - ol, cx + r + ol, cy + r + ol), fill=(70, 70, 120, 255))
     for (cx, cy, r) in puffs:                      # lavender body
@@ -48,7 +48,7 @@ def cloud_band(width, height, seed):
         k = int(r * 0.80)
         d.ellipse((cx - r + 6 * ss, cy - r + 4 * ss, cx - r + 6 * ss + 2 * k, cy - r + 4 * ss + 2 * k), fill=(255, 255, 255, 255))
     layer = layer.resize((width, height), Image.LANCZOS)
-    soft = layer.filter(ImageFilter.GaussianBlur(26))          # wispy halo around the outlined clouds
+    soft = layer.filter(ImageFilter.GaussianBlur(max(4, height * 0.05)))          # wispy halo around the outlined clouds
     halo = np.asarray(soft).astype(np.float32)
     halo[..., :3] = 255
     halo[..., 3] = np.clip(halo[..., 3] * 0.9, 0, 255)
@@ -57,7 +57,7 @@ def cloud_band(width, height, seed):
     rgb = halo[..., :3] * (1 - a) + out[..., :3] * a
     alpha = np.maximum(halo[..., 3:4], out[..., 3:4])
     fade = np.minimum(np.linspace(0, 1, height), np.linspace(1, 0, height))[:, None, None]
-    alpha = alpha * np.clip(fade * 6.0, 0, 1)
+    alpha = alpha * np.clip(fade * 12.0, 0, 1)
     return np.concatenate([rgb, alpha], axis=2)
 
 
