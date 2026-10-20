@@ -10,6 +10,8 @@ namespace BoingUpSkyTower.Gameplay
     public sealed class RunHud : MonoBehaviour
     {
         public Action OnPause, OnResume, OnRetry, OnNext, OnMenu, OnRevive;
+        /// <summary>A power-up button was pressed (loadout slot 0..2). The run controller latches it into the next tick's input.</summary>
+        public Action<int> OnPower;
         /// <summary>The close mark of the current overlay (pause: resume, end screens: back to the level select).</summary>
         Action OnClose;
 
@@ -29,6 +31,8 @@ namespace BoingUpSkyTower.Gameplay
         bool endless;         // endless mode: Floor N / Best N, no goal text and no stars
         int bestBefore;       // best floor of the region when the run started
         public ControlPad Pad { get; private set; }
+        /// <summary>The power-up buttons above the jump pad (docs/15 FR-PWR-3); empty when the run has no loadout.</summary>
+        public PowerUpBar Powers { get; private set; }
 
         /// <summary>Places an element, mirrored horizontally for the left-handed layout.</summary>
         void P(RectTransform rt, Vector2 anchor, Vector2 pos, Vector2 size)
@@ -109,6 +113,10 @@ namespace BoingUpSkyTower.Gameplay
             introText = UiKit.AddText(root, "Intro", session.Region.Name + "\n" + introTitle + "\n" + RunSession.DescribeGoal(session.Spec) + "\n\nHold < > to move, tap JUMP", 64, Color.white);
             P((RectTransform)introText.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 120f), new Vector2(820f, 460f));
             Pad = ControlPad.Build(root, art, mirror);
+            Powers = new PowerUpBar();
+            Powers.OnPress = slot => { if (OnPower != null) OnPower(slot); };
+            Powers.Build(root, session, P);
+            Powers.SetVisible(false);   // shown when the intro text is gone
             introTimer = 3.2f;
         }
 
@@ -118,6 +126,11 @@ namespace BoingUpSkyTower.Gameplay
         public void Refresh(RunSession s, float deltaTime)
         {
             SimState st = s.State;
+            if (Powers != null && Powers.ButtonCount > 0)
+            {
+                if (introTimer <= 0f && !Powers.Visible) Powers.SetVisible(true);
+                Powers.Refresh(in st, s.Cfg);
+            }
             // Strings are rebuilt only when a value changes: no per-frame allocations (CUX-1).
             if (st.Row != lastRow)
             {
@@ -175,7 +188,7 @@ namespace BoingUpSkyTower.Gameplay
             if (introTimer > 0f)
             {
                 introTimer -= deltaTime;
-                if (introTimer <= 0f) introText.gameObject.SetActive(false);
+                if (introTimer <= 0f) { introText.gameObject.SetActive(false); if (Powers != null) Powers.SetVisible(true); }
             }
         }
 

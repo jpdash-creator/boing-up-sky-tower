@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,7 +10,8 @@ namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The in-game shop (docs/14-shop-requirements.md). Four tabs: Chests and Gears, Power-ups and Characters, VIP and Battle Pass,
-    /// Gems and Coins. Tabs 1 to 3 are "Coming soon" panels; tab 4 sells gem packs (TEST purchases in development builds, nothing in
+    /// Gems and Coins. Tabs 1 and 3 are "Coming soon" panels; tab 2 sells the power-ups (docs/15: cards with a coins and a gems Buy button,
+    /// the characters come later); tab 4 sells gem packs (TEST purchases in development builds, nothing in
     /// release builds because there is no billing yet) and coin packs (paid with gems, real). Built in code under the safe area.
     /// Menu screen only: it has no per-frame code.
     /// </summary>
@@ -151,6 +153,7 @@ namespace BoingUpSkyTower.Gameplay
                 BuildSectionBar();
                 BuildPackList(Section == GemsSection);
             }
+            else if (Tab == TabPowerups) BuildPowerUps();
             else BuildComingSoon(Tab);
             // The wallet texts were created by the header and stay valid; the host refreshes them on every wallet change.
             if (CoinText != null) UiKit.SetText(CoinText, progress.Coins.ToString());
@@ -188,6 +191,151 @@ namespace BoingUpSkyTower.Gameplay
             Text info = UiKit.AddText(host, "SoonInfo", TabSoonText[Mathf.Clamp(tab, 0, TabSoonText.Length - 1)], 46, Theme.InkSoft, TextAnchor.MiddleCenter);
             info.GetComponent<Outline>().enabled = false;
             UiKit.Place((RectTransform)info.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -100f), new Vector2(740f, 300f));
+        }
+
+        // ---------------- tab 2: power-ups (docs/15 section 3, docs/14 Tab 2) ----------------
+
+        const float PowerCardH = 880f, PowerCardGap = 24f, PowerCardTextW = 760f;
+        string lastBoughtId;
+
+        void BuildPowerUps()
+        {
+            bool dev = TestPurchasesEnabled;
+            float top = SectionTop + (dev ? 160f : 0f);
+            if (dev)
+            {
+                Button give = UiKit.AddButton(body, "TestGive", "Test: add 3 of each", Btn(0), Color.white, new Vector2(760f, 130f), TestGrantAll, 44);
+                UiKit.Place((RectTransform)give.transform, new Vector2(0.5f, 1f), new Vector2(0f, -SectionTop), new Vector2(760f, 130f));
+                give.GetComponent<A11yLabel>().Text = "Test only: add 3 of every power-up";
+            }
+            var defs = progress.PowerUpDefs.Implemented;
+            RectTransform vp = UiKit.Rect(body, "ShopViewport");
+            vp.anchorMin = Vector2.zero;
+            vp.anchorMax = Vector2.one;
+            vp.offsetMin = new Vector2(0f, BottomMargin);
+            vp.offsetMax = new Vector2(0f, -top);
+            vp.gameObject.AddComponent<RectMask2D>();
+            var hit = vp.gameObject.AddComponent<Image>();
+            hit.color = new Color(0f, 0f, 0f, 0f);
+
+            RectTransform list = UiKit.Rect(vp, "ShopList");
+            list.anchorMin = new Vector2(0f, 1f);
+            list.anchorMax = new Vector2(1f, 1f);
+            list.pivot = new Vector2(0.5f, 1f);
+            list.offsetMin = Vector2.zero;
+            list.offsetMax = Vector2.zero;
+            list.sizeDelta = new Vector2(0f, defs.Count * (PowerCardH + PowerCardGap));
+
+            var scroll = vp.gameObject.AddComponent<ScrollRect>();
+            scroll.content = list;
+            scroll.viewport = vp;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic;
+            scroll.scrollSensitivity = 60f;
+
+            for (int i = 0; i < defs.Count; i++) BuildPowerUpCard(list, i * (PowerCardH + PowerCardGap), defs[i]);
+        }
+
+        /// <summary>One power-up card: icon, name, owned count, description, and one Buy button per currency (coins, gems), 130 px tall each.</summary>
+        void BuildPowerUpCard(RectTransform list, float y, PowerUpDef def)
+        {
+            RectTransform crt = UiKit.Rect(list, "Panel");
+            Transform card = crt;
+            Theme.CardBacking(crt);
+            crt.anchorMin = new Vector2(0f, 1f);
+            crt.anchorMax = new Vector2(1f, 1f);
+            crt.pivot = new Vector2(0.5f, 1f);
+            crt.offsetMin = new Vector2(SideMargin, -(y + PowerCardH));
+            crt.offsetMax = new Vector2(-SideMargin, -y);
+
+            PowerUpUi.AddIcon(card, "Icon", def.Type, new Vector2(0f, 1f), new Vector2(24f, -30f), 110f, false);
+            Text name = UiKit.AddText(card, "Name", def.Name, 54, Theme.Ink, TextAnchor.MiddleLeft, true);
+            name.GetComponent<Outline>().enabled = false;
+            UiKit.Place((RectTransform)name.transform, new Vector2(0f, 1f), new Vector2(158f, -26f), new Vector2(660f, 118f));
+
+            int owned = progress.PowerUpCount(def.Id);
+            bool justBought = def.Id == lastBoughtId;
+            AddPill(card, justBought ? "Bought! You own " + owned : "You own " + owned, justBought ? LaunchBadgeColor : SpecialBadgeColor, 150f);
+
+            Text desc = UiKit.AddText(card, "Desc", def.Description + "\nTakes up to " + def.CarryCap + " into a run.", 42, Theme.InkSoft, TextAnchor.UpperLeft);
+            desc.GetComponent<Outline>().enabled = false;
+            UiKit.Place((RectTransform)desc.transform, new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(PowerCardTextW, 440f));
+
+            Button coins = UiKit.AddButton(card, "BuyCoins", Num(def.CoinPrice) + " coins", Btn(1), Color.white, new Vector2(470f, 130f), () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 44);
+            var crt2 = (RectTransform)coins.transform;
+            crt2.anchorMin = new Vector2(0f, 0f); crt2.anchorMax = new Vector2(0.5f, 0f); crt2.pivot = new Vector2(0.5f, 0f);
+            crt2.offsetMin = new Vector2(24f, 24f); crt2.offsetMax = new Vector2(-8f, 154f);
+            coins.GetComponent<A11yLabel>().Text = "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins";
+            Button gems = UiKit.AddButton(card, "BuyGems", Num(def.GemPrice) + " gems", Btn(0), Color.white, new Vector2(470f, 130f), () => TapBuyPowerUp(def, PowerUpCurrency.Gems), 44);
+            var grt = (RectTransform)gems.transform;
+            grt.anchorMin = new Vector2(0.5f, 0f); grt.anchorMax = new Vector2(1f, 0f); grt.pivot = new Vector2(0.5f, 0f);
+            grt.offsetMin = new Vector2(8f, 24f); grt.offsetMax = new Vector2(-24f, 154f);
+            gems.GetComponent<A11yLabel>().Text = "Buy " + def.Name + " for " + Num(def.GemPrice) + " gems";
+        }
+
+        void TestGrantAll()
+        {
+            if (!TestPurchasesEnabled) return;
+            foreach (PowerUpDef d in progress.PowerUpDefs.Implemented) progress.GrantPowerUp(d.Id, 3);
+            lastBoughtId = null;
+            RebuildBody();
+        }
+
+        /// <summary>Tap on a Buy button: too few coins or gems explains it and points to the right place; a gem spend above 50 asks first.</summary>
+        public void TapBuyPowerUp(PowerUpDef def, PowerUpCurrency currency)
+        {
+            if (def == null) return;
+            int price = PowerUpCatalog.PriceFor(def, currency, 1);
+            bool coins = currency == PowerUpCurrency.Coins;
+            string unit = coins ? "coins" : "gems";
+            int have = coins ? progress.Coins : progress.Gems;
+            if (have < price)
+            {
+                host.OpenPopup("Not enough " + unit, "You need " + Num(price) + " " + unit + " and have " + Num(have) + ".\n" + (coins ? "Earn coins in levels or buy them with gems." : "Get more gems first."), 1180f);
+                host.PopupButton(coins ? "Get coins" : "Get gems", true, 230f, () =>
+                {
+                    host.ClosePopup();
+                    Tab = TabGems;
+                    SelectSection(coins ? CoinsSection : GemsSection);
+                });
+                host.PopupButton("Close", false, 60f, host.ClosePopup);
+                return;
+            }
+            if (!coins && price > ConfirmGemThreshold)
+            {
+                host.OpenPopup("Confirm purchase", "Buy " + def.Name + " for " + Num(price) + " gems?\nYou have " + Num(progress.Gems) + " gems.", 1180f);
+                host.PopupButton("Buy for " + Num(price) + " gems", true, 230f, () => CompletePowerUpPurchase(def, currency));
+                host.PopupButton("Cancel", false, 60f, host.ClosePopup);
+                return;
+            }
+            CompletePowerUpPurchase(def, currency);
+        }
+
+        void CompletePowerUpPurchase(PowerUpDef def, PowerUpCurrency currency)
+        {
+            host.ClosePopup();
+            PowerUpBuyResult result = progress.TryBuyPowerUp(def.Id, currency, 1);
+            switch (result)
+            {
+                case PowerUpBuyResult.Ok:
+                    lastBoughtId = def.Id;
+                    AudioManager.Play(Sfx.PowerUp);
+                    RebuildBody();   // the card shows the new count and a "Bought!" mark; the wallet follows through the host
+                    break;
+                case PowerUpBuyResult.StackFull:
+                    Info("Stock is full", "You already own as many " + def.Name + " as the stock can hold (" + PowerUpCatalog.StackCap + ").");
+                    break;
+                case PowerUpBuyResult.NotEnoughCoins:
+                    Info("Not enough coins", "You do not have enough coins for " + def.Name + ".");
+                    break;
+                case PowerUpBuyResult.NotEnoughGems:
+                    Info("Not enough gems", "You do not have enough gems for " + def.Name + ".");
+                    break;
+                default:
+                    Info("Not available", def.Name + " cannot be bought right now.");
+                    break;
+            }
         }
 
         // ---------------- pack lists ----------------

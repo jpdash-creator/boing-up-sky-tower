@@ -34,6 +34,13 @@ namespace BoingUpSkyTower.Gameplay
 
         static Sprite round, ring, shadow, gradientDown;
 
+        /// <summary>Draws all surface sprites now (they are generated on first use): call it at boot so no overlay or card hitches a run (CUX-1).</summary>
+        public static void Warmup()
+        {
+            Sprite a = RoundSprite, b = RingSprite, c = ShadowSprite, d = GradientDownSprite;
+            if (a == null || b == null || c == null || d == null) Debug.LogWarning("Theme sprites missing");
+        }
+
         /// <summary>White rounded rectangle, 9-sliced: tint it.</summary>
         public static Sprite RoundSprite
         {

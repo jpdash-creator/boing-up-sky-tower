@@ -1,0 +1,79 @@
+[
+  {
+    "id": "pw_flight", "order": 1, "name": "Flight",
+    "description": "Fly upward for 4 seconds and steer left and right. Gongs cannot hurt you.",
+    "trigger": "button", "durationSec": 4, "uses": 1, "carryCap": 1, "maxStack": 99, "stack": "none",
+    "price": { "coins": 2400, "gems": 20 }, "unlockRegion": 1, "implemented": true,
+    "simParams": { "riseUps": 8.0, "graceSec": 1.0, "stopsRowsBelowTop": 3 }, "icon": "pw_flight"
+  },
+  {
+    "id": "pw_rocket", "order": 2, "name": "Rocket",
+    "description": "A strong boost straight up, about 8 floors in 2 seconds. Stops before the last floors of a level.",
+    "trigger": "button", "durationSec": 2, "uses": 1, "carryCap": 1, "maxStack": 99, "stack": "none",
+    "price": { "coins": 2000, "gems": 16 }, "unlockRegion": 1, "implemented": true,
+    "simParams": { "riseUps": 14.0, "slowFallSec": 1.0, "stopsRowsBelowTop": 3 }, "icon": "pw_rocket"
+  },
+  {
+    "id": "pw_doublejump", "order": 3, "name": "Double Jump",
+    "description": "Jump again in mid-air, twice within 30 seconds.",
+    "trigger": "button", "durationSec": 30, "uses": 2, "carryCap": 3, "maxStack": 99, "stack": "none",
+    "price": { "coins": 900, "gems": 8 }, "unlockRegion": 1, "implemented": true,
+    "simParams": { "airJumps": 2 }, "icon": "pw_doublejump"
+  },
+  {
+    "id": "pw_wallstick", "order": 4, "name": "Wall Stick",
+    "description": "For 10 seconds you stick to the side walls for up to 1.5 seconds. Jump to leap off.",
+    "trigger": "button", "durationSec": 10, "uses": 1, "carryCap": 2, "maxStack": 99, "stack": "none",
+    "price": { "coins": 800, "gems": 8 }, "unlockRegion": 1, "implemented": true,
+    "simParams": { "holdSec": 1.5 }, "icon": "pw_wallstick"
+  },
+  {
+    "id": "pw_shield", "order": 5, "name": "Shield",
+    "description": "Blocks the next gong hit, or saves you once if you fall off the bottom. Lasts up to 30 seconds.",
+    "trigger": "button", "durationSec": 30, "uses": 1, "carryCap": 2, "maxStack": 99, "stack": "none",
+    "price": { "coins": 1000, "gems": 10 }, "unlockRegion": 1, "implemented": true,
+    "simParams": { "rescueMarginU": 3.0 }, "icon": "pw_shield"
+  },
+  {
+    "id": "pw_magnet", "order": 6, "name": "Magnet",
+    "description": "Gems and stars come to you from farther away for 10 seconds.",
+    "trigger": "button", "durationSec": 10, "uses": 1, "carryCap": 2, "maxStack": 99, "stack": "none",
+    "price": { "coins": 900, "gems": 8 }, "unlockRegion": 1, "implemented": true,
+    "simParams": { "extraRadiusU": 2.0 }, "icon": "pw_magnet"
+  },
+  {
+    "id": "pw_slowtime", "order": 7, "name": "Slow Time",
+    "description": "The rising danger zone moves 40 percent slower for 6 seconds.",
+    "trigger": "button", "durationSec": 6, "uses": 1, "carryCap": 2, "maxStack": 99, "stack": "none",
+    "price": { "coins": 1200, "gems": 10 }, "unlockRegion": 1, "implemented": true,
+    "simParams": { "scrollPercent": 40 }, "icon": "pw_slowtime"
+  },
+  {
+    "id": "pw_springboots", "order": 8, "name": "Spring Boots",
+    "description": "The next 3 jumps are 20 percent higher.",
+    "trigger": "button", "durationSec": 0, "uses": 3, "carryCap": 2, "maxStack": 99, "stack": "refresh",
+    "price": { "coins": 1000, "gems": 10 }, "unlockRegion": 1, "implemented": false,
+    "simParams": { "peakPercent": 20, "peakClampU": 6.5 }, "icon": "pw_springboots"
+  },
+  {
+    "id": "pw_coindoubler", "order": 9, "name": "Coin Doubler",
+    "description": "Doubles the coins paid at the end of this level.",
+    "trigger": "button", "durationSec": 0, "uses": 1, "carryCap": 1, "maxStack": 99, "stack": "none",
+    "price": { "coins": 120, "gems": 2 }, "unlockRegion": 1, "implemented": false,
+    "simParams": { "multiplier": 2 }, "icon": "pw_coindoubler"
+  },
+  {
+    "id": "pw_starseeker", "order": 10, "name": "Star Seeker",
+    "description": "Arrows at the screen edge point to stars you have not collected yet.",
+    "trigger": "button", "durationSec": 12, "uses": 1, "carryCap": 2, "maxStack": 99, "stack": "none",
+    "price": { "coins": 800, "gems": 8 }, "unlockRegion": 1, "implemented": false,
+    "simParams": { "rangeU": 12.0 }, "icon": "pw_starseeker"
+  },
+  {
+    "id": "pw_safetynet", "order": 11, "name": "Safety Net",
+    "description": "Catches you the first time you would fall off the bottom.",
+    "trigger": "auto", "durationSec": 0, "uses": 1, "carryCap": 1, "maxStack": 99, "stack": "none",
+    "price": { "coins": 1500, "gems": 14 }, "unlockRegion": 1, "implemented": false,
+    "simParams": {}, "icon": "pw_safetynet"
+  }
+]

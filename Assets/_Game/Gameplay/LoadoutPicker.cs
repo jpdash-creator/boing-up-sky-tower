@@ -1,0 +1,198 @@
+using System;
+using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Simulation;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace BoingUpSkyTower.Gameplay
+{
+    /// <summary>
+    /// The loadout picker (docs/15 section 9.4): a row of three slot buttons inside a popup panel (level popup and endless start). Tap a slot to open the
+    /// chooser (a second layer in the same popup) listing the owned power-ups with their counts; an empty stock explains where to get more
+    /// (the shop). The loadout is stored in the save at once (ProgressService.SetLoadoutSlot). Built in code, menu screens only: no per-frame code.
+    /// </summary>
+    public sealed class LoadoutPicker
+    {
+        public const float RowW = 740f, CellW = 232f, CellH = 150f, CellGap = 22f, HintH = 132f;
+        /// <summary>Height of the header line, the three slots and the shop hint, for popup layout.</summary>
+        public const float BlockHeight = 64f + CellH + 8f + HintH;
+
+        readonly ProgressService progress;
+        readonly ArtCatalog art;
+        readonly Action openShop;
+        RectTransform popupRoot;
+        Transform under;                 // the level card hidden while the chooser is open
+        Transform panel;
+        float top;
+        RectTransform rowsHost;
+        RectTransform chooser;
+
+        public RectTransform ChooserRoot { get { return chooser; } }
+        public int RowCount { get { return PowerUpCatalog.SlotCount; } }
+
+        /// <param name="openShop">Closes the popup and opens the shop's power-up tab.</param>
+        public LoadoutPicker(ProgressService progress, ArtCatalog art, Action openShop)
+        {
+            this.progress = progress;
+            this.art = art;
+            this.openShop = openShop;
+        }
+
+        /// <summary>Adds the header and the three rows to <paramref name="panelTransform"/>, <paramref name="yFromTop"/> below its top edge.</summary>
+        public void Build(RectTransform popupRootRect, Transform panelTransform, float yFromTop)
+        {
+            popupRoot = popupRootRect;
+            panel = panelTransform;
+            top = yFromTop;
+            Text head = UiKit.AddText(panel, "LoadoutHeader", "Power-ups (up to 3)", 42, Theme.Ink, TextAnchor.MiddleLeft, true);
+            UiKit.OnPanel(head);
+            UiKit.Place((RectTransform)head.transform, new Vector2(0.5f, 1f), new Vector2(0f, -top), new Vector2(RowW, 56f));
+            BuildRows();
+        }
+
+        void BuildRows()
+        {
+            if (rowsHost != null) UnityEngine.Object.Destroy(rowsHost.gameObject);
+            rowsHost = UiKit.Rect(panel, "LoadoutRows");
+            UiKit.Place(rowsHost, new Vector2(0.5f, 1f), new Vector2(0f, -(top + 64f)), new Vector2(RowW, CellH + 8f + HintH));
+            string[] ids = progress.GetLoadout();
+            bool anyStock = false;
+            foreach (PowerUpDef d in progress.PowerUpDefs.Implemented) if (progress.PowerUpCount(d.Id) > 0) { anyStock = true; break; }
+            for (int i = 0; i < PowerUpCatalog.SlotCount; i++) BuildCell(i, ids[i]);
+            if (!anyStock)
+            {
+                // the empty-state text points to the shop (docs/15 FR-PWR-10)
+                Text hint = UiKit.AddText(rowsHost, "ShopHint", "No power-ups yet. Get them in the Shop.", 42, Theme.InkSoft, TextAnchor.UpperLeft);
+                UiKit.OnPanel(hint);
+                hint.color = Theme.InkSoft;
+                UiKit.Place((RectTransform)hint.transform, new Vector2(0f, 1f), new Vector2(0f, -(CellH + 8f)), new Vector2(RowW, HintH));
+            }
+        }
+
+        /// <summary>One slot: a badge with the power-up code and the units owned ("x3"), or a plus sign when empty. The names are in the chooser.</summary>
+        void BuildCell(int slot, string id)
+        {
+            int index = slot;
+            PowerUpDef def = id != null ? progress.PowerUpDefs.Get(id) : null;
+            string a11y = def != null
+                ? "Slot " + (slot + 1) + ": " + PowerUpUi.Spoken(def.Type, progress.PowerUpCount(def.Id)) + ". Tap to change"
+                : "Slot " + (slot + 1) + ": empty. Tap to choose a power-up";
+            Button cell = UiKit.AddButton(rowsHost, "Slot" + (slot + 1), "", Theme.RoundSprite, Theme.SurfaceDim, new Vector2(CellW, CellH), () => OpenChooser(index), 42);
+            RectTransform crt = (RectTransform)cell.transform;
+            UiKit.Place(crt, new Vector2(0f, 1f), new Vector2(slot * (CellW + CellGap), 0f), new Vector2(CellW, CellH));
+            cell.GetComponent<A11yLabel>().Text = a11y;
+            Image rim = UiKit.AddImage(crt, "Rim", Theme.RingSprite, new Color(Theme.InkSoft.r, Theme.InkSoft.g, Theme.InkSoft.b, 0.45f));
+            rim.type = Image.Type.Sliced;
+            rim.preserveAspect = false;
+            UiKit.Stretch(rim.rectTransform);
+
+            if (def != null)
+            {
+                PowerUpUi.AddIcon(crt, "Icon", def.Type, new Vector2(0f, 0.5f), new Vector2(12f, 0f), 100f, false);
+                Text count = UiKit.AddText(crt, "Count", "x" + progress.PowerUpCount(def.Id), 44, Theme.Ink, TextAnchor.MiddleCenter, true);
+                UiKit.OnPanel(count);
+                UiKit.Place((RectTransform)count.transform, new Vector2(1f, 0.5f), new Vector2(-8f, 0f), new Vector2(CellW - 124f, CellH - 20f));
+            }
+            else
+            {
+                Image plus = UiKit.AddImage(crt, "Icon", Theme.RoundSprite, new Color(0.82f, 0.84f, 0.9f, 1f));
+                plus.type = Image.Type.Sliced;
+                plus.preserveAspect = false;
+                plus.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / 50f);
+                UiKit.Place(plus.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(100f, 100f));
+                Text sign = UiKit.AddText(plus.transform, "Plus", "+", 64, Theme.Ink, TextAnchor.MiddleCenter, true);
+                UiKit.OnPanel(sign);
+                UiKit.Stretch((RectTransform)sign.transform);
+            }
+        }
+
+        // ---------------- chooser (second layer inside the popup) ----------------
+
+        public void OpenChooser(int slot)
+        {
+            CloseChooser();
+            // The chooser replaces the level card while it is open (one modal at a time: nothing overlaps, CUX-3); closing brings the card back.
+            under = popupRoot.Find("Panel");
+            if (under != null) under.gameObject.SetActive(false);
+            chooser = UiKit.Rect(popupRoot, "LoadoutChooser");
+            UiKit.Stretch(chooser);
+            var dim = chooser.gameObject.AddComponent<Image>();
+            dim.color = new Color(0f, 0f, 0f, 0.55f);
+            RectTransform cp = UiKit.BuildPopupFrame(chooser, "Slot " + (slot + 1), art, new Vector2(860f, 1180f), CloseChooser);
+
+            string[] now = progress.GetLoadout();
+            var owned = new System.Collections.Generic.List<PowerUpDef>();
+            foreach (PowerUpDef d in progress.PowerUpDefs.Implemented) if (progress.PowerUpCount(d.Id) > 0) owned.Add(d);
+
+            if (owned.Count == 0)
+            {
+                Text none = UiKit.AddText(cp, "None", "You do not own any power-ups yet.\nBuy them in the Shop.", 46, Theme.Ink, TextAnchor.MiddleCenter);
+                UiKit.OnPanel(none);
+                UiKit.Place((RectTransform)none.transform, new Vector2(0.5f, 1f), new Vector2(0f, -240f), new Vector2(740f, 300f));
+                Button shop0 = ChooserButton(cp, "Open shop", true, new Vector2(0.5f, 0f), new Vector2(0f, 200f), new Vector2(560f, 130f), OpenShop);
+                shop0.GetComponent<A11yLabel>().Text = "Open the shop to buy power-ups";
+                ChooserButton(cp, "Close", false, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(560f, 130f), CloseChooser);
+                return;
+            }
+
+            // two columns of cards, up to 4 rows (7 power-ups)
+            const float cardW = 356f, cardH = 150f, gap = 24f;
+            for (int i = 0; i < owned.Count; i++)
+            {
+                PowerUpDef d = owned[i];
+                int col = i % 2, r = i / 2;
+                int where = Array.IndexOf(now, d.Id);
+                string id = d.Id;
+                Button card = UiKit.AddButton(cp, "Choose" + d.Id, "", Theme.RoundSprite, where == slot ? new Color(1f, 0.9f, 0.55f, 1f) : Theme.SurfaceDim, new Vector2(cardW, cardH), () => Choose(slot, id), 42);
+                UiKit.Place((RectTransform)card.transform, new Vector2(0.5f, 1f), new Vector2((col - 0.5f) * (cardW + gap), -(190f + r * (cardH + gap))), new Vector2(cardW, cardH));
+                card.GetComponent<A11yLabel>().Text = PowerUpUi.Spoken(d.Type, progress.PowerUpCount(id)) + (where >= 0 && where != slot ? ", in slot " + (where + 1) : (where == slot ? ", current choice" : ""));
+                Image rim = UiKit.AddImage(card.transform, "Rim", Theme.RingSprite, new Color(Theme.InkSoft.r, Theme.InkSoft.g, Theme.InkSoft.b, 0.45f));
+                rim.type = Image.Type.Sliced;
+                rim.preserveAspect = false;
+                UiKit.Stretch(rim.rectTransform);
+                Text nm = UiKit.AddText(card.transform, "Name", d.Name, 44, Theme.Ink, TextAnchor.MiddleLeft, true);
+                UiKit.OnPanel(nm);
+                nm.horizontalOverflow = HorizontalWrapMode.Wrap;
+                UiKit.Place((RectTransform)nm.transform, new Vector2(0f, 1f), new Vector2(16f, -8f), new Vector2(cardW - 32f, 70f));
+                string sub = where >= 0 && where != slot ? "x" + progress.PowerUpCount(id) + "  in slot " + (where + 1) : "x" + progress.PowerUpCount(id) + "  takes " + progress.CarryUnits(id);
+                Text st = UiKit.AddText(card.transform, "Sub", sub, 42, Theme.InkSoft, TextAnchor.MiddleLeft);
+                UiKit.OnPanel(st);
+                st.color = Theme.InkSoft;
+                UiKit.Place((RectTransform)st.transform, new Vector2(0f, 0f), new Vector2(16f, 8f), new Vector2(cardW - 32f, 64f));
+            }
+
+            Button clear = ChooserButton(cp, "Empty slot", false, new Vector2(0f, 0f), new Vector2(60f, 40f), new Vector2(350f, 130f), () => Choose(slot, null));
+            clear.GetComponent<A11yLabel>().Text = "Leave slot " + (slot + 1) + " empty";
+            Button shop = ChooserButton(cp, "Shop", true, new Vector2(1f, 0f), new Vector2(-60f, 40f), new Vector2(350f, 130f), OpenShop);
+            shop.GetComponent<A11yLabel>().Text = "Open the shop to buy more power-ups";
+        }
+
+        Button ChooserButton(Transform parent, string label, bool primary, Vector2 anchor, Vector2 pos, Vector2 size, Action action)
+        {
+            Sprite sprite = art != null ? ArtCatalog.Pick(art.Buttons, primary ? 1 : 0) : null;
+            Button b = UiKit.AddButton(parent, label, label, sprite, Color.white, size, action, 46);
+            UiKit.Place((RectTransform)b.transform, anchor, pos, size);
+            return b;
+        }
+
+        void Choose(int slot, string id)
+        {
+            progress.SetLoadoutSlot(slot, id);
+            CloseChooser();
+            BuildRows();
+        }
+
+        void OpenShop()
+        {
+            if (openShop != null) openShop();
+        }
+
+        public void CloseChooser()
+        {
+            if (chooser != null) UnityEngine.Object.Destroy(chooser.gameObject);
+            chooser = null;
+            if (under != null) under.gameObject.SetActive(true);
+            under = null;
+        }
+    }
+}

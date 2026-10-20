@@ -57,6 +57,8 @@ namespace BoingUpSkyTower.Gameplay
         string currentRegionId;
 
         public string CurrentScreen { get; private set; }
+        /// <summary>The loadout picker of the open level or endless popup (tests open its chooser).</summary>
+        public LoadoutPicker CurrentPicker { get; private set; }
 
         void Start()
         {
@@ -573,8 +575,31 @@ namespace BoingUpSkyTower.Gameplay
             // Endless mode (owner decision 2026-10-20): one pill under the circles, bottom centre (thumb reach), 720 x 130 px = well over 48 dp.
             int bestFloor = progress.EndlessBestFloor(region.Id);
             string endlessLabel = bestFloor > 0 ? "Endless  best " + bestFloor : "Endless";
-            Button endlessBtn = UiKit.AddButton(screen, "Endless", endlessLabel, Btn(1), new Color(0.85f, 1f, 0.9f), new Vector2(720f, 130f), () => StartEndless(region), 46);
+            Button endlessBtn = UiKit.AddButton(screen, "Endless", endlessLabel, Btn(1), new Color(0.85f, 1f, 0.9f), new Vector2(720f, 130f), () => OnEndlessTapped(region), 46);
             UiKit.Place((RectTransform)endlessBtn.transform, new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(720f, 130f));
+        }
+
+        /// <summary>Endless start popup (docs/15 FR-PWR-2): best floor, the power-up loadout picker and START. The loadout is optional.</summary>
+        public void OnEndlessTapped(RegionDef region)
+        {
+            int best = progress.EndlessBestFloor(region.Id);
+            OpenPopup("Endless", "", 1300f);
+            Transform panel = popup.Find("Panel");
+            Destroy(panel.Find("Body").gameObject);
+            Text info = UiKit.AddText(panel, "Info", region.Name + "\nClimb as high as you can.\n" + (best > 0 ? "Best floor " + best : "No best floor yet"), 46, Color.white, TextAnchor.MiddleCenter);
+            UiKit.OnPanel(info);
+            UiKit.Place((RectTransform)info.transform, new Vector2(0.5f, 1f), new Vector2(0f, -195f), new Vector2(740f, 300f));
+            var picker = CurrentPicker = new LoadoutPicker(progress, art, OpenShopPowerUps);
+            picker.Build(popup, panel, 520f);
+            PopupButton("START", Btn(1), Color.white, 200f, () => StartEndless(region));
+            PopupButton("Close", Btn(0), Color.white, 40f, ClosePopup);
+        }
+
+        /// <summary>Leaves the current popup for the shop's Power-ups tab (the loadout picker's way to buy more).</summary>
+        void OpenShopPowerUps()
+        {
+            ClosePopup();
+            ShowShop(ShopScreen.TabPowerups);
         }
 
         /// <summary>Height reserved at the bottom of the level screen for the Endless button (button 130 + 24 margin + 16 gap).</summary>
@@ -638,7 +663,7 @@ namespace BoingUpSkyTower.Gameplay
             LevelSpec spec = LevelSpecFactory.Build(level, repo.GetRegion(level.Region));
             LevelProgress p = progress.GetProgress(level.Id);
             int starsHave = p != null ? p.Stars : 0;
-            OpenPopup("Level " + level.Index, "");
+            OpenPopup("Level " + level.Index, "", 1500f);   // taller than the default: the loadout picker (docs/15 9.4) sits above PLAY
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
 
@@ -650,15 +675,17 @@ namespace BoingUpSkyTower.Gameplay
             {
                 bool got = i < starsHave;
                 Image star = UiKit.AddImage(panel, "Star" + i, art != null ? (got ? art.StarFilled : art.StarEmpty) : null, got ? Color.white : new Color(1f, 1f, 1f, 0.55f));
-                UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 170f, -300f), new Vector2(150f, 150f));
+                UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 170f, -300f), new Vector2(130f, 130f));
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
-            string info = "Collect the 3 stars on the way up.\nPays 30 coins + 40 per star + 5 per combo.";
+            string info = "Collect the 3 stars.\nPays 30 + 40 per star + 5 per combo.";
             if (starsHave >= 3) info = "All 3 stars collected.\nReplays pay half the coins and no gems.";
             if (p != null && p.BestScore > 0) info += "\nBest score " + p.BestScore;
             Text t = UiKit.AddText(panel, "Info", info, 42, Color.white, TextAnchor.UpperCenter);
             UiKit.OnPanel(t);
-            UiKit.Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(0f, -465f), new Vector2(740f, 330f));
+            UiKit.Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(0f, -440f), new Vector2(740f, 330f));
+            CurrentPicker = new LoadoutPicker(progress, art, OpenShopPowerUps);
+            CurrentPicker.Build(popup, panel, 790f);
             PopupButton("PLAY", Btn(1), Color.white, 200f, () =>
             {
                 GameSession.CurrentLevelId = level.Id;

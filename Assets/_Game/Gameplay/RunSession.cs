@@ -97,6 +97,47 @@ namespace BoingUpSkyTower.Gameplay
             return true;
         }
 
+        // ---- power-ups (docs/15): the loadout is put into the state; used units are taken from the stock when the run pauses or ends ----
+
+        readonly int[] settledUnits = new int[PowerUps.SlotCount];
+
+        /// <summary>Puts the player's loadout (units already limited by stock and carry cap) into the fresh run state.</summary>
+        public void ApplyLoadout(LoadoutSlot[] slots)
+        {
+            if (slots == null || slots.Length < PowerUps.SlotCount) return;
+            Sim.SetLoadout(ref State, slots[0].Type, slots[0].Units, slots[1].Type, slots[1].Units, slots[2].Type, slots[2].Units);
+            for (int i = 0; i < settledUnits.Length; i++) settledUnits[i] = State.SlotUnits(i);
+        }
+
+        /// <summary>True when the loadout holds at least one power-up (the HUD then shows the buttons).</summary>
+        public bool HasLoadout
+        {
+            get
+            {
+                for (int i = 0; i < PowerUps.SlotCount; i++) if (State.SlotType(i) != PowerUp.None) return true;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Takes the units used since the last call out of the owned stock and saves (used units are gone, also on a failed run; unused ones
+        /// stay in the stock). Called when the run pauses, ends or is left, never per tick (a save is a file write).
+        /// </summary>
+        public int SettlePowerUps(ProgressService progress)
+        {
+            int used = 0;
+            for (int i = 0; i < settledUnits.Length; i++)
+            {
+                int now = State.SlotUnits(i);
+                if (now >= settledUnits[i]) continue;
+                int n = settledUnits[i] - now;
+                settledUnits[i] = now;
+                if (progress != null) progress.TryConsumePowerUp(PowerUps.IdOf(State.SlotType(i)), n);
+                used += n;
+            }
+            return used;
+        }
+
         public RunOutcome BuildOutcome()
         {
             return new RunOutcome

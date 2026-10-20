@@ -6,6 +6,14 @@ namespace BoingUpSkyTower.Simulation
         public const int Left = 1;
         public const int Right = 2;
         public const int Jump = 4;
+        /// <summary>
+        /// Power-up activation edges (docs/15 FR-REGION-3): bit 8, 16 and 32 activate loadout slot 0, 1 and 2 on the tick they are set.
+        /// Bits above 4 were unused before, so old replays and the bot (which never set them) are unaffected.
+        /// </summary>
+        public const int PowerSlot0 = 8;
+        public const int PowerSlot1 = 16;
+        public const int PowerSlot2 = 32;
+        public const int PowerMask = PowerSlot0 | PowerSlot1 | PowerSlot2;
     }
 
     /// <summary>All mutable simulation state. Copy with Clone() (the CrumbleTick and PickupTaken arrays are the only reference members).</summary>
@@ -54,6 +62,54 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Per pickup: collected flag (index = pickup id).</summary>
         public bool[] PickupTaken;
 
+        // ---- Power-ups. Stored compactly (16-bit timers, one packed loadout word) because the bot copies SimState on every recursion level;
+        // a state without a loadout never touches them. Read and write them through the int properties. ----
+        private uint pwLoadout;
+        private ushort pwUsedMask, flightTicks, rocketTicks, slowFall, magnetTicks, slowTicks, shieldTicks, wallStickTicks, doubleJumpTicks, wallHold, wallCool;
+        private byte pwUsed, doubleJumps, shieldSaves;
+        private bool assisted;
+
+        /// <summary>Units used this run and a bit mask of the types used (bit = PowerUp id).</summary>
+        public int PwUsed { readonly get { return pwUsed; } set { pwUsed = (byte)value; } }
+        public int PwUsedMask { readonly get { return pwUsedMask; } set { pwUsedMask = (ushort)value; } }
+        /// <summary>Remaining ticks: Flight, Rocket, slow fall after them, Magnet, Slow Time, Shield (armed), Wall Stick window.</summary>
+        public int FlightTicks { readonly get { return flightTicks; } set { flightTicks = (ushort)value; } }
+        public int RocketTicks { readonly get { return rocketTicks; } set { rocketTicks = (ushort)value; } }
+        public int SlowFall { readonly get { return slowFall; } set { slowFall = (ushort)value; } }
+        public int MagnetTicks { readonly get { return magnetTicks; } set { magnetTicks = (ushort)value; } }
+        public int SlowTicks { readonly get { return slowTicks; } set { slowTicks = (ushort)value; } }
+        public int ShieldTicks { readonly get { return shieldTicks; } set { shieldTicks = (ushort)value; } }
+        public int WallStickTicks { readonly get { return wallStickTicks; } set { wallStickTicks = (ushort)value; } }
+        /// <summary>Double Jump: extra air jumps left and the ticks left to use them.</summary>
+        public int DoubleJumps { readonly get { return doubleJumps; } set { doubleJumps = (byte)value; } }
+        public int DoubleJumpTicks { readonly get { return doubleJumpTicks; } set { doubleJumpTicks = (ushort)value; } }
+        /// <summary>Wall Stick: ticks left of the current hold (0 = not holding) and the cooldown before the next hold.</summary>
+        public int WallHold { readonly get { return wallHold; } set { wallHold = (ushort)value; } }
+        public int WallCool { readonly get { return wallCool; } set { wallCool = (ushort)value; } }
+        /// <summary>The current air phase was started by Flight/Rocket: its landing does not count for combos, jump buckets or landing coins.</summary>
+        public bool Assisted { readonly get { return assisted; } set { assisted = value; } }
+        /// <summary>Shield rescues taken and gong hits absorbed.</summary>
+        public int ShieldSaves { readonly get { return shieldSaves; } set { shieldSaves = (byte)value; } }
+
+        /// <summary>Loadout slot (0..2): type in the low 4 bits and units in the next 4 bits of each byte.</summary>
+        public readonly PowerUp SlotType(int slot)
+        {
+            return (PowerUp)((pwLoadout >> (slot * 8)) & 0xFu);
+        }
+
+        public readonly int SlotUnits(int slot)
+        {
+            return (int)((pwLoadout >> (slot * 8 + 4)) & 0xFu);
+        }
+
+        public void SetSlot(int slot, PowerUp type, int units)
+        {
+            if (units < 0) units = 0;
+            if (units > 15) units = 15;
+            uint v = ((uint)type & 0xFu) | ((uint)units << 4);
+            pwLoadout = (pwLoadout & ~(0xFFu << (slot * 8))) | (v << (slot * 8));
+        }
+
         public SimState Clone()
         {
             SimState c = this;
@@ -81,6 +137,7 @@ namespace BoingUpSkyTower.Simulation
         public readonly bool CampaignRamp;
         private readonly Fx scrollPerTick;
         private readonly Fx maxPickupRadius;
+        private readonly Fx powerCapY;
 
         /// <param name="difficulty">0..1 level difficulty; scales the scroll pressure.</param>
         public Sim(SimConfig cfg, Platform[] platforms, Fx difficulty, bool endless)
@@ -90,11 +147,17 @@ namespace BoingUpSkyTower.Simulation
 
         /// <summary>Campaign constructor: level from LevelBuilder, difficulty and ramp taken from the spec.</summary>
         public Sim(SimConfig cfg, LevelData level, LevelSpec spec)
-            : this(cfg, level, spec.Difficulty, false, spec.Ramp)
+            : this(cfg, level, spec.Difficulty, false, spec.Ramp, spec.TargetRow())
         {
         }
 
         public Sim(SimConfig cfg, LevelData level, Fx difficulty, bool endless, bool campaignRamp)
+            : this(cfg, level, difficulty, endless, campaignRamp, int.MaxValue)
+        {
+        }
+
+        /// <param name="targetRow">The row the goal checks (campaign): Flight and Rocket stop PowerFlightRowsBelowTop rows below the lower of it and the top row.</param>
+        private Sim(SimConfig cfg, LevelData level, Fx difficulty, bool endless, bool campaignRamp, int targetRow)
         {
             Cfg = cfg;
             Level = level;
@@ -107,6 +170,28 @@ namespace BoingUpSkyTower.Simulation
             Fx maxR = Fx.Zero;
             for (int i = 0; i < Pickups.Length; i++) if (Pickups[i].Radius > maxR) maxR = Pickups[i].Radius;
             maxPickupRadius = maxR;
+
+            // Flight and Rocket stop PowerFlightRowsBelowTop rows under the top row of a campaign level (never in endless).
+            Fx cap = Fx.FromInt(30000);
+            if (!endless && Platforms.Length > 0)
+            {
+                int limitRow = (level.Rows < targetRow ? level.Rows : targetRow) - cfg.PowerFlightRowsBelowTop;
+                int idx = Platforms.Length - 1;
+                while (idx > 0 && Platforms[idx].Row > limitRow) idx--;
+                cap = Platforms[idx].Y;
+            }
+            powerCapY = cap;
+        }
+
+        /// <summary>
+        /// Puts up to three power-ups into the run state. units[i] is the number of activations carried for slot i
+        /// (the caller applies the carry caps and the owned stock). Call once on a fresh state, before the first Step.
+        /// </summary>
+        public void SetLoadout(ref SimState s, PowerUp a, int unitsA, PowerUp b, int unitsB, PowerUp c, int unitsC)
+        {
+            s.SetSlot(0, a, a == PowerUp.None ? 0 : unitsA);
+            s.SetSlot(1, b, b == PowerUp.None ? 0 : unitsB);
+            s.SetSlot(2, c, c == PowerUp.None ? 0 : unitsC);
         }
 
         public SimState NewState()
@@ -171,6 +256,8 @@ namespace BoingUpSkyTower.Simulation
             s.KillY = p.Y - Cfg.ReviveKillDistance;
             if (s.StartTick < 0) s.StartTick = s.Tick;
             s.Invuln = Cfg.ReviveInvulnTicks;
+            s.WallHold = 0;
+            s.Assisted = false;
             s.Combo = 0;
             s.RevivesUsed++;
         }
@@ -243,6 +330,26 @@ namespace BoingUpSkyTower.Simulation
             int dir = ((input & SimInput.Right) != 0 ? 1 : 0) - ((input & SimInput.Left) != 0 ? 1 : 0);
             Fx maxSpeed = CurrentMaxSpeed(s.Row);
 
+            // --- power-ups: activation edges, then the effect flags of this tick ---
+            if ((input & SimInput.PowerMask) != 0) ActivatePowerUps(ref s, input, tick);
+            bool rocket = s.RocketTicks > 0;
+            bool flying = rocket || s.FlightTicks > 0;
+            if (flying)
+            {
+                s.Grounded = false;
+                s.Coyote = 0;
+                s.Assisted = true;
+                s.WallHold = 0;
+            }
+            if (rocket) dir = 0;
+            // Wall Stick: steering away from the wall lets go (jumping is the wall jump, below).
+            if (s.WallHold > 0 && dir != 0 && dir == WallAwayDir(s))
+            {
+                s.WallHold = 0;
+                s.WallCool = Cfg.WallStickCooldownTicks;
+            }
+            bool holding = s.WallHold > 0;
+
             // --- horizontal acceleration ---
             PlatformKind surface = Platforms[s.GroundId].Kind;
             Fx accel = Cfg.Accel;
@@ -269,10 +376,21 @@ namespace BoingUpSkyTower.Simulation
                 else s.Vx = Fx.Zero;
             }
             s.Vx = Fx.Clamp(s.Vx, -maxSpeed, maxSpeed);
+            if (rocket || holding) s.Vx = Fx.Zero;
 
             // --- jump ---
             if ((input & SimInput.Jump) != 0) s.JumpBuffer = Cfg.JumpBufferTicks;
-            if (s.JumpBuffer > 0 && (s.Grounded || s.Coyote > 0))
+            if (holding && s.JumpBuffer > 0)
+            {
+                // wall jump: standing-jump strength, pushed away from the wall
+                s.Vy = Cfg.JumpBase;
+                s.Vx = Cfg.WallJumpVx * WallAwayDir(s);
+                s.WallHold = 0;
+                s.WallCool = Cfg.WallStickCooldownTicks;
+                s.JumpBuffer = 0;
+                holding = false;
+            }
+            else if (s.JumpBuffer > 0 && (s.Grounded || s.Coyote > 0))
             {
                 Fx v0 = Cfg.JumpSpeed(Fx.Abs(s.Vx));
                 if (surface == PlatformKind.Sticky) v0 = v0 * Cfg.StickyJumpMultiplier;
@@ -282,6 +400,13 @@ namespace BoingUpSkyTower.Simulation
                 s.JumpBuffer = 0;
                 s.JumpStartRow = Platforms[s.GroundId].Row;
                 if (s.StartTick < 0) s.StartTick = tick;
+            }
+            else if (s.JumpBuffer > 0 && s.DoubleJumps > 0 && !flying && !holding && !s.Grounded && s.Coyote == 0 && s.Vy <= Fx.Zero)
+            {
+                // Double Jump: a standing-jump launch in mid-air (no sticky or bounce multiplier)
+                s.Vy = Cfg.JumpBase;
+                s.DoubleJumps--;
+                s.JumpBuffer = 0;
             }
 
             // --- movement ---
@@ -297,9 +422,36 @@ namespace BoingUpSkyTower.Simulation
             }
             else
             {
-                s.Vy = s.Vy - Cfg.Gravity;
+                if (flying)
+                {
+                    s.Vy = rocket ? Cfg.RocketRise : Cfg.FlightRise;
+                }
+                else if (holding)
+                {
+                    s.Vy = Fx.Zero;
+                }
+                else if (s.SlowFall > 0)
+                {
+                    s.Vy = s.Vy - Cfg.Gravity * Cfg.SlowFallGravityPercent / 100;
+                    if (s.Vy < -Cfg.SlowFallMaxSpeed) s.Vy = -Cfg.SlowFallMaxSpeed;
+                }
+                else
+                {
+                    s.Vy = s.Vy - Cfg.Gravity;
+                }
                 s.Y = s.Y + s.Vy;
                 s.X = s.X + s.Vx;
+                if (flying && s.Y >= powerCapY)
+                {
+                    // never skip the finish: stop under the top rows, then fall slowly
+                    s.Y = powerCapY;
+                    s.Vy = Fx.Zero;
+                    s.SlowFall = rocket ? Cfg.RocketSlowFallTicks : Cfg.FlightGraceTicks;
+                    s.RocketTicks = 0;
+                    s.FlightTicks = 0;
+                    flying = false;
+                    rocket = false;
+                }
             }
 
             // --- walls ---
@@ -308,12 +460,20 @@ namespace BoingUpSkyTower.Simulation
             if (s.X < minX)
             {
                 s.X = minX;
-                if (s.Vx < Fx.Zero) { s.Vx = Fx.Clamp(-s.Vx * Cfg.WallBoost, -maxSpeed, maxSpeed); if (!s.Grounded) s.WallBounces++; }
+                if (s.Vx < Fx.Zero)
+                {
+                    if (CanWallStick(in s, flying)) StartWallHold(ref s);
+                    else { s.Vx = Fx.Clamp(-s.Vx * Cfg.WallBoost, -maxSpeed, maxSpeed); if (!s.Grounded) s.WallBounces++; }
+                }
             }
             else if (s.X > maxX)
             {
                 s.X = maxX;
-                if (s.Vx > Fx.Zero) { s.Vx = Fx.Clamp(-s.Vx * Cfg.WallBoost, -maxSpeed, maxSpeed); if (!s.Grounded) s.WallBounces++; }
+                if (s.Vx > Fx.Zero)
+                {
+                    if (CanWallStick(in s, flying)) StartWallHold(ref s);
+                    else { s.Vx = Fx.Clamp(-s.Vx * Cfg.WallBoost, -maxSpeed, maxSpeed); if (!s.Grounded) s.WallBounces++; }
+                }
             }
 
             // --- ground / landing ---
@@ -347,8 +507,8 @@ namespace BoingUpSkyTower.Simulation
             }
 
             // --- pickups and hazards ---
-            if (Pickups.Length > 0) CollectPickups(ref s, prevX, prevY + Cfg.PlayerCenterY);
-            if (Hazards.Length > 0) HitHazards(ref s, tick);
+            if (Pickups.Length > 0) CollectPickups(ref s, prevX, prevY + Cfg.PlayerCenterY, s.MagnetTicks > 0 ? Cfg.MagnetExtraRadius : Fx.Zero);
+            if (Hazards.Length > 0 && !flying && s.SlowFall == 0) HitHazards(ref s, tick);
 
             // --- scroll pressure and death ---
             if (s.Y > s.MaxY) s.MaxY = s.Y;
@@ -376,15 +536,121 @@ namespace BoingUpSkyTower.Simulation
                     Fx ceiling = Cfg.ScrollMaxSpeed / SimConfig.TicksPerSecond;
                     if (scroll > ceiling) scroll = ceiling;
                 }
+                if (s.SlowTicks > 0) scroll = scroll * (100 - Cfg.SlowTimePercent) / 100;
                 s.KillY = s.KillY + scroll;
             }
             Fx follow = s.MaxY - Cfg.KillDistance;
             if (follow > s.KillY) s.KillY = follow;
-            if (s.Y < s.KillY) s.Dead = true;
+            if (s.Y < s.KillY && !(s.ShieldTicks > 0 && ShieldRescue(ref s, tick))) s.Dead = true;
 
             if (s.JumpBuffer > 0) s.JumpBuffer--;
             if (s.Invuln > 0) s.Invuln--;
+            if (s.PwUsed > 0) TickPowerUps(ref s);
             s.Tick = tick;
+        }
+
+        // ------------------------------------------------------------------------------------------
+        // Power-ups. Everything below is skipped (or cheap) for a run without a loadout.
+        // ------------------------------------------------------------------------------------------
+
+        private void ActivatePowerUps(ref SimState s, int input, int tick)
+        {
+            for (int slot = 0; slot < PowerUps.SlotCount; slot++)
+            {
+                if ((input & PowerUps.InputBitForSlot(slot)) == 0) continue;
+                if (!PowerUps.CanActivate(in s, slot)) continue;
+                PowerUp p = s.SlotType(slot);
+                s.SetSlot(slot, p, s.SlotUnits(slot) - 1);
+                s.PwUsed++;
+                s.PwUsedMask |= 1 << (int)p;
+                switch (p)
+                {
+                    case PowerUp.Flight:
+                    case PowerUp.Rocket:
+                        if (p == PowerUp.Flight) s.FlightTicks = Cfg.FlightTicks; else { s.RocketTicks = Cfg.RocketTicks; s.Vx = Fx.Zero; }
+                        s.SlowFall = 0;
+                        s.Grounded = false;
+                        s.Coyote = 0;
+                        s.WallHold = 0;
+                        s.Assisted = true;
+                        s.JumpStartRow = Platforms[s.GroundId].Row;
+                        if (s.StartTick < 0) s.StartTick = tick;
+                        break;
+                    case PowerUp.DoubleJump: s.DoubleJumps = Cfg.DoubleJumpCount; s.DoubleJumpTicks = Cfg.DoubleJumpWindowTicks; break;
+                    case PowerUp.WallStick: s.WallStickTicks = Cfg.WallStickWindowTicks; break;
+                    case PowerUp.Shield: s.ShieldTicks = Cfg.ShieldTicks; break;
+                    case PowerUp.Magnet: s.MagnetTicks = Cfg.MagnetTicks; break;
+                    case PowerUp.SlowTime: s.SlowTicks = Cfg.SlowTimeTicks; break;
+                }
+            }
+        }
+
+        /// <summary>Direction (+1 right, -1 left) that leads away from the wall the player is held on.</summary>
+        private int WallAwayDir(in SimState s)
+        {
+            return s.X < Cfg.ScreenWidth / 2 ? 1 : -1;
+        }
+
+        private static bool CanWallStick(in SimState s, bool flying)
+        {
+            return s.WallStickTicks > 0 && s.WallCool == 0 && s.WallHold == 0 && !s.Grounded && !flying;
+        }
+
+        private void StartWallHold(ref SimState s)
+        {
+            s.WallHold = Cfg.WallHoldTicks;
+            s.Vx = Fx.Zero;
+            s.Vy = Fx.Zero;
+            s.WallBounces++;
+        }
+
+        /// <summary>
+        /// Shield: the player fell under the kill line. Puts them on the lowest solid platform at least ShieldRescueMargin above it
+        /// (the highest row reached is kept) and uses the shield up. Returns false (and keeps the shield) when no platform qualifies.
+        /// </summary>
+        private bool ShieldRescue(ref SimState s, int tick)
+        {
+            Fx minY = s.KillY + Cfg.ShieldRescueMargin;
+            int id = -1;
+            Platform last = Platforms[s.GroundId];
+            if (last.Y >= minY && IsSolid(s.GroundId, tick, s.CrumbleTick)) id = s.GroundId;
+            for (int i = LowerBound(minY); id < 0 && i < Platforms.Length; i++)
+            {
+                if (IsSolid(i, tick, s.CrumbleTick) && Platforms[i].Kind != PlatformKind.Vanishing) id = i;
+            }
+            if (id < 0) return false;
+            Platform p = Platforms[id];
+            s.ShieldTicks = 0;
+            s.ShieldSaves++;
+            s.GroundId = id;
+            s.X = PlatformX(id, tick);
+            s.Y = p.Y;
+            s.Vx = Fx.Zero;
+            s.Vy = Fx.Zero;
+            s.Grounded = true;
+            s.Coyote = Cfg.CoyoteTicks;
+            s.JumpBuffer = 0;
+            s.JumpStartRow = p.Row;
+            s.WallHold = 0;
+            s.Assisted = false;
+            s.Combo = 0;
+            s.Invuln = Cfg.ShieldInvulnTicks;
+            return true;
+        }
+
+        /// <summary>End-of-tick countdown of the timed effects (only runs once something was activated).</summary>
+        private void TickPowerUps(ref SimState s)
+        {
+            if (s.SlowFall > 0) s.SlowFall--;
+            if (s.FlightTicks > 0 && --s.FlightTicks == 0) { s.SlowFall = Cfg.FlightGraceTicks; s.Vy = Fx.Zero; }
+            if (s.RocketTicks > 0 && --s.RocketTicks == 0) { s.SlowFall = Cfg.RocketSlowFallTicks; s.Vy = Fx.Zero; }
+            if (s.MagnetTicks > 0) s.MagnetTicks--;
+            if (s.SlowTicks > 0) s.SlowTicks--;
+            if (s.ShieldTicks > 0) s.ShieldTicks--;
+            if (s.WallStickTicks > 0) s.WallStickTicks--;
+            if (s.WallCool > 0) s.WallCool--;
+            if (s.WallHold > 0 && --s.WallHold == 0) s.WallCool = Cfg.WallStickCooldownTicks;
+            if (s.DoubleJumpTicks > 0 && --s.DoubleJumpTicks == 0) s.DoubleJumps = 0;
         }
 
         private static long Dist2(Fx ax, Fx ay, Fx bx, Fx by)
@@ -416,23 +682,23 @@ namespace BoingUpSkyTower.Simulation
         /// Collects every pickup the player centre touched during this tick: the path from the previous tick position
         /// (prevCx, prevCy) to the current one is tested against the pickup circle, so a fast pass cannot jump over a star between ticks.
         /// </summary>
-        private void CollectPickups(ref SimState s, Fx prevCx, Fx prevCy)
+        private void CollectPickups(ref SimState s, Fx prevCx, Fx prevCy, Fx extraRadius)
         {
             Fx cx = s.X;
             Fx cy = s.Y + Cfg.PlayerCenterY;
             int lo = 0, hi = Pickups.Length;
             Fx lowY = Fx.Min(cy, prevCy), highY = Fx.Max(cy, prevCy);
-            Fx from = lowY - maxPickupRadius;
+            Fx from = lowY - maxPickupRadius - extraRadius;
             while (lo < hi)
             {
                 int mid = (lo + hi) >> 1;
                 if (Pickups[mid].Y < from) lo = mid + 1; else hi = mid;
             }
-            Fx to = highY + maxPickupRadius;
+            Fx to = highY + maxPickupRadius + extraRadius;
             for (int i = lo; i < Pickups.Length && Pickups[i].Y <= to; i++)
             {
                 if (s.PickupTaken[i]) continue;
-                long r = Pickups[i].Radius.Raw;
+                long r = (long)Pickups[i].Radius.Raw + extraRadius.Raw;
                 if (SegmentDist2(prevCx, prevCy, cx, cy, Pickups[i].X, Pickups[i].Y) > r * r) continue;
                 s.PickupTaken[i] = true;
                 switch (Pickups[i].Kind)
@@ -472,6 +738,14 @@ namespace BoingUpSkyTower.Simulation
                 HazardPosition(i, tick, out gx, out gy);
                 long r = (long)Hazards[i].Radius.Raw + Cfg.PlayerHitRadius.Raw;
                 if (Dist2(cx, cy, gx, gy) > r * r) continue;
+                if (s.ShieldTicks > 0)
+                {
+                    // Shield: the hit is absorbed (no knockback, no hit counted) and the shield is used up
+                    s.ShieldTicks = 0;
+                    s.ShieldSaves++;
+                    s.Invuln = Cfg.ShieldInvulnTicks;
+                    return;
+                }
                 s.Vx = cx >= gx ? Cfg.GongKnockbackVx : -Cfg.GongKnockbackVx;
                 if (!s.Grounded) s.Vy = cy >= gy ? Cfg.GongKnockbackVy : -Cfg.GongKnockbackVy;
                 s.Invuln = Cfg.GongInvulnTicks;
@@ -490,7 +764,8 @@ namespace BoingUpSkyTower.Simulation
             s.Coyote = Cfg.CoyoteTicks;
 
             int oldRow = s.Row;
-            int gained = p.Row - s.JumpStartRow;
+            int gained = s.Assisted ? 0 : p.Row - s.JumpStartRow;   // Flight/Rocket landings never count as a multi-floor jump
+            s.Assisted = false;
             bool newRow = p.Row > oldRow;
             bool qualifies = gained >= Cfg.ComboMinFloors;
             bool continuesCombo = qualifies && s.Combo > 0;

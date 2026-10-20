@@ -91,6 +91,7 @@ namespace BoingUpSkyTower.Gameplay
         readonly TouchControlLogic touch = new TouchControlLogic();
         readonly List<TouchSample> samples = new List<TouchSample>(8);
         bool jumpLatched;
+        int powerLatched;   // SimInput.PowerSlotN edges, latched like the jump until the next tick
         int keyboardMove;
 
         /// <summary>Optional override for tests: when set, Update() uses it instead of the devices.</summary>
@@ -127,6 +128,9 @@ namespace BoingUpSkyTower.Gameplay
                 if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) keyboardMove |= SimInput.Left;
                 if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) keyboardMove |= SimInput.Right;
                 if (kb.spaceKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) jumpLatched = true;
+                if (kb.digit1Key.wasPressedThisFrame) LatchPower(0);
+                if (kb.digit2Key.wasPressedThisFrame) LatchPower(1);
+                if (kb.digit3Key.wasPressedThisFrame) LatchPower(2);
             }
         }
 
@@ -142,13 +146,23 @@ namespace BoingUpSkyTower.Gameplay
                 bits |= SimInput.Jump;
                 jumpLatched = false;
             }
+            bits |= powerLatched;
+            powerLatched = 0;
             return bits;
+        }
+
+        /// <summary>A power-up button was pressed: the activation bit of the loadout slot goes into the next tick's input (never lost between ticks).</summary>
+        public void LatchPower(int slot)
+        {
+            if (slot < 0 || slot >= PowerUps.SlotCount) return;
+            powerLatched |= PowerUps.InputBitForSlot(slot);
         }
 
         public void Clear()
         {
             touch.Clear();
             jumpLatched = false;
+            powerLatched = 0;
             keyboardMove = 0;
         }
     }

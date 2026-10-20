@@ -230,6 +230,7 @@ namespace BoingUpSkyTower.Gameplay
             BuildPickups();
             BuildHazards();
             BuildPlayer();
+            BuildPowerFx();
             if (!endless) BuildPortal();   // endless towers have no goal
             for (int i = 0; i < pops.Length; i++) pops[i] = MakePop();
 
@@ -753,6 +754,114 @@ namespace BoingUpSkyTower.Gameplay
         }
 
 
+        // ---------------- power-up effects (docs/15 FR-PWR-7) ----------------
+        // Rings around Momo for the Shield (cyan), Magnet (gold, as wide as its pull) and Flight/Rocket (white / orange), a burst when one starts
+        // and trail sparkles while flying. Everything reads the simulation state; nothing here feeds back. Reduced motion: static rings only,
+        // no trail and no pops. Allocation free: three pooled renderers and the existing pop pool.
+
+        SpriteRenderer fxShield, fxMagnet, fxBoost;
+        int prevPwMask, prevPwUsed, prevShieldSaves;
+
+        static Sprite MakeRing()
+        {
+            const int n = 128;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            for (int y = 0; y < n; y++)
+            {
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = (x + 0.5f) / n * 2f - 1f, dy = (y + 0.5f) / n * 2f - 1f;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    float ring = Mathf.Clamp01(1f - Mathf.Abs(r - 0.92f) / 0.06f);   // a 0.06 wide band near the rim
+                    float fill = r < 0.92f ? 0.10f : 0f;                             // a faint tint inside
+                    float a = Mathf.Max(ring, fill);
+                    px[y * n + x] = new Color(1f, 1f, 1f, a);
+                }
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 64f);   // 2 world units across
+        }
+
+        void BuildPowerFx()
+        {
+            Sprite ring = MakeRing();
+            fxShield = NewSprite("FxShield", ring, 11);
+            fxMagnet = NewSprite("FxMagnet", ring, 9);
+            fxBoost = NewSprite("FxBoost", ring, 9);
+            fxShield.enabled = fxMagnet.enabled = fxBoost.enabled = false;
+        }
+
+        static int PowerMask(in SimState st)
+        {
+            int m = 0;
+            if (st.FlightTicks > 0) m |= 1 << (int)PowerUp.Flight;
+            if (st.RocketTicks > 0) m |= 1 << (int)PowerUp.Rocket;
+            if (st.DoubleJumps > 0) m |= 1 << (int)PowerUp.DoubleJump;
+            if (st.WallStickTicks > 0) m |= 1 << (int)PowerUp.WallStick;
+            if (st.ShieldTicks > 0) m |= 1 << (int)PowerUp.Shield;
+            if (st.MagnetTicks > 0) m |= 1 << (int)PowerUp.Magnet;
+            if (st.SlowTicks > 0) m |= 1 << (int)PowerUp.SlowTime;
+            return m;
+        }
+
+        /// <summary>Sounds and bursts from the change of the power-up state between two ticks.</summary>
+        void DerivePowerFx()
+        {
+            SimState st = session.State;
+            if (st.PwUsed == 0 && prevPwMask == 0 && st.ShieldSaves == 0) return;   // no loadout in use: nothing to do
+            int mask = PowerMask(in st);
+            float cx = st.X.F(), cy = st.Y.F() + 0.5f;
+            if (st.PwUsed > prevPwUsed)
+            {
+                AudioManager.Play(Sfx.PowerUp);
+                Spawn(cx, cy, 2.4f, new Color(1f, 0.95f, 0.5f, 0.9f), 0.45f, 0.4f, ArtCatalog.Pick(art != null ? art.Sparkles : null, 1));
+            }
+            else if (st.ShieldSaves != prevShieldSaves)
+            {
+                AudioManager.Play(Sfx.PowerUp);   // the shield took a hit or caught a fall
+                Spawn(cx, cy, 2.6f, new Color(0.6f, 0.95f, 0.95f, 0.9f), 0.5f, 0.3f, ArtCatalog.Pick(art != null ? art.Sparkles : null, 0));
+            }
+            else if ((prevPwMask & ~mask) != 0) AudioManager.Play(Sfx.PowerEnd);
+            if (!reduced && (st.FlightTicks > 0 || st.RocketTicks > 0) && (st.Tick % 4) == 0)
+                Spawn(cx, cy - 0.3f, 0.8f, st.RocketTicks > 0 ? new Color(1f, 0.6f, 0.25f, 0.9f) : new Color(0.8f, 0.95f, 1f, 0.9f), 0.35f, -1.2f, ArtCatalog.Pick(art != null ? art.Sparkles : null, 0));
+            prevPwMask = mask;
+            prevPwUsed = st.PwUsed;
+            prevShieldSaves = st.ShieldSaves;
+        }
+
+        void UpdatePowerFx(float cx, float cy)
+        {
+            if (fxShield == null) return;
+            SimState st = session.State;
+            bool shield = st.ShieldTicks > 0, magnet = st.MagnetTicks > 0, boost = st.FlightTicks > 0 || st.RocketTicks > 0;
+            if (fxShield.enabled != shield) fxShield.enabled = shield;
+            if (fxMagnet.enabled != magnet) fxMagnet.enabled = magnet;
+            if (fxBoost.enabled != boost) fxBoost.enabled = boost;
+            if (shield)
+            {
+                float k = 2.1f * (reduced ? 1f : 1f + 0.05f * Mathf.Sin(st.Tick * 0.1f));
+                fxShield.transform.position = new Vector3(cx, cy, 0f);
+                fxShield.transform.localScale = new Vector3(k * 0.5f, k * 0.5f, 1f);
+                fxShield.color = new Color(0.5f, 0.95f, 0.95f, 0.85f);
+            }
+            if (magnet)
+            {
+                float d = (session.Cfg.StarRadius + session.Cfg.MagnetExtraRadius).F() * 2f;   // as wide as the pull
+                fxMagnet.transform.position = new Vector3(cx, cy, 0f);
+                fxMagnet.transform.localScale = new Vector3(d * 0.5f, d * 0.5f, 1f);
+                fxMagnet.color = new Color(1f, 0.85f, 0.3f, 0.45f);
+            }
+            if (boost)
+            {
+                float k = st.RocketTicks > 0 ? 2.8f : 3.2f;
+                fxBoost.transform.position = new Vector3(cx, cy - 0.2f, 0f);
+                fxBoost.transform.localScale = new Vector3(k * 0.5f, k * 0.5f, 1f);
+                fxBoost.color = st.RocketTicks > 0 ? new Color(1f, 0.6f, 0.25f, 0.7f) : new Color(0.75f, 0.92f, 1f, 0.7f);
+            }
+        }
+
         // ---------------- per tick / per frame ----------------
 
         /// <summary>Call once after every Sim tick: remembers the previous and current player position for interpolation and spawns effects.</summary>
@@ -766,6 +875,7 @@ namespace BoingUpSkyTower.Gameplay
             curY = session.State.Y.F();
             bool grounded = session.State.Grounded;
             DeriveAudio(grounded);
+            DerivePowerFx();
             if (grounded && !wasGrounded) { squash = 1f; Spawn(curX, curY + 0.1f, 0.9f, new Color(1f, 1f, 1f, 0.6f), 0.25f, 0.2f, ArtCatalog.Pick(art != null ? art.DustPuff : null, 0)); }
             wasGrounded = grounded;
             if (coinTaken) SpawnPickupEffects();
@@ -870,6 +980,7 @@ namespace BoingUpSkyTower.Gameplay
             player.position = new Vector3(px, py + h * 0.5f, 0f);
             player.rotation = reduced ? Quaternion.identity : Quaternion.Euler(0f, 0f, Mathf.Clamp(-s.Vx.F() * 40f, -12f, 12f));
             playerSr.color = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;
+            UpdatePowerFx(px, py + h * 0.5f);
 
             // Platforms (moving ones follow the sim, vanishing ones blink, crumbling ones fade).
             if (endless) UpdateEndlessWindow();

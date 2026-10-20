@@ -60,10 +60,12 @@ namespace BoingUpSkyTower.Gameplay
 
         void BeginRun(RunSession session)
         {
+            if (Session != null && GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);   // units used in the previous attempt (retry, next level)
             if (View != null) Destroy(View.gameObject);
             if (Hud != null) Destroy(Hud.gameObject);
 
             Session = session;
+            if (GameSession.Progress != null) Session.ApplyLoadout(GameSession.Progress.BuildRunLoadout());   // before the HUD is built: it makes one button per slot
             acc = 0f;
             endHandled = false;
             Paused = false;
@@ -91,6 +93,7 @@ namespace BoingUpSkyTower.Gameplay
             Hud.OnMenu = ExitToMeta;
             Hud.OnNext = PlayNext;
             Hud.OnRevive = Revive;
+            Hud.OnPower = slot => Input.LatchPower(slot);
         }
 
         /// <summary>Script time per frame (milliseconds), for the CUX-1 budget tests and on-device profiling.</summary>
@@ -160,6 +163,7 @@ namespace BoingUpSkyTower.Gameplay
         void HandleEnd()
         {
             endHandled = true;
+            if (GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);
             if (Session.IsEndless)
             {
                 // The run is over for good (no revive in endless): best floor and coins are saved right now (CUX-8).
@@ -187,6 +191,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (Session == null || Session.Over || Paused) return;
             Paused = true;
+            if (GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);
             Hud.ShowPause();
         }
 
@@ -216,6 +221,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public void ExitToMeta()
         {
+            if (Session != null && GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);
             GameSession.PendingRegionId = Session != null ? Session.Region.Id : null;
             GameSession.EndlessMode = false;
             SceneManager.LoadScene("Meta");

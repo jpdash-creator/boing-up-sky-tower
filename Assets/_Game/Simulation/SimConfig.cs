@@ -196,6 +196,45 @@ namespace BoingUpSkyTower.Simulation
         public Fx ReviveKillDistance = Fx.FromInt(6);
         public int ReviveInvulnTicks = 120;
 
+        // ---------------------------------------------------------------------------------------
+        // Power-ups (docs/15 FR-PWR; owner decisions 2026-10-20). Player effects only: they never change the layout.
+        // Durations are in ticks (60 per second), speeds in u per tick.
+        // ---------------------------------------------------------------------------------------
+
+        /// <summary>Flight: 4 s of flight, rising at 8 u/s with normal air steering; hazards cannot hit; 1 s of slow fall after it.</summary>
+        public int FlightTicks = 240;
+        public Fx FlightRise = Fx.FromRatio(8, 60);
+        public int FlightGraceTicks = 60;
+        /// <summary>Rocket: 2 s straight up at 14 u/s (28 u, about 8 rows), no steering; 1 s of slow fall after it.</summary>
+        public int RocketTicks = 120;
+        public Fx RocketRise = Fx.FromRatio(14, 60);
+        public int RocketSlowFallTicks = 60;
+        /// <summary>Flight and Rocket stop this many rows under the top row of a campaign level, so they can never skip the finish.</summary>
+        public int PowerFlightRowsBelowTop = 3;
+        /// <summary>Slow fall after Flight/Rocket: gravity is scaled to this percent and the fall speed is capped.</summary>
+        public int SlowFallGravityPercent = 35;
+        public Fx SlowFallMaxSpeed = Fx.FromRatio(6, 60);
+        /// <summary>Double Jump: one unit arms this many extra air jumps (standing-jump strength) for DoubleJumpWindowTicks.</summary>
+        public int DoubleJumpCount = 2;
+        public int DoubleJumpWindowTicks = 1800;
+        /// <summary>Wall Stick: one unit enables sticking for 10 s; each stick holds up to 1.5 s; a wall jump launches away from the wall.</summary>
+        public int WallStickWindowTicks = 600;
+        public int WallHoldTicks = 90;
+        public Fx WallJumpVx = Fx.FromRatio(6, 60);
+        /// <summary>Ticks after leaving a wall before it can hold again.</summary>
+        public int WallStickCooldownTicks = 15;
+        /// <summary>Shield: armed for up to 30 s; absorbs the next gong hit, or the next fall under the kill line (rescue to a platform, once).</summary>
+        public int ShieldTicks = 1800;
+        /// <summary>The rescue platform is the lowest solid one at least this far above the kill line.</summary>
+        public Fx ShieldRescueMargin = Fx.FromInt(3);
+        public int ShieldInvulnTicks = 90;
+        /// <summary>Magnet: 10 s; every pickup counts as this much larger (a star then collects from about 3 u).</summary>
+        public int MagnetTicks = 600;
+        public Fx MagnetExtraRadius = Fx.FromInt(2);
+        /// <summary>Slow Time: 6 s with the auto-scroll reduced by this percent.</summary>
+        public int SlowTimeTicks = 360;
+        public int SlowTimePercent = 40;
+
         /// <summary>Jump launch speed (per tick) for a given horizontal speed magnitude.</summary>
         public Fx JumpSpeed(Fx absVx)
         {

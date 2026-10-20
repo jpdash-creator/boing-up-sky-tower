@@ -292,6 +292,14 @@ namespace BoingUpSkyTower.Tests
             var levels = GameSession.Repo.LevelsOf(r1.Id);
             yield return CheckScreen("level-popup", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); }, problems);
             yield return CheckScreen("locked-popup", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[12]); }, problems);
+            // Power-ups (docs/15 FR-INV-5): the loadout picker without stock (shop hint), the chooser, the endless start popup, then with stock.
+            yield return CheckScreen("loadout-chooser-empty", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); meta.CurrentPicker.OpenChooser(0); }, problems);
+            yield return CheckScreen("endless-popup-empty", () => { meta.ShowLevels(r1); meta.OnEndlessTapped(r1); }, problems);
+            GrantAllPowerUps(3);
+            GameSession.Progress.SetLoadout(new List<string> { "pw_doublejump", "pw_flight", "pw_slowtime" });
+            yield return CheckScreen("level-popup-loadout", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); }, problems);
+            yield return CheckScreen("loadout-chooser", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); meta.CurrentPicker.OpenChooser(1); }, problems);
+            yield return CheckScreen("endless-popup-loadout", () => { meta.ShowLevels(r1); meta.OnEndlessTapped(r1); }, problems);
             yield return CheckScreen("region-locked-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(2)); }, problems);
             yield return CheckScreen("coming-soon-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(6)); }, problems);
             yield return CheckScreen("reset-popup", () => { meta.ShowSettings(); meta.ConfirmReset(); }, problems);
@@ -340,6 +348,66 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
+        // ---- power-ups (docs/15): the in-run buttons on every aspect, at 130 percent text, right- and left-handed ----
+
+        static void GrantAllPowerUps(int each)
+        {
+            foreach (PowerUpDef d in GameSession.Progress.PowerUpDefs.Implemented) GameSession.Progress.GrantPowerUp(d.Id, each);
+        }
+
+        [UnityTest]
+        public IEnumerator PowerUpButtonsFitEveryAspect() { return PowerUpRunAudit(100, false); }
+
+        [UnityTest]
+        public IEnumerator PowerUpButtonsSurvive130PercentTextAndLeftHandedLayout() { return PowerUpRunAudit(130, true); }
+
+        IEnumerator PowerUpRunAudit(int textPercent, bool leftHanded)
+        {
+            GameSettings.TextPercent = textPercent;
+            GameSettings.LeftHanded = leftHanded;
+            GameSettings.ReducedMotion = leftHanded;
+            for (int i = 1; i <= 2; i++)
+                GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
+            GrantAllPowerUps(3);
+            GameSession.Progress.SetLoadout(new List<string> { "pw_flight", "pw_doublejump", "pw_shield" });
+            GameSession.CurrentLevelId = "lvl_001_03";
+            yield return Load("Run");
+            var rc = Object.FindFirstObjectByType<RunController>();
+            var problems = new List<string>();
+            Assert.AreEqual(3, rc.Hud.Powers.ButtonCount, "one button per loadout slot");
+            yield return CheckScreen("run-powerups-intro", () => { }, problems);   // the buttons wait until the intro text is gone
+            Assert.IsFalse(rc.Hud.Powers.Visible, "hidden during the intro");
+            rc.Hud.SkipIntro();
+            int frame = 0;
+            rc.Input.ScriptedMove = () => SimInput.Right;
+            rc.Input.ScriptedJump = () => frame % 45 == 0;
+            for (frame = 1; frame <= 60; frame++) yield return null;
+            Assert.IsTrue(rc.Hud.Powers.Visible);
+
+            // thumb side: the buttons sit on the jump side, in the lower half, and are well over 48 dp
+            for (int i = 0; i < 3; i++)
+            {
+                RectTransform b = rc.Hud.Powers.ButtonRect(i);
+                Assert.IsNotNull(b, "button " + i);
+                Assert.GreaterOrEqual(b.rect.width, UiKit.MinTouchPx - 1f);
+                Assert.GreaterOrEqual(b.rect.height, UiKit.MinTouchPx - 1f);
+                Assert.IsNotNull(b.GetComponent<A11yLabel>());
+                StringAssert.Contains("left", b.GetComponent<A11yLabel>().Text, "spoken label names the units left");
+            }
+            yield return CheckScreen("run-powerups-ready", () => { }, problems);
+
+            // activate all three through the input path: rings drain, counts turn into seconds, nothing overlaps
+            rc.Input.LatchPower(0);
+            rc.Input.LatchPower(1);
+            rc.Input.LatchPower(2);
+            for (frame = 61; frame <= 90; frame++) yield return null;
+            Assert.AreEqual(3, rc.Session.State.PwUsed, "the three buttons reached the simulation");
+            yield return CheckScreen("run-powerups-active", () => { }, problems);
+            rc.Session.SettlePowerUps(GameSession.Progress);
+            Assert.AreEqual(2, GameSession.Progress.PowerUpCount("pw_flight"), "a used unit is gone after the run settles");
+            Report(problems);
+        }
+
         // ---- shop (docs/14): all four tabs, both sections, promo on and off, and the shop popups ----
 
         [UnityTest]
@@ -364,6 +432,7 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-coins", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection), problems);
             yield return CheckScreen("shop-tab1-chests", () => meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-tab2-powerups", () => meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-tab2-powerups-bought", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins); }, problems);
             yield return CheckScreen("shop-tab3-vip", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-gems-notbuyable-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(3); }, problems);
 
@@ -371,6 +440,7 @@ namespace BoingUpSkyTower.Tests
             ShopScreen.TestPurchasesOverride = true;
             yield return CheckScreen("shop-gems-test", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-test-buy-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(6); }, problems);
+            yield return CheckScreen("shop-tab2-powerups-test", () => meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection), problems);
             ShopScreen.TestPurchasesOverride = null;
 
             // Coin popups: confirm above 50 gems, not enough gems, done.
@@ -383,6 +453,10 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-gems-list-prices", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-coins-list-prices", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection), problems);
             GameSettings.LaunchPromo = true;
+
+            // Power-up shop: the not-enough-coins popup (with an empty wallet) points to the coins section.
+            GameSession.Progress.TrySpendCoins(GameSession.Progress.Coins);
+            yield return CheckScreen("shop-tab2-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_rocket"), PowerUpCurrency.Coins); }, problems);
             Report(problems);
         }
     }

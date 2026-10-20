@@ -80,6 +80,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (Initialized) return;
             PerformanceSettings.Apply();
+            Theme.Warmup();
             ApplyDifficulty();
             ProgressService.TestUnlockAll = GameSettings.TestUnlockAll;
             GameSettings.ApplyTextScale();

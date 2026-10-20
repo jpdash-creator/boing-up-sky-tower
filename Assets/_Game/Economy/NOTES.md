@@ -45,3 +45,11 @@ Build `RunOutcome` from the finished `SimState`: `StarMask = StarEvaluator.Earne
 - `ShopCatalog` (gem packs + coin packs from the manifest; built-in copy of the owner tables when the manifest still has the old format).
 - `ProgressService.LaunchPromoActive` (default on; `GameSettings.LaunchPromo` feeds it): `CoinPackPrice`, `TryBuyCoinPack` (debit gems and credit coins in one save), `GrantTestGemPurchase` (development builds only, no billing).
 - UI: `Gameplay/ShopScreen.cs`, opened by `MetaController.ShowShop` (main menu "Shop" button). Release builds show "Not available yet" on gem packs.
+
+## Power-ups (docs/15, 2026-10-20)
+- `PowerUpCatalog` (`PowerUpDef`: id, `PowerUp` type, name, description, duration, uses, carry cap, max stack 99, coin and gem price, unlock region, implemented flag). Runtime source is the built-in table; `Content/economy/powerups.json` is the editable source and an EditMode test keeps them equal. It is **not** part of the content manifest (adding it would make `Resources/Content/content_manifest.json` stale until Unity regenerates it).
+- Save (additive, no version bump): `inventory.powerups` (id to count, 1..99) and `loadout` (3 ids, "" = empty). `EnsurePowerUpFields` repairs null, short or over-long data and drops unknown ids.
+- `ProgressService`: `PowerUpDefs`, `PowerUpCount`, `GrantPowerUp` (returns units added, capped), `TryConsumePowerUp` (all or nothing, empties loadout slots at zero), `TryBuyPowerUp(id, PowerUpCurrency, quantity)` -> `PowerUpBuyResult` (Ok, NotEnoughCoins, NotEnoughGems, StackFull, Locked, Invalid; atomic, one save), `IsLoadoutCandidate`, `GetLoadout`, `SetLoadoutSlot`, `SetLoadout`, `CarryUnits`, `BuildRunLoadout` -> `LoadoutSlot[3]`.
+- `PowerUpCatalog.PriceFor`: unit price x quantity, 5 units -10 percent, 10 or more -20 percent, half up.
+- Prices (coins / gems): Flight 2,400 / 20, Rocket 2,000 / 16, Double Jump 900 / 8, Wall Stick 800 / 8, Shield 1,000 / 10, Magnet 900 / 8, Slow Time 1,200 / 10. A 3-star level pays about 150 coins, so a Flight costs about 16 levels (docs/15 conflicts X-2, X-3 still open).
+- Tests: `Assets/_Game/Tests/EditMode/PowerUpTests.cs` (class `PowerUpEconomyTests`).

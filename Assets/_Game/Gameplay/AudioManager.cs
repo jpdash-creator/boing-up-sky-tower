@@ -3,7 +3,7 @@ using UnityEngine;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>Sound effect ids. Clip file names are in AudioManager.SfxNames (Assets/Resources/Audio/sfx).</summary>
-    public enum Sfx { Tap, Jump, Land, Bounce, Coin, Gem, Star, Combo, SpeedUp, Fall, Win, Fail, Back, Popup }
+    public enum Sfx { Tap, Jump, Land, Bounce, Coin, Gem, Star, Combo, SpeedUp, Fall, Win, Fail, Back, Popup, PowerUp, PowerEnd }
 
     /// <summary>Music beds: the meta screens (menu, map, levels) and the run.</summary>
     public enum MusicTrack { None, Meta, Run }
@@ -25,8 +25,8 @@ namespace BoingUpSkyTower.Gameplay
         const string MusicRunPath = "Audio/music/run";   // optional: when absent the run reuses the loop at a lower volume
 
         // Index = (int)Sfx. Same order as the enum.
-        static readonly string[] SfxNames = { "tap", "jump", "land", "bounce", "coin", "gem", "star", "combo", "speedup", "fall", "win", "fail", "back", "popup" };
-        static readonly float[] SfxVolume = { 0.5f, 0.55f, 0.5f, 0.7f, 0.6f, 0.65f, 0.8f, 0.6f, 0.6f, 0.7f, 0.8f, 0.7f, 0.5f, 0.5f };
+        static readonly string[] SfxNames = { "tap", "jump", "land", "bounce", "coin", "gem", "star", "combo", "speedup", "fall", "win", "fail", "back", "popup", "combo", "back" };   // PowerUp reuses the combo clip, PowerEnd the back clip
+        static readonly float[] SfxVolume = { 0.5f, 0.55f, 0.5f, 0.7f, 0.6f, 0.65f, 0.8f, 0.6f, 0.6f, 0.7f, 0.8f, 0.7f, 0.5f, 0.5f, 0.7f, 0.45f };
         const float MinGapSeconds = 0.04f;   // the same cue never stacks inside one frame or two
 
         static AudioManager instance;
