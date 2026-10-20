@@ -57,14 +57,19 @@ namespace SkyHopper.Gameplay
             canvas = UiKit.CreateCanvas("RunHud", 10);
             canvas.transform.SetParent(transform, false);
 
-            // Dark backing strip: text and icons stay readable over any background art (CUX-5).
-            Image strip = UiKit.AddImage(canvas.transform, "TopBacking", null, new Color(0.05f, 0.07f, 0.14f, 0.72f));
+            // A soft fade at the top (not a hard band) plus two frosted glass chips behind the text keep everything readable over any art (CUX-5).
+            Image strip = UiKit.AddImage(canvas.transform, "TopBacking", Theme.GradientDownSprite, new Color(0.04f, 0.06f, 0.16f, 0.45f));
+            strip.preserveAspect = false;
             P(strip.rectTransform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0f, 300f));
             strip.rectTransform.anchorMin = new Vector2(0f, 1f);
             strip.rectTransform.anchorMax = new Vector2(1f, 1f);
-            strip.rectTransform.sizeDelta = new Vector2(0f, 300f);
+            strip.rectTransform.sizeDelta = new Vector2(0f, 340f);
 
             RectTransform root = UiKit.SafeArea(canvas.transform);
+            Image leftChip = Theme.GlassPanel(root, "InfoChip");
+            P(leftChip.rectTransform, new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(600f, 176f));
+            Image rightChip = Theme.GlassPanel(root, "StatChip");
+            P(rightChip.rectTransform, new Vector2(1f, 1f), new Vector2(-18f, -16f), new Vector2(340f, 152f));
 
             floorText = UiKit.AddText(root, "Floor", "", 46, Color.white, Align(TextAnchor.UpperLeft), true);
             P((RectTransform)floorText.transform, new Vector2(0f, 1f), new Vector2(30f, -30f), new Vector2(420f, 60f));
@@ -72,7 +77,7 @@ namespace SkyHopper.Gameplay
             endless = session.IsEndless;
             bestBefore = endless && GameSession.Progress != null ? GameSession.Progress.EndlessBestFloor(session.Region.Id) : 0;
             goalText = UiKit.AddText(root, "Goal", endless ? "Best " + bestBefore : RunSession.DescribeGoal(session.Spec), endless ? 40 : 34, new Color(1f, 0.95f, 0.6f), Align(TextAnchor.UpperLeft));
-            P((RectTransform)goalText.transform, new Vector2(0f, 1f), new Vector2(30f, -112f), new Vector2(700f, 90f));
+            P((RectTransform)goalText.transform, new Vector2(0f, 1f), new Vector2(30f, -112f), new Vector2(560f, 90f));
 
             // Top right: the 3 stars of the level (filled when collected) and the gems taken so far.
             starIcons = new Image[3];
@@ -88,7 +93,7 @@ namespace SkyHopper.Gameplay
             if (endless) { gemIcon.gameObject.SetActive(false); gemText.gameObject.SetActive(false); }   // endless has no gems or stars to collect
 
             Button pause = UiKit.AddButton(root, "Pause", "II", art != null ? ArtCatalog.Pick(art.RoundButtons, 0) : null, new Color(1f, 1f, 1f, 0.95f), new Vector2(130f, 130f), () => { if (OnPause != null) OnPause(); }, 48);
-            P((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(-30f, -165f), new Vector2(130f, 130f));
+            P((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(-30f, -190f), new Vector2(130f, 130f));
 
             comboText = UiKit.AddText(root, "Combo", "", 72, new Color(1f, 0.85f, 0.2f));
             P((RectTransform)comboText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -260f), new Vector2(700f, 100f));

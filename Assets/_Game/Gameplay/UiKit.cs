@@ -166,10 +166,11 @@ namespace SkyHopper.Gameplay
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
             t.raycastTarget = false;
+            t.supportRichText = text != null && text.IndexOf("<color", StringComparison.Ordinal) >= 0;
             var outline = rt.gameObject.AddComponent<Outline>();
             // The outline grows with the text so big titles stay readable over bright art (CUX-5).
-            float d = Mathf.Max(2.5f, t.fontSize * 0.045f);
-            outline.effectColor = new Color(0.05f, 0.05f, 0.12f, 0.9f);
+            float d = Mathf.Max(1.6f, t.fontSize * 0.024f);
+            outline.effectColor = new Color(0.04f, 0.06f, 0.16f, 0.55f);
             outline.effectDistance = new Vector2(d, -d);
             return t;
         }
@@ -233,48 +234,30 @@ namespace SkyHopper.Gameplay
         /// </summary>
         public static RectTransform BuildPopupFrame(Transform parent, string title, ArtCatalog art, Vector2 size, Action onClose)
         {
-            AudioManager.Play(Sfx.Popup);
-            Image rim;
-            if (art != null && art.PopupFrame != null)
-            {
-                // On-style 9-slice frame from the art set: corners keep their shape, only the flat middle stretches.
-                rim = AddImage(parent, "Panel", art.PopupFrame, Color.white);
-                rim.type = Image.Type.Sliced;
-                rim.preserveAspect = false;
-                rim.pixelsPerUnitMultiplier = 3.3f;   // 200 px corners are drawn about 60 units wide
-                Place(rim.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, size);
-                rim.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            }
-            else
-            {
-                rim = AddPanel(parent, "Panel", new Color(0.20f, 0.10f, 0.16f, 1f));
-                Place(rim.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, size);
-                rim.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                Image fill = AddPanel(rim.transform, "Fill", new Color(0.99f, 0.94f, 0.84f, 1f));
-                Stretch(fill.rectTransform);
-                fill.rectTransform.offsetMin = new Vector2(10f, 10f);
-                fill.rectTransform.offsetMax = new Vector2(-10f, -10f);
-            }
+            // Modern card (design direction "daylight glass"): a light rounded surface with a soft shadow, an ink title in the display face
+            // and the game's round X. No rim, no ribbon.
+            RectTransform panel = Rect(parent, "Panel");
+            Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, size);
+            panel.pivot = new Vector2(0.5f, 0.5f);
+            Theme.CardBacking(panel);
 
-            // Compact card (owner, 2026-10-20): no ribbon. A big outlined title in the display font sits on the frame, and a round X icon in the corner.
-            Text t = AddText(rim.transform, "Title", title, title.Length > 14 ? 60 : 84, new Color(0.60f, 0.16f, 0.30f, 1f), TextAnchor.MiddleCenter, true);
+            Text t = AddText(panel, "Title", title, title.Length > 14 ? 60 : 76, Theme.Ink, TextAnchor.MiddleCenter, true);
             var tout = t.GetComponent<Outline>();
-            if (tout != null) { tout.effectColor = new Color(1f, 1f, 1f, 0.9f); tout.effectDistance = new Vector2(3f, -3f); }
-            Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(-40f, -50f), new Vector2(560f, 130f));
+            if (tout != null) tout.enabled = false;
+            Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(-30f, -52f), new Vector2(600f, 130f));
 
             if (onClose != null)
             {
                 Sprite icon = art != null ? art.CloseIcon : null;
-                Button x = AddButton(rim.transform, "CloseX", icon != null ? "" : "X", icon != null ? icon : PillSprite, icon != null ? Color.white : new Color(0.96f, 0.80f, 0.55f, 1f), new Vector2(130f, 130f), onClose, 64, false);
-                x.onClick.AddListener(() => AudioManager.Play(Sfx.Back));
+                Button x = AddButton(panel, "CloseX", icon != null ? "" : "X", icon != null ? icon : PillSprite, icon != null ? Color.white : Theme.Accent, new Vector2(132f, 132f), onClose, 64, false);
                 if (icon == null) x.GetComponent<Image>().type = Image.Type.Sliced;
                 x.GetComponent<A11yLabel>().Text = "Close";
-                Place((RectTransform)x.transform, new Vector2(1f, 1f), new Vector2(-26f, -26f), new Vector2(130f, 130f));
+                Place((RectTransform)x.transform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(132f, 132f));
             }
-            return rim.rectTransform;
+            return panel;
         }
 
-        public static readonly Color PanelInk = new Color(0.20f, 0.11f, 0.16f, 1f);
+        public static readonly Color PanelInk = new Color(0.09f, 0.11f, 0.24f, 1f);   // Theme.Ink
 
         /// <summary>Dark ink for text on the light cream popup panels (white text there fails the 4.5:1 contrast rule).</summary>
         public static Text OnPanel(Text t)

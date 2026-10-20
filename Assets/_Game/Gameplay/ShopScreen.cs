@@ -42,16 +42,16 @@ namespace SkyHopper.Gameplay
         public static bool TestPurchasesEnabled { get { return TestPurchasesOverride ?? GameSettings.DevBuild; } }
 
         // Layout (reference pixels from the top of the safe area).
-        const float TabTop = 250f, TabH = 150f, TabGap = 16f, SideMargin = 24f;
-        const float SectionTop = TabTop + TabH * 2f + TabGap + 24f;          // 590
-        const float SectionH = 130f;
-        const float ListTop = SectionTop + SectionH + 20f;                   // 740
+        const float TabTop = 250f, TabH = 146f, SideMargin = 28f;                  // tab buttons are TabH - 16 = 130 tall (above the 48 dp minimum)
+        const float SectionTop = TabTop + TabH + 24f;                        // 420
+        const float SectionH = 146f;
+        const float ListTop = SectionTop + SectionH + 20f;                   // 586
         const float BottomMargin = 24f;
         const float CardH = 436f, CardGap = 20f;
 
-        static readonly Color CardColor = new Color(0.05f, 0.07f, 0.16f, 0.95f);
-        static readonly Color ListPriceColor = new Color(0.78f, 0.80f, 0.90f, 1f);
-        static readonly Color PromoPriceColor = new Color(0.60f, 1f, 0.70f, 1f);
+        static readonly Color ListPriceColor = Theme.InkSoft;
+        static readonly Color PromoPriceColor = new Color(0.03f, 0.48f, 0.27f, 1f);          // deep green on the light card (about 6:1)
+        static readonly string[] TabShort = { "Chests", "Power-ups", "VIP", "Gems" };
         static readonly Color LaunchBadgeColor = new Color(1f, 0.82f, 0.25f, 1f);
         static readonly Color SpecialBadgeColor = new Color(0.62f, 0.90f, 1f, 1f);
 
@@ -120,7 +120,7 @@ namespace SkyHopper.Gameplay
             trt.offsetMin = new Vector2(190f, -160f);
             trt.offsetMax = new Vector2(-(panelW + 40f), -30f);
 
-            Image panel = UiKit.AddPanel(screen, "WalletPanel", new Color(0.05f, 0.07f, 0.16f, 0.92f));
+            Image panel = Theme.GlassPanel(screen, "WalletPanel");
             UiKit.Place(panel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(panelW, rowH * 2f + 30f));
             CoinText = WalletRow(panel.transform, 0, art != null ? art.CoinIcon : null, Color.white);
             GemText = WalletRow(panel.transform, 1, art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f));
@@ -157,47 +157,36 @@ namespace SkyHopper.Gameplay
             if (GemText != null) UiKit.SetText(GemText, progress.Gems.ToString());
         }
 
-        /// <summary>A button in a two column grid: stretched by anchors so it fits every canvas width. The selected one is drawn 5 percent larger.</summary>
-        Button GridButton(string name, string label, int col, float top, float height, bool selected, Action action, string a11y)
-        {
-            Button b = UiKit.AddButton(body, name, label, Btn(selected ? 1 : 0), Color.white, new Vector2(300f, height), action, 40);
-            var rt = (RectTransform)b.transform;
-            rt.anchorMin = new Vector2(col * 0.5f, 1f);
-            rt.anchorMax = new Vector2(col * 0.5f + 0.5f, 1f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.offsetMin = new Vector2(col == 0 ? SideMargin : 8f, -(top + height));
-            rt.offsetMax = new Vector2(col == 0 ? -8f : -SideMargin, -top);
-            rt.localScale = selected ? new Vector3(1.05f, 1.05f, 1f) : Vector3.one;
-            b.GetComponent<A11yLabel>().Text = selected ? a11y + ", selected" : a11y;
-            return b;
-        }
-
         void BuildTabBar()
         {
-            for (int i = 0; i < TabNames.Length; i++)
-            {
-                int idx = i;
-                GridButton("Tab" + (i + 1), TabNames[i], i % 2, TabTop + (i / 2) * (TabH + TabGap), TabH, i == Tab, () => SelectTab(idx), TabNames[i] + " tab");
-            }
+            Button[] tabs = Theme.TabBar(body, TabShort, Tab, SelectTab, TabH, 38);
+            for (int i = 0; i < tabs.Length; i++) tabs[i].GetComponent<A11yLabel>().Text = TabNames[i] + " tab" + (i == Tab ? ", selected" : "");
+            ((RectTransform)tabs[0].transform.parent).anchoredPosition = new Vector2(0f, -TabTop);
         }
 
         void BuildSectionBar()
         {
-            GridButton("SectionGems", "Gems", 0, SectionTop, SectionH, Section == GemsSection, () => SelectSection(GemsSection), "Gems section");
-            GridButton("SectionCoins", "Coins", 1, SectionTop, SectionH, Section == CoinsSection, () => SelectSection(CoinsSection), "Coins section");
+            Button[] sec = Theme.TabBar(body, new[] { "Gems", "Coins" }, Section, SelectSection, SectionH, 40);
+            sec[0].GetComponent<A11yLabel>().Text = "Gems section" + (Section == GemsSection ? ", selected" : "");
+            sec[1].GetComponent<A11yLabel>().Text = "Coins section" + (Section == CoinsSection ? ", selected" : "");
+            sec[0].name = "SectionGems";
+            sec[1].name = "SectionCoins";
+            ((RectTransform)sec[0].transform.parent).anchoredPosition = new Vector2(0f, -SectionTop);
         }
 
         void BuildComingSoon(int tab)
         {
-            Image panel = UiKit.AddPanel(body, "Panel", CardColor);
-            var prt = panel.rectTransform;
-            prt.anchorMin = Vector2.zero;
-            prt.anchorMax = Vector2.one;
-            prt.offsetMin = new Vector2(SideMargin, BottomMargin);
-            prt.offsetMax = new Vector2(-SideMargin, -SectionTop);
-            Text head = UiKit.AddText(panel.transform, "Soon", "Coming soon", 84, Color.white, TextAnchor.MiddleCenter, true);
+            RectTransform host = UiKit.Rect(body, "Panel");
+            host.anchorMin = Vector2.zero;
+            host.anchorMax = Vector2.one;
+            host.offsetMin = new Vector2(SideMargin, BottomMargin + 20f);
+            host.offsetMax = new Vector2(-SideMargin, -(SectionTop));
+            Theme.CardBacking(host);
+            Text head = UiKit.AddText(host, "Soon", "Coming soon", 76, Theme.Ink, TextAnchor.MiddleCenter, true);
+            head.GetComponent<Outline>().enabled = false;
             UiKit.Place((RectTransform)head.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 110f), new Vector2(760f, 140f));
-            Text info = UiKit.AddText(panel.transform, "SoonInfo", TabSoonText[Mathf.Clamp(tab, 0, TabSoonText.Length - 1)], 48, new Color(0.88f, 0.90f, 1f, 1f), TextAnchor.MiddleCenter);
+            Text info = UiKit.AddText(host, "SoonInfo", TabSoonText[Mathf.Clamp(tab, 0, TabSoonText.Length - 1)], 46, Theme.InkSoft, TextAnchor.MiddleCenter);
+            info.GetComponent<Outline>().enabled = false;
             UiKit.Place((RectTransform)info.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -100f), new Vector2(740f, 300f));
         }
 
@@ -295,32 +284,35 @@ namespace SkyHopper.Gameplay
         /// </summary>
         void BuildCard(RectTransform list, float y, Sprite icon, string amount, string listPrice, string price, bool launch, string special, string buyLabel, string a11y, Action onBuy)
         {
-            Image card = UiKit.AddPanel(list, "Panel", CardColor);
-            RectTransform crt = card.rectTransform;
+            RectTransform crt = UiKit.Rect(list, "Panel");
+            Transform card = crt;
+            Theme.CardBacking(crt);
             crt.anchorMin = new Vector2(0f, 1f);
             crt.anchorMax = new Vector2(1f, 1f);
             crt.pivot = new Vector2(0.5f, 1f);
             crt.offsetMin = new Vector2(SideMargin, -(y + CardH));
             crt.offsetMax = new Vector2(-SideMargin, -y);
 
-            Image ic = UiKit.AddImage(card.transform, "Icon", icon, Color.white);
+            Image ic = UiKit.AddImage(card, "Icon", icon, Color.white);
             UiKit.Place(ic.rectTransform, new Vector2(0f, 1f), new Vector2(24f, -34f), new Vector2(110f, 110f));
 
-            Text amountText = UiKit.AddText(card.transform, "Amount", amount, 64, Color.white, TextAnchor.MiddleLeft, true);
+            Text amountText = UiKit.AddText(card, "Amount", amount, 64, Theme.Ink, TextAnchor.MiddleLeft, true);
+            amountText.GetComponent<Outline>().enabled = false;
             UiKit.Place((RectTransform)amountText.transform, new Vector2(0f, 1f), new Vector2(148f, -24f), new Vector2(280f, 144f));
 
             float badgeY = 24f;
             if (launch)
             {
-                AddPill(card.transform, "Launch offer", LaunchBadgeColor, badgeY);
+                AddPill(card, "Launch offer", LaunchBadgeColor, badgeY);
                 badgeY += 76f;
             }
-            if (special != null) AddPill(card.transform, special, SpecialBadgeColor, badgeY);
+            if (special != null) AddPill(card, special, SpecialBadgeColor, badgeY);
 
             float priceX = 24f;
             if (listPrice != null)
             {
-                Text lp = UiKit.AddText(card.transform, "ListPrice", listPrice, 42, ListPriceColor, TextAnchor.MiddleLeft);
+                Text lp = UiKit.AddText(card, "ListPrice", listPrice, 42, ListPriceColor, TextAnchor.MiddleLeft);
+                lp.GetComponent<Outline>().enabled = false;
                 lp.horizontalOverflow = HorizontalWrapMode.Overflow;
                 UiKit.Place((RectTransform)lp.transform, new Vector2(0f, 1f), new Vector2(24f, -178f), new Vector2(290f, 90f));
                 // The strike-through: a thin line over the list price (the text is also read out as the list price by the accessibility label).
@@ -328,10 +320,11 @@ namespace SkyHopper.Gameplay
                 UiKit.Place(strike.rectTransform, new Vector2(0f, 0.5f), new Vector2(-4f, 0f), new Vector2(Mathf.Min(lp.preferredWidth, 290f) + 8f, 5f));
                 priceX = 24f + 290f + 16f;
             }
-            Text pr = UiKit.AddText(card.transform, "Price", price, 56, launch ? PromoPriceColor : Color.white, TextAnchor.MiddleLeft, true);
+            Text pr = UiKit.AddText(card, "Price", price, 56, launch ? PromoPriceColor : Theme.Ink, TextAnchor.MiddleLeft, true);
+            pr.GetComponent<Outline>().enabled = false;
             UiKit.Place((RectTransform)pr.transform, new Vector2(0f, 1f), new Vector2(priceX, -178f), new Vector2(330f, 90f));
 
-            Button buy = UiKit.AddButton(card.transform, "Buy", buyLabel, Btn(1), Color.white, new Vector2(300f, 130f), onBuy, 46);
+            Button buy = UiKit.AddButton(card, "Buy", buyLabel, Btn(1), Color.white, new Vector2(300f, 130f), onBuy, 46);
             var brt = (RectTransform)buy.transform;
             brt.anchorMin = new Vector2(0f, 1f);
             brt.anchorMax = new Vector2(1f, 1f);

@@ -203,7 +203,8 @@ namespace SkyHopper.Gameplay
         void AddWallet(float panelAlpha = 0.92f)
         {
             const float rowH = 84f, panelW = 270f;
-            Image panel = UiKit.AddPanel(screen, "WalletPanel", new Color(0.05f, 0.07f, 0.16f, panelAlpha));
+            Image panel = Theme.GlassPanel(screen, "WalletPanel");
+            panel.color = new Color(Theme.Glass.r, Theme.Glass.g, Theme.Glass.b, Theme.Glass.a * Mathf.Clamp01(panelAlpha / 0.92f));
             UiKit.Place(panel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(panelW, rowH * 3f + 30f));
             coinText = WalletRow(panel.transform, 0, art != null ? art.CoinIcon : null, Color.white);
             gemText = WalletRow(panel.transform, 1, art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f));
@@ -245,7 +246,7 @@ namespace SkyHopper.Gameplay
         void AddLevelsWallet(RegionDef region)
         {
             const float rowH = 84f, col1 = 270f, col2 = 280f;
-            Image panel = UiKit.AddPanel(screen, "WalletPanel", new Color(0.05f, 0.07f, 0.16f, 0.92f));
+            Image panel = Theme.GlassPanel(screen, "WalletPanel");
             UiKit.Place(panel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(col1 + col2, rowH * 3f + 30f));
             coinText = WalletRow(panel.transform, 0, art != null ? art.CoinIcon : null, Color.white, 0, 150f, 0f, col1);
             gemText = WalletRow(panel.transform, 1, art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 0, 150f, 0f, col1);
@@ -299,7 +300,7 @@ namespace SkyHopper.Gameplay
             lastMapOffset = -1f;   // the map opens on the current region again after a visit to the menu
             RegionArt meadow = art != null ? art.ForRegion(1) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
-            Text title = UiKit.AddText(screen, "Title", "SKY\nHOPPER", 150, Color.white);
+            Text title = UiKit.AddText(screen, "Title", "SKY\n<color=#FFC93D>HOPPER</color>", 150, Color.white);
             UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(900f, 340f));
             if (art != null && art.Player != null)
             {
@@ -421,7 +422,8 @@ namespace SkyHopper.Gameplay
             }
 
             // Fixed overlay: dark top bar with the home button, the title and the wallet.
-            Image bar = UiKit.AddPanel(screen, "TopBacking", new Color(0.05f, 0.07f, 0.16f, 0.20f));
+            Image bar = UiKit.AddImage(screen, "TopBacking", Theme.GradientDownSprite, new Color(0.04f, 0.06f, 0.16f, 0.50f));   // a fade, not a band
+            bar.preserveAspect = false;
             bar.rectTransform.anchorMin = new Vector2(0f, 1f);
             bar.rectTransform.anchorMax = new Vector2(1f, 1f);
             bar.rectTransform.pivot = new Vector2(0.5f, 1f);
@@ -677,7 +679,7 @@ namespace SkyHopper.Gameplay
             UiKit.Place((RectTransform)hdr.transform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(800f, 110f));
 
             // Backing panel: white labels stay readable over the bright background art (CUX-5).
-            Image rows = UiKit.AddImage(screen, "RowsBacking", null, new Color(0.05f, 0.07f, 0.16f, 0.72f));
+            Image rows = Theme.GlassPanel(screen, "RowsBacking", Theme.RadiusCard);
             rows.rectTransform.anchorMin = new Vector2(0f, 1f);
             rows.rectTransform.anchorMax = new Vector2(1f, 1f);
             rows.rectTransform.pivot = new Vector2(0.5f, 1f);

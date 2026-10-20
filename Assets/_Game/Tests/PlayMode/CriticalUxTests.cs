@@ -117,7 +117,7 @@ namespace SkyHopper.Tests
                 // Decorative images (icons, stars, badges): text must not run over them unless the image is the text's own backing.
                 foreach (Image img in canvas.GetComponentsInChildren<Image>(false))
                 {
-                    if (img.sprite == null || img.color.a < 0.3f || !img.gameObject.activeInHierarchy) continue;
+                    if (img.sprite == null || img.color.a < 0.3f || !img.gameObject.activeInHierarchy || Theme.IsSurfaceSprite(img.sprite)) continue;
                     if (img.GetComponent<Button>() != null) continue;          // buttons are audited as buttons
                     string n = img.name;
                     if (n == "Bg" || n == "Fill" || n == "Panel" || n == "Ribbon" || n == "WalletPanel" || n == "StarPill" || n == "RowsBacking" || n == "TopBacking" || n == "NameBacking") continue;
