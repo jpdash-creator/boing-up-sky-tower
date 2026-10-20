@@ -1,4 +1,4 @@
-"""Boing Tower content CLI.
+"""Sky Hopper content CLI.
 
 Usage (from the repo root):
     python Tools/content_cli/content.py validate

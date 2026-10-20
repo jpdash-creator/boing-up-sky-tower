@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>Player preferences (doc 01 FR-X3). Stored in PlayerPrefs; audio and haptics read these when they exist.</summary>
     public static class GameSettings
@@ -22,7 +22,7 @@ namespace BoingTower.Gameplay
         public static bool TestUnlockAll
         {
             get { return DevBuild && PlayerPrefs.GetInt(TestUnlockKey, 1) == 1; }
-            set { PlayerPrefs.SetInt(TestUnlockKey, value ? 1 : 0); PlayerPrefs.Save(); BoingTower.Economy.ProgressService.TestUnlockAll = value && DevBuild; }
+            set { PlayerPrefs.SetInt(TestUnlockKey, value ? 1 : 0); PlayerPrefs.Save(); SkyHopper.Economy.ProgressService.TestUnlockAll = value && DevBuild; }
         }
 
         /// <summary>

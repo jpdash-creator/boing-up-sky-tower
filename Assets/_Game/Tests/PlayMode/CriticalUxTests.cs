@@ -1,17 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using BoingTower.Content;
-using BoingTower.Economy;
-using BoingTower.Gameplay;
-using BoingTower.Simulation;
+using SkyHopper.Content;
+using SkyHopper.Economy;
+using SkyHopper.Gameplay;
+using SkyHopper.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
-namespace BoingTower.Tests
+namespace SkyHopper.Tests
 {
     /// <summary>
     /// Enforces the critical UX rules (docs/11, CUX-3/4/5): no overlapping text or buttons, nothing outside the safe area,

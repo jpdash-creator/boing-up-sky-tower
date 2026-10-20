@@ -1,7 +1,7 @@
 using System;
-using BoingTower.Content;
+using SkyHopper.Content;
 
-namespace BoingTower.Economy
+namespace SkyHopper.Economy
 {
     public enum SkipResult
     {

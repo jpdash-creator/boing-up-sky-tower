@@ -1,8 +1,8 @@
-using BoingTower.Content;
-using BoingTower.Economy;
-using BoingTower.Simulation;
+using SkyHopper.Content;
+using SkyHopper.Economy;
+using SkyHopper.Simulation;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>
     /// One attempt at one level: owns the deterministic Sim and its state, advances it one tick at a time and decides when

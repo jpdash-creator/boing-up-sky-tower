@@ -1,4 +1,4 @@
-namespace BoingTower.Simulation
+namespace SkyHopper.Simulation
 {
     /// <summary>Input bit flags for one tick. Jump is an edge: set it only on the tick of the tap.</summary>
     public static class SimInput

@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using BoingTower.Content;
-using BoingTower.Economy;
+using SkyHopper.Content;
+using SkyHopper.Economy;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingTower.Tests
+namespace SkyHopper.Tests
 {
     public class EconomyTests
     {

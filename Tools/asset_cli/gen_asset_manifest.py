@@ -1,4 +1,4 @@
-"""Builds the complete asset request catalog for Boing Tower (docs 02, 04, 08, 09).
+"""Builds the complete asset request catalog for Sky Hopper (docs 02, 04, 08, 09).
 
     python Tools/asset_cli/gen_asset_manifest.py
 
@@ -349,7 +349,7 @@ def build():
         notes=["Outfits/boots/hats generated with this guide as a reference image (image2image)."])
 
     add(id="fnd_logo", cls="foundation", phase="A1", group="brand", tier="hero", candidates=6,
-        name="Boing Tower logo / wordmark concepts", purpose="Game logo exploration. Final wordmark text is added in Unity/vector, not trusted from AI.",
+        name="Sky Hopper logo / wordmark concepts", purpose="Game logo exploration. Final wordmark text is added in Unity/vector, not trusted from AI.",
         prompt=("Game logo emblem concept (symbol only, no letters): a stack of glowing neon platforms forming a tower with a small cloud-fox bouncing on a spring at the top. "
                 + STYLE + ", " + KEY),
         aspect="1:1", size="2K", path="Art/Marketing/logo/logo_concept_v1.png",
@@ -699,7 +699,7 @@ def main():
 
     imgs = sum(0 if a.get("status") in ("done", "skipped") else a.get("fixed_images", a["candidates"]) for a in assets)
     tot_default = sum(credits_of(a) for a in assets)
-    L = ["# Boing Tower - Asset Catalog (generated)", "",
+    L = ["# Sky Hopper - Asset Catalog (generated)", "",
          "**Status:** planning only. Zero credits spent. Every batch below needs the owner's explicit approval (`.claude/rules/openart-credit-guardrail.md`).", "",
          "Source of truth for rules: docs 02, 04, 08, 09. Style lock: `%s`." % (STYLE + ", " + KEY), "",
          "## Totals", "", "- Asset requests: **%d** (%d still need generation; B00 model gate and B01a style bible done: 100 credits spent, Seedream 5 Lite 2K locked, style bible image 4 chosen; Momo master skipped)" % (len(assets), sum(1 for a in assets if a.get('status') not in ('done', 'skipped') and a.get('fixed_images', a['candidates']) > 0)),

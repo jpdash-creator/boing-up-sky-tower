@@ -13,7 +13,7 @@ Start: v0.9.0.x = the five-region milestone candidate (pre-release). v1.0.0.x is
 
 How it is used
 - Bump MINOR or HOTFIX BEFORE building when the change set of the next build needs it (new feature or rule change = minor, fixes only = hotfix). Several builds of the same change set only raise BUILD.
-- The build writes: app version name `M.m.h.b` (`Application.version`, `PlayerSettings.bundleVersion`), Android version code = BUILD, the file `E:/Unity/builds/boingtower_v<M.m.h.b>.apk` (kept) and a copy `boingtower.apk` (latest, used by the device test kit), and one line in `Content/builds/build_log.csv`.
+- The build writes: app version name `M.m.h.b` (`Application.version`, `PlayerSettings.bundleVersion`), Android version code = BUILD, the file `E:/Unity/builds/skyhopper_v<M.m.h.b>.apk` (kept) and a copy `skyhopper.apk` (latest, used by the device test kit), and one line in `Content/builds/build_log.csv`.
 - The game shows the version on the main menu (bottom) and logs it in the first field of `BTSTATE`.
 - Always tell the owner the version of the build you installed ("v0.9.0.7 is on your phone") and name the version in the report and in the commit message of a build ("Build v0.9.0.7: ...").
 - Never ship or install an APK that is not produced by the build script (it would have no new version).

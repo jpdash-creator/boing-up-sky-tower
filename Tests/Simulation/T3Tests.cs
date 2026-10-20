@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     internal static class T3
     {

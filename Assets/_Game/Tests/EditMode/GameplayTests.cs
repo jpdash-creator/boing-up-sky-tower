@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using BoingTower.Content;
-using BoingTower.Economy;
-using BoingTower.Gameplay;
-using BoingTower.Simulation;
+using SkyHopper.Content;
+using SkyHopper.Economy;
+using SkyHopper.Gameplay;
+using SkyHopper.Simulation;
 using NUnit.Framework;
 
-namespace BoingTower.Tests
+namespace SkyHopper.Tests
 {
     public class TouchControlTests
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>Haptic feedback behind the player's setting (CUX-6). Android fine-grained patterns arrive with the device build (T11).</summary>
     public static class Haptics

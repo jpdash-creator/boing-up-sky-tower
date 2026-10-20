@@ -1,7 +1,7 @@
-using BoingTower.Simulation;
+using SkyHopper.Simulation;
 using NUnit.Framework;
 
-namespace BoingTower.Tests
+namespace SkyHopper.Tests
 {
     // Runs the engine-agnostic Simulation inside Unity as a cross-check of the xunit suite in Tests/Simulation.
     public class SimulationSmokeTests

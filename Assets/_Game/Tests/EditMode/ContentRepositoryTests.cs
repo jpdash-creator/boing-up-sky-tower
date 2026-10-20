@@ -2,12 +2,12 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using BoingTower.Content;
-using BoingTower.Simulation;
+using SkyHopper.Content;
+using SkyHopper.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingTower.Tests
+namespace SkyHopper.Tests
 {
     public class ContentRepositoryTests
     {
@@ -110,7 +110,7 @@ namespace BoingTower.Tests
             string rebuilt = ContentManifestMerger.Build(Path.Combine(ProjectRoot, "Content"));
             string onDisk = File.ReadAllText(ManifestFile, Encoding.UTF8);
             Assert.IsTrue(rebuilt == onDisk,
-                "content_manifest.json is stale: run Tools/Boing Tower/Build Content Manifest (or BuildFromCommandLine).");
+                "content_manifest.json is stale: run Tools/Sky Hopper/Build Content Manifest (or BuildFromCommandLine).");
             StringAssert.Contains(Repo.ContentHash, rebuilt);
         }
 

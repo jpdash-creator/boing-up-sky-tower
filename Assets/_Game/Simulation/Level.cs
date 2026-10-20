@@ -1,4 +1,4 @@
-namespace BoingTower.Simulation
+namespace SkyHopper.Simulation
 {
     public enum PickupKind
     {

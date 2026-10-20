@@ -1,8 +1,8 @@
 using System;
-using BoingTower.Content;
-using BoingTower.Simulation;
+using SkyHopper.Content;
+using SkyHopper.Simulation;
 
-namespace BoingTower.Economy
+namespace SkyHopper.Economy
 {
     /// <summary>Tunables that doc 08 leaves open. Defaults are assumptions; they will move to Remote Config.</summary>
     public static class EconomyRules

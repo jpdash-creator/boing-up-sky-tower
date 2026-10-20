@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     /// <summary>Endless mode (T13): deterministic tower, reachable gaps, prefix stability, bot climbs in every region.</summary>
     public class EndlessTests

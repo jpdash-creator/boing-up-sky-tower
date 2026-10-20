@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>
     /// One place for frame pacing (CUX-1). Mobile builds default to 30 fps unless the target is set explicitly, so this runs on boot.

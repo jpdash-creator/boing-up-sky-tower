@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Xunit;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     /// <summary>
     /// T29 economy check (analysis only, no tuning). Builds every shipped level of regions 1 to 5 with the real LevelBuilder,

@@ -48,7 +48,7 @@ def main():
                              '<figcaption>%s</figcaption></figure>' % (a, fn, a, n, n))
             body.append('<section><h3>%s <small>%s</small></h3><div class="row">%s</div></section>' %
                         (html.escape(a), html.escape(names.get(a, "")), "".join(cells)))
-    page = ("<!doctype html><meta charset='utf-8'><title>Boing Tower - pick candidates</title>"
+    page = ("<!doctype html><meta charset='utf-8'><title>Sky Hopper - pick candidates</title>"
             "<style>body{font-family:system-ui;margin:16px;background:#1b1b24;color:#eee}h2{margin-top:32px;border-bottom:1px solid #444}"
             "small{color:#999;font-weight:normal}.row{display:flex;gap:10px;flex-wrap:wrap}figure{margin:0;text-align:center}"
             "img{max-height:260px;max-width:340px;border-radius:6px;background:#808080}figcaption{font-size:22px;font-weight:bold}"

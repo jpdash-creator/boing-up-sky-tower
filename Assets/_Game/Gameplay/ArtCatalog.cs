@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>Measured walkable island of a platform sprite, in the sprite's pixels (Tools/art_pipeline/platform_metrics.py).</summary>
     [Serializable]
@@ -34,7 +34,7 @@ namespace BoingTower.Gameplay
 
     /// <summary>
     /// Every sprite the game needs, referenced from one asset in Resources so player builds include them.
-    /// Rebuild with Tools/Boing Tower/Build Art Catalog after the art changes.
+    /// Rebuild with Tools/Sky Hopper/Build Art Catalog after the art changes.
     /// </summary>
     public sealed class ArtCatalog : ScriptableObject
     {

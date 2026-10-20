@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using BoingTower.Simulation;
+using SkyHopper.Simulation;
 using UnityEngine;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>
     /// Draws a RunSession with SpriteRenderers (no gameplay logic here: it only reads the Sim state).

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Xunit;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     public class FxTests
     {

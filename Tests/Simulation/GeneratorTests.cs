@@ -5,7 +5,7 @@ using System.Text.Json;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     public class GeneratorTests
     {

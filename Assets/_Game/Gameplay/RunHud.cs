@@ -1,10 +1,10 @@
 using System;
-using BoingTower.Economy;
-using BoingTower.Simulation;
+using SkyHopper.Economy;
+using SkyHopper.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>Code-built HUD and overlays (intro, pause, failed, results) for the Run scene.</summary>
     public sealed class RunHud : MonoBehaviour

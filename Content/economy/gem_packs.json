@@ -4,7 +4,7 @@
     "gems": 10,
     "usdList": 0.99,
     "usdPromo": 0.49,
-    "sku": "boingtower.gems.pinch",
+    "sku": "skyhopper.gems.pinch",
     "badge": ""
   },
   {
@@ -12,7 +12,7 @@
     "gems": 20,
     "usdList": 1.99,
     "usdPromo": 0.99,
-    "sku": "boingtower.gems.handful",
+    "sku": "skyhopper.gems.handful",
     "badge": ""
   },
   {
@@ -20,7 +20,7 @@
     "gems": 50,
     "usdList": 3.99,
     "usdPromo": 1.99,
-    "sku": "boingtower.gems.pouch",
+    "sku": "skyhopper.gems.pouch",
     "badge": ""
   },
   {
@@ -28,7 +28,7 @@
     "gems": 100,
     "usdList": 7.99,
     "usdPromo": 3.99,
-    "sku": "boingtower.gems.sack",
+    "sku": "skyhopper.gems.sack",
     "badge": "popular"
   },
   {
@@ -36,7 +36,7 @@
     "gems": 200,
     "usdList": 11.99,
     "usdPromo": 5.99,
-    "sku": "boingtower.gems.chest",
+    "sku": "skyhopper.gems.chest",
     "badge": ""
   },
   {
@@ -44,7 +44,7 @@
     "gems": 500,
     "usdList": 19.99,
     "usdPromo": 9.99,
-    "sku": "boingtower.gems.vault",
+    "sku": "skyhopper.gems.vault",
     "badge": ""
   },
   {
@@ -52,7 +52,7 @@
     "gems": 1000,
     "usdList": 29.99,
     "usdPromo": 14.99,
-    "sku": "boingtower.gems.treasury",
+    "sku": "skyhopper.gems.treasury",
     "badge": "best_value"
   }
 ]

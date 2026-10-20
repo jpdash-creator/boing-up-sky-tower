@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingTower.Simulation
+namespace SkyHopper.Simulation
 {
     public enum GoalType
     {

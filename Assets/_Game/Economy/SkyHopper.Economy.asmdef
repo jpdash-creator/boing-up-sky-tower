@@ -1,8 +1,9 @@
 {
-  "name": "BoingTower.Content",
-  "rootNamespace": "BoingTower.Content",
+  "name": "SkyHopper.Economy",
+  "rootNamespace": "SkyHopper.Economy",
   "references": [
-    "BoingTower.Simulation",
+    "SkyHopper.Simulation",
+    "SkyHopper.Content",
     "Unity.Nuget.Newtonsoft-Json"
   ],
   "includePlatforms": [],

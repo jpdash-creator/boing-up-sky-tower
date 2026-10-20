@@ -1,10 +1,10 @@
-using BoingTower.Content;
-using BoingTower.Economy;
-using BoingTower.Simulation;
+using SkyHopper.Content;
+using SkyHopper.Economy;
+using SkyHopper.Simulation;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     /// <summary>
     /// The Run scene driver: a fixed 60 Hz simulation clock (accumulator), input, view, HUD and the end-of-run flow.

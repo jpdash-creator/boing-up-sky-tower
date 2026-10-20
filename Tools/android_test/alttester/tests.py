@@ -1,4 +1,4 @@
-"""AltTester tests for Boing Tower (roadmap T26). Each test is a function test_*(g) taking the Game helper; run_all.py runs them in order.
+"""AltTester tests for Sky Hopper (roadmap T26). Each test is a function test_*(g) taking the Game helper; run_all.py runs them in order.
 Object names come from the UI code: Play, Settings, Back, Region<n>, Level<n>, LevelGrid, Endless, PLAY (level popup), Close, Pad*,
 Try again / Level select (run overlays), <label>Toggle (settings) with a child 'Label' holding ON or OFF."""
 import time

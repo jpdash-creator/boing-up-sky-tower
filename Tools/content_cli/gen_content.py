@@ -97,7 +97,7 @@ COIN_PACKS = [  # (coins, gemsList, gemsPromo)
 
 def gem_packs():
     return [{"id": "gempack_" + n, "gems": g, "usdList": ul, "usdPromo": up,
-             "sku": "boingtower.gems." + n, "badge": b} for n, g, ul, up, b in GEM_PACKS]
+             "sku": "skyhopper.gems." + n, "badge": b} for n, g, ul, up, b in GEM_PACKS]
 
 
 def coin_packs():

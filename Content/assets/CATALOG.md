@@ -1,4 +1,4 @@
-# Boing Tower - Asset Catalog (generated)
+# Sky Hopper - Asset Catalog (generated)
 
 **Status:** planning only. Zero credits spent. Every batch below needs the owner's explicit approval (`.claude/rules/openart-credit-guardrail.md`).
 

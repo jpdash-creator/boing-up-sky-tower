@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     /// <summary>
     /// Owner playtest 2026-10-20 (list 6): stars sometimes needed two passes, and a single standing jump must reach the next platform.

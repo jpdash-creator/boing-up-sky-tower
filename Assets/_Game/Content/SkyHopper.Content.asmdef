@@ -1,12 +1,9 @@
 {
-  "name": "BoingTower.Gameplay",
-  "rootNamespace": "BoingTower.Gameplay",
+  "name": "SkyHopper.Content",
+  "rootNamespace": "SkyHopper.Content",
   "references": [
-    "BoingTower.Simulation",
-    "BoingTower.Content",
-    "BoingTower.Economy",
-    "Unity.InputSystem",
-    "UnityEngine.UI"
+    "SkyHopper.Simulation",
+    "Unity.Nuget.Newtonsoft-Json"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

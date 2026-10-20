@@ -1,6 +1,6 @@
 {
-  "name": "BoingTower.Simulation",
-  "rootNamespace": "BoingTower.Simulation",
+  "name": "SkyHopper.Simulation",
+  "rootNamespace": "SkyHopper.Simulation",
   "references": [],
   "includePlatforms": [],
   "excludePlatforms": [],

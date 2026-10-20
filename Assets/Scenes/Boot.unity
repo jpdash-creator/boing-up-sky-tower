@@ -239,7 +239,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d280e3108ac6f324c83a8cb03902864a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BoingTower.Gameplay::BoingTower.Gameplay.BootLoader
+  m_EditorClassIdentifier: SkyHopper.Gameplay::SkyHopper.Gameplay.BootLoader
   MinSeconds: 1.2
 --- !u!4 &2134757307
 Transform:

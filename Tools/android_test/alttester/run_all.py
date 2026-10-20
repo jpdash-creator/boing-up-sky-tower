@@ -3,7 +3,7 @@
     python Tools/android_test/alttester/run_all.py [--install] [--no-launch] [--only name_part]
 
 Prerequisites (README.md): AltTester Desktop is running on the PC, the phone is connected through adb.
---install  installs E:/Unity/builds/boingtower_alttester.apk first.  --no-launch  uses the game that is already running."""
+--install  installs E:/Unity/builds/skyhopper_alttester.apk first.  --no-launch  uses the game that is already running."""
 import os
 import sys
 import time

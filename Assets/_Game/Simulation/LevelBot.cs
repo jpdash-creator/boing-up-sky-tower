@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingTower.Simulation
+namespace SkyHopper.Simulation
 {
     public struct BotResult
     {

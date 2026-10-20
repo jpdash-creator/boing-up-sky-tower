@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
-using BoingTower.Content;
-using BoingTower.Simulation;
+using SkyHopper.Content;
+using SkyHopper.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingTower.Tests
+namespace SkyHopper.Tests
 {
     // End-to-end content check inside Unity: ContentRepository -> LevelSpecFactory -> LevelBuilder.
     // The hashes must equal the dotnet-generated golden file (Content/golden/level_hashes_r1-5.txt), proving both toolchains build bit-identical levels.

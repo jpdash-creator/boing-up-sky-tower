@@ -1,4 +1,4 @@
-# AltTester tests for Boing Tower (roadmap T26)
+# AltTester tests for Sky Hopper (roadmap T26)
 
 AltTester drives the real game objects (by name) on the phone: find a button, tap it, read its text, swipe the map. It is an addition to
 `Tools/android_test` (`bt.py`, `smoke_test.py`), not a replacement.
@@ -19,24 +19,24 @@ AltTester drives the real game objects (by name) on the phone: find a button, ta
   commands) compile into every player, but nothing instantiates them unless the prefab is in a scene.
 - Our build hook does **not** use `AltBuilder` (it saves the scene file and edits player settings). `AltTesterBuildHook` defines `ALTTESTER` for
   that one build with `BuildPlayerOptions.extraScriptingDefines` and adds the prefab to the Boot scene in memory (`IProcessSceneWithReport`),
-  so the scene files and project settings stay untouched. Port 13000, host 127.0.0.1, app name `BoingTower`, popup hidden.
+  so the scene files and project settings stay untouched. Port 13000, host 127.0.0.1, app name `SkyHopper`, popup hidden.
 
 ## Steps for the owner
 
 1. **Build the alttester APK.** Close nothing else; Unity must not be running another build. From a terminal in the project folder:
 
    ```bash
-   BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectPath . -executeMethod BoingTower.Editor.Build.AndroidBuild.BuildFromCommandLine -logFile Logs/build_alttester.log
+   BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectPath . -executeMethod SkyHopper.Editor.Build.AndroidBuild.BuildFromCommandLine -logFile Logs/build_alttester.log
    ```
 
    (or add `-altTester` to the command line instead of the environment variable). Look for `[ALTTESTER] on:` and `[ALTTESTER] runner added to scene`
-   in the log. Result: `E:/Unity/builds/boingtower_v<version>_alttester.apk` and a copy `E:/Unity/builds/boingtower_alttester.apk`.
-   The clean `boingtower.apk` is not touched. The build number goes up as for any build (`.claude/rules/versioning.md`); tell the owner the version.
+   in the log. Result: `E:/Unity/builds/skyhopper_v<version>_alttester.apk` and a copy `E:/Unity/builds/skyhopper_alttester.apk`.
+   The clean `skyhopper.apk` is not touched. The build number goes up as for any build (`.claude/rules/versioning.md`); tell the owner the version.
    A normal build (no variable, no flag) contains no AltTester runner.
 2. **Install** (same package name as the normal build, so it replaces it; the next normal build replaces it back):
 
    ```bash
-   adb install -r E:/Unity/builds/boingtower_alttester.apk
+   adb install -r E:/Unity/builds/skyhopper_alttester.apk
    ```
 3. **Start AltTester Desktop** on the PC: `E:/tools/alttester_desktop/AltTesterDesktopPackageWindows__2_4_0/AltTesterDesktop__v2.4.0.exe`.
    Leave it on the default port 13000.
@@ -47,7 +47,7 @@ AltTester drives the real game objects (by name) on the phone: find a button, ta
    ```
 
    `--install` installs the alttester APK first; leave it out when it is already installed. The script runs `adb reverse`, launches the game with cleared
-   data, waits until the game shows up in Desktop, then runs the tests. In the Desktop window the game should appear as app `BoingTower` before
+   data, waits until the game shows up in Desktop, then runs the tests. In the Desktop window the game should appear as app `SkyHopper` before
    the driver connects. Options: `--no-launch` (use the game that is running), `--only <part of a test name>`.
 5. Output is `PASS`, `FAIL` or `SKIP` per test and `RESULT: PASSED` or `FAILED` (exit code 1 on a failure). Screenshots of failures and a few
    milestones go to `E:/Unity/device_shots/alttester/`.

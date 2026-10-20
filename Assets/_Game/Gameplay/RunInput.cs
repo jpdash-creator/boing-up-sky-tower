@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using BoingTower.Simulation;
+using SkyHopper.Simulation;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace BoingTower.Gameplay
+namespace SkyHopper.Gameplay
 {
     public enum TouchPhaseKind { Began, Held, Ended }
 

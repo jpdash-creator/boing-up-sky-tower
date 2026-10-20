@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingTower.Content
+namespace SkyHopper.Content
 {
     /// <summary>Thrown for malformed, missing or inconsistent content. Message always names the offending id.</summary>
     public sealed class ContentException : Exception

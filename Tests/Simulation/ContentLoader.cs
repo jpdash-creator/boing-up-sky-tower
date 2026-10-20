@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     /// <summary>One shipped level as the Simulation sees it.</summary>
     public sealed class LoadedLevel

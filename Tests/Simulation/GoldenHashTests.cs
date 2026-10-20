@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Xunit;
 
-namespace BoingTower.Simulation.Tests
+namespace SkyHopper.Simulation.Tests
 {
     /// <summary>
     /// Pins the exact LevelData hash of all 75 levels of regions 1-5 in Content/golden/level_hashes_r1-5.txt.

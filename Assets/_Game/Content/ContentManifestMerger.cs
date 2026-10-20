@@ -7,7 +7,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace BoingTower.Content
+namespace SkyHopper.Content
 {
     /// <summary>
     /// Merges the source files under Content/ into one deterministic manifest text.

@@ -1,18 +1,18 @@
 using System;
-using BoingTower.Gameplay;
+using SkyHopper.Gameplay;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace BoingTower.Editor
+namespace SkyHopper.Editor
 {
     /// <summary>
     /// Puts the bootstrap component into each of the three scenes (Boot, Meta, Run) created by ProjectSetup and saves them.
-    /// Idempotent. Headless: -executeMethod BoingTower.Editor.SceneBuilder.BuildFromCommandLine
+    /// Idempotent. Headless: -executeMethod SkyHopper.Editor.SceneBuilder.BuildFromCommandLine
     /// </summary>
     public static class SceneBuilder
     {
-        [MenuItem("Tools/Boing Tower/Build Scenes")]
+        [MenuItem("Tools/Sky Hopper/Build Scenes")]
         public static void Build()
         {
             Setup("Assets/Scenes/Boot.unity", go => go.AddComponent<BootLoader>(), "BootLoader");

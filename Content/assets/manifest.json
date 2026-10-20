@@ -256,7 +256,7 @@
       "group": "brand",
       "tier": "hero",
       "candidates": 6,
-      "name": "Boing Tower logo / wordmark concepts",
+      "name": "Sky Hopper logo / wordmark concepts",
       "purpose": "Game logo exploration. Final wordmark text is added in Unity/vector, not trusted from AI.",
       "prompt": "Game logo emblem concept (symbol only, no letters): a stack of glowing neon platforms forming a tower with a small cloud-fox bouncing on a spring at the top. cute chibi cartoon with neon rim light and glow, thick consistent dark-hue outline, saturated gradient colors, glossy sparkle accents, top-left light, clean vector-like edges, solid flat #808080 mid-grey background, no text, no watermark",
       "aspect": "1:1",

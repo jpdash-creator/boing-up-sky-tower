@@ -36,7 +36,7 @@ def panel(title, disp, body):
     D = lambda s: ImageFont.truetype(os.path.join(F, disp), s)
     B = lambda s: ImageFont.truetype(os.path.join(F, body), s)
     d.text((10, 8), title, font=B(20), fill=(255, 255, 255))
-    outlined(d, (W // 2, 120), "BOING", D(96), (255, 255, 255), r=5)
+    outlined(d, (W // 2, 120), "SKY", D(96), (255, 255, 255), r=5)
     outlined(d, (W // 2, 205), "TOWER", D(96), (255, 214, 64), r=5)
     # HUD
     outlined(d, (22, 300), "Floor 12 / 60", D(34), (255, 255, 255), anchor="lm")

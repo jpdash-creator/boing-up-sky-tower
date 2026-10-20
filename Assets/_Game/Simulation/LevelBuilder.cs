@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingTower.Simulation
+namespace SkyHopper.Simulation
 {
     /// <summary>
     /// Builds a complete campaign level (platforms, hazards, pickups) from a LevelSpec. Deterministic: the

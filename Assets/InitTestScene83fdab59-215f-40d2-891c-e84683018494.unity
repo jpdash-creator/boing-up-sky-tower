@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.TestRunner::UnityEngine.TestTools.TestRunner.PlaymodeTestsController
   m_AssembliesWithTests:
-  - BoingTower.Tests.PlayMode
+  - SkyHopper.Tests.PlayMode
   - Unity.InputSystem.TestFramework
   - Unity.PerformanceTesting
   - UnityEngine.TestRunner
