@@ -534,6 +534,8 @@ namespace BoingUpSkyTower.Simulation
                 list[i] = pk;
             }
 
+            SeparateGems(list, platforms, cfg.ScreenWidth / 2);
+
             list.Sort(ComparePickup);
             Pickup[] arr = list.ToArray();
             for (int i = 0; i < arr.Length; i++) arr[i].Id = i;
@@ -593,6 +595,92 @@ namespace BoingUpSkyTower.Simulation
             bool left = ctx.X[row] < screen / 2;
             Fx ex = left ? ctx.X[row] - ctx.W[row] / 2 - Fx.FromRatio(7, 10) : ctx.X[row] + ctx.W[row] / 2 + Fx.FromRatio(7, 10);
             return Fx.Clamp(ex, wallMin, wallMax);
+        }
+
+        /// <summary>Stars, gems and hidden gems keep at least this distance (world units) from each other (owner report 2026-10-21: overlapping pickups).</summary>
+        private static readonly Fx PickupMinGap = Fx.FromRatio(11, 10);
+
+        /// <summary>
+        /// A gem that sits on top of a star or another gem moves up in steps until the gap is wide enough (stars never move: they are the goal
+        /// of the level, and the placement above stays clear of the platforms).
+        /// </summary>
+        private static void SeparateGems(List<Pickup> list, Platform[] platforms, Fx centreX)
+        {
+            Fx lo = Fx.FromRatio(12, 10), hi = centreX * 2 - Fx.FromRatio(12, 10);
+            Fx step = Fx.FromRatio(6, 10);
+            var drop = new List<int>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                Pickup pk = list[i];
+                if (pk.Kind != PickupKind.Gem || ConflictingPickup(list, i, pk) < 0) continue;
+                // Nearest free spot on a grid around the gem: rings of growing size, each candidate clear of every platform and of every star and gem.
+                bool found = false;
+                for (int ring = 1; ring <= 12 && !found; ring++)
+                {
+                    for (int oy = -ring; oy <= ring && !found; oy++)
+                    {
+                        for (int ox = -ring; ox <= ring && !found; ox++)
+                        {
+                            if (System.Math.Max(System.Math.Abs(ox), System.Math.Abs(oy)) != ring) continue;
+                            Pickup c = pk;
+                            c.X = pk.X + step * ox;
+                            c.Y = pk.Y + step * oy;
+                            if (c.X < lo || c.X > hi) continue;
+                            Fx lift;
+                            if (PickupOverlapsPlatform(platforms, c, out lift)) continue;
+                            if (ConflictingPickup(list, i, c) >= 0) continue;
+                            pk = c;
+                            found = true;
+                        }
+                    }
+                }
+                if (!found)
+                {
+                    // Crowded spot: accept a candidate that needs a lift off a platform, as long as it is clear of other pickups.
+                    for (int ring = 1; ring <= 12 && !found; ring++)
+                    {
+                        for (int oy = -ring; oy <= ring && !found; oy++)
+                        {
+                            for (int ox = -ring; ox <= ring && !found; ox++)
+                            {
+                                if (System.Math.Max(System.Math.Abs(ox), System.Math.Abs(oy)) != ring) continue;
+                                Pickup c = pk;
+                                c.X = pk.X + step * ox;
+                                c.Y = pk.Y + step * oy;
+                                if (c.X < lo || c.X > hi) continue;
+                                for (int pass = 0; pass < 8; pass++)
+                                {
+                                    Fx lift;
+                                    if (!PickupOverlapsPlatform(platforms, c, out lift)) break;
+                                    c.Y = lift;
+                                }
+                                if (PickupOverlapsPlatform(platforms, c, out _)) continue;
+                                if (ConflictingPickup(list, i, c) >= 0) continue;
+                                pk = c;
+                                found = true;
+                            }
+                        }
+                    }
+                }
+                if (!found) drop.Add(i);   // no clear spot in a crowded gap: the extra gem is dropped (stars and the hidden gem never are)
+                list[i] = pk;
+            }
+            for (int k = drop.Count - 1; k >= 0; k--) list.RemoveAt(drop[k]);
+        }
+
+        /// <summary>Index of a star or gem within the minimum gap of <paramref name="pk"/>, or -1.</summary>
+        private static int ConflictingPickup(List<Pickup> list, int self, Pickup pk)
+        {
+            Fx gapSq = PickupMinGap * PickupMinGap;
+            for (int j = 0; j < list.Count; j++)
+            {
+                if (j == self) continue;
+                Pickup o = list[j];
+                if (o.Kind == PickupKind.Coin) continue;
+                Fx dx = o.X - pk.X, dy = o.Y - pk.Y;
+                if (dx * dx + dy * dy < gapSq) return j;
+            }
+            return -1;
         }
 
         private static Pickup MakePickup(SimConfig cfg, PickupKind kind, Fx x, Fx y, int tag)
