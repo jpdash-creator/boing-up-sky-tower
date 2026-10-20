@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contentHash": "f419df3084045e33cde75763ddaceba220d2740df068fb4007955eb2942acaff",
+  "contentHash": "70886621aef9d4dd5f5a9ec4a5eeab460cd90ee654703c7f20b270c6da384fd9",
   "regions": [
     {
       "id": "region_001_meadow_springs",
@@ -2688,7 +2688,7 @@
       "id": "lvl_003_08",
       "region": "region_003_sunny_beach",
       "index": 8,
-      "seed": 873934,
+      "seed": 873935,
       "class": "medium",
       "difficulty": 0.5,
       "goal": {
