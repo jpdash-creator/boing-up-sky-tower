@@ -30,6 +30,19 @@ namespace SkyHopper.Simulation
         /// <summary>Rows at the start that always use the easy ladder (owner: the first few platforms are fixed).</summary>
         public const int FixedRows = 4;
 
+        /// <summary>Stack rule (see LevelBuilder.MaxPerWindow): optional platforms only while the 3 u window ending at y holds at most MaxPerWindow - 2.</summary>
+        private static bool OptionalFits(List<Platform> plats, Fx y)
+        {
+            int n = 0;
+            for (int i = plats.Count - 1; i >= 0; i--)
+            {
+                Fx py = plats[i].Y;
+                if (py < y - LevelBuilder.WindowHeight) { if (py < y - LevelBuilder.WindowHeight - Fx.FromInt(5)) break; continue; }
+                if (py <= y) n++;
+            }
+            return n <= LevelBuilder.MaxPerWindow - 2;
+        }
+
         public static Fx DifficultyAt(GeneratorParams p, int row)
         {
             if (!p.Endless) return p.Difficulty;
@@ -150,7 +163,7 @@ namespace SkyHopper.Simulation
                 if (rng.Next(100) < secondChance)
                 {
                     Fx x2 = screen - x;
-                    if (Fx.Abs(x2 - x) >= (w + w) / 2 + Fx.One)
+                    if (Fx.Abs(x2 - x) >= (w + w) / 2 + Fx.One && OptionalFits(list, y))
                     {
                         Platform extra = new Platform();
                         extra.Id = list.Count;
@@ -178,7 +191,7 @@ namespace SkyHopper.Simulation
                         Fx x2 = rng.Range(lo2, hi2);
                         bool free = true;
                         for (int u = 0; u < nUsed; u++) if (Fx.Abs(x2 - used[u]) < (w2 + usedW[u]) / 2 + Fx.FromRatio(6, 10)) free = false;
-                        if (!free) continue;
+                        if (!free || !OptionalFits(list, y)) continue;
                         Platform ex = new Platform();
                         ex.Id = list.Count;
                         ex.Row = row;

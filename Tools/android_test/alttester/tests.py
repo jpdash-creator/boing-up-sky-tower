@@ -1,6 +1,8 @@
 """AltTester tests for Sky Hopper (roadmap T26). Each test is a function test_*(g) taking the Game helper; run_all.py runs them in order.
 Object names come from the UI code: Play, Settings, Back, Region<n>, Level<n>, LevelGrid, Endless, PLAY (level popup), Close, Pad*,
 Try again / Level select (run overlays), <label>Toggle (settings) with a child 'Label' holding ON or OFF."""
+import os
+import sys
 import time
 
 from altbt import TestFailure, Skip, By
@@ -181,6 +183,76 @@ def test_endless_button_present(g):
     g.tap("Back")
 
 
+def test_region1_all_levels_autopilot(g):
+    """Region 1 as a real player: the game's own Autopilot plays levels 1..15 (it needs the autoplay.json flag file, written here), and this test
+    only OBSERVES through AltTester (the Run scene and its pad objects exist while the autopilot plays) and takes a screenshot at every death.
+    Results come from the BTAUTO lines in logcat. Settings through the environment: AUTOPLAY_SKILL (0.5), AUTOPLAY_LEVELS ('1-15'),
+    AUTOPLAY_DIFFICULTY (0), AUTOPLAY_SEEDS (1), AUTOPLAY_MINUTES (45). SKIP outside development builds."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import autoplay_r1 as ap
+    import json
+
+    if not g.exists("Settings", 5):
+        g.to_menu()
+    opts = {"region": 1, "levels": ap.parse_levels(os.environ.get("AUTOPLAY_LEVELS", "1-15")), "skill": float(os.environ.get("AUTOPLAY_SKILL", "0.5")),
+            "difficulty": int(os.environ.get("AUTOPLAY_DIFFICULTY", "0")), "stopOnFail": False, "seeds": int(os.environ.get("AUTOPLAY_SEEDS", "1")),
+            "speed": 1.0}
+    expected = len(opts["levels"]) * opts["seeds"]
+    ap.remove_flags()
+    log = ap.Follower()                     # logcat reader for the BTAUTO lines (adb only, runs next to AltTester)
+    try:
+        placed = ap.place_flag(json.dumps(opts), "both", os.path.join(ap.QA, "autoplay_flag_tmp.json"))
+        if not placed:
+            raise Skip("could not write autoplay.json (needs a development build with run-as or a writable external files folder)")
+        # The game polls for the file while the menu is up and then loads the Run scene by itself.
+        results, shots, saw_run, meta = [], {}, False, {}
+        deadline = time.time() + 60 * float(os.environ.get("AUTOPLAY_MINUTES", "45"))
+        started = time.time()
+        while time.time() < deadline and not log.done:
+            for ev in log.take_events():
+                if ev.get("ev") == "start":
+                    meta.update(version=ev.get("v"), run=ev.get("run"), step=ev.get("step"))
+                elif ev.get("ev") == "error":
+                    raise TestFailure("autopilot error: %s" % ev.get("msg"))
+                elif ev.get("ev") == "level":
+                    results.append(ev)
+                    print("     %s %s %s floors %s/%s %.1fs" % (ap.verdict(ev), ev.get("lvl"), ev.get("res"), ev.get("floors"), ev.get("target"), ev.get("sec", 0)))
+                    if ev.get("res") != "cleared":
+                        name = "autopilot_%02d_%s_death" % (int(ev.get("n", 0)), ev.get("att", 1))
+                        g.screenshot(name)  # the game keeps the death on screen for a few seconds
+                        shots[(ev.get("n"), ev.get("att"))] = os.path.join(altbt_shots(), name + ".png")
+            if g.scene() == "Run" and not saw_run:
+                saw_run = g.exists("PadJump", 5) or g.exists("Pause", 1)
+            if log.crash:
+                raise TestFailure("crash in logcat: " + log.crash)
+            if not results and not saw_run and time.time() - started > 120:
+                raise TestFailure("the autopilot did not start within 120 s (is this a development build, is the flag in persistentDataPath?)")
+            time.sleep(0.5)
+        if not log.done:
+            raise TestFailure("autoplay did not finish within the time limit; %d of %d runs reported" % (len(results), expected))
+        if not saw_run:
+            raise TestFailure("never saw the Run scene or its pad objects through AltTester while the autopilot played")
+        ap.write_report(results, shots, opts, meta, os.path.join(ap.QA, "autoplay_report_alttester.md"))
+        print(ap.table(results))
+        failed = [r for r in results if ap.verdict(r) == "FAIL"]
+        if len(results) < expected:
+            raise TestFailure("only %d of %d runs reported" % (len(results), expected))
+        if failed:
+            raise TestFailure("%d run(s) not cleared: %s (report: E:/Unity/qa/autoplay_report_alttester.md)" % (
+                len(failed), ", ".join("%s %s@%s" % (r.get("lvl"), r.get("res"), r.get("floors")) for r in failed)))
+    finally:
+        log.close()
+        ap.remove_flags()
+
+
+def altbt_shots():
+    import altbt
+    return altbt.SHOTS
+
+
+test_region1_all_levels_autopilot.long = True   # run_all.py runs 'long' tests only with --only or --long
+
+
 TESTS = [
     test_level_grid_has_15_nodes,
     test_endless_button_present,
@@ -188,4 +260,5 @@ TESTS = [
     test_all_levels_open_toggle,
     test_map_scroll_to_far_region,
     test_menu_map_play_fail,
+    test_region1_all_levels_autopilot,   # long (up to 45 min): run alone with --only region1
 ]

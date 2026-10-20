@@ -65,6 +65,17 @@ namespace SkyHopper.Simulation
         public int ScrollStepSeconds = 5;
         public int ScrollStepPercent = 4;
         public int ScrollStepCapPercent = 50;
+        /// <summary>
+        /// Number of speed steps that are applied; later steps are skipped, so the speed flattens after ScrollStepMaxSteps x ScrollStepSeconds
+        /// (30 s). Owner list 2026-10-20: the 20/40/60/80/100 percent steps stay clearly visible for the first 30 s. Without a limit the
+        /// screen outruns the best possible climb (about 6.6 to 8 u/s for the bot) after 30 to 40 s and every level ends in a game over.
+        /// </summary>
+        public int ScrollStepMaxSteps = 6;
+        /// <summary>
+        /// Hard ceiling of the campaign scroll speed in u/s (not applied to endless). 4.0 u/s is about 60 percent of the fastest bot climb
+        /// on the hardest region 1 level (6.6 u/s), the most a good human can sustain; the base speed of the hardest level is 2.4 u/s.
+        /// </summary>
+        public Fx ScrollMaxSpeed = Fx.FromInt(4);
 
         // Endless speed ramp (doc 08 section 2)
         public int RampFloors = 25;
@@ -166,6 +177,11 @@ namespace SkyHopper.Simulation
         /// <summary>Combo ladder (ComboChain goals): height of one goal-sized jump, u. Rung gap = span / Goal.Value.</summary>
         public Fx ComboLadderSpan = Fx.FromRatio(36, 10);
         public Fx ComboLadderWidth = Fx.FromInt(6);
+        /// <summary>Ladders whose rung gap would be below this (comboChain value 4+) use rungs of LadderMinRung in two alternating columns of LadderZigWidth, LadderColumnGap apart edge to edge (stack rule, 2026-10-20).</summary>
+        public Fx LadderMinStackGap = Fx.FromRatio(12, 10);
+        public Fx LadderMinRung = Fx.One;
+        public Fx LadderZigWidth = Fx.FromRatio(28, 10);
+        public Fx LadderColumnGap = Fx.FromRatio(22, 10);
         /// <summary>First authored chunk row and spacing (rows between chunks) when LevelSpec.FixedChunks is set.</summary>
         public int ChunkStartRow = 10;
         public int ChunkInterval = 14;

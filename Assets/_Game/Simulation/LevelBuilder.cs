@@ -57,6 +57,31 @@ namespace SkyHopper.Simulation
             return maxGap * (55 + (Fx.FromInt(45) * t).FloorToInt()) / 100;
         }
 
+        /// <summary>
+        /// Stack rule (owner report 2026-10-20): at most MaxPerWindow platforms (any x, any kind) with surfaces inside one WindowHeight tall
+        /// window. The builder adds optional platforms (dense extras, second platform, hidden gem side platform) only while the window
+        /// ending at the new platform holds at most MaxPerWindow - 2 others, which keeps one slot free for the next spine platform.
+        /// </summary>
+        public static readonly Fx WindowHeight = Fx.FromInt(3);
+        public const int MaxPerWindow = 4;
+
+        private static int CountInWindow(List<Platform> plats, Fx y)
+        {
+            int n = 0;
+            for (int i = plats.Count - 1; i >= 0; i--)
+            {
+                Fx py = plats[i].Y;
+                if (py < y - WindowHeight) { if (py < y - WindowHeight - Fx.FromInt(5)) break; continue; }
+                if (py <= y) n++;
+            }
+            return n;
+        }
+
+        private static bool OptionalPlatformFits(List<Platform> plats, Fx y)
+        {
+            return CountInWindow(plats, y) <= MaxPerWindow - 2;
+        }
+
         public static LevelData Build(SimConfig cfg, LevelSpec spec)
         {
             int rows = spec.RowsFor();
@@ -185,21 +210,37 @@ namespace SkyHopper.Simulation
                 {
                     Fx gap0 = rng.Range(Fx.Lerp(gapEasyLo, gapHardLo, d), Fx.Lerp(gapEasyHi, gapHardHi, d));
                     gap0 = Fx.Min(gap0, cfg.NormalGapMax);
+                    // The row below the ladder sits more than one window under its first rung, so no window holds more than MaxPerWindow.
+                    gap0 = Fx.Max(gap0, WindowHeight + Fx.FromRatio(5, 100));
+                    gap0 = Fx.Min(gap0, cfg.NormalGapMax);
                     if (prevKind == PlatformKind.Sticky) gap0 = Fx.Min(gap0, cfg.StickyNextGapMax);
                     bool lAfterBounce = prevKind == PlatformKind.Bounce || prevKind == PlatformKind.BounceCap;
                     if (lAfterBounce) gap0 = Fx.Min(gap0, cfg.BounceNextGapMax);
                     Fx jm0 = prevKind == PlatformKind.Sticky ? cfg.StickyJumpMultiplier : Fx.One;
-                    Fx lw = cfg.ComboLadderWidth;
+                    // Rungs closer than LadderMinStackGap would stack 5+ platforms in a window: such ladders (comboChain value 4+) use
+                    // rungs of LadderMinRung and alternate between two columns that are at least 2 u apart edge to edge.
+                    Fx rung = cfg.ComboLadderSpan / ladderV;
+                    bool zig = rung < cfg.LadderMinStackGap;
+                    if (zig && rung < cfg.LadderMinRung) rung = cfg.LadderMinRung;
+                    Fx lw = zig ? cfg.LadderZigWidth : cfg.ComboLadderWidth;
                     Fx lim0 = cfg.LayoutMaxReachDx(gap0, jm0) * 6 / 10 + (prevW + lw) / 2 + half;
                     if (lAfterBounce) lim0 = Fx.Min(lim0, cfg.BounceNextDxMax + (prevW + lw) / 2);
                     Fx xl = prevX + Fx.Clamp(screen / 2 - prevX, -lim0, lim0);
                     xl = Fx.Clamp(xl, lw / 2, screen - lw / 2);
-                    Fx rung = cfg.ComboLadderSpan / ladderV;
+                    Fx xOther = xl;
+                    if (zig)
+                    {
+                        Fx colSep = lw + cfg.LadderColumnGap;
+                        Fx edge = lw / 2;
+                        if (xl < screen / 2) { xl = Fx.Clamp(xl, edge, screen - edge - colSep); xOther = xl + colSep; }
+                        else { xl = Fx.Clamp(xl, edge + colSep, screen - edge); xOther = xl - colSep; }
+                    }
                     for (int i = 0; i < ladderLen; i++)
                     {
                         y = y + (i == 0 ? gap0 : rung);
-                        ctx.Add(rowNo + i, PlatformKind.Normal, xl, y, lw, Fx.Zero, 0, 0);
+                        ctx.Add(rowNo + i, PlatformKind.Normal, (i & 1) == 0 ? xl : xOther, y, lw, Fx.Zero, 0, 0);
                     }
+                    xl = (ladderLen & 1) == 1 ? xl : xOther;
                     prevX = xl; prevW = lw; prevKind = PlatformKind.Normal;
                     rowNo += ladderLen;
                     continue;
@@ -337,7 +378,7 @@ namespace SkyHopper.Simulation
                         Fx off = t < 2 ? sep : sep + Fx.One;
                         Fx cand = (t & 1) == 0 ? x + off : x - off;
                         cand = Fx.Clamp(cand, ws / 2, screen - ws / 2);
-                        if (Fx.Abs(cand - x) >= sep - Fx.FromRatio(5, 100) && Fx.Abs(cand - prevX) <= limS)
+                        if (Fx.Abs(cand - x) >= sep - Fx.FromRatio(5, 100) && Fx.Abs(cand - prevX) <= limS && CountInWindow(ctx.Plats, y) <= MaxPerWindow - 1)
                         {
                             xs = cand; found = true;
                         }
@@ -373,7 +414,7 @@ namespace SkyHopper.Simulation
                         Fx x2 = rng.Range(w2 / 2, screen - w2 / 2);
                         bool free = true;
                         for (int u = 0; u < nUsed; u++) if (Fx.Abs(x2 - usedX[u]) < (w2 + usedW[u]) / 2 + Fx.FromRatio(6, 10)) free = false;
-                        if (!free) continue;
+                        if (!free || !OptionalPlatformFits(ctx.Plats, y)) continue;
                         Platform ex = new Platform();
                         ex.Id = ctx.Plats.Count;
                         ex.Row = row;
@@ -389,7 +430,7 @@ namespace SkyHopper.Simulation
                 {
                     // Optional second platform on the same row (easy levels give more choices), as in LevelGenerator.
                     int secondChance = (Fx.FromInt(50) * (Fx.One - d)).FloorToInt();
-                    if (kind == PlatformKind.Normal && rng.Next(100) < secondChance)
+                    if (kind == PlatformKind.Normal && rng.Next(100) < secondChance && OptionalPlatformFits(ctx.Plats, y))
                     {
                         Fx x2 = screen - x;
                         if (Fx.Abs(x2 - x) >= (w + w) / 2 + Fx.One)

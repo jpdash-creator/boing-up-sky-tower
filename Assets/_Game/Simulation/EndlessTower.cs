@@ -120,6 +120,19 @@ namespace SkyHopper.Simulation
             return true;
         }
 
+        /// <summary>Stack rule (LevelBuilder.MaxPerWindow): optional platforms only while the 3 u window ending at y holds at most MaxPerWindow - 2.</summary>
+        private bool OptionalFits(Fx y)
+        {
+            int n = 0;
+            for (int i = plats.Count - 1; i >= 0; i--)
+            {
+                Fx py = plats[i].Y;
+                if (py < y - LevelBuilder.WindowHeight) break;
+                if (py <= y) n++;
+            }
+            return n <= LevelBuilder.MaxPerWindow - 2;
+        }
+
         private static int PercentLerp(int easy, int hard, Fx d)
         {
             return Fx.Lerp(Fx.FromInt(easy), Fx.FromInt(hard), d).FloorToInt();
@@ -236,7 +249,7 @@ namespace SkyHopper.Simulation
                     Fx x2 = rng.Range(w2 / 2, screen - w2 / 2);
                     bool free = true;
                     for (int u = 0; u < nUsed; u++) if (Fx.Abs(x2 - usedX[u]) < (w2 + usedW[u]) / 2 + Fx.FromRatio(6, 10)) free = false;
-                    if (!free) continue;
+                    if (!free || !OptionalFits(y)) continue;
                     Add(r, rng.Next(100) < 25 ? PlatformKind.Crumble : PlatformKind.Normal, x2, y, w2, Fx.Zero, 0, 0);
                     usedX[nUsed] = x2; usedW[nUsed] = w2; nUsed++;
                 }
@@ -247,7 +260,7 @@ namespace SkyHopper.Simulation
                 if (kind == PlatformKind.Normal && rng.Next(100) < secondChance)
                 {
                     Fx x2 = screen - x;
-                    if (Fx.Abs(x2 - x) >= (w + w) / 2 + Fx.One)
+                    if (Fx.Abs(x2 - x) >= (w + w) / 2 + Fx.One && OptionalFits(y))
                         Add(r, PlatformKind.Normal, Fx.Clamp(x2, lo, hi), y, w, Fx.Zero, 0, 0);
                 }
             }

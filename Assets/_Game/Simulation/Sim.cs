@@ -357,6 +357,7 @@ namespace SkyHopper.Simulation
                 Fx scroll = scrollPerTick;
                 // The scroll speed steps up every ScrollStepSeconds of play (Cfg.ScrollStepPercent each, capped).
                 int steps = (tick - s.StartTick) / (Cfg.ScrollStepSeconds * SimConfig.TicksPerSecond);
+                if (steps > Cfg.ScrollStepMaxSteps) steps = Cfg.ScrollStepMaxSteps;
                 int stepPct = CampaignRamp ? 0 : steps * Cfg.ScrollStepPercent;   // boss levels already ramp with the row
                 if (stepPct > Cfg.ScrollStepCapPercent) stepPct = Cfg.ScrollStepCapPercent;
                 scroll = scroll * (100 + stepPct) / 100;
@@ -369,6 +370,11 @@ namespace SkyHopper.Simulation
                     int pct = Cfg.RampPercentAt(s.Row);
                     if (pct > Cfg.CampaignRampCapPercent) pct = Cfg.CampaignRampCapPercent;
                     scroll = scroll * (100 + pct) / 100;
+                }
+                if (!Endless)
+                {
+                    Fx ceiling = Cfg.ScrollMaxSpeed / SimConfig.TicksPerSecond;
+                    if (scroll > ceiling) scroll = ceiling;
                 }
                 s.KillY = s.KillY + scroll;
             }

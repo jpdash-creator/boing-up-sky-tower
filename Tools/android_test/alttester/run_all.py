@@ -1,9 +1,11 @@
 """Runs the AltTester tests on the phone. Prints PASS / FAIL / SKIP per test and RESULT like smoke_test.py (exit 0 = no failure).
 
-    python Tools/android_test/alttester/run_all.py [--install] [--no-launch] [--only name_part]
+    python Tools/android_test/alttester/run_all.py [--install] [--no-launch] [--only name_part] [--long] [--skip-if-offline]
 
 Prerequisites (README.md): AltTester Desktop is running on the PC, the phone is connected through adb.
---install  installs E:/Unity/builds/skyhopper_alttester.apk first.  --no-launch  uses the game that is already running."""
+--install  installs E:/Unity/builds/skyhopper_alttester.apk first.  --no-launch  uses the game that is already running.
+--long  also runs the long tests (region 1 autopilot, up to 45 min); --only region1 runs just that one.
+--skip-if-offline  prints SKIP and exits 0 when AltTester Desktop / the alttester build cannot be reached (instead of FAIL)."""
 import os
 import sys
 import time
@@ -29,12 +31,19 @@ def main():
         g = altbt.connect()
         g.find("Play", 40)                  # the menu is up
     except TestFailure as e:
+        if "--skip-if-offline" in sys.argv:
+            print("SKIP all  AltTester not reachable (%s). For region 1 without AltTester use Tools/android_test/autoplay_r1.py" % str(e)[:120])
+            return 0
         print("FAIL connect  %s" % e)
         print("RESULT: FAILED")
         return 1
     failed = skipped = passed = 0
     for fn in tests.TESTS:
         if only and only not in fn.__name__:
+            continue
+        if getattr(fn, "long", False) and not only and "--long" not in sys.argv:
+            print("SKIP %-34s long test, use --long or --only %s" % (fn.__name__, fn.__name__[5:13]))
+            skipped += 1
             continue
         t = time.time()
         try:

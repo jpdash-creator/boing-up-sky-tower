@@ -492,7 +492,8 @@ namespace SkyHopper.Gameplay
             b.GetComponent<Image>().preserveAspect = true;
 
             bool open = playable && unlocked;
-            Image tag = UiKit.AddPanel(rt, "NameBacking", open ? new Color(0.05f, 0.07f, 0.16f, 0.92f) : new Color(0.16f, 0.14f, 0.24f, 0.92f));
+            Image tag = Theme.GlassPanel(rt, "NameBacking", 30f);
+            tag.color = open ? new Color(0.05f, 0.08f, 0.22f, 0.78f) : new Color(0.16f, 0.14f, 0.28f, 0.78f);
             string label = playable ? region.Name : "Coming soon";
             Text name = UiKit.AddText(tag.transform, "Name", label, 36, open ? Color.white : new Color(0.88f, 0.88f, 0.95f, 1f), TextAnchor.MiddleCenter);
             name.horizontalOverflow = HorizontalWrapMode.Overflow;

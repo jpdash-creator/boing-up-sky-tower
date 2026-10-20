@@ -5,6 +5,12 @@ using UnityEngine.InputSystem;
 
 namespace SkyHopper.Gameplay
 {
+    /// <summary>Supplies the input word (SimInput bits) for each simulation tick. Used by the development-only Autopilot.</summary>
+    public interface IInputSource
+    {
+        int ReadTick();
+    }
+
     public enum TouchPhaseKind { Began, Held, Ended }
 
     public struct TouchSample
@@ -94,6 +100,9 @@ namespace SkyHopper.Gameplay
         /// <summary>The on-screen controls (set by the HUD once built).</summary>
         public ControlPad Pad;
 
+        /// <summary>Development / test hook (the Autopilot): when set, ReadTick() takes the input word from it instead of the devices.</summary>
+        public IInputSource Source;
+
         public void Update()
         {
             if (ScriptedMove != null || ScriptedJump != null)
@@ -124,6 +133,7 @@ namespace SkyHopper.Gameplay
         /// <summary>Input word for the next simulation tick (movement bits plus the Jump edge, which is then cleared).</summary>
         public int ReadTick()
         {
+            if (Source != null) return Source.ReadTick();
             int move = touch.Move | keyboardMove;
             if ((move & SimInput.Left) != 0 && (move & SimInput.Right) != 0) move = 0;   // both pressed cancels
             int bits = move;

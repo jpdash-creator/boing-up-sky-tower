@@ -63,6 +63,7 @@ If the driver cannot connect: Desktop not running, `adb reverse --list` empty, t
 | `test_settings_toggles_persist` | Flips the five settings toggles, leaves and re-enters Settings, checks the values stuck, then restores them |
 | `test_all_levels_open_toggle` | Dev toggle 'Test: all levels open' ON: region 2 opens and its level 15 shows the level popup (`PLAY`) instead of 'Locked'. SKIP outside development builds |
 | `test_map_scroll_to_far_region` | Swipes the world map until the highest region pin is on screen, taps it, level grid opens. SKIP if that region is locked |
+| `test_region1_all_levels_autopilot` | LONG (only with `--long` or `--only region1`, up to 45 min). Writes `autoplay.json` so the game's own Autopilot plays region 1, levels 1 to 15; AltTester only observes the Run scene (pad objects) and takes a screenshot at every death; the results come from the `BTAUTO` logcat lines. FAIL when a level is not cleared. See the next section |
 | `test_menu_map_play_fail` | Menu, map, region 1, level 1, PLAY, jump taps on `PadJump`, drift until the fail overlay (`Try again`, `Level select`), back to the map |
 
 Object names come from the UI code (`MetaController.cs`, `RunHud.cs`, `ControlPad.cs`, `UiKit.AddButton`): a button's object name is the
@@ -82,3 +83,61 @@ name passed to `AddButton`; toggles are `<label>Toggle` with a child `Label` hol
 
 Written without Unity or a device: the C# hook is not compiled, the Python tests have not run against the game. Expect to adjust waits and a few
 names on the first real run (for example whether the long-press pads respond to AltTester taps, and how far one swipe moves the map).
+
+## Region 1 as a real player
+
+The game contains a development-only **Autopilot** (`Assets/_Game/Gameplay/Autopilot*.cs`). It plays through the same input path as the on-screen
+pad (one input word per simulation tick), plans each hop with the real simulation (like the LevelBot) and can imitate a human: `skill` 0 is a perfect
+player, 1 has a 150 ms reaction lag and timing jitter. A fall is a result, nothing is restarted. It only exists in development builds on a device
+(`GameSettings.DevBuild`); the player's save is never touched (the suite plays on an in-memory save and the real save is reloaded at the end).
+
+For every level the game logs one line `BTAUTO {json}` to logcat and appends a row to `autoplay_results.csv` in its `persistentDataPath`:
+version, level, difficulty and step-table value, skill, result (`cleared`, `fell`, `timeout`), floors reached, time, tick of death, row, X and Y,
+ground platform and the platform ids and kinds within 3 units, scroll speed percent at death, kill-zone gap, number of platforms in the 3 unit window
+and the `dense` flag (6 or more, the 'stacked platforms' case). At the end it writes `BTAUTO done` and deletes `autoplay.json`.
+
+### Option A: adb only (no AltTester Desktop, no alttester APK)
+
+1. Install a **normal development build** (the usual Android build; `Debug.isDebugBuild` must be true). Phone connected, screen on and unlocked.
+2. Run:
+
+   ```bash
+   python Tools/android_test/autoplay_r1.py --skill 0.5
+   ```
+
+   Useful options: `--skill 0` (perfect player: a fall then points at an unfair level), `--levels 8` or `--levels 1-15`, `--difficulty 0..4`,
+   `--seeds 3` (three runs per level with different jitter), `--speed 2` (game speed, 1 is real time), `--stop-on-fail`, `--install`
+   (installs `E:/Unity/builds/skyhopper.apk` first), `--where internal|external|both` (where `autoplay.json` is written; `auto` is right on most phones).
+3. The script pushes `autoplay.json` (run-as for the internal files folder, adb push for `/sdcard/Android/data/com.skyhopper.game/files`), launches the
+   game, follows the `BTAUTO` lines, prints a PASS/FAIL table, takes a screenshot at every fall and writes the report. Do not touch the phone while it plays;
+   the whole region takes 10 to 20 minutes in real time.
+4. Results: `E:/Unity/qa/autoplay_report.md`, `E:/Unity/qa/autoplay_results_<run>.csv` (copy of the file on the phone),
+   screenshots `E:/Unity/device_shots/autoplay_<level>_<n>.png` (level number, attempt). Exit code 0 only when every run was cleared.
+
+### Option B: through AltTester (needs the Desktop server and the alttester APK)
+
+1. Build and install the alttester APK and start AltTester Desktop exactly as in 'Steps for the owner' above (Desktop must be running on port 13000).
+2. Run the long test on its own (it is not part of the normal run):
+
+   ```bash
+   python Tools/android_test/alttester/run_all.py --install --only region1
+   ```
+
+   Environment variables: `AUTOPLAY_SKILL` (0.5), `AUTOPLAY_LEVELS` (`1-15`), `AUTOPLAY_DIFFICULTY` (0), `AUTOPLAY_SEEDS` (1), `AUTOPLAY_MINUTES` (45).
+   `--skip-if-offline` makes the script print SKIP and exit 0 when Desktop or the alttester build cannot be reached.
+3. The test writes the flag file while the menu is up (the game polls for it once a second), then observes with AltTester: the Run scene and its pad
+   objects must appear; at every death it saves `E:/Unity/device_shots/alttester/autopilot_<level>_<n>_death.png`. Report: `E:/Unity/qa/autoplay_report_alttester.md`.
+   The same test also needs adb to read logcat, which AltTester does not replace.
+
+### Reading the result
+
+- A level that falls at skill 0 means that a perfect player, which searches the real simulation, found no safe line: look at `dense`, `nk` (platform kinds
+  near the death) and the screenshot; that is the signal for an unfair or broken spot (for example the stacked platforms).
+- A fall only at higher skill is the reaction lag: compare the same level at skill 0 and 0.5.
+- `timeout` means the run neither ended nor made progress for 90 s (or lasted 300 s of game time).
+
+### Not verified yet
+
+Written without Unity, a compiler or a device. The planner (`AutopilotPlanner`) is new code modelled on `LevelBot`, so the first run may show levels that
+the LevelBot proves solvable but the autopilot does not clear at skill 0 (goals such as FindHiddenGem and ComboChain are only roughly handled). Check
+first that `lvl_001_01` is cleared at skill 0 (EditMode test `PerfectAutopilotClearsRegionOneLevelOne`, PlayMode test `AutopilotClearsRegionOneLevelOneAtSkillZero`).

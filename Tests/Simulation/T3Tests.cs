@@ -115,7 +115,7 @@ namespace SkyHopper.Simulation.Tests
             LevelSpec b = T3.Spec(777, 700, 10, SignatureKind.SwingingGongs, GoalType.SurviveWave);
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
-            Assert.Equal(-829843588191266141L, LevelBuilder.Build(cfg, a).ComputeHash());
+            Assert.Equal(3262358288399855812L, LevelBuilder.Build(cfg, a).ComputeHash());
             Assert.Equal(-3451722916450616671L, LevelBuilder.Build(cfg, b).ComputeHash());
         }
 

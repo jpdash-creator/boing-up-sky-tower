@@ -180,6 +180,6 @@ namespace SkyHopper.Simulation.Tests
             Assert.Equal(GoldenR3S12345, d.ComputeHash());
         }
 
-        private const long GoldenR3S12345 = 5513047740284291827L;
+        private const long GoldenR3S12345 = 918977617001383232L;
     }
 }
