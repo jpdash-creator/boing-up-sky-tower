@@ -292,7 +292,7 @@ namespace BoingTower.Gameplay
             UiKit.Place((RectTransform)play.transform, new Vector2(0.5f, 0f), new Vector2(0f, 290f), new Vector2(520f, 150f));
             Button settings = UiKit.AddButton(screen, "Settings", "Settings", Btn(0), new Color(0.9f, 0.95f, 1f), new Vector2(380f, 130f), ShowSettings, 46);
             UiKit.Place((RectTransform)settings.transform, new Vector2(0.5f, 0f), new Vector2(0f, 135f), new Vector2(380f, 130f));
-            Text v = UiKit.AddText(screen, "Version", "v" + Application.version + "  prototype", 30, new Color(1f, 1f, 1f, 0.6f));
+            Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.6f));
             UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(700f, 60f));
         }
 

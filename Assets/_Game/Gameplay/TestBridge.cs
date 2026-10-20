@@ -36,7 +36,7 @@ namespace BoingTower.Gameplay
         void LogState()
         {
             sb.Length = 0;
-            sb.Append("BTSTATE {\"scene\":\"").Append(SceneManager.GetActiveScene().name).Append("\",\"fps\":").Append((1f / Mathf.Max(0.0001f, Time.smoothDeltaTime)).ToString("F0"));
+            sb.Append("BTSTATE {\"version\":\"").Append(Application.version).Append("\",\"scene\":\"").Append(SceneManager.GetActiveScene().name).Append("\",\"fps\":").Append((1f / Mathf.Max(0.0001f, Time.smoothDeltaTime)).ToString("F0"));
             var meta = FindFirstObjectByType<MetaController>();
             if (meta != null) sb.Append(",\"screen\":\"").Append(meta.CurrentScreen).Append('"');
             var rc = FindFirstObjectByType<RunController>();

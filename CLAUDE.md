@@ -66,3 +66,7 @@ C# 9+, assembly definitions per module, DI via VContainer or a small service loc
 
 ## Device testing (Android)
 `Tools/unity_tests.ps1 -Platform PlayMode|EditMode` runs the Unity tests and prints failures. `Assets/Editor/Build/AndroidBuild.cs` builds the development APK (`-executeMethod BoingTower.Editor.Build.AndroidBuild.BuildFromCommandLine`, output `E:/Unity/builds/boingtower.apk`). `python Tools/android_test/smoke_test.py` installs it on the connected phone (the phone asks to confirm each install), walks every screen, plays, and checks layout and frame time through the in-game TestBridge (development builds only). Owner feedback and decisions: `.claude/pendingdecisions/device-feedback-2026-10-19.md`.
+
+
+## Build versioning
+Every build uses the semantic version vMAJOR.MINOR.HOTFIX.BUILD (file Tools/version.json, rules in .claude/rules/versioning.md). Bump minor (feature or rule change) or hotfix (fix only) with `python Tools/version.py bump ...` before the build; BUILD is incremented by the build script. Name the installed version in every report.
