@@ -200,9 +200,9 @@
     {
       "id": "T19",
       "task": "Android test kit: adb harness (install, launch, tap, screenshot, logcat asserts) plus in-game UI-tree dump; run on the OnePlus 13",
-      "status": "active",
-      "minutes": 60,
-      "blocker": "Harness works on the phone; needs install taps (OnePlus asks each time)",
+      "status": "done",
+      "minutes": 0,
+      "blocker": "Smoke test passes on the OnePlus (7/7 steps, 2026-10-20)",
       "depends": [
         "T11"
       ]
@@ -270,9 +270,9 @@
     {
       "id": "T26",
       "task": "AltTester SDK + Desktop on E: (owner approved the install); keep Tools/android_test as the lightweight kit",
-      "status": "pending",
-      "minutes": 90,
-      "blocker": "After T23/T24 (owner approved install)",
+      "status": "active",
+      "minutes": 20,
+      "blocker": "SDK 2.3.2 + driver 2.3.2 installed, Desktop 2.4.0 extracted to E:/tools/alttester_desktop; owner launches Desktop once",
       "depends": [
         "T19"
       ]
