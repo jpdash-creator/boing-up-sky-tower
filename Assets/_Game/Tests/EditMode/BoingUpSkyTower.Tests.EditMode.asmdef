@@ -1,11 +1,11 @@
 {
-  "name": "SkyHopper.Tests.EditMode",
-  "rootNamespace": "SkyHopper.Tests",
+  "name": "BoingUpSkyTower.Tests.EditMode",
+  "rootNamespace": "BoingUpSkyTower.Tests",
   "references": [
-    "SkyHopper.Simulation",
-    "SkyHopper.Content",
-    "SkyHopper.Economy",
-    "SkyHopper.Gameplay",
+    "BoingUpSkyTower.Simulation",
+    "BoingUpSkyTower.Content",
+    "BoingUpSkyTower.Economy",
+    "BoingUpSkyTower.Gameplay",
     "Unity.Nuget.Newtonsoft-Json",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

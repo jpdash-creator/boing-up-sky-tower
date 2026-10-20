@@ -1,18 +1,18 @@
 using System.Collections;
 using System.IO;
-using SkyHopper.Content;
-using SkyHopper.Economy;
-using SkyHopper.Gameplay;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Gameplay;
+using BoingUpSkyTower.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace SkyHopper.Tests
+namespace BoingUpSkyTower.Tests
 {
     /// <summary>
-    /// Plays the real scenes. Screenshots go to the folder in the environment variable SKYHOPPER_SHOTS (default E:/Unity/shots)
+    /// Plays the real scenes. Screenshots go to the folder in the environment variable BOINGUPSKYTOWER_SHOTS (default E:/Unity/shots)
     /// so a developer (or Claude) can look at the result. Run with graphics enabled (no -nographics) to get real pixels.
     /// </summary>
     public class SceneSmokeTests
@@ -21,7 +21,7 @@ namespace SkyHopper.Tests
         {
             get
             {
-                string d = System.Environment.GetEnvironmentVariable("SKYHOPPER_SHOTS");
+                string d = System.Environment.GetEnvironmentVariable("BOINGUPSKYTOWER_SHOTS");
                 return string.IsNullOrEmpty(d) ? "E:/Unity/shots" : d;
             }
         }

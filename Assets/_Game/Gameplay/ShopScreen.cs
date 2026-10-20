@@ -1,11 +1,11 @@
 using System;
 using System.Globalization;
-using SkyHopper.Content;
-using SkyHopper.Economy;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The in-game shop (docs/14-shop-requirements.md). Four tabs: Chests and Gears, Power-ups and Characters, VIP and Battle Pass,

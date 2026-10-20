@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using SkyHopper.Content;
-using SkyHopper.Economy;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Simulation;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// Meta scene: main menu, world map, level select (15 levels per region, stars, locks), level info popup,
@@ -300,7 +300,7 @@ namespace SkyHopper.Gameplay
             lastMapOffset = -1f;   // the map opens on the current region again after a visit to the menu
             RegionArt meadow = art != null ? art.ForRegion(1) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
-            Text title = UiKit.AddText(screen, "Title", "SKY\n<color=#FFC93D>HOPPER</color>", 150, Color.white);
+            Text title = UiKit.AddText(screen, "Title", "BOING UP\n<color=#FFC93D>SKY TOWER</color>", 108, Color.white);
             UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(900f, 340f));
             if (art != null && art.Player != null)
             {

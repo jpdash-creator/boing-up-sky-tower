@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>Boot scene: loads content, art and the save, shows the loading art for a moment, then opens Meta.</summary>
     public sealed class BootLoader : MonoBehaviour
@@ -24,7 +24,7 @@ namespace SkyHopper.Gameplay
             bg.preserveAspect = false;
             UiKit.Stretch(bg.rectTransform);
 
-            Text title = UiKit.AddText(canvas.transform, "Title", "SKY HOPPER", 120, Color.white);
+            Text title = UiKit.AddText(canvas.transform, "Title", "BOING UP: SKY TOWER", 120, Color.white);
             UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -260f), new Vector2(1000f, 160f));
 
             Image track = UiKit.AddImage(canvas.transform, "BarTrack", null, new Color(0.1f, 0.2f, 0.35f, 0.9f));

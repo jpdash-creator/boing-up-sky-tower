@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Simulation;
 using UnityEngine;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The contents of persistentDataPath/autoplay.json, written by the host (Tools/android_test/autoplay_r1.py):

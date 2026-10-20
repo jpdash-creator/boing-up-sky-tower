@@ -1,10 +1,10 @@
 using System.IO;
-using SkyHopper.Content;
-using SkyHopper.Economy;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Simulation;
 using UnityEngine;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>What the Run scene hands back to the Meta scene.</summary>
     public sealed class RunResult

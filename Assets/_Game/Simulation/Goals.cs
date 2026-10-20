@@ -1,4 +1,4 @@
-namespace SkyHopper.Simulation
+namespace BoingUpSkyTower.Simulation
 {
     /// <summary>
     /// Pure functions that decide whether a campaign goal is met from a SimState. Call after every

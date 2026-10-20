@@ -1,6 +1,6 @@
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Simulation;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>Fixed-point to float for RENDERING only. Never feed floats back into the Simulation.</summary>
     public static class FxExt

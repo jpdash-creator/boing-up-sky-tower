@@ -1,8 +1,8 @@
 {
-  "name": "SkyHopper.Editor.ContentSync",
-  "rootNamespace": "SkyHopper.Editor.ContentSync",
+  "name": "BoingUpSkyTower.Editor.ContentSync",
+  "rootNamespace": "BoingUpSkyTower.Editor.ContentSync",
   "references": [
-    "SkyHopper.Content"
+    "BoingUpSkyTower.Content"
   ],
   "includePlatforms": [
     "Editor"

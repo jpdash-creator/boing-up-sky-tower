@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using SkyHopper.Content;
-using SkyHopper.Gameplay;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Gameplay;
+using BoingUpSkyTower.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace SkyHopper.Tests
+namespace BoingUpSkyTower.Tests
 {
     /// <summary>The Autopilot's decision code (planner bridge, brain, stack counter, CSV / JSON writers). No scene needed.</summary>
     public class AutopilotTests

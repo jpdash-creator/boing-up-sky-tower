@@ -1,4 +1,4 @@
-"""Android test kit for Sky Hopper (roadmap T19): a small, Playwright-like driver on top of adb.
+"""Android test kit for Boing Up: Sky Tower (roadmap T19): a small, Playwright-like driver on top of adb.
 
 The development build contains TestBridge, which logs the visible UI tree with screen rectangles (BTUI) and the game state (BTSTATE) to
 logcat. This module reads those lines, finds elements by their text, and drives the phone with adb taps, holds and screenshots.
@@ -14,8 +14,8 @@ import subprocess
 import threading
 import time
 
-PKG = "com.skyhopper.game"
-APK = "E:/Unity/builds/skyhopper.apk"
+PKG = "com.jdlabs.boingupskytower"
+APK = "E:/Unity/builds/boingupskytower.apk"
 SHOTS = "E:/Unity/device_shots"
 
 

@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Xunit;
 
-namespace SkyHopper.Simulation.Tests
+namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>
     /// T14: derives the star-2 coin targets of regions 1-5 from the bot and checks the shipped table.

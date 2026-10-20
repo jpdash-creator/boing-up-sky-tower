@@ -16,7 +16,7 @@ Casual players of all ages (owner decision 2026-10-20: "all of them"), on a phon
 
 ## Product Purpose
 
-Sky Hopper (renamed from the working title Boing Tower on 2026-10-20) is a 2D vertical jumper. The player steers a small chibi character up an endless tower of platforms through 30 themed regions (5 playable now) while the screen scrolls up and the bottom edge is the danger. Success: smooth 60 fps play, instant input, clear feedback, a progression of regions, and a shop that never blocks play.
+Boing Up: Sky Tower is a 2D vertical jumper. The player steers a small chibi character up an endless tower of platforms through 30 themed regions (5 playable now) while the screen scrolls up and the bottom edge is the danger. Success: smooth 60 fps play, instant input, clear feedback, a progression of regions, and a shop that never blocks play.
 
 ## Positioning
 
@@ -36,7 +36,7 @@ One thumb on a 6 to 6.8 inch phone, often outdoors or in transit, sound often of
 
 ## Brand Commitments
 
-Name: Sky Hopper (no mention of the old name anywhere). Mascot: Momo (fluffy white chibi with a pink scarf). Art world: cute chibi cartoon, neon rim light, glossy sparkle accents, saturated gradients, daylight sky and meadow as home base.
+Name: Boing Up: Sky Tower (store title; two lines Boing Up and Sky Tower on the title screen; package com.jdlabs.boingupskytower). Mascot: Momo (fluffy white chibi with a pink scarf). Art world: cute chibi cartoon, neon rim light, glossy sparkle accents, saturated gradients, daylight sky and meadow as home base.
 
 ## Evidence on Hand
 

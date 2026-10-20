@@ -14,7 +14,7 @@ namespace ProjectBootstrap
     public static class ProjectSetup
     {
         // Placeholder: trademark and store-availability check is still pending (doc 07).
-        const string AppId = "com.skyhopper.game";
+        const string AppId = "com.jdlabs.boingupskytower";
 
         public static void Run()
         {
@@ -38,15 +38,15 @@ namespace ProjectBootstrap
         static void SetColorSpaceAndIdentity()
         {
             PlayerSettings.colorSpace = ColorSpace.Linear;
-            PlayerSettings.companyName = "SkyHopper";
-            PlayerSettings.productName = "Sky Hopper";
+            PlayerSettings.companyName = "BoingUpSkyTower";
+            PlayerSettings.productName = "Boing Up: Sky Tower";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, AppId);
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, AppId);
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
-            Debug.Log("[ProjectSetup] Identity: Linear color space, Sky Hopper, " + AppId + ", portrait, Android IL2CPP ARM64.");
+            Debug.Log("[ProjectSetup] Identity: Linear color space, Boing Up: Sky Tower, " + AppId + ", portrait, Android IL2CPP ARM64.");
         }
 
         static void CreateUrp2D()

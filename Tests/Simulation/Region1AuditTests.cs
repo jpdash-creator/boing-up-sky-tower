@@ -6,7 +6,7 @@ using System.Text;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SkyHopper.Simulation.Tests
+namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>Result of the stack scan of one built level.</summary>
     public sealed class StackStats

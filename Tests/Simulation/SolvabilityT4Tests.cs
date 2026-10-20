@@ -5,7 +5,7 @@ using System.Text;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SkyHopper.Simulation.Tests
+namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>One row of the solvability report.</summary>
     public sealed class LevelOutcome

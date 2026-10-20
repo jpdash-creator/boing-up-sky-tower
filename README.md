@@ -1,4 +1,4 @@
-# Sky Hopper
+# Boing Up: Sky Tower
 
 A 2D vertical-jumping arcade game for Android and iOS (Unity 6 LTS). Planning docs live in `E:\Source\Game Ideas\boing-tower-docs\docs\`.
 

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Simulation;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>Supplies the input word (SimInput bits) for each simulation tick. Used by the development-only Autopilot.</summary>
     public interface IInputSource

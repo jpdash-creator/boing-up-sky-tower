@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SkyHopper.Content;
-using SkyHopper.Economy;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Economy;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace SkyHopper.Tests
+namespace BoingUpSkyTower.Tests
 {
     /// <summary>Shop economy (docs/14): the owner's pack tables, test gem purchases, coin packs bought with gems, launch promo on and off.</summary>
     public class ShopTests

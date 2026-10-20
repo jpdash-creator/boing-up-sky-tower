@@ -1,4 +1,4 @@
-namespace SkyHopper.Simulation
+namespace BoingUpSkyTower.Simulation
 {
     public enum PlatformKind
     {

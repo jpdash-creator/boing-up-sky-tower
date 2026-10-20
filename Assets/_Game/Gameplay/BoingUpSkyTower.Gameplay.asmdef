@@ -1,10 +1,10 @@
 {
-  "name": "SkyHopper.Gameplay",
-  "rootNamespace": "SkyHopper.Gameplay",
+  "name": "BoingUpSkyTower.Gameplay",
+  "rootNamespace": "BoingUpSkyTower.Gameplay",
   "references": [
-    "SkyHopper.Simulation",
-    "SkyHopper.Content",
-    "SkyHopper.Economy",
+    "BoingUpSkyTower.Simulation",
+    "BoingUpSkyTower.Content",
+    "BoingUpSkyTower.Economy",
     "Unity.InputSystem",
     "UnityEngine.UI"
   ],

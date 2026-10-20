@@ -239,7 +239,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e47cf9211dfe44847935a8bd7ccc98d3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: SkyHopper.Gameplay::SkyHopper.Gameplay.MetaController
+  m_EditorClassIdentifier: BoingUpSkyTower.Gameplay::BoingUpSkyTower.Gameplay.MetaController
 --- !u!4 &2134757307
 Transform:
   m_ObjectHideFlags: 0

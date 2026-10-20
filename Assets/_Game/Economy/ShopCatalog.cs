@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Globalization;
-using SkyHopper.Content;
+using BoingUpSkyTower.Content;
 
-namespace SkyHopper.Economy
+namespace BoingUpSkyTower.Economy
 {
     /// <summary>
     /// The shop's gem and coin packs (docs/14-shop-requirements.md). Loaded from the content manifest (Content/economy/gem_packs.json and
@@ -59,7 +59,7 @@ namespace SkyHopper.Economy
         {
             var list = new List<GemPackDef>(GemRows.Length);
             foreach (object[] r in GemRows)
-                list.Add(new GemPackDef { Id = "gempack_" + (string)r[0], Gems = (int)r[1], UsdList = (double)r[2], UsdPromo = (double)r[3], Sku = "skyhopper.gems." + (string)r[0], Badge = (string)r[4] });
+                list.Add(new GemPackDef { Id = "gempack_" + (string)r[0], Gems = (int)r[1], UsdList = (double)r[2], UsdPromo = (double)r[3], Sku = "boingupskytower.gems." + (string)r[0], Badge = (string)r[4] });
             return list;
         }
 

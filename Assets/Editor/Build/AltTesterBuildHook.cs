@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 using AltTester.AltTesterSDK.Driver;
 using AltTester.AltTesterUnitySDK.Commands;
 
-namespace SkyHopper.Editor.Build
+namespace BoingUpSkyTower.Editor.Build
 {
     /// <summary>
     /// Opt-in AltTester build (roadmap T26). OFF by default: a normal build contains nothing of AltTester.
@@ -24,7 +24,7 @@ namespace SkyHopper.Editor.Build
         /// <summary>The port the game connects to on the PC (AltTester Desktop listens on it); the driver uses the same port.</summary>
         public const int ServerPort = 13000;
         public const string ServerHost = "127.0.0.1";   // reached through "adb reverse tcp:13000 tcp:13000"
-        public const string AppName = "SkyHopper";
+        public const string AppName = "BoingUpSkyTower";
         const string RunnerPrefabPath = "Packages/com.alttester.sdk/Runtime/Prefab/AltTesterPrefab.prefab";
         const string BootSceneName = "Boot";
 

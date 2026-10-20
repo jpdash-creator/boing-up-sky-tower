@@ -4,12 +4,12 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace SkyHopper.Editor.Build
+namespace BoingUpSkyTower.Editor.Build
 {
-    /// <summary>Headless Android build: -executeMethod SkyHopper.Editor.Build.AndroidBuild.BuildFromCommandLine (output E:/Unity/builds/skyhopper.apk).</summary>
+    /// <summary>Headless Android build: -executeMethod BoingUpSkyTower.Editor.Build.AndroidBuild.BuildFromCommandLine (output E:/Unity/builds/boingupskytower.apk).</summary>
     public static class AndroidBuild
     {
-        const string OutputPath = "E:/Unity/builds/skyhopper.apk";   // always the latest build (the device test kit installs this one)
+        const string OutputPath = "E:/Unity/builds/boingupskytower.apk";   // always the latest build (the device test kit installs this one)
 
         // Semantic build version vMAJOR.MINOR.HOTFIX.BUILD (.claude/rules/versioning.md): the first three parts are bumped by hand with
         // Tools/version.py, BUILD is incremented here for every produced APK and never reset. It becomes the app version name, and the
@@ -23,7 +23,7 @@ namespace SkyHopper.Editor.Build
 
         static void WriteVersion(VersionInfo v) { File.WriteAllText(VersionFile, JsonUtility.ToJson(v, true) + "\n"); }
 
-        [MenuItem("Tools/Sky Hopper/Build Android APK")]
+        [MenuItem("Tools/Boing Up: Sky Tower/Build Android APK")]
         public static void BuildFromMenu() { Build(); }
 
         public static void BuildFromCommandLine()
@@ -40,9 +40,9 @@ namespace SkyHopper.Editor.Build
             string versionName = ver.major + "." + ver.minor + "." + ver.hotfix + "." + ver.build;
             PlayerSettings.bundleVersion = versionName;
             PlayerSettings.Android.bundleVersionCode = ver.build;
-            // Opt-in AltTester build (-altTester or BT_ALTTESTER=1, see AltTesterBuildHook): own file name, and it never replaces the clean skyhopper.apk.
+            // Opt-in AltTester build (-altTester or BT_ALTTESTER=1, see AltTesterBuildHook): own file name, and it never replaces the clean boingupskytower.apk.
             bool altTester = AltTesterBuildHook.Requested();
-            string versionedPath = "E:/Unity/builds/skyhopper_v" + versionName + (altTester ? "_alttester" : "") + ".apk";
+            string versionedPath = "E:/Unity/builds/boingupskytower_v" + versionName + (altTester ? "_alttester" : "") + ".apk";
             Debug.Log("[BUILD] version v" + versionName);
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
@@ -63,7 +63,7 @@ namespace SkyHopper.Editor.Build
             finally { AltTesterBuildHook.End(); }
             Debug.Log("[BUILD] result " + report.summary.result + ", size " + (report.summary.totalSize / (1024 * 1024)) + " MB, errors " + report.summary.totalErrors);
             bool ok = report.summary.result == BuildResult.Succeeded;
-            if (ok) File.Copy(versionedPath, altTester ? "E:/Unity/builds/skyhopper_alttester.apk" : OutputPath, true);
+            if (ok) File.Copy(versionedPath, altTester ? "E:/Unity/builds/boingupskytower_alttester.apk" : OutputPath, true);
             string log = Path.Combine(ProjectRoot, "Content", "builds", "build_log.csv");
             Directory.CreateDirectory(Path.GetDirectoryName(log));
             if (!File.Exists(log)) File.WriteAllText(log, "date,version,result,sizeMB,apk\n");

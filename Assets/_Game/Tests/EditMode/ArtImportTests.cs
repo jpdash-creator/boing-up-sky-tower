@@ -1,10 +1,10 @@
 using System.IO;
-using SkyHopper.Content;
+using BoingUpSkyTower.Content;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
-namespace SkyHopper.Tests
+namespace BoingUpSkyTower.Tests
 {
     // Checks the sliced Tier 1 art (roadmap T1) is present and imports as mobile-ready sprites.
     public class ArtImportTests

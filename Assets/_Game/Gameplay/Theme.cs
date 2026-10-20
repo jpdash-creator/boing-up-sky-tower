@@ -2,10 +2,10 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The interface chrome of Sky Hopper (design direction "daylight glass", 2026-10-20): the painted world art stays the hero and the interface
+    /// The interface chrome of Boing Up: Sky Tower (design direction "daylight glass", 2026-10-20): the painted world art stays the hero and the interface
     /// is calm and crisp around it. Surfaces are soft rounded cards and frosted glass chips, text is ink on light surfaces and white on glass,
     /// the accent is a warm coral with a sky-blue companion, and tabs are a segmented pill bar. All sprites are drawn in code (rounded, 9-sliced,
     /// never stretched) so there is nothing to import. Tokens live here; screens do not hand-pick colours or radii.

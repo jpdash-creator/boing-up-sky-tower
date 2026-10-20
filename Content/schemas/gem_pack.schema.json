@@ -9,7 +9,7 @@
     "gems": {"type": "integer", "minimum": 1},
     "usdList": {"type": "number", "minimum": 0.49},
     "usdPromo": {"type": "number", "minimum": 0.49},
-    "sku": {"type": "string", "pattern": "^skyhopper[.]gems[.][a-z0-9_]+$"},
+    "sku": {"type": "string", "pattern": "^boingupskytower[.]gems[.][a-z0-9_]+$"},
     "badge": {"type": "string", "enum": ["", "popular", "best_value"]}
   }
 }

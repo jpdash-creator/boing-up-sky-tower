@@ -1,7 +1,7 @@
 using System;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Simulation;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     // Development-only test tooling (the Autopilot). Plain C#, no Unity types, so it is unit-testable and allocation-free per tick:
     // only AutopilotPlanner.Plan() does real work, once per landing, on buffers it allocated up front.

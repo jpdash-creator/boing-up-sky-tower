@@ -3,7 +3,7 @@
     python Tools/android_test/alttester/run_all.py [--install] [--no-launch] [--only name_part] [--long] [--skip-if-offline]
 
 Prerequisites (README.md): AltTester Desktop is running on the PC, the phone is connected through adb.
---install  installs E:/Unity/builds/skyhopper_alttester.apk first.  --no-launch  uses the game that is already running.
+--install  installs E:/Unity/builds/boingupskytower_alttester.apk first.  --no-launch  uses the game that is already running.
 --long  also runs the long tests (region 1 autopilot, up to 45 min); --only region1 runs just that one.
 --skip-if-offline  prints SKIP and exits 0 when AltTester Desktop / the alttester build cannot be reached (instead of FAIL)."""
 import os

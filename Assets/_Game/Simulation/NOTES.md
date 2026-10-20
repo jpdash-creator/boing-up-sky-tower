@@ -1,6 +1,6 @@
 # Simulation library: API notes and design decisions (T3 + T4)
 
-Engine-agnostic C# 9 (asmdef `SkyHopper.Simulation`, no engine references). Fixed-point `Fx` (Q16.16) and integers only, seeded `Rng`. No `float`, `System.Math`, LINQ-heavy code or JSON in this folder. `Sim.Step` never allocates (checked by a test). The sources are compiled by `Tests/Simulation/*.csproj` straight from `Assets/`, so anything that builds there builds in Unity 6.
+Engine-agnostic C# 9 (asmdef `BoingUpSkyTower.Simulation`, no engine references). Fixed-point `Fx` (Q16.16) and integers only, seeded `Rng`. No `float`, `System.Math`, LINQ-heavy code or JSON in this folder. `Sim.Step` never allocates (checked by a test). The sources are compiled by `Tests/Simulation/*.csproj` straight from `Assets/`, so anything that builds there builds in Unity 6.
 
 ## How Unity code builds a level and runs it
 

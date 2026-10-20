@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Simulation;
 
-namespace SkyHopper.Content
+namespace BoingUpSkyTower.Content
 {
     /// <summary>
     /// Maps a content LevelDef (+ its RegionDef) to the Simulation's engine-agnostic LevelSpec.

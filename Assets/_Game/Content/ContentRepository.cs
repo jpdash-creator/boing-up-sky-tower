@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Simulation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace SkyHopper.Content
+namespace BoingUpSkyTower.Content
 {
     /// <summary>
     /// Read-only, validated view of all shipped content, loaded from the merged manifest

@@ -1,12 +1,12 @@
 using System.Collections;
-using SkyHopper.Economy;
-using SkyHopper.Gameplay;
+using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace SkyHopper.Tests
+namespace BoingUpSkyTower.Tests
 {
     /// <summary>The development-only Autopilot driving the real Run scene through the normal input path.</summary>
     public class AutopilotPlayTests

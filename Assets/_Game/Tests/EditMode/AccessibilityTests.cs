@@ -1,8 +1,8 @@
-using SkyHopper.Gameplay;
+using BoingUpSkyTower.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace SkyHopper.Tests.EditModeTests
+namespace BoingUpSkyTower.Tests.EditModeTests
 {
     /// <summary>CUX-5 / CUX-6: contrast of the fixed colour combinations, accessibility settings and haptics gating.</summary>
     [Category("CriticalUX")]

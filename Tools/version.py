@@ -1,4 +1,4 @@
-"""Build version of Sky Hopper: vMAJOR.MINOR.HOTFIX.BUILD (see .claude/rules/versioning.md).
+"""Build version of Boing Up: Sky Tower: vMAJOR.MINOR.HOTFIX.BUILD (see .claude/rules/versioning.md).
 
     python Tools/version.py show
     python Tools/version.py bump minor      # MINOR+1, HOTFIX back to 0 (BUILD is never reset)

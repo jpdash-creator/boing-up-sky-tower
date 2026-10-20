@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace SkyHopper.Simulation
+namespace BoingUpSkyTower.Simulation
 {
     public sealed class GeneratorParams
     {

@@ -8,7 +8,7 @@
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <RootNamespace>SkyHopper.Simulation.Tests</RootNamespace>
+    <RootNamespace>BoingUpSkyTower.Simulation.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

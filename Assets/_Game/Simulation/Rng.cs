@@ -1,4 +1,4 @@
-namespace SkyHopper.Simulation
+namespace BoingUpSkyTower.Simulation
 {
     /// <summary>
     /// Seeded xoshiro128** generator, integer-only, identical on every platform. State is seeded

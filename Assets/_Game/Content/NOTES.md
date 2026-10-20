@@ -1,12 +1,12 @@
-# SkyHopper.Content (T2: runtime content loading)
+# BoingUpSkyTower.Content (T2: runtime content loading)
 
-Assembly `SkyHopper.Content` (references SkyHopper.Simulation + Unity.Nuget.Newtonsoft-Json, package `com.unity.nuget.newtonsoft-json` 3.2.2). Namespace `SkyHopper.Content`.
+Assembly `BoingUpSkyTower.Content` (references BoingUpSkyTower.Simulation + Unity.Nuget.Newtonsoft-Json, package `com.unity.nuget.newtonsoft-json` 3.2.2). Namespace `BoingUpSkyTower.Content`.
 
 ## Loading
 - Offline fallback: `ContentRepository.LoadFromResources()` reads `Assets/Resources/Content/content_manifest.json` (TextAsset, path `Content/content_manifest`).
 - Remote/other text: `ContentRepository.LoadFromJson(string manifestJson)` (same format, validated identically).
-- Regenerate the manifest after any change under `Content/`: menu `Tools/Sky Hopper/Build Content Manifest`, or headless
-  `Unity.exe -batchmode -nographics -projectPath <repo> -executeMethod SkyHopper.Editor.ContentSync.ContentManifestBuilder.BuildFromCommandLine -logFile <log>` (no `-quit`; exits 0/1).
+- Regenerate the manifest after any change under `Content/`: menu `Tools/Boing Up: Sky Tower/Build Content Manifest`, or headless
+  `Unity.exe -batchmode -nographics -projectPath <repo> -executeMethod BoingUpSkyTower.Editor.ContentSync.ContentManifestBuilder.BuildFromCommandLine -logFile <log>` (no `-quit`; exits 0/1).
   It also runs automatically before every player build (`ContentManifestBuildStep`, IPreprocessBuildWithReport).
 - The EditMode test `ResourcesManifestIsInSyncWithSourceContent` fails when the manifest is stale.
 

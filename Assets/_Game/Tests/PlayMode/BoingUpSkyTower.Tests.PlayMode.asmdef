@@ -1,11 +1,11 @@
 {
-  "name": "SkyHopper.Tests.PlayMode",
-  "rootNamespace": "SkyHopper.Tests",
+  "name": "BoingUpSkyTower.Tests.PlayMode",
+  "rootNamespace": "BoingUpSkyTower.Tests",
   "references": [
-    "SkyHopper.Simulation",
-    "SkyHopper.Content",
-    "SkyHopper.Economy",
-    "SkyHopper.Gameplay",
+    "BoingUpSkyTower.Simulation",
+    "BoingUpSkyTower.Content",
+    "BoingUpSkyTower.Economy",
+    "BoingUpSkyTower.Gameplay",
     "Unity.InputSystem",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

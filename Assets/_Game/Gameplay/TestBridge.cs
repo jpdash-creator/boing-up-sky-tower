@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// Development-build only hook for the Android test harness (Tools/android_test). It writes game state (BTSTATE) and the visible UI tree

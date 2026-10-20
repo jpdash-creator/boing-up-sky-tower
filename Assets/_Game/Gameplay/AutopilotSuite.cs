@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using SkyHopper.Content;
-using SkyHopper.Economy;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Economy;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// Development-only runner that plays a list of levels in sequence with the Autopilot, like a real player, without any UI tap:

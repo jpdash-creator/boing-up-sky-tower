@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>Sound effect ids. Clip file names are in AudioManager.SfxNames (Assets/Resources/Audio/sfx).</summary>
     public enum Sfx { Tap, Jump, Land, Bounce, Coin, Gem, Star, Combo, SpeedUp, Fall, Win, Fail, Back, Popup }

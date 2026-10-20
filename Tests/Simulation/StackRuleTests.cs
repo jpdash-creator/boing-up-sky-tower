@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SkyHopper.Simulation.Tests
+namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>
     /// Regression tests for the owner report of 2026-10-20 ("8 to 10 platforms stacked in region 1, game over on touching").

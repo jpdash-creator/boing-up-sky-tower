@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-namespace SkyHopper.Gameplay
+namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>Accessibility label of an interactive element (bridged to the platform screen reader later). CUX-6.</summary>
     public sealed class A11yLabel : MonoBehaviour

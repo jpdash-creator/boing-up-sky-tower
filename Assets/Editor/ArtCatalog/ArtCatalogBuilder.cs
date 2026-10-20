@@ -1,23 +1,23 @@
 using System;
 using System.IO;
 using System.Linq;
-using SkyHopper.Gameplay;
+using BoingUpSkyTower.Gameplay;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace SkyHopper.Editor
+namespace BoingUpSkyTower.Editor
 {
     /// <summary>
     /// Fills Assets/Resources/ArtCatalog.asset from the sliced art in Assets/Art (see Assets/Art/NOTES.md).
-    /// Menu: Tools/Sky Hopper/Build Art Catalog. Headless: -executeMethod SkyHopper.Editor.ArtCatalogBuilder.BuildFromCommandLine
+    /// Menu: Tools/Boing Up: Sky Tower/Build Art Catalog. Headless: -executeMethod BoingUpSkyTower.Editor.ArtCatalogBuilder.BuildFromCommandLine
     /// </summary>
     public static class ArtCatalogBuilder
     {
         const string Art = "Assets/Art";
         const string AssetPath = "Assets/Resources/ArtCatalog.asset";
 
-        [MenuItem("Tools/Sky Hopper/Build Art Catalog")]
+        [MenuItem("Tools/Boing Up: Sky Tower/Build Art Catalog")]
         public static void Build()
         {
             AssetDatabase.Refresh();

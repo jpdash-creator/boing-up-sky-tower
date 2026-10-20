@@ -1,11 +1,7 @@
 {
-  "name": "SkyHopper.Economy",
-  "rootNamespace": "SkyHopper.Economy",
-  "references": [
-    "SkyHopper.Simulation",
-    "SkyHopper.Content",
-    "Unity.Nuget.Newtonsoft-Json"
-  ],
+  "name": "BoingUpSkyTower.Simulation",
+  "rootNamespace": "BoingUpSkyTower.Simulation",
+  "references": [],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
@@ -14,5 +10,5 @@
   "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],
-  "noEngineReferences": false
+  "noEngineReferences": true
 }

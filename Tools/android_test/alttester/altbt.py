@@ -1,4 +1,4 @@
-"""AltTester helper for Sky Hopper (roadmap T26): connects the Python driver to the alttester build on the phone.
+"""AltTester helper for Boing Up: Sky Tower (roadmap T26): connects the Python driver to the alttester build on the phone.
 
 Needs: AltTester Desktop running on the PC (it is the server on port 13000), the alttester APK installed (see README.md).
 The game connects OUT to 127.0.0.1:13000 on the phone; "adb reverse" maps that to the PC, where Desktop listens.
@@ -13,10 +13,10 @@ sys.path.insert(0, "E:/pylibs")
 from alttester import AltDriver, By  # noqa: E402
 from alttester.exceptions import NotFoundException, WaitTimeOutException  # noqa: E402
 
-PKG = "com.skyhopper.game"
-APK = "E:/Unity/builds/skyhopper_alttester.apk"
+PKG = "com.jdlabs.boingupskytower"
+APK = "E:/Unity/builds/boingupskytower_alttester.apk"
 PORT = 13000
-APP_NAME = "SkyHopper"
+APP_NAME = "BoingUpSkyTower"
 SHOTS = "E:/Unity/device_shots/alttester"
 
 

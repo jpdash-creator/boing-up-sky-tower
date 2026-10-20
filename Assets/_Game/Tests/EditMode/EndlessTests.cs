@@ -1,12 +1,12 @@
 using System;
-using SkyHopper.Content;
-using SkyHopper.Economy;
-using SkyHopper.Gameplay;
-using SkyHopper.Simulation;
+using BoingUpSkyTower.Content;
+using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Gameplay;
+using BoingUpSkyTower.Simulation;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace SkyHopper.Tests
+namespace BoingUpSkyTower.Tests
 {
     /// <summary>Endless mode (T13): coin formula, daily cap, best floor save, old saves, and the endless RunSession.</summary>
     public class EndlessTests
