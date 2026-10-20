@@ -12,6 +12,17 @@ namespace BoingTower.Gameplay
         const string LeftKey = "settings.lefthanded";
         const string TextKey = "settings.textpercent";
         const string DifficultyKey = "settings.difficulty";
+        const string TestUnlockKey = "settings.testunlock";
+
+        /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
+        public static bool DevBuild { get { return Debug.isDebugBuild && !Application.isEditor; } }
+
+        /// <summary>Testing aid: all levels and regions open. Only has an effect in a development build.</summary>
+        public static bool TestUnlockAll
+        {
+            get { return DevBuild && PlayerPrefs.GetInt(TestUnlockKey, 1) == 1; }
+            set { PlayerPrefs.SetInt(TestUnlockKey, value ? 1 : 0); PlayerPrefs.Save(); BoingTower.Economy.ProgressService.TestUnlockAll = value && DevBuild; }
+        }
 
         /// <summary>Game difficulty (owner, 2026-10-19): scroll speed grows by this percent every 5 seconds.</summary>
         public static readonly int[] DifficultyStepPercent = { 20, 40, 60, 80, 100 };

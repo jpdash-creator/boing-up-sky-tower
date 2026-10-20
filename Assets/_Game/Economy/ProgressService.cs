@@ -90,9 +90,12 @@ namespace BoingTower.Economy
             return region.IsLive && region.Index <= PlayableRegionLimit;
         }
 
+        /// <summary>Testing aid for development builds (Settings > "Test: all levels open"): every level and region of the playable set counts as unlocked. Off in tests and release builds.</summary>
+        public static bool TestUnlockAll;
+
         public bool IsRegionUnlocked(RegionDef region)
         {
-            return region.Index == 1 || Data.UnlockedRegions.Contains(region.Id);
+            return TestUnlockAll || region.Index == 1 || Data.UnlockedRegions.Contains(region.Id);
         }
 
         public bool CanEnterRegion(RegionDef region)
@@ -148,7 +151,7 @@ namespace BoingTower.Economy
         {
             RegionDef region = repo.GetRegion(level.Region);
             if (!CanEnterRegion(region)) return false;
-            if (level.Index <= 1) return true;
+            if (TestUnlockAll || level.Index <= 1) return true;
             string previousId = region.Levels[level.Index - 2];
             return IsLevelCleared(previousId);
         }

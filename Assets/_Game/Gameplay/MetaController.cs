@@ -488,13 +488,13 @@ namespace BoingTower.Gameplay
             AddLevelsWallet(region);
             AddBack("Map", ShowMap);
             // Region title centred in its own band under the back arrow and the wallet; the level circles start below it (owner list 10).
-            Text hdr = UiKit.AddText(screen, "Header", region.Name, 56, Color.white, TextAnchor.UpperCenter, true);
+            Text hdr = UiKit.AddText(screen, "Header", region.Name, 76, Color.white, TextAnchor.UpperCenter, true);
             var hrt = (RectTransform)hdr.transform;
             hrt.anchorMin = new Vector2(0f, 1f);
             hrt.anchorMax = new Vector2(1f, 1f);
             hrt.pivot = new Vector2(0.5f, 1f);
-            hrt.offsetMin = new Vector2(24f, -410f);
-            hrt.offsetMax = new Vector2(-24f, -318f);
+            hrt.offsetMin = new Vector2(24f, -440f);
+            hrt.offsetMax = new Vector2(-24f, -312f);
 
             List<LevelDef> levels = repo.LevelsOf(region.Id);
             string currentId = null;
@@ -504,7 +504,7 @@ namespace BoingTower.Gameplay
             // bottom edge, whatever the screen shape: rows are spread and the circles shrink a little when the screen is short (LevelGridFit).
             RectTransform grid = UiKit.Rect(screen, "LevelGrid");
             UiKit.Stretch(grid);
-            grid.offsetMax = new Vector2(0f, -(MapTopBar + 90f));
+            grid.offsetMax = new Vector2(0f, -(MapTopBar + 140f));
             var fit = grid.gameObject.AddComponent<LevelGridFit>();
             fit.Nodes = new RectTransform[levels.Count];
             fit.Cols = new int[levels.Count];
@@ -619,7 +619,7 @@ namespace BoingTower.Gameplay
             rows.rectTransform.anchorMax = new Vector2(1f, 1f);
             rows.rectTransform.pivot = new Vector2(0.5f, 1f);
             rows.rectTransform.anchoredPosition = new Vector2(0f, -315f);
-            rows.rectTransform.sizeDelta = new Vector2(-30f, 1070f);
+            rows.rectTransform.sizeDelta = new Vector2(-30f, GameSettings.DevBuild ? 1220f : 1070f);
             AddToggle("Sound effects", -340f, () => GameSettings.Sound, v => GameSettings.Sound = v);
             AddToggle("Music", -490f, () => GameSettings.Music, v => GameSettings.Music = v);
             AddToggle("Haptics", -640f, () => GameSettings.Haptics, v => GameSettings.Haptics = v);
@@ -627,6 +627,7 @@ namespace BoingTower.Gameplay
             AddToggle("Left-handed", -940f, () => GameSettings.LeftHanded, v => GameSettings.LeftHanded = v);
             AddTextSize(-1090f);
             AddDifficulty(-1240f);
+            if (GameSettings.DevBuild) AddToggle("Test: all levels open", -1390f, () => GameSettings.TestUnlockAll, v => GameSettings.TestUnlockAll = v);
 
             Button reset = UiKit.AddButton(screen, "Reset", "Reset progress", Btn(1), new Color(1f, 0.6f, 0.6f), new Vector2(560f, 130f), ConfirmReset, 46);
             UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(560f, 130f));

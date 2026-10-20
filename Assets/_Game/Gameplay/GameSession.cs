@@ -50,6 +50,7 @@ namespace BoingTower.Gameplay
             if (Initialized) return;
             PerformanceSettings.Apply();
             ApplyDifficulty();
+            ProgressService.TestUnlockAll = GameSettings.TestUnlockAll;
             GameSettings.ApplyTextScale();
             Repo = ContentRepository.LoadFromResources();
             Progress = new ProgressService(Repo, new FileSaveStore(Path.Combine(Application.persistentDataPath, "save.json")), PlayableRegions);
