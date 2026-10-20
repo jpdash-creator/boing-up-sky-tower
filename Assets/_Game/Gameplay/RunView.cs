@@ -264,7 +264,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             Sprite[] sprites = region != null ? new[] { region.BgFar, region.BgMid, region.BgNear } : new Sprite[3];
             float[] factor = { 0.12f, 0.25f, 0.45f };
-            float[] alpha = { 1f, 0.55f, 0.35f };   // owner decision: mid/near stack with fade (they came out opaque)
+            float[] alpha = { 1f, 0.30f, 0.16f };   // the mid and near layers are full pictures: faint, so they never ghost into a double image behind the platforms (owner, T15, 2026-10-20)
             for (int i = 0; i < 3; i++)
             {
                 if (sprites[i] == null) continue;
@@ -279,6 +279,21 @@ namespace BoingUpSkyTower.Gameplay
                     layer.Tiles[k] = sr;
                 }
                 layers.Add(layer);
+            }
+
+            // A light veil between the painted layers and the platforms calms the picture so platforms and pickups read clearly in every region.
+            if (white != null && sprites[0] != null)
+            {
+                float vs = designHalfH * 2f * 1.7f / Mathf.Max(0.01f, white.bounds.size.y);
+                var veil = new Layer { Factor = 0f, Height = white.bounds.size.y * vs, Scale = vs, Tiles = new SpriteRenderer[3] };
+                for (int k = 0; k < 3; k++)
+                {
+                    var sr = NewSprite("veil" + k, white, -75);
+                    sr.transform.localScale = new Vector3(vs, vs, 1f);
+                    sr.color = new Color(1f, 1f, 1f, 0.14f);
+                    veil.Tiles[k] = sr;
+                }
+                layers.Add(veil);
             }
         }
 
