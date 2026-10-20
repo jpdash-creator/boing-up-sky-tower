@@ -106,10 +106,10 @@ COIN_STAR_MIN, COIN_STAR_MAX = 15, 500
 def validate():
     errors = []
     schemas = {name: load("schemas/%s.schema.json" % name)
-               for name in ("region", "level", "item", "gem_pack", "module")}
+               for name in ("region", "level", "item", "gem_pack", "coin_pack", "module")}
 
     # --- schema pass ---
-    regions, levels, modules, packs, items = {}, {}, {}, [], []
+    regions, levels, modules, packs, coin_packs, items = {}, {}, {}, [], [], []
     for path in sorted(glob.glob(os.path.join(CONTENT, "regions", "*.json"))):
         data = load_abs(path)
         check_schema(data, schemas["region"], rel(path), errors)
@@ -133,6 +133,9 @@ def validate():
     for p in load("economy/gem_packs.json"):
         check_schema(p, schemas["gem_pack"], "economy/gem_packs.json:" + str(p.get("id")), errors)
         packs.append(p)
+    for p in load("economy/coin_packs.json"):
+        check_schema(p, schemas["coin_pack"], "economy/coin_packs.json:" + str(p.get("id")), errors)
+        coin_packs.append(p)
     for it in load("items/items.json"):
         check_schema(it, schemas["item"], "items/items.json:" + str(it.get("id")), errors)
         items.append(it)
@@ -242,12 +245,27 @@ def validate():
         errors.append("modules must cover regions 1-30, missing %s" % sorted(set(range(1, 31)) - covered))
 
     # --- economy (doc 08 section 8) ---
-    ladder = sorted(packs, key=lambda p: p["usd"])
-    rates = [p["gems"] / p["usd"] for p in ladder]
-    if rates != sorted(rates):
-        errors.append("gem packs must give more gems per dollar as price rises")
+    # Owner tables (docs/14): promo never above list, more gems per dollar as the price rises (1.5 percent tolerance for the
+    # owner's rounded price points), unique SKUs and ids.
+    for key in ("usdList", "usdPromo"):
+        ladder = sorted(packs, key=lambda p: p[key])
+        rates = [p["gems"] / p[key] for p in ladder]
+        for a, b in zip(rates, rates[1:]):
+            if b < a * 0.985:
+                errors.append("gem packs (%s) must give more gems per dollar as price rises" % key)
+                break
+    for p in packs:
+        if p["usdPromo"] > p["usdList"]:
+            errors.append("gem pack %s: promo price above list price" % p["id"])
     if len({p["sku"] for p in packs}) != len(packs):
         errors.append("duplicate gem pack sku")
+    if len({p["id"] for p in packs}) != len(packs):
+        errors.append("duplicate gem pack id")
+    for p in coin_packs:
+        if p["gemsPromo"] > p["gemsList"]:
+            errors.append("coin pack %s: promo price above list price" % p["id"])
+    if len({p["id"] for p in coin_packs}) != len(coin_packs):
+        errors.append("duplicate coin pack id")
     ids = [x["id"] for x in items]
     if len(ids) != len(set(ids)):
         errors.append("duplicate item id")

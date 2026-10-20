@@ -311,10 +311,41 @@ namespace BoingTower.Gameplay
             }
             Button play = UiKit.AddButton(screen, "Play", "PLAY", Btn(1), Color.white, new Vector2(520f, 150f), ShowMap, 72);
             UiKit.Place((RectTransform)play.transform, new Vector2(0.5f, 0f), new Vector2(0f, 290f), new Vector2(520f, 150f));
+            // Settings and Shop share one row (2 x 380 + 40 = 800 px, fits the narrowest canvas of 940 px).
             Button settings = UiKit.AddButton(screen, "Settings", "Settings", Btn(0), new Color(0.9f, 0.95f, 1f), new Vector2(380f, 130f), ShowSettings, 46);
-            UiKit.Place((RectTransform)settings.transform, new Vector2(0.5f, 0f), new Vector2(0f, 135f), new Vector2(380f, 130f));
+            UiKit.Place((RectTransform)settings.transform, new Vector2(0.5f, 0f), new Vector2(-210f, 135f), new Vector2(380f, 130f));
+            Button shopBtn = UiKit.AddButton(screen, "Shop", "Shop", Btn(0), new Color(1f, 0.93f, 0.62f), new Vector2(380f, 130f), () => ShowShop(), 46);
+            UiKit.Place((RectTransform)shopBtn.transform, new Vector2(0.5f, 0f), new Vector2(210f, 135f), new Vector2(380f, 130f));
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.6f));
             UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(700f, 60f));
+        }
+
+        // ---------------- shop ----------------
+
+        ShopScreen shop;
+
+        /// <summary>The shop while its screen is showing (null on every other screen). Tests drive purchases through it.</summary>
+        public ShopScreen CurrentShop { get { return CurrentScreen == "Shop" ? shop : null; } }
+
+        /// <summary>Shop (docs/14): four tabs, only Gems and Coins is live. Opens on that tab by default.</summary>
+        public void ShowShop(int tab = ShopScreen.TabGems, int section = ShopScreen.GemsSection)
+        {
+            NewScreen("Shop");
+            RegionArt meadow = art != null ? art.ForRegion(1) : null;
+            Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
+            AddBack("Back", ShowMenu);
+            progress.LaunchPromoActive = GameSettings.LaunchPromo;
+            var host = new ShopScreen.Host
+            {
+                OpenPopup = (title, body, height) => OpenPopup(title, body, height),
+                PopupButton = (label, primary, y, action) => PopupButton(label, Btn(primary ? 1 : 0), Color.white, y, action),
+                ClosePopup = ClosePopup,
+            };
+            shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
+            shop.Build(tab, section);
+            coinText = shop.CoinText;     // RefreshWallet keeps these two current after every purchase
+            gemText = shop.GemText;
+            RefreshWallet();
         }
 
         // ---------------- world map ----------------

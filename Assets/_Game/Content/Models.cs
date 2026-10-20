@@ -108,13 +108,30 @@ namespace BoingTower.Content
         [JsonProperty("buildStatus", Required = Required.Always)] public string BuildStatus { get; set; }
     }
 
+    /// <summary>
+    /// Gem pack sold for real money (docs/14). The player pays UsdPromo while the launch promotion is on (UsdList is shown crossed out),
+    /// UsdList otherwise. Badge is "", "popular" or "best_value".
+    /// </summary>
     public sealed class GemPackDef
     {
         [JsonProperty("id", Required = Required.Always)] public string Id { get; set; }
-        [JsonProperty("nameKey", Required = Required.Always)] public string NameKey { get; set; }
-        [JsonProperty("usd", Required = Required.Always)] public double Usd { get; set; }
         [JsonProperty("gems", Required = Required.Always)] public int Gems { get; set; }
+        [JsonProperty("usdList")] public double UsdList { get; set; }
+        [JsonProperty("usdPromo")] public double UsdPromo { get; set; }
         [JsonProperty("sku", Required = Required.Always)] public string Sku { get; set; }
+        [JsonProperty("badge")] public string Badge { get; set; }
+        /// <summary>Legacy fields of the pre-docs/14 manifest (kept so a stale manifest still loads until it is regenerated).</summary>
+        [JsonProperty("usd")] public double LegacyUsd { get; set; }
+        [JsonProperty("nameKey")] public string LegacyNameKey { get; set; }
+    }
+
+    /// <summary>Coin pack bought with gems (docs/14). The price is GemsPromo while the launch promotion is on, GemsList otherwise.</summary>
+    public sealed class CoinPackDef
+    {
+        [JsonProperty("id", Required = Required.Always)] public string Id { get; set; }
+        [JsonProperty("coins", Required = Required.Always)] public int Coins { get; set; }
+        [JsonProperty("gemsList", Required = Required.Always)] public int GemsList { get; set; }
+        [JsonProperty("gemsPromo", Required = Required.Always)] public int GemsPromo { get; set; }
     }
 
     public sealed class ItemSpritesDef

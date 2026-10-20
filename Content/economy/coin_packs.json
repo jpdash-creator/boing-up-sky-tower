@@ -1,0 +1,44 @@
+[
+  {
+    "id": "coinpack_100",
+    "coins": 100,
+    "gemsList": 10,
+    "gemsPromo": 5
+  },
+  {
+    "id": "coinpack_200",
+    "coins": 200,
+    "gemsList": 20,
+    "gemsPromo": 10
+  },
+  {
+    "id": "coinpack_500",
+    "coins": 500,
+    "gemsList": 50,
+    "gemsPromo": 25
+  },
+  {
+    "id": "coinpack_1000",
+    "coins": 1000,
+    "gemsList": 100,
+    "gemsPromo": 50
+  },
+  {
+    "id": "coinpack_2000",
+    "coins": 2000,
+    "gemsList": 200,
+    "gemsPromo": 100
+  },
+  {
+    "id": "coinpack_5000",
+    "coins": 5000,
+    "gemsList": 500,
+    "gemsPromo": 200
+  },
+  {
+    "id": "coinpack_10000",
+    "coins": 10000,
+    "gemsList": 1000,
+    "gemsPromo": 500
+  }
+]

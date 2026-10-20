@@ -356,6 +356,87 @@
       "depends": [
         "T27"
       ]
+    },
+    {
+      "id": "T35",
+      "task": "Shop: requirements done (docs/14-shop-requirements.md), Tab 4 screen (gems and coins) with test purchases",
+      "status": "active",
+      "minutes": 330,
+      "blocker": "Written but not compiled: main session regenerates the content manifest, compiles, runs EditMode ShopTests and the PlayMode shop layout audit, checks the screen on the phone. Owner decisions Q1 to Q3 in docs/14 (coin anchor, Coins section in release, 50/100 gem packs)",
+      "depends": [
+        "T8",
+        "T27"
+      ]
+    },
+    {
+      "id": "T36",
+      "task": "Shop tabs 1 to 3 + real billing",
+      "status": "pending",
+      "minutes": 4500,
+      "blocker": "owner decisions and Play Console",
+      "depends": [
+        "T35"
+      ]
+    },
+    {
+      "id": "T37",
+      "task": "Inventory + region foundation (save v2, inventory screens, run config, bonus pipeline, matrix harness) v0.11, docs/15 groups INV and REGION",
+      "status": "pending",
+      "minutes": 1905,
+      "blocker": "owner decision X-1 (ranked neutral)",
+      "depends": [
+        "T35"
+      ]
+    },
+    {
+      "id": "T38",
+      "task": "Gear: layered ornamental hats, shirts, pants, boots with placeholder art v0.12, docs/15 group GEAR",
+      "status": "pending",
+      "minutes": 980,
+      "blocker": "owner check of Momo anchors; real art needs OpenArt approval (about 480 credits, none spent)",
+      "depends": [
+        "T37"
+      ]
+    },
+    {
+      "id": "T39",
+      "task": "Characters: 20-character roster (4 per region), character screen, 20 abilities v0.13, docs/15 group CHAR",
+      "status": "pending",
+      "minutes": 1755,
+      "blocker": "roster/prices sign-off; real art region 1 about 360 credits, regions 2-5 about 1920 (none spent)",
+      "depends": [
+        "T37"
+      ]
+    },
+    {
+      "id": "T40",
+      "task": "Power-ups: 11 consumables, stock, 3-slot loadout, HUD buttons, 5-region matrix v0.14, docs/15 group PWR",
+      "status": "pending",
+      "minutes": 1110,
+      "blocker": "prices (after doc 14 C-2), icon art about 165 credits (none spent)",
+      "depends": [
+        "T37"
+      ]
+    },
+    {
+      "id": "T41",
+      "task": "Chests: coin/gear/power-up chests in 4 tiers, odds, pity, earn rules v0.15, docs/15 group CHEST",
+      "status": "pending",
+      "minutes": 1035,
+      "blocker": "odds sign-off, server for production rolls, chest art about 360 credits (none spent)",
+      "depends": [
+        "T37"
+      ]
+    },
+    {
+      "id": "T42",
+      "task": "VIP: six subscription tiers v0.16, docs/15 group VIP",
+      "status": "pending",
+      "minutes": 945,
+      "blocker": "billing and server (T36), Play Console, tier table sign-off",
+      "depends": [
+        "T37"
+      ]
     }
   ]
 }

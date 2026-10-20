@@ -30,6 +30,7 @@ namespace BoingTower.Content
         public IReadOnlyList<RegionDef> LiveRegions { get { return _liveRegions; } }
         public IReadOnlyList<ModuleDef> Modules { get; private set; }
         public IReadOnlyList<GemPackDef> GemPacks { get; private set; }
+        public IReadOnlyList<CoinPackDef> CoinPacks { get; private set; }
         public IReadOnlyList<ItemDef> Items { get; private set; }
         public RemoteConfigDef RemoteConfig { get; private set; }
         public int LevelCount { get { return _levelsById.Count; } }
@@ -70,6 +71,8 @@ namespace BoingTower.Content
             var levels = ReadList<LevelDef>(root, "levels", ser, "level");
             repo.Items = ReadList<ItemDef>(root, "items", ser, "item");
             repo.GemPacks = ReadList<GemPackDef>(root, "gemPacks", ser, "gemPack");
+            // Optional: a manifest built before the shop (docs/14) has no coinPacks; ShopCatalog then falls back to its built-in table.
+            repo.CoinPacks = root["coinPacks"] != null ? ReadList<CoinPackDef>(root, "coinPacks", ser, "coinPack") : new List<CoinPackDef>();
             repo.Modules = ReadList<ModuleDef>(root, "modules", ser, "module");
 
             JToken rc = root["remoteConfig"];

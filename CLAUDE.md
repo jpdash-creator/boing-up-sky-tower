@@ -53,7 +53,7 @@ Open items waiting on the owner are logged in `.claude/pendingdecisions/` (asset
 - Region offset `d_eff = d + offset * (1 - d)`, offset 0.0 to 0.25 across regions 1-30.
 - Endless speed: +4% per 25 floors, cap +150%. Constants in `Content/config/remote_config.json`.
 - Endless mode (owner decision 2026-10-20): "Endless" pill at the bottom of each region's level screen (shows `best N`). `EndlessTower` (Simulation) grows in 40-row chunks from a per-run seed (`GameSession.EndlessSeed`), `RunSession(repo, cfg, region, seed)`, `RunView` creates/recycles platform views on demand, HUD shows Floor N / Best N, game over has no revive. Coins: `floors/2 + 50 x (floors/100)` x region factor, 3 full-rate runs per UTC day then x0.5; best floor per region in the save. Details: `Assets/_Game/Simulation/NOTES.md`, `Assets/_Game/Economy/NOTES.md`.
-- Coins : gems : USD = 100 : 1 : about $0.011. Gem packs in `Content/economy/gem_packs.json`.
+- Coins : gems : USD = 100 : 1 : about $0.011. Gem packs in `Content/economy/gem_packs.json` and coin packs (bought with gems) in `coin_packs.json`; the owner shop tables of docs/14 replace the older ladder (see the conflict list there).
 - Score = floors x 10 + combo^2 x 5 (the sim score has no coins term since economy v2; doc 08 still lists "+ coins"). Floor = platform row index. Screen about 10 units wide. These are prototype values.
 
 ## Open / next

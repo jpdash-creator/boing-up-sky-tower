@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CoinPackDef",
+  "type": "object",
+  "required": ["id", "coins", "gemsList", "gemsPromo"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "pattern": "^coinpack_[0-9]+$"},
+    "coins": {"type": "integer", "minimum": 1},
+    "gemsList": {"type": "integer", "minimum": 1},
+    "gemsPromo": {"type": "integer", "minimum": 1}
+  }
+}

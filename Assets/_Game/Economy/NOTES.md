@@ -40,3 +40,8 @@ Build `RunOutcome` from the finished `SimState`: `StarMask = StarEvaluator.Earne
 6. Hidden gems pay no wallet gems yet (Simulation counts them separately).
 7. Playable region limit is code, not content: flip regions 6-20 to `teaser` in `gen_content.py` (and the validator rule) when the launch scope is final.
 8. Local only: the server-authoritative wallet (PlayFab) replaces this later; the save format is the conflict-resolution unit (server wins for currencies, max wins for progress).
+
+## Shop (docs/14-shop-requirements.md, first slice)
+- `ShopCatalog` (gem packs + coin packs from the manifest; built-in copy of the owner tables when the manifest still has the old format).
+- `ProgressService.LaunchPromoActive` (default on; `GameSettings.LaunchPromo` feeds it): `CoinPackPrice`, `TryBuyCoinPack` (debit gems and credit coins in one save), `GrantTestGemPurchase` (development builds only, no billing).
+- UI: `Gameplay/ShopScreen.cs`, opened by `MetaController.ShowShop` (main menu "Shop" button). Release builds show "Not available yet" on gem packs.

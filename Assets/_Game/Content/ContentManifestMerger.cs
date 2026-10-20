@@ -12,7 +12,7 @@ namespace BoingTower.Content
     /// <summary>
     /// Merges the source files under Content/ into one deterministic manifest text.
     /// Plain C# (System.IO only) so Editor tooling and EditMode tests share the same code.
-    /// Ordering: regions by index, levels by id, items/gemPacks/modules keep the order of their source file.
+    /// Ordering: regions by index, levels by id, items/gemPacks/coinPacks/modules keep the order of their source file.
     /// </summary>
     public static class ContentManifestMerger
     {
@@ -20,7 +20,7 @@ namespace BoingTower.Content
 
         public static readonly string[] SingleFiles =
         {
-            "items/items.json", "economy/gem_packs.json", "config/modules.json", "config/remote_config.json",
+            "items/items.json", "economy/gem_packs.json", "economy/coin_packs.json", "config/modules.json", "config/remote_config.json",
         };
 
         /// <summary>Returns the manifest text (indent 2, LF, no timestamps) for the Content folder at contentRoot.</summary>
@@ -37,7 +37,7 @@ namespace BoingTower.Content
 
             var regions = new List<JObject>();
             var levels = new List<JObject>();
-            JArray items = null, gemPacks = null, modules = null;
+            JArray items = null, gemPacks = null, coinPacks = null, modules = null;
             JObject remote = null;
             foreach (var kv in inputs)
             {
@@ -46,6 +46,7 @@ namespace BoingTower.Content
                 else if (kv.Key.StartsWith("levels/", StringComparison.Ordinal)) levels.AddRange(((JArray)tok).Cast<JObject>());
                 else if (kv.Key == "items/items.json") items = (JArray)tok;
                 else if (kv.Key == "economy/gem_packs.json") gemPacks = (JArray)tok;
+                else if (kv.Key == "economy/coin_packs.json") coinPacks = (JArray)tok;
                 else if (kv.Key == "config/modules.json") modules = (JArray)tok;
                 else if (kv.Key == "config/remote_config.json") remote = (JObject)tok;
             }
@@ -61,6 +62,7 @@ namespace BoingTower.Content
                 ["levels"] = new JArray(levels),
                 ["items"] = items,
                 ["gemPacks"] = gemPacks,
+                ["coinPacks"] = coinPacks,
                 ["modules"] = modules,
                 ["remoteConfig"] = remote,
             };

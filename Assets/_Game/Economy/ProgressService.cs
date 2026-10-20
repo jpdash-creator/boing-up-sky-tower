@@ -12,6 +12,13 @@ namespace BoingTower.Economy
         NotEnoughGems
     }
 
+    public enum ShopResult
+    {
+        Ok,
+        NotEnoughGems,
+        Invalid
+    }
+
     /// <summary>
     /// Owns the player's local progress: wallet, per-level results, region unlocks. Every mutation saves immediately.
     /// Rules (doc 01 FR-P5, FR-P6; doc 08):
@@ -89,6 +96,48 @@ namespace BoingTower.Economy
         {
             long sum = (long)a + b;
             return sum > int.MaxValue ? int.MaxValue : (int)sum;
+        }
+
+        // ---- shop (docs/14) ----
+
+        /// <summary>
+        /// Launch promotion switch (default on). While on, packs cost their promotional price. Later driven by the remote config flag
+        /// shop.launchPromo.enabled; when it is off the list price applies.
+        /// </summary>
+        public bool LaunchPromoActive { get; set; } = true;
+
+        /// <summary>Gem price of a coin pack under the current promotion state.</summary>
+        public int CoinPackPrice(CoinPackDef pack)
+        {
+            return ShopCatalog.CoinPackGems(pack, LaunchPromoActive);
+        }
+
+        /// <summary>
+        /// TEST purchase (development builds only, the caller checks): credits the pack's gems without billing and saves at once.
+        /// Real purchases will go through the server-validated flow instead (docs/13, docs/14).
+        /// </summary>
+        public ShopResult GrantTestGemPurchase(GemPackDef pack)
+        {
+            if (pack == null || pack.Gems <= 0) return ShopResult.Invalid;
+            Data.Gems = SaturatingAdd(Data.Gems, pack.Gems);
+            Commit();
+            return ShopResult.Ok;
+        }
+
+        /// <summary>
+        /// Buys a coin pack with gems: debits the gems and credits the coins in one step and saves once (atomic: either both happen or
+        /// neither). Not enough gems changes nothing.
+        /// </summary>
+        public ShopResult TryBuyCoinPack(CoinPackDef pack)
+        {
+            if (pack == null || pack.Coins <= 0) return ShopResult.Invalid;
+            int price = CoinPackPrice(pack);
+            if (price <= 0) return ShopResult.Invalid;
+            if (Data.Gems < price) return ShopResult.NotEnoughGems;
+            Data.Gems -= price;
+            Data.Coins = SaturatingAdd(Data.Coins, pack.Coins);
+            Commit();
+            return ShopResult.Ok;
         }
 
         // ---- regions ----

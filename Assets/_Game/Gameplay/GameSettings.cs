@@ -13,6 +13,7 @@ namespace BoingTower.Gameplay
         const string TextKey = "settings.textpercent";
         const string DifficultyKey = "settings.difficulty";
         const string TestUnlockKey = "settings.testunlock";
+        const string PromoKey = "settings.launchpromo";
 
         /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
         public static bool DevBuild { get { return Debug.isDebugBuild && !Application.isEditor; } }
@@ -22,6 +23,16 @@ namespace BoingTower.Gameplay
         {
             get { return DevBuild && PlayerPrefs.GetInt(TestUnlockKey, 1) == 1; }
             set { PlayerPrefs.SetInt(TestUnlockKey, value ? 1 : 0); PlayerPrefs.Save(); BoingTower.Economy.ProgressService.TestUnlockAll = value && DevBuild; }
+        }
+
+        /// <summary>
+        /// Launch promotion of the shop (docs/14): on = packs cost their promotional price and the list price is shown crossed out.
+        /// Default on. Placeholder for the remote config flag shop.launchPromo.enabled (a development build can flip the PlayerPref).
+        /// </summary>
+        public static bool LaunchPromo
+        {
+            get { return PlayerPrefs.GetInt(PromoKey, 1) == 1; }
+            set { PlayerPrefs.SetInt(PromoKey, value ? 1 : 0); PlayerPrefs.Save(); }
         }
 
         /// <summary>Game difficulty (owner, 2026-10-19): scroll speed grows by this percent every 5 seconds.</summary>

@@ -339,6 +339,52 @@ namespace BoingTower.Tests
             yield return CheckScreen("run-endless-failed", () => rc.Hud.ShowEndlessFailed(rc.Session, endlessReward), problems);
             Report(problems);
         }
+
+        // ---- shop (docs/14): all four tabs, both sections, promo on and off, and the shop popups ----
+
+        [UnityTest]
+        public IEnumerator ShopScreenHasNoOverlapAndFitsEveryAspect() { return ShopAudit(100); }
+
+        /// <summary>CUX-5: the shop survives the 130 percent text size too.</summary>
+        [UnityTest]
+        public IEnumerator ShopScreenSurvives130PercentText() { return ShopAudit(130); }
+
+        IEnumerator ShopAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            ShopScreen.TestPurchasesOverride = null;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            GameSession.Progress.AddGems(300);
+            GameSession.Progress.AddCoins(12345);
+
+            // Release layout: the gem buttons say "Not available yet".
+            yield return CheckScreen("shop-gems", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-coins", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection), problems);
+            yield return CheckScreen("shop-tab1-chests", () => meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-tab2-powerups", () => meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-tab3-vip", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-gems-notbuyable-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(3); }, problems);
+
+            // Development layout: "Buy (test)" and the test purchase popups.
+            ShopScreen.TestPurchasesOverride = true;
+            yield return CheckScreen("shop-gems-test", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-test-buy-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(6); }, problems);
+            ShopScreen.TestPurchasesOverride = null;
+
+            // Coin popups: confirm above 50 gems, not enough gems, done.
+            yield return CheckScreen("shop-coin-confirm-popup", () => { meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection); meta.CurrentShop.TapCoinPack(4); }, problems);
+            yield return CheckScreen("shop-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection); meta.CurrentShop.TapCoinPack(6); }, problems);
+            yield return CheckScreen("shop-coins-done-popup", () => { meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection); meta.CurrentShop.TapCoinPack(0); }, problems);
+
+            // Promo off: list prices only, no crossed-out price and no Launch offer badge.
+            GameSettings.LaunchPromo = false;
+            yield return CheckScreen("shop-gems-list-prices", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-coins-list-prices", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection), problems);
+            GameSettings.LaunchPromo = true;
+            Report(problems);
+        }
     }
 
     /// <summary>CUX-1: the run loop stays inside its frame budget and does not allocate per frame, on the hardest content.</summary>

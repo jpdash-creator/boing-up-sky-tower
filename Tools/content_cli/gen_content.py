@@ -83,6 +83,27 @@ def write(rel, data):
         f.write("\n")
 
 
+# Shop tables (owner brief 2026-10-20, docs/14-shop-requirements.md). The promo price is a launch promotion: the player pays usdPromo
+# (gemsPromo for coin packs) while the remote flag shop.launchPromo.enabled is on, the list price is shown crossed out.
+GEM_PACKS = [  # (name, gems, usdList, usdPromo, badge)
+    ("pinch", 10, 0.99, 0.49, ""), ("handful", 20, 1.99, 0.99, ""), ("pouch", 50, 3.99, 1.99, ""),
+    ("sack", 100, 7.99, 3.99, "popular"), ("chest", 200, 11.99, 5.99, ""), ("vault", 500, 19.99, 9.99, ""),
+    ("treasury", 1000, 29.99, 14.99, "best_value"),
+]
+COIN_PACKS = [  # (coins, gemsList, gemsPromo)
+    (100, 10, 5), (200, 20, 10), (500, 50, 25), (1000, 100, 50), (2000, 200, 100), (5000, 500, 200), (10000, 1000, 500),
+]
+
+
+def gem_packs():
+    return [{"id": "gempack_" + n, "gems": g, "usdList": ul, "usdPromo": up,
+             "sku": "boingtower.gems." + n, "badge": b} for n, g, ul, up, b in GEM_PACKS]
+
+
+def coin_packs():
+    return [{"id": "coinpack_%d" % c, "coins": c, "gemsList": gl, "gemsPromo": gp} for c, gl, gp in COIN_PACKS]
+
+
 def coin_payout(index):
     if index in (5, 10):
         return 300
@@ -177,11 +198,8 @@ def main():
 
     write("config/modules.json", modules)
 
-    packs = [("handful", 0.99, 80), ("pouch", 4.99, 440), ("sack", 9.99, 920),
-             ("chest", 19.99, 1900), ("vault", 49.99, 5000), ("treasury", 99.99, 10500)]
-    write("economy/gem_packs.json", [
-        {"id": "gempack_" + p, "nameKey": "pack." + p, "usd": usd, "gems": gems,
-         "sku": "boingtower.gems." + p} for p, usd, gems in packs])
+    write("economy/gem_packs.json", gem_packs())
+    write("economy/coin_packs.json", coin_packs())
 
     write("items/items.json", [{
         "id": "boots_cloud_runner", "slot": "boots", "rarity": "rare", "bundle": "items_boots_01",
