@@ -56,7 +56,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public static bool Sound { get { return PlayerPrefs.GetInt(SoundKey, 1) == 1; } set { PlayerPrefs.SetInt(SoundKey, value ? 1 : 0); PlayerPrefs.Save(); AudioManager.Refresh(); } }
         public static bool Music { get { return PlayerPrefs.GetInt(MusicKey, 1) == 1; } set { PlayerPrefs.SetInt(MusicKey, value ? 1 : 0); PlayerPrefs.Save(); AudioManager.Refresh(); } }
-        public static bool Haptics { get { return PlayerPrefs.GetInt(HapticsKey, 1) == 1; } set { PlayerPrefs.SetInt(HapticsKey, value ? 1 : 0); PlayerPrefs.Save(); } }
+        public static bool Haptics { get { return PlayerPrefs.GetInt(HapticsKey, 0) == 1; } set { PlayerPrefs.SetInt(HapticsKey, value ? 1 : 0); PlayerPrefs.Save(); } }
 
         /// <summary>No screen shake, squash, pulses or parallax scrolling (CUX-6).</summary>
         public static bool ReducedMotion { get { return PlayerPrefs.GetInt(ReducedKey, 0) == 1; } set { PlayerPrefs.SetInt(ReducedKey, value ? 1 : 0); PlayerPrefs.Save(); } }

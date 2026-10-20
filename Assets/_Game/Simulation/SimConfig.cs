@@ -35,8 +35,8 @@ namespace BoingUpSkyTower.Simulation
         public Fx LayoutJumpBase = Fx.FromRatio(14, 60);
         /// <summary>Speed factor of the layout reference jump (the pre-2026-10-20 0.85). Layout full-speed launch is 21.65 u/s, below the real 24.2 u/s, so every generated dx is covered.</summary>
         public Fx LayoutJumpSpeedFactor = Fx.FromRatio(85, 100);
-        public Fx JumpSpeedFactor = Fx.FromRatio(58, 100);   // extra jump speed per unit of horizontal speed
-        public Fx WallBoost = Fx.FromRatio(11, 10);          // speed multiplier on wall bounce
+        public Fx JumpSpeedFactor = Fx.FromRatio(41, 100);   // extra jump speed per unit of horizontal speed
+        public Fx WallBoost = Fx.FromRatio(77, 100);         // speed multiplier on wall bounce
         public int CoyoteTicks = 5;                          // 80 ms
         public int JumpBufferTicks = 6;                      // 100 ms
 

@@ -149,7 +149,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void WallBounceReversesAndBoostsBelowCap()
+        public void WallBounceReversesAndDampsBelowCap()
         {
             SimConfig cfg = new SimConfig();
             Sim sim = FlatWorld(cfg);
@@ -158,7 +158,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             s.Vx = -Fx.FromRatio(5, 60);
             sim.Step(ref s, 0);
             Assert.True(s.Vx > Fx.Zero);
-            Assert.True(s.Vx > Fx.FromRatio(5, 60) * 10 / 11 - Fx.FromRatio(1, 1000));
+            Assert.True(s.Vx < Fx.FromRatio(5, 60));
         }
 
         [Fact]

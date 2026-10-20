@@ -164,7 +164,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             double standing = (cfg.JumpBase * cfg.JumpBase / (cfg.Gravity * 2)).Raw / 65536.0;
             double full = cfg.MaxJumpHeight().Raw / 65536.0;
             Assert.InRange(standing / median, 1.2, 1.4);
-            Assert.InRange(full / median, 1.9, 2.3);
+            Assert.InRange(full / median, 1.7, 2.3);
         }
 
         [Fact]
