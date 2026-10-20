@@ -35,7 +35,7 @@ namespace BoingTower.Gameplay
             { 2, new Vector2(0.11f, 0.56f) },    // at the big purple mushroom on the left
             { 7, new Vector2(0.17f, 0.26f) },    // by the big tree on the left
             { 8, new Vector2(0.40f, 0.46f) },    // on the sand dune hump
-            { 9, new Vector2(0.81f, 0.56f) },    // just above the red flag of the pirate ship
+            { 9, new Vector2(0.81f, 0.64f) },    // just above the red flag of the pirate ship
             { 10, new Vector2(0.88f, 0.14f) },   // on the blue toy block at the right
         };
         static float lastMapOffset = -1f; static int lastMapCurrent = -1;                                          // scroll position kept while visiting a region's levels
@@ -94,6 +94,36 @@ namespace BoingTower.Gameplay
             if (momo != null && !GameSettings.ReducedMotion) momo.anchoredPosition = momoBase + new Vector2(0f, Mathf.Sin(Time.unscaledTime * 2.2f) * 22f);
         }
 
+        /// <summary>Lays the 15 level circles out in 3 columns by 5 rows inside its rectangle (level 1 at the bottom) and scales them to fit.</summary>
+        sealed class LevelGridFit : MonoBehaviour
+        {
+            public RectTransform[] Nodes;
+            public int[] Cols, Rows;
+            public bool[] Current;
+
+            void Start() { Apply(); }
+            void OnRectTransformDimensionsChange() { Apply(); }
+
+            public void Apply()
+            {
+                if (Nodes == null) return;
+                float h = ((RectTransform)transform).rect.height;
+                if (h < 10f) return;
+                const float bottom = 150f, top = 110f, cell = 245f;     // room under the first row for its stars, above the last row for its rim
+                float spacing = (h - bottom - top) / 4f;
+                float scale = Mathf.Clamp(spacing / cell, 0.6f, 1f);
+                for (int i = 0; i < Nodes.Length; i++)
+                {
+                    RectTransform rt = Nodes[i];
+                    if (rt == null) continue;
+                    rt.anchorMin = rt.anchorMax = new Vector2(0.2f + 0.3f * Cols[i], 0f);
+                    rt.pivot = new Vector2(0.5f, 0.5f);
+                    rt.anchoredPosition = new Vector2(0f, bottom + Rows[i] * spacing);
+                    rt.localScale = Vector3.one * (scale * (Current[i] ? 1.12f : 1f));
+                }
+            }
+        }
+
         // ---------------- helpers ----------------
 
         RectTransform NewScreen(string name)
@@ -104,6 +134,8 @@ namespace BoingTower.Gameplay
             coinText = null;
             gemText = null;
             starText = null;
+            levelsText = null;
+            regionStarsText = null;
             screenRoot = UiKit.Rect(canvas.transform, name);
             UiKit.Stretch(screenRoot);
             screen = UiKit.SafeArea(screenRoot);
@@ -137,13 +169,13 @@ namespace BoingTower.Gameplay
         Text starText;
 
         /// <summary>Stretches a header between the icon button (left) and the wallet panel (right) so the two can never overlap.</summary>
-        static void BesideWallet(RectTransform rt, float yFromTop, float height)
+        static void BesideWallet(RectTransform rt, float yFromTop, float height, float rightInset = 310f)
         {
             rt.anchorMin = new Vector2(0f, 1f);
             rt.anchorMax = new Vector2(1f, 1f);
             rt.pivot = new Vector2(0f, 1f);
             rt.offsetMin = new Vector2(190f, yFromTop - height);
-            rt.offsetMax = new Vector2(-310f, yFromTop);
+            rt.offsetMax = new Vector2(-rightInset, yFromTop);
         }
 
         /// <summary>Wallet: one dark rounded panel at the top-right with three aligned rows (coins, gems, stars): [icon][number].</summary>
@@ -158,14 +190,53 @@ namespace BoingTower.Gameplay
             RefreshWallet();
         }
 
-        Text WalletRow(Transform parent, int row, Sprite icon, Color numberColor)
+        // Centre of mass of each currency sprite (fraction of its width and height, measured from the art): the icons are shifted by it so
+        // coin, gem and star sit on one vertical line and one centre line in every wallet row (owner list 9).
+        static Vector2 IconMass(Sprite icon)
         {
+            if (icon == null) return new Vector2(0.5f, 0.5f);
+            switch (icon.name)
+            {
+                case "cur_coin_single": return new Vector2(0.594f, 0.617f);
+                case "cur_gem_single": return new Vector2(0.446f, 0.478f);
+                case "cur_star_filled": return new Vector2(0.494f, 0.542f);
+                default: return new Vector2(0.5f, 0.5f);
+            }
+        }
+
+        /// <summary>One wallet row: icon on the left of its column (centred on its visual mass), value right-aligned. Column 0 is the left one.</summary>
+        Text WalletRow(Transform parent, int row, Sprite icon, Color numberColor, int column = 0, float valueWidth = 140f, float x0 = 0f, float colWidth = 270f, int fontSize = 48, float iconX = 22f)
+        {
+            const float box = 68f;
             float y = -15f - row * 84f;
-            Image ic = UiKit.AddImage(parent, "Icon" + row, icon, Color.white);
-            UiKit.Place(ic.rectTransform, new Vector2(0f, 1f), new Vector2(22f, y - 8f), new Vector2(68f, 68f));
-            Text t = UiKit.AddText(parent, "Value" + row, "", 48, numberColor, TextAnchor.MiddleRight, true);
-            UiKit.Place((RectTransform)t.transform, new Vector2(1f, 1f), new Vector2(-22f, y), new Vector2(140f, 84f));
+            Vector2 mass = IconMass(icon);
+            Image ic = UiKit.AddImage(parent, "Icon" + column + "_" + row, icon, Color.white);
+            UiKit.Place(ic.rectTransform, new Vector2(0f, 1f), new Vector2(x0 + iconX + box * 0.5f + (0.5f - mass.x) * box, y - 8f - box * 0.5f + (mass.y - 0.5f) * box), new Vector2(box, box));
+            ic.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            Text t = UiKit.AddText(parent, "Value" + column + "_" + row, "", fontSize, numberColor, TextAnchor.MiddleRight, true);
+            UiKit.Place((RectTransform)t.transform, new Vector2(0f, 1f), new Vector2(x0 + colWidth - 22f - valueWidth, y), new Vector2(valueWidth, 84f));
             return t;
+        }
+
+        Text levelsText, regionStarsText;
+
+        /// <summary>Wallet for the level select: column 1 coins, gems and total stars; column 2 levels completed and stars of this region.</summary>
+        void AddLevelsWallet(RegionDef region)
+        {
+            const float rowH = 84f, col1 = 270f, col2 = 280f;
+            Image panel = UiKit.AddPanel(screen, "WalletPanel", new Color(0.05f, 0.07f, 0.16f, 0.92f));
+            UiKit.Place(panel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(col1 + col2, rowH * 3f + 30f));
+            coinText = WalletRow(panel.transform, 0, art != null ? art.CoinIcon : null, Color.white, 0, 150f, 0f, col1);
+            gemText = WalletRow(panel.transform, 1, art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 0, 150f, 0f, col1);
+            starText = WalletRow(panel.transform, 2, art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 0, 150f, 0f, col1);
+            int cleared = 0;
+            foreach (string id in region.Levels) if (progress.IsLevelCleared(id)) cleared++;
+            Sprite levelIcon = art != null ? ArtCatalog.Pick(art.LevelNodes, 0) : null;
+            levelsText = WalletRow(panel.transform, 0, levelIcon, Color.white, 1, 170f, col1, col2, 36, 14f);
+            regionStarsText = WalletRow(panel.transform, 1, art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 1, 170f, col1, col2, 36, 14f);
+            UiKit.SetText(levelsText, cleared + "/" + region.Levels.Count);
+            UiKit.SetText(regionStarsText, progress.StarsInRegion(region) + "/" + region.Levels.Count * 3);
+            RefreshWallet();
         }
 
         void RefreshWallet()
@@ -414,29 +485,46 @@ namespace BoingTower.Gameplay
             currentRegionId = region.Id;
             RegionArt ra = art != null ? art.ForRegion(region.Index) : null;
             Background(ra != null ? ra.BgFar : null, new Color(0.1f, 0.14f, 0.25f, 1f));
-            AddWallet();
+            AddLevelsWallet(region);
             AddBack("Map", ShowMap);
-            Text hdr = UiKit.AddText(screen, "Header", region.Name, 56, Color.white, TextAnchor.MiddleLeft);
-            BesideWallet((RectTransform)hdr.transform, -20f, 180f);
-            Text sub = UiKit.AddText(screen, "Sub", progress.StarsInRegion(region) + " / " + region.Levels.Count * 3 + " stars", 44, new Color(1f, 0.92f, 0.5f), TextAnchor.MiddleLeft);
-            BesideWallet((RectTransform)sub.transform, -205f, 60f);
+            // Region title below the back arrow and left of the wallet, so the wallet can be two columns wide.
+            Text hdr = UiKit.AddText(screen, "Header", region.Name, 44, Color.white, TextAnchor.UpperLeft, true);
+            var hrt = (RectTransform)hdr.transform;
+            hrt.anchorMin = new Vector2(0f, 1f);
+            hrt.anchorMax = new Vector2(1f, 1f);
+            hrt.pivot = new Vector2(0f, 1f);
+            hrt.offsetMin = new Vector2(24f, -304f);
+            hrt.offsetMax = new Vector2(-590f, -178f);
 
             List<LevelDef> levels = repo.LevelsOf(region.Id);
             string currentId = null;
             foreach (LevelDef l in levels) if (progress.IsLevelUnlocked(l) && !progress.IsLevelCleared(l.Id)) { currentId = l.Id; break; }
 
-            // 3 columns x 5 rows, level 1 at the bottom (the tower climbs upward).
+            // 3 columns x 5 rows, level 1 at the bottom (the tower climbs upward). The grid fills the space between the wallet widget and the
+            // bottom edge, whatever the screen shape: rows are spread and the circles shrink a little when the screen is short (LevelGridFit).
+            RectTransform grid = UiKit.Rect(screen, "LevelGrid");
+            UiKit.Stretch(grid);
+            grid.offsetMax = new Vector2(0f, -MapTopBar);
+            var fit = grid.gameObject.AddComponent<LevelGridFit>();
+            fit.Nodes = new RectTransform[levels.Count];
+            fit.Cols = new int[levels.Count];
+            fit.Rows = new int[levels.Count];
+            fit.Current = new bool[levels.Count];
             for (int i = 0; i < levels.Count; i++)
             {
                 LevelDef l = levels[i];
                 int row = i / 3, col = i % 3;
-                AddLevelNode(l, new Vector2(0.2f + 0.3f * col, 0.115f + row * 0.143f), l.Id == currentId);
+                fit.Nodes[i] = AddLevelNode(l, grid, l.Id == currentId);
+                fit.Cols[i] = col;
+                fit.Rows[i] = row;
+                fit.Current[i] = l.Id == currentId;
             }
+            fit.Apply();
         }
 
         // Sprite order of ui_level_nodes after slicing: 0 plain bubble, 1 gem bubble (garbled text), 2 crown, 3 padlock,
         // 4 = three small pieces (NOT a node), 5 large bubble.
-        void AddLevelNode(LevelDef level, Vector2 anchor, bool isCurrent)
+        RectTransform AddLevelNode(LevelDef level, Transform parent, bool isCurrent)
         {
             bool unlocked = progress.IsLevelUnlocked(level);
             bool cleared = progress.IsLevelCleared(level.Id);
@@ -447,13 +535,9 @@ namespace BoingTower.Gameplay
             if (unlocked && !boss && cleared) tint = new Color(1f, 0.93f, 0.55f, 1f);   // completed: warm gold bubble
             else if (isCurrent) tint = new Color(1f, 1f, 0.7f, 1f);                     // current: bright
             Sprite nodeSprite = art != null ? ArtCatalog.Pick(art.LevelNodes, sprite) : null;
-            Button b = UiKit.AddButton(screen, "Level" + level.Index, "", nodeSprite, tint, new Vector2(190f, 190f), () => OnLevelTapped(level), 40);
+            Button b = UiKit.AddButton(parent, "Level" + level.Index, "", nodeSprite, tint, new Vector2(190f, 190f), () => OnLevelTapped(level), 40);
             RectTransform rt = (RectTransform)b.transform;
-            rt.anchorMin = rt.anchorMax = anchor;
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = Vector2.zero;
             b.GetComponent<Image>().preserveAspect = true;
-            if (isCurrent) rt.localScale = Vector3.one * 1.12f;
             if (unlocked && !boss)
             {
                 Text num = UiKit.AddText(rt, "Num", level.Index.ToString(), 72, UiKit.ButtonInk);
@@ -480,6 +564,7 @@ namespace BoingTower.Gameplay
                 srt.anchoredPosition = new Vector2((s - 1) * 52f, -4f);
                 srt.sizeDelta = new Vector2(50f, 50f);
             }
+            return rt;
         }
 
         public void OnLevelTapped(LevelDef level)
