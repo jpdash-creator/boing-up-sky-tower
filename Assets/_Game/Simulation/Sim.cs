@@ -129,6 +129,27 @@ namespace BoingTower.Simulation
         }
 
         /// <summary>
+        /// Endless mode: after the tower grew (a new Sim was built from the longer level, same prefix), extends the per-platform and
+        /// per-pickup arrays of a state taken from the shorter one. Allocates, so call it once per growth step, never per tick.
+        /// </summary>
+        public void GrowState(ref SimState s)
+        {
+            if (s.CrumbleTick == null || s.CrumbleTick.Length < Platforms.Length)
+            {
+                int[] c = new int[Platforms.Length];
+                int have = s.CrumbleTick == null ? 0 : s.CrumbleTick.Length;
+                for (int i = 0; i < c.Length; i++) c[i] = i < have ? s.CrumbleTick[i] : -1;
+                s.CrumbleTick = c;
+            }
+            if (s.PickupTaken == null || s.PickupTaken.Length < Pickups.Length)
+            {
+                bool[] p = new bool[Pickups.Length];
+                if (s.PickupTaken != null) System.Array.Copy(s.PickupTaken, p, s.PickupTaken.Length);
+                s.PickupTaken = p;
+            }
+        }
+
+        /// <summary>
         /// Minimal revive: if dead, puts the player back on the highest platform landed on, clears speed,
         /// grants a short invulnerability and counts the revive. UI and payment are the caller's job.
         /// </summary>

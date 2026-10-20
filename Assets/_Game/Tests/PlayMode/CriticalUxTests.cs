@@ -329,6 +329,14 @@ namespace BoingTower.Tests
             var outcome = rc.Session.BuildOutcome();
             var reward = GameSession.Progress.ApplyRun(GameSession.CurrentLevelId, outcome);
             yield return CheckScreen("run-results", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
+            rc.Hud.CloseOverlay();
+
+            // Endless mode (owner decision 2026-10-20): its HUD (Floor / Best) and the game over overlay obey the same rules.
+            rc.StartEndlessRun(GameSession.Repo.GetRegionByIndex(1).Id);
+            rc.Hud.SkipIntro();
+            yield return CheckScreen("run-endless-hud", () => { }, problems);
+            var endlessReward = new EndlessReward { Floors = 142, BestBefore = 120, NewBest = true, FullRateCoins = 121, Coins = 61, OverCap = true, RunsToday = 4 };
+            yield return CheckScreen("run-endless-failed", () => rc.Hud.ShowEndlessFailed(rc.Session, endlessReward), problems);
             Report(problems);
         }
     }

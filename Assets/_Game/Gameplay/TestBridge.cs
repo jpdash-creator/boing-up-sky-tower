@@ -43,7 +43,7 @@ namespace BoingTower.Gameplay
             if (rc != null && rc.Session != null)
             {
                 var s = rc.Session.State;
-                sb.Append(",\"level\":\"").Append(rc.Session.Level.Id).Append("\",\"tick\":").Append(s.Tick).Append(",\"row\":").Append(s.Row)
+                sb.Append(",\"level\":\"").Append(rc.Session.Level != null ? rc.Session.Level.Id : "endless").Append("\",\"tick\":").Append(s.Tick).Append(",\"row\":").Append(s.Row)
                   .Append(",\"coins\":").Append(s.Coins).Append(",\"dead\":").Append(s.Dead ? "true" : "false")
                   .Append(",\"over\":").Append(rc.Session.Over ? "true" : "false").Append(",\"paused\":").Append(rc.Paused ? "true" : "false")
                   .Append(",\"overlay\":").Append(rc.Hud != null && rc.Hud.OverlayOpen ? "true" : "false")

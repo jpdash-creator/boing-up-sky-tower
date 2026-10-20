@@ -55,9 +55,26 @@ namespace BoingTower.Gameplay
         int nextPop;
         Sprite white;
 
+        // Endless mode: the tower grows without end, so platform and gong views are created on demand for the part of the tower around the
+        // camera and recycled through pools (no allocation in steady state: a pooled renderer is only re-configured). Campaign levels build
+        // everything once; their window is the whole level.
+        bool endless;
+        int builtVersion;
+        int actLo, actHi;             // active platform views are [actLo, actHi)
+        int hazLo, hazHi;             // active gong views are [hazLo, hazHi)
+        readonly Stack<SpriteRenderer> platPool = new Stack<SpriteRenderer>();
+        readonly Stack<SpriteRenderer> cuePool = new Stack<SpriteRenderer>();
+        readonly Stack<SpriteRenderer> gongPool = new Stack<SpriteRenderer>();
+        Sprite gongSprite;
+        /// <summary>Views kept below / above the screen edges in endless mode, world units.</summary>
+        const float WindowBelow = 3f, WindowAbove = 8f;
+
         float camHalfH, camHalfW, camY, designHalfH;
         float prevX, prevY, curX, curY, prevKill, curKill;
         bool wasGrounded = true;
+        float prevVy;           // audio cues are derived from state changes here; the simulation knows nothing about sound
+        bool wasDead;
+        int prevHits;
         float squash;   // 0..1 landing squash timer
         bool reduced;   // reduced-motion setting, read once per run
         Sprite[] patterns;
@@ -186,7 +203,10 @@ namespace BoingTower.Gameplay
         public void Build(RunSession s, ArtCatalog catalog, Camera camera)
         {
             session = s;
+            endless = s.IsEndless;
+            builtVersion = s.WorldVersion;
             reduced = GameSettings.ReducedMotion;
+            AudioManager.SetMusic(MusicTrack.Run);
             art = catalog;
             cam = camera;
             region = art != null ? art.ForRegion(s.Region.Index) : null;
@@ -210,7 +230,7 @@ namespace BoingTower.Gameplay
             BuildPickups();
             BuildHazards();
             BuildPlayer();
-            BuildPortal();
+            if (!endless) BuildPortal();   // endless towers have no goal
             for (int i = 0; i < pops.Length; i++) pops[i] = MakePop();
 
             curX = prevX = s.State.X.F();
@@ -218,6 +238,7 @@ namespace BoingTower.Gameplay
             prevKill = curKill = s.State.KillY.F();
             camY = curKill + camHalfH;
             ApplyCamera();
+            if (endless) UpdateEndlessWindow();
         }
 
         static Sprite MakeWhite()
@@ -425,71 +446,180 @@ namespace BoingTower.Gameplay
         void BuildPlatforms()
         {
             Platform[] plats = session.Data.Platforms;
-            platformSr = new SpriteRenderer[plats.Length];
-            platformTf = new Transform[plats.Length];
-            platformBaseScaleX = new float[plats.Length];
-            platformOffX = new float[plats.Length];
-            platformOffY = new float[plats.Length];
-            cueSr = new SpriteRenderer[plats.Length];
-            for (int i = 0; i < plats.Length; i++)
-            {
-                Platform p = plats[i];
-                Sprite sprite = PlatformSprite(p);
-                var sr = NewSprite("plat" + p.Id + "_" + p.Kind, sprite, 0);
-                float width = p.Width.F();
-                platformOffX[i] = 0f;
-                int piece = PieceIndex(p, width);
-                if (piece >= 0)
-                {
-                    // On-style art piece, never stretched out of shape: caps keep their size (9-slice), the middle is stretched sideways only,
-                    // and a platform narrower than its piece is scaled down uniformly (thinner, same proportions).
-                    Sprite sp = region.Pieces[piece];
-                    PlatformMetric m = region.PieceMetrics[piece];
-                    float ppu = sp.pixelsPerUnit;
-                    float bodyW = (m.BodyRight - m.BodyLeft) / ppu;
-                    float s = Mathf.Min(1f, width / bodyW);
-                    sr.sprite = sp;
-                    sr.drawMode = SpriteDrawMode.Sliced;
-                    sr.size = new Vector2((width / s) * (m.W / (m.BodyRight - m.BodyLeft)), m.H / ppu);
-                    sr.transform.localScale = new Vector3(s, s, 1f);
-                    platformBaseScaleX[i] = s;
-                    platformOffY[i] = -(m.H * 0.5f - m.SurfaceY) / ppu * s;   // the sprite centre sits (H/2 - surface) below the walking line
-                }
-                else if (region != null && region.PlatSide.a > 0f)
-                {
-                    // Clean code-drawn slab in the region's colours, 0.5 units thick; the top edge is exactly the walking surface.
-                    Color top = region.PlatTop, side = region.PlatSide;
-                    if (p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) { top = new Color(1f, 0.55f, 0.75f); side = new Color(0.8f, 0.2f, 0.45f); }
-                    else if (p.Kind == PlatformKind.Crumble) { side = Color.Lerp(side, Color.gray, 0.45f); top = Color.Lerp(top, Color.gray, 0.35f); }
-                    sr.sprite = MakeSlab(top, side);
-                    sr.drawMode = SpriteDrawMode.Sliced;
-                    sr.size = new Vector2(width + 0.3f, 0.6f);
-                    sr.transform.localScale = Vector3.one;
-                    platformBaseScaleX[i] = 1f;
-                    platformOffY[i] = -0.3f;
-                }
-                else
-                {
-                    sr.transform.localScale = new Vector3(width, 0.4f, 1f);   // fallback bar
-                    platformBaseScaleX[i] = width;
-                    platformOffY[i] = -0.2f;
-                }
-                sr.color = PlatformTint(p.Kind);
-                platformSr[i] = sr;
-                platformTf[i] = sr.transform;
+            ResizePlatformArrays(plats.Length);
+            if (endless) return;   // endless views come from UpdateEndlessWindow
+            for (int i = 0; i < plats.Length; i++) SetupPlatform(i, plats[i], null);
+            actLo = 0;
+            actHi = plats.Length;
+        }
 
-                // Non-colour cue (CUX-6): a pattern strip on the walking surface.
-                int cue = p.Kind == PlatformKind.Sticky ? 0 : p.Kind == PlatformKind.Slippery ? 1 : p.Kind == PlatformKind.Vanishing ? 2 : ((p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) && piece < 0) ? 4 : -1;
-                if (cue >= 0)
-                {
-                    if (patterns == null) patterns = new Sprite[5];
-                    if (patterns[cue] == null) patterns[cue] = MakePattern(cue);
-                    var c = NewSprite("cue" + p.Id, patterns[cue], 1);
-                    c.drawMode = SpriteDrawMode.Tiled;
-                    c.size = new Vector2(width * 0.8f, 0.25f);
-                    cueSr[i] = c;
-                }
+        void ResizePlatformArrays(int n)
+        {
+            if (platformSr == null)
+            {
+                platformSr = new SpriteRenderer[n];
+                platformTf = new Transform[n];
+                platformBaseScaleX = new float[n];
+                platformOffX = new float[n];
+                platformOffY = new float[n];
+                cueSr = new SpriteRenderer[n];
+                return;
             }
+            System.Array.Resize(ref platformSr, n);
+            System.Array.Resize(ref platformTf, n);
+            System.Array.Resize(ref platformBaseScaleX, n);
+            System.Array.Resize(ref platformOffX, n);
+            System.Array.Resize(ref platformOffY, n);
+            System.Array.Resize(ref cueSr, n);
+        }
+
+        /// <summary>Creates (or, with a pooled renderer, re-configures) the view of platform i.</summary>
+        void SetupPlatform(int i, Platform p, SpriteRenderer reuse)
+        {
+            Sprite sprite = PlatformSprite(p);
+            SpriteRenderer sr = reuse;
+            if (sr == null) sr = NewSprite("plat" + p.Id + "_" + p.Kind, sprite, 0);
+            else
+            {
+                sr.gameObject.SetActive(true);
+                sr.drawMode = SpriteDrawMode.Simple;
+                sr.sprite = sprite != null ? sprite : white;
+            }
+            float width = p.Width.F();
+            platformOffX[i] = 0f;
+            int piece = PieceIndex(p, width);
+            if (piece >= 0)
+            {
+                // On-style art piece, never stretched out of shape: caps keep their size (9-slice), the middle is stretched sideways only,
+                // and a platform narrower than its piece is scaled down uniformly (thinner, same proportions).
+                Sprite sp = region.Pieces[piece];
+                PlatformMetric m = region.PieceMetrics[piece];
+                float ppu = sp.pixelsPerUnit;
+                float bodyW = (m.BodyRight - m.BodyLeft) / ppu;
+                float s = Mathf.Min(1f, width / bodyW);
+                sr.sprite = sp;
+                sr.drawMode = SpriteDrawMode.Sliced;
+                sr.size = new Vector2((width / s) * (m.W / (m.BodyRight - m.BodyLeft)), m.H / ppu);
+                sr.transform.localScale = new Vector3(s, s, 1f);
+                platformBaseScaleX[i] = s;
+                platformOffY[i] = -(m.H * 0.5f - m.SurfaceY) / ppu * s;   // the sprite centre sits (H/2 - surface) below the walking line
+            }
+            else if (region != null && region.PlatSide.a > 0f)
+            {
+                // Clean code-drawn slab in the region's colours, 0.5 units thick; the top edge is exactly the walking surface.
+                Color top = region.PlatTop, side = region.PlatSide;
+                if (p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) { top = new Color(1f, 0.55f, 0.75f); side = new Color(0.8f, 0.2f, 0.45f); }
+                else if (p.Kind == PlatformKind.Crumble) { side = Color.Lerp(side, Color.gray, 0.45f); top = Color.Lerp(top, Color.gray, 0.35f); }
+                sr.sprite = MakeSlab(top, side);
+                sr.drawMode = SpriteDrawMode.Sliced;
+                sr.size = new Vector2(width + 0.3f, 0.6f);
+                sr.transform.localScale = Vector3.one;
+                platformBaseScaleX[i] = 1f;
+                platformOffY[i] = -0.3f;
+            }
+            else
+            {
+                sr.transform.localScale = new Vector3(width, 0.4f, 1f);   // fallback bar
+                platformBaseScaleX[i] = width;
+                platformOffY[i] = -0.2f;
+            }
+            sr.color = PlatformTint(p.Kind);
+            platformSr[i] = sr;
+            platformTf[i] = sr.transform;
+
+            // Non-colour cue (CUX-6): a pattern strip on the walking surface.
+            int cue = p.Kind == PlatformKind.Sticky ? 0 : p.Kind == PlatformKind.Slippery ? 1 : p.Kind == PlatformKind.Vanishing ? 2 : ((p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) && piece < 0) ? 4 : -1;
+            if (cue >= 0)
+            {
+                if (patterns == null) patterns = new Sprite[5];
+                if (patterns[cue] == null) patterns[cue] = MakePattern(cue);
+                SpriteRenderer c = cuePool.Count > 0 ? cuePool.Pop() : NewSprite("cue" + p.Id, patterns[cue], 1);
+                c.gameObject.SetActive(true);
+                c.sprite = patterns[cue];
+                c.drawMode = SpriteDrawMode.Tiled;
+                c.size = new Vector2(width * 0.8f, 0.25f);
+                c.color = Color.white;
+                cueSr[i] = c;
+            }
+            else cueSr[i] = null;
+        }
+
+        void ReleasePlatform(int i)
+        {
+            if (platformSr[i] == null) return;
+            platformSr[i].gameObject.SetActive(false);
+            platPool.Push(platformSr[i]);
+            platformSr[i] = null;
+            platformTf[i] = null;
+            if (cueSr[i] != null)
+            {
+                cueSr[i].gameObject.SetActive(false);
+                cuePool.Push(cueSr[i]);
+                cueSr[i] = null;
+            }
+        }
+
+        /// <summary>First index in a Y-sorted platform array whose Y is at least y.</summary>
+        static int FirstPlatformAtOrAbove(Platform[] plats, float y)
+        {
+            int lo = 0, hi = plats.Length;
+            while (lo < hi)
+            {
+                int mid = (lo + hi) >> 1;
+                if (plats[mid].Y.F() < y) lo = mid + 1; else hi = mid;
+            }
+            return lo;
+        }
+
+        static int FirstHazardAtOrAbove(Hazard[] hz, float y)
+        {
+            int lo = 0, hi = hz.Length;
+            while (lo < hi)
+            {
+                int mid = (lo + hi) >> 1;
+                if (hz[mid].Y.F() < y) lo = mid + 1; else hi = mid;
+            }
+            return lo;
+        }
+
+        /// <summary>
+        /// Endless mode, once per frame: picks up a grown tower (arrays are extended, a rare step), then makes sure exactly the platforms and gongs
+        /// between a little below the screen and a few rows above it have views. Views leaving the window go back to the pools.
+        /// </summary>
+        void UpdateEndlessWindow()
+        {
+            if (session.WorldVersion != builtVersion)
+            {
+                ResizePlatformArrays(session.Data.Platforms.Length);
+                int gongs = session.Data.Hazards.Length;
+                if (hazardTf.Length != gongs)
+                {
+                    System.Array.Resize(ref hazardTf, gongs);
+                    System.Array.Resize(ref hazardSr, gongs);
+                }
+                builtVersion = session.WorldVersion;
+            }
+
+            float bottom = camY - camHalfH - WindowBelow;
+            float top = camY + camHalfH + WindowAbove;
+
+            Platform[] plats = session.Data.Platforms;
+            int lo = FirstPlatformAtOrAbove(plats, bottom);
+            int hi = FirstPlatformAtOrAbove(plats, top);
+            for (int i = actLo; i < actHi && i < plats.Length; i++) if (i < lo || i >= hi) ReleasePlatform(i);
+            for (int i = lo; i < hi; i++)
+                if (platformSr[i] == null) SetupPlatform(i, plats[i], platPool.Count > 0 ? platPool.Pop() : null);
+            actLo = lo;
+            actHi = hi;
+
+            Hazard[] hz = session.Data.Hazards;
+            int hlo = FirstHazardAtOrAbove(hz, bottom - 1f);
+            int hhi = FirstHazardAtOrAbove(hz, top + 1f);
+            for (int i = hazLo; i < hazHi && i < hz.Length; i++) if (i < hlo || i >= hhi) ReleaseHazard(i);
+            for (int i = hlo; i < hhi; i++)
+                if (hazardSr[i] == null) SetupHazard(i, hz[i], gongPool.Count > 0 ? gongPool.Pop() : null);
+            hazLo = hlo;
+            hazHi = hhi;
         }
 
         /// <summary>Drawn size in world units (the Simulation radius is only the collection zone). Rarer gems are drawn bigger.</summary>
@@ -550,25 +680,41 @@ namespace BoingTower.Gameplay
             Hazard[] hz = session.Data.Hazards;
             hazardTf = new Transform[hz.Length];
             hazardSr = new SpriteRenderer[hz.Length];
-            Sprite gong = region != null && region.Signature.Length > 0 ? region.Signature[0] : null;
-            for (int i = 0; i < hz.Length; i++)
+            gongSprite = region != null && region.Signature.Length > 0 ? region.Signature[0] : null;
+            if (endless) return;   // endless gongs come from UpdateEndlessWindow
+            for (int i = 0; i < hz.Length; i++) SetupHazard(i, hz[i], null);
+            hazLo = 0;
+            hazHi = hz.Length;
+        }
+
+        void SetupHazard(int i, Hazard h, SpriteRenderer reuse)
+        {
+            Sprite gong = gongSprite;
+            SpriteRenderer sr = reuse != null ? reuse : NewSprite("gong" + h.Id, gong, 6);
+            if (reuse != null) sr.gameObject.SetActive(true);
+            float diameter = h.Radius.F() * 2.4f;
+            if (gong != null)
             {
-                var sr = NewSprite("gong" + hz[i].Id, gong, 6);
-                float diameter = hz[i].Radius.F() * 2.4f;
-                if (gong != null)
-                {
-                    Vector2 size = gong.bounds.size;
-                    float s = diameter / Mathf.Max(size.x, size.y);
-                    sr.transform.localScale = new Vector3(s, s, 1f);
-                }
-                else
-                {
-                    sr.transform.localScale = new Vector3(diameter, diameter, 1f);
-                    sr.color = new Color(1f, 0.75f, 0.2f, 1f);
-                }
-                hazardTf[i] = sr.transform;
-                hazardSr[i] = sr;
+                Vector2 size = gong.bounds.size;
+                float s = diameter / Mathf.Max(size.x, size.y);
+                sr.transform.localScale = new Vector3(s, s, 1f);
             }
+            else
+            {
+                sr.transform.localScale = new Vector3(diameter, diameter, 1f);
+                sr.color = new Color(1f, 0.75f, 0.2f, 1f);
+            }
+            hazardTf[i] = sr.transform;
+            hazardSr[i] = sr;
+        }
+
+        void ReleaseHazard(int i)
+        {
+            if (hazardSr[i] == null) return;
+            hazardSr[i].gameObject.SetActive(false);
+            gongPool.Push(hazardSr[i]);
+            hazardSr[i] = null;
+            hazardTf[i] = null;
         }
 
         void BuildPlayer()
@@ -604,9 +750,34 @@ namespace BoingTower.Gameplay
             curX = session.State.X.F();
             curY = session.State.Y.F();
             bool grounded = session.State.Grounded;
+            DeriveAudio(grounded);
             if (grounded && !wasGrounded) { squash = 1f; Spawn(curX, curY + 0.1f, 0.9f, new Color(1f, 1f, 1f, 0.6f), 0.25f, 0.2f, ArtCatalog.Pick(art != null ? art.DustPuff : null, 0)); }
             wasGrounded = grounded;
             if (coinTaken) SpawnPickupEffects();
+        }
+
+        /// <summary>Jump, bounce, land, hit and fall sounds, from the change between the previous and the current simulation state (no allocation).</summary>
+        void DeriveAudio(bool grounded)
+        {
+            SimState st = session.State;
+            float vy = st.Vy.F();
+            if (prevVy <= 0f && vy > 0f && !st.Dead)
+            {
+                Platform[] plats = session.Data.Platforms;
+                bool bounce = false;
+                if (prevVy < 0f && st.GroundId >= 0 && st.GroundId < plats.Length)
+                {
+                    PlatformKind k = plats[st.GroundId].Kind;
+                    bounce = k == PlatformKind.Bounce || k == PlatformKind.BounceCap;
+                }
+                AudioManager.Play(bounce ? Sfx.Bounce : Sfx.Jump);
+            }
+            else if (grounded && !wasGrounded) AudioManager.Play(Sfx.Land);
+            if (st.Dead && !wasDead) AudioManager.Play(Sfx.Fall);
+            else if (st.Hits > prevHits) AudioManager.Play(Sfx.Fall);
+            wasDead = st.Dead;
+            prevHits = st.Hits;
+            prevVy = vy;
         }
 
         /// <summary>Pickup feedback drawn where the pickup was (not at the character): a gem shows its own gem, a star its star, a coin a gold sparkle.</summary>
@@ -619,6 +790,7 @@ namespace BoingTower.Gameplay
                 pickupSeen[i] = true;
                 Pickup pk = picks[i];
                 float x = pk.X.F(), y = pk.Y.F();
+                AudioManager.Play(pk.Kind == PickupKind.Star ? Sfx.Star : (pk.Kind == PickupKind.Gem || pk.Kind == PickupKind.HiddenGem) ? Sfx.Gem : Sfx.Coin);
                 if (pk.Kind == PickupKind.Gem || pk.Kind == PickupKind.HiddenGem)
                 {
                     Sprite gem = art != null ? ArtCatalog.Pick(art.GemSizes, pk.Kind == PickupKind.HiddenGem ? 2 : Mathf.Min(pk.Tag, 2)) : null;
@@ -685,9 +857,11 @@ namespace BoingTower.Gameplay
             playerSr.color = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;
 
             // Platforms (moving ones follow the sim, vanishing ones blink, crumbling ones fade).
+            if (endless) UpdateEndlessWindow();
             Platform[] plats = session.Data.Platforms;
-            for (int i = 0; i < plats.Length; i++)
+            for (int i = actLo; i < actHi; i++)
             {
+                if (platformSr[i] == null) continue;
                 Platform p = plats[i];
                 float x = p.Kind == PlatformKind.Moving ? session.Sim.PlatformX(p.Id, tick).F() : p.X.F();
                 float y = p.Y.F();
@@ -722,8 +896,9 @@ namespace BoingTower.Gameplay
             }
 
             // Hazards.
-            for (int i = 0; i < hazardTf.Length; i++)
+            for (int i = hazLo; i < hazHi; i++)
             {
+                if (hazardTf[i] == null) continue;
                 Fx hx, hy;
                 session.Sim.HazardPosition(session.Data.Hazards[i].Id, tick, out hx, out hy);
                 hazardTf[i].position = new Vector3(hx.F(), hy.F(), 0f);

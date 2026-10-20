@@ -46,6 +46,9 @@
 ## reg002_props  (8 sprites)
 - ok
 
+## reg002_platforms  (6 sprites)
+- ok
+
 ## reg002_tileset  (7 sprites)
 - ok
 
@@ -53,6 +56,9 @@
 - ok
 
 ## reg003_props  (8 sprites)
+- ok
+
+## reg003_platforms  (6 sprites)
 - ok
 
 ## reg003_tileset  (7 sprites)
@@ -64,6 +70,9 @@
 ## reg004_props  (8 sprites)
 - ok
 
+## reg004_platforms  (6 sprites)
+- ok
+
 ## reg004_tileset  (7 sprites)
 - ok
 
@@ -71,6 +80,9 @@
 - scale: area ratio 23.9 between largest and smallest sprite (mixed scales)
 
 ## reg005_props  (8 sprites)
+- ok
+
+## reg005_platforms  (6 sprites)
 - ok
 
 ## reg005_tileset  (7 sprites)
@@ -151,4 +163,4 @@
 ## vfx_wall_spark  (6 sprites)
 - scale: area ratio 10.9 between largest and smallest sprite (mixed scales)
 
-Sprites checked: 307. Blocking issues (clipped/halo): 0.
+Sprites checked: 331. Blocking issues (clipped/halo): 0.

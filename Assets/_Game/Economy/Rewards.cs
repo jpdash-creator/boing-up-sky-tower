@@ -132,4 +132,56 @@ namespace BoingTower.Economy
             return result;
         }
     }
+
+    /// <summary>What an endless run paid (doc 08 section 7, D3).</summary>
+    public struct EndlessReward
+    {
+        public int Floors;
+        public int BestBefore;
+        public bool NewBest;
+        /// <summary>Coins before the daily cap (floors based, region factor applied).</summary>
+        public int FullRateCoins;
+        /// <summary>Coins actually paid.</summary>
+        public int Coins;
+        /// <summary>True when the daily full-rate runs were used up and the over-cap multiplier applied.</summary>
+        public bool OverCap;
+        /// <summary>Paying runs finished today including this one.</summary>
+        public int RunsToday;
+    }
+
+    /// <summary>
+    /// Endless coin rules (owner decision 2026-10-20, doc 08 section 7 and D3): +1 coin per 2 floors and +50 coins for every full 100 floors,
+    /// times the region coin factor (rounded half up). The per-landing coin rule does not apply in endless. Per UTC day the first
+    /// <c>endlessCoinDailyFullRateRuns</c> (3) paying runs pay in full, later runs pay <c>endlessCoinOverCapMultiplier</c> (0.5) of that.
+    /// A run that earns 0 base coins (under 2 floors) is not counted against the cap. Pure integer math, so a server can recompute it.
+    /// </summary>
+    public static class EndlessRewards
+    {
+        public const int FloorsPerCoin = 2;
+        public const int HundredFloorBonus = 50;
+
+        public static int RawCoins(int floors)
+        {
+            if (floors <= 0) return 0;
+            return floors / FloorsPerCoin + HundredFloorBonus * (floors / 100);
+        }
+
+        public static int FullRateCoins(int floors, double regionCoinFactor)
+        {
+            long factor = (long)Math.Round(regionCoinFactor * 10000);
+            return (int)(((long)RawCoins(floors) * factor + 5000) / 10000);
+        }
+
+        public static int OverCapCoins(int fullRateCoins, double overCapMultiplier)
+        {
+            long pct = (long)Math.Round(overCapMultiplier * 100);
+            return (int)(((long)fullRateCoins * pct + 50) / 100);
+        }
+
+        /// <summary>UTC day key of a moment, "yyyyMMdd".</summary>
+        public static string DayKey(DateTime utc)
+        {
+            return utc.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
 }

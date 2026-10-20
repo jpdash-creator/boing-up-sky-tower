@@ -106,9 +106,9 @@
     {
       "id": "T10",
       "task": "Audio placeholders: SFX and music loops",
-      "status": "pending",
+      "status": "active",
       "minutes": 45,
-      "blocker": "Owner chose free CC0 libraries; owner approves the packs before download",
+      "blocker": "Session audio-t10 running: Kenney CC0 packs approved 2026-10-20",
       "depends": []
     },
     {
@@ -138,9 +138,9 @@
     {
       "id": "T13",
       "task": "Endless mode per region with speed ramp (optional for this milestone)",
-      "status": "pending",
+      "status": "active",
       "minutes": 60,
-      "blocker": "optional; needs T5",
+      "blocker": "Session endless-t13 running: Endless button per region level screen (owner choice)",
       "depends": [
         "T5"
       ]
@@ -272,7 +272,7 @@
       "task": "AltTester SDK + Desktop on E: (owner approved the install); keep Tools/android_test as the lightweight kit",
       "status": "active",
       "minutes": 20,
-      "blocker": "SDK 2.3.2 + driver 2.3.2 installed, Desktop 2.4.0 extracted to E:/tools/alttester_desktop; owner launches Desktop once",
+      "blocker": "Remaining: (1) build the alttester APK with the hook (BT_ALTTESTER=1 or -altTester, Assets/Editor/Build/AltTesterBuildHook.cs, written but not yet compiled in Unity); (2) owner launches AltTester Desktop 2.4.0 (E:/tools/alttester_desktop); (3) run python Tools/android_test/alttester/run_all.py --install and fix whatever the first real run shows (tests are unverified on a device). SDK 2.3.2 + driver 2.3.2 are installed.",
       "depends": [
         "T19"
       ]
@@ -330,9 +330,9 @@
     {
       "id": "T32",
       "task": "Compact end popups (fell/clear/pause) with big display-font title and round X icon (OpenArt icon, 15 credits, packet first)",
-      "status": "pending",
-      "minutes": 90,
-      "blocker": "Owner approval of the X icon packet",
+      "status": "done",
+      "minutes": 0,
+      "blocker": "Compact popups with big title and round X are in (v0.9.x); owner verifies on the phone",
       "depends": [
         "T28"
       ]
@@ -350,9 +350,9 @@
     {
       "id": "T34",
       "task": "Level info popup rebuild (goal, stars, PLAY) with centered layout and fonts; wallet icon alignment",
-      "status": "active",
-      "minutes": 30,
-      "blocker": "Level popup rebuilt; wallet alignment next",
+      "status": "done",
+      "minutes": 0,
+      "blocker": "Level popup and two-column wallet done (v0.9.1.2)",
       "depends": [
         "T27"
       ]

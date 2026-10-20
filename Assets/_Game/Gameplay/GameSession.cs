@@ -14,6 +14,11 @@ namespace BoingTower.Gameplay
         public RewardResult Reward;
         public int Stars;
         public int Score;
+        /// <summary>Endless run: the floor reached, the coins paid and whether it is a new best (LevelId is then null, RegionId is set).</summary>
+        public bool Endless;
+        public string RegionId;
+        public int Floors;
+        public EndlessReward EndlessReward;
     }
 
     /// <summary>
@@ -41,6 +46,32 @@ namespace BoingTower.Gameplay
         }
 
         public static string CurrentLevelId;
+        /// <summary>
+        /// Endless mode, set by the level select before it loads the Run scene (owner decision 2026-10-20): the Run scene then plays the endless
+        /// tower of EndlessRegionId instead of CurrentLevelId. EndlessSeed is the seed of the current tower (stored with the run; 0 = pick a new one).
+        /// </summary>
+        public static bool EndlessMode;
+        public static string EndlessRegionId;
+        public static int EndlessSeed;
+
+        /// <summary>Starts an endless run next time the Run scene loads. A new random seed is drawn for every run.</summary>
+        public static void SelectEndless(string regionId)
+        {
+            EndlessMode = true;
+            EndlessRegionId = regionId;
+            EndlessSeed = 0;
+        }
+
+        /// <summary>A fresh endless seed: UTC ticks and the region mixed, never 0.</summary>
+        public static int NewEndlessSeed()
+        {
+            unchecked
+            {
+                long t = System.DateTime.UtcNow.Ticks;
+                int seed = (int)(t ^ (t >> 32)) * 1103515245 + 12345;
+                return seed == 0 ? 1 : seed;
+            }
+        }
         /// <summary>Meta opens the level select of this region when it loads (set by the Run scene on exit).</summary>
         public static string PendingRegionId;
         public static RunResult LastResult;
@@ -67,6 +98,9 @@ namespace BoingTower.Gameplay
             CurrentLevelId = null;
             PendingRegionId = null;
             LastResult = null;
+            EndlessMode = false;
+            EndlessRegionId = null;
+            EndlessSeed = 0;
             Initialized = true;
         }
 
@@ -79,6 +113,9 @@ namespace BoingTower.Gameplay
             CurrentLevelId = null;
             PendingRegionId = null;
             LastResult = null;
+            EndlessMode = false;
+            EndlessRegionId = null;
+            EndlessSeed = 0;
         }
 
         /// <summary>The next level after this one in play order, or null if it is the last playable one.</summary>

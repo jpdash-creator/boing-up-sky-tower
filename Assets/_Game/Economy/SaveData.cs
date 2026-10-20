@@ -26,5 +26,10 @@ namespace BoingTower.Economy
         [JsonProperty("levels")] public Dictionary<string, LevelProgress> Levels = new Dictionary<string, LevelProgress>();
         /// <summary>Region ids unlocked by progress or by paying the gem skip. Region 1 is always unlocked and is not stored.</summary>
         [JsonProperty("unlockedRegions")] public List<string> UnlockedRegions = new List<string>();
+        /// <summary>Endless mode: best floor per region id. Added with endless mode; old saves simply have no entry (no version bump needed).</summary>
+        [JsonProperty("endlessBest")] public Dictionary<string, int> EndlessBest = new Dictionary<string, int>();
+        /// <summary>Endless coin cap: the UTC day (yyyyMMdd) the counter below belongs to, and how many paying endless runs finished that day.</summary>
+        [JsonProperty("endlessDay")] public string EndlessDay = "";
+        [JsonProperty("endlessRunsToday")] public int EndlessRunsToday;
     }
 }

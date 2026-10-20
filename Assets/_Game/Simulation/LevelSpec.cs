@@ -132,6 +132,11 @@ namespace BoingTower.Simulation
         public string[] FixedChunks = new string[0];
         /// <summary>Explicit platform rows above the start; 0 = derive with RowsFor().</summary>
         public int Rows;
+        /// <summary>Endless mode (EndlessTower): no goal, the Goal field is a never-reached placeholder. Campaign specs leave this false.</summary>
+        public bool Endless;
+        /// <summary>Endless only: the region's difficulty offset (0..0.25) and the floor where difficulty reaches 1 (remote config, 400).</summary>
+        public Fx RegionOffset;
+        public int EndlessDifficultyFloors = 400;
 
         /// <summary>
         /// Number of platform rows (top row index). Rule: an explicit Rows wins; ReachFloor, Speedrun and BossChase

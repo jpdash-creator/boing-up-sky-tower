@@ -15,15 +15,27 @@ namespace BoingTower.Gameplay
         public const int MaxRevives = 2;
         public static int ReviveCostFor(int revivesUsed) { return revivesUsed <= 0 ? 2 : 5; }
         public int NextReviveCost { get { return ReviveCostFor(State.RevivesUsed); } }
-        public bool CanRevive { get { return State.RevivesUsed < MaxRevives; } }
+        /// <summary>Endless runs have no revive: the result (best floor, coins) is saved the moment the player falls (CUX-8), so a revive would double pay.</summary>
+        public bool CanRevive { get { return !IsEndless && State.RevivesUsed < MaxRevives; } }
 
         public readonly SimConfig Cfg;
+        /// <summary>The campaign level, or null in endless mode.</summary>
         public readonly LevelDef Level;
         public readonly RegionDef Region;
         public readonly LevelSpec Spec;
-        public readonly LevelData Data;
-        public readonly Sim Sim;
+        /// <summary>Current world. In endless mode the tower grows in chunks: Data and Sim are replaced (same prefix) when WorldVersion changes.</summary>
+        public LevelData Data { get; private set; }
+        public Sim Sim { get; private set; }
         public SimState State;
+
+        /// <summary>Endless mode (owner decision 2026-10-20): an ever growing tower of the region, the run ends only when the player falls.</summary>
+        public readonly bool IsEndless;
+        /// <summary>Seed of the endless tower; stored with the run so it can be rebuilt (replay, server check).</summary>
+        public readonly int Seed;
+        /// <summary>Endless tower, null for campaign levels.</summary>
+        public readonly EndlessTower Tower;
+        /// <summary>Changes every time the endless tower grew (the view then extends its world). Always 0 for campaign levels.</summary>
+        public int WorldVersion { get; private set; }
 
         public bool GoalReached { get; private set; }
         public bool Failed { get { return State.Dead && !GoalReached; } }
@@ -40,11 +52,39 @@ namespace BoingTower.Gameplay
             State = Sim.NewState();
         }
 
+        /// <summary>Endless run in a region. <paramref name="seed"/> picks the tower; the same seed always gives the same tower.</summary>
+        public RunSession(ContentRepository repo, SimConfig cfg, RegionDef region, int seed)
+        {
+            Cfg = cfg;
+            Level = null;
+            Region = region;
+            IsEndless = true;
+            Seed = seed;
+            Spec = LevelSpecFactory.BuildEndless(region, seed, repo.RemoteConfig.Generator.EndlessDifficultyFloors);
+            Tower = new EndlessTower(cfg, Spec);
+            Data = Tower.Data;
+            Sim = Tower.CreateSim();
+            State = Sim.NewState();
+            WorldVersion = Tower.Version;
+        }
+
         /// <summary>Advances one 1/60 s tick. Does nothing once the run is over.</summary>
         public void Step(int input)
         {
             if (Over) return;
             Sim.Step(ref State, input);
+            if (IsEndless)
+            {
+                // Keep the tower 60 rows above the player. Growth happens once per 40 rows (about every 15 s), never per frame.
+                if (Tower.EnsureAhead(State.Row))
+                {
+                    Data = Tower.Data;
+                    Sim = Tower.CreateSim();
+                    Sim.GrowState(ref State);
+                    WorldVersion = Tower.Version;
+                }
+                return;
+            }
             if (GoalEvaluator.IsComplete(Spec, State)) GoalReached = true;
         }
 
@@ -73,6 +113,7 @@ namespace BoingTower.Gameplay
         /// <summary>Short goal text for the HUD and the level info popup.</summary>
         public static string DescribeGoal(LevelSpec spec)
         {
+            if (spec.Endless) return "Climb as high as you can";
             GoalSpec g = spec.Goal;
             switch (g.Type)
             {

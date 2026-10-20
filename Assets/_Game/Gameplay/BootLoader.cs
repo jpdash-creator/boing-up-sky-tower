@@ -15,6 +15,7 @@ namespace BoingTower.Gameplay
         void Start()
         {
             GameSession.EnsureInit();
+            AudioManager.Warm();   // loads the clips during the loading screen
             ArtCatalog art = GameSession.Art;
             Canvas canvas = UiKit.CreateCanvas("BootUi", 0);
             canvas.transform.SetParent(transform, false);

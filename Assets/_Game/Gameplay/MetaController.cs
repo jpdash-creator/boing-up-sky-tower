@@ -62,6 +62,7 @@ namespace BoingTower.Gameplay
         {
             GameSession.EnsureInit();
             GameSettings.ApplyTextScale();
+            AudioManager.SetMusic(MusicTrack.Meta);
             repo = GameSession.Repo;
             progress = GameSession.Progress;
             art = GameSession.Art;
@@ -505,6 +506,7 @@ namespace BoingTower.Gameplay
             RectTransform grid = UiKit.Rect(screen, "LevelGrid");
             UiKit.Stretch(grid);
             grid.offsetMax = new Vector2(0f, -(MapTopBar + 140f));
+            grid.offsetMin = new Vector2(0f, EndlessBarHeight);   // the Endless button sits under the grid, never over a circle or its stars
             var fit = grid.gameObject.AddComponent<LevelGridFit>();
             fit.Nodes = new RectTransform[levels.Count];
             fit.Cols = new int[levels.Count];
@@ -520,6 +522,22 @@ namespace BoingTower.Gameplay
                 fit.Current[i] = l.Id == currentId;
             }
             fit.Apply();
+
+            // Endless mode (owner decision 2026-10-20): one pill under the circles, bottom centre (thumb reach), 720 x 130 px = well over 48 dp.
+            int bestFloor = progress.EndlessBestFloor(region.Id);
+            string endlessLabel = bestFloor > 0 ? "Endless  best " + bestFloor : "Endless";
+            Button endlessBtn = UiKit.AddButton(screen, "Endless", endlessLabel, Btn(1), new Color(0.85f, 1f, 0.9f), new Vector2(720f, 130f), () => StartEndless(region), 46);
+            UiKit.Place((RectTransform)endlessBtn.transform, new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(720f, 130f));
+        }
+
+        /// <summary>Height reserved at the bottom of the level screen for the Endless button (button 130 + 24 margin + 16 gap).</summary>
+        const float EndlessBarHeight = 170f;
+
+        /// <summary>Opens the endless tower of a region in the Run scene.</summary>
+        public void StartEndless(RegionDef region)
+        {
+            GameSession.SelectEndless(region.Id);
+            SceneManager.LoadScene("Run");
         }
 
         // Sprite order of ui_level_nodes after slicing: 0 plain bubble, 1 gem bubble (garbled text), 2 crown, 3 padlock,
@@ -597,6 +615,7 @@ namespace BoingTower.Gameplay
             PopupButton("PLAY", Btn(1), Color.white, 200f, () =>
             {
                 GameSession.CurrentLevelId = level.Id;
+                GameSession.EndlessMode = false;
                 SceneManager.LoadScene("Run");
             });
             PopupButton("Close", Btn(0), Color.white, 40f, ClosePopup);

@@ -38,6 +38,14 @@ namespace BoingTower.Economy
             this.store = store;
             PlayableRegionLimit = playableRegionLimit;
             Data = store.Load();
+            EnsureEndlessFields();
+        }
+
+        /// <summary>Saves written before endless mode (or with null fields) get safe defaults.</summary>
+        void EnsureEndlessFields()
+        {
+            if (Data.EndlessBest == null) Data.EndlessBest = new System.Collections.Generic.Dictionary<string, int>();
+            if (Data.EndlessDay == null) Data.EndlessDay = "";
         }
 
         public int Coins { get { return Data.Coins; } }
@@ -209,6 +217,63 @@ namespace BoingTower.Economy
             }
             Commit();
             return reward;
+        }
+
+        // ---- endless ----
+
+        /// <summary>Best floor reached in the region's endless tower (0 = never played).</summary>
+        public int EndlessBestFloor(string regionId)
+        {
+            int best;
+            return Data.EndlessBest != null && Data.EndlessBest.TryGetValue(regionId, out best) ? best : 0;
+        }
+
+        /// <summary>Paying endless runs finished on the given UTC day (0 when the counter belongs to another day).</summary>
+        public int EndlessRunsOn(string dayKey)
+        {
+            return Data.EndlessDay == dayKey ? Data.EndlessRunsToday : 0;
+        }
+
+        /// <summary>
+        /// Applies a finished endless run (the player fell): saves the best floor, pays the floors based coins (EndlessRewards) with the
+        /// daily cap rule of the remote config, and saves immediately. <paramref name="dayKey"/> is the UTC day, "yyyyMMdd".
+        /// The region must be enterable.
+        /// </summary>
+        public EndlessReward ApplyEndlessRun(string regionId, int floors, string dayKey)
+        {
+            RegionDef region = repo.GetRegion(regionId);
+            if (!CanEnterRegion(region)) throw new InvalidOperationException("Region is locked: " + regionId);
+            if (floors < 0) floors = 0;
+            EnsureEndlessFields();
+
+            var result = new EndlessReward();
+            result.Floors = floors;
+            result.BestBefore = EndlessBestFloor(regionId);
+            result.NewBest = floors > result.BestBefore;
+            if (result.NewBest) Data.EndlessBest[regionId] = floors;
+
+            int full = EndlessRewards.FullRateCoins(floors, region.CoinFactor);
+            result.FullRateCoins = full;
+            result.Coins = full;
+            if (full > 0)
+            {
+                if (Data.EndlessDay != dayKey) { Data.EndlessDay = dayKey; Data.EndlessRunsToday = 0; }
+                EconomyConfigDef eco = repo.RemoteConfig.Economy;
+                if (Data.EndlessRunsToday >= eco.EndlessCoinDailyFullRateRuns)
+                {
+                    result.OverCap = true;
+                    result.Coins = EndlessRewards.OverCapCoins(full, eco.EndlessCoinOverCapMultiplier);
+                }
+                Data.EndlessRunsToday++;
+                result.RunsToday = Data.EndlessRunsToday;
+                Data.Coins = SaturatingAdd(Data.Coins, result.Coins);
+            }
+            else
+            {
+                result.RunsToday = EndlessRunsOn(dayKey);
+            }
+            Commit();
+            return result;
         }
 
         /// <summary>Erases all progress, coins and gems (Settings > Reset progress).</summary>

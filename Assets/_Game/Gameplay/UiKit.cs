@@ -233,6 +233,7 @@ namespace BoingTower.Gameplay
         /// </summary>
         public static RectTransform BuildPopupFrame(Transform parent, string title, ArtCatalog art, Vector2 size, Action onClose)
         {
+            AudioManager.Play(Sfx.Popup);
             Image rim;
             if (art != null && art.PopupFrame != null)
             {
@@ -264,7 +265,8 @@ namespace BoingTower.Gameplay
             if (onClose != null)
             {
                 Sprite icon = art != null ? art.CloseIcon : null;
-                Button x = AddButton(rim.transform, "CloseX", icon != null ? "" : "X", icon != null ? icon : PillSprite, icon != null ? Color.white : new Color(0.96f, 0.80f, 0.55f, 1f), new Vector2(130f, 130f), onClose, 64);
+                Button x = AddButton(rim.transform, "CloseX", icon != null ? "" : "X", icon != null ? icon : PillSprite, icon != null ? Color.white : new Color(0.96f, 0.80f, 0.55f, 1f), new Vector2(130f, 130f), onClose, 64, false);
+                x.onClick.AddListener(() => AudioManager.Play(Sfx.Back));
                 if (icon == null) x.GetComponent<Image>().type = Image.Type.Sliced;
                 x.GetComponent<A11yLabel>().Text = "Close";
                 Place((RectTransform)x.transform, new Vector2(1f, 1f), new Vector2(-26f, -26f), new Vector2(130f, 130f));
@@ -294,7 +296,7 @@ namespace BoingTower.Gameplay
         }
 
         /// <summary>Touch target. Size is raised to the 48 dp minimum so no button can be built too small.</summary>
-        public static Button AddButton(Transform parent, string name, string label, Sprite sprite, Color tint, Vector2 size, Action onClick, int fontSize = 44)
+        public static Button AddButton(Transform parent, string name, string label, Sprite sprite, Color tint, Vector2 size, Action onClick, int fontSize = 44, bool tapSound = true)
         {
             size = new Vector2(Mathf.Max(size.x, MinTouchPx), Mathf.Max(size.y, MinTouchPx));
             RectTransform rt = Rect(parent, name);
@@ -307,6 +309,7 @@ namespace BoingTower.Gameplay
             var colors = btn.colors;
             colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
             btn.colors = colors;
+            if (tapSound) btn.onClick.AddListener(() => AudioManager.Play(Sfx.Tap));
             if (onClick != null) btn.onClick.AddListener(() => onClick());
             rt.gameObject.AddComponent<A11yLabel>().Text = string.IsNullOrEmpty(label) ? name : label;
             if (!string.IsNullOrEmpty(label))

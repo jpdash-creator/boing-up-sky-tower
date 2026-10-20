@@ -24,6 +24,13 @@ Build `RunOutcome` from the finished `SimState`: `StarMask = StarEvaluator.Earne
 - Gems: normal levels only from in-run gem pickups. Milestones: L5 and L10 roll the content chance (25 percent for 1-3 gems) on first clear, L10 guarantees 1; L15 first clear gives 5 plus a star bonus (+2 for two stars, +5 for three), replays 50 percent for 2. Rolls use the Simulation `Rng` seeded from the level seed and the clear count, so a server can recompute them.
 - Level N unlocks when level N-1 of the same region is cleared. Best stars use the union of earned star bits; score keeps the maximum.
 
+## Endless mode (T13, owner decision 2026-10-20)
+- Save (additive, no version bump, old saves load with defaults): `endlessBest` (region id -> best floor), `endlessDay` (UTC `yyyyMMdd` the counter belongs to), `endlessRunsToday`.
+- `ProgressService.ApplyEndlessRun(regionId, floors, dayKey)` records the best floor, pays the coins and saves immediately (CUX-8). The region must be enterable. No revive in endless, so the payout is final when the player falls. A run abandoned from the pause menu records nothing.
+- **Coin formula** (`EndlessRewards`, doc 08 section 7): `raw = floors / 2 + 50 * (floors / 100)` (integer division), `full = round_half_up(raw x region.coinFactor)`. Examples at factor 1.0: 40 floors = 20 coins, 100 = 100, 250 = 225, 500 = 500.
+- **Daily cap** (remote config `economy.endlessCoinDailyFullRateRuns` 3, `endlessCoinOverCapMultiplier` 0.5): per UTC day (`EndlessRewards.DayKey(DateTime.UtcNow)`) the first 3 paying runs pay `full`, later runs pay `round_half_up(full x 0.5)`. A run with `full == 0` (under 2 floors) does not count against the cap. The counter resets when the day key changes. The cap is global, not per region.
+- Not done yet: endless gem drops at floors 250/500/1000 (once per account per day, doc 08 D2).
+
 ## Assumptions to confirm (also in `.claude/pendingdecisions/open-items.md`)
 1. Star bonus is +10 percent of the payout per star beyond the first (doc 08 says "base + star bonus" without a number). Constant: `EconomyRules.StarBonusPercentPerExtraStar`.
 2. A failed run pays nothing and records nothing.
