@@ -96,6 +96,8 @@ namespace BoingUpSkyTower.Gameplay
         public int Hazards;
         public int Hits;
         public int Coins;
+        /// <summary>Pickups taken versus placed in the level: stars, gems (plain gems), coins.</summary>
+        public int StarsTaken, StarsTotal, GemsTaken, GemsTotal, CoinsTotal;
         public int Plans;
         public int Misses;
         public int PlanMaxMs;
@@ -158,6 +160,7 @@ namespace BoingUpSkyTower.Gameplay
             r.Hazards = CountHazards(sim, s);
             r.Hits = s.Hits;
             r.Coins = s.Coins;
+            CountPickups(sim, s, r);
             if (brain != null)
             {
                 r.Plans = brain.Plans;
@@ -165,6 +168,22 @@ namespace BoingUpSkyTower.Gameplay
                 r.PlanMaxMs = (int)Math.Round(brain.MaxPlanMs);
             }
             return r;
+        }
+
+        /// <summary>Counts the pickups placed in the level and how many of each kind the run took (stars, plain gems, coins).</summary>
+        static void CountPickups(Sim sim, SimState s, AutoResult r)
+        {
+            Pickup[] p = sim.Pickups;
+            for (int i = 0; i < p.Length; i++)
+            {
+                bool taken = s.PickupTaken != null && i < s.PickupTaken.Length && s.PickupTaken[i];
+                switch (p[i].Kind)
+                {
+                    case PickupKind.Star: r.StarsTotal++; if (taken) r.StarsTaken++; break;
+                    case PickupKind.Gem: r.GemsTotal++; if (taken) r.GemsTaken++; break;
+                    case PickupKind.Coin: r.CoinsTotal++; break;
+                }
+            }
         }
 
         /// <summary>Scroll speed relative to the level's base speed: 100 + the step-ups after the first jump (+ the boss ramp), as Sim.Step computes it.</summary>
@@ -267,6 +286,11 @@ namespace BoingUpSkyTower.Gameplay
             Num(sb, "haz", r.Hazards);
             Num(sb, "hits", r.Hits);
             Num(sb, "coins", r.Coins);
+            Num(sb, "stars", r.StarsTaken);
+            Num(sb, "starsOf", r.StarsTotal);
+            Num(sb, "gems", r.GemsTaken);
+            Num(sb, "gemsOf", r.GemsTotal);
+            Num(sb, "coinsOf", r.CoinsTotal);
             Num(sb, "plans", r.Plans);
             Num(sb, "miss", r.Misses);
             Num(sb, "planMs", r.PlanMaxMs);
@@ -306,7 +330,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             "run", "version", "level", "n", "attempt", "difficulty", "stepPercent", "skill", "goal", "result", "floors", "targetRow", "seconds", "tick",
             "x", "y", "groundId", "groundKind", "nearIds", "nearKinds", "scrollPercent", "killGap", "stackCount", "dense", "hazards", "hits", "coins",
-            "plans", "misses", "planMaxMs"
+            "plans", "misses", "planMaxMs", "stars", "starsOf", "gems", "gemsOf", "coinsOf"
         };
 
         public static string CsvHeader() { return string.Join(",", CsvColumns); }
@@ -329,7 +353,9 @@ namespace BoingUpSkyTower.Gameplay
                 F(r.X), F(r.Y), r.GroundId.ToString(CultureInfo.InvariantCulture), r.GroundKind, JoinIds(r.NearIds), r.NearKinds.Replace(',', '|'),
                 r.ScrollPercent.ToString(CultureInfo.InvariantCulture), F(r.KillGap), r.StackCount.ToString(CultureInfo.InvariantCulture), r.Dense ? "1" : "0",
                 r.Hazards.ToString(CultureInfo.InvariantCulture), r.Hits.ToString(CultureInfo.InvariantCulture), r.Coins.ToString(CultureInfo.InvariantCulture),
-                r.Plans.ToString(CultureInfo.InvariantCulture), r.Misses.ToString(CultureInfo.InvariantCulture), r.PlanMaxMs.ToString(CultureInfo.InvariantCulture)
+                r.Plans.ToString(CultureInfo.InvariantCulture), r.Misses.ToString(CultureInfo.InvariantCulture), r.PlanMaxMs.ToString(CultureInfo.InvariantCulture),
+                r.StarsTaken.ToString(CultureInfo.InvariantCulture), r.StarsTotal.ToString(CultureInfo.InvariantCulture),
+                r.GemsTaken.ToString(CultureInfo.InvariantCulture), r.GemsTotal.ToString(CultureInfo.InvariantCulture), r.CoinsTotal.ToString(CultureInfo.InvariantCulture)
             };
             for (int i = 0; i < cells.Length; i++) cells[i] = Csv(cells[i]);
             return string.Join(",", cells);

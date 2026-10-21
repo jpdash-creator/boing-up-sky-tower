@@ -32,8 +32,11 @@ CSV = "autoplay_results.csv"
 EXT_DIR = "/sdcard/Android/data/%s/files" % PKG
 
 
+SERIAL = os.environ.get("ANDROID_SERIAL", "96355505")   # the owner's phone: an emulator may be attached too, plain adb would then fail
+
+
 def adb(*args, check=False, timeout=120, data=None):
-    r = subprocess.run(["adb"] + list(args), capture_output=True, timeout=timeout, input=data)
+    r = subprocess.run(["adb", "-s", SERIAL] + list(args), capture_output=True, timeout=timeout, input=data)
     if check and r.returncode != 0:
         raise RuntimeError("adb %s failed: %s" % (" ".join(args), r.stderr.decode(errors="replace")[:300]))
     return r.stdout.decode(errors="replace")
@@ -119,7 +122,7 @@ class Follower:
         self.last_line = time.time()
         self._chunks = {}
         self._lock = threading.Lock()
-        self._proc = subprocess.Popen(["adb", "logcat", "-v", "brief"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self._proc = subprocess.Popen(["adb", "-s", SERIAL, "logcat", "-v", "brief"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         threading.Thread(target=self._read, daemon=True).start()
 
     def _read(self):
@@ -165,7 +168,7 @@ class Follower:
 
 
 def screenshot(path):
-    data = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+    data = subprocess.run(["adb", "-s", SERIAL, "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
     with open(path, "wb") as f:
         f.write(data)
 
@@ -177,12 +180,13 @@ def verdict(r):
 
 
 def table(results):
-    head = "%-3s %-11s %-7s %-9s %7s %6s %6s %-5s %-6s %5s %5s" % ("Lvl", "Level", "Result", "Floors", "Time", "Tick", "X", "Kind", "Stack", "Scr%", "Plans")
+    head = "%-3s %-11s %-7s %-9s %7s %6s %6s %-5s %-6s %5s %5s" % ("Lvl", "Level", "Result", "Floors", "Time", "Tick", "X", "Kind", "Stack", "Scr%", "Plans") + "  Stars Gems Coins"
     lines = [head, "-" * len(head)]
     for r in results:
         lines.append("%-3s %-11s %-7s %-9s %6.1fs %6d %6.2f %-5s %-6s %5d %5d  %s" % (
             r.get("n"), r.get("lvl"), r.get("res"), "%s/%s" % (r.get("floors"), r.get("target")), r.get("sec", 0), r.get("tick", 0),
-            r.get("x", 0), r.get("gk", ""), ("%d%s" % (r.get("stack", 0), "!" if r.get("dense") else "")), r.get("scr", 0), r.get("plans", 0), verdict(r)))
+            r.get("x", 0), r.get("gk", ""), ("%d%s" % (r.get("stack", 0), "!" if r.get("dense") else "")), r.get("scr", 0), r.get("plans", 0), verdict(r)) + "  %s/%s %s/%s %s/%s" % (
+            r.get("stars", "?"), r.get("starsOf", "?"), r.get("gems", "?"), r.get("gemsOf", "?"), r.get("coins", "?"), r.get("coinsOf", "?")))
     return "\n".join(lines)
 
 
@@ -229,6 +233,37 @@ def write_report(results, shots, opts, meta, path):
 
 
 # ---------------------------------------------------------------- main
+
+def merge_csv_rows(results, path, run):
+    """The live logcat feed can drop (the game killed, a USB hiccup); the game also writes every finished level to a CSV on the phone.
+    Adds the rows of this run that the live feed missed, so the table and the report are complete for every level that was played."""
+    import csv
+    have = set((str(r.get("lvl")), str(r.get("att"))) for r in results)
+    try:
+        with open(path, newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+    except OSError:
+        return
+    for row in rows:
+        if run and row.get("run") != run:
+            continue
+        key = (row.get("level"), row.get("attempt"))
+        if key in have:
+            continue
+        def num(k, cast=float, default=0):
+            try:
+                return cast(row.get(k, default))
+            except (TypeError, ValueError):
+                return default
+        results.append({"ev": "level", "lvl": row.get("level"), "n": num("n", int), "att": num("attempt", int), "diff": num("difficulty", int),
+                        "step": num("stepPercent", int), "skill": num("skill"), "goal": row.get("goal"), "res": row.get("result"),
+                        "floors": num("floors", int), "target": num("targetRow", int), "sec": num("seconds"), "tick": num("tick", int),
+                        "x": num("x"), "gk": row.get("groundKind"), "stack": num("stackCount", int), "scr": num("scrollPercent", int),
+                        "plans": num("plans", int), "stars": num("stars", int), "starsOf": num("starsOf", int), "gems": num("gems", int),
+                        "gemsOf": num("gemsOf", int), "coins": num("coins", int), "coinsOf": num("coinsOf", int), "from_csv": True})
+        have.add(key)
+    results.sort(key=lambda r: (r.get("n", 0), r.get("att", 0)))
+
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -333,6 +368,8 @@ def main():
 
     csv_dest = os.path.join(QA, "autoplay_results_%s.csv" % meta.get("run", "last"))
     got_csv = pull_csv(csv_dest)
+    if got_csv:
+        merge_csv_rows(results, csv_dest, meta.get("run"))
     remove_flags()
     if exit_code:
         adb("shell", "am force-stop " + PKG)
