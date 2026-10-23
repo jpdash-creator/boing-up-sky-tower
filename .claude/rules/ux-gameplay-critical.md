@@ -50,3 +50,8 @@ If a change cannot meet a rule, stop and tell the owner instead of shipping it. 
 - Portrait lock, safe-area handling, app pause/resume, low-memory behaviour. Missing art or content never crashes the game (visible fallback instead).
 
 How to apply: when you add or change a screen, run the layout/accessibility/performance tests (category `CriticalUX`) and look at screenshots at 9:16 and 9:21. A failing CUX test blocks the commit. Keep this file in sync with `docs/11-critical-ux-gameplay-requirements.md` in the docs folder.
+
+## CUX-9 addendum (owner, 2026-10-23): no stretched images
+- No sprite or UI image may be scaled non-uniformly (different X and Y scale), and no platform piece may have its middle stretched. Only flat-colour 9-slice middles may stretch.
+- Platforms use a fixed set of real painted widths per region (normal 1.5, 2, 3, 4, 6, 8; crumble, moving and bounce in 2 widths); level widths snap to that set.
+- Acceptance: a contact sheet of every platform width per region approved by the owner, and an automatic CriticalUX test that fails on any non-uniform scale. Details in docs/16-ui-polish-and-platform-overhaul.md.
