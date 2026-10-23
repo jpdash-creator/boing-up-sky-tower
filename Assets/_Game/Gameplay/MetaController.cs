@@ -860,11 +860,11 @@ namespace BoingUpSkyTower.Gameplay
             titleRow.pivot = new Vector2(0.5f, 1f);
             titleRow.anchoredPosition = new Vector2(0f, -244f);
             titleRow.sizeDelta = new Vector2(-40f, 176f);
-            Text hdr = UiKit.AddText(titleRow, "Header", region.Name, 64, Color.white, TextAnchor.MiddleCenter, true);
+            Text hdr = UiKit.AddText(titleRow, "Header", region.Name, 64, Color.white, TextAnchor.MiddleLeft, true);
             var hrt = (RectTransform)hdr.transform;
             hrt.anchorMin = Vector2.zero;
             hrt.anchorMax = Vector2.one;
-            hrt.offsetMin = new Vector2(0f, 0f);
+            hrt.offsetMin = new Vector2(24f, 0f);
             hrt.offsetMax = new Vector2(-170f, 0f);
             Button endlessIcon = ToyKit.IconButton(titleRow, "Endless", "Endless mode", 1, Glyphs.Infinity, new Vector2(136f, 136f), () => OnEndlessTapped(region), 0.72f);
             UiKit.Place((RectTransform)endlessIcon.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(136f, 136f));
@@ -894,27 +894,13 @@ namespace BoingUpSkyTower.Gameplay
             scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.scrollSensitivity = 60f;
 
-            float[] lanes = { 0.5f, 0.22f, 0.5f, 0.78f };
             float[] nx = new float[levels.Count], ny = new float[levels.Count];
+            int lastUnlocked = 0;
             for (int i = 0; i < levels.Count; i++)
             {
-                nx[i] = lanes[i % 4];
+                nx[i] = PathX(i);
                 ny[i] = pad + 70f + i * pitch + nodeSize * 0.5f;
-            }
-            // dotted path first (under the nodes)
-            for (int i = 0; i + 1 < levels.Count; i++)
-            {
-                for (int d = 1; d <= 9; d++)
-                {
-                    float t = d / 10f;
-                    float curve = (1f - Mathf.Cos(t * Mathf.PI)) * 0.5f;   // S-curve between two nodes (owner, 2026-10-24: curvy, not straight)
-                    Image dot = UiKit.AddImage(content, "Dot", Theme.RoundSprite, new Color(1f, 1f, 1f, progress.IsLevelUnlocked(levels[i + 1]) ? 0.95f : 0.5f));
-                    dot.type = Image.Type.Sliced;
-                    dot.rectTransform.anchorMin = dot.rectTransform.anchorMax = new Vector2(Mathf.Lerp(nx[i], nx[i + 1], curve), 0f);
-                    dot.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                    dot.rectTransform.anchoredPosition = new Vector2(0f, Mathf.Lerp(ny[i], ny[i + 1], t));
-                    dot.rectTransform.sizeDelta = new Vector2(22f, 22f);
-                }
+                if (progress.IsLevelUnlocked(levels[i])) lastUnlocked = i;
             }
             float currentY = ny[0];
             for (int i = 0; i < levels.Count; i++)
@@ -929,16 +915,73 @@ namespace BoingUpSkyTower.Gameplay
                 node.localScale = Vector3.one * (isCur ? 1.15f : 1f);
                 if (isCur) currentY = ny[i];
             }
-            StartCoroutine(OpenPathAt(scroll, contentH, currentY));
+            StartCoroutine(OpenPathAt(scroll, contentH, currentY, content, pad + 70f + nodeSize * 0.5f, pitch, lastUnlocked));
             AddTabBar(-1, false);
         }
 
-        /// <summary>Scrolls the level path so the current level sits in the middle of the view (after the first layout pass).</summary>
-        System.Collections.IEnumerator OpenPathAt(ScrollRect scroll, float contentH, float y)
+        /// <summary>Horizontal position (0..1) of level node <paramref name="i"/> and of the flowing line: one smooth wave from the bottom to the top.</summary>
+        static float PathX(float i) { return 0.5f + 0.27f * Mathf.Sin(i * 0.8f); }
+
+        /// <summary>
+        /// Draws the winding path as ONE smooth line (a navy-edged white ribbon, fainter beyond the last unlocked level) into a single texture, so
+        /// it flows through every node instead of a row of dots (owner, 2026-10-24). Built after the first layout pass, when the real width is known.
+        /// </summary>
+        void BuildPathLine(RectTransform content, float w, float h, float yBase, float pitch, int count, int lastUnlocked)
+        {
+            const float sc = 0.5f;
+            int tw = Mathf.Max(8, Mathf.RoundToInt(w * sc)), th = Mathf.Max(8, Mathf.RoundToInt(h * sc));
+            var px = new Color[tw * th];
+            float yEnd = yBase + (count - 1) * pitch;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                float radius = (pass == 0 ? 17f : 11f) * sc;
+                for (float y = yBase - pitch * 0.35f; y <= yEnd + pitch * 0.35f; y += 2f)
+                {
+                    float t = (y - yBase) / pitch;
+                    float x = PathX(t) * w;
+                    float a = t <= lastUnlocked + 0.5f ? 1f : 0.45f;
+                    Color src = pass == 0 ? new Color(0.06f, 0.14f, 0.34f, 0.85f * a) : new Color(1f, 1f, 1f, 0.97f * a);
+                    int cx = Mathf.RoundToInt(x * sc), cy = Mathf.RoundToInt(y * sc), r = Mathf.CeilToInt(radius) + 1;
+                    for (int dy = -r; dy <= r; dy++)
+                    {
+                        int py = cy + dy;
+                        if (py < 0 || py >= th) continue;
+                        for (int dx = -r; dx <= r; dx++)
+                        {
+                            int pxx = cx + dx;
+                            if (pxx < 0 || pxx >= tw) continue;
+                            float cov = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + 0.5f);
+                            if (cov <= 0f) continue;
+                            float sa = src.a * cov;
+                            Color d = px[py * tw + pxx];
+                            float oa = sa + d.a * (1f - sa);
+                            px[py * tw + pxx] = oa <= 0f ? Color.clear : new Color((src.r * sa + d.r * d.a * (1f - sa)) / oa, (src.g * sa + d.g * d.a * (1f - sa)) / oa, (src.b * sa + d.b * d.a * (1f - sa)) / oa, oa);
+                        }
+                    }
+                }
+            }
+            var tex = new Texture2D(tw, th, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            tex.SetPixels(px);
+            tex.Apply();
+            var raw = UiKit.Rect(content, "PathLine").gameObject.AddComponent<RawImage>();
+            raw.texture = tex;
+            raw.raycastTarget = false;
+            raw.rectTransform.anchorMin = new Vector2(0f, 0f);
+            raw.rectTransform.anchorMax = new Vector2(1f, 0f);
+            raw.rectTransform.pivot = new Vector2(0.5f, 0f);
+            raw.rectTransform.anchoredPosition = Vector2.zero;
+            raw.rectTransform.sizeDelta = new Vector2(0f, h);
+            raw.transform.SetAsFirstSibling();   // under the nodes
+        }
+
+        /// <summary>Builds the line, then scrolls the level path so the current level sits in the middle of the view.</summary>
+        System.Collections.IEnumerator OpenPathAt(ScrollRect scroll, float contentH, float y, RectTransform content, float yBase, float pitch, int lastUnlocked)
         {
             yield return null;
             if (scroll == null) yield break;
-            float vpH = ((RectTransform)scroll.viewport).rect.height;
+            RectTransform vpr = (RectTransform)scroll.viewport;
+            if (content != null) BuildPathLine(content, vpr.rect.width, contentH, yBase, pitch, 15, lastUnlocked);
+            float vpH = vpr.rect.height;
             float span = Mathf.Max(1f, contentH - vpH);
             scroll.verticalNormalizedPosition = Mathf.Clamp01((y - vpH * 0.5f) / span);
         }
