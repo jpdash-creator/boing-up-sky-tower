@@ -172,7 +172,7 @@ namespace BoingUpSkyTower.Gameplay
             if (o != null) o.enabled = false;
         }
 
-        Sprite Btn(int i) { return art != null ? ArtCatalog.Pick(art.Buttons, i) : null; }
+        Sprite Btn(int i) { return ToyKit.Button(i == 1 ? 1 : 0) ?? (art != null ? ArtCatalog.Pick(art.Buttons, i) : null); }
 
         void Background(Sprite sprite, Color fallback)
         {
@@ -283,7 +283,7 @@ namespace BoingUpSkyTower.Gameplay
         void AddBack(string label, Action action)
         {
             int icon = label == "Menu" ? 2 : 3;   // round buttons: 2 = home, 3 = back arrow
-            Sprite sprite = art != null ? ArtCatalog.Pick(art.RoundButtons, icon) : null;
+            Sprite sprite = ToyKit.Get("btn_back") ?? (art != null ? ArtCatalog.Pick(art.RoundButtons, icon) : null);
             Button b = UiKit.AddButton(screen, "Back", "", sprite, Color.white, new Vector2(150f, 150f), action, 40);
             b.GetComponent<A11yLabel>().Text = label;
             UiKit.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(20f, -20f), new Vector2(150f, 150f));
@@ -302,25 +302,51 @@ namespace BoingUpSkyTower.Gameplay
             lastMapOffset = -1f;   // the map opens on the current region again after a visit to the menu
             RegionArt meadow = art != null ? art.ForRegion(1) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
-            Text title = UiKit.AddText(screen, "Title", "BOING UP\n<color=#FFC93D>SKY TOWER</color>", 108, Color.white);
-            UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(900f, 340f));
+            Sprite logo = ToyKit.Get("logo");
+            if (logo != null)
+            {
+                Image lg = UiKit.AddImage(screen, "Logo", logo, Color.white);
+                UiKit.Place(lg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(960f, 392f));
+                lg.rectTransform.pivot = new Vector2(0.5f, 1f);
+                lg.GetComponent<Image>().raycastTarget = false;
+            }
+            else
+            {
+                Text title = UiKit.AddText(screen, "Title", "BOING UP"+(char)10+"<color=#FFC93D>SKY TOWER</color>", 108, Color.white);
+                UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(900f, 340f));
+            }
             if (art != null && art.Player != null)
             {
                 Image m = UiKit.AddImage(screen, "Momo", art.Player, Color.white);
-                UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.47f), Vector2.zero, new Vector2(440f, 540f));
+                UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(440f, 540f));
                 m.rectTransform.pivot = new Vector2(0.5f, 0.5f);
                 momo = m.rectTransform;
                 momoBase = momo.anchoredPosition;
             }
-            Button play = UiKit.AddButton(screen, "Play", "PLAY", Btn(1), Color.white, new Vector2(520f, 150f), ShowMap, 72);
-            UiKit.Place((RectTransform)play.transform, new Vector2(0.5f, 0f), new Vector2(0f, 290f), new Vector2(520f, 150f));
-            // Settings and Shop share one row (2 x 380 + 40 = 800 px, fits the narrowest canvas of 940 px).
-            Button settings = UiKit.AddButton(screen, "Settings", "Settings", Btn(0), new Color(0.9f, 0.95f, 1f), new Vector2(380f, 130f), ShowSettings, 46);
-            UiKit.Place((RectTransform)settings.transform, new Vector2(0.5f, 0f), new Vector2(-210f, 135f), new Vector2(380f, 130f));
-            Button shopBtn = UiKit.AddButton(screen, "Shop", "Shop", Btn(0), new Color(1f, 0.93f, 0.62f), new Vector2(380f, 130f), () => ShowShop(), 46);
-            UiKit.Place((RectTransform)shopBtn.transform, new Vector2(0.5f, 0f), new Vector2(210f, 135f), new Vector2(380f, 130f));
+            Button settings = UiKit.AddButton(screen, "Settings", "Settings", Btn(0), Color.white, new Vector2(380f, 130f), ShowSettings, 46);
+            UiKit.Place((RectTransform)settings.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 50f), new Vector2(380f, 130f));
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.6f));
-            UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(700f, 60f));
+            UiKit.Place((RectTransform)v.transform, new Vector2(0f, 1f), new Vector2(24f, -20f), new Vector2(420f, 56f));
+            ((Text)v).alignment = TextAnchor.MiddleLeft;
+            AddTabBar(ToyKit.TabPlay);
+        }
+
+        /// <summary>The persistent bottom tab bar (docs/16 section C). Gear, Characters and Daily are not built yet and say so.</summary>
+        void AddTabBar(int selected)
+        {
+            ToyKit.BuildTabBar(screen, selected, OnTab);
+        }
+
+        void OnTab(int tab)
+        {
+            switch (tab)
+            {
+                case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
+                case ToyKit.TabPlay: ShowMap(); break;
+                case ToyKit.TabGear: ShowMessage("Gear", "Hats, shirts and boots for Momo are coming soon."); break;
+                case ToyKit.TabHeroes: ShowMessage("Characters", "New characters are coming soon."); break;
+                default: ShowMessage("Daily rewards", "Daily rewards are coming soon."); break;
+            }
         }
 
         // ---------------- shop ----------------
@@ -346,6 +372,7 @@ namespace BoingUpSkyTower.Gameplay
             };
             shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
             shop.Build(tab, section);
+            AddTabBar(ToyKit.TabShop);
             coinText = shop.CoinText;     // RefreshWallet keeps these two current after every purchase
             gemText = shop.GemText;
             RefreshWallet();

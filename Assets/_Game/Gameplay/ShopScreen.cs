@@ -48,7 +48,7 @@ namespace BoingUpSkyTower.Gameplay
         const float SectionTop = TabTop + TabH + 24f;                        // 420
         const float SectionH = 146f;
         const float ListTop = SectionTop + SectionH + 20f;                   // 586
-        const float BottomMargin = 24f;
+        const float BottomMargin = 24f + ToyKit.TabBarReserve - 24f;   // room for the persistent tab bar
         const float CardH = 420f, CardGap = 20f, ColGap = 20f, InfoSize = 126f;
         static float ColW { get { return (1080f - 2f * SideMargin - ColGap) * 0.5f; } }
 
@@ -79,7 +79,7 @@ namespace BoingUpSkyTower.Gameplay
             this.host = host;
         }
 
-        Sprite Btn(int i) { return art != null ? ArtCatalog.Pick(art.Buttons, i) : null; }
+        Sprite Btn(int i) { return ToyKit.Button(i == 1 ? 1 : 0) ?? (art != null ? ArtCatalog.Pick(art.Buttons, i) : null); }
 
         static string Num(int n) { return n.ToString("N0", CultureInfo.InvariantCulture); }
 

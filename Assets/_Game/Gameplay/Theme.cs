@@ -146,6 +146,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>A frosted glass chip or bar: translucent dark ink with a faint white rim. Children go under the returned image.</summary>
         public static Image GlassPanel(Transform parent, string name, float radius = RadiusChip)
         {
+            Sprite pill = ToyKit.Get("pill_dark");
+            if (pill != null) return ToyKit.Sliced(parent, name, pill, radius * 1.6f);
             Image img = Sliced(parent, name, RoundSprite, Glass, radius);
             Image rim = Sliced(img.transform, "Rim", RingSprite, GlassStroke, radius);
             UiKit.Stretch(rim.rectTransform);
@@ -164,7 +166,7 @@ namespace BoingUpSkyTower.Gameplay
             sh.rectTransform.anchorMax = Vector2.one;
             sh.rectTransform.offsetMin = new Vector2(-30f, -50f);
             sh.rectTransform.offsetMax = new Vector2(30f, 14f);
-            Image card = Sliced(box, name, RoundSprite, Surface, radius);
+            Image card = KitSurface(box, name, radius);
             UiKit.Stretch(card.rectTransform);
             return card;
         }
@@ -177,15 +179,23 @@ namespace BoingUpSkyTower.Gameplay
             sh.rectTransform.anchorMax = Vector2.one;
             sh.rectTransform.offsetMin = new Vector2(-30f, -50f);
             sh.rectTransform.offsetMax = new Vector2(30f, 14f);
-            Image card = Sliced(host, "Surface", RoundSprite, Surface, radius);
+            Image card = KitSurface(host, "Surface", radius);
             UiKit.Stretch(card.rectTransform);
             return card;
         }
 
         /// <summary>True for the decorative surface sprites drawn by this class (the layout audit does not treat them as content images).</summary>
+        /// <summary>The cream kit panel (toy-plate look) or, without the kit art, the plain light rounded surface.</summary>
+        static Image KitSurface(Transform parent, string name, float radius)
+        {
+            Sprite panel = ToyKit.Get("panel_cream");
+            if (panel != null) return ToyKit.Sliced(parent, name, panel, radius * 1.4f);
+            return Sliced(parent, name, RoundSprite, Surface, radius);
+        }
+
         public static bool IsSurfaceSprite(Sprite s)
         {
-            return s != null && (s == round || s == ring || s == shadow || s == gradientDown);
+            return ToyKit.IsKitSprite(s) || s != null && (s == round || s == ring || s == shadow || s == gradientDown);
         }
 
         /// <summary>
@@ -216,8 +226,8 @@ namespace BoingUpSkyTower.Gameplay
                 bg.sprite = RoundSprite;
                 bg.type = Image.Type.Sliced;
                 bg.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / ((height - 2f * pad) * 0.5f));
-                bg.color = on ? Accent : new Color(1f, 1f, 1f, 0f);
-                Text t = UiKit.AddText(rt, "Label", labels[i], fontSize, on ? Color.white : OnGlassSoft, TextAnchor.MiddleCenter, true);
+                bg.color = on ? Gold : new Color(1f, 1f, 1f, 0f);
+                Text t = UiKit.AddText(rt, "Label", labels[i], fontSize, on ? Ink : OnGlassSoft, TextAnchor.MiddleCenter, true);
                 var o = t.GetComponent<Outline>();
                 if (o != null) o.enabled = false;
                 UiKit.Stretch((RectTransform)t.transform);
