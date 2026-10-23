@@ -757,6 +757,28 @@ namespace BoingUpSkyTower.Gameplay
                 if (i == current) currentRise = rise;
             }
 
+            // Soft cloud bands over the joins between the painted pages (owner, 2026-10-24: clouds separate the six sets).
+            if (painted != null)
+            {
+                for (int pj = 1; pj < painted.pages.Length; pj++)
+                {
+                    float seam = pj * (float)painted.height / total;
+                    float[] cx = { 0.12f, 0.34f, 0.56f, 0.78f, 0.95f };
+                    for (int c = 0; c < cx.Length; c++)
+                    {
+                        Image cloud = UiKit.AddImage(mapContent, "SeamCloud", Theme.RoundSprite, new Color(1f, 1f, 1f, 0.92f));
+                        cloud.type = Image.Type.Sliced;
+                        cloud.preserveAspect = false;
+                        cloud.pixelsPerUnitMultiplier = 0.3f;
+                        cloud.raycastTarget = false;
+                        cloud.rectTransform.anchorMin = cloud.rectTransform.anchorMax = new Vector2(cx[c], seam);
+                        cloud.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                        cloud.rectTransform.sizeDelta = new Vector2(380f + (c % 2) * 90f, 150f + (c % 3) * 30f);
+                        cloud.rectTransform.anchoredPosition = new Vector2(0f, (c % 2 == 0 ? 18f : -14f));
+                    }
+                }
+            }
+
             // Fixed overlay: dark top bar with the home button, the title and the wallet.
             Image bar = UiKit.AddImage(screen, "TopBacking", Theme.GradientDownSprite, new Color(0.04f, 0.06f, 0.16f, 0.50f));   // a fade, not a band
             bar.preserveAspect = false;

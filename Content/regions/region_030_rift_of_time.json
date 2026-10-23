@@ -5,7 +5,7 @@
   "name": "Rift Of Time",
   "status": "teaser",
   "unlock": {
-    "requires": "region_029_alien_jungle",
+    "requires": "region_029_space_station",
     "gemSkip": 566
   },
   "theme": {

@@ -1,0 +1,47 @@
+{
+  "id": "region_026_dino_valley",
+  "index": 26,
+  "nameKey": "region.dino_valley",
+  "name": "Dino Valley",
+  "status": "teaser",
+  "unlock": {
+    "requires": "region_025_wild_west_mesa",
+    "gemSkip": 500
+  },
+  "theme": {
+    "bundle": "region_026",
+    "palette": [
+      "lime",
+      "orange"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_stomp_quakes",
+    "difficultyOffset": 0.2155,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.75,
+  "levels": [
+    "lvl_026_01",
+    "lvl_026_02",
+    "lvl_026_03",
+    "lvl_026_04",
+    "lvl_026_05",
+    "lvl_026_06",
+    "lvl_026_07",
+    "lvl_026_08",
+    "lvl_026_09",
+    "lvl_026_10",
+    "lvl_026_11",
+    "lvl_026_12",
+    "lvl_026_13",
+    "lvl_026_14",
+    "lvl_026_15"
+  ],
+  "availableFrom": null
+}

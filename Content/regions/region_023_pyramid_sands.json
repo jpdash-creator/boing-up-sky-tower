@@ -1,0 +1,47 @@
+{
+  "id": "region_023_pyramid_sands",
+  "index": 23,
+  "nameKey": "region.pyramid_sands",
+  "name": "Pyramid Sands",
+  "status": "teaser",
+  "unlock": {
+    "requires": "region_022_samurai_dojo",
+    "gemSkip": 450
+  },
+  "theme": {
+    "bundle": "region_023",
+    "palette": [
+      "gold",
+      "lapis"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_sliding_stone_doors",
+    "difficultyOffset": 0.1897,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.66,
+  "levels": [
+    "lvl_023_01",
+    "lvl_023_02",
+    "lvl_023_03",
+    "lvl_023_04",
+    "lvl_023_05",
+    "lvl_023_06",
+    "lvl_023_07",
+    "lvl_023_08",
+    "lvl_023_09",
+    "lvl_023_10",
+    "lvl_023_11",
+    "lvl_023_12",
+    "lvl_023_13",
+    "lvl_023_14",
+    "lvl_023_15"
+  ],
+  "availableFrom": null
+}

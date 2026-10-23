@@ -1,0 +1,47 @@
+{
+  "id": "region_018_arcade_realm",
+  "index": 18,
+  "nameKey": "region.arcade_realm",
+  "name": "Arcade Realm",
+  "status": "live",
+  "unlock": {
+    "requires": "region_017_moon_carnival",
+    "gemSkip": 366
+  },
+  "theme": {
+    "bundle": "region_018",
+    "palette": [
+      "pixel",
+      "neon"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_pixel_snap",
+    "difficultyOffset": 0.1466,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.51,
+  "levels": [
+    "lvl_018_01",
+    "lvl_018_02",
+    "lvl_018_03",
+    "lvl_018_04",
+    "lvl_018_05",
+    "lvl_018_06",
+    "lvl_018_07",
+    "lvl_018_08",
+    "lvl_018_09",
+    "lvl_018_10",
+    "lvl_018_11",
+    "lvl_018_12",
+    "lvl_018_13",
+    "lvl_018_14",
+    "lvl_018_15"
+  ],
+  "availableFrom": null
+}

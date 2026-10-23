@@ -1,0 +1,47 @@
+{
+  "id": "region_027_dragon_peak",
+  "index": 27,
+  "nameKey": "region.dragon_peak",
+  "name": "Dragon Peak",
+  "status": "teaser",
+  "unlock": {
+    "requires": "region_026_dino_valley",
+    "gemSkip": 516
+  },
+  "theme": {
+    "bundle": "region_027",
+    "palette": [
+      "crimson",
+      "gold"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_fire_breath_sweeps",
+    "difficultyOffset": 0.2241,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.78,
+  "levels": [
+    "lvl_027_01",
+    "lvl_027_02",
+    "lvl_027_03",
+    "lvl_027_04",
+    "lvl_027_05",
+    "lvl_027_06",
+    "lvl_027_07",
+    "lvl_027_08",
+    "lvl_027_09",
+    "lvl_027_10",
+    "lvl_027_11",
+    "lvl_027_12",
+    "lvl_027_13",
+    "lvl_027_14",
+    "lvl_027_15"
+  ],
+  "availableFrom": null
+}

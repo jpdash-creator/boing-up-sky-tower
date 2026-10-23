@@ -1,0 +1,47 @@
+{
+  "id": "region_028_alien_jungle",
+  "index": 28,
+  "nameKey": "region.alien_jungle",
+  "name": "Alien Jungle",
+  "status": "teaser",
+  "unlock": {
+    "requires": "region_027_dragon_peak",
+    "gemSkip": 533
+  },
+  "theme": {
+    "bundle": "region_028",
+    "palette": [
+      "glow green",
+      "violet"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_gravity_pods",
+    "difficultyOffset": 0.2328,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.81,
+  "levels": [
+    "lvl_028_01",
+    "lvl_028_02",
+    "lvl_028_03",
+    "lvl_028_04",
+    "lvl_028_05",
+    "lvl_028_06",
+    "lvl_028_07",
+    "lvl_028_08",
+    "lvl_028_09",
+    "lvl_028_10",
+    "lvl_028_11",
+    "lvl_028_12",
+    "lvl_028_13",
+    "lvl_028_14",
+    "lvl_028_15"
+  ],
+  "availableFrom": null
+}

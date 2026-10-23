@@ -1,0 +1,47 @@
+{
+  "id": "region_025_wild_west_mesa",
+  "index": 25,
+  "nameKey": "region.wild_west_mesa",
+  "name": "Wild West Mesa",
+  "status": "teaser",
+  "unlock": {
+    "requires": "region_024_viking_fjord",
+    "gemSkip": 483
+  },
+  "theme": {
+    "bundle": "region_025",
+    "palette": [
+      "terracotta",
+      "sunset"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_tumbleweeds_and_barrels",
+    "difficultyOffset": 0.2069,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.72,
+  "levels": [
+    "lvl_025_01",
+    "lvl_025_02",
+    "lvl_025_03",
+    "lvl_025_04",
+    "lvl_025_05",
+    "lvl_025_06",
+    "lvl_025_07",
+    "lvl_025_08",
+    "lvl_025_09",
+    "lvl_025_10",
+    "lvl_025_11",
+    "lvl_025_12",
+    "lvl_025_13",
+    "lvl_025_14",
+    "lvl_025_15"
+  ],
+  "availableFrom": null
+}

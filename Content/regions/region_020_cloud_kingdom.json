@@ -1,0 +1,47 @@
+{
+  "id": "region_020_cloud_kingdom",
+  "index": 20,
+  "nameKey": "region.cloud_kingdom",
+  "name": "Cloud Kingdom",
+  "status": "live",
+  "unlock": {
+    "requires": "region_019_steampunk_skyport",
+    "gemSkip": 400
+  },
+  "theme": {
+    "bundle": "region_020",
+    "palette": [
+      "white",
+      "lavender"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_dissolving_clouds",
+    "difficultyOffset": 0.1638,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.57,
+  "levels": [
+    "lvl_020_01",
+    "lvl_020_02",
+    "lvl_020_03",
+    "lvl_020_04",
+    "lvl_020_05",
+    "lvl_020_06",
+    "lvl_020_07",
+    "lvl_020_08",
+    "lvl_020_09",
+    "lvl_020_10",
+    "lvl_020_11",
+    "lvl_020_12",
+    "lvl_020_13",
+    "lvl_020_14",
+    "lvl_020_15"
+  ],
+  "availableFrom": null
+}

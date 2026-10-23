@@ -1,0 +1,47 @@
+{
+  "id": "region_016_deep_sea_reef",
+  "index": 16,
+  "nameKey": "region.deep_sea_reef",
+  "name": "Deep Sea Reef",
+  "status": "live",
+  "unlock": {
+    "requires": "region_015_neon_city",
+    "gemSkip": 333
+  },
+  "theme": {
+    "bundle": "region_016",
+    "palette": [
+      "deep blue",
+      "coral"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_water_currents",
+    "difficultyOffset": 0.1293,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.45,
+  "levels": [
+    "lvl_016_01",
+    "lvl_016_02",
+    "lvl_016_03",
+    "lvl_016_04",
+    "lvl_016_05",
+    "lvl_016_06",
+    "lvl_016_07",
+    "lvl_016_08",
+    "lvl_016_09",
+    "lvl_016_10",
+    "lvl_016_11",
+    "lvl_016_12",
+    "lvl_016_13",
+    "lvl_016_14",
+    "lvl_016_15"
+  ],
+  "availableFrom": null
+}

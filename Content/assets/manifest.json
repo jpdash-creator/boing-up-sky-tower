@@ -12105,7 +12105,7 @@
       "id": "reg016_tileset",
       "cls": "region_tileset",
       "phase": "E",
-      "group": "region_016",
+      "group": "region_020",
       "candidates": 4,
       "name": "Cloud Kingdom: platform tileset",
       "purpose": "Platform set for the region skin (normal, narrow, moving, crumbling, bouncy) and side walls.",
@@ -12119,7 +12119,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_016_cloud_kingdom/tiles/tileset_cloud_kingdom_v1.png",
+      "path": "Art/Regions/region_020_cloud_kingdom/tiles/tileset_cloud_kingdom_v1.png",
       "post": [
         "Slice per platform type",
         "Edge alignment test in Unity",
@@ -12158,7 +12158,7 @@
       "id": "reg016_bg_far",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_016",
+      "group": "region_020",
       "candidates": 3,
       "name": "Cloud Kingdom: background far",
       "purpose": "Parallax layer (far) for the region.",
@@ -12171,7 +12171,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_016_cloud_kingdom/bg_far/bg_cloud_kingdom_far_v1.png",
+      "path": "Art/Regions/region_020_cloud_kingdom/bg_far/bg_cloud_kingdom_far_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12210,7 +12210,7 @@
       "id": "reg016_bg_mid",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_016",
+      "group": "region_020",
       "candidates": 3,
       "name": "Cloud Kingdom: background mid",
       "purpose": "Parallax layer (mid) for the region.",
@@ -12223,7 +12223,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_016_cloud_kingdom/bg_mid/bg_cloud_kingdom_mid_v1.png",
+      "path": "Art/Regions/region_020_cloud_kingdom/bg_mid/bg_cloud_kingdom_mid_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12262,7 +12262,7 @@
       "id": "reg016_bg_near",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_016",
+      "group": "region_020",
       "candidates": 3,
       "name": "Cloud Kingdom: background near",
       "purpose": "Parallax layer (near) for the region.",
@@ -12275,7 +12275,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_016_cloud_kingdom/bg_near/bg_cloud_kingdom_near_v1.png",
+      "path": "Art/Regions/region_020_cloud_kingdom/bg_near/bg_cloud_kingdom_near_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12314,7 +12314,7 @@
       "id": "reg016_props",
       "cls": "region_props",
       "phase": "E",
-      "group": "region_016",
+      "group": "region_020",
       "candidates": 3,
       "name": "Cloud Kingdom: props and decoration sheet",
       "purpose": "Scattered decoration sprites for the region.",
@@ -12327,7 +12327,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_016_cloud_kingdom/props/props_cloud_kingdom_v1.png",
+      "path": "Art/Regions/region_020_cloud_kingdom/props/props_cloud_kingdom_v1.png",
       "post": [
         "Slice objects with a matte pass",
         "Pivot at base"
@@ -12362,7 +12362,7 @@
       "id": "reg016_signature",
       "cls": "region_signature",
       "phase": "E",
-      "group": "region_016",
+      "group": "region_020",
       "candidates": 3,
       "name": "Cloud Kingdom: signature mechanic art (Dissolving Clouds)",
       "purpose": "Art for the region's signature module: Dissolving clouds plus lightning flashes. Behaviour is code (doc 08 section 5).",
@@ -12375,7 +12375,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_016_cloud_kingdom/hazards/signature_cloud_kingdom_v1.png",
+      "path": "Art/Regions/region_020_cloud_kingdom/hazards/signature_cloud_kingdom_v1.png",
       "checks": [
         "States clearly distinguishable (warning must read before danger)",
         "No reliance on colour alone for the warning (add shape/motion)",
@@ -12408,7 +12408,7 @@
       "id": "reg017_tileset",
       "cls": "region_tileset",
       "phase": "E",
-      "group": "region_017",
+      "group": "region_019",
       "candidates": 4,
       "name": "Steampunk Skyport: platform tileset",
       "purpose": "Platform set for the region skin (normal, narrow, moving, crumbling, bouncy) and side walls.",
@@ -12422,7 +12422,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_017_steampunk_skyport/tiles/tileset_steampunk_skyport_v1.png",
+      "path": "Art/Regions/region_019_steampunk_skyport/tiles/tileset_steampunk_skyport_v1.png",
       "post": [
         "Slice per platform type",
         "Edge alignment test in Unity",
@@ -12461,7 +12461,7 @@
       "id": "reg017_bg_far",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_017",
+      "group": "region_019",
       "candidates": 3,
       "name": "Steampunk Skyport: background far",
       "purpose": "Parallax layer (far) for the region.",
@@ -12474,7 +12474,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_017_steampunk_skyport/bg_far/bg_steampunk_skyport_far_v1.png",
+      "path": "Art/Regions/region_019_steampunk_skyport/bg_far/bg_steampunk_skyport_far_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12513,7 +12513,7 @@
       "id": "reg017_bg_mid",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_017",
+      "group": "region_019",
       "candidates": 3,
       "name": "Steampunk Skyport: background mid",
       "purpose": "Parallax layer (mid) for the region.",
@@ -12526,7 +12526,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_017_steampunk_skyport/bg_mid/bg_steampunk_skyport_mid_v1.png",
+      "path": "Art/Regions/region_019_steampunk_skyport/bg_mid/bg_steampunk_skyport_mid_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12565,7 +12565,7 @@
       "id": "reg017_bg_near",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_017",
+      "group": "region_019",
       "candidates": 3,
       "name": "Steampunk Skyport: background near",
       "purpose": "Parallax layer (near) for the region.",
@@ -12578,7 +12578,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_017_steampunk_skyport/bg_near/bg_steampunk_skyport_near_v1.png",
+      "path": "Art/Regions/region_019_steampunk_skyport/bg_near/bg_steampunk_skyport_near_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12617,7 +12617,7 @@
       "id": "reg017_props",
       "cls": "region_props",
       "phase": "E",
-      "group": "region_017",
+      "group": "region_019",
       "candidates": 3,
       "name": "Steampunk Skyport: props and decoration sheet",
       "purpose": "Scattered decoration sprites for the region.",
@@ -12630,7 +12630,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_017_steampunk_skyport/props/props_steampunk_skyport_v1.png",
+      "path": "Art/Regions/region_019_steampunk_skyport/props/props_steampunk_skyport_v1.png",
       "post": [
         "Slice objects with a matte pass",
         "Pivot at base"
@@ -12665,7 +12665,7 @@
       "id": "reg017_signature",
       "cls": "region_signature",
       "phase": "E",
-      "group": "region_017",
+      "group": "region_019",
       "candidates": 3,
       "name": "Steampunk Skyport: signature mechanic art (Steam Vents)",
       "purpose": "Art for the region's signature module: Steam vents give upward lift. Behaviour is code (doc 08 section 5).",
@@ -12678,7 +12678,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_017_steampunk_skyport/hazards/signature_steampunk_skyport_v1.png",
+      "path": "Art/Regions/region_019_steampunk_skyport/hazards/signature_steampunk_skyport_v1.png",
       "checks": [
         "States clearly distinguishable (warning must read before danger)",
         "No reliance on colour alone for the warning (add shape/motion)",
@@ -12711,7 +12711,7 @@
       "id": "reg018_tileset",
       "cls": "region_tileset",
       "phase": "E",
-      "group": "region_018",
+      "group": "region_016",
       "candidates": 4,
       "name": "Deep Sea Reef: platform tileset",
       "purpose": "Platform set for the region skin (normal, narrow, moving, crumbling, bouncy) and side walls.",
@@ -12725,7 +12725,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_018_deep_sea_reef/tiles/tileset_deep_sea_reef_v1.png",
+      "path": "Art/Regions/region_016_deep_sea_reef/tiles/tileset_deep_sea_reef_v1.png",
       "post": [
         "Slice per platform type",
         "Edge alignment test in Unity",
@@ -12764,7 +12764,7 @@
       "id": "reg018_bg_far",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_018",
+      "group": "region_016",
       "candidates": 3,
       "name": "Deep Sea Reef: background far",
       "purpose": "Parallax layer (far) for the region.",
@@ -12777,7 +12777,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_018_deep_sea_reef/bg_far/bg_deep_sea_reef_far_v1.png",
+      "path": "Art/Regions/region_016_deep_sea_reef/bg_far/bg_deep_sea_reef_far_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12816,7 +12816,7 @@
       "id": "reg018_bg_mid",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_018",
+      "group": "region_016",
       "candidates": 3,
       "name": "Deep Sea Reef: background mid",
       "purpose": "Parallax layer (mid) for the region.",
@@ -12829,7 +12829,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_018_deep_sea_reef/bg_mid/bg_deep_sea_reef_mid_v1.png",
+      "path": "Art/Regions/region_016_deep_sea_reef/bg_mid/bg_deep_sea_reef_mid_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12868,7 +12868,7 @@
       "id": "reg018_bg_near",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_018",
+      "group": "region_016",
       "candidates": 3,
       "name": "Deep Sea Reef: background near",
       "purpose": "Parallax layer (near) for the region.",
@@ -12881,7 +12881,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_018_deep_sea_reef/bg_near/bg_deep_sea_reef_near_v1.png",
+      "path": "Art/Regions/region_016_deep_sea_reef/bg_near/bg_deep_sea_reef_near_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -12920,7 +12920,7 @@
       "id": "reg018_props",
       "cls": "region_props",
       "phase": "E",
-      "group": "region_018",
+      "group": "region_016",
       "candidates": 3,
       "name": "Deep Sea Reef: props and decoration sheet",
       "purpose": "Scattered decoration sprites for the region.",
@@ -12933,7 +12933,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_018_deep_sea_reef/props/props_deep_sea_reef_v1.png",
+      "path": "Art/Regions/region_016_deep_sea_reef/props/props_deep_sea_reef_v1.png",
       "post": [
         "Slice objects with a matte pass",
         "Pivot at base"
@@ -12968,7 +12968,7 @@
       "id": "reg018_signature",
       "cls": "region_signature",
       "phase": "E",
-      "group": "region_018",
+      "group": "region_016",
       "candidates": 3,
       "name": "Deep Sea Reef: signature mechanic art (Water Currents)",
       "purpose": "Art for the region's signature module: Low-gravity water currents. Behaviour is code (doc 08 section 5).",
@@ -12981,7 +12981,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_018_deep_sea_reef/hazards/signature_deep_sea_reef_v1.png",
+      "path": "Art/Regions/region_016_deep_sea_reef/hazards/signature_deep_sea_reef_v1.png",
       "checks": [
         "States clearly distinguishable (warning must read before danger)",
         "No reliance on colour alone for the warning (add shape/motion)",
@@ -13014,7 +13014,7 @@
       "id": "reg019_tileset",
       "cls": "region_tileset",
       "phase": "E",
-      "group": "region_019",
+      "group": "region_017",
       "candidates": 4,
       "name": "Moon Carnival: platform tileset",
       "purpose": "Platform set for the region skin (normal, narrow, moving, crumbling, bouncy) and side walls.",
@@ -13028,7 +13028,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_019_moon_carnival/tiles/tileset_moon_carnival_v1.png",
+      "path": "Art/Regions/region_017_moon_carnival/tiles/tileset_moon_carnival_v1.png",
       "post": [
         "Slice per platform type",
         "Edge alignment test in Unity",
@@ -13067,7 +13067,7 @@
       "id": "reg019_bg_far",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_019",
+      "group": "region_017",
       "candidates": 3,
       "name": "Moon Carnival: background far",
       "purpose": "Parallax layer (far) for the region.",
@@ -13080,7 +13080,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_019_moon_carnival/bg_far/bg_moon_carnival_far_v1.png",
+      "path": "Art/Regions/region_017_moon_carnival/bg_far/bg_moon_carnival_far_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -13119,7 +13119,7 @@
       "id": "reg019_bg_mid",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_019",
+      "group": "region_017",
       "candidates": 3,
       "name": "Moon Carnival: background mid",
       "purpose": "Parallax layer (mid) for the region.",
@@ -13132,7 +13132,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_019_moon_carnival/bg_mid/bg_moon_carnival_mid_v1.png",
+      "path": "Art/Regions/region_017_moon_carnival/bg_mid/bg_moon_carnival_mid_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -13171,7 +13171,7 @@
       "id": "reg019_bg_near",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_019",
+      "group": "region_017",
       "candidates": 3,
       "name": "Moon Carnival: background near",
       "purpose": "Parallax layer (near) for the region.",
@@ -13184,7 +13184,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_019_moon_carnival/bg_near/bg_moon_carnival_near_v1.png",
+      "path": "Art/Regions/region_017_moon_carnival/bg_near/bg_moon_carnival_near_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -13223,7 +13223,7 @@
       "id": "reg019_props",
       "cls": "region_props",
       "phase": "E",
-      "group": "region_019",
+      "group": "region_017",
       "candidates": 3,
       "name": "Moon Carnival: props and decoration sheet",
       "purpose": "Scattered decoration sprites for the region.",
@@ -13236,7 +13236,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_019_moon_carnival/props/props_moon_carnival_v1.png",
+      "path": "Art/Regions/region_017_moon_carnival/props/props_moon_carnival_v1.png",
       "post": [
         "Slice objects with a matte pass",
         "Pivot at base"
@@ -13271,7 +13271,7 @@
       "id": "reg019_signature",
       "cls": "region_signature",
       "phase": "E",
-      "group": "region_019",
+      "group": "region_017",
       "candidates": 3,
       "name": "Moon Carnival: signature mechanic art (Carnival Mix)",
       "purpose": "Art for the region's signature module: Trampolines plus rotating wheels. Behaviour is code (doc 08 section 5).",
@@ -13284,7 +13284,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_019_moon_carnival/hazards/signature_moon_carnival_v1.png",
+      "path": "Art/Regions/region_017_moon_carnival/hazards/signature_moon_carnival_v1.png",
       "checks": [
         "States clearly distinguishable (warning must read before danger)",
         "No reliance on colour alone for the warning (add shape/motion)",
@@ -13317,7 +13317,7 @@
       "id": "reg020_tileset",
       "cls": "region_tileset",
       "phase": "E",
-      "group": "region_020",
+      "group": "region_027",
       "candidates": 4,
       "name": "Dragon Peak: platform tileset",
       "purpose": "Platform set for the region skin (normal, narrow, moving, crumbling, bouncy) and side walls.",
@@ -13331,7 +13331,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_020_dragon_peak/tiles/tileset_dragon_peak_v1.png",
+      "path": "Art/Regions/region_027_dragon_peak/tiles/tileset_dragon_peak_v1.png",
       "post": [
         "Slice per platform type",
         "Edge alignment test in Unity",
@@ -13370,7 +13370,7 @@
       "id": "reg020_bg_far",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_020",
+      "group": "region_027",
       "candidates": 3,
       "name": "Dragon Peak: background far",
       "purpose": "Parallax layer (far) for the region.",
@@ -13383,7 +13383,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_020_dragon_peak/bg_far/bg_dragon_peak_far_v1.png",
+      "path": "Art/Regions/region_027_dragon_peak/bg_far/bg_dragon_peak_far_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -13422,7 +13422,7 @@
       "id": "reg020_bg_mid",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_020",
+      "group": "region_027",
       "candidates": 3,
       "name": "Dragon Peak: background mid",
       "purpose": "Parallax layer (mid) for the region.",
@@ -13435,7 +13435,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_020_dragon_peak/bg_mid/bg_dragon_peak_mid_v1.png",
+      "path": "Art/Regions/region_027_dragon_peak/bg_mid/bg_dragon_peak_mid_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -13474,7 +13474,7 @@
       "id": "reg020_bg_near",
       "cls": "region_background",
       "phase": "E",
-      "group": "region_020",
+      "group": "region_027",
       "candidates": 3,
       "name": "Dragon Peak: background near",
       "purpose": "Parallax layer (near) for the region.",
@@ -13487,7 +13487,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_020_dragon_peak/bg_near/bg_dragon_peak_near_v1.png",
+      "path": "Art/Regions/region_027_dragon_peak/bg_near/bg_dragon_peak_near_v1.png",
       "post": [
         "Make horizontally tileable (offset + blend)",
         "Transparent sky where noted (matte pass)",
@@ -13526,7 +13526,7 @@
       "id": "reg020_props",
       "cls": "region_props",
       "phase": "E",
-      "group": "region_020",
+      "group": "region_027",
       "candidates": 3,
       "name": "Dragon Peak: props and decoration sheet",
       "purpose": "Scattered decoration sprites for the region.",
@@ -13539,7 +13539,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_020_dragon_peak/props/props_dragon_peak_v1.png",
+      "path": "Art/Regions/region_027_dragon_peak/props/props_dragon_peak_v1.png",
       "post": [
         "Slice objects with a matte pass",
         "Pivot at base"
@@ -13574,7 +13574,7 @@
       "id": "reg020_signature",
       "cls": "region_signature",
       "phase": "E",
-      "group": "region_020",
+      "group": "region_027",
       "candidates": 3,
       "name": "Dragon Peak: signature mechanic art (Fire-Breath Sweeps)",
       "purpose": "Art for the region's signature module: Fire-breath sweeps across the tower. Behaviour is code (doc 08 section 5).",
@@ -13587,7 +13587,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_020_dragon_peak/hazards/signature_dragon_peak_v1.png",
+      "path": "Art/Regions/region_027_dragon_peak/hazards/signature_dragon_peak_v1.png",
       "checks": [
         "States clearly distinguishable (warning must read before danger)",
         "No reliance on colour alone for the warning (add shape/motion)",
@@ -13633,7 +13633,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_021_space_station/teaser/teaser_space_station_v1.png",
+      "path": "Art/Regions/region_029_space_station/teaser/teaser_space_station_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -13679,7 +13679,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_022_pyramid_sands/teaser/teaser_pyramid_sands_v1.png",
+      "path": "Art/Regions/region_023_pyramid_sands/teaser/teaser_pyramid_sands_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -13725,7 +13725,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_023_viking_fjord/teaser/teaser_viking_fjord_v1.png",
+      "path": "Art/Regions/region_024_viking_fjord/teaser/teaser_viking_fjord_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -13771,7 +13771,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_024_wild_west_mesa/teaser/teaser_wild_west_mesa_v1.png",
+      "path": "Art/Regions/region_025_wild_west_mesa/teaser/teaser_wild_west_mesa_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -13817,7 +13817,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_025_dino_valley/teaser/teaser_dino_valley_v1.png",
+      "path": "Art/Regions/region_026_dino_valley/teaser/teaser_dino_valley_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -13863,7 +13863,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_026_storybook_castle/teaser/teaser_storybook_castle_v1.png",
+      "path": "Art/Regions/region_021_storybook_castle/teaser/teaser_storybook_castle_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -13909,7 +13909,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_027_arcade_realm/teaser/teaser_arcade_realm_v1.png",
+      "path": "Art/Regions/region_018_arcade_realm/teaser/teaser_arcade_realm_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -13955,7 +13955,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_028_samurai_dojo/teaser/teaser_samurai_dojo_v1.png",
+      "path": "Art/Regions/region_022_samurai_dojo/teaser/teaser_samurai_dojo_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],
@@ -14001,7 +14001,7 @@
       "depends_on": [
         "fnd_style_bible"
       ],
-      "path": "Art/Regions/region_029_alien_jungle/teaser/teaser_alien_jungle_v1.png",
+      "path": "Art/Regions/region_028_alien_jungle/teaser/teaser_alien_jungle_v1.png",
       "notes": [
         "Full tileset/backgrounds for this region are generated only when the region goes live (live-ops)."
       ],

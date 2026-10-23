@@ -1,0 +1,47 @@
+{
+  "id": "region_024_viking_fjord",
+  "index": 24,
+  "nameKey": "region.viking_fjord",
+  "name": "Viking Fjord",
+  "status": "teaser",
+  "unlock": {
+    "requires": "region_023_pyramid_sands",
+    "gemSkip": 466
+  },
+  "theme": {
+    "bundle": "region_024",
+    "palette": [
+      "steel blue",
+      "frost"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_ice_floes",
+    "difficultyOffset": 0.1983,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.69,
+  "levels": [
+    "lvl_024_01",
+    "lvl_024_02",
+    "lvl_024_03",
+    "lvl_024_04",
+    "lvl_024_05",
+    "lvl_024_06",
+    "lvl_024_07",
+    "lvl_024_08",
+    "lvl_024_09",
+    "lvl_024_10",
+    "lvl_024_11",
+    "lvl_024_12",
+    "lvl_024_13",
+    "lvl_024_14",
+    "lvl_024_15"
+  ],
+  "availableFrom": null
+}

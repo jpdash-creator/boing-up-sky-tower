@@ -1,0 +1,47 @@
+{
+  "id": "region_019_steampunk_skyport",
+  "index": 19,
+  "nameKey": "region.steampunk_skyport",
+  "name": "Steampunk Skyport",
+  "status": "live",
+  "unlock": {
+    "requires": "region_018_arcade_realm",
+    "gemSkip": 383
+  },
+  "theme": {
+    "bundle": "region_019",
+    "palette": [
+      "brass",
+      "teal"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_steam_vents",
+    "difficultyOffset": 0.1552,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.54,
+  "levels": [
+    "lvl_019_01",
+    "lvl_019_02",
+    "lvl_019_03",
+    "lvl_019_04",
+    "lvl_019_05",
+    "lvl_019_06",
+    "lvl_019_07",
+    "lvl_019_08",
+    "lvl_019_09",
+    "lvl_019_10",
+    "lvl_019_11",
+    "lvl_019_12",
+    "lvl_019_13",
+    "lvl_019_14",
+    "lvl_019_15"
+  ],
+  "availableFrom": null
+}

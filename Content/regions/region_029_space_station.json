@@ -1,0 +1,47 @@
+{
+  "id": "region_029_space_station",
+  "index": 29,
+  "nameKey": "region.space_station",
+  "name": "Space Station",
+  "status": "teaser",
+  "unlock": {
+    "requires": "region_028_alien_jungle",
+    "gemSkip": 550
+  },
+  "theme": {
+    "bundle": "region_029",
+    "palette": [
+      "black",
+      "cyan"
+    ],
+    "music": null
+  },
+  "rules": {
+    "signatureModule": "mod_zero_g_zones",
+    "difficultyOffset": 0.2414,
+    "platformWeights": {
+      "normal": 1.0,
+      "signature": 0.3
+    },
+    "hazards": []
+  },
+  "coinFactor": 1.84,
+  "levels": [
+    "lvl_029_01",
+    "lvl_029_02",
+    "lvl_029_03",
+    "lvl_029_04",
+    "lvl_029_05",
+    "lvl_029_06",
+    "lvl_029_07",
+    "lvl_029_08",
+    "lvl_029_09",
+    "lvl_029_10",
+    "lvl_029_11",
+    "lvl_029_12",
+    "lvl_029_13",
+    "lvl_029_14",
+    "lvl_029_15"
+  ],
+  "availableFrom": null
+}

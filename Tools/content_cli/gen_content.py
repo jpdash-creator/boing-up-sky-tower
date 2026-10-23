@@ -12,6 +12,9 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONTENT = os.path.join(ROOT, "Content")
 
 # (region name, palette, signature module name, module description)
+# Region order changed 2026-10-24: slots 16-20 follow the painted map page 4 (Deep Sea Reef, Moon Carnival, Arcade Realm,
+# Steampunk Skyport, Cloud Kingdom) and Dragon Peak moved to slot 27. Level files were MOVED with their regions (Content/levels),
+# so do not regenerate levels from this table without checking the seeds.
 REGIONS = [
     ("Meadow Springs", ["green", "pink", "sky blue"], "Bounce Flowers", "Tutorial region; bouncy flower platforms, no hazards"),
     ("Mushroom Grove", ["purple", "teal"], "Bounce Caps", "Bounce-cap platforms with a high launch"),
@@ -28,18 +31,18 @@ REGIONS = [
     ("Volcano Forge", ["red", "charcoal"], "Rising Lava", "Rising lava plus timed fire jets"),
     ("Jungle Ruins", ["emerald", "amber"], "Vine Swing", "Grab and release vines"),
     ("Neon City", ["electric blue", "pink"], "Laser Gates", "Timed laser gates"),
-    ("Cloud Kingdom", ["white", "lavender"], "Dissolving Clouds", "Dissolving clouds plus lightning flashes"),
-    ("Steampunk Skyport", ["brass", "teal"], "Steam Vents", "Steam vents give upward lift"),
     ("Deep Sea Reef", ["deep blue", "coral"], "Water Currents", "Low-gravity water currents"),
     ("Moon Carnival", ["rainbow", "neon"], "Carnival Mix", "Trampolines plus rotating wheels"),
-    ("Dragon Peak", ["crimson", "gold"], "Fire-Breath Sweeps", "Fire-breath sweeps across the tower"),
+    ("Arcade Realm", ["pixel", "neon"], "Pixel Snap", "Pixel-grid snap platforms that blink"),
+    ("Steampunk Skyport", ["brass", "teal"], "Steam Vents", "Steam vents give upward lift"),
+    ("Cloud Kingdom", ["white", "lavender"], "Dissolving Clouds", "Dissolving clouds plus lightning flashes"),
     ("Space Station", ["black", "cyan"], "Zero-G Zones", "Zero-g zones with floaty jumps"),
     ("Pyramid Sands", ["gold", "lapis"], "Sliding Stone Doors", "Sliding stone doors open and close"),
     ("Viking Fjord", ["steel blue", "frost"], "Ice Floes", "Drifting ice floes plus gusts (reuses Wind Gusts)"),
     ("Wild West Mesa", ["terracotta", "sunset"], "Tumbleweeds And Barrels", "Tumbleweeds and rolling barrels"),
     ("Dino Valley", ["lime", "orange"], "Stomp Quakes", "Stomp quakes shake the platforms"),
     ("Storybook Castle", ["pastel", "royal"], "Drawbridge Platforms", "Tilting drawbridge platforms"),
-    ("Arcade Realm", ["pixel", "neon"], "Pixel Snap", "Pixel-grid snap platforms that blink"),
+    ("Dragon Peak", ["crimson", "gold"], "Fire-Breath Sweeps", "Fire-breath sweeps across the tower"),
     ("Samurai Dojo", ["ink", "cherry"], "Falling Blades", "Falling blades with warning marks"),
     ("Alien Jungle", ["glow green", "violet"], "Gravity Pods", "Gravity pods with a flip pull"),
     ("Rift Of Time", ["chrono violet", "white"], "Rewind Zones", "Rewind zones leave a position echo"),

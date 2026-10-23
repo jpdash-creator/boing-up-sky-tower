@@ -88,11 +88,11 @@ Each batch is a separate approval. Batches are capped near 400 planning credits 
 | B31 | 8 | 25 | 375 | reg011_bg_near | region_011, region_012 |
 | B32 | 8 | 26 | 390 | reg012_signature | region_012, region_013 |
 | B33 | 8 | 25 | 375 | reg014_bg_far | region_014, region_015 |
-| B34 | 8 | 25 | 375 | reg015_bg_near | region_015, region_016 |
-| B35 | 8 | 26 | 390 | reg016_signature | region_016, region_017 |
-| B36 | 8 | 25 | 375 | reg018_bg_far | region_018, region_019 |
-| B37 | 8 | 25 | 375 | reg019_bg_near | region_019, region_020 |
-| B38 | 2 | 7 | 105 | reg020_signature | region_020 |
+| B34 | 8 | 25 | 375 | reg015_bg_near | region_015, region_027 |
+| B35 | 8 | 26 | 390 | reg016_signature | region_027, region_017 |
+| B36 | 8 | 25 | 375 | reg018_bg_far | region_020, region_019 |
+| B37 | 8 | 25 | 375 | reg019_bg_near | region_019, region_018 |
+| B38 | 2 | 7 | 105 | reg020_signature | region_018 |
 | B39 | 8 | 24 | 360 | reg021_teaser | teasers |
 | B40 | 2 | 6 | 90 | reg029_teaser | teasers |
 | B41 | 12 | 24 | 360 | cur_coin_gem_mix | currency |

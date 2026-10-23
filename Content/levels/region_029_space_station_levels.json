@@ -1,0 +1,518 @@
+[
+  {
+    "id": "lvl_029_01",
+    "region": "region_029_space_station",
+    "index": 1,
+    "seed": 283373,
+    "class": "simple",
+    "difficulty": 0.05,
+    "goal": {
+      "type": "reachFloor",
+      "value": 60
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 25
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 60,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_02",
+    "region": "region_029_space_station",
+    "index": 2,
+    "seed": 388102,
+    "class": "simple",
+    "difficulty": 0.1,
+    "goal": {
+      "type": "reachFloor",
+      "value": 90
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 30
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 65,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_03",
+    "region": "region_029_space_station",
+    "index": 3,
+    "seed": 492831,
+    "class": "simple",
+    "difficulty": 0.15,
+    "goal": {
+      "type": "reachFloor",
+      "value": 120
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 35
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 75,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_04",
+    "region": "region_029_space_station",
+    "index": 4,
+    "seed": 597560,
+    "class": "simple",
+    "difficulty": 0.22,
+    "goal": {
+      "type": "reachFloor",
+      "value": 100
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 40
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 80,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_05",
+    "region": "region_029_space_station",
+    "index": 5,
+    "seed": 702289,
+    "class": "complex",
+    "difficulty": 0.4,
+    "goal": {
+      "type": "comboChain",
+      "value": 3,
+      "count": 2
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 45
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 300,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.25,
+        "min": 1,
+        "max": 3
+      }
+    },
+    "overrides": {
+      "fixedChunks": [
+        "chunk_complex_a"
+      ]
+    }
+  },
+  {
+    "id": "lvl_029_06",
+    "region": "region_029_space_station",
+    "index": 6,
+    "seed": 807018,
+    "class": "medium",
+    "difficulty": 0.35,
+    "goal": {
+      "type": "reachFloor",
+      "value": 160
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 50
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 90,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_07",
+    "region": "region_029_space_station",
+    "index": 7,
+    "seed": 911747,
+    "class": "medium",
+    "difficulty": 0.42,
+    "goal": {
+      "type": "noWallBounce",
+      "value": 120
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 55
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 95,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_08",
+    "region": "region_029_space_station",
+    "index": 8,
+    "seed": 1016476,
+    "class": "medium",
+    "difficulty": 0.5,
+    "goal": {
+      "type": "findHiddenGem"
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 60
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 105,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_09",
+    "region": "region_029_space_station",
+    "index": 9,
+    "seed": 1121205,
+    "class": "medium",
+    "difficulty": 0.58,
+    "goal": {
+      "type": "reachFloor",
+      "value": 180
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 65
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 110,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_10",
+    "region": "region_029_space_station",
+    "index": 10,
+    "seed": 1225934,
+    "class": "complex",
+    "difficulty": 0.7,
+    "goal": {
+      "type": "surviveWave"
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 70
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 300,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.25,
+        "min": 1,
+        "max": 3,
+        "firstClearGuaranteed": 1
+      }
+    },
+    "overrides": {
+      "fixedChunks": [
+        "chunk_complex_a"
+      ]
+    }
+  },
+  {
+    "id": "lvl_029_11",
+    "region": "region_029_space_station",
+    "index": 11,
+    "seed": 1330663,
+    "class": "hard",
+    "difficulty": 0.62,
+    "goal": {
+      "type": "comboChain",
+      "value": 6,
+      "count": 1
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 75
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 120,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_12",
+    "region": "region_029_space_station",
+    "index": 12,
+    "seed": 1435392,
+    "class": "hard",
+    "difficulty": 0.7,
+    "goal": {
+      "type": "reachFloor",
+      "value": 200
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 80
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 125,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_13",
+    "region": "region_029_space_station",
+    "index": 13,
+    "seed": 1540121,
+    "class": "hard",
+    "difficulty": 0.78,
+    "goal": {
+      "type": "reachFloor",
+      "value": 220
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 85
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 135,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_14",
+    "region": "region_029_space_station",
+    "index": 14,
+    "seed": 1644850,
+    "class": "hard",
+    "difficulty": 0.86,
+    "goal": {
+      "type": "reachFloor",
+      "value": 240
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 90
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 140,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_029_15",
+    "region": "region_029_space_station",
+    "index": 15,
+    "seed": 1749579,
+    "class": "highly_complex",
+    "difficulty": 1.0,
+    "goal": {
+      "type": "bossChase",
+      "value": 250
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 95
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 900,
+      "replayCoinPercent": 40,
+      "gems": {
+        "chance": 1.0,
+        "min": 5,
+        "max": 5,
+        "firstClearGuaranteed": 5,
+        "starBonusMax": 5,
+        "replayChance": 0.5,
+        "replayAmount": 2
+      }
+    },
+    "overrides": {
+      "fixedChunks": [
+        "chunk_gauntlet_a"
+      ],
+      "ramp": true
+    }
+  }
+]
