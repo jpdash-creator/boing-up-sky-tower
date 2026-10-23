@@ -21,6 +21,8 @@ namespace BoingUpSkyTower.Gameplay
         readonly List<Action> steps = new List<Action>();
         int stepIndex;
         float shown;
+        RectTransform momoRt, logoRt;
+        Vector2 momoBase, logoBase;
         int lastTip = -1;
 
         static readonly string[] Tips =
@@ -48,6 +50,8 @@ namespace BoingUpSkyTower.Gameplay
                 UiKit.Place(lg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -130f), new Vector2(860f, 352f));
                 lg.rectTransform.pivot = new Vector2(0.5f, 1f);
                 lg.raycastTarget = false;
+                logoRt = lg.rectTransform;
+                logoBase = logoRt.anchoredPosition;
             }
             else
             {
@@ -59,6 +63,8 @@ namespace BoingUpSkyTower.Gameplay
                 Image m = UiKit.AddImage(safe, "Momo", art.Player, Color.white);
                 UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(460f, 560f));
                 m.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                momoRt = m.rectTransform;
+                momoBase = momoRt.anchoredPosition;
             }
 
             Text label = UiKit.AddText(safe, "Loading", "Loading..", 64, Theme.Ink, TextAnchor.MiddleCenter, true);
@@ -94,6 +100,12 @@ namespace BoingUpSkyTower.Gameplay
         void Update()
         {
             timer += Time.unscaledDeltaTime;
+            if (!GameSettings.ReducedMotion)
+            {
+                // Momo bounces and the logo breathes while the bar fills (reduced motion keeps them still).
+                if (momoRt != null) momoRt.anchoredPosition = momoBase + new Vector2(0f, Mathf.Abs(Mathf.Sin(timer * 3.2f)) * 70f);
+                if (logoRt != null) logoRt.localScale = Vector3.one * (1f + Mathf.Sin(timer * 2.4f) * 0.02f);
+            }
             // One warm-up step per frame so the bar really moves.
             if (stepIndex < steps.Count)
             {

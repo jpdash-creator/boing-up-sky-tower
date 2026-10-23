@@ -99,14 +99,14 @@ namespace BoingUpSkyTower.Gameplay
             {
                 float t = i * 2f * Mathf.PI / steps;
                 float d = 1f + Mathf.Sin(t) * Mathf.Sin(t);
-                px[i] = 0.5f + 0.34f * Mathf.Cos(t) / d * 1.0f;
-                py[i] = 0.5f + 0.34f * Mathf.Sin(t) * Mathf.Cos(t) / d * 1.5f;
+                px[i] = 0.5f + 0.4f * Mathf.Cos(t) / d * 1.0f;
+                py[i] = 0.5f + 0.34f * Mathf.Sin(t) * Mathf.Cos(t) / d * 1.1f;
             }
             return (x, y) =>
             {
                 float dmin = 1f;
                 for (int i = 0; i < steps; i++) dmin = Mathf.Min(dmin, Seg(x, y, px[i], py[i], px[i + 1], py[i + 1]));
-                return dmin - 0.075f;
+                return dmin - 0.062f;
             };
         }
 

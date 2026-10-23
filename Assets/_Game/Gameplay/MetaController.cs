@@ -4,6 +4,7 @@ using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
 using BoingUpSkyTower.Simulation;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -181,6 +182,17 @@ namespace BoingUpSkyTower.Gameplay
         Sprite Btn(int i) { return ToyKit.Button(i == 1 ? 1 : 0) ?? (art != null ? ArtCatalog.Pick(art.Buttons, i) : null); }
 
         void SkyBackground() { Theme.SkyBackground(screenRoot); }
+
+        /// <summary>The level screen shows the painted background of ITS region (owner, 2026-10-24), calmed with a blue veil so the path and nodes read.</summary>
+        void LevelBackground(RegionArt ra)
+        {
+            if (ra == null || ra.BgFar == null) { SkyBackground(); return; }
+            Background(ra.BgFar, Color.white);
+            Image veil = UiKit.AddImage(screenRoot, "BgVeil", null, new Color(0.08f, 0.2f, 0.42f, 0.30f));
+            veil.preserveAspect = false;
+            UiKit.Stretch(veil.rectTransform);
+            veil.transform.SetSiblingIndex(1);
+        }
 
         void Background(Sprite sprite, Color fallback)
         {
@@ -432,6 +444,220 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- world map ----------------
 
+        // ---------------- world map: 6 swipe pages of 5 region medallions (docs/16 section D) ----------------
+
+        const int MapPages = 6, RegionsPerPage = 5;
+
+        /// <summary>Snaps a horizontally scrolling set of equal pages to the nearest page when the finger lifts.</summary>
+        sealed class PageSnap : MonoBehaviour, IBeginDragHandler, IEndDragHandler
+        {
+            public ScrollRect Scroll;
+            public int Pages = 1;
+            public RectTransform Content, Viewport;
+            public Image[] Dots;
+            bool dragging;
+            float target = -1f;
+
+            public int Page { get { return Mathf.Clamp(Mathf.RoundToInt(Scroll.horizontalNormalizedPosition * (Pages - 1)), 0, Pages - 1); } }
+            public void OnBeginDrag(PointerEventData e) { dragging = true; target = -1f; }
+            public void OnEndDrag(PointerEventData e) { dragging = false; target = Page / (float)Mathf.Max(1, Pages - 1); }
+            public void GoTo(int page) { Scroll.horizontalNormalizedPosition = Mathf.Clamp01(page / (float)Mathf.Max(1, Pages - 1)); }
+
+            void Update()
+            {
+                if (Viewport != null && Content != null)
+                {
+                    float w = Viewport.rect.width * Pages;
+                    if (Mathf.Abs(Content.sizeDelta.x - w) > 0.5f) Content.sizeDelta = new Vector2(w, 0f);
+                }
+                if (!dragging && target >= 0f)
+                {
+                    float n = Mathf.MoveTowards(Scroll.horizontalNormalizedPosition, target, Time.unscaledDeltaTime * 3.5f);
+                    Scroll.horizontalNormalizedPosition = n;
+                    if (Mathf.Approximately(n, target)) target = -1f;
+                }
+                if (Dots != null)
+                {
+                    int p = Page;
+                    for (int i = 0; i < Dots.Length; i++) Dots[i].color = i == p ? new Color(1f, 0.82f, 0.2f, 1f) : new Color(1f, 1f, 1f, 0.65f);
+                }
+            }
+        }
+
+        static Color PaletteColor(string name)
+        {
+            switch ((name ?? "").ToLowerInvariant())
+            {
+                case "green": return new Color(0.42f, 0.78f, 0.34f);
+                case "pink": return new Color(1f, 0.55f, 0.72f);
+                case "sky blue": return new Color(0.45f, 0.75f, 1f);
+                case "purple": return new Color(0.66f, 0.45f, 0.9f);
+                case "teal": return new Color(0.25f, 0.78f, 0.75f);
+                case "gold": return new Color(1f, 0.8f, 0.3f);
+                case "aqua": return new Color(0.35f, 0.82f, 0.95f);
+                case "mint": return new Color(0.55f, 0.92f, 0.72f);
+                case "jade": return new Color(0.28f, 0.72f, 0.5f);
+                case "red": return new Color(0.92f, 0.32f, 0.3f);
+                case "orange": return new Color(1f, 0.6f, 0.25f);
+                case "white": return new Color(0.92f, 0.96f, 1f);
+                case "blue": return new Color(0.3f, 0.55f, 0.95f);
+                default: return new Color(0.7f, 0.78f, 0.95f);
+            }
+        }
+
+        /// <summary>The swipe pages of medallions (docs/16 section D). Not the main map for now: the owner prefers the painted world map.</summary>
+        public void ShowMapPages()
+        {
+            NewScreen("Map");
+            currentRegionId = null;
+            mapContent = null;
+            mapScroll = null;
+            SkyBackground();
+            AddPillRow();
+            AddBack("Menu", ShowMenu);
+            AddTabBar(-1, false);
+
+            RectTransform vp = UiKit.Rect(screen, "MapPages");
+            vp.anchorMin = Vector2.zero;
+            vp.anchorMax = Vector2.one;
+            vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 70f);
+            vp.offsetMax = new Vector2(0f, -150f);
+            vp.gameObject.AddComponent<RectMask2D>();
+            var vhit = vp.gameObject.AddComponent<Image>();
+            vhit.color = new Color(0f, 0f, 0f, 0f);
+            RectTransform content = UiKit.Rect(vp, "PagesContent");
+            content.anchorMin = new Vector2(0f, 0f);
+            content.anchorMax = new Vector2(0f, 1f);
+            content.pivot = new Vector2(0f, 0.5f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = new Vector2(1080f * MapPages, 0f);
+            var scroll = vp.gameObject.AddComponent<ScrollRect>();
+            scroll.content = content;
+            scroll.viewport = vp;
+            scroll.horizontal = true;
+            scroll.vertical = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            var snap = vp.gameObject.AddComponent<PageSnap>();
+            snap.Scroll = scroll;
+            snap.Pages = MapPages;
+            snap.Content = content;
+            snap.Viewport = vp;
+
+            int current = Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, Mathf.Max(1, GameSession.PlayableRegions));
+            float[] lanes = { 0.3f, 0.7f, 0.3f, 0.7f, 0.3f };
+            for (int p = 0; p < MapPages; p++)
+            {
+                RectTransform page = UiKit.Rect(content, "Page" + (p + 1));
+                page.anchorMin = new Vector2(p / (float)MapPages, 0f);
+                page.anchorMax = new Vector2((p + 1) / (float)MapPages, 1f);
+                page.offsetMin = page.offsetMax = Vector2.zero;
+                ToyKit.Ribbon(page, (p * RegionsPerPage + 1) + " - " + (p * RegionsPerPage + RegionsPerPage), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(460f, 164f));
+                float top = 200f;   // below the ribbon
+                float[] mx = new float[RegionsPerPage], my = new float[RegionsPerPage];
+                for (int k = 0; k < RegionsPerPage; k++) { mx[k] = lanes[k]; my[k] = 0.17f + k * 0.15f; }
+                for (int k = 0; k + 1 < RegionsPerPage; k++)
+                {
+                    for (int d = 1; d <= 9; d++)
+                    {
+                        float t = d / 10f;
+                        float curve = (1f - Mathf.Cos(t * Mathf.PI)) * 0.5f;   // S-curve: the path bends instead of running straight
+                        Image dot = UiKit.AddImage(page, "Dot", Theme.RoundSprite, new Color(1f, 1f, 1f, 0.8f));
+                        dot.type = Image.Type.Sliced;
+                        dot.rectTransform.anchorMin = dot.rectTransform.anchorMax = new Vector2(Mathf.Lerp(mx[k], mx[k + 1], curve), Mathf.Lerp(my[k], my[k + 1], t));
+                        dot.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                        dot.rectTransform.anchoredPosition = Vector2.zero;
+                        dot.rectTransform.sizeDelta = new Vector2(20f, 20f);
+                    }
+                }
+                for (int k = 0; k < RegionsPerPage; k++)
+                {
+                    int idx = p * RegionsPerPage + k + 1;
+                    RegionDef region = repo.TryGetRegionByIndex(idx);
+                    if (region == null) continue;
+                    AddMedallion(page, region, mx[k], my[k], idx == current);
+                }
+            }
+
+            // page dots
+            var dots = new Image[MapPages];
+            RectTransform dotRow = UiKit.Rect(screen, "PageDots");
+            UiKit.Place(dotRow, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 18f), new Vector2(MapPages * 44f, 30f));
+            for (int i = 0; i < MapPages; i++)
+            {
+                dots[i] = UiKit.AddImage(dotRow, "Dot" + i, Theme.RoundSprite, Color.white);
+                dots[i].type = Image.Type.Sliced;
+                dots[i].rectTransform.anchorMin = dots[i].rectTransform.anchorMax = new Vector2(0f, 0.5f);
+                dots[i].rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                dots[i].rectTransform.anchoredPosition = new Vector2(22f + i * 44f, 0f);
+                dots[i].rectTransform.sizeDelta = new Vector2(26f, 26f);
+            }
+            snap.Dots = dots;
+            StartCoroutine(OpenMapPage(snap, (current - 1) / RegionsPerPage));
+        }
+
+        System.Collections.IEnumerator OpenMapPage(PageSnap snap, int page)
+        {
+            yield return null;
+            if (snap != null) snap.GoTo(page);
+            yield return null;
+            if (snap != null) snap.GoTo(page);
+        }
+
+        /// <summary>One round region medallion: the region colour, its signature picture (or a padlock), the name and the stars earned.</summary>
+        void AddMedallion(RectTransform page, RegionDef region, float lane, float frac, bool isCurrent)
+        {
+            bool playable = progress.IsRegionPlayable(region);
+            bool unlocked = playable && progress.IsRegionUnlocked(region);
+            const float size = 210f;
+            Color col = unlocked ? PaletteColor(region.Theme.Palette != null && region.Theme.Palette.Count > 0 ? region.Theme.Palette[0] : null) : new Color(0.36f, 0.42f, 0.55f);
+            RegionDef r = region;
+            Button b = UiKit.AddButton(page, "Region" + region.Index, "", Theme.RoundSprite, col, new Vector2(size, size), () => OnRegionTapped(r), 40);
+            b.GetComponent<A11yLabel>().Text = region.Name + (unlocked ? "" : (playable ? ", locked" : ", coming soon"));
+            var brt = (RectTransform)b.transform;
+            brt.anchorMin = brt.anchorMax = new Vector2(lane, frac);
+            brt.pivot = new Vector2(0.5f, 0.5f);
+            brt.anchoredPosition = Vector2.zero;
+            brt.sizeDelta = new Vector2(size, size);
+            brt.localScale = Vector3.one * (isCurrent ? 1.12f : 1f);
+            Image face = b.GetComponent<Image>();
+            face.type = Image.Type.Sliced;
+            face.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / (size * 0.5f));
+            Image ring = UiKit.AddImage(b.transform, "Ring", Glyphs.Ring, isCurrent ? new Color(1f, 0.82f, 0.2f, 1f) : UiKit.ButtonInk);
+            ring.rectTransform.anchorMin = Vector2.zero;
+            ring.rectTransform.anchorMax = Vector2.one;
+            ring.rectTransform.offsetMin = new Vector2(-8f, -8f);
+            ring.rectTransform.offsetMax = new Vector2(8f, 8f);
+            RegionArt ra = art != null ? art.ForRegion(region.Index) : null;
+            Sprite pic = unlocked && ra != null && ra.Signature != null && ra.Signature.Length > 0 ? ra.Signature[0] : ToyKit.Get(unlocked ? "icon_flag" : "icon_lock");
+            Image icon = UiKit.AddImage(b.transform, "Icon", pic, Color.white);
+            icon.preserveAspect = true;
+            icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            icon.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            icon.rectTransform.sizeDelta = new Vector2(size * 0.62f, size * 0.62f);
+            Text name = UiKit.AddText(page, "Name" + region.Index, region.Name, 42, Color.white, TextAnchor.MiddleCenter, true);
+            name.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var nrt = (RectTransform)name.transform;
+            nrt.anchorMin = nrt.anchorMax = new Vector2(lane, frac);
+            nrt.pivot = new Vector2(0.5f, 1f);
+            nrt.anchoredPosition = new Vector2(0f, -(size * 0.5f + 12f));
+            nrt.sizeDelta = new Vector2(400f, 56f);
+            if (unlocked)
+            {
+                int stars = progress.StarsInRegion(region);
+                RectTransform pillRow = UiKit.Rect(page, "Stars" + region.Index);
+                pillRow.anchorMin = pillRow.anchorMax = new Vector2(lane, frac);
+                pillRow.pivot = new Vector2(0.5f, 1f);
+                pillRow.anchoredPosition = new Vector2(0f, -(size * 0.5f + 74f));
+                pillRow.sizeDelta = new Vector2(230f, 62f);
+                Text st = ToyKit.WalletPillFlex(pillRow, "StarsPill", art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 62f);
+                UiKit.SetText(st, stars + "/" + region.Levels.Count * 3);
+                var hl = pillRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+                hl.childControlWidth = hl.childControlHeight = true;
+                hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+            }
+        }
+
+        /// <summary>The painted world map (the 10 stitched region paintings with a pin for every region): the main map (owner, 2026-10-24).</summary>
         public void ShowMap()
         {
             NewScreen("Map");
@@ -619,40 +845,102 @@ namespace BoingUpSkyTower.Gameplay
             NewScreen("Levels");
             currentRegionId = region.Id;
             RegionArt ra = art != null ? art.ForRegion(region.Index) : null;
-            SkyBackground();
+            LevelBackground(ra);
             AddLevelsWallet(region);
             AddBack("Map", ShowMap);
             List<LevelDef> levels = repo.LevelsOf(region.Id);
             string currentId = null;
             foreach (LevelDef l in levels) if (progress.IsLevelUnlocked(l) && !progress.IsLevelCleared(l.Id)) { currentId = l.Id; break; }
 
-            // 3 columns x 5 rows, level 1 at the bottom (the tower climbs upward). The grid fills the space between the wallet widget and the
-            // bottom edge, whatever the screen shape: rows are spread and the circles shrink a little when the screen is short (LevelGridFit).
-            RectTransform grid = UiKit.Rect(screen, "LevelGrid");
-            UiKit.Stretch(grid);
-            grid.offsetMax = new Vector2(0f, -(MapTopBar - 20f));
-            grid.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);   // the icon tab bar sits under the grid, never over a circle or its stars
-            var fit = grid.gameObject.AddComponent<LevelGridFit>();
-            Text hdr = UiKit.AddText(grid, "Header", region.Name, 76, Color.white, TextAnchor.MiddleCenter, true);
-            fit.Title = (RectTransform)hdr.transform;
-            Button endlessIcon = ToyKit.IconButton(grid, "Endless", "Endless mode", 1, Glyphs.Infinity, new Vector2(136f, 136f), () => OnEndlessTapped(region), 0.72f);
-            fit.TitleExtra = (RectTransform)endlessIcon.transform;
-            fit.Nodes = new RectTransform[levels.Count];
-            fit.Cols = new int[levels.Count];
-            fit.Rows = new int[levels.Count];
-            fit.Current = new bool[levels.Count];
+            // A winding path of 15 round nodes, level 1 at the bottom (docs/16 section C): the nodes follow four lanes (centre, left, centre, right),
+            // dotted lines join them, and the path scrolls; it opens on the current level. Title row and the Endless icon stay fixed above it.
+            RectTransform titleRow = UiKit.Rect(screen, "TitleRow");
+            titleRow.anchorMin = new Vector2(0f, 1f);
+            titleRow.anchorMax = new Vector2(1f, 1f);
+            titleRow.pivot = new Vector2(0.5f, 1f);
+            titleRow.anchoredPosition = new Vector2(0f, -244f);
+            titleRow.sizeDelta = new Vector2(-40f, 176f);
+            Text hdr = UiKit.AddText(titleRow, "Header", region.Name, 64, Color.white, TextAnchor.MiddleCenter, true);
+            var hrt = (RectTransform)hdr.transform;
+            hrt.anchorMin = Vector2.zero;
+            hrt.anchorMax = Vector2.one;
+            hrt.offsetMin = new Vector2(0f, 0f);
+            hrt.offsetMax = new Vector2(-170f, 0f);
+            Button endlessIcon = ToyKit.IconButton(titleRow, "Endless", "Endless mode", 1, Glyphs.Infinity, new Vector2(136f, 136f), () => OnEndlessTapped(region), 0.72f);
+            UiKit.Place((RectTransform)endlessIcon.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(136f, 136f));
+            endlessIcon.GetComponent<RectTransform>().pivot = new Vector2(1f, 0.5f);
+
+            RectTransform vp = UiKit.Rect(screen, "PathViewport");
+            vp.anchorMin = Vector2.zero;
+            vp.anchorMax = Vector2.one;
+            vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);
+            vp.offsetMax = new Vector2(0f, -430f);
+            vp.gameObject.AddComponent<RectMask2D>();
+            var vhit = vp.gameObject.AddComponent<Image>();
+            vhit.color = new Color(0f, 0f, 0f, 0f);
+            const float pitch = 210f, pad = 70f, nodeSize = 150f;
+            float contentH = pad * 2f + (levels.Count - 1) * pitch + nodeSize + 70f;
+            RectTransform content = UiKit.Rect(vp, "PathContent");
+            content.anchorMin = new Vector2(0f, 0f);
+            content.anchorMax = new Vector2(1f, 0f);
+            content.pivot = new Vector2(0.5f, 0f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = new Vector2(0f, contentH);
+            var scroll = vp.gameObject.AddComponent<ScrollRect>();
+            scroll.content = content;
+            scroll.viewport = vp;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic;
+            scroll.scrollSensitivity = 60f;
+
+            float[] lanes = { 0.5f, 0.22f, 0.5f, 0.78f };
+            float[] nx = new float[levels.Count], ny = new float[levels.Count];
+            for (int i = 0; i < levels.Count; i++)
+            {
+                nx[i] = lanes[i % 4];
+                ny[i] = pad + 70f + i * pitch + nodeSize * 0.5f;
+            }
+            // dotted path first (under the nodes)
+            for (int i = 0; i + 1 < levels.Count; i++)
+            {
+                for (int d = 1; d <= 9; d++)
+                {
+                    float t = d / 10f;
+                    float curve = (1f - Mathf.Cos(t * Mathf.PI)) * 0.5f;   // S-curve between two nodes (owner, 2026-10-24: curvy, not straight)
+                    Image dot = UiKit.AddImage(content, "Dot", Theme.RoundSprite, new Color(1f, 1f, 1f, progress.IsLevelUnlocked(levels[i + 1]) ? 0.95f : 0.5f));
+                    dot.type = Image.Type.Sliced;
+                    dot.rectTransform.anchorMin = dot.rectTransform.anchorMax = new Vector2(Mathf.Lerp(nx[i], nx[i + 1], curve), 0f);
+                    dot.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                    dot.rectTransform.anchoredPosition = new Vector2(0f, Mathf.Lerp(ny[i], ny[i + 1], t));
+                    dot.rectTransform.sizeDelta = new Vector2(22f, 22f);
+                }
+            }
+            float currentY = ny[0];
             for (int i = 0; i < levels.Count; i++)
             {
                 LevelDef l = levels[i];
-                int row = i / 3, col = i % 3;
-                fit.Nodes[i] = AddLevelNode(l, grid, l.Id == currentId);
-                fit.Cols[i] = col;
-                fit.Rows[i] = row;
-                fit.Current[i] = l.Id == currentId;
+                bool isCur = l.Id == currentId;
+                RectTransform node = AddLevelNode(l, content, isCur);
+                node.anchorMin = node.anchorMax = new Vector2(nx[i], 0f);
+                node.pivot = new Vector2(0.5f, 0.5f);
+                node.anchoredPosition = new Vector2(0f, ny[i]);
+                node.sizeDelta = new Vector2(nodeSize, nodeSize);
+                node.localScale = Vector3.one * (isCur ? 1.15f : 1f);
+                if (isCur) currentY = ny[i];
             }
-            fit.Apply();
-
+            StartCoroutine(OpenPathAt(scroll, contentH, currentY));
             AddTabBar(-1, false);
+        }
+
+        /// <summary>Scrolls the level path so the current level sits in the middle of the view (after the first layout pass).</summary>
+        System.Collections.IEnumerator OpenPathAt(ScrollRect scroll, float contentH, float y)
+        {
+            yield return null;
+            if (scroll == null) yield break;
+            float vpH = ((RectTransform)scroll.viewport).rect.height;
+            float span = Mathf.Max(1f, contentH - vpH);
+            scroll.verticalNormalizedPosition = Mathf.Clamp01((y - vpH * 0.5f) / span);
         }
 
         /// <summary>Endless start popup (docs/15 FR-PWR-2): best floor, the power-up loadout picker and START. The loadout is optional.</summary>
