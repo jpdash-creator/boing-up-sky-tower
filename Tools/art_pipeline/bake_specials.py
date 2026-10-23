@@ -71,7 +71,7 @@ def main():
     for f in glob.glob(os.path.join(outdir, "reg00%d_[cmb]*.png" % region)):
         os.remove(f)
 
-    PADX, PADB = 96, 150
+    PADX, PADB = 96, 260
     for kind in ("crumble", "moving", "bounce"):
         for w in widths:
             base = [p for p in pieces if abs(p["width"] - w) < 0.01][0]
@@ -79,7 +79,8 @@ def main():
             bl, br, sy, bb = base["bodyLeft"], base["bodyRight"], base["surfaceY"], base["bodyBottom"]
             bodyW, t = br - bl, bb - sy
             canvas = Image.new("RGBA", (slab.width + 2 * PADX, slab.height + PADB), (0, 0, 0, 0))
-            canvas.alpha_composite(slab, (PADX, 0))
+            if kind != "bounce":
+                canvas.alpha_composite(slab, (PADX, 0))
             L, R, SY, BB = bl + PADX, br + PADX, sy, bb
             if kind == "crumble":
                 crack = uniform(parts["crack_long" if w >= 3 else "crack_short"], height=0.62 * t)
@@ -91,8 +92,9 @@ def main():
                 paste(canvas, knob.transpose(Image.FLIP_LEFT_RIGHT), L - knob.width * 0.62, SY + 0.5 * t - knob.height / 2 + 0.1 * t)
                 paste(canvas, knob, R - knob.width * 0.38, SY + 0.5 * t - knob.height / 2 + 0.1 * t)
             else:
-                spring = uniform(parts["spring_tall"], height=1.0 * t)
-                paste(canvas, spring, L + bodyW / 2 - spring.width / 2, BB - 0.35 * t)
+                spring = uniform(parts["spring_tall"], height=2.6 * t)
+                paste(canvas, spring, L + bodyW / 2 - spring.width / 2, BB - 0.6 * t)   # drawn first: the spring sits BEHIND the slab
+                canvas.alpha_composite(slab, (PADX, 0))
             name = "reg00%d_%s_w%s.png" % (region, kind, ("%g" % w).replace(".", "_"))
             canvas.save(os.path.join(outdir, name))
             ent = {"w": canvas.width, "h": canvas.height, "bodyLeft": L, "bodyRight": R, "surfaceY": SY, "bodyBottom": BB,
