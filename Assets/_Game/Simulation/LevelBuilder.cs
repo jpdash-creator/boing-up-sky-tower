@@ -467,7 +467,8 @@ namespace BoingUpSkyTower.Simulation
         private static readonly int[] NormalWidthsTenths = { 15, 20, 30, 40, 60, 80 };
         private static readonly int[] SpecialWidthsTenths = { 20, 40 };
 
-        private static Fx SnapWidth(Fx w, PlatformKind kind)
+        /// <summary>Snaps a width to the painted set of its kind (docs/16 section E): the campaign builder and the endless tower use the same set.</summary>
+        public static Fx SnapWidth(Fx w, PlatformKind kind)
         {
             if (w >= Fx.FromInt(9)) return w;
             bool special = kind == PlatformKind.Crumble || kind == PlatformKind.Moving || kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap;

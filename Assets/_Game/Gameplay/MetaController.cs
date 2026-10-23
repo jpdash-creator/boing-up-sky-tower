@@ -19,6 +19,10 @@ namespace BoingUpSkyTower.Gameplay
         // World map (Tools/art_pipeline/build_world_map.py): 10 stitched segments of 3 regions each, bottom to top, in the Resources/Map chunks.
         [System.Serializable] class MapChunkMeta { public string file; public int height; }
         [System.Serializable] class MapSpanMeta { public int bottom; public int height; }
+        // The painted world-map pages (owner, 2026-10-24): one tall image per 5 regions, with the 5 marker positions (x across, y up from the bottom, 0..1).
+        [System.Serializable] class PaintedMarker { public float x, y; }
+        [System.Serializable] class PaintedPage { public string file; public PaintedMarker[] markers = new PaintedMarker[0]; }
+        [System.Serializable] class PaintedPages { public int width = 1080, height = 1922; public PaintedPage[] pages = new PaintedPage[0]; }
         [System.Serializable] class WorldMapMeta
         {
             public int width = 1080, totalHeight = 15764;
@@ -670,13 +674,28 @@ namespace BoingUpSkyTower.Gameplay
             WorldMapMeta meta = new WorldMapMeta();
             TextAsset metaAsset = Resources.Load<TextAsset>("Map/world_map");
             if (metaAsset != null) meta = JsonUtility.FromJson<WorldMapMeta>(metaAsset.text);
+            // Painted pages replace the old stitched segments when they exist (regions 1-5 on page 1, 6-10 on page 2, ...).
+            PaintedPages painted = null;
+            TextAsset pagesAsset = Resources.Load<TextAsset>("Map/painted_pages");
+            if (pagesAsset != null)
+            {
+                painted = JsonUtility.FromJson<PaintedPages>(pagesAsset.text);
+                if (painted == null || painted.pages == null || painted.pages.Length == 0) painted = null;
+            }
+            if (painted != null)
+            {
+                meta = new WorldMapMeta { width = painted.width, totalHeight = painted.height * painted.pages.Length, chunks = new MapChunkMeta[painted.pages.Length], segmentSpans = new MapSpanMeta[0] };
+                for (int pi = 0; pi < painted.pages.Length; pi++) meta.chunks[pi] = new MapChunkMeta { file = painted.pages[pi].file, height = painted.height };
+                bgFill.color = new Color(0.55f, 0.78f, 1f, 1f);
+            }
             int total = Mathf.Max(1, meta.totalHeight);
 
             // Scrolling viewport below the fixed top bar. Its content keeps the art's aspect, so the map is never stretched.
             mapViewport = UiKit.Rect(screenRoot, "MapViewport");   // full-bleed (under the notch and system bars); the HUD sits in the safe area above it
             mapViewport.SetSiblingIndex(screen.GetSiblingIndex());
             UiKit.Stretch(mapViewport);
-            mapViewport.offsetMax = Vector2.zero;   // the map fills the whole screen; the top bar floats over it
+            mapViewport.offsetMax = Vector2.zero;   // the map fills the width; the top bar floats over it
+            mapViewport.offsetMin = new Vector2(0f, ToyKit.TabBarReserve);   // the icon tab bar sits under the map
             mapViewport.gameObject.AddComponent<RectMask2D>();
             Image hit = mapViewport.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
@@ -717,6 +736,16 @@ namespace BoingUpSkyTower.Gameplay
             {
                 RegionDef region = repo.TryGetRegionByIndex(i);
                 if (region == null) continue;
+                if (painted != null)
+                {
+                    int pg = (i - 1) / 5, mk = (i - 1) % 5;
+                    if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;   // that page is not painted yet
+                    PaintedMarker m = painted.pages[pg].markers[mk];
+                    float prise = (pg * painted.height + m.y * painted.height) / total;
+                    AddRegionPin(region, new Vector2(m.x, prise), mk == 4 ? 2 : 1);
+                    if (i == current) currentRise = prise;
+                    continue;
+                }
                 int seg = (i - 1) / 3, k = (i - 1) % 3;
                 MapSpanMeta span = seg < meta.segmentSpans.Length ? meta.segmentSpans[seg] : new MapSpanMeta { bottom = seg * 1538, height = 1538 };
                 float inSeg = PinRise[k];
@@ -777,7 +806,7 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>A round pin on the map with a slim dark name tag beside it. Locked and not-yet-built regions show a padlock.</summary>
-        void AddRegionPin(RegionDef region, Vector2 anchor)
+        void AddRegionPin(RegionDef region, Vector2 anchor, int tagMode = 0)   // 0 beside the pin, 1 below, 2 above
         {
             bool playable = progress.IsRegionPlayable(region);
             bool unlocked = progress.IsRegionUnlocked(region);
@@ -805,8 +834,22 @@ namespace BoingUpSkyTower.Gameplay
             name.horizontalOverflow = HorizontalWrapMode.Overflow;
             float w = name.preferredWidth + 40f;
             bool tagRight = anchor.x < 0.5f;
-            UiKit.Place(tag.rectTransform, new Vector2(tagRight ? 1f : 0f, 0.5f), new Vector2(tagRight ? 10f : -10f, 0f), new Vector2(w, 60f));
-            tag.rectTransform.pivot = new Vector2(tagRight ? 0f : 1f, 0.5f);
+            if (tagMode == 2)
+            {
+                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 6f), new Vector2(w, 60f));
+                tag.rectTransform.pivot = new Vector2(0.5f, 0f);
+            }
+            else if (tagMode == 1)
+            {
+                // painted pages: the name sits under the marker, centred, so it stays inside the screen on every shape
+                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -6f), new Vector2(w, 60f));
+                tag.rectTransform.pivot = new Vector2(0.5f, 1f);
+            }
+            else
+            {
+                UiKit.Place(tag.rectTransform, new Vector2(tagRight ? 1f : 0f, 0.5f), new Vector2(tagRight ? 10f : -10f, 0f), new Vector2(w, 60f));
+                tag.rectTransform.pivot = new Vector2(tagRight ? 0f : 1f, 0.5f);
+            }
             UiKit.Stretch((RectTransform)name.transform);
         }
 
@@ -878,14 +921,15 @@ namespace BoingUpSkyTower.Gameplay
             vp.gameObject.AddComponent<RectMask2D>();
             var vhit = vp.gameObject.AddComponent<Image>();
             vhit.color = new Color(0f, 0f, 0f, 0f);
-            const float pitch = 210f, pad = 70f, nodeSize = 150f;
-            float contentH = pad * 2f + (levels.Count - 1) * pitch + nodeSize + 70f;
+            const float nodeSize = 150f;
             RectTransform content = UiKit.Rect(vp, "PathContent");
             content.anchorMin = new Vector2(0f, 0f);
             content.anchorMax = new Vector2(1f, 0f);
             content.pivot = new Vector2(0.5f, 0f);
             content.anchoredPosition = Vector2.zero;
-            content.sizeDelta = new Vector2(0f, contentH);
+            content.sizeDelta = new Vector2(0f, 1200f);
+            var cg = content.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;   // shown once the first layout pass has placed the nodes
             var scroll = vp.gameObject.AddComponent<ScrollRect>();
             scroll.content = content;
             scroll.viewport = vp;
@@ -894,53 +938,70 @@ namespace BoingUpSkyTower.Gameplay
             scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.scrollSensitivity = 60f;
 
-            float[] nx = new float[levels.Count], ny = new float[levels.Count];
-            int lastUnlocked = 0;
-            for (int i = 0; i < levels.Count; i++)
-            {
-                nx[i] = PathX(i);
-                ny[i] = pad + 70f + i * pitch + nodeSize * 0.5f;
-                if (progress.IsLevelUnlocked(levels[i])) lastUnlocked = i;
-            }
-            float currentY = ny[0];
+            var nodes = new RectTransform[levels.Count];
+            int lastUnlocked = 0, currentIdx = 0;
             for (int i = 0; i < levels.Count; i++)
             {
                 LevelDef l = levels[i];
                 bool isCur = l.Id == currentId;
-                RectTransform node = AddLevelNode(l, content, isCur);
-                node.anchorMin = node.anchorMax = new Vector2(nx[i], 0f);
-                node.pivot = new Vector2(0.5f, 0.5f);
-                node.anchoredPosition = new Vector2(0f, ny[i]);
-                node.sizeDelta = new Vector2(nodeSize, nodeSize);
-                node.localScale = Vector3.one * (isCur ? 1.15f : 1f);
-                if (isCur) currentY = ny[i];
+                nodes[i] = AddLevelNode(l, content, isCur);
+                nodes[i].anchorMin = nodes[i].anchorMax = new Vector2(PathX(i), 0f);
+                nodes[i].pivot = new Vector2(0.5f, 0.5f);
+                nodes[i].sizeDelta = new Vector2(nodeSize, nodeSize);
+                nodes[i].localScale = Vector3.one * (isCur ? 1.15f : 1f);
+                if (progress.IsLevelUnlocked(levels[i])) lastUnlocked = i;
+                if (isCur) currentIdx = i;
             }
-            StartCoroutine(OpenPathAt(scroll, contentH, currentY, content, pad + 70f + nodeSize * 0.5f, pitch, lastUnlocked));
+            StartCoroutine(LayoutPath(scroll, content, nodes, nodeSize, lastUnlocked, currentIdx));
             AddTabBar(-1, false);
         }
 
-        /// <summary>Horizontal position (0..1) of level node <paramref name="i"/> and of the flowing line: one smooth wave from the bottom to the top.</summary>
-        static float PathX(float i) { return 0.5f + 0.27f * Mathf.Sin(i * 0.8f); }
+        /// <summary>
+        /// Horizontal position (0..1) of level node <paramref name="i"/> and of the flowing line: one smooth wave, level 1 at the far left, then the
+        /// middle, the far right, the middle, the far left again. Neighbours are always at least a node apart sideways, so the path can be tight.
+        /// </summary>
+        static readonly float[] PathLanes = { 0.15f, 0.62f, 0.28f, 0.80f, 0.42f, 0.86f, 0.30f, 0.70f, 0.18f, 0.64f, 0.30f, 0.82f, 0.44f, 0.76f, 0.36f };
+
+        static float PathX(float i)
+        {
+            int k = Mathf.Clamp(Mathf.RoundToInt(i), 0, PathLanes.Length - 1);
+            return PathLanes[k];
+        }
 
         /// <summary>
-        /// Draws the winding path as ONE smooth line (a navy-edged white ribbon, fainter beyond the last unlocked level) into a single texture, so
-        /// it flows through every node instead of a row of dots (owner, 2026-10-24). Built after the first layout pass, when the real width is known.
+        /// The flowing line: a Catmull-Rom spline through the node lanes, so the road bends smoothly through every level and swings out to the
+        /// other side between them (no straight stretches, no dots).
+        /// </summary>
+        static float PathCurveX(float t)
+        {
+            int i = Mathf.Clamp(Mathf.FloorToInt(t), 0, PathLanes.Length - 2);
+            float f = Mathf.Clamp01(t - i);
+            float p0 = PathLanes[Mathf.Max(0, i - 1)], p1 = PathLanes[i], p2 = PathLanes[i + 1], p3 = PathLanes[Mathf.Min(PathLanes.Length - 1, i + 2)];
+            float f2 = f * f, f3 = f2 * f;
+            return 0.5f * (2f * p1 + (-p0 + p2) * f + (2f * p0 - 5f * p1 + 4f * p2 - p3) * f2 + (-p0 + 3f * p1 - 3f * p2 + p3) * f3);
+        }
+
+        /// <summary>
+        /// Draws the winding path as ONE thin translucent white line into a single texture, starting at the first level and flowing through every
+        /// node (owner, 2026-10-24). Built after the first layout pass, when the real width is known.
         /// </summary>
         void BuildPathLine(RectTransform content, float w, float h, float yBase, float pitch, int count, int lastUnlocked)
         {
-            const float sc = 0.5f;
+            const float sc = 1f;
             int tw = Mathf.Max(8, Mathf.RoundToInt(w * sc)), th = Mathf.Max(8, Mathf.RoundToInt(h * sc));
-            var px = new Color[tw * th];
+            var oa = new float[tw * th];   // navy hairline alpha
+            var fa = new float[tw * th];   // white fill alpha
             float yEnd = yBase + (count - 1) * pitch;
             for (int pass = 0; pass < 2; pass++)
             {
-                float radius = (pass == 0 ? 17f : 11f) * sc;
-                for (float y = yBase - pitch * 0.35f; y <= yEnd + pitch * 0.35f; y += 2f)
+                float radius = (pass == 0 ? 8.5f : 5f) * sc;   // thin: about 10 canvas units wide in white, a hair of navy around it
+                float[] dst = pass == 0 ? oa : fa;
+                float baseAlpha = pass == 0 ? 0.22f : 0.6f;     // translucent: the picture shows through
+                for (float y = yBase; y <= yEnd + 0.01f; y += 1f)
                 {
                     float t = (y - yBase) / pitch;
-                    float x = PathX(t) * w;
-                    float a = t <= lastUnlocked + 0.5f ? 1f : 0.45f;
-                    Color src = pass == 0 ? new Color(0.06f, 0.14f, 0.34f, 0.85f * a) : new Color(1f, 1f, 1f, 0.97f * a);
+                    float x = PathCurveX(t) * w;
+                    float sa = baseAlpha * (t <= lastUnlocked + 0.01f ? 1f : 0.45f);
                     int cx = Mathf.RoundToInt(x * sc), cy = Mathf.RoundToInt(y * sc), r = Mathf.CeilToInt(radius) + 1;
                     for (int dy = -r; dy <= r; dy++)
                     {
@@ -951,14 +1012,21 @@ namespace BoingUpSkyTower.Gameplay
                             int pxx = cx + dx;
                             if (pxx < 0 || pxx >= tw) continue;
                             float cov = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + 0.5f);
-                            if (cov <= 0f) continue;
-                            float sa = src.a * cov;
-                            Color d = px[py * tw + pxx];
-                            float oa = sa + d.a * (1f - sa);
-                            px[py * tw + pxx] = oa <= 0f ? Color.clear : new Color((src.r * sa + d.r * d.a * (1f - sa)) / oa, (src.g * sa + d.g * d.a * (1f - sa)) / oa, (src.b * sa + d.b * d.a * (1f - sa)) / oa, oa);
+                            float v = sa * cov;
+                            if (v > dst[py * tw + pxx]) dst[py * tw + pxx] = v;   // the strongest stamp wins: overlapping stamps never add up
                         }
                     }
                 }
+            }
+            var px = new Color[tw * th];
+            var navy = new Color(0.06f, 0.14f, 0.34f);
+            for (int i = 0; i < px.Length; i++)
+            {
+                float a = Mathf.Max(oa[i], fa[i]);
+                if (a <= 0f) { px[i] = Color.clear; continue; }
+                Color c = Color.Lerp(navy, Color.white, fa[i] / a);
+                c.a = a;
+                px[i] = c;
             }
             var tex = new Texture2D(tw, th, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
             tex.SetPixels(px);
@@ -974,16 +1042,29 @@ namespace BoingUpSkyTower.Gameplay
             raw.transform.SetAsFirstSibling();   // under the nodes
         }
 
-        /// <summary>Builds the line, then scrolls the level path so the current level sits in the middle of the view.</summary>
-        System.Collections.IEnumerator OpenPathAt(ScrollRect scroll, float contentH, float y, RectTransform content, float yBase, float pitch, int lastUnlocked)
+        /// <summary>
+        /// After the first layout pass: spaces the 15 nodes so that TEN of them fit the real height of the view (owner, 2026-10-24), builds the line
+        /// from level 1, and scrolls so the current level sits in the middle.
+        /// </summary>
+        System.Collections.IEnumerator LayoutPath(ScrollRect scroll, RectTransform content, RectTransform[] nodes, float nodeSize, int lastUnlocked, int currentIdx)
         {
             yield return null;
             if (scroll == null) yield break;
             RectTransform vpr = (RectTransform)scroll.viewport;
-            if (content != null) BuildPathLine(content, vpr.rect.width, contentH, yBase, pitch, 15, lastUnlocked);
             float vpH = vpr.rect.height;
+            const float starRoom = 56f, edge = 24f;
+            // ten nodes: nine gaps plus one node with its stars must fit the view; never tighter than 106 (two apart in one lane would touch)
+            float pitch = Mathf.Clamp((vpH - nodeSize - starRoom - 2f * edge) / 9f, 106f, 200f);
+            float yBase = edge + starRoom + nodeSize * 0.5f;
+            float contentH = yBase * 2f + (nodes.Length - 1) * pitch;
+            content.sizeDelta = new Vector2(0f, contentH);
+            for (int i = 0; i < nodes.Length; i++) if (nodes[i] != null) nodes[i].anchoredPosition = new Vector2(0f, yBase + i * pitch);
+            BuildPathLine(content, vpr.rect.width, contentH, yBase, pitch, nodes.Length, lastUnlocked);
+            float y = yBase + currentIdx * pitch;
             float span = Mathf.Max(1f, contentH - vpH);
             scroll.verticalNormalizedPosition = Mathf.Clamp01((y - vpH * 0.5f) / span);
+            var cg = content.GetComponent<CanvasGroup>();
+            if (cg != null) cg.alpha = 1f;
         }
 
         /// <summary>Endless start popup (docs/15 FR-PWR-2): best floor, the power-up loadout picker and START. The loadout is optional.</summary>

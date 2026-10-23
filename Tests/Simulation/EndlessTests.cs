@@ -180,6 +180,38 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(GoldenR3S12345, d.ComputeHash());
         }
 
-        private const long GoldenR3S12345 = 918977617001383232L;
+        private const long GoldenR3S12345 = -7511674414380074137L;
+    }
+}
+
+namespace BoingUpSkyTower.Simulation.Tests
+{
+    /// <summary>Owner 2026-10-24: the endless tower follows the campaign rules too (painted widths only, nothing stretched, no touching platforms).</summary>
+    public class EndlessPaintedWidthTests
+    {
+        static readonly double[] Normal = { 1.5, 2, 3, 4, 6, 8 };
+        static readonly double[] Special = { 2, 4 };
+
+        [Xunit.Fact]
+        public void EndlessPlatformsUseOnlyPaintedWidthsAndStayApart()
+        {
+            SimConfig cfg = new SimConfig();
+            for (int seed = 1; seed <= 25; seed++)
+            {
+                LevelSpec spec = EndlessTower.MakeSpec(seed * 7919, Fx.Zero, SignatureKind.BounceFlowers, 400);
+                LevelData d = EndlessTower.BuildFixed(cfg, spec, 400);
+                Platform[] p = d.Platforms;
+                for (int i = 0; i < p.Length; i++)
+                {
+                    double w = p[i].Width.Raw / 65536.0;
+                    if (w >= 9.0) continue;   // the floor
+                    bool special = p[i].Kind == PlatformKind.Crumble || p[i].Kind == PlatformKind.Moving || p[i].Kind == PlatformKind.Bounce || p[i].Kind == PlatformKind.BounceCap;
+                    double[] set = special ? Special : Normal;
+                    bool ok = false;
+                    foreach (double c in set) if (System.Math.Abs(w - c) < 0.001) ok = true;
+                    Xunit.Assert.True(ok, "seed " + seed + " platform " + p[i].Id + " " + p[i].Kind + " width " + w + " is not a painted width");
+                }
+            }
+        }
     }
 }

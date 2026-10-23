@@ -199,6 +199,8 @@ namespace BoingUpSkyTower.Simulation
             else if (rowPattern == 2) w = rng.Range(Fx.FromRatio(28, 10), Fx.FromRatio(40, 10));
             w = Fx.Clamp(w, minWidth, maxWidth);
             if (kind == PlatformKind.Moving && w > cfg.DriftMaxWidth) w = cfg.DriftMaxWidth;
+            w = LevelBuilder.SnapWidth(w, kind);   // only painted widths exist (owner 2026-10-24: endless follows the campaign rules, no stretching)
+            if (kind == PlatformKind.Moving && w > cfg.DriftMaxWidth) w = Fx.FromInt(2);
             gap = Fx.Min(gap, LevelBuilder.SmallPlatformGapCap(maxGap, Fx.Min(w, prevW)));
             Fx y = prevY + gap;
 
@@ -246,11 +248,13 @@ namespace BoingUpSkyTower.Simulation
                 for (int e = 0; e < extras; e++)
                 {
                     Fx w2 = rng.Range(Fx.FromRatio(15, 10), Fx.FromRatio(26, 10));
+                    PlatformKind k2 = rng.Next(100) < 25 ? PlatformKind.Crumble : PlatformKind.Normal;
+                    w2 = LevelBuilder.SnapWidth(w2, k2);
                     Fx x2 = rng.Range(w2 / 2, screen - w2 / 2);
                     bool free = true;
                     for (int u = 0; u < nUsed; u++) if (Fx.Abs(x2 - usedX[u]) < (w2 + usedW[u]) / 2 + Fx.FromRatio(6, 10)) free = false;
                     if (!free || !OptionalFits(y)) continue;
-                    Add(r, rng.Next(100) < 25 ? PlatformKind.Crumble : PlatformKind.Normal, x2, y, w2, Fx.Zero, 0, 0);
+                    Add(r, k2, x2, y, w2, Fx.Zero, 0, 0);
                     usedX[nUsed] = x2; usedW[nUsed] = w2; nUsed++;
                 }
             }
