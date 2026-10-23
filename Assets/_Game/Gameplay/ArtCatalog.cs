@@ -22,6 +22,10 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Thin on-style platform pieces (optional): long, medium, short, crumble, moving, bounce. Each has the same world thickness.</summary>
         public Sprite[] Pieces = new Sprite[0];
         public PlatformMetric[] PieceMetrics = new PlatformMetric[0];
+        /// <summary>One real, unscaled piece per platform width (owner, 2026-10-23: never stretch). WidthUnits[i] is the walkable length of WidthPieces[i] in world units.</summary>
+        public Sprite[] WidthPieces = new Sprite[0];
+        public PlatformMetric[] WidthMetrics = new PlatformMetric[0];
+        public float[] WidthUnits = new float[0];
         /// <summary>Seamless vertical wall tiles (mirrored middle band of the wall art): stacked edge to edge they never leave a gap.</summary>
         public Sprite WallTileL, WallTileR;
         /// <summary>Order: normal, narrow, moving, crumble, bounce.</summary>

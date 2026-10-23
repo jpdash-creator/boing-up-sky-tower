@@ -118,6 +118,24 @@ namespace BoingUpSkyTower.Editor
                     };
                 }
             }
+            string widthDir = regionDir + "/tiles/reg00" + r + "_widths";
+            if (Directory.Exists(widthDir) && File.Exists(widthDir + "/platform_set.json"))
+            {
+                JArray wp = (JArray)JObject.Parse(File.ReadAllText(widthDir + "/platform_set.json"))["pieces"];
+                ra.WidthPieces = new Sprite[wp.Count];
+                ra.WidthMetrics = new PlatformMetric[wp.Count];
+                ra.WidthUnits = new float[wp.Count];
+                for (int k = 0; k < wp.Count; k++)
+                {
+                    ra.WidthPieces[k] = AssetDatabase.LoadAssetAtPath<Sprite>(widthDir + "/" + (string)wp[k]["file"]);
+                    ra.WidthUnits[k] = (float)wp[k]["width"];
+                    ra.WidthMetrics[k] = new PlatformMetric
+                    {
+                        W = (float)wp[k]["w"], H = (float)wp[k]["h"], BodyLeft = (float)wp[k]["bodyLeft"], BodyRight = (float)wp[k]["bodyRight"],
+                        SurfaceY = (float)wp[k]["surfaceY"], BodyBottom = (float)wp[k]["bodyBottom"]
+                    };
+                }
+            }
             string surfacePath = tiles + "/surface.json";
             if (File.Exists(surfacePath))
             {

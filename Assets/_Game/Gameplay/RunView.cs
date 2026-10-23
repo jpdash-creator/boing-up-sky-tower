@@ -391,6 +391,28 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
+        /// <summary>Index of the painted piece for this width (kinds the width set covers), or -1 when the region has none (or the kind still uses the old pieces).</summary>
+        int WidthPieceIndex(Platform p, float width)
+        {
+            if (region == null || region.WidthPieces == null || region.WidthPieces.Length == 0) return -1;
+            switch (p.Kind)
+            {
+                case PlatformKind.Crumble:
+                case PlatformKind.Moving:
+                case PlatformKind.Bounce:
+                case PlatformKind.BounceCap:
+                    return -1;   // specials are built from the slabs plus overlays (later)
+            }
+            int best = -1;
+            float bestDist = 0.26f;
+            for (int k = 0; k < region.WidthUnits.Length; k++)
+            {
+                float d = Mathf.Abs(region.WidthUnits[k] - width);
+                if (d < bestDist && region.WidthPieces[k] != null) { bestDist = d; best = k; }
+            }
+            return best;
+        }
+
         PlatformMetric PlatformMetricFor(Platform p)
         {
             if (region == null || region.Metrics == null) return default(PlatformMetric);
@@ -504,7 +526,21 @@ namespace BoingUpSkyTower.Gameplay
             float width = p.Width.F();
             platformOffX[i] = 0f;
             int piece = PieceIndex(p, width);
-            if (piece >= 0)
+            int wp = WidthPieceIndex(p, width);
+            if (wp >= 0)
+            {
+                // A real painted piece for exactly this width: ONE uniform scale, never stretched (owner rule, CUX-9 addendum).
+                Sprite sp = region.WidthPieces[wp];
+                PlatformMetric m = region.WidthMetrics[wp];
+                float ppu = sp.pixelsPerUnit;
+                float s = width / ((m.BodyRight - m.BodyLeft) / ppu);
+                sr.sprite = sp;
+                sr.drawMode = SpriteDrawMode.Simple;
+                sr.transform.localScale = new Vector3(s, s, 1f);
+                platformBaseScaleX[i] = s;
+                platformOffY[i] = -(m.H * 0.5f - m.SurfaceY) / ppu * s;
+            }
+            else if (piece >= 0)
             {
                 // On-style art piece, never stretched out of shape: caps keep their size (9-slice), the middle is stretched sideways only,
                 // and a platform narrower than its piece is scaled down uniformly (thinner, same proportions).

@@ -180,7 +180,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Ladders whose rung gap would be below this (comboChain value 4+) use rungs of LadderMinRung in two alternating columns of LadderZigWidth, LadderColumnGap apart edge to edge (stack rule, 2026-10-20).</summary>
         public Fx LadderMinStackGap = Fx.FromRatio(12, 10);
         public Fx LadderMinRung = Fx.One;
-        public Fx LadderZigWidth = Fx.FromRatio(28, 10);
+        public Fx LadderZigWidth = Fx.FromRatio(30, 10);
         public Fx LadderColumnGap = Fx.FromRatio(22, 10);
         /// <summary>First authored chunk row and spacing (rows between chunks) when LevelSpec.FixedChunks is set.</summary>
         public int ChunkStartRow = 10;

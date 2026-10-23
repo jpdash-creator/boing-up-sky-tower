@@ -452,6 +452,7 @@ namespace BoingUpSkyTower.Simulation
             }
 
             data.Platforms = ctx.Plats.ToArray();
+            SnapPlatformWidths(cfg, data.Platforms);
 
             // ---- pickups ----
             data.Pickups = BuildPickups(cfg, spec, ctx, data.Platforms, rows, d, hiddenGemPlaced, hiddenGemX, hiddenGemY);
@@ -462,6 +463,38 @@ namespace BoingUpSkyTower.Simulation
         }
 
         // ------------------------------------------------------------------------------------------
+        /// <summary>Platform widths the art has real, unscaled pieces for (owner, 2026-10-23: platforms are never stretched). The 10 unit floor stays.</summary>
+        private static readonly int[] NormalWidthsTenths = { 15, 20, 30, 40, 60, 80 };
+        private static readonly int[] SpecialWidthsTenths = { 20, 40 };
+
+        private static Fx SnapWidth(Fx w, PlatformKind kind)
+        {
+            if (w >= Fx.FromInt(9)) return w;
+            bool special = kind == PlatformKind.Crumble || kind == PlatformKind.Moving || kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap;
+            int[] set = special ? SpecialWidthsTenths : NormalWidthsTenths;
+            Fx best = Fx.FromRatio(set[0], 10);
+            Fx bestDist = Fx.Abs(w - best);
+            for (int i = 1; i < set.Length; i++)
+            {
+                Fx c = Fx.FromRatio(set[i], 10);
+                Fx dist = Fx.Abs(w - c);
+                if (dist <= bestDist) { best = c; bestDist = dist; }   // a tie goes to the wider piece
+            }
+            return best;
+        }
+
+        private static void SnapPlatformWidths(SimConfig cfg, Platform[] plats)
+        {
+            Fx screen = cfg.ScreenWidth;
+            for (int i = 0; i < plats.Length; i++)
+            {
+                Fx w = SnapWidth(plats[i].Width, plats[i].Kind);
+                plats[i].Width = w;
+                Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving ? plats[i].Amplitude : Fx.Zero);
+                plats[i].X = Fx.Clamp(plats[i].X, edge, screen - edge);   // a wider piece (and its swing) must stay inside the walls
+            }
+        }
+
         // Pickups. Per row: path coins between the previous and this spine platform (probability
         // PathCoinPercent, 100 = exactly one per row), then a risky coin (edge side-route or high
         // overshoot route) with probability RiskyCoinPercent, half the time as a pair. Both

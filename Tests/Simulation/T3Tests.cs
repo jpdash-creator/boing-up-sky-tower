@@ -115,7 +115,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             LevelSpec b = T3.Spec(777, 700, 10, SignatureKind.SwingingGongs, GoalType.SurviveWave);
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
-            Assert.Equal(3262358288399855812L, LevelBuilder.Build(cfg, a).ComputeHash());
+            Assert.Equal(-7273216675343283188L, LevelBuilder.Build(cfg, a).ComputeHash());
             Assert.Equal(-3451722916450616671L, LevelBuilder.Build(cfg, b).ComputeHash());
         }
 
@@ -774,7 +774,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             {
                 Platform p = FirstOnRow(d, r);
                 Platform prev = FirstOnRow(d, r - 1);
-                bool authored = Fx.Abs(p.Width - T3.F(2.6)) < Fx.FromRatio(2, 100) && Fx.Abs((p.Y - prev.Y) - T3.F(3.6)) < Fx.FromRatio(2, 100);
+                bool authored = Fx.Abs(p.Width - T3.F(3.0)) < Fx.FromRatio(2, 100) && Fx.Abs((p.Y - prev.Y) - T3.F(3.6)) < Fx.FromRatio(2, 100);
                 if (authored) { run++; if (run == 6) starts.Add(r - 5); } else run = 0;
             }
             Assert.True(starts.Count >= 3, "several chunks spliced: " + starts.Count);
