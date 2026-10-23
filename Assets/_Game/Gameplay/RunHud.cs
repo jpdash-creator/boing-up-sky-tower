@@ -235,7 +235,7 @@ namespace BoingUpSkyTower.Gameplay
                 lastStarMask = st.StarMask;
                 for (int i = 0; i < 3; i++) if (starIcons[i] != null) starIcons[i].color = (st.StarMask & (1 << i)) != 0 ? Color.white : new Color(0.35f, 0.35f, 0.4f, 0.9f);
             }
-            int gems = st.Gems + st.HiddenGems;
+            int gems = st.Gems + st.HiddenGems + (endless || GameSession.Progress == null ? 0 : GameSession.Progress.Gems);
             if (gems != lastGems) { lastGems = gems; UiKit.SetText(gemText, gems.ToString()); }
             if (s.Spec.Goal.Type == GoalType.Speedrun)
             {
@@ -308,6 +308,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public void CloseOverlay()
         {
+            if (shopRoot != null) CloseShop();
             if (overlay != null) Destroy(overlay.gameObject);
             overlay = null;
         }
@@ -333,7 +334,7 @@ namespace BoingUpSkyTower.Gameplay
         void OverlayRow(params Act[] acts)
         {
             Transform panel = PanelOf();
-            const float gap = 44f;
+            float gap = acts.Length > 3 ? 28f : 44f;
             float total = gap * (acts.Length - 1);
             for (int i = 0; i < acts.Length; i++) total += acts[i].Size;
             float x = -total * 0.5f;
@@ -356,10 +357,74 @@ namespace BoingUpSkyTower.Gameplay
         {
             OpenOverlay("Paused", 640f);
             OnClose = () => { if (OnResume != null) OnResume(); };
+            // Four equal round buttons (owner issue 15.3): resume, restart, shop (opens over the paused run) and home.
             OverlayRow(
-                MakeAct("Resume", "Resume", 1, ToyKit.Get("icon_play"), 200f, () => { if (OnResume != null) OnResume(); }),
+                MakeAct("Resume", "Resume", 1, ToyKit.Get("icon_play"), 150f, () => { if (OnResume != null) OnResume(); }),
                 MakeAct("Restart", "Restart", 0, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
+                MakeAct("Shop", "Shop", 0, ToyKit.Get("icon_shop"), 150f, OpenShop),
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
+        }
+
+        // ---------------- shop over the paused run ----------------
+
+        RectTransform shopRoot, shopPopup;
+        ShopScreen shop;
+
+        /// <summary>The full Shop on top of the paused run; Back returns to the pause menu and the run continues where it was.</summary>
+        void OpenShop()
+        {
+            if (overlay == null || shopRoot != null || GameSession.Progress == null || GameSession.Repo == null) return;
+            overlay.gameObject.SetActive(false);
+            shopRoot = UiKit.Rect(canvas.transform, "Overlay");
+            UiKit.Stretch(shopRoot);
+            Theme.SkyBackground(shopRoot);
+            RectTransform safe = UiKit.SafeArea(shopRoot);
+            var host = new ShopScreen.Host
+            {
+                OpenPopup = (title, body, height) =>
+                {
+                    ClosePopupInShop();
+                    shopPopup = UiKit.Rect(shopRoot, "Popup");
+                    UiKit.Stretch(shopPopup);
+                    var dim = shopPopup.gameObject.AddComponent<Image>();
+                    dim.color = new Color(0f, 0f, 0f, 0.65f);
+                    RectTransform panel = UiKit.BuildPopupFrame(shopPopup, title, art, new Vector2(860f, height), ClosePopupInShop);
+                    Text b = UiKit.AddText(panel, "Body", body, 44, Color.white);
+                    UiKit.OnPanel(b);
+                    UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(0f, -240f), new Vector2(740f, 520f));
+                },
+                PopupButton = (label, primary, y, action) => ToyKit.PopupAction(shopPopup.Find("Panel"), label, ToyKit.Button(primary ? 1 : 0), Color.white, y, action),
+                ClosePopup = ClosePopupInShop,
+            };
+            GameSession.Progress.LaunchPromoActive = GameSettings.LaunchPromo;
+            shop = new ShopScreen(safe, GameSession.Progress, ShopCatalog.FromRepository(GameSession.Repo), art, host);
+            shop.Build(ShopScreen.TabPowerups, ShopScreen.GemsSection);
+            Button back = ToyKit.GlyphButton(safe, "Back", "Back to pause", 2, Glyphs.Left, new Vector2(150f, 150f), CloseShop);
+            UiKit.Place((RectTransform)back.transform, new Vector2(0f, 1f), new Vector2(20f, -20f), new Vector2(150f, 150f));
+            GameSession.Progress.Changed += RefreshShopWallet;
+        }
+
+        void RefreshShopWallet()
+        {
+            if (shop == null || GameSession.Progress == null) return;
+            UiKit.SetText(shop.CoinText, GameSession.Progress.Coins.ToString());
+            UiKit.SetText(shop.GemText, GameSession.Progress.Gems.ToString());
+        }
+
+        void ClosePopupInShop()
+        {
+            if (shopPopup != null) Destroy(shopPopup.gameObject);
+            shopPopup = null;
+        }
+
+        void CloseShop()
+        {
+            if (GameSession.Progress != null) GameSession.Progress.Changed -= RefreshShopWallet;
+            ClosePopupInShop();
+            if (shopRoot != null) Destroy(shopRoot.gameObject);
+            shopRoot = null;
+            shop = null;
+            if (overlay != null) overlay.gameObject.SetActive(true);
         }
 
         public void ShowFailed(RunSession s, bool canAffordRevive)

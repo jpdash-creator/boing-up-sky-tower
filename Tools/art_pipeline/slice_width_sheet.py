@@ -73,12 +73,49 @@ def repeat(a, add):
     return a
 
 
+def split_merged(crop):
+    """The generator sometimes lets a prop (palm top) touch the platform above, so two platforms come out as ONE crop and every baked piece shows two
+    stacked platforms (owner issue 15, Sunny Beach). Rows where more than 35 percent of the width is opaque are platform bodies; when two separate runs
+    of such rows exist, the crop is cut at the emptiest row between them."""
+    a = crop[:, :, 3] > 200
+    w = a.shape[1]
+    cnt = a.sum(axis=1)
+    thick = cnt > 0.35 * w
+    runs, start = [], None
+    for y, t in enumerate(thick):
+        if t and start is None:
+            start = y
+        if not t and start is not None:
+            if y - start >= 20: runs.append((start, y))
+            start = None
+    if start is not None and len(thick) - start >= 20: runs.append((start, len(thick)))
+    if len(runs) < 2:
+        return [crop]
+    parts, top = [], 0
+    for k in range(len(runs) - 1):
+        lo, hi = runs[k][1], runs[k + 1][0]
+        cut = lo + int(np.argmin(cnt[lo:hi])) if hi > lo else lo
+        parts.append(crop[top:cut])
+        top = cut
+    parts.append(crop[top:])
+    out = []
+    for part in parts:
+        ys, xs = np.nonzero(part[:, :, 3] > 24)
+        if len(ys): out.append(part[ys.min():ys.max() + 1, xs.min():xs.max() + 1].copy())
+    return out
+
+
 def main():
     args = [x for x in sys.argv[1:]]
     ppu = 334.0
     if "--ppu" in args:
         i = args.index("--ppu")
         ppu = float(args[i + 1])
+        del args[i:i + 2]
+    merge = None
+    if "--merge" in args:
+        i = args.index("--merge")
+        merge = int(args[i + 1])
         del args[i:i + 2]
     sheet, region = args[0], int(args[1])
     widths = [float(x) for x in args[2:]]
@@ -88,12 +125,21 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     os.makedirs(rawdir, exist_ok=True)
     for f in glob.glob(os.path.join(outdir, "*.png")) + glob.glob(os.path.join(outdir, "*.json")) + glob.glob(os.path.join(rawdir, "*.png")):
-        os.remove(f)
+        try:
+            os.remove(f)
+        except PermissionError:
+            pass   # a viewer may hold the file; it is overwritten below
 
     rgb = np.asarray(Image.open(sheet).convert("RGB"))
     rgba, bg = pa.key_image(rgb, False)
-    found = [f for f in pa.split_sheet(rgba, None) if f[0][2] > 100]
+    found = [f for f in pa.split_sheet(rgba, merge) if f[0][2] > 100]
     found.sort(key=lambda f: f[0][1])
+    expanded = []
+    for bbox, crop in found:
+        for part in split_merged(crop):
+            expanded.append((bbox, part))
+    found = expanded
+    print("rows found:", len(found), "(each must be ONE platform; if two platforms merged, rerun with --merge <smaller gap>)")
     rows = []
     for n, (bbox, crop) in enumerate(found, start=1):
         path = os.path.join(rawdir, "row%d.png" % n)

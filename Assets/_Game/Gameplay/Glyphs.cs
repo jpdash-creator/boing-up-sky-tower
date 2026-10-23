@@ -10,16 +10,20 @@ namespace BoingUpSkyTower.Gameplay
     public static class Glyphs
     {
         const int N = 256;
-        static Sprite left, up, pause, cross, check, restart;
+        static Sprite left, up, pause, cross, check, restart, ring, infinity;
 
-        public static Sprite Left { get { return left != null ? left : (left = Build(ChevronShape(-1f, 0f))); } }
-        public static Sprite Up { get { return up != null ? up : (up = Build(ChevronShape(0f, 1f))); } }
-        public static Sprite Pause { get { return pause != null ? pause : (pause = Build(BarsShape())); } }
-        public static Sprite Cross { get { return cross != null ? cross : (cross = Build(CrossShape())); } }
-        public static Sprite Restart { get { return restart != null ? restart : (restart = Build(RestartShape())); } }
-        public static Sprite Check { get { return check != null ? check : (check = Build(TickShape())); } }
+        public static Sprite Left { get { return left != null ? left : (left = Build(ChevronShape(-1f, 0f), "glyph_left")); } }
+        public static Sprite Up { get { return up != null ? up : (up = Build(ChevronShape(0f, 1f), "glyph_up")); } }
+        public static Sprite Pause { get { return pause != null ? pause : (pause = Build(BarsShape(), "glyph_pause")); } }
+        public static Sprite Cross { get { return cross != null ? cross : (cross = Build(CrossShape(), "glyph_cross")); } }
+        public static Sprite Restart { get { return restart != null ? restart : (restart = Build(RestartShape(), "glyph_restart")); } }
+        /// <summary>A plain circle outline (the power-up timer ring, drawn with a radial fill).</summary>
+        public static Sprite Ring { get { return ring != null ? ring : (ring = Build(RingShape(), "glyph_ring")); } }
+        /// <summary>The endless-mode symbol: a sideways figure eight.</summary>
+        public static Sprite Infinity { get { return infinity != null ? infinity : (infinity = Build(InfinityShape(), "glyph_infinity")); } }
+        public static Sprite Check { get { return check != null ? check : (check = Build(TickShape(), "glyph_check")); } }
 
-        public static void Warmup() { Sprite a = Left, b = Up, c = Pause, d = Cross, e = Check, f = Restart; }
+        public static void Warmup() { Sprite a = Left, b = Up, c = Pause, d = Cross, e = Check, f = Restart, g = Ring, h = Infinity; }
 
         /// <summary>A shape = distance to the nearest stroke segment, minus the stroke radius (negative inside).</summary>
         delegate float Sdf(float x, float y);
@@ -81,12 +85,37 @@ namespace BoingUpSkyTower.Gameplay
             };
         }
 
+        static Sdf RingShape()
+        {
+            return (x, y) => Mathf.Abs(Mathf.Sqrt((x - 0.5f) * (x - 0.5f) + (y - 0.5f) * (y - 0.5f)) - 0.4f) - 0.04f;
+        }
+
+        static Sdf InfinityShape()
+        {
+            const int steps = 48;
+            var px = new float[steps + 1];
+            var py = new float[steps + 1];
+            for (int i = 0; i <= steps; i++)
+            {
+                float t = i * 2f * Mathf.PI / steps;
+                float d = 1f + Mathf.Sin(t) * Mathf.Sin(t);
+                px[i] = 0.5f + 0.34f * Mathf.Cos(t) / d * 1.0f;
+                py[i] = 0.5f + 0.34f * Mathf.Sin(t) * Mathf.Cos(t) / d * 1.5f;
+            }
+            return (x, y) =>
+            {
+                float dmin = 1f;
+                for (int i = 0; i < steps; i++) dmin = Mathf.Min(dmin, Seg(x, y, px[i], py[i], px[i + 1], py[i + 1]));
+                return dmin - 0.075f;
+            };
+        }
+
         static Sdf TickShape()
         {
             return (x, y) => Mathf.Min(Seg(x, y, 0.24f, 0.5f, 0.42f, 0.3f), Seg(x, y, 0.42f, 0.3f, 0.78f, 0.7f)) - 0.1f;
         }
 
-        static Sprite Build(Sdf shape)
+        static Sprite Build(Sdf shape, string name)
         {
             const float outline = 0.055f;      // navy rim width
             var px = new Color32[N * N];
@@ -117,7 +146,9 @@ namespace BoingUpSkyTower.Gameplay
             var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
             tex.SetPixels32(px);
             tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), 100f);
+            Sprite sp = Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), 100f);
+            sp.name = name;
+            return sp;
         }
     }
 }

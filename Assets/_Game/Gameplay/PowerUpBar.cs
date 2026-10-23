@@ -15,7 +15,7 @@ namespace BoingUpSkyTower.Gameplay
     public sealed class PowerUpBar
     {
         public const float ButtonSize = 168f;
-        public const float Gap = 24f;
+        public const float Gap = 40f;
         /// <summary>Distance of the lowest button above the bottom of the safe area: just above the jump button (40 + 20 + 280) plus a gap.</summary>
         public const float BottomOffset = 364f;
 
@@ -25,7 +25,7 @@ namespace BoingUpSkyTower.Gameplay
             public Button Button;
             public Image Background;
             public Text Code, Count;
-            public RectTransform Fill;
+            public Image Ring;
             public A11yLabel Label;
             public int LastUnits = -1, LastSecs = -1, LastState = -1, LastFill = -1;
         }
@@ -80,25 +80,36 @@ namespace BoingUpSkyTower.Gameplay
                     Image pill = UiKit.AddImage(rt, "CountBacking", Theme.RoundSprite, new Color(Theme.Ink.r, Theme.Ink.g, Theme.Ink.b, 0.86f));
                     pill.type = Image.Type.Sliced;
                     pill.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / 28f);
-                    UiKit.Place(pill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(ButtonSize * 0.62f, 56f));
+                    UiKit.Place(pill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(ButtonSize * 0.62f, 56f));
                     s.Count.transform.SetParent(pill.transform, false);
                     s.Count.color = Color.white;
                     UiKit.Stretch((RectTransform)s.Count.transform);
                 }
 
-                Image track = UiKit.AddImage(rt, "Track", null, new Color(0.09f, 0.11f, 0.24f, 0.28f));
-                UiKit.Place(track.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(ButtonSize - 40f, 14f));
-                Image fill = UiKit.AddImage(track.transform, "Fill", null, Theme.Ink);
-                s.Fill = fill.rectTransform;
-                s.Fill.anchorMin = Vector2.zero;
-                s.Fill.anchorMax = Vector2.one;
-                s.Fill.offsetMin = Vector2.zero;
-                s.Fill.offsetMax = Vector2.zero;
+                // The timer is a ring AROUND the button (nothing covers the icon): a dim full ring behind, and a radial fill that drains clockwise.
+                Image ringBack = UiKit.AddImage(rt, "RingBack", Glyphs.Ring, new Color(0.09f, 0.11f, 0.24f, 0.45f));
+                RingStretch(ringBack.rectTransform);
+                Image ring = UiKit.AddImage(rt, "Ring", Glyphs.Ring, Color.white);
+                RingStretch(ring.rectTransform);
+                ring.type = Image.Type.Filled;
+                ring.fillMethod = Image.FillMethod.Radial360;
+                ring.fillOrigin = (int)Image.Origin360.Top;
+                ring.fillClockwise = true;
+                ring.fillAmount = 1f;
+                s.Ring = ring;
 
                 slots[i] = s;
                 visible++;
             }
             ButtonCount = visible;
+        }
+
+        static void RingStretch(RectTransform rt)
+        {
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(-12f, -12f);
+            rt.offsetMax = new Vector2(12f, 12f);
         }
 
         /// <summary>Updates the buttons from the simulation state. Call once per frame.</summary>
@@ -131,7 +142,7 @@ namespace BoingUpSkyTower.Gameplay
                 // the bar drains with the remaining time (a full bar while ready, empty when used up)
                 float frac = state == Active ? (total > 0 ? Mathf.Clamp01(ticks / (float)total) : 1f) : (state == Ready ? 1f : 0f);
                 int fill64 = Mathf.RoundToInt(frac * 64f);
-                if (fill64 != s.LastFill) { s.LastFill = fill64; s.Fill.anchorMax = new Vector2(fill64 / 64f, 1f); }
+                if (fill64 != s.LastFill) { s.LastFill = fill64; s.Ring.fillAmount = fill64 / 64f; s.Ring.color = state == Active ? new Color(1f, 0.84f, 0.2f, 1f) : new Color(0.55f, 0.95f, 0.65f, 1f); }
             }
         }
 

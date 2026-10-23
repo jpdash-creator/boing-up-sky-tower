@@ -105,7 +105,7 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         sealed class LevelGridFit : MonoBehaviour
         {
-            public RectTransform Title;
+            public RectTransform Title, TitleExtra;
             public RectTransform[] Nodes;
             public int[] Cols, Rows;
             public bool[] Current;
@@ -132,8 +132,14 @@ namespace BoingUpSkyTower.Gameplay
                     Title.anchorMin = new Vector2(0f, 0f);
                     Title.anchorMax = new Vector2(1f, 0f);
                     Title.pivot = new Vector2(0.5f, 0.5f);
-                    Title.sizeDelta = new Vector2(-48f, titleH);
-                    Title.anchoredPosition = new Vector2(0f, h - g - titleH * 0.5f);
+                    Title.sizeDelta = new Vector2(TitleExtra != null ? -48f - 180f : -48f, titleH);
+                    Title.anchoredPosition = new Vector2(TitleExtra != null ? -90f : 0f, h - g - titleH * 0.5f);
+                    if (TitleExtra != null)
+                    {
+                        TitleExtra.anchorMin = TitleExtra.anchorMax = new Vector2(1f, 0f);
+                        TitleExtra.pivot = new Vector2(1f, 0.5f);
+                        TitleExtra.anchoredPosition = new Vector2(-24f, h - g - titleH * 0.5f);
+                    }
                 }
                 for (int i = 0; i < Nodes.Length; i++)
                 {
@@ -246,23 +252,48 @@ namespace BoingUpSkyTower.Gameplay
 
         Text levelsText, regionStarsText;
 
-        /// <summary>Wallet for the level select: column 1 coins, gems and total stars; column 2 levels completed and stars of this region.</summary>
+        /// <summary>
+        /// Currency pills (coins, gems, total stars) in one row to the right of the back button (owner issue 15.4: nothing leaves its pill). Used by
+        /// the world map and the level screen.
+        /// </summary>
+        void AddPillRow()
+        {
+            RectTransform row = UiKit.Rect(screen, "CurrencyBar");
+            row.anchorMin = new Vector2(0f, 1f);
+            row.anchorMax = new Vector2(1f, 1f);
+            row.pivot = new Vector2(0.5f, 1f);
+            row.offsetMin = new Vector2(190f, -128f);
+            row.offsetMax = new Vector2(-16f, -16f);
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.spacing = 10f;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+            coinText = ToyKit.WalletPillFlex(row, "CoinsPill", art != null ? art.CoinIcon : null, Color.white, 112f);
+            gemText = ToyKit.WalletPillFlex(row, "GemsPill", art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 112f);
+            starText = ToyKit.WalletPillFlex(row, "StarsPill", art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 112f);
+            RefreshWallet();
+        }
+
+        /// <summary>Level screen header: the three currency pills, then two region progress pills (levels cleared and stars of this region).</summary>
         void AddLevelsWallet(RegionDef region)
         {
-            const float rowH = 84f, col1 = 270f, col2 = 280f;
-            Image panel = Theme.GlassPanel(screen, "WalletPanel");
-            UiKit.Place(panel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(col1 + col2, rowH * 3f + 30f));
-            coinText = WalletRow(panel.transform, 0, art != null ? art.CoinIcon : null, Color.white, 0, 150f, 0f, col1);
-            gemText = WalletRow(panel.transform, 1, art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 0, 150f, 0f, col1);
-            starText = WalletRow(panel.transform, 2, art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 0, 150f, 0f, col1);
+            AddPillRow();
+            RectTransform row = UiKit.Rect(screen, "RegionBar");
+            row.anchorMin = new Vector2(0f, 1f);
+            row.anchorMax = new Vector2(1f, 1f);
+            row.pivot = new Vector2(0.5f, 1f);
+            row.offsetMin = new Vector2(190f, -236f);
+            row.offsetMax = new Vector2(-16f, -140f);
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.spacing = 10f;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = true;
             int cleared = 0;
             foreach (string id in region.Levels) if (progress.IsLevelCleared(id)) cleared++;
-            Sprite levelIcon = art != null ? ArtCatalog.Pick(art.LevelNodes, 0) : null;
-            levelsText = WalletRow(panel.transform, 0, levelIcon, Color.white, 1, 170f, col1, col2, 36, 14f);
-            regionStarsText = WalletRow(panel.transform, 1, art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 1, 170f, col1, col2, 36, 14f);
+            levelsText = ToyKit.WalletPillFlex(row, "LevelsPill", ToyKit.Get("icon_flag"), Color.white, 96f);
+            regionStarsText = ToyKit.WalletPillFlex(row, "RegionStarsPill", art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 96f);
             UiKit.SetText(levelsText, cleared + "/" + region.Levels.Count);
             UiKit.SetText(regionStarsText, progress.StarsInRegion(region) + "/" + region.Levels.Count * 3);
-            RefreshWallet();
         }
 
         void RefreshWallet()
@@ -474,10 +505,9 @@ namespace BoingUpSkyTower.Gameplay
             bar.rectTransform.pivot = new Vector2(0.5f, 1f);
             bar.rectTransform.offsetMin = new Vector2(0f, -MapTopBar);
             bar.rectTransform.offsetMax = Vector2.zero;
-            AddWallet(0.50f);
+            AddPillRow();
             AddBack("Menu", ShowMenu);
-            Text hdr = UiKit.AddText(screen, "Header", "World map", 64, Color.white, TextAnchor.MiddleLeft);
-            BesideWallet((RectTransform)hdr.transform, -30f, 130f);
+            AddTabBar(ToyKit.TabPlay);
 
             CenterMap(currentRise);
             StartCoroutine(CenterMapAgain(currentRise));
@@ -596,10 +626,12 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform grid = UiKit.Rect(screen, "LevelGrid");
             UiKit.Stretch(grid);
             grid.offsetMax = new Vector2(0f, -(MapTopBar - 20f));
-            grid.offsetMin = new Vector2(0f, EndlessBarHeight);   // the Endless button sits under the grid, never over a circle or its stars
+            grid.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);   // the icon tab bar sits under the grid, never over a circle or its stars
             var fit = grid.gameObject.AddComponent<LevelGridFit>();
             Text hdr = UiKit.AddText(grid, "Header", region.Name, 76, Color.white, TextAnchor.MiddleCenter, true);
             fit.Title = (RectTransform)hdr.transform;
+            Button endlessIcon = ToyKit.IconButton(grid, "Endless", "Endless mode", 1, Glyphs.Infinity, new Vector2(136f, 136f), () => OnEndlessTapped(region), 0.72f);
+            fit.TitleExtra = (RectTransform)endlessIcon.transform;
             fit.Nodes = new RectTransform[levels.Count];
             fit.Cols = new int[levels.Count];
             fit.Rows = new int[levels.Count];
@@ -615,11 +647,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             fit.Apply();
 
-            // Endless mode (owner decision 2026-10-20): one pill under the circles, bottom centre (thumb reach), 720 x 130 px = well over 48 dp.
-            int bestFloor = progress.EndlessBestFloor(region.Id);
-            string endlessLabel = bestFloor > 0 ? "Endless  best " + bestFloor : "Endless";
-            Button endlessBtn = UiKit.AddButton(screen, "Endless", endlessLabel, Btn(1), new Color(0.85f, 1f, 0.9f), new Vector2(720f, 130f), () => OnEndlessTapped(region), 46);
-            UiKit.Place((RectTransform)endlessBtn.transform, new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(720f, 130f));
+            AddTabBar(ToyKit.TabPlay);
         }
 
         /// <summary>Endless start popup (docs/15 FR-PWR-2): best floor, the power-up loadout picker and START. The loadout is optional.</summary>
@@ -886,31 +914,9 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(0f, -240f), new Vector2(740f, 520f));
         }
 
-        /// <summary>
-        /// Popup action. Simple words become round icon buttons (owner issue 14): PLAY and START a green play icon, OK and Confirm a green tick, Close and
-        /// Cancel a yellow cross. Anything with a price or a longer sentence stays a wide kit button so the amount is readable.
-        /// </summary>
         Button PopupButton(string label, Sprite sprite, Color tint, float y, Action action)
         {
-            Transform panel = popup.Find("Panel");
-            Sprite icon = null;
-            int role = 1;
-            float size = 170f;
-            switch (label)
-            {
-                case "PLAY": case "START": icon = ToyKit.Get("icon_play"); size = 150f; break;
-                case "OK": case "Confirm": icon = Glyphs.Check; size = 130f; break;
-                case "Close": case "Cancel": icon = Glyphs.Cross; role = 3; size = 130f; break;
-            }
-            if (icon != null)
-            {
-                Button ib = ToyKit.IconButton(panel, label, label, role, icon, new Vector2(size, size), action, label == "PLAY" || label == "START" ? 0.6f : 0.56f);
-                UiKit.Place((RectTransform)ib.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(size, size));
-                return ib;
-            }
-            Button b = UiKit.AddButton(panel, label, label, sprite, tint, new Vector2(560f, 130f), action, 46);
-            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(560f, 130f));
-            return b;
+            return ToyKit.PopupAction(popup.Find("Panel"), label, sprite, tint, y, action);
         }
 
         void ShowMessage(string title, string body)

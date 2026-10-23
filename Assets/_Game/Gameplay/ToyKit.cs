@@ -34,7 +34,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (s == null) return false;
             string n = s.name;
-            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo" || n == "shop_scene" || n.StartsWith("plate_");
+            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo" || n == "shop_scene" || n.StartsWith("plate_") || n.StartsWith("glyph_");
         }
 
         /// <summary>Button art by role: 0 secondary (yellow), 1 main action (green), 2 back (blue), 3 danger (red).</summary>
@@ -196,6 +196,32 @@ namespace BoingUpSkyTower.Gameplay
                 if (it.Badge) AddBadge(b.transform);
             }
             return bar;
+        }
+
+        /// <summary>
+        /// A popup action. Simple words become round icon buttons (owner issue 14): PLAY and START a green play icon, OK and Confirm a green tick,
+        /// Close and Cancel a red cross. Anything with a price or a longer sentence stays a wide kit button so the amount is readable.
+        /// </summary>
+        public static Button PopupAction(Transform panel, string label, Sprite sprite, Color tint, float y, Action action)
+        {
+            Sprite icon = null;
+            int role = 1;
+            float size = 170f;
+            switch (label)
+            {
+                case "PLAY": case "START": icon = Get("icon_play"); size = 150f; break;
+                case "OK": case "Confirm": icon = Glyphs.Check; size = 130f; break;
+                case "Close": case "Cancel": icon = Glyphs.Cross; role = 3; size = 130f; break;
+            }
+            if (icon != null)
+            {
+                Button ib = IconButton(panel, label, label, role, icon, new Vector2(size, size), action, label == "PLAY" || label == "START" ? 0.6f : 0.56f);
+                UiKit.Place((RectTransform)ib.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(size, size));
+                return ib;
+            }
+            Button b = UiKit.AddButton(panel, label, label, sprite, tint, new Vector2(560f, 130f), action, 46);
+            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(560f, 130f));
+            return b;
         }
 
         /// <summary>A small red notification badge in the top-right corner of a button.</summary>

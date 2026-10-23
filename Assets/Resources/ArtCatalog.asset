@@ -528,12 +528,12 @@ MonoBehaviour:
       BodyRight: 511
       SurfaceY: 67
       BodyBottom: 156
-    - W: 693
-      H: 316
-      BodyLeft: 20
-      BodyRight: 682
-      SurfaceY: 192
-      BodyBottom: 299
+    - W: 670
+      H: 140
+      BodyLeft: 1
+      BodyRight: 669
+      SurfaceY: 43
+      BodyBottom: 126
     - W: 1022
       H: 208
       BodyLeft: 11
@@ -558,36 +558,36 @@ MonoBehaviour:
       BodyRight: 439
       SurfaceY: 32
       BodyBottom: 109
-    - W: 885
-      H: 576
-      BodyLeft: 116
-      BodyRight: 778
-      SurfaceY: 192
-      BodyBottom: 299
+    - W: 862
+      H: 400
+      BodyLeft: 97
+      BodyRight: 765
+      SurfaceY: 43
+      BodyBottom: 126
     - W: 545
       H: 386
       BodyLeft: 106
       BodyRight: 439
       SurfaceY: 32
       BodyBottom: 109
-    - W: 885
-      H: 576
-      BodyLeft: 116
-      BodyRight: 778
-      SurfaceY: 192
-      BodyBottom: 299
+    - W: 862
+      H: 400
+      BodyLeft: 97
+      BodyRight: 765
+      SurfaceY: 43
+      BodyBottom: 126
     - W: 545
       H: 386
       BodyLeft: 106
       BodyRight: 439
       SurfaceY: 32
       BodyBottom: 109
-    - W: 885
-      H: 576
-      BodyLeft: 116
-      BodyRight: 778
-      SurfaceY: 192
-      BodyBottom: 299
+    - W: 862
+      H: 400
+      BodyLeft: 97
+      BodyRight: 765
+      SurfaceY: 43
+      BodyBottom: 126
     WidthUnits:
     - 1.5
     - 2
