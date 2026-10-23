@@ -34,7 +34,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (s == null) return false;
             string n = s.name;
-            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo" || n == "shop_scene" || n.StartsWith("plate_") || n.StartsWith("glyph_");
+            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo" || n == "shop_scene" || n.StartsWith("plate_") || n.StartsWith("glyph_") || n.StartsWith("pw_");
         }
 
         /// <summary>Button art by role: 0 secondary (yellow), 1 main action (green), 2 back (blue), 3 danger (red).</summary>
@@ -202,7 +202,7 @@ namespace BoingUpSkyTower.Gameplay
         /// A popup action. Simple words become round icon buttons (owner issue 14): PLAY and START a green play icon, OK and Confirm a green tick,
         /// Close and Cancel a red cross. Anything with a price or a longer sentence stays a wide kit button so the amount is readable.
         /// </summary>
-        public static Button PopupAction(Transform panel, string label, Sprite sprite, Color tint, float y, Action action)
+        public static Button PopupAction(Transform panel, string label, Sprite sprite, Color tint, float y, Action action, float x = 0f)
         {
             Sprite icon = null;
             int role = 1;
@@ -216,11 +216,11 @@ namespace BoingUpSkyTower.Gameplay
             if (icon != null)
             {
                 Button ib = IconButton(panel, label, label, role, icon, new Vector2(size, size), action, label == "PLAY" || label == "START" ? 0.6f : 0.56f);
-                UiKit.Place((RectTransform)ib.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(size, size));
+                UiKit.Place((RectTransform)ib.transform, new Vector2(0.5f, 0f), new Vector2(x, y), new Vector2(size, size));
                 return ib;
             }
             Button b = UiKit.AddButton(panel, label, label, sprite, tint, new Vector2(560f, 130f), action, 46);
-            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(560f, 130f));
+            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(x, y), new Vector2(560f, 130f));
             return b;
         }
 
@@ -264,6 +264,48 @@ namespace BoingUpSkyTower.Gameplay
             trt.anchorMax = new Vector2(1f, 1f);
             trt.offsetMin = new Vector2(size.y * 1.1f, 0f);
             trt.offsetMax = new Vector2(-size.y * 0.35f, 0f);
+            return t;
+        }
+
+        /// <summary>A centred row of icon pills on a popup, <paramref name="y"/> below the top edge of <paramref name="panel"/>.</summary>
+        public static RectTransform PillRow(Transform panel, string name, float y, float height)
+        {
+            RectTransform row = UiKit.Rect(panel, name);
+            row.anchorMin = new Vector2(0f, 1f);
+            row.anchorMax = new Vector2(1f, 1f);
+            row.pivot = new Vector2(0.5f, 1f);
+            row.anchoredPosition = new Vector2(0f, -y);
+            row.sizeDelta = new Vector2(-48f, height);
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.spacing = 14f;
+            hl.childAlignment = TextAnchor.MiddleCenter;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = false;
+            return row;
+        }
+
+        /// <summary>A dark pill with a painted icon and a bold number (result and goal details instead of sentences). Returns the value text.</summary>
+        public static Text InfoPill(RectTransform row, Sprite icon, string text, Color color, float width, float height)
+        {
+            Image pill = Theme.GlassPanel(row, "Pill", height * 0.25f);
+            var le = pill.gameObject.AddComponent<LayoutElement>();
+            le.preferredWidth = width;
+            le.minWidth = width;
+            le.preferredHeight = height;
+            le.flexibleWidth = 0f;
+            Image ic = UiKit.AddImage(pill.transform, "Icon", icon, Color.white);
+            var irt = ic.rectTransform;
+            irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
+            irt.pivot = new Vector2(0f, 0.5f);
+            irt.anchoredPosition = new Vector2(height * 0.18f, 0f);
+            irt.sizeDelta = new Vector2(height * 0.74f, height * 0.74f);
+            Text t = UiKit.AddText(pill.transform, "Value", text, 50, color, TextAnchor.MiddleCenter, true);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var trt = (RectTransform)t.transform;
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = new Vector2(height * 0.95f, 0f);
+            trt.offsetMax = new Vector2(-height * 0.18f, 0f);
             return t;
         }
 

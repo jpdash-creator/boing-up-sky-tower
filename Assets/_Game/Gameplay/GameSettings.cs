@@ -31,7 +31,7 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         public static bool LaunchPromo
         {
-            get { return PlayerPrefs.GetInt(PromoKey, 1) == 1; }
+            get { return PlayerPrefs.GetInt(PromoKey, 0) == 1; }   // off for now (owner issue 16.2)
             set { PlayerPrefs.SetInt(PromoKey, value ? 1 : 0); PlayerPrefs.Save(); }
         }
 

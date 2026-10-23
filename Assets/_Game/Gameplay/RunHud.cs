@@ -427,42 +427,64 @@ namespace BoingUpSkyTower.Gameplay
             if (overlay != null) overlay.gameObject.SetActive(true);
         }
 
+        /// <summary>A thin progress bar (dark track, green fill) at <paramref name="y"/> below the top of the panel; <paramref name="fraction"/> 0..1.</summary>
+        void ProgressBar(Transform panel, float y, float fraction)
+        {
+            Image track = Theme.GlassPanel(panel, "Progress", 20f);
+            track.rectTransform.anchorMin = new Vector2(0f, 1f);
+            track.rectTransform.anchorMax = new Vector2(1f, 1f);
+            track.rectTransform.pivot = new Vector2(0.5f, 1f);
+            track.rectTransform.anchoredPosition = new Vector2(0f, -y);
+            track.rectTransform.sizeDelta = new Vector2(-140f, 50f);
+            Image fill = ToyKit.Sliced(track.transform, "Fill", ToyKit.Button(1), 18f);
+            fill.rectTransform.anchorMin = new Vector2(0f, 0f);
+            fill.rectTransform.anchorMax = new Vector2(Mathf.Max(0.07f, Mathf.Clamp01(fraction)), 1f);
+            fill.rectTransform.offsetMin = new Vector2(5f, 5f);
+            fill.rectTransform.offsetMax = new Vector2(-5f, -5f);
+        }
+
         public void ShowFailed(RunSession s, bool canAffordRevive)
         {
-            OpenOverlay("You fell!", 760f);
+            OpenOverlay("You fell!", 800f);
             AudioManager.Play(Sfx.Fail);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
-            Text sub = UiKit.AddText(PanelOf(), "Sub", s.State.Row + " / " + s.Spec.TargetRow(), 72, Theme.Ink, TextAnchor.MiddleCenter, true);
-            UiKit.OnPanel(sub);
-            UiKit.Place((RectTransform)sub.transform, new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(760f, 100f));
+            Transform panel = PanelOf();
+            // How far you got: tower = the floor reached, flag = the goal, and a bar between the ground and the flag.
+            int target = Mathf.Max(1, s.Spec.TargetRow());
+            RectTransform row = ToyKit.PillRow(panel, "Result", 215f, 104f);
+            ToyKit.InfoPill(row, ToyKit.Get("icon_tower"), s.State.Row.ToString(), Color.white, 270f, 104f);
+            ToyKit.InfoPill(row, ToyKit.Get("icon_flag"), target.ToString(), new Color(1f, 0.95f, 0.6f), 270f, 104f);
+            ProgressBar(panel, 345f, s.State.Row / (float)target);
+            // Four equal round buttons (owner issue 16.1): retry, revive, shop and home.
             OverlayRow(
-                MakeAct("Retry", "Try again", 1, Glyphs.Restart, 200f, () => { if (OnRetry != null) OnRetry(); }),
+                MakeAct("Retry", "Try again", 1, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
                 MakeAct("Revive " + s.NextReviveCost, "Revive for " + s.NextReviveCost + " gems", 0, ToyKit.Get("icon_gem"), 150f, () => { if (OnRevive != null) OnRevive(); }, canAffordRevive),
+                MakeAct("Shop", "Shop", 0, ToyKit.Get("icon_shop"), 150f, OpenShop),
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
         }
 
         /// <summary>Endless game over: floor, best (or NEW BEST), score and coins paid; no revive in endless. Try again starts a new tower.</summary>
         public void ShowEndlessFailed(RunSession s, EndlessReward r)
         {
-            OpenOverlay("You fell!", 960f);
+            OpenOverlay("You fell!", 900f);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
-            Text sub = UiKit.AddText(PanelOf(), "Sub", "Floor " + r.Floors, 64, Color.white);
-            UiKit.OnPanel(sub);
-            UiKit.Place((RectTransform)sub.transform, new Vector2(0.5f, 1f), new Vector2(0f, -215f), new Vector2(760f, 100f));
-            string best = r.NewBest ? "NEW BEST!" : "Best " + r.BestBefore;
-            string coins = "Coins +" + r.Coins;
-            if (r.OverCap) coins += "  (daily limit: half rate)";
-            Text info = UiKit.AddText(PanelOf(), "Info", best + "\nScore " + s.State.Score + "\n" + coins, 42, Color.white);
-            UiKit.OnPanel(info);
-            UiKit.Place((RectTransform)info.transform, new Vector2(0.5f, 1f), new Vector2(0f, -335f), new Vector2(780f, 280f));
+            Transform panel = PanelOf();
+            RectTransform row1 = ToyKit.PillRow(panel, "Result", 215f, 104f);
+            ToyKit.InfoPill(row1, ToyKit.Get("icon_tower"), r.Floors.ToString(), Color.white, 270f, 104f);
+            ToyKit.InfoPill(row1, ToyKit.Get("icon_crown"), (r.NewBest ? r.Floors : r.BestBefore).ToString(), new Color(1f, 0.9f, 0.4f), 270f, 104f);
+            RectTransform row2 = ToyKit.PillRow(panel, "Result2", 335f, 104f);
+            ToyKit.InfoPill(row2, art != null ? art.StarFilled : null, s.State.Score.ToString(), Color.white, 270f, 104f);
+            ToyKit.InfoPill(row2, art != null ? art.CoinIcon : null, "+" + r.Coins, new Color(1f, 0.92f, 0.5f), 270f, 104f);
+            if (r.NewBest) ToyKit.Ribbon(panel, "New best!", new Vector2(0.5f, 1f), new Vector2(0f, -450f), new Vector2(520f, 184f));
             OverlayRow(
-                MakeAct("Retry", "Try again", 1, Glyphs.Restart, 200f, () => { if (OnRetry != null) OnRetry(); }),
+                MakeAct("Retry", "Try again", 1, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
+                MakeAct("Shop", "Shop", 0, ToyKit.Get("icon_shop"), 150f, OpenShop),
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
         }
 
         public void ShowResults(RunSession s, RewardResult reward, bool hasNext)
         {
-            OpenOverlay("Level clear!", 1060f);
+            OpenOverlay("Level clear!", 980f);
             AudioManager.Play(Sfx.Win);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -474,14 +496,17 @@ namespace BoingUpSkyTower.Gameplay
                 UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 200f, -190f), new Vector2(180f, 180f));
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
-            string line = "Coins +" + reward.TotalCoins + "     Gems +" + reward.TotalGems + "\nBest combo x" + s.State.BestCombo;
-            if (reward.FirstClear) line += "\nFirst clear!";
-            if (!string.IsNullOrEmpty(reward.UnlockedRegionId)) line += "\nNew region unlocked!";
-            Text info = UiKit.AddText(panel, "Info", line, 42, Color.white);
-            UiKit.OnPanel(info);
-            UiKit.Place((RectTransform)info.transform, new Vector2(0.5f, 1f), new Vector2(0f, -400f), new Vector2(780f, 210f));
+            // What you earned, as icon pills (no sentences): coins and gems, then the best combo.
+            RectTransform row1 = ToyKit.PillRow(panel, "Earned", 400f, 104f);
+            ToyKit.InfoPill(row1, art != null ? art.CoinIcon : null, "+" + reward.TotalCoins, new Color(1f, 0.92f, 0.5f), 270f, 104f);
+            ToyKit.InfoPill(row1, art != null ? art.GemIcon : null, "+" + reward.TotalGems, new Color(0.75f, 0.92f, 1f), 270f, 104f);
+            RectTransform row2 = ToyKit.PillRow(panel, "Earned2", 520f, 104f);
+            ToyKit.InfoPill(row2, ToyKit.Get("icon_flame"), "x" + s.State.BestCombo, new Color(1f, 0.78f, 0.35f), 270f, 104f);
+            if (reward.FirstClear) ToyKit.InfoPill(row2, ToyKit.Get("icon_crown"), "First", new Color(1f, 0.9f, 0.4f), 270f, 104f);
+            if (!string.IsNullOrEmpty(reward.UnlockedRegionId)) ToyKit.InfoPill(row2, ToyKit.Get("icon_flag"), "New", new Color(0.7f, 1f, 0.75f), 270f, 104f);
+            // Three equal round buttons (owner issue 16.7).
             OverlayRow(
-                MakeAct("Next", "Next level", 1, ToyKit.Get("icon_play"), 200f, () => { if (OnNext != null) OnNext(); }, hasNext),
+                MakeAct("Next", "Next level", 1, ToyKit.Get("icon_play"), 150f, () => { if (OnNext != null) OnNext(); }, hasNext),
                 MakeAct("Retry", "Play again", 0, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
         }

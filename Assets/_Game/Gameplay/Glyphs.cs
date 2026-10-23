@@ -18,7 +18,7 @@ namespace BoingUpSkyTower.Gameplay
         public static Sprite Cross { get { return cross != null ? cross : (cross = Build(CrossShape(), "glyph_cross")); } }
         public static Sprite Restart { get { return restart != null ? restart : (restart = Build(RestartShape(), "glyph_restart")); } }
         /// <summary>A plain circle outline (the power-up timer ring, drawn with a radial fill).</summary>
-        public static Sprite Ring { get { return ring != null ? ring : (ring = Build(RingShape(), "glyph_ring")); } }
+        public static Sprite Ring { get { return ring != null ? ring : (ring = Build(RingShape(), "glyph_ring", 0.016f)); } }
         /// <summary>The endless-mode symbol: a sideways figure eight.</summary>
         public static Sprite Infinity { get { return infinity != null ? infinity : (infinity = Build(InfinityShape(), "glyph_infinity")); } }
         public static Sprite Check { get { return check != null ? check : (check = Build(TickShape(), "glyph_check")); } }
@@ -87,7 +87,7 @@ namespace BoingUpSkyTower.Gameplay
 
         static Sdf RingShape()
         {
-            return (x, y) => Mathf.Abs(Mathf.Sqrt((x - 0.5f) * (x - 0.5f) + (y - 0.5f) * (y - 0.5f)) - 0.4f) - 0.04f;
+            return (x, y) => Mathf.Abs(Mathf.Sqrt((x - 0.5f) * (x - 0.5f) + (y - 0.5f) * (y - 0.5f)) - 0.45f) - 0.022f;
         }
 
         static Sdf InfinityShape()
@@ -115,9 +115,9 @@ namespace BoingUpSkyTower.Gameplay
             return (x, y) => Mathf.Min(Seg(x, y, 0.24f, 0.5f, 0.42f, 0.3f), Seg(x, y, 0.42f, 0.3f, 0.78f, 0.7f)) - 0.1f;
         }
 
-        static Sprite Build(Sdf shape, string name)
+        static Sprite Build(Sdf shape, string name, float outline = 0.055f)
         {
-            const float outline = 0.055f;      // navy rim width
+            // outline = navy rim width
             var px = new Color32[N * N];
             for (int j = 0; j < N; j++)
             {

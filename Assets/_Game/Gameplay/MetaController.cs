@@ -373,17 +373,22 @@ namespace BoingUpSkyTower.Gameplay
             RefreshWallet();
         }
 
-        /// <summary>The persistent bottom tab bar (docs/16 section C). Gear, Characters and Daily are not built yet and say so.</summary>
-        void AddTabBar(int selected)
+        /// <summary>
+        /// The persistent bottom tab bar (docs/16 section C). With <paramref name="withPlay"/> false (World Map and Level screen, owner issue 16.3) the
+        /// middle PLAY button is left out. Gear, Characters and Daily are not built yet and say so.
+        /// </summary>
+        void AddTabBar(int selected, bool withPlay = true)
         {
-            ToyKit.BuildIconBar(screen, new[]
+            var items = new System.Collections.Generic.List<ToyKit.BarItem>
             {
-                new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop", Badge = progress != null && progress.LaunchPromoActive },
+                new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" },
                 new ToyKit.BarItem { Icon = "icon_gear", Caption = "Gear", A11y = "Gear" },
-                new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true },
-                new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" },
-                new ToyKit.BarItem { Icon = "icon_daily", Caption = "Daily", A11y = "Daily rewards" },
-            }, selected, OnTab);
+            };
+            if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true });
+            items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
+            items.Add(new ToyKit.BarItem { Icon = "icon_daily", Caption = "Daily", A11y = "Daily rewards" });
+            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabGear, ToyKit.TabPlay, ToyKit.TabHeroes, ToyKit.TabDaily } : new[] { ToyKit.TabShop, ToyKit.TabGear, ToyKit.TabHeroes, ToyKit.TabDaily };
+            ToyKit.BuildIconBar(screen, items.ToArray(), selected < 0 ? -1 : System.Array.IndexOf(tabOf, selected), i => OnTab(tabOf[i]));
         }
 
         void OnTab(int tab)
@@ -507,7 +512,7 @@ namespace BoingUpSkyTower.Gameplay
             bar.rectTransform.offsetMax = Vector2.zero;
             AddPillRow();
             AddBack("Menu", ShowMenu);
-            AddTabBar(ToyKit.TabPlay);
+            AddTabBar(-1, false);
 
             CenterMap(currentRise);
             StartCoroutine(CenterMapAgain(currentRise));
@@ -647,7 +652,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             fit.Apply();
 
-            AddTabBar(ToyKit.TabPlay);
+            AddTabBar(-1, false);
         }
 
         /// <summary>Endless start popup (docs/15 FR-PWR-2): best floor, the power-up loadout picker and START. The loadout is optional.</summary>
@@ -657,13 +662,22 @@ namespace BoingUpSkyTower.Gameplay
             OpenPopup("Endless", "", 1300f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
-            Text info = UiKit.AddText(panel, "Info", region.Name + "\nClimb as high as you can.\n" + (best > 0 ? "Best floor " + best : "No best floor yet"), 46, Color.white, TextAnchor.MiddleCenter);
-            UiKit.OnPanel(info);
-            UiKit.Place((RectTransform)info.transform, new Vector2(0.5f, 1f), new Vector2(0f, -195f), new Vector2(740f, 300f));
+            Image inf = UiKit.AddImage(panel, "EndlessIcon", ToyKit.Button(1), Color.white);
+            inf.type = Image.Type.Sliced;
+            inf.preserveAspect = false;
+            inf.pixelsPerUnitMultiplier = 2.6f;
+            UiKit.Place(inf.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(150f, 150f));
+            inf.rectTransform.pivot = new Vector2(0.5f, 1f);
+            ToyKit.AddGlyph(inf.transform, Glyphs.Infinity, 0.72f);
+            Text rname = UiKit.AddText(panel, "Region", region.Name, 52, Theme.Ink, TextAnchor.MiddleCenter, true);
+            DropOutline(rname);
+            UiKit.Place((RectTransform)rname.transform, new Vector2(0.5f, 1f), new Vector2(0f, -352f), new Vector2(760f, 80f));
+            RectTransform bestRow = ToyKit.PillRow(panel, "BestFloor", 425f, 96f);
+            ToyKit.InfoPill(bestRow, ToyKit.Get("icon_crown"), best > 0 ? best.ToString() : "-", new Color(1f, 0.9f, 0.4f), 300f, 96f);
             var picker = CurrentPicker = new LoadoutPicker(progress, art, OpenShopPowerUps);
-            picker.Build(popup, panel, 520f);
-            PopupButton("START", Btn(1), Color.white, 200f, () => StartEndless(region));
-            PopupButton("Close", Btn(0), Color.white, 40f, ClosePopup);
+            picker.Build(popup, panel, 570f);
+            ToyKit.PopupAction(popup.Find("Panel"), "START", Btn(1), Color.white, 60f, () => StartEndless(region), -90f);
+            ToyKit.PopupAction(popup.Find("Panel"), "Close", Btn(0), Color.white, 70f, ClosePopup, 100f);
         }
 
         /// <summary>Leaves the current popup for the shop's Power-ups tab (the loadout picker's way to buy more).</summary>
@@ -738,32 +752,42 @@ namespace BoingUpSkyTower.Gameplay
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
 
-            // Everything is centred on the panel: goal, the three stars, what pays, then the buttons.
-            Text goal = UiKit.AddText(panel, "Goal", RunSession.DescribeGoal(spec), 52, Color.white, TextAnchor.MiddleCenter, true);
-            UiKit.OnPanel(goal);
-            UiKit.Place((RectTransform)goal.transform, new Vector2(0.5f, 1f), new Vector2(0f, -170f), new Vector2(740f, 130f));
+            // Everything is centred on the panel: the goal, the three stars, then what a clear pays as icon pills (no sentences).
+            Text goal = UiKit.AddText(panel, "Goal", RunSession.DescribeGoal(spec), 46, Theme.Ink, TextAnchor.MiddleCenter, true);
+            DropOutline(goal);
+            UiKit.Place((RectTransform)goal.transform, new Vector2(0.5f, 1f), new Vector2(0f, -170f), new Vector2(760f, 110f));
             for (int i = 0; i < 3; i++)
             {
                 bool got = i < starsHave;
                 Image star = UiKit.AddImage(panel, "Star" + i, art != null ? (got ? art.StarFilled : art.StarEmpty) : null, got ? Color.white : new Color(1f, 1f, 1f, 0.55f));
-                UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 170f, -300f), new Vector2(130f, 130f));
+                UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 170f, -290f), new Vector2(130f, 130f));
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
-            string info = "Collect the 3 stars.\nPays 30 + 40 per star + 5 per combo.";
-            if (starsHave >= 3) info = "All 3 stars collected.\nReplays pay half the coins and no gems.";
-            if (p != null && p.BestScore > 0) info += "\nBest score " + p.BestScore;
-            Text t = UiKit.AddText(panel, "Info", info, 42, Color.white, TextAnchor.UpperCenter);
-            UiKit.OnPanel(t);
-            UiKit.Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(0f, -440f), new Vector2(740f, 330f));
+            RectTransform pays = ToyKit.PillRow(panel, "Pays", 440f, 96f);
+            if (starsHave >= 3)
+            {
+                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "50%", new Color(1f, 0.92f, 0.5f), 250f, 96f);   // replays pay half the coins and no gems
+            }
+            else
+            {
+                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "30", new Color(1f, 0.92f, 0.5f), 220f, 96f);
+                ToyKit.InfoPill(pays, art != null ? art.StarFilled : null, "+40", Color.white, 220f, 96f);
+                ToyKit.InfoPill(pays, ToyKit.Get("icon_flame"), "+5", new Color(1f, 0.78f, 0.35f), 220f, 96f);
+            }
+            if (p != null && p.BestScore > 0)
+            {
+                RectTransform best = ToyKit.PillRow(panel, "Best", 550f, 96f);
+                ToyKit.InfoPill(best, ToyKit.Get("icon_crown"), p.BestScore.ToString(), new Color(1f, 0.9f, 0.4f), 300f, 96f);
+            }
             CurrentPicker = new LoadoutPicker(progress, art, OpenShopPowerUps);
             CurrentPicker.Build(popup, panel, 790f);
-            PopupButton("PLAY", Btn(1), Color.white, 180f, () =>
+            ToyKit.PopupAction(popup.Find("Panel"), "PLAY", Btn(1), Color.white, 60f, () =>
             {
                 GameSession.CurrentLevelId = level.Id;
                 GameSession.EndlessMode = false;
                 SceneManager.LoadScene("Run");
-            });
-            PopupButton("Close", Btn(0), Color.white, 40f, ClosePopup);
+            }, -90f);
+            ToyKit.PopupAction(popup.Find("Panel"), "Close", Btn(0), Color.white, 70f, ClosePopup, 100f);
         }
 
         // ---------------- settings ----------------

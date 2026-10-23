@@ -118,7 +118,7 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Stretch(chooser);
             var dim = chooser.gameObject.AddComponent<Image>();
             dim.color = new Color(0f, 0f, 0f, 0.55f);
-            RectTransform cp = UiKit.BuildPopupFrame(chooser, "Slot " + (slot + 1), art, new Vector2(860f, 1180f), CloseChooser);
+            RectTransform cp = UiKit.BuildPopupFrame(chooser, "Slot " + (slot + 1), art, new Vector2(860f, 1300f), CloseChooser);
 
             string[] now = progress.GetLoadout();
             var owned = new System.Collections.Generic.List<PowerUpDef>();
@@ -129,42 +129,62 @@ namespace BoingUpSkyTower.Gameplay
                 Text none = UiKit.AddText(cp, "None", "You do not own any power-ups yet.\nBuy them in the Shop.", 46, Theme.Ink, TextAnchor.MiddleCenter);
                 UiKit.OnPanel(none);
                 UiKit.Place((RectTransform)none.transform, new Vector2(0.5f, 1f), new Vector2(0f, -240f), new Vector2(740f, 300f));
-                Button shop0 = ChooserButton(cp, "Open shop", true, new Vector2(0.5f, 0f), new Vector2(0f, 200f), new Vector2(560f, 130f), OpenShop);
-                shop0.GetComponent<A11yLabel>().Text = "Open the shop to buy power-ups";
-                ChooserButton(cp, "Close", false, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(560f, 130f), CloseChooser);
+                Button shop0 = ToyKit.IconButton(cp, "Open shop", "Open the shop to buy power-ups", 1, ToyKit.Get("icon_shop"), new Vector2(170f, 170f), OpenShop, 0.62f);
+                UiKit.Place((RectTransform)shop0.transform, new Vector2(0.5f, 0f), new Vector2(0f, 60f), new Vector2(170f, 170f));
                 return;
             }
 
-            // two columns of cards, up to 4 rows (7 power-ups)
-            const float cardW = 356f, cardH = 150f, gap = 24f;
+            // Big round power-up icons in a 3-column grid (owner issue 16.5): the count on a dark pill, the slot number when it is already used in
+            // another slot, a gold ring around the current choice and the name as a one-line caption.
+            const float cell = 210f, gapX = 36f, pitch = 300f;
             for (int i = 0; i < owned.Count; i++)
             {
                 PowerUpDef d = owned[i];
-                int col = i % 2, r = i / 2;
+                int col = i % 3, r = i / 3;
                 int where = Array.IndexOf(now, d.Id);
                 string id = d.Id;
-                Button card = UiKit.AddButton(cp, "Choose" + d.Id, "", Theme.RoundSprite, where == slot ? new Color(1f, 0.9f, 0.55f, 1f) : Theme.SurfaceDim, new Vector2(cardW, cardH), () => Choose(slot, id), 42);
-                UiKit.Place((RectTransform)card.transform, new Vector2(0.5f, 1f), new Vector2((col - 0.5f) * (cardW + gap), -(190f + r * (cardH + gap))), new Vector2(cardW, cardH));
-                card.GetComponent<A11yLabel>().Text = PowerUpUi.Spoken(d.Type, progress.PowerUpCount(id)) + (where >= 0 && where != slot ? ", in slot " + (where + 1) : (where == slot ? ", current choice" : ""));
-                Image rim = UiKit.AddImage(card.transform, "Rim", Theme.RingSprite, new Color(Theme.InkSoft.r, Theme.InkSoft.g, Theme.InkSoft.b, 0.45f));
-                rim.type = Image.Type.Sliced;
-                rim.preserveAspect = false;
-                UiKit.Stretch(rim.rectTransform);
-                Text nm = UiKit.AddText(card.transform, "Name", d.Name, 44, Theme.Ink, TextAnchor.MiddleLeft, true);
+                bool current = where == slot;
+                float cx = (col - 1) * (cell + gapX);
+                Button card = UiKit.AddButton(cp, "Choose" + d.Id, "", Theme.RoundSprite, current ? new Color(1f, 0.9f, 0.55f, 1f) : Theme.SurfaceDim, new Vector2(cell, cell), () => Choose(slot, id), 42);
+                UiKit.Place((RectTransform)card.transform, new Vector2(0.5f, 1f), new Vector2(cx, -(190f + r * pitch)), new Vector2(cell, cell));
+                card.GetComponent<A11yLabel>().Text = PowerUpUi.Spoken(d.Type, progress.PowerUpCount(id)) + (where >= 0 && !current ? ", in slot " + (where + 1) : (current ? ", current choice" : ""));
+                Image ring = UiKit.AddImage(card.transform, "Ring", Glyphs.Ring, current ? new Color(1f, 0.8f, 0.15f, 1f) : new Color(Theme.InkSoft.r, Theme.InkSoft.g, Theme.InkSoft.b, 0.5f));
+                ring.rectTransform.anchorMin = Vector2.zero;
+                ring.rectTransform.anchorMax = Vector2.one;
+                ring.rectTransform.offsetMin = new Vector2(-6f, -6f);
+                ring.rectTransform.offsetMax = new Vector2(6f, 6f);
+                Image icon = PowerUpUi.AddIcon(card.transform, "Icon", d.Type, new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), cell - 34f, false);
+                icon.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                // count pill (dark, white number), bottom centre
+                Image pill = UiKit.AddImage(card.transform, "CountBacking", Theme.RoundSprite, new Color(Theme.Ink.r, Theme.Ink.g, Theme.Ink.b, 0.9f));
+                pill.type = Image.Type.Sliced;
+                pill.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / 28f);
+                UiKit.Place(pill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(110f, 54f));
+                Text cnt = UiKit.AddText(pill.transform, "Count", "x" + progress.PowerUpCount(id), 42, Color.white, TextAnchor.MiddleCenter, true);
+                cnt.horizontalOverflow = HorizontalWrapMode.Overflow;
+                UiKit.Stretch((RectTransform)cnt.transform);
+                if (where >= 0 && !current)
+                {
+                    Image tag = UiKit.AddImage(card.transform, "SlotTag", Theme.RoundSprite, Theme.Sky);
+                    tag.type = Image.Type.Sliced;
+                    tag.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / 30f);
+                    UiKit.Place(tag.rectTransform, new Vector2(1f, 1f), new Vector2(2f, 2f), new Vector2(60f, 60f));
+                    tag.rectTransform.pivot = new Vector2(1f, 1f);
+                    Text tg = UiKit.AddText(tag.transform, "Slot", (where + 1).ToString(), 42, Color.white, TextAnchor.MiddleCenter, true);
+                    tg.horizontalOverflow = HorizontalWrapMode.Overflow;
+                    UiKit.Stretch((RectTransform)tg.transform);
+                }
+                Text nm = UiKit.AddText(cp, "Name" + d.Id, d.Name, 42, Theme.Ink, TextAnchor.MiddleCenter, true);
                 UiKit.OnPanel(nm);
-                nm.horizontalOverflow = HorizontalWrapMode.Wrap;
-                UiKit.Place((RectTransform)nm.transform, new Vector2(0f, 1f), new Vector2(16f, -8f), new Vector2(cardW - 32f, 70f));
-                string sub = where >= 0 && where != slot ? "x" + progress.PowerUpCount(id) + "  in slot " + (where + 1) : "x" + progress.PowerUpCount(id) + "  takes " + progress.CarryUnits(id);
-                Text st = UiKit.AddText(card.transform, "Sub", sub, 42, Theme.InkSoft, TextAnchor.MiddleLeft);
-                UiKit.OnPanel(st);
-                st.color = Theme.InkSoft;
-                UiKit.Place((RectTransform)st.transform, new Vector2(0f, 0f), new Vector2(16f, 8f), new Vector2(cardW - 32f, 64f));
+                nm.horizontalOverflow = HorizontalWrapMode.Overflow;
+                UiKit.Place((RectTransform)nm.transform, new Vector2(0.5f, 1f), new Vector2(cx, -(190f + r * pitch + cell + 6f)), new Vector2(cell + gapX, 54f));
+                nm.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
 
-            Button clear = ChooserButton(cp, "Empty slot", false, new Vector2(0f, 0f), new Vector2(60f, 40f), new Vector2(350f, 130f), () => Choose(slot, null));
-            clear.GetComponent<A11yLabel>().Text = "Leave slot " + (slot + 1) + " empty";
-            Button shop = ChooserButton(cp, "Shop", true, new Vector2(1f, 0f), new Vector2(-60f, 40f), new Vector2(350f, 130f), OpenShop);
-            shop.GetComponent<A11yLabel>().Text = "Open the shop to buy more power-ups";
+            Button clear = ToyKit.IconButton(cp, "Empty slot", "Leave slot " + (slot + 1) + " empty", 3, Glyphs.Cross, new Vector2(150f, 150f), () => Choose(slot, null), 0.56f);
+            UiKit.Place((RectTransform)clear.transform, new Vector2(0f, 0f), new Vector2(70f, 50f), new Vector2(150f, 150f));
+            Button shop = ToyKit.IconButton(cp, "Shop", "Open the shop to buy more power-ups", 0, ToyKit.Get("icon_shop"), new Vector2(150f, 150f), OpenShop, 0.62f);
+            UiKit.Place((RectTransform)shop.transform, new Vector2(1f, 0f), new Vector2(-70f, 50f), new Vector2(150f, 150f));
         }
 
         Button ChooserButton(Transform parent, string label, bool primary, Vector2 anchor, Vector2 pos, Vector2 size, Action action)

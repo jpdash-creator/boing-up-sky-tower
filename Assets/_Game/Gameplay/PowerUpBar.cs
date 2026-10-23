@@ -108,8 +108,8 @@ namespace BoingUpSkyTower.Gameplay
         {
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(-12f, -12f);
-            rt.offsetMax = new Vector2(12f, 12f);
+            rt.offsetMin = new Vector2(-6f, -6f);
+            rt.offsetMax = new Vector2(6f, 6f);
         }
 
         /// <summary>Updates the buttons from the simulation state. Call once per frame.</summary>
