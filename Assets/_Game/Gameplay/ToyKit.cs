@@ -11,7 +11,7 @@ namespace BoingUpSkyTower.Gameplay
     /// </summary>
     public static class ToyKit
     {
-        public const float TabBarHeight = 170f, TabBarBottom = 16f;
+        public const float TabBarHeight = 190f, TabBarBottom = 16f;
         /// <summary>Space a screen leaves at the bottom of the safe area for the tab bar.</summary>
         public const float TabBarReserve = TabBarHeight + TabBarBottom + 24f;
 
@@ -34,7 +34,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (s == null) return false;
             string n = s.name;
-            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo";
+            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo" || n == "shop_scene" || n.StartsWith("plate_");
         }
 
         /// <summary>Button art by role: 0 secondary (yellow), 1 main action (green), 2 back (blue), 3 danger (red).</summary>
@@ -68,40 +68,223 @@ namespace BoingUpSkyTower.Gameplay
             return Sliced(parent, name, Get(blue ? "panel_blue" : "panel_cream"), corner);
         }
 
-        /// <summary>
-        /// The persistent bottom tab bar: Shop, Gear, PLAY (centre, biggest), Characters, Daily. The selected tab is a yellow plate, PLAY is always a
-        /// raised green plate. Tabs are real buttons of at least 48 dp. Returns the bar rect (placed at the bottom of <paramref name="screen"/>).
-        /// </summary>
-        public static RectTransform BuildTabBar(RectTransform screen, int selected, Action<int> onSelect)
+        static Sprite emptyStar;
+
+        /// <summary>Points the catalog's currency and star icons at the new kit icons (chunky toy-plate style) so every screen shares them.</summary>
+        public static void ApplyTo(ArtCatalog art)
         {
-            Sprite barSprite = Get("tabbar");
+            if (art == null) return;
+            Sprite coin = Get("icon_coin"), gem = Get("icon_gem"), star = Get("icon_star");
+            if (coin != null) art.CoinIcon = coin;
+            if (gem != null) art.GemIcon = gem;
+            if (star != null)
+            {
+                art.StarFilled = star;
+                art.StarEmpty = EmptyStar(star) ?? art.StarEmpty;
+            }
+        }
+
+        /// <summary>A dark, flat copy of the star for stars not yet earned.</summary>
+        static Sprite EmptyStar(Sprite star)
+        {
+            if (emptyStar != null) return emptyStar;
+            try
+            {
+                Texture2D src = star.texture;
+                var px = src.GetPixels32();
+                for (int i = 0; i < px.Length; i++)
+                {
+                    byte a = px[i].a;
+                    byte v = (byte)(px[i].r / 5 + 40);
+                    px[i] = new Color32(v, (byte)(v + 4), (byte)(v + 14), (byte)(a * 0.85f));
+                }
+                var tex = new Texture2D(src.width, src.height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+                tex.SetPixels32(px);
+                tex.Apply();
+                emptyStar = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), star.pixelsPerUnit);
+            }
+            catch (Exception) { emptyStar = null; }   // not readable: the catalog keeps its own empty star
+            return emptyStar;
+        }
+
+        /// <summary>A white glyph (chevron, pause bars, cross) centred on a button, about <paramref name="fraction"/> of its size.</summary>
+        public static Image AddGlyph(Transform button, Sprite glyph, float fraction = 0.62f, bool flipX = false)
+        {
+            Image g = UiKit.AddImage(button, "Glyph", glyph, Color.white);
+            RectTransform rt = g.rectTransform;
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            var parent = (RectTransform)button;
+            float s = Mathf.Min(parent.sizeDelta.x, parent.sizeDelta.y) * fraction;
+            rt.sizeDelta = new Vector2(s, s);
+            rt.anchoredPosition = Vector2.zero;
+            if (flipX) rt.localScale = new Vector3(-1f, 1f, 1f);
+            return g;
+        }
+
+        public static Button GlyphButton(Transform parent, string name, string a11y, int role, Sprite glyph, Vector2 size, Action onClick, bool flipX = false, float fraction = 0.62f)
+        {
+            Button b = UiKit.AddButton(parent, name, "", Button(role), Color.white, size, onClick);
+            b.GetComponent<A11yLabel>().Text = a11y;
+            b.GetComponent<Image>().raycastTarget = true;
+            AddGlyph(b.transform, glyph, fraction, flipX);
+            return b;
+        }
+
+        /// <summary>One slot of the bottom icon bar.</summary>
+        public sealed class BarItem
+        {
+            public string Icon;          // sprite name under Resources/Art/Ui
+            public string Caption;       // tiny caption, drawn only on the selected tab
+            public string A11y;
+            public bool Raised;          // PLAY: bigger, green, lifted above the row
+            public bool Badge;           // red notification badge
+        }
+
+        /// <summary>
+        /// The bottom bar of SS2/SS3 (owner issue 14): a row of separate square icon buttons. The selected one is yellow with a tiny caption, a raised
+        /// item (PLAY) is green and bigger, the others are blue plates with an icon only. Each is a real button of at least 48 dp. Placed at the bottom
+        /// of <paramref name="screen"/>; the buttons are anchored by fractions of the width so they fit every aspect.
+        /// </summary>
+        public static RectTransform BuildIconBar(RectTransform screen, BarItem[] items, int selected, Action<int> onSelect)
+        {
             RectTransform bar = UiKit.Rect(screen, "TabBar");
-            UiKit.Place(bar, new Vector2(0.5f, 0f), new Vector2(0f, TabBarBottom), new Vector2(1000f, TabBarHeight));
+            bar.anchorMin = new Vector2(0f, 0f);
+            bar.anchorMax = new Vector2(1f, 0f);
             bar.pivot = new Vector2(0.5f, 0f);
-            if (barSprite != null)
-            {
-                Image back = Sliced(bar, "Back", barSprite, 56f);
-                UiKit.Stretch(back.rectTransform);
-            }
-            else
-            {
-                Image back = UiKit.AddPanel(bar, "Back", Theme.Sky);
-                UiKit.Stretch(back.rectTransform);
-            }
-            const float slotW = 184f, pad = 40f;
-            for (int i = 0; i < TabLabels.Length; i++)
+            bar.anchoredPosition = new Vector2(0f, TabBarBottom);
+            bar.sizeDelta = new Vector2(-24f, TabBarHeight);
+            int n = items.Length;
+            const float gap = 12f;
+            for (int i = 0; i < n; i++)
             {
                 int idx = i;
-                bool play = i == TabPlay, on = i == selected;
-                float size = play ? 180f : 130f;
-                Sprite plate = play ? Button(1) : (on ? Button(0) : Theme.RoundSprite);
-                Color tint = play || on ? Color.white : new Color(1f, 1f, 1f, 0f);
-                Button b = UiKit.AddButton(bar, "Tab" + TabA11y[i].Replace(" ", ""), TabLabels[i], plate, tint, new Vector2(size, size), () => onSelect(idx), play ? 48 : 42);
-                b.GetComponent<A11yLabel>().Text = TabA11y[i] + " tab" + (on ? ", selected" : "");
+                BarItem it = items[i];
+                bool on = i == selected;
+                int role = it.Raised ? 1 : (on ? 0 : 2);
+                Button b = UiKit.AddButton(bar, "Tab" + it.A11y.Replace(" ", ""), "", ToyKit.Button(role), Color.white, new Vector2(160f, 150f), () => onSelect(idx));
+                b.GetComponent<A11yLabel>().Text = it.A11y + " tab" + (on ? ", selected" : "");
+                b.GetComponent<Image>().raycastTarget = true;
                 var rt = (RectTransform)b.transform;
-                UiKit.Place(rt, new Vector2(0f, 0f), new Vector2(pad + slotW * i + (slotW - size) * 0.5f, play ? 12f : (TabBarHeight - size) * 0.5f), new Vector2(size, size));
+                rt.anchorMin = new Vector2(i / (float)n, 0f);
+                rt.anchorMax = new Vector2((i + 1) / (float)n, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                float lift = it.Raised ? 26f : 0f;
+                rt.offsetMin = new Vector2(gap * 0.5f - (it.Raised ? 8f : 0f), 14f);
+                rt.offsetMax = new Vector2(-gap * 0.5f + (it.Raised ? 8f : 0f), 14f + 158f + lift);
+                bool caption = on || it.Raised;
+                Image ic = UiKit.AddImage(b.transform, "Icon", Get(it.Icon), Color.white);
+                var irt = ic.rectTransform;
+                irt.anchorMin = irt.anchorMax = new Vector2(0.5f, it.Raised ? 0.7f : (caption ? 0.66f : 0.5f));
+                irt.pivot = new Vector2(0.5f, 0.5f);
+                irt.anchoredPosition = Vector2.zero;
+                float isz = it.Raised ? 80f : (caption ? 66f : 90f);
+                irt.sizeDelta = new Vector2(isz, isz);
+                if (caption && !string.IsNullOrEmpty(it.Caption))
+                {
+                    Text cap = UiKit.AddText(b.transform, "Caption", it.Caption, 42, UiKit.ButtonInk, TextAnchor.LowerCenter, true);
+                    DropOutline(cap);
+                    cap.horizontalOverflow = HorizontalWrapMode.Overflow;
+                    var crt = (RectTransform)cap.transform;
+                    crt.anchorMin = new Vector2(0f, 0f);
+                    crt.anchorMax = new Vector2(1f, 0f);
+                    crt.pivot = new Vector2(0.5f, 0f);
+                    crt.offsetMin = new Vector2(0f, 12f);
+                    crt.offsetMax = new Vector2(0f, 68f);
+                }
+                if (it.Badge) AddBadge(b.transform);
             }
             return bar;
+        }
+
+        /// <summary>A small red notification badge in the top-right corner of a button.</summary>
+        public static Image AddBadge(Transform button)
+        {
+            Image bd = UiKit.AddImage(button, "Badge", Get("badge_red"), Color.white);
+            var rt = bd.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(-6f, -6f);
+            rt.sizeDelta = new Vector2(52f, 58f);
+            return bd;
+        }
+
+        /// <summary>A round or square plate button carrying a painted icon (settings gear, etc.).</summary>
+        public static Button IconButton(Transform parent, string name, string a11y, int role, Sprite icon, Vector2 size, Action onClick, float fraction = 0.62f)
+        {
+            Button b = UiKit.AddButton(parent, name, "", Button(role), Color.white, size, onClick);
+            b.GetComponent<A11yLabel>().Text = a11y;
+            b.GetComponent<Image>().raycastTarget = true;
+            AddGlyph(b.transform, icon, fraction);
+            return b;
+        }
+
+        /// <summary>A dark pill with a painted icon and a right-aligned number (wallet and HUD pills). Returns the value text.</summary>
+        public static Text WalletPill(Transform parent, string name, Sprite icon, Vector2 anchor, Vector2 pos, Vector2 size, Color numberColor)
+        {
+            Image pill = Theme.GlassPanel(parent, name, size.y * 0.25f);
+            UiKit.Place(pill.rectTransform, anchor, pos, size);
+            Image ic = UiKit.AddImage(pill.transform, "Icon", icon, Color.white);
+            var irt = ic.rectTransform;
+            irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
+            irt.pivot = new Vector2(0f, 0.5f);
+            irt.anchoredPosition = new Vector2(size.y * 0.28f, 0f);
+            irt.sizeDelta = new Vector2(size.y * 0.78f, size.y * 0.78f);
+            Text t = UiKit.AddText(pill.transform, "Value", "0", 46, numberColor, TextAnchor.MiddleRight, true);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var trt = (RectTransform)t.transform;
+            trt.anchorMin = new Vector2(0f, 0f);
+            trt.anchorMax = new Vector2(1f, 1f);
+            trt.offsetMin = new Vector2(size.y * 1.1f, 0f);
+            trt.offsetMax = new Vector2(-size.y * 0.35f, 0f);
+            return t;
+        }
+
+        /// <summary>A wallet pill that fills its slot in a layout row (no fixed placement). Returns the value text.</summary>
+        public static Text WalletPillFlex(Transform parent, string name, Sprite icon, Color numberColor, float height)
+        {
+            Image pill = Theme.GlassPanel(parent, name, height * 0.25f);
+            var le = pill.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = height;
+            le.flexibleWidth = 1f;
+            Image ic = UiKit.AddImage(pill.transform, "Icon", icon, Color.white);
+            var irt = ic.rectTransform;
+            irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
+            irt.pivot = new Vector2(0f, 0.5f);
+            irt.anchoredPosition = new Vector2(height * 0.2f, 0f);
+            irt.sizeDelta = new Vector2(height * 0.7f, height * 0.7f);
+            Text t = UiKit.AddText(pill.transform, "Value", "0", 46, numberColor, TextAnchor.MiddleRight, true);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var trt = (RectTransform)t.transform;
+            trt.anchorMin = new Vector2(0f, 0f);
+            trt.anchorMax = new Vector2(1f, 1f);
+            trt.offsetMin = new Vector2(height * 0.95f, 0f);
+            trt.offsetMax = new Vector2(-height * 0.25f, 0f);
+            return t;
+        }
+
+        /// <summary>The gold ribbon banner with a title in ink (section titles like SS2/SS3).</summary>
+        public static Text Ribbon(Transform parent, string title, Vector2 anchor, Vector2 pos, Vector2 size)
+        {
+            Sprite r = Get("ribbon_gold");
+            Image img = UiKit.AddImage(parent, "Ribbon", r, Color.white);
+            img.preserveAspect = true;
+            UiKit.Place(img.rectTransform, anchor, pos, size);
+            Text t = UiKit.AddText(img.transform, "Title", title, 64, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+            DropOutline(t);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var trt = (RectTransform)t.transform;
+            trt.anchorMin = new Vector2(0.22f, 0.5f);
+            trt.anchorMax = new Vector2(0.78f, 0.9f);
+            trt.offsetMin = trt.offsetMax = Vector2.zero;
+            return t;
+        }
+
+        static void DropOutline(Text t)
+        {
+            var o = t.GetComponent<Outline>();
+            if (o != null) o.enabled = false;
         }
     }
 }

@@ -174,6 +174,8 @@ namespace BoingUpSkyTower.Gameplay
 
         Sprite Btn(int i) { return ToyKit.Button(i == 1 ? 1 : 0) ?? (art != null ? ArtCatalog.Pick(art.Buttons, i) : null); }
 
+        void SkyBackground() { Theme.SkyBackground(screenRoot); }
+
         void Background(Sprite sprite, Color fallback)
         {
             Image bg = UiKit.AddImage(screenRoot, "Bg", sprite, sprite != null ? Color.white : fallback);
@@ -282,16 +284,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Round icon button at the top-left (home or back arrow): no text, with an accessibility label.</summary>
         void AddBack(string label, Action action)
         {
-            int icon = label == "Menu" ? 2 : 3;   // round buttons: 2 = home, 3 = back arrow
-            Sprite sprite = ToyKit.Get("btn_back") ?? (art != null ? ArtCatalog.Pick(art.RoundButtons, icon) : null);
-            Button b = UiKit.AddButton(screen, "Back", "", sprite, Color.white, new Vector2(150f, 150f), action, 40);
-            b.GetComponent<A11yLabel>().Text = label;
+            Button b = ToyKit.GlyphButton(screen, "Back", label, 2, Glyphs.Left, new Vector2(150f, 150f), action);
             UiKit.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(20f, -20f), new Vector2(150f, 150f));
-            if (sprite == null)
-            {
-                Text t = UiKit.AddText(b.transform, "Fallback", label, 40, UiKit.ButtonInk);
-                UiKit.Stretch((RectTransform)t.transform);
-            }
         }
 
         // ---------------- main menu ----------------
@@ -302,39 +296,63 @@ namespace BoingUpSkyTower.Gameplay
             lastMapOffset = -1f;   // the map opens on the current region again after a visit to the menu
             RegionArt meadow = art != null ? art.ForRegion(1) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
+            AddCurrencyBar();
             Sprite logo = ToyKit.Get("logo");
             if (logo != null)
             {
                 Image lg = UiKit.AddImage(screen, "Logo", logo, Color.white);
-                UiKit.Place(lg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(960f, 392f));
+                UiKit.Place(lg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(860f, 352f));
                 lg.rectTransform.pivot = new Vector2(0.5f, 1f);
-                lg.GetComponent<Image>().raycastTarget = false;
-            }
-            else
-            {
-                Text title = UiKit.AddText(screen, "Title", "BOING UP"+(char)10+"<color=#FFC93D>SKY TOWER</color>", 108, Color.white);
-                UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(900f, 340f));
+                lg.raycastTarget = false;
             }
             if (art != null && art.Player != null)
             {
                 Image m = UiKit.AddImage(screen, "Momo", art.Player, Color.white);
-                UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(440f, 540f));
+                UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.40f), Vector2.zero, new Vector2(440f, 540f));
                 m.rectTransform.pivot = new Vector2(0.5f, 0.5f);
                 momo = m.rectTransform;
                 momoBase = momo.anchoredPosition;
             }
-            Button settings = UiKit.AddButton(screen, "Settings", "Settings", Btn(0), Color.white, new Vector2(380f, 130f), ShowSettings, 46);
-            UiKit.Place((RectTransform)settings.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 50f), new Vector2(380f, 130f));
-            Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.6f));
-            UiKit.Place((RectTransform)v.transform, new Vector2(0f, 1f), new Vector2(24f, -20f), new Vector2(420f, 56f));
-            ((Text)v).alignment = TextAnchor.MiddleLeft;
+            Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
+            UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(500f, 44f));
             AddTabBar(ToyKit.TabPlay);
+        }
+
+        /// <summary>Currency pills (coins, gems, total stars) with the round settings gear at the right (owner issue 14, SS2).</summary>
+        void AddCurrencyBar()
+        {
+            RectTransform row = UiKit.Rect(screen, "CurrencyBar");
+            row.anchorMin = new Vector2(0f, 1f);
+            row.anchorMax = new Vector2(1f, 1f);
+            row.pivot = new Vector2(0.5f, 1f);
+            row.anchoredPosition = new Vector2(0f, -16f);
+            row.sizeDelta = new Vector2(-32f, 128f);
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.spacing = 10f;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+            coinText = ToyKit.WalletPillFlex(row, "CoinsPill", art != null ? art.CoinIcon : null, Color.white, 104f);
+            gemText = ToyKit.WalletPillFlex(row, "GemsPill", art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 104f);
+            starText = ToyKit.WalletPillFlex(row, "StarsPill", art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 104f);
+            Button gear = ToyKit.IconButton(row, "Settings", "Settings", 2, ToyKit.Get("icon_settings"), new Vector2(130f, 128f), ShowSettings, 0.62f);
+            var le = gear.gameObject.AddComponent<LayoutElement>();
+            le.minWidth = 130f;
+            le.preferredWidth = 130f;
+            le.flexibleWidth = 0f;
+            RefreshWallet();
         }
 
         /// <summary>The persistent bottom tab bar (docs/16 section C). Gear, Characters and Daily are not built yet and say so.</summary>
         void AddTabBar(int selected)
         {
-            ToyKit.BuildTabBar(screen, selected, OnTab);
+            ToyKit.BuildIconBar(screen, new[]
+            {
+                new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop", Badge = progress != null && progress.LaunchPromoActive },
+                new ToyKit.BarItem { Icon = "icon_gear", Caption = "Gear", A11y = "Gear" },
+                new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true },
+                new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" },
+                new ToyKit.BarItem { Icon = "icon_daily", Caption = "Daily", A11y = "Daily rewards" },
+            }, selected, OnTab);
         }
 
         void OnTab(int tab)
@@ -360,9 +378,7 @@ namespace BoingUpSkyTower.Gameplay
         public void ShowShop(int tab = ShopScreen.TabGems, int section = ShopScreen.GemsSection)
         {
             NewScreen("Shop");
-            RegionArt meadow = art != null ? art.ForRegion(1) : null;
-            Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
-            AddBack("Back", ShowMenu);
+            SkyBackground();
             progress.LaunchPromoActive = GameSettings.LaunchPromo;
             var host = new ShopScreen.Host
             {
@@ -372,7 +388,7 @@ namespace BoingUpSkyTower.Gameplay
             };
             shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
             shop.Build(tab, section);
-            AddTabBar(ToyKit.TabShop);
+            AddBack("Back", ShowMenu);
             coinText = shop.CoinText;     // RefreshWallet keeps these two current after every purchase
             gemText = shop.GemText;
             RefreshWallet();
@@ -568,7 +584,7 @@ namespace BoingUpSkyTower.Gameplay
             NewScreen("Levels");
             currentRegionId = region.Id;
             RegionArt ra = art != null ? art.ForRegion(region.Index) : null;
-            Background(ra != null ? ra.BgFar : null, new Color(0.1f, 0.14f, 0.25f, 1f));
+            SkyBackground();
             AddLevelsWallet(region);
             AddBack("Map", ShowMap);
             List<LevelDef> levels = repo.LevelsOf(region.Id);
@@ -713,7 +729,7 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(0f, -440f), new Vector2(740f, 330f));
             CurrentPicker = new LoadoutPicker(progress, art, OpenShopPowerUps);
             CurrentPicker.Build(popup, panel, 790f);
-            PopupButton("PLAY", Btn(1), Color.white, 200f, () =>
+            PopupButton("PLAY", Btn(1), Color.white, 180f, () =>
             {
                 GameSession.CurrentLevelId = level.Id;
                 GameSession.EndlessMode = false;
@@ -727,39 +743,100 @@ namespace BoingUpSkyTower.Gameplay
         public void ShowSettings()
         {
             NewScreen("Settings");
-            RegionArt meadowBg = art != null ? art.ForRegion(1) : null;
-            Background(meadowBg != null ? meadowBg.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
+            SkyBackground();
             AddBack("Back", ShowMenu);
-            Text hdr = UiKit.AddText(screen, "Header", "Settings", 80, Color.white);
-            UiKit.Place((RectTransform)hdr.transform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(800f, 110f));
+            ToyKit.Ribbon(screen, "Settings", new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(580f, 206f));
 
-            // Backing panel: white labels stay readable over the bright background art (CUX-5).
-            Image rows = Theme.GlassPanel(screen, "RowsBacking", Theme.RadiusCard);
-            rows.rectTransform.anchorMin = new Vector2(0f, 1f);
-            rows.rectTransform.anchorMax = new Vector2(1f, 1f);
-            rows.rectTransform.pivot = new Vector2(0.5f, 1f);
-            rows.rectTransform.anchoredPosition = new Vector2(0f, -315f);
-            rows.rectTransform.sizeDelta = new Vector2(-30f, GameSettings.DevBuild ? 1220f : 1070f);
-            AddToggle("Sound effects", -340f, () => GameSettings.Sound, v => GameSettings.Sound = v);
-            AddToggle("Music", -490f, () => GameSettings.Music, v => GameSettings.Music = v);
-            AddToggle("Haptics", -640f, () => GameSettings.Haptics, v => GameSettings.Haptics = v);
-            AddToggle("Reduced motion", -790f, () => GameSettings.ReducedMotion, v => GameSettings.ReducedMotion = v);
-            AddToggle("Left-handed", -940f, () => GameSettings.LeftHanded, v => GameSettings.LeftHanded = v);
-            AddTextSize(-1090f);
-            AddDifficulty(-1240f);
-            if (GameSettings.DevBuild) AddToggle("Test: all levels open", -1390f, () => GameSettings.TestUnlockAll, v => GameSettings.TestUnlockAll = v);
+            bool dev = GameSettings.DevBuild;
+            const float rowH = 148f;
+            int rows = 7 + (dev ? 1 : 0);
+            // One cream card holds the icon rows (icon, short label, switch or value button).
+            RectTransform card = UiKit.Rect(screen, "Card");
+            card.anchorMin = new Vector2(0f, 1f);
+            card.anchorMax = new Vector2(1f, 1f);
+            card.pivot = new Vector2(0.5f, 1f);
+            card.anchoredPosition = new Vector2(0f, -250f);
+            card.sizeDelta = new Vector2(-40f, rows * rowH + 40f);
+            Theme.CardBacking(card);
+            int r = 0;
+            AddSwitchRow(card, r++ * rowH, "icon_sound", "Sound", () => GameSettings.Sound, v => GameSettings.Sound = v);
+            AddSwitchRow(card, r++ * rowH, "icon_music", "Music", () => GameSettings.Music, v => GameSettings.Music = v);
+            AddSwitchRow(card, r++ * rowH, "icon_vibrate", "Haptics", () => GameSettings.Haptics, v => GameSettings.Haptics = v);
+            AddSwitchRow(card, r++ * rowH, "icon_motion", "Reduced motion", () => GameSettings.ReducedMotion, v => GameSettings.ReducedMotion = v);
+            AddSwitchRow(card, r++ * rowH, "icon_hand", "Left-handed", () => GameSettings.LeftHanded, v => GameSettings.LeftHanded = v);
+            AddValueRow(card, r++ * rowH, "icon_size", "Text size", GameSettings.TextPercent + "%", () =>
+            {
+                GameSettings.NextTextPercent();
+                ShowSettings();   // rebuild so the new size applies to every label
+            });
+            AddValueRow(card, r++ * rowH, "icon_dial", "Difficulty", GameSettings.DifficultyNames[GameSettings.Difficulty], ShowDifficultyList);
+            if (dev) AddSwitchRow(card, r++ * rowH, "icon_lock", "All levels open", () => GameSettings.TestUnlockAll, v => GameSettings.TestUnlockAll = v);
 
-            Button reset = UiKit.AddButton(screen, "Reset", "Reset progress", Btn(1), new Color(1f, 0.6f, 0.6f), new Vector2(560f, 130f), ConfirmReset, 46);
+            Button reset = UiKit.AddButton(screen, "Reset", "Reset progress", ToyKit.Button(3), Color.white, new Vector2(560f, 130f), ConfirmReset, 46);
             UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(560f, 130f));
         }
 
-        /// <summary>Difficulty dropdown: the button shows the current level; tapping it opens a list of the five levels.</summary>
-        void AddDifficulty(float yFromTop)
+        /// <summary>Left part of a settings row: the painted icon and a short label (ink on the cream card).</summary>
+        void AddRowLead(RectTransform card, float y, string icon, string label)
         {
-            Text t = UiKit.AddText(screen, "Difficulty", "Difficulty", 54, Color.white, TextAnchor.MiddleLeft);
-            UiKit.Place((RectTransform)t.transform, new Vector2(0f, 1f), new Vector2(70f, yFromTop), new Vector2(470f, 130f));
-            Button b = UiKit.AddButton(screen, "DifficultyButton", GameSettings.DifficultyNames[GameSettings.Difficulty] + " v", Btn(0), Color.white, new Vector2(300f, 130f), ShowDifficultyList, 44);
-            UiKit.Place((RectTransform)b.transform, new Vector2(1f, 1f), new Vector2(-70f, yFromTop), new Vector2(300f, 130f));
+            Image ic = UiKit.AddImage(card, label + "Icon", ToyKit.Get(icon), Color.white);
+            ic.preserveAspect = true;
+            ic.rectTransform.anchorMin = ic.rectTransform.anchorMax = new Vector2(0f, 1f);
+            ic.rectTransform.pivot = new Vector2(0f, 1f);
+            ic.rectTransform.anchoredPosition = new Vector2(28f, -(y + 28f));
+            ic.rectTransform.sizeDelta = new Vector2(92f, 92f);
+            Text t = UiKit.AddText(card, label, label, 46, Theme.Ink, TextAnchor.MiddleLeft, true);
+            DropOutline(t);
+            var rt = (RectTransform)t.transform;
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.offsetMin = new Vector2(140f, -(y + 28f + 92f));
+            rt.offsetMax = new Vector2(-270f, -(y + 28f));
+        }
+
+        /// <summary>An on/off row: a kit switch (green with the knob right when on, blue with the knob left when off).</summary>
+        void AddSwitchRow(RectTransform card, float y, string icon, string label, Func<bool> get, Action<bool> set)
+        {
+            AddRowLead(card, y, icon, label);
+            Button b = UiKit.AddButton(card, label + "Toggle", "", ToyKit.Button(get() ? 1 : 2), Color.white, new Vector2(200f, 126f), null);
+            var rt = (RectTransform)b.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 1f);
+            rt.anchoredPosition = new Vector2(-28f, -(y + 11f));
+            rt.sizeDelta = new Vector2(200f, 126f);
+            Image knob = UiKit.AddImage(b.transform, "Knob", Theme.RoundSprite, Color.white);
+            knob.type = Image.Type.Sliced;
+            knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(get() ? 0.74f : 0.26f, 0.5f);
+            knob.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            knob.rectTransform.anchoredPosition = Vector2.zero;
+            knob.rectTransform.sizeDelta = new Vector2(86f, 86f);
+            Image ring = UiKit.AddImage(knob.transform, "Ring", Theme.RingSprite, UiKit.ButtonInk);
+            ring.type = Image.Type.Sliced;
+            ring.preserveAspect = false;
+            UiKit.Stretch(ring.rectTransform);
+            b.GetComponent<A11yLabel>().Text = label + (get() ? ", on" : ", off");
+            b.onClick.AddListener(() =>
+            {
+                set(!get());
+                bool on = get();
+                b.GetComponent<Image>().sprite = ToyKit.Button(on ? 1 : 2);
+                knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(on ? 0.74f : 0.26f, 0.5f);
+                b.GetComponent<A11yLabel>().Text = label + (on ? ", on" : ", off");
+            });
+        }
+
+        /// <summary>A row with a yellow value button (text size, difficulty).</summary>
+        void AddValueRow(RectTransform card, float y, string icon, string label, string value, Action onClick)
+        {
+            AddRowLead(card, y, icon, label);
+            Button b = UiKit.AddButton(card, label + "Button", value, ToyKit.Button(0), Color.white, new Vector2(240f, 126f), onClick, 44);
+            var rt = (RectTransform)b.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 1f);
+            rt.anchoredPosition = new Vector2(-28f, -(y + 11f));
+            rt.sizeDelta = new Vector2(240f, 126f);
+            b.GetComponent<A11yLabel>().Text = label + ", " + value;
         }
 
         public void ShowDifficultyList()
@@ -780,32 +857,6 @@ namespace BoingUpSkyTower.Gameplay
                 }, 40);
                 UiKit.Place((RectTransform)opt.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f + (GameSettings.DifficultyNames.Length - 1 - i) * 145f), new Vector2(700f, 132f));
             }
-        }
-
-        void AddTextSize(float yFromTop)
-        {
-            Text t = UiKit.AddText(screen, "Text size", "Text size", 54, Color.white, TextAnchor.MiddleLeft);
-            UiKit.Place((RectTransform)t.transform, new Vector2(0f, 1f), new Vector2(70f, yFromTop), new Vector2(470f, 130f));
-            Button b = UiKit.AddButton(screen, "TextSizeButton", GameSettings.TextPercent + "%", Btn(0), Color.white, new Vector2(240f, 130f), () =>
-            {
-                GameSettings.NextTextPercent();
-                ShowSettings();   // rebuild so the new size applies to every label
-            }, 48);
-            UiKit.Place((RectTransform)b.transform, new Vector2(1f, 1f), new Vector2(-70f, yFromTop), new Vector2(240f, 130f));
-        }
-
-        void AddToggle(string label, float yFromTop, Func<bool> get, Action<bool> set)
-        {
-            Text t = UiKit.AddText(screen, label, label, 54, Color.white, TextAnchor.MiddleLeft);
-            UiKit.Place((RectTransform)t.transform, new Vector2(0f, 1f), new Vector2(70f, yFromTop), new Vector2(470f, 130f));
-            Button b = null;
-            b = UiKit.AddButton(screen, label + "Toggle", get() ? "ON" : "OFF", Btn(get() ? 1 : 2), Color.white, new Vector2(240f, 130f), () =>
-            {
-                set(!get());
-                b.GetComponentInChildren<Text>().text = get() ? "ON" : "OFF";
-                b.GetComponent<Image>().sprite = Btn(get() ? 1 : 2);
-            }, 48);
-            UiKit.Place((RectTransform)b.transform, new Vector2(1f, 1f), new Vector2(-70f, yFromTop), new Vector2(240f, 130f));
         }
 
         public void ConfirmReset()
@@ -835,9 +886,29 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(0f, -240f), new Vector2(740f, 520f));
         }
 
+        /// <summary>
+        /// Popup action. Simple words become round icon buttons (owner issue 14): PLAY and START a green play icon, OK and Confirm a green tick, Close and
+        /// Cancel a yellow cross. Anything with a price or a longer sentence stays a wide kit button so the amount is readable.
+        /// </summary>
         Button PopupButton(string label, Sprite sprite, Color tint, float y, Action action)
         {
-            Button b = UiKit.AddButton(popup.Find("Panel"), label, label, sprite, tint, new Vector2(560f, 130f), action, 46);
+            Transform panel = popup.Find("Panel");
+            Sprite icon = null;
+            int role = 1;
+            float size = 170f;
+            switch (label)
+            {
+                case "PLAY": case "START": icon = ToyKit.Get("icon_play"); size = 150f; break;
+                case "OK": case "Confirm": icon = Glyphs.Check; size = 130f; break;
+                case "Close": case "Cancel": icon = Glyphs.Cross; role = 3; size = 130f; break;
+            }
+            if (icon != null)
+            {
+                Button ib = ToyKit.IconButton(panel, label, label, role, icon, new Vector2(size, size), action, label == "PLAY" || label == "START" ? 0.6f : 0.56f);
+                UiKit.Place((RectTransform)ib.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(size, size));
+                return ib;
+            }
+            Button b = UiKit.AddButton(panel, label, label, sprite, tint, new Vector2(560f, 130f), action, 46);
             UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(560f, 130f));
             return b;
         }

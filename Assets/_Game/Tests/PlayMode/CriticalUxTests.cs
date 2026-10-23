@@ -250,9 +250,28 @@ namespace BoingUpSkyTower.Tests
                     yield return ApplyAspect(a, holder);
                     yield return null;
                     all.AddRange(Audit(screen + "@" + a.Name + (safe == NotchSafe ? "+notch" : ""), a, safe));
+                    if (safe == FullSafe) Shot(screen, a, holder[0]);
                 }
             }
             Restore(holder);
+        }
+
+        /// <summary>Visual validation: with BU_SHOTS=dir set, every audited screen is saved as a PNG (9x16 and 9x21, normal text, right-handed) for review.</summary>
+        static void Shot(string screen, Aspect a, RenderTexture rt)
+        {
+            string dir = System.Environment.GetEnvironmentVariable("BU_SHOTS");
+            if (string.IsNullOrEmpty(dir) || rt == null) return;
+            if (a.Name != "9x16" && a.Name != "9x21") return;
+            if (GameSettings.TextPercent != 100 || GameSettings.LeftHanded) return;
+            System.IO.Directory.CreateDirectory(dir);
+            var prev = RenderTexture.active;
+            RenderTexture.active = rt;
+            var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            tex.Apply();
+            RenderTexture.active = prev;
+            System.IO.File.WriteAllBytes(System.IO.Path.Combine(dir, screen + "_" + a.Name + ".png"), tex.EncodeToPNG());
+            Object.Destroy(tex);
         }
 
         static void Report(List<string> problems)

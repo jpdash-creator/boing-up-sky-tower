@@ -38,6 +38,7 @@ namespace BoingUpSkyTower.Gameplay
         public static void Warmup()
         {
             Sprite a = RoundSprite, b = RingSprite, c = ShadowSprite, d = GradientDownSprite;
+            Glyphs.Warmup();
             if (a == null || b == null || c == null || d == null) Debug.LogWarning("Theme sprites missing");
         }
 
@@ -146,8 +147,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>A frosted glass chip or bar: translucent dark ink with a faint white rim. Children go under the returned image.</summary>
         public static Image GlassPanel(Transform parent, string name, float radius = RadiusChip)
         {
-            Sprite pill = ToyKit.Get("pill_dark");
-            if (pill != null) return ToyKit.Sliced(parent, name, pill, radius * 1.6f);
+            Sprite pill = ToyKit.Get("plate_pill");
+            if (pill != null) return ToyKit.Sliced(parent, name, pill, radius * 2f);
             Image img = Sliced(parent, name, RoundSprite, Glass, radius);
             Image rim = Sliced(img.transform, "Rim", RingSprite, GlassStroke, radius);
             UiKit.Stretch(rim.rectTransform);
@@ -185,6 +186,46 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>True for the decorative surface sprites drawn by this class (the layout audit does not treat them as content images).</summary>
+        static Sprite skyGradient;
+
+        /// <summary>A calm sky-blue gradient with a few soft clouds: the background of Settings and the level screen (owner issue 14).</summary>
+        public static RectTransform SkyBackground(Transform parent)
+        {
+            if (skyGradient == null)
+            {
+                const int h = 128;
+                var tex = new Texture2D(2, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+                for (int y = 0; y < h; y++)
+                {
+                    float t = y / (h - 1f);   // 0 bottom, 1 top
+                    Color c = Color.Lerp(new Color(0.80f, 0.92f, 1f), new Color(0.34f, 0.66f, 0.98f), t);
+                    tex.SetPixel(0, y, c);
+                    tex.SetPixel(1, y, c);
+                }
+                tex.Apply();
+                skyGradient = Sprite.Create(tex, new Rect(0, 0, 2, h), new Vector2(0.5f, 0.5f), 100f);
+            }
+            RectTransform root = UiKit.Rect(parent, "Sky");
+            UiKit.Stretch(root);
+            Image g = UiKit.AddImage(root, "Gradient", skyGradient, Color.white);
+            g.preserveAspect = false;
+            UiKit.Stretch(g.rectTransform);
+            // Soft clouds: wide white ellipses at fixed fractions of the screen.
+            float[][] clouds = { new[] { 0.18f, 0.80f, 520f, 150f, 0.55f }, new[] { 0.82f, 0.62f, 640f, 170f, 0.45f }, new[] { 0.30f, 0.38f, 600f, 160f, 0.4f }, new[] { 0.78f, 0.16f, 700f, 190f, 0.5f } };
+            for (int i = 0; i < clouds.Length; i++)
+            {
+                Image c = UiKit.AddImage(root, "Cloud" + i, RoundSprite, new Color(1f, 1f, 1f, clouds[i][4]));
+                c.type = Image.Type.Sliced;
+                c.preserveAspect = false;
+                c.pixelsPerUnitMultiplier = 0.35f;
+                c.rectTransform.anchorMin = c.rectTransform.anchorMax = new Vector2(clouds[i][0], clouds[i][1]);
+                c.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                c.rectTransform.sizeDelta = new Vector2(clouds[i][2], clouds[i][3]);
+            }
+            root.SetAsFirstSibling();
+            return root;
+        }
+
         /// <summary>The cream kit panel (toy-plate look) or, without the kit art, the plain light rounded surface.</summary>
         static Image KitSurface(Transform parent, string name, float radius)
         {

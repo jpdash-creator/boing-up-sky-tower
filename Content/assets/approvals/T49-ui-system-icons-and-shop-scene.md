@@ -1,0 +1,19 @@
+# Approval packet T49: system icon sheets A and B, Momo shopkeeper scene
+
+Status: PENDING OWNER APPROVAL. Nothing has been generated.
+
+- Purpose (owner issue list 14, answers to the 8 questions of 2026-10-23): the UI becomes icon-first. This batch gives every icon the new screens need: popup actions (play, restart, home), Settings rows (sound, music, vibration, reduced motion, left-handed, text size), run HUD (combo flame, speed-up arrows, goal flag, tower), shop tabs (chest, crown, power-up bolt) and a notification bell, plus the painted Momo shopkeeper header for the Shop (like SS2/SS3).
+- MCP / tool: OpenArt MCP, `openart_generate_image` (3 jobs).
+- Model / mode: byte-plus-seedream-5-lite, image2image, 2K, 2 images per job, style bible vVnbzqvg1L5uSFCKydUE. Jobs A and B 1:1, job C 4:3.
+- Cost: 15 credits per image x 6 = 90 credits. Balance 7,673, after 7,583.
+- Alternative: 1 image per job = 45 credits (saves 45), no choice between candidates.
+- Output: Art/_candidates/ui_icons2/ (A1 A2 B1 B2) and ui_shop/ (C1 C2), shown to you right away with labels; you pick one per job; cut by process_art.py into Assets/Resources/Art/Ui.
+
+## Job A (1:1): system icons
+Match the art style of the reference image exactly (outline weight, glossy shading, colour saturation), but draw only the new subjects described here. A sprite sheet of nine chunky glossy game icons for a cute mobile jumping game, in a three by three grid on a flat solid #808080 background, generous empty space around every icon, nothing overlapping, no text, no letters, no numbers. Thick dark navy outline, bevelled gradient surfaces, top-left light, sky-blue, cloud-white and gold colour world. Row 1: a big rounded play triangle in glossy green; a circular restart arrow in glossy yellow; a little house (home) in glossy blue. Row 2: a loudspeaker with two sound waves; a pair of music notes; a smartphone with vibration lines. Row 3: a swirl of wind for reduced motion; a raised open hand; a magnifying glass. No characters, no clouds, no watermark.
+
+## Job B (1:1): game icons
+Match the art style of the reference image exactly (outline weight, glossy shading, colour saturation), but draw only the new subjects described here. A sprite sheet of nine chunky glossy game icons for a cute mobile jumping game, in a three by three grid on a flat solid #808080 background, generous empty space around every icon, nothing overlapping, no text, no letters, no numbers. Thick dark navy outline, bevelled gradient surfaces, top-left light, sky-blue, cloud-white and gold colour world. Row 1: a glossy orange flame; a golden treasure chest with a star lock; a golden crown with a small blue gem. Row 2: three stacked upward chevrons in glossy orange (speed up); a small tall tower with a flag on top; a lightning bolt in glossy yellow. Row 3: a finish flag on a pole; a golden notification bell; a round speed dial gauge. No characters, no clouds, no watermark.
+
+## Job C (4:3): Momo shopkeeper header scene
+Match the art style of the reference image exactly (outline weight, glossy shading, colour saturation), but draw only the new subject described here. A cozy cute toy shop interior scene for a mobile game, wide scene: a red and white striped awning across the top, a sky-blue wall with a big arched window showing clouds and soft sunlight, shelves on both sides with potions, plants and gift boxes, a wooden shop counter along the bottom with a golden treasure chest and a stack of books on it. Behind the counter stands a small round chibi cloud-fox shopkeeper with soft white and warm cream fur, a pale sky-blue cloud-puff tail, big glossy eyes, a tiny magenta scarf and a small brown shop apron, smiling and holding up a shiny pink-blue gem. Warm sky-blue, cream and gold colours. No text, no letters, no numbers, no watermark.

@@ -51,7 +51,7 @@ namespace ProjectBootstrap
             }
         }
 
-        public override uint GetVersion() { return 5; }   // bump to re-import the art when the import rules change
+        public override uint GetVersion() { return 6; }   // bump to re-import the art when the import rules change
 
         /// <summary>Small square icons (power-ups): a single sprite, no mipmaps, 256 px, compressed.</summary>
         static void ApplyIcon(TextureImporter ti)
@@ -83,6 +83,10 @@ namespace ProjectBootstrap
             else if (n.StartsWith("panel_")) border = new Vector4(170f, 170f, 170f, 170f);
             else if (n == "pill_dark") border = new Vector4(100f, 90f, 100f, 90f);
             else if (n == "tabbar") border = new Vector4(180f, 120f, 180f, 120f);
+            else if (n == "plate_pill" || n == "plate_gold") border = new Vector4(215f, 150f, 215f, 150f);
+            else if (n == "plate_cream" || n == "plate_sky") border = new Vector4(190f, 150f, 190f, 150f);
+            else if (n == "plate_chip") border = new Vector4(150f, 150f, 150f, 150f);
+            if (n == "icon_star") ti.isReadable = true;   // the dimmed "empty star" is made from it at runtime
             ti.spriteBorder = border;
             var st = new TextureImporterSettings();
             ti.ReadTextureSettings(st);

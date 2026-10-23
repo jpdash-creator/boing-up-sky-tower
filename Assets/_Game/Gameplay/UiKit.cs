@@ -248,10 +248,7 @@ namespace BoingUpSkyTower.Gameplay
 
             if (onClose != null)
             {
-                Sprite icon = art != null ? art.CloseIcon : null;
-                Button x = AddButton(panel, "CloseX", icon != null ? "" : "X", icon != null ? icon : PillSprite, icon != null ? Color.white : Theme.Accent, new Vector2(132f, 132f), onClose, 64, false);
-                if (icon == null) x.GetComponent<Image>().type = Image.Type.Sliced;
-                x.GetComponent<A11yLabel>().Text = "Close";
+                Button x = ToyKit.GlyphButton(panel, "CloseX", "Close", 3, Glyphs.Cross, new Vector2(132f, 132f), onClose, false, 0.58f);
                 Place((RectTransform)x.transform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(132f, 132f));
             }
             return panel;

@@ -87,6 +87,7 @@ namespace BoingUpSkyTower.Gameplay
             Repo = ContentRepository.LoadFromResources();
             Progress = new ProgressService(Repo, new FileSaveStore(Path.Combine(Application.persistentDataPath, "save.json")), PlayableRegions);
             Art = Resources.Load<ArtCatalog>("ArtCatalog");
+            ToyKit.ApplyTo(Art);
             Initialized = true;
         }
 
@@ -96,6 +97,7 @@ namespace BoingUpSkyTower.Gameplay
             Repo = ContentRepository.LoadFromResources();
             Progress = new ProgressService(Repo, store, PlayableRegions);
             Art = art ?? Resources.Load<ArtCatalog>("ArtCatalog");
+            ToyKit.ApplyTo(Art);
             CurrentLevelId = null;
             PendingRegionId = null;
             LastResult = null;

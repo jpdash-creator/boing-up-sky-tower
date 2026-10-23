@@ -169,7 +169,7 @@ namespace BoingUpSkyTower.Gameplay
 
         Button ChooserButton(Transform parent, string label, bool primary, Vector2 anchor, Vector2 pos, Vector2 size, Action action)
         {
-            Sprite sprite = art != null ? ArtCatalog.Pick(art.Buttons, primary ? 1 : 0) : null;
+            Sprite sprite = ToyKit.Button(primary ? 1 : 2) ?? (art != null ? ArtCatalog.Pick(art.Buttons, primary ? 1 : 0) : null);
             Button b = UiKit.AddButton(parent, label, label, sprite, Color.white, size, action, 46);
             UiKit.Place((RectTransform)b.transform, anchor, pos, size);
             return b;

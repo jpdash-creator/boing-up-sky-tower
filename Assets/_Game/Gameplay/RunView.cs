@@ -265,10 +265,10 @@ namespace BoingUpSkyTower.Gameplay
         {
             Sprite[] sprites = region != null ? new[] { region.BgFar, region.BgMid, region.BgNear } : new Sprite[3];
             float[] factor = { 0.12f, 0.25f, 0.45f };
-            float[] alpha = { 1f, 0.30f, 0.16f };   // the mid and near layers are full pictures: faint, so they never ghost into a double image behind the platforms (owner, T15, 2026-10-20)
+            float[] alpha = { 1f, 0f, 0f };   // the mid and near layers are full pictures: faint, so they never ghost into a double image behind the platforms (owner, T15, 2026-10-20)
             for (int i = 0; i < 3; i++)
             {
-                if (sprites[i] == null) continue;
+                if (sprites[i] == null || alpha[i] <= 0f) continue;   // owner issue 14: calm background, no ghost layers behind the platforms
                 Vector2 size = sprites[i].bounds.size;
                 float scale = Mathf.Max(screenW * 1.1f / size.x, designHalfH * 2f * 1.05f / size.y);
                 var layer = new Layer { Factor = factor[i], Height = size.y * scale, Scale = scale, Tiles = new SpriteRenderer[3] };
@@ -276,7 +276,7 @@ namespace BoingUpSkyTower.Gameplay
                 {
                     var sr = NewSprite("bg" + i + "_" + k, sprites[i], -100 + i * 10);
                     sr.transform.localScale = new Vector3(scale, scale, 1f);
-                    sr.color = new Color(1f, 1f, 1f, alpha[i]);
+                    sr.color = i == 0 ? new Color(0.84f, 0.9f, 0.98f, 1f) : new Color(1f, 1f, 1f, alpha[i]);
                     layer.Tiles[k] = sr;
                 }
                 layers.Add(layer);
@@ -291,7 +291,7 @@ namespace BoingUpSkyTower.Gameplay
                 {
                     var sr = NewSprite("veil" + k, white, -75);
                     sr.transform.localScale = new Vector3(vs, vs, 1f);
-                    sr.color = new Color(1f, 1f, 1f, 0.14f);
+                    sr.color = new Color(0.08f, 0.2f, 0.42f, 0.42f);
                     veil.Tiles[k] = sr;
                 }
                 layers.Add(veil);
