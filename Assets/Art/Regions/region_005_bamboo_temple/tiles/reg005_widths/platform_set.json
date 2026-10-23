@@ -1,0 +1,155 @@
+{
+  "asset": "reg005_widths",
+  "ppuBake": 334.0,
+  "pieces": [
+    {
+      "w": 282,
+      "h": 130,
+      "bodyLeft": 24,
+      "bodyRight": 270,
+      "surfaceY": 37,
+      "bodyBottom": 118,
+      "width": 1.5,
+      "file": "reg005_w1_5.png",
+      "ppu": 164.0
+    },
+    {
+      "w": 365,
+      "h": 130,
+      "bodyLeft": 18,
+      "bodyRight": 353,
+      "surfaceY": 40,
+      "bodyBottom": 118,
+      "width": 2.0,
+      "file": "reg005_w2.png",
+      "ppu": 167.5
+    },
+    {
+      "w": 522,
+      "h": 140,
+      "bodyLeft": 11,
+      "bodyRight": 511,
+      "surfaceY": 68,
+      "bodyBottom": 127,
+      "width": 3.0,
+      "file": "reg005_w3.png",
+      "ppu": 166.667
+    },
+    {
+      "w": 688,
+      "h": 142,
+      "bodyLeft": 10,
+      "bodyRight": 677,
+      "surfaceY": 71,
+      "bodyBottom": 130,
+      "width": 4.0,
+      "file": "reg005_w4.png",
+      "ppu": 166.75
+    },
+    {
+      "w": 1022,
+      "h": 150,
+      "bodyLeft": 10,
+      "bodyRight": 1011,
+      "surfaceY": 80,
+      "bodyBottom": 138,
+      "width": 6.0,
+      "file": "reg005_w6.png",
+      "ppu": 166.833
+    },
+    {
+      "w": 1356,
+      "h": 150,
+      "bodyLeft": 10,
+      "bodyRight": 1345,
+      "surfaceY": 80,
+      "bodyBottom": 138,
+      "width": 8.0,
+      "file": "reg005_w8.png",
+      "ppu": 166.875
+    },
+    {
+      "w": 1690,
+      "h": 150,
+      "bodyLeft": 10,
+      "bodyRight": 1679,
+      "surfaceY": 80,
+      "bodyBottom": 138,
+      "width": 10.0,
+      "file": "reg005_w10.png",
+      "ppu": 166.9
+    },
+    {
+      "w": 557,
+      "h": 390,
+      "bodyLeft": 114,
+      "bodyRight": 449,
+      "surfaceY": 40,
+      "bodyBottom": 118,
+      "width": 2.0,
+      "file": "reg005_crumble_w2.png",
+      "ppu": 167.5,
+      "kind": "crumble"
+    },
+    {
+      "w": 880,
+      "h": 402,
+      "bodyLeft": 106,
+      "bodyRight": 773,
+      "surfaceY": 71,
+      "bodyBottom": 130,
+      "width": 4.0,
+      "file": "reg005_crumble_w4.png",
+      "ppu": 166.75,
+      "kind": "crumble"
+    },
+    {
+      "w": 557,
+      "h": 390,
+      "bodyLeft": 114,
+      "bodyRight": 449,
+      "surfaceY": 40,
+      "bodyBottom": 118,
+      "width": 2.0,
+      "file": "reg005_moving_w2.png",
+      "ppu": 167.5,
+      "kind": "moving"
+    },
+    {
+      "w": 880,
+      "h": 402,
+      "bodyLeft": 106,
+      "bodyRight": 773,
+      "surfaceY": 71,
+      "bodyBottom": 130,
+      "width": 4.0,
+      "file": "reg005_moving_w4.png",
+      "ppu": 166.75,
+      "kind": "moving"
+    },
+    {
+      "w": 557,
+      "h": 390,
+      "bodyLeft": 114,
+      "bodyRight": 449,
+      "surfaceY": 40,
+      "bodyBottom": 118,
+      "width": 2.0,
+      "file": "reg005_bounce_w2.png",
+      "ppu": 167.5,
+      "kind": "bounce"
+    },
+    {
+      "w": 880,
+      "h": 402,
+      "bodyLeft": 106,
+      "bodyRight": 773,
+      "surfaceY": 71,
+      "bodyBottom": 130,
+      "width": 4.0,
+      "file": "reg005_bounce_w4.png",
+      "ppu": 166.75,
+      "kind": "bounce"
+    }
+  ]
+}

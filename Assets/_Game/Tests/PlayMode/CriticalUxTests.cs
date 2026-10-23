@@ -314,7 +314,7 @@ namespace BoingUpSkyTower.Tests
         {
             var problems = new List<string>();
             int checkedPlatforms = 0;
-            foreach (string id in new[] { "lvl_001_01", "lvl_001_05", "lvl_001_07", "lvl_001_10" })
+            foreach (string id in new[] { "lvl_001_01", "lvl_001_05", "lvl_001_10", "lvl_002_03", "lvl_002_09", "lvl_003_04", "lvl_003_12", "lvl_004_06", "lvl_004_14", "lvl_005_02", "lvl_005_11" })
             {
                 GameSession.CurrentLevelId = id;
                 yield return Load("Run");
@@ -330,7 +330,7 @@ namespace BoingUpSkyTower.Tests
                     if (sr.drawMode != SpriteDrawMode.Simple) problems.Add(id + " " + sr.name + " draw mode " + sr.drawMode + " (stretches a slice)");
                 }
             }
-            Assert.Greater(checkedPlatforms, 20, "platforms were inspected");
+            Assert.Greater(checkedPlatforms, 60, "platforms were inspected");
             Report(problems);
         }
 
