@@ -26,6 +26,8 @@ namespace BoingUpSkyTower.Gameplay
         public Sprite[] WidthPieces = new Sprite[0];
         public PlatformMetric[] WidthMetrics = new PlatformMetric[0];
         public float[] WidthUnits = new float[0];
+        /// <summary>Kind of each width piece: 0 normal, 1 crumble, 2 moving, 3 bounce.</summary>
+        public int[] WidthKinds = new int[0];
         /// <summary>Seamless vertical wall tiles (mirrored middle band of the wall art): stacked edge to edge they never leave a gap.</summary>
         public Sprite WallTileL, WallTileR;
         /// <summary>Order: normal, narrow, moving, crumble, bounce.</summary>

@@ -78,6 +78,78 @@
       "width": 10.0,
       "file": "reg001_w10.png",
       "ppu": 166.9
+    },
+    {
+      "w": 548,
+      "h": 272,
+      "bodyLeft": 106,
+      "bodyRight": 440,
+      "surfaceY": 30,
+      "bodyBottom": 111,
+      "width": 2.0,
+      "file": "reg001_crumble_w2.png",
+      "ppu": 167.0,
+      "kind": "crumble"
+    },
+    {
+      "w": 880,
+      "h": 276,
+      "bodyLeft": 106,
+      "bodyRight": 773,
+      "surfaceY": 33,
+      "bodyBottom": 115,
+      "width": 4.0,
+      "file": "reg001_crumble_w4.png",
+      "ppu": 166.75,
+      "kind": "crumble"
+    },
+    {
+      "w": 548,
+      "h": 272,
+      "bodyLeft": 106,
+      "bodyRight": 440,
+      "surfaceY": 30,
+      "bodyBottom": 111,
+      "width": 2.0,
+      "file": "reg001_moving_w2.png",
+      "ppu": 167.0,
+      "kind": "moving"
+    },
+    {
+      "w": 880,
+      "h": 276,
+      "bodyLeft": 106,
+      "bodyRight": 773,
+      "surfaceY": 33,
+      "bodyBottom": 115,
+      "width": 4.0,
+      "file": "reg001_moving_w4.png",
+      "ppu": 166.75,
+      "kind": "moving"
+    },
+    {
+      "w": 548,
+      "h": 272,
+      "bodyLeft": 106,
+      "bodyRight": 440,
+      "surfaceY": 30,
+      "bodyBottom": 111,
+      "width": 2.0,
+      "file": "reg001_bounce_w2.png",
+      "ppu": 167.0,
+      "kind": "bounce"
+    },
+    {
+      "w": 880,
+      "h": 276,
+      "bodyLeft": 106,
+      "bodyRight": 773,
+      "surfaceY": 33,
+      "bodyBottom": 115,
+      "width": 4.0,
+      "file": "reg001_bounce_w4.png",
+      "ppu": 166.75,
+      "kind": "bounce"
     }
   ]
 }

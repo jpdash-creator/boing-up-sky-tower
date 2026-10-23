@@ -391,24 +391,17 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>Index of the painted piece for this width (kinds the width set covers), or -1 when the region has none (or the kind still uses the old pieces).</summary>
+        /// <summary>Index of the painted piece for this kind and width, or -1 when the region has none (the older pieces or code-drawn slab are used then).</summary>
         int WidthPieceIndex(Platform p, float width)
         {
             if (region == null || region.WidthPieces == null || region.WidthPieces.Length == 0) return -1;
-            switch (p.Kind)
-            {
-                case PlatformKind.Crumble:
-                case PlatformKind.Moving:
-                case PlatformKind.Bounce:
-                case PlatformKind.BounceCap:
-                    return -1;   // specials are built from the slabs plus overlays (later)
-            }
+            int kind = p.Kind == PlatformKind.Crumble ? 1 : p.Kind == PlatformKind.Moving ? 2 : (p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) ? 3 : 0;
             int best = -1;
             float bestDist = 0.26f;
             for (int k = 0; k < region.WidthUnits.Length; k++)
             {
                 float d = Mathf.Abs(region.WidthUnits[k] - width);
-                if (d < bestDist && region.WidthPieces[k] != null) { bestDist = d; best = k; }
+                if (d < bestDist && region.WidthPieces[k] != null && region.WidthKinds != null && k < region.WidthKinds.Length && region.WidthKinds[k] == kind) { bestDist = d; best = k; }
             }
             return best;
         }
@@ -580,7 +573,7 @@ namespace BoingUpSkyTower.Gameplay
             platformTf[i] = sr.transform;
 
             // Non-colour cue (CUX-6): a pattern strip on the walking surface.
-            int cue = p.Kind == PlatformKind.Sticky ? 0 : p.Kind == PlatformKind.Slippery ? 1 : p.Kind == PlatformKind.Vanishing ? 2 : ((p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) && piece < 0) ? 4 : -1;
+            int cue = p.Kind == PlatformKind.Sticky ? 0 : p.Kind == PlatformKind.Slippery ? 1 : p.Kind == PlatformKind.Vanishing ? 2 : ((p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) && piece < 0 && wp < 0) ? 4 : -1;
             if (cue >= 0)
             {
                 if (patterns == null) patterns = new Sprite[5];

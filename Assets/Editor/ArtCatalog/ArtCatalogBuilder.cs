@@ -125,10 +125,13 @@ namespace BoingUpSkyTower.Editor
                 ra.WidthPieces = new Sprite[wp.Count];
                 ra.WidthMetrics = new PlatformMetric[wp.Count];
                 ra.WidthUnits = new float[wp.Count];
+                ra.WidthKinds = new int[wp.Count];
                 for (int k = 0; k < wp.Count; k++)
                 {
                     ra.WidthPieces[k] = AssetDatabase.LoadAssetAtPath<Sprite>(widthDir + "/" + (string)wp[k]["file"]);
                     ra.WidthUnits[k] = (float)wp[k]["width"];
+                    string kindName = wp[k]["kind"] != null ? (string)wp[k]["kind"] : "normal";
+                    ra.WidthKinds[k] = kindName == "crumble" ? 1 : kindName == "moving" ? 2 : kindName == "bounce" ? 3 : 0;
                     ra.WidthMetrics[k] = new PlatformMetric
                     {
                         W = (float)wp[k]["w"], H = (float)wp[k]["h"], BodyLeft = (float)wp[k]["bodyLeft"], BodyRight = (float)wp[k]["bodyRight"],

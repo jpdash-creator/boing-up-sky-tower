@@ -69,6 +69,114 @@ MonoBehaviour:
       BodyRight: 526
       SurfaceY: 69
       BodyBottom: 160
+    WidthPieces:
+    - {fileID: 21300000, guid: d9fac4851439bcb4e8536c16437fdfea, type: 3}
+    - {fileID: 21300000, guid: 4fd2c9d0cee929a4dbf9b9a4f47ea633, type: 3}
+    - {fileID: 21300000, guid: 88f95b7367a11f841bce44f6de1f143d, type: 3}
+    - {fileID: 21300000, guid: 01f4b5ce2f06cb045b008037f342a2b4, type: 3}
+    - {fileID: 21300000, guid: f5cc66b72e077ef438ab6091380059df, type: 3}
+    - {fileID: 21300000, guid: 62be651ccf47fda428f49a81196978eb, type: 3}
+    - {fileID: 21300000, guid: d71a1ceeb85149f438df4c1cb5da84ad, type: 3}
+    - {fileID: 21300000, guid: 9f281e64a9b2c5f408c4a405e2506dde, type: 3}
+    - {fileID: 21300000, guid: f2981469f33ad6e4eb0add571908b9e5, type: 3}
+    - {fileID: 21300000, guid: e5db0ef4041fc714887ef3aed0446333, type: 3}
+    - {fileID: 21300000, guid: c51edd1baa522c946a92d6e5bb7fdc07, type: 3}
+    - {fileID: 21300000, guid: 08821c30b3de7ff4bbe4b5064e5048cc, type: 3}
+    - {fileID: 21300000, guid: 2c631b5621076c34f9341cfdaf5da174, type: 3}
+    WidthMetrics:
+    - W: 272
+      H: 124
+      BodyLeft: 10
+      BodyRight: 260
+      SurfaceY: 29
+      BodyBottom: 112
+    - W: 356
+      H: 122
+      BodyLeft: 10
+      BodyRight: 344
+      SurfaceY: 30
+      BodyBottom: 111
+    - W: 524
+      H: 124
+      BodyLeft: 11
+      BodyRight: 512
+      SurfaceY: 31
+      BodyBottom: 112
+    - W: 688
+      H: 126
+      BodyLeft: 10
+      BodyRight: 677
+      SurfaceY: 33
+      BodyBottom: 115
+    - W: 1023
+      H: 124
+      BodyLeft: 10
+      BodyRight: 1011
+      SurfaceY: 29
+      BodyBottom: 113
+    - W: 1357
+      H: 124
+      BodyLeft: 10
+      BodyRight: 1345
+      SurfaceY: 29
+      BodyBottom: 113
+    - W: 1691
+      H: 124
+      BodyLeft: 10
+      BodyRight: 1679
+      SurfaceY: 29
+      BodyBottom: 113
+    - W: 548
+      H: 272
+      BodyLeft: 106
+      BodyRight: 440
+      SurfaceY: 30
+      BodyBottom: 111
+    - W: 880
+      H: 276
+      BodyLeft: 106
+      BodyRight: 773
+      SurfaceY: 33
+      BodyBottom: 115
+    - W: 548
+      H: 272
+      BodyLeft: 106
+      BodyRight: 440
+      SurfaceY: 30
+      BodyBottom: 111
+    - W: 880
+      H: 276
+      BodyLeft: 106
+      BodyRight: 773
+      SurfaceY: 33
+      BodyBottom: 115
+    - W: 548
+      H: 272
+      BodyLeft: 106
+      BodyRight: 440
+      SurfaceY: 30
+      BodyBottom: 111
+    - W: 880
+      H: 276
+      BodyLeft: 106
+      BodyRight: 773
+      SurfaceY: 33
+      BodyBottom: 115
+    WidthUnits:
+    - 1.5
+    - 2
+    - 3
+    - 4
+    - 6
+    - 8
+    - 10
+    - 2
+    - 4
+    - 2
+    - 4
+    - 2
+    - 4
+    WidthKinds: 00000000000000000000000000000000000000000000000000000000010000000100000002000000020000000300000003000000
     WallTileL: {fileID: 21300000, guid: 4ac2f7f0d37fdef4a954ac099dba5680, type: 3}
     WallTileR: {fileID: 21300000, guid: 1ab090affd2130e499e998621191fdbb, type: 3}
     Metrics:
@@ -173,6 +281,10 @@ MonoBehaviour:
       BodyRight: 537
       SurfaceY: 65
       BodyBottom: 190
+    WidthPieces: []
+    WidthMetrics: []
+    WidthUnits: []
+    WidthKinds: 
     WallTileL: {fileID: 21300000, guid: 8d8c416ac7b93b44583898454228c7f1, type: 3}
     WallTileR: {fileID: 21300000, guid: 7f7d14f9a053137469f12c4f5ea4b75e, type: 3}
     Metrics:
@@ -279,6 +391,10 @@ MonoBehaviour:
       BodyRight: 525
       SurfaceY: 76
       BodyBottom: 180
+    WidthPieces: []
+    WidthMetrics: []
+    WidthUnits: []
+    WidthKinds: 
     WallTileL: {fileID: 21300000, guid: 34b4381e3cab5384889368ac44811ad8, type: 3}
     WallTileR: {fileID: 21300000, guid: a76bf2aeeb1c41d4088ab6064f1ce63c, type: 3}
     Metrics:
@@ -367,7 +483,7 @@ MonoBehaviour:
       SurfaceY: 98
       BodyBottom: 265
     - W: 796
-      H: 428
+      H: 473
       BodyLeft: 13
       BodyRight: 762
       SurfaceY: 107
@@ -384,6 +500,10 @@ MonoBehaviour:
       BodyRight: 474
       SurfaceY: 157
       BodyBottom: 454
+    WidthPieces: []
+    WidthMetrics: []
+    WidthUnits: []
+    WidthKinds: 
     WallTileL: {fileID: 21300000, guid: 5d8a89bdb8b571b4f9555a35fcf118b2, type: 3}
     WallTileR: {fileID: 21300000, guid: fe1e8e12f65524845abe30fbe057b9f8, type: 3}
     Metrics:
@@ -489,6 +609,10 @@ MonoBehaviour:
       BodyRight: 483
       SurfaceY: 147
       BodyBottom: 328
+    WidthPieces: []
+    WidthMetrics: []
+    WidthUnits: []
+    WidthKinds: 
     WallTileL: {fileID: 21300000, guid: 2304a807df8213b40b5ac04d7be1d668, type: 3}
     WallTileR: {fileID: 21300000, guid: 09a30e00bfe8b7a4899cf46086280093, type: 3}
     Metrics:

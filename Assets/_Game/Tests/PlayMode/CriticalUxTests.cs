@@ -306,6 +306,34 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
+        /// <summary>CUX-9 addendum (owner, 2026-10-23): no platform image is stretched. Every platform sprite of a region that has painted width pieces is drawn
+        /// Simple with the same X and Y scale (one uniform scale); a stretched slice or a non-uniform scale fails the test.</summary>
+        [UnityTest]
+        [Category("CriticalUX")]
+        public IEnumerator NoPlatformImageIsStretched()
+        {
+            var problems = new List<string>();
+            int checkedPlatforms = 0;
+            foreach (string id in new[] { "lvl_001_01", "lvl_001_05", "lvl_001_07", "lvl_001_10" })
+            {
+                GameSession.CurrentLevelId = id;
+                yield return Load("Run");
+                var rc = Object.FindFirstObjectByType<RunController>();
+                Assert.IsNotNull(rc, id);
+                yield return null;
+                foreach (SpriteRenderer sr in Object.FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None))
+                {
+                    if (!sr.gameObject.name.StartsWith("plat") || !sr.gameObject.activeInHierarchy) continue;
+                    checkedPlatforms++;
+                    Vector3 ls = sr.transform.lossyScale;
+                    if (Mathf.Abs(ls.x - ls.y) > 0.001f * Mathf.Max(ls.x, ls.y)) problems.Add(id + " " + sr.name + " non-uniform scale " + ls);
+                    if (sr.drawMode != SpriteDrawMode.Simple) problems.Add(id + " " + sr.name + " draw mode " + sr.drawMode + " (stretches a slice)");
+                }
+            }
+            Assert.Greater(checkedPlatforms, 20, "platforms were inspected");
+            Report(problems);
+        }
+
         [UnityTest]
         public IEnumerator RunScreensHaveNoOverlapAndFitEveryAspect() { return RunAudit(100, false); }
 
