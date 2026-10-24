@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BoingUpSkyTower.Economy;
 using BoingUpSkyTower.Simulation;
 using UnityEngine;
 
@@ -773,7 +774,19 @@ namespace BoingUpSkyTower.Gameplay
                 player.localScale = new Vector3(s, s, 1f);
             }
             else player.localScale = new Vector3(0.9f, playerHeight, 1f);
+            // The selected character's colour and the gear it wears (docs/15): ornamental only, no effect on the simulation.
+            ProgressService prog = GameSession.Progress;
+            if (prog != null)
+            {
+                string hero = prog.SelectedHeroId;
+                playerTint = GearArt.PlayerTint(hero);
+                playerSr.color = playerTint;
+                gearSr = GearArt.AttachToRunPlayer(player, art != null ? art.Player : null, hero, prog, 10);
+            }
         }
+
+        Color playerTint = Color.white;
+        SpriteRenderer[] gearSr = new SpriteRenderer[0];
 
         Pop MakePop()
         {
@@ -1008,7 +1021,9 @@ namespace BoingUpSkyTower.Gameplay
             }
             player.position = new Vector3(px, py + h * 0.5f, 0f);
             player.rotation = reduced ? Quaternion.identity : Quaternion.Euler(0f, 0f, Mathf.Clamp(-s.Vx.F() * 40f, -12f, 12f));
-            playerSr.color = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;
+            bool ghost = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0);
+            playerSr.color = ghost ? new Color(playerTint.r, playerTint.g, playerTint.b, 0.55f) : playerTint;
+            for (int gi = 0; gi < gearSr.Length; gi++) gearSr[gi].color = ghost ? new Color(1f, 1f, 1f, 0.55f) : Color.white;
             UpdatePowerFx(px, py + h * 0.5f);
 
             // Platforms (moving ones follow the sim, vanishing ones blink, crumbling ones fade).
