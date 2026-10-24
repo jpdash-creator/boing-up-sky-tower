@@ -36,6 +36,16 @@ POLY_DOLL = {   # the assembled grey doll itself (make_generic_mannequin.py): us
     "legR":  ("round",   (715, 1180, 895, 1520)),
     "body":  ("round",   (390, 940, 975, 1320)),
 }
+POLY_SPORE = {   # zones measured on the registered Sporeling painting: plain partition lines (chin line, arm/torso lines, hip line)
+    "head":  ("rect", (0, 0, 1365, 960)),
+    "handL": ("rect", (0, 900, 395, 1500)),
+    "handR": ("rect", (975, 900, 1365, 1500)),
+    "body":  ("rect", (395, 960, 975, 1320)),
+    "footL": ("rect", (395, 1320, 682, 1649)),
+    "footR": ("rect", (682, 1320, 975, 1649)),
+    "legL":  ("rect", (395, 1320, 682, 1649)),
+    "legR":  ("rect", (682, 1320, 975, 1649)),
+}
 PRIORITY = ["head", "handL", "handR", "footL", "footR", "legL", "legR", "body"]
 OUT_PARTS = {"head": "head", "handL": "handL", "handR": "handR", "footL": "legL", "legL": "legL", "footR": "legR", "legR": "legR", "body": "body"}
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
@@ -44,7 +54,9 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 def poly_mask(kind, box):
     m = np.zeros((H, W), np.uint8)
     x0, y0, x1, y1 = [int(v) for v in box]
-    if kind == "ellipse":
+    if kind == "rect":
+        cv2.rectangle(m, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), 255, -1)
+    elif kind == "ellipse":
         cv2.ellipse(m, ((x0 + x1) // 2, (y0 + y1) // 2), ((x1 - x0) // 2, (y1 - y0) // 2), 0, 0, 360, 255, -1)
     else:
         r = min(x1 - x0, y1 - y0) // 2
@@ -115,6 +127,9 @@ def main():
     img = cv2.cvtColor(cv2.imread(src), cv2.COLOR_BGR2RGB)
     alpha = key_background(img)
     cc, Af = register(alpha)
+    if zones == "spore":
+        POLY = POLY_SPORE
+        cc, Af = refine_to_doll(alpha, Af)
     if zones == "doll":
         POLY = POLY_DOLL
         cc, Af = refine_to_doll(alpha, Af)
