@@ -506,6 +506,86 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-tab2-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_rocket"), PowerUpCurrency.Coins); }, problems);
             Report(problems);
         }
+
+        // ---- gear, heroes, chests and VIP (docs/15): every screen and popup, empty and full ----
+
+        [UnityTest]
+        public IEnumerator WardrobeAndChestScreensHaveNoOverlapAndFitEveryAspect() { return WardrobeAudit(100); }
+
+        /// <summary>CUX-5: the gear, heroes, chest and VIP screens survive the 130 percent text size.</summary>
+        [UnityTest]
+        public IEnumerator WardrobeAndChestScreensSurvive130PercentText() { return WardrobeAudit(130); }
+
+        IEnumerator WardrobeAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            ShopScreen.TestPurchasesOverride = null;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            ProgressService p = GameSession.Progress;
+            p.AddCoins(60000);
+            p.AddGems(1000);
+
+            // Gear: empty wardrobe, every slot, then a full wardrobe with a worn piece in each slot.
+            yield return CheckScreen("gear-empty", () => meta.ShowGear("char_momo", GearSlot.Hat), problems);
+            foreach (GearSlot slot in new[] { GearSlot.Shirt, GearSlot.Pants, GearSlot.Boots })
+            {
+                GearSlot sl = slot;
+                yield return CheckScreen("gear-" + sl, () => meta.ShowGear("char_momo", sl), problems);
+            }
+            foreach (GearDef g in p.GearDefs.All) p.GrantGear(g.Id);
+            p.EquipGear("char_momo", "hat_wizard_hat");
+            p.EquipGear("char_momo", "shirt_star_jacket");
+            p.EquipGear("char_momo", "pants_racing_pants");
+            p.EquipGear("char_momo", "boots_golden_boots");
+            yield return CheckScreen("gear-full-hat", () => meta.ShowGear("char_momo", GearSlot.Hat), problems);
+            yield return CheckScreen("gear-full-boots", () => meta.ShowGear("char_momo", GearSlot.Boots), problems);
+            yield return CheckScreen("menu-dressed", () => meta.ShowMenu(), problems);
+
+            // Heroes: owned, for sale, a Legendary, a locked region, after buying.
+            yield return CheckScreen("heroes-owned", () => meta.ShowHeroes("char_momo"), problems);
+            yield return CheckScreen("heroes-for-sale", () => meta.ShowHeroes("char_pip"), problems);
+            yield return CheckScreen("heroes-legendary", () => meta.ShowHeroes("char_petal"), problems);
+            yield return CheckScreen("heroes-locked-region", () => meta.ShowHeroes("char_baroncap"), problems);
+            Assert.AreEqual(StoreBuyResult.Ok, p.TryBuyHero("char_clover"));
+            p.SelectHero("char_clover");
+            yield return CheckScreen("heroes-selected", () => meta.ShowHeroes("char_clover"), problems);
+
+            // Shop chests: three kinds, none owned and all owned; details, opening, not enough.
+            yield return CheckScreen("shop-chests-coin", () => meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-chests-gear", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.SelectChestKind(ChestKind.Gear); }, problems);
+            yield return CheckScreen("shop-chests-powerup", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.SelectChestKind(ChestKind.Powerup); }, problems);
+            ShopScreen.TestPurchasesOverride = true;
+            yield return CheckScreen("shop-chests-test", () => meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection), problems);
+            ShopScreen.TestPurchasesOverride = null;
+            foreach (ChestDef d in p.ChestDefs.All) p.GrantChest(d.Id, 12);
+            yield return CheckScreen("shop-chests-owned", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.SelectChestKind(ChestKind.Gear); }, problems);
+            yield return CheckScreen("shop-chest-details", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.ShowChestDetails(p.ChestDefs.Get("gear_epic")); }, problems);
+            yield return CheckScreen("shop-chest-opened-gear", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.OpenChestWithSeed(p.ChestDefs.Get("gear_rare"), 3); }, problems);
+            yield return CheckScreen("shop-chest-opened-coin", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.OpenChestWithSeed(p.ChestDefs.Get("coin_legendary"), 4); }, problems);
+            yield return CheckScreen("shop-chest-opened-powerup", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.OpenChestWithSeed(p.ChestDefs.Get("powerup_legendary"), 5); }, problems);
+            yield return CheckScreen("shop-chest-confirm-gems", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapBuyChest(p.ChestDefs.Get("coin_epic")); }, problems);
+
+            // VIP: the six cards, a card with the current tier, the details popup, the development popup.
+            yield return CheckScreen("shop-vip", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-vip-details", () => { meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection); meta.CurrentShop.ShowVipDetails(VipCatalog.All[5]); }, problems);
+            p.TestSetVipTier(3);
+            yield return CheckScreen("shop-vip-current", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection), problems);
+            ShopScreen.TestPurchasesOverride = true;
+            yield return CheckScreen("shop-vip-details-test", () => { meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection); meta.CurrentShop.ShowVipDetails(VipCatalog.All[2]); }, problems);
+            ShopScreen.TestPurchasesOverride = null;
+
+            // Not enough money everywhere (an empty wallet).
+            p.TrySpendCoins(p.Coins);
+            p.TrySpendGems(p.Gems);
+            yield return CheckScreen("shop-chest-not-enough-coins", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapBuyChest(p.ChestDefs.Get("gear_common")); }, problems);
+            yield return CheckScreen("shop-chest-not-enough-gems", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapBuyChest(p.ChestDefs.Get("gear_legendary")); }, problems);
+            ProgressService.TestUnlockAll = false;
+            ProgressService fresh = p;
+            yield return CheckScreen("heroes-not-enough-popup", () => { meta.ShowHeroes("char_pip"); meta.TapBuyHero(fresh.HeroDefs.Get("char_pip")); }, problems);
+            Report(problems);
+        }
     }
 
     /// <summary>CUX-1: the run loop stays inside its frame budget and does not allocate per frame, on the hardest content.</summary>
