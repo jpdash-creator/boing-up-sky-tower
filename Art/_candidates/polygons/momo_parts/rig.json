@@ -1,0 +1,16 @@
+{
+  "canvas": [
+    1365,
+    1649
+  ],
+  "order": [
+    "back",
+    "legL",
+    "legR",
+    "body",
+    "handL",
+    "handR",
+    "head"
+  ],
+  "ecc": 1.0
+}
