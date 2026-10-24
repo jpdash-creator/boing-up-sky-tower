@@ -1043,6 +1043,8 @@ namespace BoingUpSkyTower.Gameplay
                     Color c = PlatformTint(p.Kind);
                     c.a = solid ? 1f : 0.2f;
                     if (p.Kind == PlatformKind.Crumble && s.CrumbleTick[i] >= 0 && solid) c.a = reduced ? 0.7f : 0.6f + 0.4f * Mathf.Abs(Mathf.Sin(tick * 0.3f));
+                    // Vanishing platforms warn before they go (CUX-7); reduced motion gets a steady dim instead of a blink (CUX-6).
+                    if (p.Kind == PlatformKind.Vanishing && solid && session.Sim.VanishWarning(p.Id, tick)) c.a = reduced ? 0.55f : (((tick / 12) & 1) == 0 ? 1f : 0.45f);
                     sr.color = c;
                     if (cueSr[i] != null) cueSr[i].color = new Color(1f, 1f, 1f, c.a);
                 }

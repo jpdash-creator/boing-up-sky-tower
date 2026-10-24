@@ -48,6 +48,8 @@ namespace BoingUpSkyTower.Simulation
         public int CrumbleTicks = 30;
         public int VanishVisibleTicks = 150;
         public int VanishHiddenTicks = 60;
+        /// <summary>The platform blinks for this many ticks before it vanishes (Sim.VanishWarning).</summary>
+        public int VanishWarnTicks = 45;
 
         // Scroll pressure (kill zone). Units per second at d = 0 and d = 1.
         public Fx ScrollSpeedEasy = Fx.FromRatio(1, 2);
@@ -108,7 +110,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Drifting platforms are narrowed to at most this width so the sway has room, u.</summary>
         public Fx DriftMaxWidth = Fx.FromInt(4);
         /// <summary>Largest gap generated right above a Sticky platform, u (sticky jumps reach only about 0.49 of the normal height).</summary>
-        public Fx StickyNextGapMax = Fx.FromRatio(22, 10);
+        public Fx StickyNextGapMax = Fx.FromRatio(18, 10);
         /// <summary>
         /// After a Bounce or BounceCap platform the landing speed is not chosen by the player, so the generator keeps the next
         /// row close: gap at most BounceNextGapMax and edge-to-edge horizontal distance at most BounceNextDxMax (u).

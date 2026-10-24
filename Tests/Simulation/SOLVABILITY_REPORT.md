@@ -59,19 +59,19 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_003_15 | highly complex | 1.000 | bossChase 250 | 250 | yes | 265 | 11563 | 0 | 0 | NO (10 / 490) | yes (solved without a revive) |
 | lvl_004_01 | simple | 0.074 | reachFloor 60 | 60 | yes | 59 | 2791 | 0 | 0 | yes (145 / 120) | yes (solved without a revive) |
 | lvl_004_02 | simple | 0.123 | reachFloor 90 | 90 | yes | 91 | 4313 | 5 | 0 | yes (215 / 170) | yes (solved without a revive) |
-| lvl_004_03 | simple | 0.171 | reachFloor 120 | 120 | yes | 145 | 6885 | 0 | 0 | yes (230 / 225) | yes (solved without a revive) |
-| lvl_004_04 | simple | 0.240 | reachFloor 100 | 100 | yes | 126 | 5639 | 0 | 0 | yes (150 / 15) | yes (solved without a revive) |
-| lvl_004_05 | complex | 0.415 | comboChain 3x2 | 60 | yes | 23 | 1026 | 5 | 0 | NO (25 / 70) | yes (solved without a revive) |
-| lvl_004_06 | medium | 0.366 | reachFloor 160 | 160 | yes | 203 | 9251 | 0 | 0 | NO (135 / 310) | yes (solved without a revive) |
-| lvl_004_07 | medium | 0.435 | noWallBounce 120 | 120 | yes | 148 | 6320 | 0 | 0 | NO (45 / 240) | yes (solved without a revive) |
-| lvl_004_08 | medium | 0.512 | findHiddenGem | 60 | yes | 64 | 1444 | 0 | 0 | NO (0 / 60) | yes (solved without a revive) |
-| lvl_004_09 | medium | 0.590 | reachFloor 180 | 180 | yes | 233 | 10220 | 0 | 0 | NO (45 / 380) | yes (solved without a revive) |
-| lvl_004_10 | complex | 0.707 | surviveWave | 60 | yes | 77 | 3590 | 0 | 8 | NO (35 / 160) | yes (solved without a revive) |
-| lvl_004_11 | hard | 0.629 | comboChain 6x1 | 60 | yes | 330 | 1261 | 0 | 0 | NO (10 / 55) | yes (solved without a revive) |
-| lvl_004_12 | hard | 0.707 | reachFloor 200 | 200 | yes | 269 | 11744 | 0 | 0 | NO (50 / 440) | yes (solved without a revive) |
-| lvl_004_13 | hard | 0.785 | reachFloor 220 | 220 | yes | 284 | 12693 | 0 | 0 | NO (70 / 455) | yes (solved without a revive) |
-| lvl_004_14 | hard | 0.863 | reachFloor 240 | 240 | yes | 307 | 13605 | 0 | 0 | NO (70 / 500) | yes (solved without a revive) |
-| lvl_004_15 | highly complex | 1.000 | bossChase 250 | 250 | yes | 299 | 12766 | 0 | 0 | NO (50 / 500) | yes (solved without a revive) |
+| lvl_004_03 | simple | 0.171 | reachFloor 120 | 120 | yes | 127 | 5941 | 5 | 0 | yes (230 / 225) | yes (solved without a revive) |
+| lvl_004_04 | simple | 0.240 | reachFloor 100 | 100 | yes | 105 | 4596 | 0 | 0 | yes (150 / 15) | yes (solved without a revive) |
+| lvl_004_05 | complex | 0.415 | comboChain 3x2 | 60 | yes | 20 | 865 | 5 | 0 | NO (25 / 70) | yes (solved without a revive) |
+| lvl_004_06 | medium | 0.366 | reachFloor 160 | 160 | yes | 182 | 8200 | 0 | 0 | NO (135 / 310) | yes (solved without a revive) |
+| lvl_004_07 | medium | 0.435 | noWallBounce 120 | 120 | yes | 126 | 5258 | 0 | 0 | NO (45 / 240) | yes (solved without a revive) |
+| lvl_004_08 | medium | 0.512 | findHiddenGem | 60 | yes | 154 | 1524 | 0 | 0 | NO (0 / 60) | yes (solved without a revive) |
+| lvl_004_09 | medium | 0.590 | reachFloor 180 | 180 | yes | 215 | 9588 | 0 | 0 | NO (70 / 380) | yes (solved without a revive) |
+| lvl_004_10 | complex | 0.707 | surviveWave | 60 | yes | 74 | 3506 | 0 | 9 | NO (45 / 160) | yes (solved without a revive) |
+| lvl_004_11 | hard | 0.629 | comboChain 6x1 | 60 | yes | 331 | 1319 | 0 | 0 | NO (10 / 55) | yes (solved without a revive) |
+| lvl_004_12 | hard | 0.707 | reachFloor 200 | 200 | yes | 241 | 10554 | 0 | 0 | NO (60 / 440) | yes (solved without a revive) |
+| lvl_004_13 | hard | 0.785 | reachFloor 220 | 220 | yes | 274 | 12250 | 0 | 0 | NO (75 / 455) | yes (solved without a revive) |
+| lvl_004_14 | hard | 0.863 | reachFloor 240 | 240 | yes | 296 | 13367 | 5 | 0 | NO (115 / 500) | yes (solved without a revive) |
+| lvl_004_15 | highly complex | 1.000 | bossChase 250 | 250 | yes | 291 | 12645 | 0 | 0 | NO (50 / 500) | yes (solved without a revive) |
 | lvl_005_01 | simple | 0.082 | reachFloor 60 | 60 | yes | 64 | 3127 | 0 | 0 | yes (145 / 110) | yes (solved without a revive) |
 | lvl_005_02 | simple | 0.131 | reachFloor 90 | 90 | yes | 92 | 4399 | 5 | 0 | yes (200 / 175) | yes (solved without a revive) |
 | lvl_005_03 | simple | 0.179 | reachFloor 120 | 120 | yes | 132 | 6237 | 0 | 3 | NO (215 / 225) | yes (solved without a revive) |
