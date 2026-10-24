@@ -8,8 +8,8 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The shop's Chests tab (owner reference 2, docs/17 section D): two big chest cards, blue Iron and gold Golden, each with the chest picture, the gear rarities it
-    /// can drop with their odds, what else it holds as icons and numbers, and two buttons: open 1 and open 10 with the gem price. Opening plays a reveal.
+    /// The shop's Chests tab: two big chest cards, blue Iron and gold Golden, each with the chest picture, what it holds as icons and numbers (power-ups and coins),
+    /// and two buttons: open 1 and open 10 with the gem price. Opening plays a reveal.
     /// Gems only; too few gems offers the gem packs through an icon. Menu screen only: no per-frame code except the reveal animation.
     /// </summary>
     public sealed partial class ShopScreen
@@ -78,74 +78,17 @@ namespace BoingUpSkyTower.Gameplay
             pic.gameObject.AddComponent<A11yLabel>().Text = "What is in the " + look.Name;
             AddInfoDot(pic.transform);
 
-            // right side: gear rarities with their odds, then the power-ups and coins it holds
+            // right side: the power-ups and coins it holds
             RectTransform right = UiKit.Rect(card, "Contents");
             right.anchorMin = new Vector2(0f, 1f);
             right.anchorMax = new Vector2(1f, 1f);
             right.pivot = new Vector2(0.5f, 1f);
             right.offsetMin = new Vector2(360f, -330f);
             right.offsetMax = new Vector2(-40f, -34f);
-            BuildRarityChips(right, kind, 0f, 140f);
-            BuildContentPills(right, kind, 170f, 100f);
+            BuildContentPills(right, kind, 90f, 110f);
 
             BuildOpenButton(card, kind, 1, 0);
             BuildOpenButton(card, kind, 10, 1);
-        }
-
-        /// <summary>Three rarity chips: frame colour, 1 to 5 pips and the odds as a number.</summary>
-        void BuildRarityChips(RectTransform parent, ChestKind kind, float y, float h)
-        {
-            int[] odds = kind == ChestKind.Iron ? ChestRolls.IronGearPercent : ChestRolls.GoldenGearPercent;
-            GearRarity low = ChestRolls.LowestRarity(kind);
-            RectTransform row = UiKit.Rect(parent, "Rarities");
-            row.anchorMin = new Vector2(0f, 1f);
-            row.anchorMax = new Vector2(1f, 1f);
-            row.pivot = new Vector2(0.5f, 1f);
-            row.anchoredPosition = new Vector2(0f, -y);
-            row.sizeDelta = new Vector2(0f, h);
-            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            hl.spacing = 12f;
-            hl.childControlWidth = hl.childControlHeight = true;
-            hl.childForceExpandWidth = hl.childForceExpandHeight = true;
-            for (int i = 0; i < odds.Length; i++)
-            {
-                var r = (GearRarity)((int)low + i);
-                Image chip = UiKit.AddImage(row, "Chip" + i, Theme.RoundSprite, GearUi.Frame(r));
-                chip.type = Image.Type.Sliced;
-                chip.preserveAspect = false;
-                chip.pixelsPerUnitMultiplier = 2.2f;
-                chip.name = "Chip" + i;
-                Image fill = UiKit.AddImage(chip.transform, "Fill", Theme.RoundSprite, GearUi.Fill(r));
-                fill.type = Image.Type.Sliced;
-                fill.preserveAspect = false;
-                fill.pixelsPerUnitMultiplier = 2.6f;
-                fill.rectTransform.anchorMin = Vector2.zero;
-                fill.rectTransform.anchorMax = Vector2.one;
-                fill.rectTransform.offsetMin = new Vector2(6f, 6f);
-                fill.rectTransform.offsetMax = new Vector2(-6f, -6f);
-                // pips (rarity by shape count, not colour alone)
-                int pips = (int)r + 1;
-                for (int p = 0; p < pips; p++)
-                {
-                    Image dot = UiKit.AddImage(fill.transform, "Pip" + p, Theme.RoundSprite, Color.white);
-                    dot.type = Image.Type.Sliced;
-                    dot.preserveAspect = false;
-                    dot.rectTransform.anchorMin = dot.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-                    dot.rectTransform.pivot = new Vector2(0.5f, 1f);
-                    dot.rectTransform.sizeDelta = new Vector2(16f, 16f);
-                    dot.rectTransform.anchoredPosition = new Vector2((p - (pips - 1) * 0.5f) * 22f, -10f);
-                }
-                Text t = UiKit.AddText(fill.transform, "Odds", odds[i] + "%", 46, UiKit.ButtonInk, TextAnchor.LowerCenter, true);
-                t.horizontalOverflow = HorizontalWrapMode.Overflow;
-                var o = t.GetComponent<Outline>();
-                if (o != null) o.enabled = false;
-                var trt = (RectTransform)t.transform;
-                trt.anchorMin = Vector2.zero;
-                trt.anchorMax = Vector2.one;
-                trt.offsetMin = new Vector2(0f, 8f);
-                trt.offsetMax = new Vector2(0f, -34f);
-                chip.gameObject.AddComponent<A11yLabel>().Text = GearCatalog.RarityNames[(int)r] + " gear, " + odds[i] + " percent";
-            }
         }
 
         /// <summary>Power-ups (bolt, count) and coins (coin, most) the chest holds, as two icon pills.</summary>
@@ -259,8 +202,7 @@ namespace BoingUpSkyTower.Gameplay
             box.pivot = new Vector2(0.5f, 1f);
             box.offsetMin = new Vector2(60f, -800f);
             box.offsetMax = new Vector2(-60f, -450f);
-            BuildRarityChips(box, kind, 0f, 140f);
-            BuildContentPills(box, kind, 170f, 100f);
+            BuildContentPills(box, kind, 60f, 110f);
             // every power-up type it can give
             RectTransform types = UiKit.Rect(panel, "Types");
             types.anchorMin = new Vector2(0f, 1f);
@@ -287,24 +229,17 @@ namespace BoingUpSkyTower.Gameplay
         {
             RectTransform overlay = host.NewOverlay();
             // what dropped, counted first so the card is only as tall as its contents (no empty space)
-            var gearIds = new List<string>();
             int coins = 0;
             var units = new Dictionary<string, int>();
             var order = new List<string>();
             foreach (ChestContents c in contents)
             {
-                gearIds.AddRange(c.Gear);
                 coins += c.Coins;
                 foreach (string id in c.PowerUps) { if (!units.ContainsKey(id)) { units[id] = 0; order.Add(id); } units[id]++; }
             }
-            const float tile = 150f, gap = 10f;
-            const int cols = 5;
-            int rows = (gearIds.Count + cols - 1) / cols;
-            float gearH = gearIds.Count == 0 ? 0f : Mathf.Min(570f, rows * (tile + gap) - gap);
             int chipRows = (order.Count + 3) / 4;
             float chipsH = order.Count == 0 ? 0f : chipRows * 104f - 8f;
             float y = 410f;                                   // below the chest
-            float gearY = y; y += gearH + (gearH > 0f ? 30f : 0f);
             float chipsY = y; y += chipsH + (chipsH > 0f ? 30f : 0f);
             float coinY = y; y += 100f + 30f;
             float doneY = y;                                  // the green tick sits under the last block
@@ -320,40 +255,6 @@ namespace BoingUpSkyTower.Gameplay
             pic.rectTransform.pivot = new Vector2(0.5f, 1f);
             anim.Chest = pic.rectTransform;
             anim.ChestImage = pic;
-
-            // all gear dropped by the opening: one tile per piece, a scrolling grid
-            RectTransform vp = UiKit.Rect(panel, "GearViewport");
-            vp.anchorMin = new Vector2(0.5f, 1f);
-            vp.anchorMax = new Vector2(0.5f, 1f);
-            vp.pivot = new Vector2(0.5f, 1f);
-            float width = cols * tile + (cols - 1) * gap;
-            vp.sizeDelta = new Vector2(width + 10f, gearH);
-            vp.anchoredPosition = new Vector2(0f, -gearY);
-            vp.gameObject.AddComponent<RectMask2D>();
-            var vhit = vp.gameObject.AddComponent<Image>();
-            vhit.color = new Color(0f, 0f, 0f, 0f);
-            RectTransform content = UiKit.Rect(vp, "GearContent");
-            content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
-            content.pivot = new Vector2(0.5f, 1f);
-            content.anchoredPosition = Vector2.zero;
-            content.sizeDelta = new Vector2(width, Mathf.Max(10f, rows * (tile + gap)));
-            var sr = vp.gameObject.AddComponent<ScrollRect>();
-            sr.content = content;
-            sr.viewport = vp;
-            sr.horizontal = false;
-            sr.vertical = true;
-            sr.movementType = ScrollRect.MovementType.Clamped;
-            sr.scrollSensitivity = 60f;
-            for (int i = 0; i < gearIds.Count; i++)
-            {
-                RectTransform t = GearUi.Tile(content, "Drop" + i, GearCatalog.Get(gearIds[i]), GearTileState.Owned, 1, 1, new Vector2(tile, tile));
-                t.anchorMin = t.anchorMax = new Vector2(0f, 1f);
-                t.pivot = new Vector2(0f, 1f);
-                int inRow = Mathf.Min(cols, gearIds.Count - (i / cols) * cols);
-                float rowShift = (cols - inRow) * (tile + gap) * 0.5f;   // a short row is centred
-                t.anchoredPosition = new Vector2(rowShift + (i % cols) * (tile + gap), -(i / cols) * (tile + gap));
-                anim.Items.Add(t);
-            }
 
             // power-ups gained: icon and count
             RectTransform chips = UiKit.Rect(panel, "PowerUps");

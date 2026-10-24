@@ -794,13 +794,10 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         SpriteRenderer[] partSr = new SpriteRenderer[0];
-        SpriteRenderer[] wornSr = new SpriteRenderer[0];
         CharacterDef who;
         /// <summary>Size in world units of the character canvas (every part picture is one full canvas); the player transform is scaled so it is playerHeight tall.</summary>
         Vector2 bodySize = new Vector2(0.9f, 1f);
 
-        /// <summary>The worn gear part renderers of the player (tests compare them with the character's).</summary>
-        public SpriteRenderer[] WornLayers { get { return wornSr; } }
         /// <summary>The first part picture of the player; its bounds are the canvas (tests).</summary>
         public SpriteRenderer PlayerRenderer { get { return playerSr; } }
         public SpriteRenderer[] PartRenderers { get { return partSr; } }
@@ -817,14 +814,12 @@ namespace BoingUpSkyTower.Gameplay
             player = go.transform;
             var group = go.AddComponent<UnityEngine.Rendering.SortingGroup>();
             group.sortingOrder = 10;
-            ProgressService pr = GameSession.Progress;
-            List<PartDraw> draws = PartsAssembler.Build(who, art, pr != null ? (System.Func<GearSlot, GearDef>)(slot => pr.EquippedDef(slot)) : null);
+            List<PartDraw> draws = PartsAssembler.Build(who, art);
             var all = new List<SpriteRenderer>(draws.Count);
-            var worn = new List<SpriteRenderer>(8);
             for (int i = 0; i < draws.Count; i++)
             {
                 PartDraw d = draws[i];
-                SpriteRenderer sr = NewSprite((d.Gear ? "Worn" : "Part") + d.Name, d.Sprite, i, player);
+                SpriteRenderer sr = NewSprite("Part" + d.Name, d.Sprite, i, player);
                 Vector2 size = d.Sprite.bounds.size;
                 if (i == 0) bodySize = size;
                 Vector3 pos, scale;
@@ -832,10 +827,8 @@ namespace BoingUpSkyTower.Gameplay
                 sr.transform.localScale = scale;
                 sr.transform.localPosition = pos;
                 all.Add(sr);
-                if (d.Gear) worn.Add(sr);
             }
             partSr = all.ToArray();
-            wornSr = worn.ToArray();
             playerSr = partSr.Length > 0 ? partSr[0] : NewSprite("Momo", null, 10, player);
             float s = playerHeight / bodySize.y;
             player.localScale = partSr.Length > 0 ? new Vector3(s, s, 1f) : new Vector3(0.9f, playerHeight, 1f);

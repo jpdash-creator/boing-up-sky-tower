@@ -494,8 +494,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public void ShowResults(RunSession s, RewardResult reward, bool hasNext)
         {
-            bool drops = reward.GearDrops != null && reward.GearDrops.Count > 0;
-            OpenOverlay("Level clear!", drops ? 1170f : 980f);
+            OpenOverlay("Level clear!", 980f);
             AudioManager.Play(Sfx.Win);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -515,8 +514,6 @@ namespace BoingUpSkyTower.Gameplay
             ToyKit.InfoPill(row2, ToyKit.Get("icon_flame"), "x" + s.State.BestCombo, new Color(1f, 0.78f, 0.35f), 270f, 104f);
             if (reward.FirstClear) ToyKit.InfoPill(row2, ToyKit.Get("icon_crown"), "First", new Color(1f, 0.9f, 0.4f), 270f, 104f);
             if (!string.IsNullOrEmpty(reward.UnlockedRegionId)) ToyKit.InfoPill(row2, ToyKit.Get("icon_flag"), "New", new Color(0.7f, 1f, 0.75f), 270f, 104f);
-            // Gear dropped by this clear (docs/17): icon tiles, nothing written out.
-            if (drops) GearUi.TileRow(panel, "GearDrops", reward.GearDrops, 650f, 150f, 12f);
             // Three equal round buttons (owner issue 16.7).
             OverlayRow(
                 MakeAct("Next", "Next level", 1, ToyKit.Get("icon_play"), 150f, () => { if (OnNext != null) OnNext(); }, hasNext),

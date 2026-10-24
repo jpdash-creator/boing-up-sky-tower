@@ -15,9 +15,9 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Space a screen leaves at the bottom of the safe area for the tab bar.</summary>
         public const float TabBarReserve = TabBarHeight + TabBarBottom + 24f;
 
-        public static readonly string[] TabLabels = { "Shop", "Gear", "PLAY", "Heroes", "Daily" };
-        public static readonly string[] TabA11y = { "Shop", "Gear", "Play", "Characters", "Daily rewards" };
-        public const int TabShop = 0, TabGear = 1, TabPlay = 2, TabHeroes = 3, TabDaily = 4;
+        public static readonly string[] TabLabels = { "Shop", "Chests", "PLAY", "Heroes", "Daily" };
+        public static readonly string[] TabA11y = { "Shop", "Treasure chests", "Play", "Characters", "Daily rewards" };
+        public const int TabShop = 0, TabChests = 1, TabPlay = 2, TabHeroes = 3, TabDaily = 4;
 
         static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
 

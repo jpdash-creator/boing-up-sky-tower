@@ -47,7 +47,7 @@ namespace BoingUpSkyTower.Economy
             Data = store.Load();
             EnsureEndlessFields();
             EnsurePowerUpFields();
-            EnsureGearFields();
+            EnsureChestFields();
         }
 
         /// <summary>Saves written before endless mode (or with null fields) get safe defaults.</summary>
@@ -465,7 +465,6 @@ namespace BoingUpSkyTower.Economy
 
             Data.Coins = SaturatingAdd(Data.Coins, reward.TotalCoins);
             Data.Gems = SaturatingAdd(Data.Gems, reward.TotalGems);
-            if (reward.GearDrops != null) foreach (string gid in reward.GearDrops) AddGearCopy(gid);
 
             if (level.Index == region.Levels.Count)
             {
@@ -543,7 +542,7 @@ namespace BoingUpSkyTower.Economy
         {
             Data = new SaveData();
             EnsurePowerUpFields();
-            EnsureGearFields();
+            EnsureChestFields();
             Commit();
         }
 

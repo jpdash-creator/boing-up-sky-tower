@@ -7,8 +7,7 @@ namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The land stage behind the character (owner reference screens, docs/18 section A.4): the current region's painted backdrop cropped to its top part,
-    /// a grass ground below it and a sandy dirt oval with the character's feet ON it. Shared by the character screen, the inventory top and the info
-    /// screen. Menu screens only: built once per screen, no per-frame code. All numbers are pixels of the 1080 wide reference canvas, measured from the top.
+    /// a grass ground below it and a sandy dirt oval with the character's feet ON it. Used by the character screen. Menu screens only: built once per screen, no per-frame code. All numbers are pixels of the 1080 wide reference canvas, measured from the top.
     /// </summary>
     public sealed class Stage
     {
@@ -35,10 +34,6 @@ namespace BoingUpSkyTower.Gameplay
     {
         /// <summary>Character screen: the stage fills the screen down to the tab bar; the oval sits at about 55 percent of the height.</summary>
         public static Stage CharacterLayout() { return new Stage { BackdropH = 820f, GroundBottom = -1f, OvalY = 1030f, OvalW = 720f, OvalH = 210f }; }
-        /// <summary>Inventory: the stage is the top 1010 px above the dark panel.</summary>
-        public static Stage InventoryLayout() { return new Stage { BackdropH = 520f, GroundBottom = 1010f, OvalY = 720f, OvalW = 560f, OvalH = 150f }; }
-        /// <summary>Info screen: a smaller stage on top, the power-up rows below it.</summary>
-        public static Stage InfoLayout() { return new Stage { BackdropH = 470f, GroundBottom = 590f, OvalY = 548f, OvalW = 440f, OvalH = 110f }; }
 
         static Sprite grass, oval, edge;
 

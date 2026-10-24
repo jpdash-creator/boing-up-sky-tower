@@ -392,19 +392,19 @@ namespace BoingUpSkyTower.Gameplay
 
         /// <summary>
         /// The persistent bottom tab bar (docs/16 section C). With <paramref name="withPlay"/> false (World Map and Level screen, owner issue 16.3) the
-        /// middle PLAY button is left out. Gear, Characters and Daily are not built yet and say so.
+        /// middle PLAY button is left out. Daily is not built yet and says so.
         /// </summary>
         void AddTabBar(int selected, bool withPlay = true)
         {
             var items = new System.Collections.Generic.List<ToyKit.BarItem>
             {
                 new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" },
-                new ToyKit.BarItem { Icon = "icon_gear", Caption = "Gear", A11y = "Gear" },
+                new ToyKit.BarItem { Icon = "icon_chest", Caption = "Chests", A11y = "Treasure chests" },
             };
             if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true });
             items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
             items.Add(new ToyKit.BarItem { Icon = "icon_daily", Caption = "Daily", A11y = "Daily rewards" });
-            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabGear, ToyKit.TabPlay, ToyKit.TabHeroes, ToyKit.TabDaily } : new[] { ToyKit.TabShop, ToyKit.TabGear, ToyKit.TabHeroes, ToyKit.TabDaily };
+            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabPlay, ToyKit.TabHeroes, ToyKit.TabDaily } : new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabHeroes, ToyKit.TabDaily };
             ToyKit.BuildIconBar(screen, items.ToArray(), selected < 0 ? -1 : System.Array.IndexOf(tabOf, selected), i => OnTab(tabOf[i]));
         }
 
@@ -414,7 +414,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
                 case ToyKit.TabPlay: ShowMap(); break;
-                case ToyKit.TabGear: if (CurrentScreen != "Inventory") ShowInventory(); break;
+                case ToyKit.TabChests: ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); break;
                 case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
                 default: ShowMessage("Daily rewards", "Daily rewards are coming soon."); break;
             }
@@ -449,59 +449,18 @@ namespace BoingUpSkyTower.Gameplay
             RefreshWallet();
         }
 
-        // ---------------- gear: inventory and characters (docs/17) ----------------
+        // ---------------- characters ----------------
 
-        InventoryScreen inventory;
         CharactersScreen characters;
 
-        /// <summary>The inventory while its screen is showing (tests drive it).</summary>
-        public InventoryScreen CurrentInventory { get { return CurrentScreen == "Inventory" ? inventory : null; } }
         public CharactersScreen CurrentCharacters { get { return CurrentScreen == "Characters" ? characters : null; } }
 
-        GearHost MakeGearHost()
-        {
-            return new GearHost
-            {
-                Back = ShowMenu,
-                OpenCharacters = () => ShowCharacters(),
-                OpenInventory = () => ShowInventory(),
-                OpenInfo = () => ShowInfo(),
-                Stage = gearStage,
-                OpenChests = () => ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection),
-                NewOverlay = NewOverlay,
-                CloseOverlay = ClosePopup,
-            };
-        }
-
-        Stage gearStage;
-        InfoScreen info;
-
-        /// <summary>The land stage behind the character, inventory and info screens: the current region's backdrop, grass and the dirt oval (docs/18).</summary>
-        void GearBackground(Stage layout)
-        {
-            gearStage = StageScene.Build(screenRoot, art, progress, layout);
-        }
-
-        /// <summary>Inventory: Momo with four gear slots, slot tabs, forge and the piece grid (docs/17 section E).</summary>
-        public void ShowInventory(int slotTab = 0)
-        {
-            NewScreen("Inventory");
-            GearBackground(StageScene.InventoryLayout());
-            inventory = new InventoryScreen(screen, progress, art, MakeGearHost());
-            inventory.Build(slotTab);
-            AddBack("Back", ShowMenu);
-            AddTabBar(ToyKit.TabGear);
-            coinText = inventory.CoinText;
-            gemText = inventory.GemText;
-            RefreshWallet();
-        }
-
-        /// <summary>Characters: Momo in the middle, the inventory and roster buttons (docs/17 section A).</summary>
+        /// <summary>Characters: the chosen character on the land stage (the current region's backdrop, grass and the dirt oval) and the roster button.</summary>
         public void ShowCharacters(bool roster = false)
         {
             NewScreen("Characters");
-            GearBackground(StageScene.CharacterLayout());
-            characters = new CharactersScreen(screen, progress, art, MakeGearHost());
+            Stage stage = StageScene.Build(screenRoot, art, progress, StageScene.CharacterLayout());
+            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage });
             characters.Build(roster);
             AddBack("Back", ShowMenu);
             AddTabBar(ToyKit.TabHeroes);
@@ -509,30 +468,6 @@ namespace BoingUpSkyTower.Gameplay
             gemText = characters.GemText;
             RefreshWallet();
         }
-
-        /// <summary>Character info: the power-ups before and after the worn gear (docs/18 section E.3).</summary>
-        public void ShowInfo()
-        {
-            NewScreen("Info");
-            GearBackground(StageScene.InfoLayout());
-            Image panel = UiKit.AddImage(screenRoot, "InfoPanel", null, new Color(0.17f, 0.23f, 0.42f, 1f));
-            panel.preserveAspect = false;
-            panel.raycastTarget = false;
-            panel.rectTransform.anchorMin = Vector2.zero;
-            panel.rectTransform.anchorMax = Vector2.one;
-            panel.rectTransform.offsetMin = Vector2.zero;
-            panel.rectTransform.offsetMax = new Vector2(0f, -gearStage.GroundBottom);
-            panel.transform.SetSiblingIndex(1);
-            info = new InfoScreen(screen, progress, art, MakeGearHost());
-            info.Build();
-            AddBack("Back", () => ShowCharacters());
-            AddTabBar(ToyKit.TabHeroes);
-            coinText = info.CoinText;
-            gemText = info.GemText;
-            RefreshWallet();
-        }
-
-        public InfoScreen CurrentInfo { get { return CurrentScreen == "Info" ? info : null; } }
 
         // ---------------- world map ----------------
 

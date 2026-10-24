@@ -120,7 +120,7 @@ namespace BoingUpSkyTower.Tests
                     if (img.sprite == null || img.color.a < 0.3f || !img.gameObject.activeInHierarchy || Theme.IsSurfaceSprite(img.sprite)) continue;
                     if (img.GetComponent<Button>() != null) continue;          // buttons are audited as buttons
                     string n = img.name;
-                    if (n == "Bg" || n == "Fill" || n == "Panel" || n == "Ribbon" || n == "WalletPanel" || n == "StarPill" || n == "RowsBacking" || n == "TopBacking" || n == "NameBacking" || n == "GearPic" || n == "Ground" || n == "GroundEdge" || n == "DirtOval" || n == "Backdrop") continue;   // GearPic: number badges sit on their own backing over its corner by design; the others are scenery
+                    if (n == "Bg" || n == "Fill" || n == "Panel" || n == "Ribbon" || n == "WalletPanel" || n == "StarPill" || n == "RowsBacking" || n == "TopBacking" || n == "NameBacking" || n == "Ground" || n == "GroundEdge" || n == "DirtOval" || n == "Backdrop") continue;   // GearPic: number badges sit on their own backing over its corner by design; the others are scenery
                     Rect ib = ToCanvasUnits(img.rectTransform, cam, scale);
                     if (ib.width * ib.height > 0.35f * (a.W / scale) * (a.H / scale)) continue;   // full-screen art
                     items.Add(new Item { Rt = img.rectTransform, Box = ib, Name = Path(img.transform) + " [image]", IsImage = true });
@@ -323,40 +323,20 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("coming-soon-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(6)); }, problems);
             yield return CheckScreen("reset-popup", () => { meta.ShowSettings(); meta.ConfirmReset(); }, problems);
 
-            // Gear (docs/17): the inventory empty and full, every slot tab, the boost summary, the characters and the roster.
-            yield return CheckScreen("inventory-empty", () => meta.ShowInventory(), problems);
-            GrantSomeGear();
-            yield return CheckScreen("inventory", () => meta.ShowInventory(), problems);
-            yield return CheckScreen("inventory-boots", () => meta.ShowInventory(3), problems);
-            yield return CheckScreen("info", () => meta.ShowInfo(), problems);
-            yield return CheckScreen("info-open", () => { meta.ShowInfo(); meta.CurrentInfo.Select(BoingUpSkyTower.Simulation.PowerUp.Magnet); }, problems);
+            // Characters: the chosen character on the land stage and the roster
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
             yield return CheckScreen("characters-roster", () => meta.ShowCharacters(true), problems);
-            // development builds: the three test characters in the roster, on the stage and in the inventory, each wearing the four test pieces
-            CharacterCatalog.TestOverride = true;
             CharacterCatalog.Selected = CharacterCatalog.Sporeling;
-            yield return CheckScreen("characters-roster-dev", () => meta.ShowCharacters(true), problems);
-            foreach (GearDef t in GearCatalog.TestPieces) { GameSession.Progress.GrantGear(t.Id); GameSession.Progress.Equip(t.Id); }
-            yield return CheckScreen("characters-momo-testgear", () => meta.ShowCharacters(), problems);
-            yield return CheckScreen("info-momo-testgear", () => meta.ShowInfo(), problems);
-            foreach (CharacterDef c in new[] { CharacterCatalog.Sporeling, CharacterCatalog.Moth, CharacterCatalog.Rootling })
-            {
-                CharacterCatalog.Selected = c;
-                yield return CheckScreen("characters-" + c.Id, () => meta.ShowCharacters(), problems);
-                yield return CheckScreen("inventory-" + c.Id, () => meta.ShowInventory(), problems);
-            }
+            yield return CheckScreen("characters-sporeling", () => meta.ShowCharacters(), problems);
             CharacterCatalog.Selected = CharacterCatalog.Momo;
-            CharacterCatalog.TestOverride = false;
             Report(problems);
         }
 
-        /// <summary>Docs/18: the run draws the character from its parts and the worn gear parts; for Momo (no fit) every part picture sits on the same canvas bounds.</summary>
-        static void AssertWornLayersFitPlayer(RunView view, List<string> problems)
+        /// <summary>The run draws the character from its parts: every part picture sits on the same canvas bounds.</summary>
+        static void AssertPartsFitPlayer(RunView view, List<string> problems)
         {
             SpriteRenderer[] parts = view.PartRenderers;
-            SpriteRenderer[] worn = view.WornLayers;
-            if (parts.Length < 9) problems.Add("run: only " + parts.Length + " part pictures were built");
-            if (worn.Length == 0) problems.Add("run: no worn gear part was built although gear is worn");
+            if (parts.Length < 6) problems.Add("run: only " + parts.Length + " part pictures were built");
             if (parts.Length == 0) return;
             Bounds a = parts[0].bounds;
             foreach (SpriteRenderer w in parts)
@@ -364,21 +344,6 @@ namespace BoingUpSkyTower.Tests
                 Bounds b = w.bounds;
                 if (Vector3.Distance(a.size, b.size) > 0.02f * a.size.magnitude || Vector3.Distance(a.center, b.center) > 0.02f * a.size.magnitude)
                     problems.Add("run: " + w.name + " bounds " + b + " differ from the character canvas " + a);
-            }
-        }
-
-        /// <summary>Owned gear of every slot and rarity, some with spare copies (forge ready), one piece worn per slot.</summary>
-        static void GrantSomeGear()
-        {
-            var p = GameSession.Progress;
-            for (int s = 0; s < 4; s++)
-            {
-                for (int r = 0; r < 5; r++)
-                {
-                    GearDef[] pieces = GearCatalog.Pieces((GearSlot)s, (GearRarity)r);
-                    for (int i = 0; i < 3 - r / 2; i++) p.GrantGear(pieces[i].Id, i == 0 && r < 2 ? 5 : 1);
-                }
-                p.Equip(GearCatalog.Pieces((GearSlot)s, (GearRarity)(s + 1))[0].Id);
             }
         }
 
@@ -423,12 +388,11 @@ namespace BoingUpSkyTower.Tests
             GameSettings.ReducedMotion = leftHanded;   // the second scenario also exercises reduced motion
             for (int i = 1; i <= 2; i++)
                 GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
-            GrantSomeGear();   // gear worn in the run: every layer must sit exactly on the player sprite
             GameSession.CurrentLevelId = "lvl_001_03";
             yield return Load("Run");
             var rc = Object.FindFirstObjectByType<RunController>();
             var problems = new List<string>();
-            AssertWornLayersFitPlayer(rc.View, problems);
+            AssertPartsFitPlayer(rc.View, problems);
             yield return CheckScreen("run-intro", () => { }, problems);
             rc.Hud.SkipIntro();
             int frame = 0;
@@ -443,9 +407,6 @@ namespace BoingUpSkyTower.Tests
             var outcome = rc.Session.BuildOutcome();
             var reward = GameSession.Progress.ApplyRun(GameSession.CurrentLevelId, outcome);
             yield return CheckScreen("run-results", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
-            rc.Hud.CloseOverlay();
-            reward.GearDrops = new List<string> { "gear_head_c01", "gear_body_u02", "gear_pants_r03", "gear_boots_e04", "gear_head_l01" };
-            yield return CheckScreen("run-results-gear", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
             rc.Hud.CloseOverlay();
 
             // Endless mode (owner decision 2026-10-20): its HUD (Floor / Best) and the game over overlay obey the same rules.

@@ -45,10 +45,10 @@ namespace BoingUpSkyTower.Gameplay
             Cfg.ScrollStepCapPercent = 150;   // the stepped speed-up stops at +150 percent: beyond it no player can out-climb the screen (level audit 2026-10-20)
         }
 
-        /// <summary>The config a run uses: a copy of <see cref="Cfg"/> with the worn gear's power-up boosts applied (docs/17). Layouts never read these fields, so level hashes stay the same.</summary>
+        /// <summary>The config a run uses: the shared <see cref="Cfg"/>.</summary>
         public static SimConfig BuildRunCfg()
         {
-            return Progress != null ? Progress.BuildRunConfig(Cfg) : Cfg;
+            return Cfg;
         }
 
         public static string CurrentLevelId;

@@ -6,8 +6,8 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The character screen (owner reference 3, docs/17 section A): Momo big in the middle on a calm scene with two round icon buttons, the inventory and
-    /// the roster of more characters. Only Momo exists, so the roster shows him as the chosen one and the rest as locked silhouettes. No words.
+    /// The character screen: the chosen character on the green land stage and one round button that opens the roster of the characters the player has
+    /// (bought or received). The rest of the roster are locked silhouettes. No words.
     /// </summary>
     public sealed class CharactersScreen
     {
@@ -18,14 +18,20 @@ namespace BoingUpSkyTower.Gameplay
         readonly RectTransform screen;
         readonly ProgressService progress;
         readonly ArtCatalog art;
-        readonly GearHost host;
+        readonly Host host;
         RectTransform body;
 
         public bool RosterOpen { get; private set; }
         public Text CoinText { get; private set; }
         public Text GemText { get; private set; }
 
-        public CharactersScreen(RectTransform screen, ProgressService progress, ArtCatalog art, GearHost host)
+        /// <summary>What the screen needs from the menu: the land stage it stands on.</summary>
+        public sealed class Host
+        {
+            public Stage Stage;
+        }
+
+        public CharactersScreen(RectTransform screen, ProgressService progress, ArtCatalog art, Host host)
         {
             this.screen = screen;
             this.progress = progress;
@@ -67,7 +73,7 @@ namespace BoingUpSkyTower.Gameplay
             for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
             {
                 string n = host.Stage.Root.GetChild(i).name;
-                if (n == "Doll" || n == "TestTag") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
+                if (n == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
             }
         }
 
@@ -79,39 +85,17 @@ namespace BoingUpSkyTower.Gameplay
             rt.sizeDelta = size;
         }
 
-        /// <summary>Momo in the middle of the stage and the two round buttons under him.</summary>
+        /// <summary>The chosen character in the middle of the stage and the roster button under it.</summary>
         void BuildStage()
         {
-            // the chosen character stands on the dirt oval of the land stage, a little larger than in the run so the fit of the gear can be seen
+            // the chosen character stands on the dirt oval of the land stage, a little larger than in the run
             CharacterDef who = CharacterCatalog.Selected;
-            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", progress, DollH, who, art);
+            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", DollH, who, art);
             host.Stage.Stand(doll);
-            if (who.IsTest) AddTestTag(host.Stage.Root, new Vector2(-330f, -(host.Stage.OvalY - 30f)));
 
-            // inventory (left), info (middle) and more characters (right): the round icon buttons
-            Button inv = ToyKit.IconButton(body, "Inventory", "Inventory", 1, Glyphs.Shirt, new Vector2(170f, 170f), () => { if (host.OpenInventory != null) host.OpenInventory(); }, 0.6f);
-            Anchor((RectTransform)inv.transform, new Vector2(0.5f, 0f), new Vector2(-250f, ToyKit.TabBarReserve + 40f), new Vector2(170f, 170f));
-            ((RectTransform)inv.transform).pivot = new Vector2(0.5f, 0f);
-            Button info = ToyKit.IconButton(body, "Info", "Character info: what my gear boosts", 2, ToyKit.Get("icon_bolt"), new Vector2(170f, 170f), () => { if (host.OpenInfo != null) host.OpenInfo(); }, 0.6f);
-            Anchor((RectTransform)info.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 40f), new Vector2(170f, 170f));
-            ((RectTransform)info.transform).pivot = new Vector2(0.5f, 0f);
-            Button more = ToyKit.IconButton(body, "MoreCharacters", "More characters", 0, ToyKit.Get("icon_heroes"), new Vector2(170f, 170f), () => Build(true), 0.6f);
-            Anchor((RectTransform)more.transform, new Vector2(0.5f, 0f), new Vector2(250f, ToyKit.TabBarReserve + 40f), new Vector2(170f, 170f));
+            Button more = ToyKit.IconButton(body, "MoreCharacters", "Choose a character", 0, ToyKit.Get("icon_heroes"), new Vector2(170f, 170f), () => Build(true), 0.6f);
+            Anchor((RectTransform)more.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 40f), new Vector2(170f, 170f));
             ((RectTransform)more.transform).pivot = new Vector2(0.5f, 0f);
-        }
-
-        /// <summary>Small TEST tag (development builds only) under the test character: it is a recolour of Momo, never shipped.</summary>
-        public static void AddTestTag(RectTransform parent, Vector2 topPos)
-        {
-            Image tag = UiKit.AddPanel(parent, "TestTag", new Color(0.95f, 0.25f, 0.25f, 0.95f));
-            RectTransform rt = tag.rectTransform;
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.sizeDelta = new Vector2(150f, 56f);
-            rt.anchoredPosition = topPos;
-            Text t = UiKit.AddText(tag.transform, "Label", "TEST", 40, Color.white, TextAnchor.MiddleCenter, true);
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
-            UiKit.Stretch((RectTransform)t.transform);
         }
 
         /// <summary>The roster: the available characters (the chosen one ticked) and locked silhouettes until more characters exist. Production shows Momo only.</summary>
@@ -142,8 +126,7 @@ namespace BoingUpSkyTower.Gameplay
                 tile.gameObject.AddComponent<A11yLabel>().Text = open ? who.Name + (isChosen ? ", chosen" : "") : "Locked character";
                 if (open)
                 {
-                    // the character's own parts, no gear
-                    RectTransform face = MomoDoll.Build(tile.transform, "Face", null, w * 0.66f, who, art);
+                    RectTransform face = MomoDoll.Build(tile.transform, "Face", w * 0.66f, who, art);
                     face.anchorMin = face.anchorMax = new Vector2(0.5f, 1f);
                     face.pivot = new Vector2(0.5f, 1f);
                     face.anchoredPosition = new Vector2(0f, -w * 0.04f);
@@ -167,15 +150,6 @@ namespace BoingUpSkyTower.Gameplay
                     {
                         Image tick = UiKit.AddImage(tile.transform, "Chosen", Glyphs.Check, Color.white);
                         Anchor(tick.rectTransform, new Vector2(1f, 1f), new Vector2(-8f, -8f), new Vector2(w * 0.3f, w * 0.3f));
-                    }
-                    if (who.IsTest)
-                    {
-                        Text t = UiKit.AddText(tile.transform, "Test", "TEST", 40, Color.white, TextAnchor.MiddleCenter, true);
-                        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-                        var trt = (RectTransform)t.transform;
-                        trt.anchorMin = new Vector2(0f, 0f);
-                        trt.anchorMax = new Vector2(1f, 0.28f);
-                        trt.offsetMin = trt.offsetMax = Vector2.zero;
                     }
                 }
             }

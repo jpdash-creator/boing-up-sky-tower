@@ -66,7 +66,7 @@ namespace ProjectBootstrap
             ti.textureCompression = TextureImporterCompression.Compressed;
         }
 
-        /// <summary>Chest pictures and worn-gear layers (docs/17): transparent sprites, no mipmaps, compressed; layers keep Momo's size so they line up.</summary>
+        /// <summary>Chest pictures: transparent sprites, no mipmaps, compressed.</summary>
         static void ApplyPicture(TextureImporter ti, int maxSize)
         {
             ti.textureType = TextureImporterType.Sprite;
@@ -113,8 +113,6 @@ namespace ProjectBootstrap
             if (assetPath.StartsWith("Assets/Resources/Art/Ui/")) { ApplyUiKit((TextureImporter)assetImporter, assetPath); return; }
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/Chests/")) { ApplyPicture((TextureImporter)assetImporter, 1024); return; }
-            if (assetPath.StartsWith("Assets/Resources/Art/GearLayers/")) { ApplyPicture((TextureImporter)assetImporter, 2048); return; }
-            if (assetPath.StartsWith("Assets/Resources/Art/GearIcons/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Characters/")) { ApplyPicture((TextureImporter)assetImporter, 2048); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (!assetPath.StartsWith("Assets/Art/")) return;
