@@ -122,6 +122,24 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
+        public void AWallBounceEndsANoWallBounceRunAtOnceAndCannotBeRevived()
+        {
+            var s = new RunSession(repo, new SimConfig(), "lvl_001_07");
+            Assert.AreEqual(GoalType.NoWallBounce, s.Spec.Goal.Type);
+            s.Step(0);
+            Assert.IsFalse(s.Over);
+            s.State.WallBounces = 1;   // the player bounced off a wall in the air
+            s.Step(0);
+            Assert.IsTrue(s.GoalLost);
+            Assert.IsTrue(s.Failed);
+            Assert.IsTrue(s.Over);
+            Assert.IsFalse(s.GoalReached);
+            Assert.IsFalse(s.State.Dead, "alive, but the goal can no longer be met");
+            Assert.IsFalse(s.CanRevive, "a revive cannot undo a lost goal");
+            Assert.IsFalse(s.BuildOutcome().Completed);
+        }
+
+        [Test]
         public void ReviveCostsTwoThenFiveGemsAndNeedsThem()
         {
             var progress = new ProgressService(repo, new MemorySaveStore(), 5);

@@ -300,6 +300,15 @@ namespace BoingUpSkyTower.Simulation
             return true;
         }
 
+        /// <summary>True while a vanishing platform is still solid but disappears within VanishWarnTicks (the view blinks it).</summary>
+        public bool VanishWarning(int id, int tick)
+        {
+            Platform p = Platforms[id];
+            if (p.Kind != PlatformKind.Vanishing) return false;
+            int phase = (tick + p.Phase) % (Cfg.VanishVisibleTicks + Cfg.VanishHiddenTicks);
+            return phase < Cfg.VanishVisibleTicks && phase >= Cfg.VanishVisibleTicks - Cfg.VanishWarnTicks;
+        }
+
         /// <summary>Index of the first platform whose Y is at or above y.</summary>
         private int LowerBound(Fx y)
         {

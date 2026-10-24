@@ -455,7 +455,7 @@ namespace BoingUpSkyTower.Simulation
             SnapPlatformWidths(cfg, data.Platforms);
 
             // ---- pickups ----
-            data.Pickups = BuildPickups(cfg, spec, ctx, data.Platforms, rows, d, hiddenGemPlaced, hiddenGemX, hiddenGemY);
+            data.Pickups = BuildPickups(cfg, spec, ctx, data.Platforms, rows, StarLimitRow(spec, rows, ladderStart, data.HiddenGemRow), d, hiddenGemPlaced, hiddenGemX, hiddenGemY);
 
             // ---- hazards ----
             data.Hazards = BuildHazards(cfg, spec, ctx, rows, d, wave, waveStart, waveEnd, ladderStart, ladderLen);
@@ -504,7 +504,19 @@ namespace BoingUpSkyTower.Simulation
         //   x1.6 for complex levels, x1.2 for highly complex (which also have 150 rows).
         // A rare 1-gem pickup (GemChancePercent per level) sits on a risky edge route.
         // ------------------------------------------------------------------------------------------
-        private static Pickup[] BuildPickups(SimConfig cfg, LevelSpec spec, Ctx ctx, Platform[] platforms, int rows, Fx d,
+        /// <summary>
+        /// Highest row stars and gems may sit on. The run ends the moment the goal is met, so a pickup above that point can never be taken:
+        /// a ComboChain level ends on its ladder (stars stay below it) and a FindHiddenGem level ends on the gem row. Every other goal
+        /// ends at the top, where the limit is the last row.
+        /// </summary>
+        public static int StarLimitRow(LevelSpec spec, int rows, int ladderStart, int hiddenGemRow)
+        {
+            if (spec.Goal.Type == GoalType.ComboChain && ladderStart > 0) return ladderStart - 1;
+            if (spec.Goal.Type == GoalType.FindHiddenGem && hiddenGemRow > 0) return hiddenGemRow - 1;
+            return rows;
+        }
+
+        private static Pickup[] BuildPickups(SimConfig cfg, LevelSpec spec, Ctx ctx, Platform[] platforms, int rows, int limitRow, Fx d,
             bool hiddenGem, Fx hgx, Fx hgy)
         {
             Rng r = new Rng(spec.Seed ^ 0x2F1A7C35);
@@ -520,7 +532,7 @@ namespace BoingUpSkyTower.Simulation
             int gemCount = PlannedGems(spec.LevelIndex, gemRng);
             int[] gemRows = new int[gemCount];
             {
-                int lo = 4, hi = rows - 3 < 5 ? 5 : rows - 3;
+                int lo = 4, hi = limitRow - 3 < 5 ? 5 : limitRow - 3;
                 int span = hi - lo + 1, slice = span / (gemCount + 1);
                 for (int gi = 0; gi < gemCount; gi++)
                 {
@@ -531,7 +543,7 @@ namespace BoingUpSkyTower.Simulation
 
             // Economy v2: no coin pickups. Three stars on the way up (about a quarter, half and 85 percent of the level), each on a
             // risky spot (beside the platform at the wall, or above the jump path), plus occasional gems of different rarity.
-            int[] starRows = { StarRow(rows, 25), StarRow(rows, 55), StarRow(rows, 85) };
+            int[] starRows = { StarRow(limitRow, 25), StarRow(limitRow, 55), StarRow(limitRow, 85) };
             for (int i = 1; i < 3; i++) if (starRows[i] <= starRows[i - 1]) starRows[i] = starRows[i - 1] + 1;
             for (int row = 1; row <= rows; row++)
             {

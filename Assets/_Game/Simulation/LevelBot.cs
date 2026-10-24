@@ -95,6 +95,8 @@ namespace BoingUpSkyTower.Simulation
         private bool stopWhenDone = true;
         private int topRow { get { return sim.Platforms[sim.Platforms.Length - 1].Row; } }
         private int comboValue;
+        /// <summary>Search cut: states with more gong hits than this are dropped (default unlimited). 0 proves a level can be won without taking damage.</summary>
+        public int MaxHits = int.MaxValue;
 
         /// <summary>Legacy mode: reach <paramref name="targetRow"/> on a level without goals.</summary>
         public LevelBot(Sim sim, int targetRow, int maxNodes)
@@ -125,6 +127,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>True when the state can no longer lead to the goal (goal-specific cuts).</summary>
         private bool Prune(SimState c)
         {
+            if (c.Hits > MaxHits) return true;
             if (spec == null) return false;
             switch (spec.Goal.Type)
             {

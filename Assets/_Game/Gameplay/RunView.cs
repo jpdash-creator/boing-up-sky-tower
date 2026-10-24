@@ -1041,8 +1041,11 @@ namespace BoingUpSkyTower.Gameplay
                 {
                     bool solid = session.Sim.IsSolid(p.Id, tick, s.CrumbleTick);
                     Color c = PlatformTint(p.Kind);
-                    c.a = solid ? 1f : 0.2f;
+                    // A crumbled platform is gone for good (no ghost to walk onto); a vanishing one comes back, so it stays a faint ghost.
+                    c.a = solid ? 1f : (p.Kind == PlatformKind.Crumble ? 0f : 0.2f);
                     if (p.Kind == PlatformKind.Crumble && s.CrumbleTick[i] >= 0 && solid) c.a = reduced ? 0.7f : 0.6f + 0.4f * Mathf.Abs(Mathf.Sin(tick * 0.3f));
+                    // Warning before a vanishing platform disappears under the player: a slow pulse, about 2 per second (CUX-6), steady dim with reduced motion.
+                    else if (solid && p.Kind == PlatformKind.Vanishing && session.Sim.VanishWarning(p.Id, tick)) c.a = reduced ? 0.6f : 0.65f + 0.35f * Mathf.Sin(tick * 0.2f);
                     sr.color = c;
                     if (cueSr[i] != null) cueSr[i].color = new Color(1f, 1f, 1f, c.a);
                 }

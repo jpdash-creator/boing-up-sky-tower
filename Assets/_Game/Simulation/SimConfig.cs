@@ -48,6 +48,8 @@ namespace BoingUpSkyTower.Simulation
         public int CrumbleTicks = 30;
         public int VanishVisibleTicks = 150;
         public int VanishHiddenTicks = 60;
+        /// <summary>A vanishing platform blinks for this many ticks before it disappears (CUX-7: nothing hurts without a warning).</summary>
+        public int VanishWarnTicks = 45;
 
         // Scroll pressure (kill zone). Units per second at d = 0 and d = 1.
         public Fx ScrollSpeedEasy = Fx.FromRatio(1, 2);
