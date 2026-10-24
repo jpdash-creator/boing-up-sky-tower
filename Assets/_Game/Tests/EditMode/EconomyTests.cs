@@ -243,7 +243,7 @@ namespace BoingUpSkyTower.Tests
         // ---- rewards ----
 
         [Test]
-        public void ClearPaysThirtyPlusFortyPerStarAndThreeStarReplaysPayHalf()
+        public void ClearPaysThirtyPlusFortyPerStarAndAnyReplayPaysTwoThirds()
         {
             var svc = NewService();
             LevelDef l = repo.GetLevel("lvl_001_01");
@@ -253,14 +253,11 @@ namespace BoingUpSkyTower.Tests
             Assert.IsTrue(first.FirstClear);
             Assert.AreEqual((int)System.Math.Round(70 * factor), first.PayoutCoins);
 
-            RewardResult second = svc.ApplyRun(l.Id, Won(starMask: 3));      // 2 stars so far: still full pay
-            Assert.AreEqual((int)System.Math.Round(110 * factor), second.PayoutCoins);
+            RewardResult second = svc.ApplyRun(l.Id, Won(starMask: 3));      // the level was cleared: replay pays 67 percent (owner 2026-10-24)
+            Assert.AreEqual((int)System.Math.Round(110 * factor * 0.67), second.PayoutCoins, 2);
 
-            RewardResult third = svc.ApplyRun(l.Id, Won(starMask: 7));       // reaches 3 stars: full pay
-            Assert.AreEqual((int)System.Math.Round(150 * factor), third.PayoutCoins);
-
-            RewardResult replay = svc.ApplyRun(l.Id, Won(starMask: 7));      // 3 stars already: half the coins
-            Assert.AreEqual((int)System.Math.Round(150 * factor) / 2, replay.PayoutCoins, 1);
+            RewardResult replay = svc.ApplyRun(l.Id, Won(starMask: 7));
+            Assert.AreEqual((int)System.Math.Round(150 * factor * 0.67), replay.PayoutCoins, 2);
         }
 
         [Test]
@@ -285,18 +282,25 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void ComboCoinsArePaidAtTheEndAndGemsDropUntilThreeStars()
+        public void ComboCoinsArePaidAtTheEndAndNoGemsDropOnAnyReplay()
         {
             var svc = NewService();
-            RewardResult first = svc.ApplyRun("lvl_001_01", Won(starMask: 1, coins: 25, gems: 2));
+            RewardResult first = svc.ApplyRun("lvl_001_01", Won(starMask: 1, coins: 25, gems: 1));
             Assert.AreEqual(25, first.ComboCoins, 1, "combo coins are part of the payout");
-            Assert.AreEqual(2, first.PickupGems);
-            RewardResult again = svc.ApplyRun("lvl_001_01", Won(starMask: 1, coins: 25, gems: 2));   // 1 star: replay pays in full
-            Assert.AreEqual(2, again.PickupGems);
-            svc.ApplyRun("lvl_001_01", Won(starMask: 7, coins: 0, gems: 0));                          // now 3 stars
-            RewardResult replay = svc.ApplyRun("lvl_001_01", Won(starMask: 7, coins: 25, gems: 2));   // 3-star replay: no gems
-            Assert.AreEqual(0, replay.PickupGems);
-            Assert.AreEqual(0, replay.TotalGems);
+            Assert.AreEqual(1, first.PickupGems);
+            RewardResult again = svc.ApplyRun("lvl_001_01", Won(starMask: 1, coins: 25, gems: 1));   // any earlier clear: no gems again
+            Assert.AreEqual(0, again.PickupGems);
+            Assert.AreEqual(0, again.TotalGems);
+        }
+
+        [Test]
+        public void GemsNeverExceedTheLevelCap()
+        {
+            var svc = NewService();
+            Assert.AreEqual(1, svc.ApplyRun("lvl_001_01", Won(gems: 5)).PickupGems, "ordinary levels pay at most one gem");
+            var l15 = NewService();
+            for (int i = 1; i <= 14; i++) l15.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
+            Assert.AreEqual(2, l15.ApplyRun("lvl_001_15", Won(gems: 5)).PickupGems, "level 15 pays at most two");
         }
 
         [Test]
@@ -306,41 +310,6 @@ namespace BoingUpSkyTower.Tests
             RewardResult res = svc.ApplyRun("lvl_001_01", Won(gems: 0));
             Assert.AreEqual(0, res.RewardGems);
             Assert.AreEqual(0, res.TotalGems);
-        }
-
-        [Test]
-        public void Level10FirstClearGivesAtLeastOneGem()
-        {
-            var svc = NewService();
-            for (int i = 1; i <= 9; i++) svc.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
-            RewardResult res = svc.ApplyRun("lvl_001_10", Won());
-            Assert.GreaterOrEqual(res.RewardGems, 1);
-        }
-
-        [Test]
-        public void Level15FirstClearGivesFiveGemsPlusStarBonus()
-        {
-            var one = NewService();
-            for (int i = 1; i <= 14; i++) one.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
-            Assert.AreEqual(5, one.ApplyRun("lvl_001_15", Won(starMask: 1)).RewardGems);
-
-            var three = NewService();
-            for (int i = 1; i <= 14; i++) three.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
-            Assert.AreEqual(10, three.ApplyRun("lvl_001_15", Won(starMask: 7)).RewardGems);
-        }
-
-        [Test]
-        public void Level15ReplayGemsAreZeroOrTwoAndDeterministic()
-        {
-            RewardResult Replay()
-            {
-                var svc = NewService();
-                for (int i = 1; i <= 15; i++) svc.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
-                return svc.ApplyRun("lvl_001_15", Won());
-            }
-            RewardResult a = Replay(), b = Replay();
-            Assert.IsTrue(a.RewardGems == 0 || a.RewardGems == 2);
-            Assert.AreEqual(a.RewardGems, b.RewardGems);
         }
 
         [Test]
@@ -376,17 +345,14 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void HiddenGemPaysOneGemOnTheFirstClearOnly()
+        public void HiddenGemIsTheGoalAndPaysNoExtraGem()
         {
             var svc = NewService();
             RunOutcome run = Won();
             run.HiddenGems = 1;
             RewardResult first = svc.ApplyRun("lvl_001_01", run);
-            Assert.AreEqual(1, first.HiddenGemReward);
-            Assert.AreEqual(1, svc.Gems);
-            RewardResult replay = svc.ApplyRun("lvl_001_01", run);
-            Assert.AreEqual(0, replay.HiddenGemReward);
-            Assert.AreEqual(1, svc.Gems);
+            Assert.AreEqual(0, first.HiddenGemReward, "gems are rare: only the planned pickups pay");
+            Assert.AreEqual(0, svc.Gems);
         }
     }
 }

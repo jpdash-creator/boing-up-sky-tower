@@ -115,8 +115,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             LevelSpec b = T3.Spec(777, 700, 10, SignatureKind.SwingingGongs, GoalType.SurviveWave);
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
-            Assert.Equal(-7273216675343283188L, LevelBuilder.Build(cfg, a).ComputeHash());
-            Assert.Equal(7719793504310640803L, LevelBuilder.Build(cfg, b).ComputeHash());
+            Assert.Equal(5559277721996333721L, LevelBuilder.Build(cfg, a).ComputeHash());
+            Assert.Equal(-8205845449502824147L, LevelBuilder.Build(cfg, b).ComputeHash());
         }
 
         [Fact]
@@ -371,23 +371,33 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void GemSpotsFollowTheDifficultySettingAndRarity()
+        public void GemsAreRareAndFollowTheOwnerOdds()
         {
+            // Owner 2026-10-24: ordinary levels 8 percent for one gem (never two), levels 5 and 10 60 percent for one,
+            // level 15 always one and 40 percent for a second.
             SimConfig cfg = new SimConfig();
-            int[] counts = new int[2];
-            int[] tiers = new int[4];
-            for (int round = 0; round < 2; round++)
+            const int N = 400;
+            int[] withGem = new int[16];
+            int level15Two = 0;
+            foreach (int idx in new int[] { 1, 4, 5, 10, 15 })
             {
-                cfg.GemInsteadOfCoinPercent = round == 0 ? 5 : 10;
-                for (int seed = 1; seed <= 60; seed++)
+                for (int seed = 1; seed <= N; seed++)
                 {
-                    LevelData d = LevelBuilder.Build(cfg, T3.Spec(seed * 104729, 300, 4, SignatureKind.None, GoalType.ReachFloor, 60));
-                    for (int i = 0; i < d.Pickups.Length; i++)
-                        if (d.Pickups[i].Kind == PickupKind.Gem) { counts[round]++; tiers[d.Pickups[i].Tag]++; }
+                    LevelSpec sp = T3.Spec(seed * 104729, 300, idx, SignatureKind.None, GoalType.ReachFloor, 60);
+                    LevelData d = LevelBuilder.Build(cfg, sp);
+                    int gems = 0;
+                    for (int i = 0; i < d.Pickups.Length; i++) if (d.Pickups[i].Kind == PickupKind.Gem) { gems++; Assert.Equal(0, d.Pickups[i].Tag); }
+                    Assert.True(gems <= (idx == 15 ? 2 : 1), "level " + idx + " has " + gems + " gems");
+                    if (gems > 0) withGem[idx]++;
+                    if (idx == 15) { Assert.True(gems >= 1); if (gems == 2) level15Two++; }
                 }
             }
-            Assert.True(counts[1] > counts[0], "more gem spots at the higher setting: " + counts[0] + " vs " + counts[1]);
-            Assert.True(tiers[0] > tiers[1] && tiers[1] > tiers[3], "rarity tiers get rarer: " + tiers[0] + "," + tiers[1] + "," + tiers[2] + "," + tiers[3]);
+            Assert.InRange(withGem[1] * 100 / N, 4, 12);
+            Assert.InRange(withGem[4] * 100 / N, 4, 12);
+            Assert.InRange(withGem[5] * 100 / N, 52, 68);
+            Assert.InRange(withGem[10] * 100 / N, 52, 68);
+            Assert.Equal(N, withGem[15]);
+            Assert.InRange(level15Two * 100 / N, 32, 48);
         }
 
         [Fact]

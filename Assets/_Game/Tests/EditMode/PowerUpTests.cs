@@ -67,14 +67,19 @@ namespace BoingUpSkyTower.Tests
             {
                 Assert.IsTrue(PowerUps.IsImplemented(d.Type), d.Id);
                 Assert.Greater(d.CoinPrice, 0, d.Id);
-                Assert.Greater(d.GemPrice, 0, d.Id);
+                Assert.AreEqual(0, d.GemPrice, d.Id + " is bought with coins only");
                 Assert.GreaterOrEqual(d.CarryCap, 1, d.Id);
                 Assert.AreEqual(PowerUps.IdOf(d.Type), d.Id);
                 int ticks = PowerUps.TotalTicks(cfg, d.Type);
                 Assert.AreEqual(d.DurationSec * SimConfig.TicksPerSecond, ticks, d.Id + " duration in the catalog and in SimConfig");
             }
-            Assert.AreEqual(2400, c.Get(PowerUp.Flight).CoinPrice);
-            Assert.AreEqual(20, c.Get(PowerUp.Flight).GemPrice);
+            Assert.AreEqual(1500, c.Get(PowerUp.Flight).CoinPrice);
+            Assert.AreEqual(1500, c.Get(PowerUp.Rocket).CoinPrice);
+            Assert.AreEqual(1500, c.Get(PowerUp.SlowTime).CoinPrice);
+            Assert.AreEqual(1000, c.Get(PowerUp.DoubleJump).CoinPrice);
+            Assert.AreEqual(1000, c.Get(PowerUp.WallStick).CoinPrice);
+            Assert.AreEqual(1000, c.Get(PowerUp.Shield).CoinPrice);
+            Assert.AreEqual(1000, c.Get(PowerUp.Magnet).CoinPrice);
             Assert.AreEqual(2, c.Get(PowerUp.DoubleJump).Uses);
             Assert.AreEqual(cfg.DoubleJumpCount, c.Get(PowerUp.DoubleJump).Uses, "units arm the same number of air jumps");
             foreach (PowerUpDef d in c.All.Where(x => !x.Implemented)) Assert.IsFalse(c.Implemented.Contains(d), d.Id);
@@ -84,11 +89,11 @@ namespace BoingUpSkyTower.Tests
         public void BundlePricesFollowTheDiscountRules()
         {
             PowerUpDef flight = PowerUpCatalog.BuiltIn().Get("pw_flight");
-            Assert.AreEqual(2400, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 1));
-            Assert.AreEqual(2400 * 4 * 100 / 100, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 4));
-            Assert.AreEqual(10800, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 5));    // -10 percent
-            Assert.AreEqual(19200, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 10));   // -20 percent
-            Assert.AreEqual(90, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Gems, 5));
+            Assert.AreEqual(1500, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 1));
+            Assert.AreEqual(1500 * 4 * 100 / 100, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 4));
+            Assert.AreEqual(6750, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 5));    // -10 percent
+            Assert.AreEqual(12000, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Coins, 10));   // -20 percent
+            Assert.AreEqual(0, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Gems, 5), "no gem price");
             Assert.AreEqual(0, PowerUpCatalog.PriceFor(flight, PowerUpCurrency.Gems, 0));
             Assert.AreEqual(0, PowerUpCatalog.PriceFor(null, PowerUpCurrency.Gems, 1));
         }
@@ -154,21 +159,21 @@ namespace BoingUpSkyTower.Tests
             var svc = NewService();
             svc.AddCoins(3000);
             Assert.AreEqual(PowerUpBuyResult.Ok, svc.TryBuyPowerUp("pw_flight", PowerUpCurrency.Coins));
-            Assert.AreEqual(600, svc.Coins);
+            Assert.AreEqual(1500, svc.Coins);
             Assert.AreEqual(1, svc.PowerUpCount("pw_flight"));
             var again = NewService();
-            Assert.AreEqual(600, again.Coins);
+            Assert.AreEqual(1500, again.Coins);
             Assert.AreEqual(1, again.PowerUpCount("pw_flight"));
         }
 
         [Test]
-        public void BuyWithGemsDebitsAndAdds()
+        public void GemsCannotBuyPowerUps()
         {
             var svc = NewService();
-            svc.AddGems(30);
-            Assert.AreEqual(PowerUpBuyResult.Ok, svc.TryBuyPowerUp("pw_doublejump", PowerUpCurrency.Gems, 2));
-            Assert.AreEqual(30 - 16, svc.Gems);
-            Assert.AreEqual(2, svc.PowerUpCount("pw_doublejump"));
+            svc.AddGems(300);
+            Assert.AreEqual(PowerUpBuyResult.Invalid, svc.TryBuyPowerUp("pw_doublejump", PowerUpCurrency.Gems, 2));
+            Assert.AreEqual(300, svc.Gems);
+            Assert.AreEqual(0, svc.PowerUpCount("pw_doublejump"));
         }
 
         [Test]
@@ -178,7 +183,7 @@ namespace BoingUpSkyTower.Tests
             svc.AddCoins(100);
             svc.AddGems(5);
             Assert.AreEqual(PowerUpBuyResult.NotEnoughCoins, svc.TryBuyPowerUp("pw_flight", PowerUpCurrency.Coins));
-            Assert.AreEqual(PowerUpBuyResult.NotEnoughGems, svc.TryBuyPowerUp("pw_flight", PowerUpCurrency.Gems));
+            Assert.AreEqual(PowerUpBuyResult.Invalid, svc.TryBuyPowerUp("pw_flight", PowerUpCurrency.Gems));
             Assert.AreEqual(PowerUpBuyResult.Invalid, svc.TryBuyPowerUp("pw_unknown", PowerUpCurrency.Coins));
             Assert.AreEqual(PowerUpBuyResult.Invalid, svc.TryBuyPowerUp("pw_flight", PowerUpCurrency.Coins, 0));
             Assert.AreEqual(PowerUpBuyResult.Invalid, svc.TryBuyPowerUp("pw_springboots", PowerUpCurrency.Coins), "reserved, not implemented");

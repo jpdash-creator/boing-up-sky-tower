@@ -1262,9 +1262,9 @@ namespace BoingUpSkyTower.Gameplay
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
             RectTransform pays = ToyKit.PillRow(panel, "Pays", 440f, 96f);
-            if (starsHave >= 3)
+            if (starsHave >= 1)
             {
-                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "50%", new Color(1f, 0.92f, 0.5f), 250f, 96f);   // replays pay half the coins and no gems
+                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "67%", new Color(1f, 0.92f, 0.5f), 250f, 96f);   // replays pay 67 percent of the coins and no gems
             }
             else
             {
@@ -1397,7 +1397,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 int level = i;
                 bool current = level == GameSettings.Difficulty;
-                string label = GameSettings.DifficultyLabel(level) + (GameSettings.DifficultyGemPercent[level] > 5 ? "  gems " + GameSettings.DifficultyGemPercent[level] + "%" : "");
+                string label = GameSettings.DifficultyLabel(level) + "";
                 Button opt = UiKit.AddButton(panel, "Diff" + level, label, Btn(current ? 1 : 0), Color.white, new Vector2(700f, 132f), () =>
                 {
                     GameSettings.Difficulty = level;

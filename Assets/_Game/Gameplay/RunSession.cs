@@ -41,15 +41,24 @@ namespace BoingUpSkyTower.Gameplay
         public bool Failed { get { return State.Dead && !GoalReached; } }
         public bool Over { get { return GoalReached || State.Dead; } }
 
-        public RunSession(ContentRepository repo, SimConfig cfg, string levelId)
+        public RunSession(ContentRepository repo, SimConfig cfg, string levelId, bool stripGems = false)
         {
             Cfg = cfg;
             Level = repo.GetLevel(levelId);
             Region = repo.GetRegion(Level.Region);
             Spec = LevelSpecFactory.Build(Level, Region);
             Data = LevelBuilder.Build(cfg, Spec);
+            if (stripGems) StripGems(Data);   // owner 2026-10-24: a level that was cleared before shows no gems again
             Sim = new Sim(cfg, Data, Spec);
             State = Sim.NewState();
+        }
+
+        /// <summary>Removes the gem pickups (the hidden gem of a FindHiddenGem goal stays: it is the goal, and pays nothing on a replay).</summary>
+        static void StripGems(LevelData data)
+        {
+            var keep = new System.Collections.Generic.List<Pickup>(data.Pickups.Length);
+            for (int i = 0; i < data.Pickups.Length; i++) if (data.Pickups[i].Kind != PickupKind.Gem) keep.Add(data.Pickups[i]);
+            data.Pickups = keep.ToArray();
         }
 
         /// <summary>Endless run in a region. <paramref name="seed"/> picks the tower; the same seed always gives the same tower.</summary>

@@ -513,11 +513,20 @@ namespace BoingUpSkyTower.Simulation
             Fx wallMin = Fx.FromRatio(7, 10), wallMax = screen - Fx.FromRatio(7, 10);
             List<Pickup> list = new List<Pickup>(rows / 4 + 8);
 
-            int gemRow = -1;
-            if (r.Next(100) < cfg.GemChancePercent)
+            // Gems are rare (owner 2026-10-24). The plan comes from a separate stream so it never shifts the star layout:
+            //   ordinary levels 8 percent for exactly one gem, levels 5 and 10 60 percent for one, level 15 always one and 40 percent for a second.
+            // Every gem is a plain 1-gem pickup on a risky edge spot; the reward calculator caps the payout again.
+            r.Next(100);   // keeps the star stream where it was before the gem plan changed
+            int gemCount = PlannedGems(spec.LevelIndex, gemRng);
+            int[] gemRows = new int[gemCount];
             {
                 int lo = 4, hi = rows - 3 < 5 ? 5 : rows - 3;
-                gemRow = r.Range(lo, hi);
+                int span = hi - lo + 1, slice = span / (gemCount + 1);
+                for (int gi = 0; gi < gemCount; gi++)
+                {
+                    int pick = lo + ((gi + 1) * span) / (gemCount + 1) - slice / 2 + gemRng.Next(slice > 0 ? slice : 1);
+                    gemRows[gi] = pick > hi ? hi : (pick < lo ? lo : pick);
+                }
             }
 
             // Economy v2: no coin pickups. Three stars on the way up (about a quarter, half and 85 percent of the level), each on a
@@ -536,13 +545,8 @@ namespace BoingUpSkyTower.Simulation
                         list.Add(MakePickup(cfg, PickupKind.Star, Fx.Clamp(hx, wallMin, wallMax), ctx.Y[row] + Fx.FromRatio(18, 10), si));
                     }
                 }
-                if (row != gemRow && gemRng.Next(100) < cfg.GemInsteadOfCoinPercent)
-                {
-                    Fx px = Fx.Lerp(ctx.X[row - 1], ctx.X[row], Fx.FromRatio(5, 10));
-                    Fx py = Fx.Lerp(ctx.Y[row - 1], ctx.Y[row], Fx.FromRatio(5, 10)) + Fx.FromRatio(12, 10);
-                    list.Add(MakePickup(cfg, PickupKind.Gem, px, py, DrawRarity(cfg, gemRng)));
-                }
-                if (row == gemRow) list.Add(MakePickup(cfg, PickupKind.Gem, EdgeX(ctx, row, screen, wallMin, wallMax), ctx.Y[row] + Fx.FromRatio(12, 10), DrawRarity(cfg, gemRng)));
+                for (int gi = 0; gi < gemRows.Length; gi++)
+                    if (gemRows[gi] == row) list.Add(MakePickup(cfg, PickupKind.Gem, EdgeX(ctx, row, screen, wallMin, wallMax), ctx.Y[row] + Fx.FromRatio(12, 10), 0));
             }
 
             if (hiddenGem)
@@ -611,6 +615,15 @@ namespace BoingUpSkyTower.Simulation
         {
             int row = rows * percent / 100;
             return row < 5 ? 5 : (row > rows - 2 ? rows - 2 : row);
+        }
+
+        /// <summary>How many gem pickups a campaign level carries (owner odds, 2026-10-24).</summary>
+        public static int PlannedGems(int levelIndex, Rng rng)
+        {
+            int roll = rng.Next(100);
+            if (levelIndex == 15) return 1 + (rng.Next(100) < 40 ? 1 : 0);
+            if (levelIndex == 5 || levelIndex == 10) return roll < 60 ? 1 : 0;
+            return roll < 8 ? 1 : 0;
         }
 
         private static int DrawRarity(SimConfig cfg, Rng rng)

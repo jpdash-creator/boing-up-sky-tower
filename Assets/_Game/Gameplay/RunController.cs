@@ -45,7 +45,7 @@ namespace BoingUpSkyTower.Gameplay
             GameSession.EndlessMode = false;
             GameSession.CurrentLevelId = levelId;
             GameSession.ApplyDifficulty();
-            BeginRun(new RunSession(GameSession.Repo, GameSession.Cfg, levelId));
+            BeginRun(new RunSession(GameSession.Repo, GameSession.Cfg, levelId, GameSession.Progress != null && GameSession.Progress.IsLevelCleared(levelId)));
         }
 
         /// <summary>Endless mode (owner decision 2026-10-20): a new tower of the region with a fresh seed, stored in GameSession.EndlessSeed.</summary>

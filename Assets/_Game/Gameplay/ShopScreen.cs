@@ -335,8 +335,7 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)own.transform, new Vector2(0.5f, 1f), new Vector2(0f, -300f), new Vector2(300f, 60f));
             own.rectTransform.pivot = new Vector2(0.5f, 1f);
 
-            PriceButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 14f + ButtonH + 12f);
-            PriceButton(crt, "BuyGems", 0, art != null ? art.GemIcon : null, Num(def.GemPrice), "Buy " + def.Name + " for " + Num(def.GemPrice) + " gems", () => TapBuyPowerUp(def, PowerUpCurrency.Gems), 14f);
+            PriceButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 24f);
         }
 
         /// <summary>Makes a card image the tap target for its details popup.</summary>
