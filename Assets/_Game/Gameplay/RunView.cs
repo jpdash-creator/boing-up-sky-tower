@@ -68,6 +68,7 @@ namespace BoingUpSkyTower.Gameplay
         readonly Stack<SpriteRenderer> gongPool = new Stack<SpriteRenderer>();
         Sprite gongSprite;
         static Sprite hazardSpikes;
+        static Sprite HazardSpikes() { if (hazardSpikes == null) hazardSpikes = MakeHazardSpikes(); return hazardSpikes; }
         /// <summary>Views kept below / above the screen edges in endless mode, world units.</summary>
         const float WindowBelow = 3f, WindowAbove = 8f;
 
@@ -755,7 +756,7 @@ namespace BoingUpSkyTower.Gameplay
             hazardSr = new SpriteRenderer[hz.Length];
             // Only the gong region has hazard art; elsewhere the signature art is a platform, so hazards (surviveWave) get a spiky code-drawn sprite.
             bool signatureIsHazard = SignatureKinds.HazardsUseSignatureArt(SignatureKinds.FromModuleId(session.Region.Rules.SignatureModule));
-            gongSprite = signatureIsHazard && region != null && region.Signature.Length > 0 ? region.Signature[0] : (hazardSpikes ?? (hazardSpikes = MakeHazardSpikes()));
+            gongSprite = signatureIsHazard && region != null && region.Signature.Length > 0 ? region.Signature[0] : HazardSpikes();
             if (endless) return;   // endless gongs come from UpdateEndlessWindow
             for (int i = 0; i < hz.Length; i++) SetupHazard(i, hz[i], null);
             hazLo = 0;
