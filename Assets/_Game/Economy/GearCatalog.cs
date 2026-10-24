@@ -91,8 +91,14 @@ namespace BoingUpSkyTower.Economy
         static GearDef[] all;
         static Dictionary<string, GearDef> byId;
         static GearDef[][][] bySlotRarity;
+        static GearDef[] testPieces;
 
         public static IReadOnlyList<GearDef> All { get { Ensure(); return all; } }
+
+        /// <summary>The four development-only test pieces (one per slot). Shown and granted only in development builds; not part of <see cref="All"/>.</summary>
+        public static IReadOnlyList<GearDef> TestPieces { get { Ensure(); return testPieces; } }
+
+        public static bool IsTestPiece(GearDef d) { return d != null && d.Number == 0; }
 
         static void Ensure()
         {
@@ -121,6 +127,21 @@ namespace BoingUpSkyTower.Economy
                         grid[s][r][i] = def;
                     }
                 }
+            }
+            // four development-only test pieces (mannequin method, docs/18 section D): one per slot, not part of the 240, never dropped; layers and icons are
+            // Resources/Art/{GearLayers,GearIcons}/<slot>_test.png
+            testPieces = new GearDef[SlotCount];
+            PowerUp[] testBoost = { PowerUp.Shield, PowerUp.Flight, PowerUp.Magnet, PowerUp.Rocket };
+            for (int s = 0; s < SlotCount; s++)
+            {
+                string slotName = SlotNames[s].ToLowerInvariant();
+                var t = new GearDef
+                {
+                    Id = "gear_" + slotName + "_test", Slot = (GearSlot)s, Rarity = GearRarity.Rare, Number = 0,
+                    Name = "Test " + SlotNames[s], Boost = testBoost[s], BoostPercent = BoostPercentByRarity[(int)GearRarity.Rare], ArtId = slotName + "_test"
+                };
+                testPieces[s] = t;
+                map[t.Id] = t;
             }
             byId = map;
             bySlotRarity = grid;

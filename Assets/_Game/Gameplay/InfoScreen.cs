@@ -77,13 +77,14 @@ namespace BoingUpSkyTower.Gameplay
     /// </summary>
     public sealed class InfoScreen
     {
-        const float RowsTop = 600f, RowH = 100f, RowGap = 8f, DetailH = 130f, StripH = 120f, Side = 20f;
+        const float RowsTop = 610f, RowH = 126f, RowGap = 8f, DetailH = 130f, Side = 20f;
 
         readonly RectTransform screen;
         readonly ProgressService progress;
         readonly ArtCatalog art;
         readonly GearHost host;
-        RectTransform body;
+        RectTransform body, content;
+        ScrollRect scroll;
 
         public PowerUp? Selected { get; private set; }
         public List<InfoRow> Rows { get; private set; }
@@ -106,7 +107,7 @@ namespace BoingUpSkyTower.Gameplay
                 for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
                     if (host.Stage.Root.GetChild(i).name == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
                 CharacterDef who = CharacterCatalog.Selected;
-                RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", who.Body(art), progress, 380f, who);
+                RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", who.Body(art), progress, 340f, who);
                 host.Stage.Stand(doll);
             }
             body = UiKit.Rect(screen, "InfoBody");
@@ -128,7 +129,22 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.SetText(GemText, progress.Gems.ToString());
 
             Rows = GearInfo.Rows(progress, GameSession.Cfg);
-            float y = RowsTop;
+            // the rows scroll in a viewport between the stage and the tab bar, so they fit every aspect (3:4 too)
+            float keep = scroll != null ? scroll.verticalNormalizedPosition : 1f;
+            RectTransform vp = UiKit.Rect(body, "RowsViewport");
+            vp.anchorMin = Vector2.zero;
+            vp.anchorMax = Vector2.one;
+            vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve);
+            vp.offsetMax = new Vector2(0f, -RowsTop);
+            vp.gameObject.AddComponent<RectMask2D>();
+            var hit = vp.gameObject.AddComponent<Image>();
+            hit.color = new Color(0f, 0f, 0f, 0f);
+            content = UiKit.Rect(vp, "RowsContent");
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = content.offsetMax = Vector2.zero;
+            float y = RowGap;
             for (int i = 0; i < Rows.Count; i++)
             {
                 InfoRow r = Rows[i];
@@ -141,7 +157,16 @@ namespace BoingUpSkyTower.Gameplay
                     y += DetailH + RowGap;
                 }
             }
-            BuildStrip(y + 8f);
+            content.sizeDelta = new Vector2(0f, y);
+            scroll = vp.gameObject.AddComponent<ScrollRect>();
+            scroll.content = content;
+            scroll.viewport = vp;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic;
+            scroll.scrollSensitivity = 60f;
+            scroll.verticalNormalizedPosition = keep;
+            BuildTotals();
         }
 
         /// <summary>Tapping a row opens the pieces that boost it; tapping it again closes them.</summary>
@@ -171,7 +196,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void BuildRow(InfoRow r, float yTop, bool open)
         {
-            Image row = UiKit.AddImage(body, "Row" + r.Type, Theme.RoundSprite, open ? new Color(0.20f, 0.30f, 0.56f, 1f) : new Color(0.10f, 0.14f, 0.30f, 0.94f));
+            Image row = UiKit.AddImage(content, "Row" + r.Type, Theme.RoundSprite, open ? new Color(0.20f, 0.30f, 0.56f, 1f) : new Color(0.10f, 0.14f, 0.30f, 0.94f));
             row.type = Image.Type.Sliced;
             row.preserveAspect = false;
             row.pixelsPerUnitMultiplier = 2.2f;
@@ -189,19 +214,19 @@ namespace BoingUpSkyTower.Gameplay
             string spoken = PowerUpUi.Name(r.Type) + ", " + GearInfo.Format(r.Before, r.Seconds) + " to " + GearInfo.Format(r.After, r.Seconds) + (r.Percent > 0 ? ", plus " + r.Percent + " percent" : "");
             row.gameObject.AddComponent<A11yLabel>().Text = spoken;
 
-            Image ic = PowerUpUi.AddIcon(row.transform, "Icon", r.Type, new Vector2(0f, 0.5f), new Vector2(14f, 0f), 84f, r.Percent <= 0);
+            Image ic = PowerUpUi.AddIcon(row.transform, "Icon", r.Type, new Vector2(0f, 0.5f), new Vector2(14f, 0f), 100f, r.Percent <= 0);
             ic.rectTransform.pivot = new Vector2(0f, 0.5f);
 
             bool boosted = r.Percent > 0;
             Color dim = new Color(0.78f, 0.84f, 1f, 1f);
-            Num(row.transform, "Before", GearInfo.Format(r.Before, r.Seconds), boosted ? dim : Color.white, TextAnchor.MiddleLeft, new Vector2(0f, 0.5f), new Vector2(116f, 0f), new Vector2(210f, 80f));
+            Num(row.transform, "Before", GearInfo.Format(r.Before, r.Seconds), boosted ? dim : Color.white, TextAnchor.MiddleLeft, new Vector2(0f, 0.5f), new Vector2(130f, 0f), new Vector2(210f, 80f));
             if (boosted)
             {
                 Image arrow = UiKit.AddImage(row.transform, "Arrow", Glyphs.Left, Color.white);
                 arrow.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
-                Anchor(arrow.rectTransform, new Vector2(0f, 0.5f), new Vector2(338f, 0f), new Vector2(56f, 56f));
+                Anchor(arrow.rectTransform, new Vector2(0f, 0.5f), new Vector2(352f, 0f), new Vector2(56f, 56f));
                 arrow.rectTransform.pivot = new Vector2(0f, 0.5f);
-                Num(row.transform, "After", GearInfo.Format(r.After, r.Seconds), new Color(0.55f, 1f, 0.62f, 1f), TextAnchor.MiddleLeft, new Vector2(0f, 0.5f), new Vector2(408f, 0f), new Vector2(210f, 80f));
+                Num(row.transform, "After", GearInfo.Format(r.After, r.Seconds), new Color(0.55f, 1f, 0.62f, 1f), TextAnchor.MiddleLeft, new Vector2(0f, 0.5f), new Vector2(420f, 0f), new Vector2(210f, 80f));
                 Image badge = UiKit.AddImage(row.transform, "Badge", Theme.RoundSprite, new Color(0.17f, 0.74f, 0.47f, 1f));
                 badge.type = Image.Type.Sliced;
                 badge.preserveAspect = false;
@@ -218,7 +243,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The worn pieces that boost the opened power-up, as gear tiles with their rarity pips (a dim cross when nothing worn boosts it).</summary>
         void BuildDetail(InfoRow r, float yTop)
         {
-            RectTransform strip = UiKit.Rect(body, "Detail");
+            RectTransform strip = UiKit.Rect(content, "Detail");
             strip.anchorMin = new Vector2(0f, 1f);
             strip.anchorMax = new Vector2(1f, 1f);
             strip.pivot = new Vector2(0.5f, 1f);
@@ -243,8 +268,11 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>Totals of what is worn: pieces worn of four, the best rarity (frame colour and pips) and the summed boost of all power-ups.</summary>
-        void BuildStrip(float yTop)
+        /// <summary>
+        /// Totals of what is worn, as three small plates in the stage beside the character: pieces worn of four, the best rarity (colour and pips) and the
+        /// summed boost of all power-ups.
+        /// </summary>
+        void BuildTotals()
         {
             int worn = 0, best = -1, sum = 0;
             for (int s = 0; s < GearCatalog.SlotCount; s++)
@@ -256,45 +284,57 @@ namespace BoingUpSkyTower.Gameplay
             }
             foreach (InfoRow r in Rows) sum += r.Percent;
 
-            Image strip = UiKit.AddImage(body, "Totals", Theme.RoundSprite, new Color(0.08f, 0.11f, 0.26f, 0.96f));
-            strip.type = Image.Type.Sliced;
-            strip.preserveAspect = false;
-            strip.pixelsPerUnitMultiplier = 2.2f;
-            strip.raycastTarget = false;
-            strip.rectTransform.anchorMin = new Vector2(0f, 1f);
-            strip.rectTransform.anchorMax = new Vector2(1f, 1f);
-            strip.rectTransform.pivot = new Vector2(0.5f, 1f);
-            strip.rectTransform.offsetMin = new Vector2(Side, -(yTop + StripH));
-            strip.rectTransform.offsetMax = new Vector2(-Side, -yTop);
-            strip.gameObject.AddComponent<A11yLabel>().Text = "Worn " + worn + " of 4 pieces" + (best >= 0 ? ", best " + GearCatalog.RarityNames[best] : "") + ", total boost " + sum + " percent";
+            RectTransform col = UiKit.Rect(body, "Totals");
+            Anchor(col, new Vector2(1f, 1f), new Vector2(-Side, -236f), new Vector2(330f, 3 * 92f));
+            col.gameObject.AddComponent<A11yLabel>().Text = "Worn " + worn + " of 4 pieces" + (best >= 0 ? ", best " + GearCatalog.RarityNames[best] : "") + ", total boost " + sum + " percent";
 
-            // pieces worn: a shirt glyph and "n/4"
-            Image g = UiKit.AddImage(strip.transform, "WornIcon", Glyphs.Shirt, Color.white);
-            Anchor(g.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(72f, 72f));
+            // pieces worn
+            RectTransform a = Plate(col, "WornPlate", 0);
+            Image g = UiKit.AddImage(a, "WornIcon", Glyphs.Shirt, Color.white);
+            Anchor(g.rectTransform, new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(60f, 60f));
             g.rectTransform.pivot = new Vector2(0f, 0.5f);
-            Num(strip.transform, "Worn", worn + "/4", Color.white, TextAnchor.MiddleLeft, new Vector2(0f, 0.5f), new Vector2(110f, 0f), new Vector2(150f, 80f));
+            Num(a, "Worn", worn + "/4", Color.white, TextAnchor.MiddleRight, new Vector2(1f, 0.5f), new Vector2(-18f, 0f), new Vector2(200f, 76f));
 
-            // best rarity: a swatch in its colour with its pips
-            Color rc = best >= 0 ? GearUi.Fill((GearRarity)best) : new Color(0.3f, 0.34f, 0.5f, 1f);
-            Image sw = UiKit.AddImage(strip.transform, "BestRarity", Theme.RoundSprite, rc);
+            // best rarity: its colour with its pips
+            RectTransform b = Plate(col, "BestPlate", 1);
+            Image sw = UiKit.AddImage(b, "BestRarity", Theme.RoundSprite, best >= 0 ? GearUi.Fill((GearRarity)best) : new Color(0.3f, 0.34f, 0.5f, 1f));
             sw.type = Image.Type.Sliced;
             sw.preserveAspect = false;
-            Anchor(sw.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-40f, 0f), new Vector2(230f, 76f));
-            sw.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            sw.rectTransform.anchorMin = Vector2.zero;
+            sw.rectTransform.anchorMax = Vector2.one;
+            sw.rectTransform.offsetMin = new Vector2(8f, 8f);
+            sw.rectTransform.offsetMax = new Vector2(-8f, -8f);
             for (int i = 0; i <= best; i++)
             {
                 Image p = UiKit.AddImage(sw.transform, "Pip" + i, Theme.RoundSprite, Color.white);
                 p.type = Image.Type.Sliced;
                 p.preserveAspect = false;
-                Anchor(p.rectTransform, new Vector2(0f, 0.5f), new Vector2(22f + i * 40f, 0f), new Vector2(28f, 28f));
-                p.rectTransform.pivot = new Vector2(0f, 0.5f);
+                Anchor(p.rectTransform, new Vector2(0.5f, 0.5f), new Vector2((i - best * 0.5f) * 44f, 0f), new Vector2(30f, 30f));
+                p.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             }
 
             // summed boost
-            Image bolt = UiKit.AddImage(strip.transform, "BoostIcon", ToyKit.Get("icon_bolt"), Color.white);
-            Anchor(bolt.rectTransform, new Vector2(1f, 0.5f), new Vector2(-230f, 0f), new Vector2(72f, 72f));
-            bolt.rectTransform.pivot = new Vector2(1f, 0.5f);
-            Num(strip.transform, "Sum", "+" + sum + "%", new Color(0.55f, 1f, 0.62f, 1f), TextAnchor.MiddleRight, new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(200f, 80f));
+            RectTransform c = Plate(col, "SumPlate", 2);
+            Image bolt = UiKit.AddImage(c, "BoostIcon", ToyKit.Get("icon_bolt"), Color.white);
+            Anchor(bolt.rectTransform, new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(60f, 60f));
+            bolt.rectTransform.pivot = new Vector2(0f, 0.5f);
+            Num(c, "Sum", "+" + sum + "%", new Color(0.55f, 1f, 0.62f, 1f), TextAnchor.MiddleRight, new Vector2(1f, 0.5f), new Vector2(-18f, 0f), new Vector2(220f, 76f));
+        }
+
+        static RectTransform Plate(RectTransform col, string name, int index)
+        {
+            Image plate = UiKit.AddImage(col, name, Theme.RoundSprite, new Color(0.08f, 0.11f, 0.26f, 0.96f));
+            plate.type = Image.Type.Sliced;
+            plate.preserveAspect = false;
+            plate.pixelsPerUnitMultiplier = 2.2f;
+            plate.raycastTarget = false;
+            RectTransform rt = plate.rectTransform;
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.offsetMin = new Vector2(0f, -(index * 92f + 84f));
+            rt.offsetMax = new Vector2(0f, -(index * 92f));
+            return rt;
         }
     }
 }

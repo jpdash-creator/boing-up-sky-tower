@@ -86,7 +86,7 @@ namespace BoingUpSkyTower.Gameplay
             if (icon != null)
             {
                 Color iconTint = state == GearTileState.Owned ? Color.white : new Color(0.07f, 0.09f, 0.20f, 0.95f);
-                Image pic = UiKit.AddImage(root.transform, "Icon", icon, iconTint);
+                Image pic = UiKit.AddImage(root.transform, "GearPic", icon, iconTint);
                 pic.preserveAspect = true;
                 Corner(pic.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -m * 0.02f), m * 0.74f);
             }

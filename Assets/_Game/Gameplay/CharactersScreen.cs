@@ -86,7 +86,7 @@ namespace BoingUpSkyTower.Gameplay
             CharacterDef who = CharacterCatalog.Selected;
             RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", who.Body(art), progress, DollH, who);
             host.Stage.Stand(doll);
-            if (who.IsStandIn) AddTestTag(host.Stage.Root, new Vector2(0f, -(host.Stage.OvalY + host.Stage.OvalH * 0.5f + 20f)));
+            if (who.IsStandIn) AddTestTag(host.Stage.Root, new Vector2(-330f, -(host.Stage.OvalY - 30f)));
 
             // inventory (left), info (middle) and more characters (right): the round icon buttons
             Button inv = ToyKit.IconButton(body, "Inventory", "Inventory", 1, Glyphs.Shirt, new Vector2(170f, 170f), () => { if (host.OpenInventory != null) host.OpenInventory(); }, 0.6f);
@@ -141,7 +141,7 @@ namespace BoingUpSkyTower.Gameplay
                 b.onClick.AddListener(() => { if (pick != null) { CharacterCatalog.Selected = pick; Build(false); } });
                 tile.gameObject.AddComponent<A11yLabel>().Text = open ? who.Name + (isChosen ? ", chosen" : "") : "Locked character";
                 Image face = UiKit.AddImage(tile.transform, "Face", open ? who.Body(art) : (art != null ? art.Player : null), open ? who.BodyColor : new Color(0.03f, 0.04f, 0.10f, 0.95f));
-                face.rectTransform.anchorMin = new Vector2(0.1f, 0.08f);
+                face.rectTransform.anchorMin = new Vector2(0.1f, open && who.IsStandIn ? 0.30f : 0.08f);
                 face.rectTransform.anchorMax = new Vector2(0.9f, 0.92f);
                 face.rectTransform.offsetMin = face.rectTransform.offsetMax = Vector2.zero;
                 if (!open)

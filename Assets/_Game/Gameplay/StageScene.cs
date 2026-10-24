@@ -38,9 +38,9 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Inventory: the stage is the top 1010 px above the dark panel.</summary>
         public static Stage InventoryLayout() { return new Stage { BackdropH = 520f, GroundBottom = 1010f, OvalY = 720f, OvalW = 560f, OvalH = 150f }; }
         /// <summary>Info screen: a smaller stage on top, the power-up rows below it.</summary>
-        public static Stage InfoLayout() { return new Stage { BackdropH = 470f, GroundBottom = 580f, OvalY = 505f, OvalW = 480f, OvalH = 120f }; }
+        public static Stage InfoLayout() { return new Stage { BackdropH = 470f, GroundBottom = 590f, OvalY = 548f, OvalW = 440f, OvalH = 110f }; }
 
-        static Sprite grass, oval;
+        static Sprite grass, oval, edge;
 
         /// <summary>Builds the stage described by <paramref name="layout"/> as the first child of <paramref name="screenRoot"/> (behind every other element).</summary>
         public static Stage Build(RectTransform screenRoot, ArtCatalog art, ProgressService progress, Stage layout)
@@ -79,18 +79,29 @@ namespace BoingUpSkyTower.Gameplay
             ground.anchorMin = new Vector2(0f, 0f);
             ground.anchorMax = new Vector2(1f, 1f);
             ground.offsetMin = Vector2.zero;
-            ground.offsetMax = new Vector2(0f, -(layout.BackdropH - 90f));
+            ground.offsetMax = new Vector2(0f, -layout.BackdropH);
             if (layout.GroundBottom > 0f)
             {
                 ground.anchorMin = new Vector2(0f, 1f);
                 ground.anchorMax = new Vector2(1f, 1f);
                 ground.pivot = new Vector2(0.5f, 1f);
                 ground.offsetMin = new Vector2(0f, -layout.GroundBottom);
-                ground.offsetMax = new Vector2(0f, -(layout.BackdropH - 90f));
+                ground.offsetMax = new Vector2(0f, -layout.BackdropH);
             }
             Image gi = ground.gameObject.AddComponent<Image>();
             gi.sprite = GrassSprite();
             gi.raycastTarget = false;
+
+            // a soft fade strip above the ground hides the seam with the backdrop's bottom edge
+            RectTransform edge = UiKit.Rect(root, "GroundEdge");
+            edge.anchorMin = new Vector2(0f, 1f);
+            edge.anchorMax = new Vector2(1f, 1f);
+            edge.pivot = new Vector2(0.5f, 1f);
+            edge.offsetMin = new Vector2(0f, -(layout.BackdropH + 2f));
+            edge.offsetMax = new Vector2(0f, -(layout.BackdropH - 130f));
+            Image ei = edge.gameObject.AddComponent<Image>();
+            ei.sprite = EdgeSprite();
+            ei.raycastTarget = false;
 
             // the dirt oval
             Image ov = UiKit.AddImage(root, "DirtOval", OvalSprite(), Color.white);
@@ -127,13 +138,31 @@ namespace BoingUpSkyTower.Gameplay
             {
                 float t = 1f - y / (float)(h - 1);                  // 0 at the top of the picture
                 Color c = Color.Lerp(top, bot, t);
-                c.a = Mathf.Clamp01(t / 0.22f);                     // soft top edge
                 for (int x = 0; x < 4; x++) px[y * 4 + x] = c;
             }
             tex.SetPixels32(px);
             tex.Apply();
             grass = Sprite.Create(tex, new Rect(0, 0, 4, h), new Vector2(0.5f, 0.5f), 100f);
             return grass;
+        }
+
+        static Sprite EdgeSprite()
+        {
+            if (edge != null) return edge;
+            const int h = 32;
+            var tex = new Texture2D(4, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var px = new Color32[4 * h];
+            Color top = new Color(0.52f, 0.82f, 0.28f);
+            for (int y = 0; y < h; y++)
+            {
+                Color c = top;
+                c.a = Mathf.SmoothStep(0f, 1f, 1f - y / (float)(h - 1));   // transparent at the top of the picture, solid at the bottom
+                for (int x = 0; x < 4; x++) px[y * 4 + x] = c;
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            edge = Sprite.Create(tex, new Rect(0, 0, 4, h), new Vector2(0.5f, 0.5f), 100f);
+            return edge;
         }
 
         static Sprite OvalSprite()

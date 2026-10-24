@@ -58,6 +58,9 @@ namespace BoingUpSkyTower.Gameplay
         public void Build(int slotTab = 0)
         {
             SlotTab = Mathf.Clamp(slotTab, 0, GearCatalog.SlotCount - 1);
+            // development builds: the four mannequin test pieces are granted so they can be worn and the fit checked on Momo and on Pip
+            if (CharacterCatalog.ShowTest)
+                foreach (GearDef t in GearCatalog.TestPieces) if (!progress.OwnsGear(t.Id)) progress.GrantGear(t.Id);
             BuildPanel();
             BuildTop();
             BuildTabs();
@@ -223,6 +226,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             Comparison<GearDef> byRarity = (a, b) => a.Rarity != b.Rarity ? b.Rarity.CompareTo(a.Rarity) : a.Number.CompareTo(b.Number);
             owned.Sort(byRarity);
+            if (CharacterCatalog.ShowTest) owned.Insert(0, GearCatalog.TestPieces[SlotTab]);   // development builds: the mannequin test piece first
             missing.Sort(byRarity);
             owned.AddRange(missing);
             return owned;

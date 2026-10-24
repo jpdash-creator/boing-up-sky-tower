@@ -203,6 +203,23 @@ namespace BoingUpSkyTower.Tests
             Assert.Less(with, 240, "not every piece is painted yet");
         }
 
+        [Test]
+        public void TheFourMannequinTestPiecesAreOutsideTheCatalogAndHaveRealArt()
+        {
+            GearCatalog.ArtProbe = null;
+            Assert.AreEqual(240, GearCatalog.All.Count);
+            Assert.AreEqual(4, GearCatalog.TestPieces.Count);
+            foreach (GearDef t in GearCatalog.TestPieces)
+            {
+                Assert.AreSame(t, GearCatalog.Get(t.Id));
+                Assert.IsTrue(GearCatalog.IsTestPiece(t));
+                Assert.IsFalse(new List<GearDef>(GearCatalog.All).Contains(t));
+                Assert.IsTrue(GearCatalog.HasArt(t), t.Id + " icon");
+                Assert.IsNotNull(GearLayers.Find(t), t.Id + " layer");
+                foreach (GearDef d in GearCatalog.Pieces(t.Slot, t.Rarity)) Assert.AreNotEqual(t.Id, d.Id);
+            }
+        }
+
         // ---- info screen numbers ----
 
         [Test]
