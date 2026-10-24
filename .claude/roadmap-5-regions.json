@@ -158,10 +158,10 @@
     },
     {
       "id": "T15",
-      "task": "Regenerate Sunny Beach and Bamboo Temple tilesets (after seen in game)",
-      "status": "blocked",
-      "minutes": 20,
-      "blocker": "Needs owner approval packet and credits (about 120)",
+      "task": "Regenerate Sunny Beach and Bamboo Temple tilesets (dropped by owner 2026-10-24: thin painted platforms replaced them)",
+      "status": "done",
+      "minutes": 0,
+      "blocker": "",
       "depends": [
         "T5"
       ]
