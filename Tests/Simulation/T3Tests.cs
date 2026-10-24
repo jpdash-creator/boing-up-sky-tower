@@ -116,7 +116,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
             Assert.Equal(5559277721996333721L, LevelBuilder.Build(cfg, a).ComputeHash());
-            Assert.Equal(-8205845449502824147L, LevelBuilder.Build(cfg, b).ComputeHash());
+            Assert.Equal(-8519198174591667113L, LevelBuilder.Build(cfg, b).ComputeHash());
         }
 
         [Fact]

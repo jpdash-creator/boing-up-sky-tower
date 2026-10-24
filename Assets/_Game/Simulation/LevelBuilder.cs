@@ -458,7 +458,7 @@ namespace BoingUpSkyTower.Simulation
             data.Pickups = BuildPickups(cfg, spec, ctx, data.Platforms, rows, d, hiddenGemPlaced, hiddenGemX, hiddenGemY);
 
             // ---- hazards ----
-            data.Hazards = BuildHazards(cfg, spec, ctx, rows, d, wave, waveStart, waveEnd, ladderStart, ladderLen);
+            data.Hazards = BuildHazards(cfg, spec, ctx, data.Platforms, data.Pickups, rows, d, wave, waveStart, waveEnd, ladderStart, ladderLen);
             return data;
         }
 
@@ -776,7 +776,7 @@ namespace BoingUpSkyTower.Simulation
         // Hazards. Gongs hang in the jump corridor between two consecutive spine platforms, swing
         // sideways by GongAmplitude and rise a little at the swing extremes (pendulum).
         // ------------------------------------------------------------------------------------------
-        private static Hazard[] BuildHazards(SimConfig cfg, LevelSpec spec, Ctx ctx, int rows, Fx d,
+        private static Hazard[] BuildHazards(SimConfig cfg, LevelSpec spec, Ctx ctx, Platform[] platforms, Pickup[] pickups, int rows, Fx d,
             bool wave, int waveStart, int waveEnd, int ladderStart, int ladderLen)
         {
             bool gongRegion = spec.LevelIndex >= 3 && spec.Signature == SignatureKind.SwingingGongs;
@@ -807,25 +807,86 @@ namespace BoingUpSkyTower.Simulation
                 {
                     Fx mx = (ctx.X[row - 1] + ctx.X[row]) / 2;
                     Fx my = (ctx.Y[row - 1] + ctx.Y[row]) / 2;
-                    Hazard h = new Hazard();
-                    h.Kind = HazardKind.Gong;
-                    h.Radius = Fx.Lerp(cfg.GongRadiusEasy, cfg.GongRadiusHard, d);
-                    h.Amplitude = r.Range(cfg.GongAmplitudeMin, cfg.GongAmplitudeMax);
-                    Fx offset = r.Range(Fx.One, Fx.FromRatio(25, 10));
-                    Fx ax = mx + offset * (k == 0 ? side : -side);
-                    Fx edge = h.Amplitude + h.Radius;
-                    if (edge * 2 < screen) ax = Fx.Clamp(ax, edge, screen - edge);
-                    h.X = ax;
-                    h.Y = my + Fx.Half;
-                    h.Period = 2 * (inWave ? r.Range(55, 90) : r.Range(70, 120));
-                    h.Phase = r.Next(h.Period);
-                    list.Add(h);
+                    // Region 5 (QA 2026-10-24): a gong must not sweep the standing spot of a platform, pass through a platform or sit on a
+                    // star or gem, so it is redrawn (amplitude, offset, period, phase) up to GongPlacementTries times, else dropped.
+                    for (int attempt = 0; attempt < GongPlacementTries; attempt++)
+                    {
+                        Hazard h = new Hazard();
+                        h.Kind = HazardKind.Gong;
+                        h.Radius = Fx.Lerp(cfg.GongRadiusEasy, cfg.GongRadiusHard, d);
+                        h.Amplitude = r.Range(cfg.GongAmplitudeMin, cfg.GongAmplitudeMax);
+                        Fx offset = r.Range(Fx.One, Fx.FromRatio(25, 10));
+                        Fx ax = mx + offset * (k == 0 ? side : -side);
+                        Fx edge = h.Amplitude + h.Radius;
+                        if (edge * 2 < screen) ax = Fx.Clamp(ax, edge, screen - edge);
+                        h.X = ax;
+                        h.Y = my + Fx.Half;
+                        h.Period = 2 * (inWave ? r.Range(55, 90) : r.Range(70, 120));
+                        h.Phase = r.Next(h.Period);
+                        if (spec.Signature == SignatureKind.SwingingGongs && GongConflicts(cfg, h, platforms, pickups)) continue;
+                        list.Add(h);
+                        break;
+                    }
                 }
             }
             list.Sort(CompareHazard);
             Hazard[] arr = list.ToArray();
             for (int i = 0; i < arr.Length; i++) arr[i].Id = i;
             return arr;
+        }
+
+        /// <summary>Redraws of one gong before it is dropped (region 5 placement filter).</summary>
+        private const int GongPlacementTries = 24;
+
+        private static long Dist2ToRect(Fx px, Fx py, Fx x0, Fx x1, Fx y0, Fx y1)
+        {
+            Fx cx = Fx.Clamp(px, x0, x1), cy = Fx.Clamp(py, y0, y1);
+            long dx = px.Raw - cx.Raw, dy = py.Raw - cy.Raw;
+            return dx * dx + dy * dy;
+        }
+
+        /// <summary>
+        /// True when the swing of a gong (same triangle wave and arc as Sim.HazardPosition) hits a player standing anywhere on a platform surface,
+        /// cuts through a platform slab, or covers a star or gem. Only platforms and pickups near the gong's height are sampled.
+        /// </summary>
+        private static bool GongConflicts(SimConfig cfg, Hazard h, Platform[] plats, Pickup[] picks)
+        {
+            Fx reach = h.Amplitude + h.Radius + cfg.PlayerHitRadius + Fx.FromInt(2);
+            Fx lo = h.Y - reach, hi = h.Y + reach;
+            Fx hitR = h.Radius + cfg.PlayerHitRadius;
+            long hitR2 = (long)hitR.Raw * hitR.Raw;
+            Fx slabR = h.Radius * 6 / 10;
+            long slabR2 = (long)slabR.Raw * slabR.Raw;
+            Fx pickR = hitR + Fx.FromRatio(3, 10);
+            long pickR2 = (long)pickR.Raw * pickR.Raw;
+            Fx slab = Fx.FromRatio(3, 10);
+            int half = h.Period / 2;
+            for (int t = 0; t < h.Period; t++)
+            {
+                int phase = (t + h.Phase) % h.Period;
+                int tri = phase < half ? phase : h.Period - phase;
+                Fx sway = Fx.FromRatio(tri, half) * 2 - Fx.One;
+                Fx gx = h.X + sway * h.Amplitude;
+                Fx gy = h.Y + Fx.Abs(sway) * h.Amplitude * cfg.GongArcRisePercent / 100;
+                for (int i = 0; i < plats.Length; i++)
+                {
+                    Platform p = plats[i];
+                    if (p.Y < lo) continue;
+                    if (p.Y > hi) break;
+                    Fx ext = p.Width / 2 + p.Amplitude;
+                    if (Dist2ToRect(gx, gy, p.X - ext - cfg.LandingMargin, p.X + ext + cfg.LandingMargin, p.Y + cfg.PlayerCenterY, p.Y + cfg.PlayerCenterY) < hitR2) return true;
+                    if (Dist2ToRect(gx, gy, p.X - ext, p.X + ext, p.Y - slab, p.Y) < slabR2) return true;
+                }
+                for (int i = 0; i < picks.Length; i++)
+                {
+                    Pickup k = picks[i];
+                    if (k.Y < lo) continue;
+                    if (k.Y > hi) break;
+                    long dx = gx.Raw - k.X.Raw, dy = gy.Raw - k.Y.Raw;
+                    if (dx * dx + dy * dy < pickR2) return true;
+                }
+            }
+            return false;
         }
 
         private static int CompareHazard(Hazard a, Hazard b)
