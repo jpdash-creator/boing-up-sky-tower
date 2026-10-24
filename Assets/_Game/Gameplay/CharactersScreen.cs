@@ -84,9 +84,9 @@ namespace BoingUpSkyTower.Gameplay
         {
             // the chosen character stands on the dirt oval of the land stage, a little larger than in the run so the fit of the gear can be seen
             CharacterDef who = CharacterCatalog.Selected;
-            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", who.Body(art), progress, DollH, who);
+            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", progress, DollH, who, art);
             host.Stage.Stand(doll);
-            if (who.IsStandIn) AddTestTag(host.Stage.Root, new Vector2(-330f, -(host.Stage.OvalY - 30f)));
+            if (who.IsTest) AddTestTag(host.Stage.Root, new Vector2(-330f, -(host.Stage.OvalY - 30f)));
 
             // inventory (left), info (middle) and more characters (right): the round icon buttons
             Button inv = ToyKit.IconButton(body, "Inventory", "Inventory", 1, Glyphs.Shirt, new Vector2(170f, 170f), () => { if (host.OpenInventory != null) host.OpenInventory(); }, 0.6f);
@@ -140,10 +140,21 @@ namespace BoingUpSkyTower.Gameplay
                 CharacterDef pick = who;
                 b.onClick.AddListener(() => { if (pick != null) { CharacterCatalog.Selected = pick; Build(false); } });
                 tile.gameObject.AddComponent<A11yLabel>().Text = open ? who.Name + (isChosen ? ", chosen" : "") : "Locked character";
-                Image face = UiKit.AddImage(tile.transform, "Face", open ? who.Body(art) : (art != null ? art.Player : null), open ? who.BodyColor : new Color(0.03f, 0.04f, 0.10f, 0.95f));
-                face.rectTransform.anchorMin = new Vector2(0.1f, open && who.IsStandIn ? 0.30f : 0.08f);
-                face.rectTransform.anchorMax = new Vector2(0.9f, 0.92f);
-                face.rectTransform.offsetMin = face.rectTransform.offsetMax = Vector2.zero;
+                if (open)
+                {
+                    // the character's own parts, no gear
+                    RectTransform face = MomoDoll.Build(tile.transform, "Face", null, w * 0.66f, who, art);
+                    face.anchorMin = face.anchorMax = new Vector2(0.5f, 1f);
+                    face.pivot = new Vector2(0.5f, 1f);
+                    face.anchoredPosition = new Vector2(0f, -w * 0.04f);
+                }
+                else
+                {
+                    Image face = UiKit.AddImage(tile.transform, "Face", art != null ? art.Player : null, new Color(0.03f, 0.04f, 0.10f, 0.95f));
+                    face.rectTransform.anchorMin = new Vector2(0.1f, 0.08f);
+                    face.rectTransform.anchorMax = new Vector2(0.9f, 0.92f);
+                    face.rectTransform.offsetMin = face.rectTransform.offsetMax = Vector2.zero;
+                }
                 if (!open)
                 {
                     Image lk = UiKit.AddImage(tile.transform, "Lock", ToyKit.Get("icon_lock"), Color.white);
@@ -157,7 +168,7 @@ namespace BoingUpSkyTower.Gameplay
                         Image tick = UiKit.AddImage(tile.transform, "Chosen", Glyphs.Check, Color.white);
                         Anchor(tick.rectTransform, new Vector2(1f, 1f), new Vector2(-8f, -8f), new Vector2(w * 0.3f, w * 0.3f));
                     }
-                    if (who.IsStandIn)
+                    if (who.IsTest)
                     {
                         Text t = UiKit.AddText(tile.transform, "Test", "TEST", 40, Color.white, TextAnchor.MiddleCenter, true);
                         t.horizontalOverflow = HorizontalWrapMode.Overflow;

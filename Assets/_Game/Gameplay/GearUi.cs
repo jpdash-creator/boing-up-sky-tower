@@ -189,52 +189,39 @@ namespace BoingUpSkyTower.Gameplay
     }
 
     /// <summary>
-    /// The character with the worn gear drawn over him (docs/17 section C, docs/18 section B): the body picture plus one layer per worn slot, all placed through the
-    /// character's rig (identity for Momo, so every layer has exactly the body's rect), drawn in the fixed order pants, boots, body, head. It is the same
-    /// composite as in the run, only larger. A piece with no layer art draws nothing (CUX-10).
+    /// The character with the worn gear (docs/18, part based): every part picture of the character and of the worn gear is a full-canvas Image anchored to the
+    /// rectangle <see cref="PartsAssembler"/> gives it (the whole box for the character parts, the fitted rect for gear), drawn back to front. It is the same list
+    /// the run draws, only larger. Missing part art draws nothing (CUX-10).
     /// </summary>
     public static class MomoDoll
     {
-        /// <summary>Slots in draw order after Momo's body: pants, boots, then the jacket (body slot), then head gear.</summary>
-        public static readonly GearSlot[] DrawOrder = { GearSlot.Pants, GearSlot.Boots, GearSlot.Body, GearSlot.Head };
-
-        /// <summary>Resolves the worn-layer picture of a piece, or null while it has none. The pilot layers are named slot_n (head_2, body_3 ...).</summary>
-        public static Func<GearDef, Sprite> LayerFor = GearLayers.Find;
-
-        /// <summary>Builds the doll in a box of the given height (width follows the picture). Returns the box. <paramref name="who"/> null = Momo.</summary>
-        public static RectTransform Build(Transform parent, string name, Sprite body, ProgressService progress, float height, CharacterDef who = null)
+        /// <summary>Builds the doll in a box of the given height (width follows the canvas). Returns the box. <paramref name="who"/> null = Momo.</summary>
+        public static RectTransform Build(Transform parent, string name, ProgressService progress, float height, CharacterDef who = null, ArtCatalog art = null)
         {
+            who = who ?? CharacterCatalog.Momo;
             RectTransform box = UiKit.Rect(parent, name);
-            float aspect = body != null ? body.rect.width / body.rect.height : 0.8f;
-            box.sizeDelta = new Vector2(height * aspect, height);
-            Color tint = who != null ? who.BodyColor : Color.white;
-            Image baseImg = UiKit.AddImage(box, "Momo", body, body != null ? tint : new Color(1f, 0.85f, 0.4f, 1f));
-            baseImg.preserveAspect = true;
-            UiKit.Stretch(baseImg.rectTransform);
-            Refresh(box, progress, who);
+            CharacterRig rig = who.Rig;
+            box.sizeDelta = new Vector2(height * rig.CanvasW / rig.CanvasH, height);
+            Refresh(box, progress, who, art);
             return box;
         }
 
-        /// <summary>Rebuilds the layers above the body from what is worn now.</summary>
-        public static void Refresh(RectTransform box, ProgressService progress, CharacterDef who = null)
+        /// <summary>Rebuilds every part image from the character and what is worn now.</summary>
+        public static void Refresh(RectTransform box, ProgressService progress, CharacterDef who = null, ArtCatalog art = null)
         {
+            who = who ?? CharacterCatalog.Momo;
             for (int i = box.childCount - 1; i >= 0; i--)
-                if (box.GetChild(i).name.StartsWith("Layer")) UnityEngine.Object.Destroy(box.GetChild(i).gameObject);
-            if (progress == null) return;
-            CharacterRig rig = who != null ? who.Rig : CharacterRig.Identity;
-            foreach (GearSlot slot in DrawOrder)
+                UnityEngine.Object.Destroy(box.GetChild(i).gameObject);
+            Func<GearSlot, GearDef> worn = progress != null ? (Func<GearSlot, GearDef>)(slot => progress.EquippedDef(slot)) : null;
+            List<PartDraw> draws = PartsAssembler.Build(who, art ?? GameSession.Art, worn);
+            foreach (PartDraw d in draws)
             {
-                GearDef d = progress.EquippedDef(slot);
-                if (d == null) continue;
-                Sprite s = LayerFor != null ? LayerFor(d) : null;
-                if (s == null) continue;
-                Image img = UiKit.AddImage(box, "Layer_" + slot, s, Color.white);
+                Image img = UiKit.AddImage(box, (d.Gear ? "Layer_" : "Part_") + d.Name, d.Sprite, Color.white);
                 img.preserveAspect = false;
+                img.raycastTarget = false;
                 RectTransform rt = img.rectTransform;
-                Vector2 nmin, nmax;
-                rig.NormalizedRect(slot, out nmin, out nmax);
-                rt.anchorMin = nmin;
-                rt.anchorMax = nmax;
+                rt.anchorMin = d.Min;
+                rt.anchorMax = d.Max;
                 rt.offsetMin = rt.offsetMax = Vector2.zero;
             }
         }

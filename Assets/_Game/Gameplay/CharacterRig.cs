@@ -1,125 +1,354 @@
+using System;
+using System.Collections.Generic;
 using BoingUpSkyTower.Economy;
 using UnityEngine;
 
 namespace BoingUpSkyTower.Gameplay
 {
-    /// <summary>One anchor box of a character: how the shared gear layer of that slot is scaled and moved to fit this body (docs/18 section B). Identity = 1, 1, 0, 0.</summary>
-    [System.Serializable]
-    public sealed class RigBox
+    // ---- JSON shapes (Resources/Characters/<id>/rig.json and Resources/Characters/gear_<set>/gear.json, written by Tools/art_pipeline/cut_character_parts.py) ----
+
+    /// <summary>A fit: move by (dx, dy) canvas px and scale about a point. Scale 0 means "absent" (identity).</summary>
+    [Serializable]
+    public sealed class FitOffset
     {
-        /// <summary>Scale of the layer about the box centre (1 = same size as on the Momo canvas).</summary>
-        public float sx = 1f, sy = 1f;
-        /// <summary>Offset in canvas fractions (x to the right, y upward).</summary>
-        public float ox, oy;
+        public float dx, dy, scale;
     }
 
-    [System.Serializable]
-    sealed class RigFile
+    [Serializable]
+    public sealed class PartFits
     {
-        public RigBox head, torso, legs, feet;
-        public float[] tint;
+        public FitOffset back, legL, legR, footL, footR, torso, armL, armR, head;
+
+        public FitOffset For(string part)
+        {
+            switch (part)
+            {
+                case "back": return back;
+                case "legL": return legL;
+                case "legR": return legR;
+                case "footL": return footL;
+                case "footR": return footR;
+                case "torso": return torso;
+                case "armL": return armL;
+                case "armR": return armR;
+                case "head": return head;
+                default: return null;
+            }
+        }
+    }
+
+    [Serializable]
+    public sealed class SlotFit
+    {
+        public float dx, dy, scale;
+        public PartFits parts;
+    }
+
+    [Serializable]
+    public sealed class GearFits
+    {
+        public SlotFit head, body, pants, boots;
+
+        public SlotFit For(GearSlot slot)
+        {
+            switch (slot)
+            {
+                case GearSlot.Head: return head;
+                case GearSlot.Body: return body;
+                case GearSlot.Pants: return pants;
+                default: return boots;
+            }
+        }
+    }
+
+    [Serializable]
+    sealed class RigJson
+    {
+        public string id;
+        public string[] order;
+        public int[] canvas;
+        public GearFits gear_offsets;
+    }
+
+    [Serializable]
+    sealed class GearPartJson
+    {
+        public string part, file, above;
+        public int[] bbox;
+    }
+
+    [Serializable]
+    sealed class GearSlotJson
+    {
+        public GearPartJson[] parts;
+    }
+
+    [Serializable]
+    sealed class GearSlotsJson
+    {
+        public GearSlotJson head, body, pants, boots;
+    }
+
+    [Serializable]
+    sealed class GearAnchorsJson
+    {
+        public int[] head, body, pants, boots;
+    }
+
+    [Serializable]
+    sealed class GearJson
+    {
+        public string id;
+        public GearSlotsJson slots;
+        public GearAnchorsJson anchors;
     }
 
     /// <summary>
-    /// The rig of one character (template T1): four anchor boxes, head, torso, legs, feet, as scale and offset relative to the Momo canvas
-    /// (1365 x 1649). Gear layers are painted once on the Momo shaped mannequin; the doll and the run both place a layer through
-    /// <see cref="NormalizedRect"/>, so a second body with other proportions wears the same layers. Momo is the identity.
+    /// The parts of a character and how gear is fitted to it (docs/18, part based). A character is nine full-canvas pictures (1365 x 1649, centre pivot, 100 ppu)
+    /// drawn back to front in <see cref="Order"/>; every gear part sits right above the character part it covers. <see cref="GearFits"/> holds, per slot (and per
+    /// sleeve), the scale and offset that fit the shared gear parts to THIS body: p' = anchor + (dx, dy) + scale * (p - anchor), then the optional per-part fit
+    /// about the part's own moved centre (the same maths as Tools/art_pipeline/render_character_composites.py, which is the reference).
     /// </summary>
     public sealed class CharacterRig
     {
-        public RigBox Head = new RigBox(), Torso = new RigBox(), Legs = new RigBox(), Feet = new RigBox();
-        /// <summary>Colour multiplied over the body picture of a recoloured stand-in (white for a character with its own painted body).</summary>
-        public Color Tint = Color.white;
+        public static readonly string[] DefaultOrder = { "back", "legL", "legR", "footL", "footR", "torso", "armL", "armR", "head" };
+
+        public string[] Order = DefaultOrder;
+        public float CanvasW = 1365f, CanvasH = 1649f;
+        public GearFits Fits;
 
         public static CharacterRig Identity { get { return new CharacterRig(); } }
-
-        public RigBox For(GearSlot slot)
-        {
-            switch (slot)
-            {
-                case GearSlot.Head: return Head;
-                case GearSlot.Body: return Torso;
-                case GearSlot.Pants: return Legs;
-                default: return Feet;
-            }
-        }
-
-        /// <summary>Vertical centre of each slot's mannequin box as a fraction of the canvas height from the top (head 0 to 52 percent, torso 52 to 78, legs 72 to 94, feet 90 to 100).</summary>
-        public static float PivotFromTop(GearSlot slot)
-        {
-            switch (slot)
-            {
-                case GearSlot.Head: return 0.26f;
-                case GearSlot.Body: return 0.65f;
-                case GearSlot.Pants: return 0.83f;
-                default: return 0.95f;
-            }
-        }
-
-        /// <summary>
-        /// The rectangle of a slot's layer on the character canvas, in canvas fractions with y upward (0..1 = the whole canvas). The layer is scaled about the
-        /// slot's box centre and moved by the offset. Identity gives (0,0) to (1,1): the same rect as the body picture.
-        /// </summary>
-        public void NormalizedRect(GearSlot slot, out Vector2 min, out Vector2 max)
-        {
-            RigBox b = For(slot);
-            Vector2 c = new Vector2(0.5f, 1f - PivotFromTop(slot));
-            Vector2 s = new Vector2(b.sx, b.sy);
-            min = new Vector2(c.x + b.ox - c.x * s.x, c.y + b.oy - c.y * s.y);
-            max = min + s;
-        }
-
-        /// <summary>
-        /// Puts a world sprite layer (a child of the body sprite's transform) where the rig says: scaled to the body sprite's own bounds, so the gear has the same
-        /// proportions as on the character screens whatever pixels-per-unit each picture was imported with.
-        /// </summary>
-        public void PlaceSprite(Transform layer, Sprite layerSprite, Sprite body, GearSlot slot)
-        {
-            Vector2 nmin, nmax;
-            NormalizedRect(slot, out nmin, out nmax);
-            Bounds pb = body.bounds;
-            Vector2 min = (Vector2)pb.min + Vector2.Scale(nmin, pb.size);
-            Vector2 size = Vector2.Scale(nmax - nmin, pb.size);
-            Vector2 lb = layerSprite.bounds.size;
-            Vector2 sc = new Vector2(size.x / lb.x, size.y / lb.y);
-            layer.localScale = new Vector3(sc.x, sc.y, 1f);
-            Vector2 centre = min + size * 0.5f;
-            layer.localPosition = new Vector3(centre.x - layerSprite.bounds.center.x * sc.x, centre.y - layerSprite.bounds.center.y * sc.y, 0f);
-        }
 
         public static CharacterRig FromJson(string json)
         {
             var rig = new CharacterRig();
             if (string.IsNullOrEmpty(json)) return rig;
-            RigFile f = JsonUtility.FromJson<RigFile>(json);
+            RigJson f = JsonUtility.FromJson<RigJson>(json);
             if (f == null) return rig;
-            rig.Head = Fix(f.head);
-            rig.Torso = Fix(f.torso);
-            rig.Legs = Fix(f.legs);
-            rig.Feet = Fix(f.feet);
-            if (f.tint != null && f.tint.Length >= 3) rig.Tint = new Color(f.tint[0], f.tint[1], f.tint[2], 1f);
+            if (f.order != null && f.order.Length > 0) rig.Order = f.order;
+            if (f.canvas != null && f.canvas.Length >= 2) { rig.CanvasW = f.canvas[0]; rig.CanvasH = f.canvas[1]; }
+            rig.Fits = f.gear_offsets;
             return rig;
         }
 
-        static RigBox Fix(RigBox b)
+        /// <summary>
+        /// The rectangle a gear part lands on, in canvas fractions with y upward (0,0 to 1,1 is the whole canvas). <paramref name="anchor"/> is the gear slot anchor in
+        /// canvas px (y down), <paramref name="partCentre"/> the centre of the part's picture in canvas px. No fit gives (0,0) to (1,1).
+        /// </summary>
+        public void GearRect(GearSlot slot, Vector2 anchor, string part, Vector2 partCentre, out Vector2 min, out Vector2 max)
         {
-            if (b == null) return new RigBox();
-            if (b.sx <= 0f) b.sx = 1f;
-            if (b.sy <= 0f) b.sy = 1f;
-            return b;
+            SlotFit off = Fits != null ? Fits.For(slot) : null;
+            float s = 1f;
+            Vector2 t = Vector2.zero;
+            if (off != null && off.scale > 0f)
+            {
+                s = off.scale;
+                t = new Vector2(anchor.x + off.dx - s * anchor.x, anchor.y + off.dy - s * anchor.y);
+                FitOffset po = off.parts != null ? off.parts.For(part) : null;
+                if (po != null && po.scale > 0f)
+                {
+                    Vector2 c = s * partCentre + t;
+                    Vector2 t2 = c * (1f - po.scale) + new Vector2(po.dx, po.dy);
+                    t = po.scale * t + t2;
+                    s *= po.scale;
+                }
+            }
+            min = new Vector2(t.x / CanvasW, 1f - (t.y + s * CanvasH) / CanvasH);
+            max = new Vector2((t.x + s * CanvasW) / CanvasW, 1f - t.y / CanvasH);
         }
     }
 
-    /// <summary>One playable character: a body picture (no gear) and its rig.</summary>
+    /// <summary>One picture to draw, back to front, in canvas fractions (y up). Shared by the UI doll and the run.</summary>
+    public struct PartDraw
+    {
+        public Sprite Sprite;
+        public Vector2 Min, Max;
+        public string Name;
+        public float Z;
+        public bool Gear;
+        public GearSlot Slot;
+
+        /// <summary>
+        /// Local scale and position of this part as a child of the player transform, whose unit is the character canvas: <paramref name="canvasSize"/> is the size of
+        /// one full-canvas part picture in world units (sprite bounds). The run uses exactly this.
+        /// </summary>
+        public void LocalTransform(Vector2 canvasSize, out Vector3 position, out Vector3 scale)
+        {
+            Vector2 c = (Min + Max) * 0.5f - new Vector2(0.5f, 0.5f);
+            scale = new Vector3(Max.x - Min.x, Max.y - Min.y, 1f);
+            position = new Vector3(c.x * canvasSize.x, c.y * canvasSize.y, 0f);
+        }
+    }
+
+    /// <summary>One part picture of a gear piece with the character part it is drawn above.</summary>
+    public sealed class GearPartEntry
+    {
+        public string Part, Above;
+        public Sprite Sprite;
+        public Vector2 Centre;
+    }
+
+    /// <summary>The parts of one worn piece: its pictures and its anchor on the Momo canvas.</summary>
+    public sealed class GearPartSet
+    {
+        public readonly List<GearPartEntry> Entries = new List<GearPartEntry>(3);
+        public Vector2 Anchor;
+    }
+
+    /// <summary>
+    /// Finds the parts of a gear piece. A piece with a parts folder (Resources/Characters/gear_&lt;set&gt;/gear.json, now the dev test pieces) is cut into parts;
+    /// a piece that only has a single worn layer (the pilot pieces) is one part drawn above the character part its slot covers, fitted by the same slot fit.
+    /// </summary>
+    public static class GearParts
+    {
+        static readonly Dictionary<string, GearPartSet> cache = new Dictionary<string, GearPartSet>();
+
+        static readonly Dictionary<GearSlot, Vector2> DefaultAnchors = new Dictionary<GearSlot, Vector2>
+        {
+            { GearSlot.Head, new Vector2(520f, 935f) }, { GearSlot.Body, new Vector2(520f, 1000f) },
+            { GearSlot.Pants, new Vector2(520f, 1390f) }, { GearSlot.Boots, new Vector2(520f, 1600f) },
+        };
+
+        /// <summary>The gear set a piece's parts live in ("test" for the dev test pieces), or null for a single layer piece.</summary>
+        public static string SetOf(GearDef d) { return GearCatalog.IsTestPiece(d) ? "test" : null; }
+
+        public static GearPartSet Find(GearDef d)
+        {
+            if (d == null) return null;
+            string key = d.Id;
+            GearPartSet set;
+            if (cache.TryGetValue(key, out set)) return set;
+            set = Load(d);
+            cache[key] = set;
+            return set;
+        }
+
+        static GearPartSet Load(GearDef d)
+        {
+            string gset = SetOf(d);
+            if (gset != null)
+            {
+                string root = "Characters/gear_" + gset + "/";
+                TextAsset ta = Resources.Load<TextAsset>(root + "gear");
+                if (ta == null) return null;
+                GearJson g = JsonUtility.FromJson<GearJson>(ta.text);
+                if (g == null || g.slots == null) return null;
+                GearSlotJson sj = Slot(g.slots, d.Slot);
+                if (sj == null || sj.parts == null) return null;
+                var set = new GearPartSet { Anchor = Anchor(g.anchors, d.Slot) };
+                foreach (GearPartJson p in sj.parts)
+                {
+                    Sprite sp = Resources.Load<Sprite>(root + p.file.Replace(".png", ""));
+                    if (sp == null) continue;
+                    Vector2 c = p.bbox != null && p.bbox.Length >= 4 ? new Vector2((p.bbox[0] + p.bbox[2]) * 0.5f, (p.bbox[1] + p.bbox[3]) * 0.5f) : set.Anchor;
+                    set.Entries.Add(new GearPartEntry { Part = p.part, Above = p.above, Sprite = sp, Centre = c });
+                }
+                return set.Entries.Count > 0 ? set : null;
+            }
+            Sprite layer = GearLayers.Find(d);
+            if (layer == null) return null;
+            var one = new GearPartSet { Anchor = DefaultAnchors[d.Slot] };
+            string above = d.Slot == GearSlot.Head ? "head" : (d.Slot == GearSlot.Boots ? "footR" : "torso");
+            one.Entries.Add(new GearPartEntry { Part = "layer", Above = above, Sprite = layer, Centre = one.Anchor });
+            return one;
+        }
+
+        static GearSlotJson Slot(GearSlotsJson s, GearSlot slot)
+        {
+            switch (slot)
+            {
+                case GearSlot.Head: return s.head;
+                case GearSlot.Body: return s.body;
+                case GearSlot.Pants: return s.pants;
+                default: return s.boots;
+            }
+        }
+
+        static Vector2 Anchor(GearAnchorsJson a, GearSlot slot)
+        {
+            int[] v = null;
+            if (a != null)
+            {
+                switch (slot)
+                {
+                    case GearSlot.Head: v = a.head; break;
+                    case GearSlot.Body: v = a.body; break;
+                    case GearSlot.Pants: v = a.pants; break;
+                    default: v = a.boots; break;
+                }
+            }
+            return v != null && v.Length >= 2 ? new Vector2(v[0], v[1]) : DefaultAnchors[slot];
+        }
+    }
+
+    /// <summary>
+    /// The one place that decides what is drawn and where: the character's parts back to front, each worn gear part right above the character part it covers
+    /// (pants and boots are cut so they never cover the same pixels). The UI doll (character screen, inventory, info screen) and the run both draw this list.
+    /// </summary>
+    public static class PartsAssembler
+    {
+        /// <summary>Gear draw order inside one anchor part: pants, body, boots, head (render_character_composites.py).</summary>
+        static readonly GearSlot[] SlotOrder = { GearSlot.Pants, GearSlot.Body, GearSlot.Boots, GearSlot.Head };
+
+        public static List<PartDraw> Build(CharacterDef who, ArtCatalog art, Func<GearSlot, GearDef> worn)
+        {
+            var list = new List<PartDraw>(20);
+            CharacterRig rig = who.Rig;
+            string[] order = rig.Order;
+            for (int i = 0; i < order.Length; i++)
+            {
+                Sprite sp = who.PartSprite(order[i]);
+                if (sp == null) continue;
+                list.Add(new PartDraw { Sprite = sp, Min = Vector2.zero, Max = Vector2.one, Name = order[i], Z = i });
+            }
+            if (list.Count == 0 && art != null && art.Player != null)
+            {
+                // missing part art never crashes (CUX-10): the single Momo picture stands in
+                list.Add(new PartDraw { Sprite = art.Player, Min = Vector2.zero, Max = Vector2.one, Name = "body", Z = 0 });
+                order = new[] { "body" };
+            }
+            if (worn != null)
+            {
+                for (int k = 0; k < SlotOrder.Length; k++)
+                {
+                    GearSlot slot = SlotOrder[k];
+                    GearDef d = worn(slot);
+                    GearPartSet set = d != null ? GearParts.Find(d) : null;
+                    if (set == null) continue;
+                    foreach (GearPartEntry e in set.Entries)
+                    {
+                        int at = Array.IndexOf(order, e.Above);
+                        Vector2 min, max;
+                        rig.GearRect(slot, set.Anchor, e.Part, e.Centre, out min, out max);
+                        list.Add(new PartDraw
+                        {
+                            Sprite = e.Sprite, Min = min, Max = max, Name = slot + "_" + e.Part, Gear = true, Slot = slot,
+                            Z = (at < 0 ? order.Length : at) + 0.5f + k * 0.01f
+                        });
+                    }
+                }
+            }
+            // insertion sort by Z (stable, the list is short)
+            for (int i = 1; i < list.Count; i++)
+            {
+                PartDraw v = list[i];
+                int j = i - 1;
+                while (j >= 0 && list[j].Z > v.Z) { list[j + 1] = list[j]; j--; }
+                list[j + 1] = v;
+            }
+            return list;
+        }
+    }
+
+    /// <summary>One playable character: its parts and its rig.</summary>
     public sealed class CharacterDef
     {
         public string Id;
         public string Name;
-        /// <summary>False for the development test character.</summary>
+        /// <summary>False for the development test characters.</summary>
         public bool Production;
         CharacterRig rig;
-        bool bodyLooked;
-        Sprite ownBody;
+        readonly Dictionary<string, Sprite> parts = new Dictionary<string, Sprite>();
 
         public CharacterRig Rig
         {
@@ -132,36 +361,31 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>The character's own painted body (Resources/Characters/id/body) or null; <see cref="Body"/> then falls back to the Momo picture, recoloured by the rig tint.</summary>
-        public Sprite OwnBody
+        /// <summary>The full-canvas picture of one part (back, legL ... head), or null when it is missing.</summary>
+        public Sprite PartSprite(string part)
         {
-            get
-            {
-                if (!bodyLooked) { ownBody = Resources.Load<Sprite>("Characters/" + Id + "/body"); bodyLooked = true; }
-                return ownBody;
-            }
+            Sprite s;
+            if (parts.TryGetValue(part, out s)) return s;
+            s = Resources.Load<Sprite>("Characters/" + Id + "/" + part);
+            parts[part] = s;
+            return s;
         }
 
-        /// <summary>The body picture to draw: the own picture, else the Momo picture from the art catalog.</summary>
-        public Sprite Body(ArtCatalog art)
-        {
-            return OwnBody != null ? OwnBody : (art != null ? art.Player : null);
-        }
-
-        /// <summary>Colour over the body: white for an own picture and for Momo, the rig tint for a recoloured stand-in (the clearly marked test character).</summary>
-        public Color BodyColor { get { return OwnBody != null || Production ? Color.white : Rig.Tint; } }
-
-        /// <summary>True while the body is Momo's picture recoloured (no own picture): the UI marks it TEST.</summary>
-        public bool IsStandIn { get { return !Production && OwnBody == null; } }
+        /// <summary>True for the development test characters (a TEST tag is drawn near them).</summary>
+        public bool IsTest { get { return !Production; } }
     }
 
-    /// <summary>The characters. Production builds show Momo only; development builds add the test character Pip (docs/18 section E.5).</summary>
+    /// <summary>The characters. Production builds show Momo only; development builds add the three test characters (docs/18 section E.5).</summary>
     public static class CharacterCatalog
     {
         const string SelectedKey = "settings.character";
 
         public static readonly CharacterDef Momo = new CharacterDef { Id = "momo", Name = "Momo", Production = true };
-        public static readonly CharacterDef Pip = new CharacterDef { Id = "pip", Name = "Pip", Production = false };
+        public static readonly CharacterDef Sporeling = new CharacterDef { Id = "sporeling", Name = "Sporeling", Production = false };
+        public static readonly CharacterDef Moth = new CharacterDef { Id = "moth", Name = "Moth", Production = false };
+        public static readonly CharacterDef Rootling = new CharacterDef { Id = "rootling", Name = "Rootling", Production = false };
+
+        static readonly CharacterDef[] All = { Momo, Sporeling, Moth, Rootling };
 
         /// <summary>Tests set this to audit the development build behaviour in the editor (where GameSettings.DevBuild is false).</summary>
         public static bool TestOverride;
@@ -170,12 +394,14 @@ namespace BoingUpSkyTower.Gameplay
 
         public static CharacterDef[] Available()
         {
-            return ShowTest ? new[] { Momo, Pip } : new[] { Momo };
+            if (ShowTest) return All;
+            return new[] { Momo };
         }
 
         public static CharacterDef Get(string id)
         {
-            return id == Pip.Id ? Pip : Momo;
+            foreach (CharacterDef c in All) if (c.Id == id) return c;
+            return Momo;
         }
 
         /// <summary>The chosen character; always Momo when test characters are hidden.</summary>

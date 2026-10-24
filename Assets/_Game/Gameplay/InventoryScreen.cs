@@ -125,7 +125,7 @@ namespace BoingUpSkyTower.Gameplay
                 for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
                     if (host.Stage.Root.GetChild(i).name == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
                 CharacterDef who = CharacterCatalog.Selected;
-                doll = MomoDoll.Build(host.Stage.Root, "Doll", who.Body(art), progress, DollH, who);
+                doll = MomoDoll.Build(host.Stage.Root, "Doll", progress, DollH, who, art);
                 host.Stage.Stand(doll);
             }
 

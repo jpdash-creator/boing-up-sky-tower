@@ -1109,27 +1109,13 @@ namespace BoingUpSkyTower.Gameplay
             titleRow.pivot = new Vector2(0.5f, 1f);
             titleRow.anchoredPosition = new Vector2(0f, -244f);
             titleRow.sizeDelta = new Vector2(-40f, 176f);
-            bool testChar = region.Index == 2 && CharacterCatalog.ShowTest;
             Text hdr = UiKit.AddText(titleRow, "Header", region.Name, 64, Color.white, TextAnchor.MiddleLeft, true);
             var hrt = (RectTransform)hdr.transform;
             hrt.anchorMin = Vector2.zero;
             hrt.anchorMax = Vector2.one;
             hrt.offsetMin = new Vector2(24f, 0f);
-            hrt.offsetMax = new Vector2(testChar ? -320f : -170f, 0f);
-            if (testChar)
-            {
-                // development builds only: the test character Pip, enterable from this region's level screen (docs/18 section E.5). Tap toggles Pip and Momo.
-                bool pipOn = CharacterCatalog.Selected.Id == CharacterCatalog.Pip.Id;
-                CharacterDef pip = CharacterCatalog.Pip;
-                Button pb = ToyKit.IconButton(titleRow, "TestCharacter", pipOn ? "Test character Pip, on" : "Test character Pip, off", pipOn ? 0 : 2, Glyphs.Ring, new Vector2(136f, 136f), () => { CharacterCatalog.Selected = pipOn ? CharacterCatalog.Momo : CharacterCatalog.Pip; ShowLevels(region); }, 0.72f);
-                UiKit.Place((RectTransform)pb.transform, new Vector2(1f, 0.5f), new Vector2(-150f, 0f), new Vector2(136f, 136f));
-                ((RectTransform)pb.transform).pivot = new Vector2(1f, 0.5f);
-                Image face = UiKit.AddImage(pb.transform, "Face", pip.Body(art), pip.BodyColor);
-                face.raycastTarget = false;
-                face.rectTransform.anchorMin = new Vector2(0.15f, 0.12f);
-                face.rectTransform.anchorMax = new Vector2(0.85f, 0.88f);
-                face.rectTransform.offsetMin = face.rectTransform.offsetMax = Vector2.zero;
-            }
+            hrt.offsetMax = new Vector2(-170f, 0f);
+
             Button endlessIcon = ToyKit.IconButton(titleRow, "Endless", "Endless mode", 1, Glyphs.Infinity, new Vector2(136f, 136f), () => OnEndlessTapped(region), 0.72f);
             UiKit.Place((RectTransform)endlessIcon.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(136f, 136f));
             endlessIcon.GetComponent<RectTransform>().pivot = new Vector2(1f, 0.5f);

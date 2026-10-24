@@ -12,38 +12,26 @@ namespace BoingUpSkyTower.Tests
     {
         static readonly GearSlot[] Slots = { GearSlot.Head, GearSlot.Body, GearSlot.Pants, GearSlot.Boots };
 
-        Texture2D tex;
-        Sprite sprite;
-        System.Func<GearDef, Sprite> oldLayer;
-
         [SetUp]
         public void SetUp()
         {
             GearCatalog.ArtProbe = d => true;
-            tex = new Texture2D(8, 8);
-            sprite = Sprite.Create(tex, new Rect(0, 0, 8, 8), new Vector2(0.5f, 0.5f));
-            oldLayer = MomoDoll.LayerFor;
-            MomoDoll.LayerFor = d => sprite;
         }
 
         [TearDown]
         public void TearDown()
         {
-            MomoDoll.LayerFor = oldLayer;
             GearCatalog.ArtProbe = null;
             CharacterCatalog.TestOverride = false;
-            Object.DestroyImmediate(sprite);
-            Object.DestroyImmediate(tex);
         }
 
-        static ProgressService WearingAll()
+        static ProgressService WearingAllTestPieces()
         {
             var svc = new ProgressService(Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
-            foreach (GearSlot s in Slots)
+            foreach (GearDef t in GearCatalog.TestPieces)
             {
-                GearDef d = GearCatalog.Pieces(s, GearRarity.Rare)[0];
-                svc.GrantGear(d.Id);
-                svc.Equip(d.Id);
+                svc.GrantGear(t.Id);
+                Assert.IsTrue(svc.Equip(t.Id));
             }
             return svc;
         }
@@ -55,112 +43,154 @@ namespace BoingUpSkyTower.Tests
             return null;
         }
 
-        // ---- doll: the same composite as the run ----
+        static List<PartDraw> Draws(CharacterDef who, ProgressService svc)
+        {
+            return PartsAssembler.Build(who, null, slot => svc.EquippedDef(slot));
+        }
+
+        static int IndexOf(List<PartDraw> l, string name)
+        {
+            for (int i = 0; i < l.Count; i++) if (l[i].Name == name) return i;
+            Assert.Fail("no part " + name);
+            return -1;
+        }
+
+        // ---- parts: the character and the gear stacked back to front ----
 
         [Test]
-        public void EveryWornLayerOfMomoHasExactlyTheBodyRect()
+        public void EveryCharacterHasItsNineParts()
+        {
+            CharacterCatalog.TestOverride = true;
+            foreach (CharacterDef c in CharacterCatalog.Available())
+            {
+                Assert.AreEqual(9, c.Rig.Order.Length, c.Id);
+                foreach (string part in c.Rig.Order) Assert.IsNotNull(c.PartSprite(part), c.Id + "/" + part);
+            }
+            Assert.AreEqual(4, CharacterCatalog.Available().Length);
+        }
+
+        [Test]
+        public void GearPartsSitRightAboveTheCharacterPartTheyCover()
+        {
+            ProgressService svc = WearingAllTestPieces();
+            List<PartDraw> l = Draws(CharacterCatalog.Momo, svc);
+            Assert.AreEqual(9 + 2 + 3 + 2 + 1, l.Count, "nine character parts plus the parts of the four pieces");
+            Assert.Less(IndexOf(l, "torso"), IndexOf(l, "Pants_legL"), "the pants band goes over the torso");
+            Assert.Less(IndexOf(l, "Pants_legL"), IndexOf(l, "Body_torso"));
+            Assert.Less(IndexOf(l, "torso"), IndexOf(l, "armL"));
+            Assert.AreEqual(IndexOf(l, "footL") + 1, IndexOf(l, "Boots_footL"), "boots right above the foot");
+            Assert.AreEqual(IndexOf(l, "armL") + 1, IndexOf(l, "Body_armL"), "the sleeve right above the arm");
+            Assert.AreEqual(IndexOf(l, "head") + 1, IndexOf(l, "Head_head"), "the hat right above the head");
+            Assert.AreEqual(l.Count - 1, IndexOf(l, "Head_head"), "the hat is the last thing drawn");
+            Assert.Less(IndexOf(l, "back"), IndexOf(l, "legL"));
+        }
+
+        [Test]
+        public void OnMomoEveryPartIsDrawnOnTheWholeCanvasUntouched()
+        {
+            // Momo is the reference: no fit, so every character and gear part is drawn on exactly the canvas rect
+            foreach (PartDraw d in Draws(CharacterCatalog.Momo, WearingAllTestPieces()))
+            {
+                Assert.AreEqual(Vector2.zero, d.Min, d.Name);
+                Assert.AreEqual(Vector2.one, d.Max, d.Name);
+            }
+        }
+
+        [Test]
+        public void TheDollIsTheSameListThePartsAssemblerGives()
         {
             var root = new GameObject("root", typeof(RectTransform));
             try
             {
-                RectTransform doll = MomoDoll.Build(root.transform, "Doll", sprite, WearingAll(), 400f, CharacterCatalog.Momo);
-                var body = (RectTransform)doll.Find("Momo");
-                int layers = 0;
-                for (int i = 0; i < doll.childCount; i++)
+                CharacterCatalog.TestOverride = true;
+                foreach (CharacterDef who in CharacterCatalog.Available())
                 {
-                    var rt = (RectTransform)doll.GetChild(i);
-                    if (!rt.name.StartsWith("Layer")) continue;
-                    layers++;
-                    Assert.AreEqual(body.rect.size.x, rt.rect.size.x, 0.01f, rt.name + " width");
-                    Assert.AreEqual(body.rect.size.y, rt.rect.size.y, 0.01f, rt.name + " height");
-                    Assert.AreEqual(body.rect.position.x, rt.rect.position.x, 0.01f, rt.name + " x");
-                    Assert.AreEqual(body.rect.position.y, rt.rect.position.y, 0.01f, rt.name + " y");
+                    ProgressService svc = WearingAllTestPieces();
+                    RectTransform doll = MomoDoll.Build(root.transform, "Doll", svc, 400f, who, null);
+                    List<PartDraw> l = Draws(who, svc);
+                    Assert.AreEqual(l.Count, doll.childCount, who.Id);
+                    for (int i = 0; i < l.Count; i++)
+                    {
+                        var rt = (RectTransform)doll.GetChild(i);
+                        Assert.AreEqual(l[i].Min, rt.anchorMin, who.Id + " " + l[i].Name);
+                        Assert.AreEqual(l[i].Max, rt.anchorMax, who.Id + " " + l[i].Name);
+                        Assert.IsTrue(rt.name.EndsWith(l[i].Name), rt.name);
+                    }
                 }
-                Assert.AreEqual(4, layers);
             }
             finally { Object.DestroyImmediate(root); }
         }
 
         [Test]
-        public void ASecondBodyWearsTheSameLayersThroughItsRig()
+        public void TheSameGearIsFittedToEachBodyThroughItsRig()
         {
-            var root = new GameObject("root", typeof(RectTransform));
-            try
+            ProgressService svc = WearingAllTestPieces();
+            foreach (CharacterDef c in new[] { CharacterCatalog.Sporeling, CharacterCatalog.Moth, CharacterCatalog.Rootling })
             {
-                CharacterRig rig = CharacterCatalog.Pip.Rig;
-                Assert.AreNotEqual(1f, rig.Head.sx, "Pip is a different body");
-                RectTransform doll = MomoDoll.Build(root.transform, "Doll", sprite, WearingAll(), 400f, CharacterCatalog.Pip);
-                var body = (RectTransform)doll.Find("Momo");
-                var head = (RectTransform)doll.Find("Layer_Head");
-                var legs = (RectTransform)doll.Find("Layer_Pants");
-                Assert.AreEqual(body.rect.width * rig.Head.sx, head.rect.width, 0.05f);
-                Assert.AreEqual(body.rect.height * rig.Head.sy, head.rect.height, 0.05f);
-                Assert.AreEqual(body.rect.width * rig.Legs.sx, legs.rect.width, 0.05f);
-                Assert.IsTrue(Mathf.Abs(head.rect.height - legs.rect.height) > 0.01f);
+                SlotFit head = c.Rig.Fits.head;
+                Assert.Greater(head.scale, 0f, c.Id + " has a head fit");
+                List<PartDraw> l = Draws(c, svc);
+                PartDraw hat = l[IndexOf(l, "Head_head")];
+                Assert.AreEqual(head.scale, hat.Max.x - hat.Min.x, 0.0005f, c.Id + " hat width fraction is the fit scale");
+                Assert.AreEqual(head.scale, hat.Max.y - hat.Min.y, 0.0005f, c.Id + " hat height fraction is the fit scale");
+                SlotFit body = c.Rig.Fits.body;
+                PartDraw sleeve = l[IndexOf(l, "Body_armL")];
+                Assert.AreEqual(body.scale * body.parts.armL.scale, sleeve.Max.x - sleeve.Min.x, 0.0005f, c.Id + " the sleeve has its own fit on top of the jacket fit");
+                PartDraw torso = l[IndexOf(l, "Body_torso")];
+                Assert.AreEqual(body.scale, torso.Max.x - torso.Min.x, 0.0005f);
+                // the character parts themselves are never moved
+                PartDraw leg = l[IndexOf(l, "legL")];
+                Assert.AreEqual(Vector2.one, leg.Max);
             }
-            finally { Object.DestroyImmediate(root); }
         }
 
         [Test]
-        public void TheRunScalesAWornLayerToThePlayerSpriteBoundsWhateverItsPixelsPerUnit()
+        public void TheRunPlacesAPartExactlyWhereTheFractionsSay()
         {
-            // the body is imported at 50 ppu, the layer (painted on the same canvas) at 100 ppu, the player is scaled and flipped like in the run
-            var bt = new Texture2D(100, 200);
-            var lt = new Texture2D(400, 800);
-            Sprite body = Sprite.Create(bt, new Rect(0, 0, 100, 200), new Vector2(0.5f, 0.5f), 50f);
-            Sprite layer = Sprite.Create(lt, new Rect(0, 0, 400, 800), new Vector2(0.25f, 0.6f), 100f);   // off-centre pivot on purpose
-            var player = new GameObject("player", typeof(SpriteRenderer));
-            var child = new GameObject("worn", typeof(SpriteRenderer));
+            // the run draws a part as a child of the player transform (unit = the canvas): its world bounds must be the rect the rig gives
+            var tex = new Texture2D(8, 8);
+            Sprite sp = Sprite.Create(tex, new Rect(0, 0, 8, 8), new Vector2(0.5f, 0.5f), 0.5f);   // 16 x 16 units, centre pivot
+            var player = new GameObject("player");
+            var child = new GameObject("part", typeof(SpriteRenderer));
             try
             {
-                player.GetComponent<SpriteRenderer>().sprite = body;
-                player.transform.localScale = new Vector3(-0.9f, 1.3f, 1f);
-                player.transform.position = new Vector3(3f, 4f, 0f);
+                child.GetComponent<SpriteRenderer>().sprite = sp;
                 child.transform.SetParent(player.transform, false);
-                child.GetComponent<SpriteRenderer>().sprite = layer;
-                foreach (GearSlot slot in Slots)
-                {
-                    CharacterRig.Identity.PlaceSprite(child.transform, layer, body, slot);
-                    Bounds a = player.GetComponent<SpriteRenderer>().bounds, b = child.GetComponent<SpriteRenderer>().bounds;
-                    Assert.AreEqual(a.size.x, b.size.x, 0.001f, slot + " width");
-                    Assert.AreEqual(a.size.y, b.size.y, 0.001f, slot + " height");
-                    Assert.AreEqual(a.center.x, b.center.x, 0.001f, slot + " centre x");
-                    Assert.AreEqual(a.center.y, b.center.y, 0.001f, slot + " centre y");
-                }
-                // a rig with other proportions changes the layer the same way as on the doll
-                CharacterRig pip = CharacterCatalog.Pip.Rig;
-                pip.PlaceSprite(child.transform, layer, body, GearSlot.Head);
-                Bounds pa = player.GetComponent<SpriteRenderer>().bounds, pb = child.GetComponent<SpriteRenderer>().bounds;
-                Assert.AreEqual(pa.size.x * pip.Head.sx, pb.size.x, 0.001f);
-                Assert.AreEqual(pa.size.y * pip.Head.sy, pb.size.y, 0.001f);
+                player.transform.localScale = new Vector3(-0.5f, 0.25f, 1f);   // scaled and facing left like in the run
+                player.transform.position = new Vector3(3f, 4f, 0f);
+                Vector2 canvas = sp.bounds.size;
+                var d = new PartDraw { Sprite = sp, Min = new Vector2(0.1f, 0.2f), Max = new Vector2(0.6f, 0.9f) };
+                Vector3 pos, scale;
+                d.LocalTransform(canvas, out pos, out scale);
+                child.transform.localScale = scale;
+                child.transform.localPosition = pos;
+                Bounds b = child.GetComponent<SpriteRenderer>().bounds;
+                Vector3 pc = player.transform.position;
+                float cw = canvas.x * 0.5f, ch = canvas.y * 0.25f;
+                Assert.AreEqual(0.5f * cw, b.size.x, 0.001f);
+                Assert.AreEqual(0.7f * ch, b.size.y, 0.001f);
+                Assert.AreEqual(pc.y + ((0.2f + 0.9f) * 0.5f - 0.5f) * ch, b.center.y, 0.001f);
+                Assert.AreEqual(pc.x - ((0.1f + 0.6f) * 0.5f - 0.5f) * cw, b.center.x, 0.001f, "mirrored with the player");
             }
             finally
             {
                 Object.DestroyImmediate(player);
                 Object.DestroyImmediate(child);
-                Object.DestroyImmediate(body);
-                Object.DestroyImmediate(layer);
-                Object.DestroyImmediate(bt);
-                Object.DestroyImmediate(lt);
+                Object.DestroyImmediate(sp);
+                Object.DestroyImmediate(tex);
             }
         }
 
         [Test]
-        public void MomoIsTheIdentityRigAndProductionShowsOnlyMomo()
+        public void ProductionShowsOnlyMomo()
         {
-            foreach (GearSlot s in Slots)
-            {
-                Vector2 min, max;
-                CharacterCatalog.Momo.Rig.NormalizedRect(s, out min, out max);
-                Assert.AreEqual(Vector2.zero, min);
-                Assert.AreEqual(Vector2.one, max);
-            }
             CharacterCatalog.TestOverride = false;
             Assert.AreEqual(1, CharacterCatalog.Available().Length);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Selected);
             CharacterCatalog.TestOverride = true;
-            Assert.AreEqual(2, CharacterCatalog.Available().Length);
-            Assert.IsFalse(CharacterCatalog.Pip.Production);
+            Assert.AreEqual(4, CharacterCatalog.Available().Length);
+            Assert.IsFalse(CharacterCatalog.Sporeling.Production);
+            Assert.IsTrue(CharacterCatalog.Momo.Production);
         }
 
         // ---- art: pieces without an icon never drop or show ----
@@ -197,7 +227,7 @@ namespace BoingUpSkyTower.Tests
             {
                 bool icon = GearIcons.Find(d) != null;
                 Assert.AreEqual(icon, GearCatalog.HasArt(d), d.Id);
-                if (icon) { with++; Assert.IsNotNull(GearLayers.Find(d), d.Id + " has an icon, so it also has a worn layer"); }
+                if (icon) { with++; Assert.IsNotNull(GearParts.Find(d), d.Id + " has an icon, so it also has worn art"); }
             }
             Assert.Greater(with, 0, "some pieces are painted");
             Assert.Less(with, 240, "not every piece is painted yet");
@@ -215,7 +245,7 @@ namespace BoingUpSkyTower.Tests
                 Assert.IsTrue(GearCatalog.IsTestPiece(t));
                 Assert.IsFalse(new List<GearDef>(GearCatalog.All).Contains(t));
                 Assert.IsTrue(GearCatalog.HasArt(t), t.Id + " icon");
-                Assert.IsNotNull(GearLayers.Find(t), t.Id + " layer");
+                Assert.IsNotNull(GearParts.Find(t), t.Id + " parts");
                 foreach (GearDef d in GearCatalog.Pieces(t.Slot, t.Rarity)) Assert.AreNotEqual(t.Id, d.Id);
             }
         }
@@ -225,7 +255,7 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void TheInfoRowsShowWhatTheRunConfigGives()
         {
-            ProgressService svc = WearingAll();
+            ProgressService svc = WearingAllTestPieces();
             svc.GrantGear(Piece(GearSlot.Body, GearRarity.Epic, PowerUp.Flight).Id);
             svc.Equip(Piece(GearSlot.Body, GearRarity.Epic, PowerUp.Flight).Id);
             var baseCfg = new SimConfig();

@@ -793,56 +793,57 @@ namespace BoingUpSkyTower.Gameplay
             hazardTf[i] = null;
         }
 
+        SpriteRenderer[] partSr = new SpriteRenderer[0];
         SpriteRenderer[] wornSr = new SpriteRenderer[0];
         CharacterDef who;
-        Sprite bodySprite;
-        Color bodyColor = Color.white;
+        /// <summary>Size in world units of the character canvas (every part picture is one full canvas); the player transform is scaled so it is playerHeight tall.</summary>
+        Vector2 bodySize = new Vector2(0.9f, 1f);
 
-        /// <summary>The worn layers of the player (tests compare their bounds with the player sprite's).</summary>
+        /// <summary>The worn gear part renderers of the player (tests compare them with the character's).</summary>
         public SpriteRenderer[] WornLayers { get { return wornSr; } }
+        /// <summary>The first part picture of the player; its bounds are the canvas (tests).</summary>
         public SpriteRenderer PlayerRenderer { get { return playerSr; } }
+        public SpriteRenderer[] PartRenderers { get { return partSr; } }
 
         /// <summary>
-        /// The worn gear: one layer per slot, a child of the player sprite, so it moves, squashes and flips with it. Every layer is placed through the character's
-        /// rig and scaled to the body sprite's own bounds (the layers are painted at the size of the Momo picture; imported at another pixels-per-unit they
-        /// would be drawn several times too big), so the gear has the same proportions as on the character screens.
+        /// The player is the selected character built from its parts (docs/18): the same <see cref="PartsAssembler"/> list the character screens draw, every part a
+        /// child of the player transform placed on the canvas rectangle the rig gives it, so the run looks exactly like the character screen. The parts share one sorting group.
         /// </summary>
-        void BuildWornGear()
-        {
-            var list = new List<SpriteRenderer>(4);
-            ProgressService pr = GameSession.Progress;
-            if (pr != null && bodySprite != null)
-            {
-                CharacterRig rig = who != null ? who.Rig : CharacterRig.Identity;
-                int order = 11;
-                foreach (GearSlot slot in MomoDoll.DrawOrder)
-                {
-                    Sprite sp = GearLayers.Find(pr.EquippedDef(slot));
-                    if (sp == null) continue;
-                    SpriteRenderer sr = NewSprite("Worn" + slot, sp, order++, player);
-                    rig.PlaceSprite(sr.transform, sp, bodySprite, slot);
-                    list.Add(sr);
-                }
-            }
-            wornSr = list.ToArray();
-        }
-
         void BuildPlayer()
         {
             who = CharacterCatalog.Selected;
-            bodySprite = who.Body(art);
-            bodyColor = who.BodyColor;
-            playerSr = NewSprite("Momo", bodySprite, 10);
-            player = playerSr.transform;
-            if (bodySprite != null)
+            var go = new GameObject("Momo");
+            go.transform.SetParent(worldRoot, false);
+            player = go.transform;
+            var group = go.AddComponent<UnityEngine.Rendering.SortingGroup>();
+            group.sortingOrder = 10;
+            ProgressService pr = GameSession.Progress;
+            List<PartDraw> draws = PartsAssembler.Build(who, art, pr != null ? (System.Func<GearSlot, GearDef>)(slot => pr.EquippedDef(slot)) : null);
+            var all = new List<SpriteRenderer>(draws.Count);
+            var worn = new List<SpriteRenderer>(8);
+            for (int i = 0; i < draws.Count; i++)
             {
-                Vector2 size = bodySprite.bounds.size;
-                float s = playerHeight / size.y;
-                player.localScale = new Vector3(s, s, 1f);
+                PartDraw d = draws[i];
+                SpriteRenderer sr = NewSprite((d.Gear ? "Worn" : "Part") + d.Name, d.Sprite, i, player);
+                Vector2 size = d.Sprite.bounds.size;
+                if (i == 0) bodySize = size;
+                Vector3 pos, scale;
+                d.LocalTransform(bodySize, out pos, out scale);
+                sr.transform.localScale = scale;
+                sr.transform.localPosition = pos;
+                all.Add(sr);
+                if (d.Gear) worn.Add(sr);
             }
-            else player.localScale = new Vector3(0.9f, playerHeight, 1f);
-            playerSr.color = bodyColor;
-            BuildWornGear();
+            partSr = all.ToArray();
+            wornSr = worn.ToArray();
+            playerSr = partSr.Length > 0 ? partSr[0] : NewSprite("Momo", null, 10, player);
+            float s = playerHeight / bodySize.y;
+            player.localScale = partSr.Length > 0 ? new Vector3(s, s, 1f) : new Vector3(0.9f, playerHeight, 1f);
+        }
+
+        void SetPlayerColor(Color c)
+        {
+            for (int i = 0; i < partSr.Length; i++) partSr[i].color = c;
         }
 
         Pop MakePop()
@@ -1105,9 +1106,9 @@ namespace BoingUpSkyTower.Gameplay
             float stretch = reduced ? 1f : 1f + Mathf.Clamp(Mathf.Abs(vy) * 1.6f, 0f, 0.25f) - squash * 0.22f;
             float h = playerHeight * stretch;
             float widthFactor = 1f / Mathf.Max(0.7f, stretch);
-            if (bodySprite != null)
+            if (partSr.Length > 0)
             {
-                Vector2 size = bodySprite.bounds.size;
+                Vector2 size = bodySize;
                 float sy = h / size.y;
                 float sx = (playerHeight / size.y) * widthFactor;
                 float facing = s.Vx.Raw < -1000 ? -1f : (s.Vx.Raw > 1000 ? 1f : Mathf.Sign(player.localScale.x));
@@ -1115,7 +1116,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             player.position = new Vector3(px, py + h * 0.5f, 0f);
             player.rotation = reduced ? Quaternion.identity : Quaternion.Euler(0f, 0f, Mathf.Clamp(-s.Vx.F() * 40f, -12f, 12f));
-            playerSr.color = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(bodyColor.r, bodyColor.g, bodyColor.b, 0.55f) : bodyColor;
+            SetPlayerColor(s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(1f, 1f, 1f, 0.55f) : Color.white);
             UpdatePowerFx(px, py + h * 0.5f);
             UpdateGearFx(px, py + h * 0.5f, h);
 

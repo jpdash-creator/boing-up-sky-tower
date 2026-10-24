@@ -525,38 +525,5 @@ namespace BoingUpSkyTower.Tests
             Assert.IsNull(svc.EquippedId(GearSlot.Boots));
             Assert.AreEqual(4, svc.Data.Equipped.Count);
         }
-
-        // ---- worn gear renderer ----
-
-        [Test]
-        public void MomoDollStacksTheWornLayersInOrderAndSkipsMissingArt()
-        {
-            var svc = NewService();
-            foreach (GearSlot sl in new[] { GearSlot.Head, GearSlot.Body, GearSlot.Pants, GearSlot.Boots })
-            {
-                GearDef d = GearCatalog.Pieces(sl, GearRarity.Common)[0];
-                svc.GrantGear(d.Id);
-                svc.Equip(d.Id);
-            }
-            var tex = new Texture2D(4, 4);
-            Sprite sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
-            var old = MomoDoll.LayerFor;
-            var root = new GameObject("root", typeof(RectTransform));
-            try
-            {
-                MomoDoll.LayerFor = d => d.Slot == GearSlot.Boots ? null : sprite;   // boots have no art yet
-                RectTransform box = MomoDoll.Build(root.transform, "Doll", sprite, svc, 100f);
-                var names = new List<string>();
-                for (int i = 0; i < box.childCount; i++) names.Add(box.GetChild(i).name);
-                Assert.AreEqual(new[] { "Momo", "Layer_Pants", "Layer_Body", "Layer_Head" }, names.ToArray());
-            }
-            finally
-            {
-                MomoDoll.LayerFor = old;
-                Object.DestroyImmediate(root);
-                Object.DestroyImmediate(sprite);
-                Object.DestroyImmediate(tex);
-            }
-        }
     }
 }

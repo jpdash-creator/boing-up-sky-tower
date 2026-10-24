@@ -332,29 +332,37 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("info-open", () => { meta.ShowInfo(); meta.CurrentInfo.Select(BoingUpSkyTower.Simulation.PowerUp.Magnet); }, problems);
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
             yield return CheckScreen("characters-roster", () => meta.ShowCharacters(true), problems);
-            // development builds: the test character Pip in the roster, on the stage, and the switch on region 2's level screen
+            // development builds: the three test characters in the roster, on the stage and in the inventory, each wearing the four test pieces
             CharacterCatalog.TestOverride = true;
-            CharacterCatalog.Selected = CharacterCatalog.Pip;
             yield return CheckScreen("characters-roster-dev", () => meta.ShowCharacters(true), problems);
-            yield return CheckScreen("characters-pip", () => meta.ShowCharacters(), problems);
-            yield return CheckScreen("inventory-pip", () => meta.ShowInventory(), problems);
-            yield return CheckScreen("levels-region2-dev", () => meta.ShowLevels(GameSession.Repo.GetRegionByIndex(2)), problems);
+            foreach (GearDef t in GearCatalog.TestPieces) { GameSession.Progress.GrantGear(t.Id); GameSession.Progress.Equip(t.Id); }
+            yield return CheckScreen("characters-momo-testgear", () => meta.ShowCharacters(), problems);
+            yield return CheckScreen("info-momo-testgear", () => meta.ShowInfo(), problems);
+            foreach (CharacterDef c in new[] { CharacterCatalog.Sporeling, CharacterCatalog.Moth, CharacterCatalog.Rootling })
+            {
+                CharacterCatalog.Selected = c;
+                yield return CheckScreen("characters-" + c.Id, () => meta.ShowCharacters(), problems);
+                yield return CheckScreen("inventory-" + c.Id, () => meta.ShowInventory(), problems);
+            }
             CharacterCatalog.Selected = CharacterCatalog.Momo;
             CharacterCatalog.TestOverride = false;
             Report(problems);
         }
 
-        /// <summary>Docs/18: every worn layer is scaled to the player sprite's bounds (same size, same centre), so gear is never several times too big in the run.</summary>
+        /// <summary>Docs/18: the run draws the character from its parts and the worn gear parts; for Momo (no fit) every part picture sits on the same canvas bounds.</summary>
         static void AssertWornLayersFitPlayer(RunView view, List<string> problems)
         {
-            SpriteRenderer body = view.PlayerRenderer;
+            SpriteRenderer[] parts = view.PartRenderers;
             SpriteRenderer[] worn = view.WornLayers;
-            if (worn.Length == 0) problems.Add("run: no worn layer was built although gear is worn");
-            foreach (SpriteRenderer w in worn)
+            if (parts.Length < 9) problems.Add("run: only " + parts.Length + " part pictures were built");
+            if (worn.Length == 0) problems.Add("run: no worn gear part was built although gear is worn");
+            if (parts.Length == 0) return;
+            Bounds a = parts[0].bounds;
+            foreach (SpriteRenderer w in parts)
             {
-                Bounds a = body.bounds, b = w.bounds;
+                Bounds b = w.bounds;
                 if (Vector3.Distance(a.size, b.size) > 0.02f * a.size.magnitude || Vector3.Distance(a.center, b.center) > 0.02f * a.size.magnitude)
-                    problems.Add("run: " + w.name + " bounds " + b + " differ from the player " + a);
+                    problems.Add("run: " + w.name + " bounds " + b + " differ from the character canvas " + a);
             }
         }
 
