@@ -15,7 +15,7 @@ namespace BoingUpSkyTower.Gameplay
     /// release builds because there is no billing yet) and coin packs (paid with gems, real). Built in code under the safe area.
     /// Menu screen only: it has no per-frame code.
     /// </summary>
-    public sealed class ShopScreen
+    public sealed partial class ShopScreen
     {
         /// <summary>What the shop needs from the meta scene: the shared modal popup. The shop never owns a canvas of its own.</summary>
         public sealed class Host
@@ -23,6 +23,9 @@ namespace BoingUpSkyTower.Gameplay
             public Action<string, string, float> OpenPopup;                  // title, body, panel height
             public Func<string, bool, float, Action, Button> PopupButton;    // label, primary (pink) or secondary, y from the panel bottom, action
             public Action ClosePopup;
+            /// <summary>A fresh full-screen dim overlay layer for the chest reveal and info cards (docs/17); null where the host has none (chests then do nothing).</summary>
+            public Func<RectTransform> NewOverlay;
+            public Action CloseOverlay;
         }
 
         public const int TabChests = 0, TabPowerups = 1, TabVip = 2, TabGems = 3;
@@ -180,6 +183,7 @@ namespace BoingUpSkyTower.Gameplay
             ToyKit.Ribbon(body, SectionTitles[BarIndex], new Vector2(0.5f, 1f), new Vector2(0f, -(HeaderH - 70f)), new Vector2(580f, 206f));
             if (Tab == TabGems) BuildPackList(Section == GemsSection);
             else if (Tab == TabPowerups) BuildPowerUps();
+            else if (Tab == TabChests) BuildChests();
             else BuildComingSoon(Tab);
             bar = ToyKit.BuildIconBar(screen, new[]
             {

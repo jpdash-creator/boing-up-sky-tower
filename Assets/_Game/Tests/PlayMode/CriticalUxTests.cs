@@ -322,7 +322,31 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("region-locked-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(2)); }, problems);
             yield return CheckScreen("coming-soon-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(6)); }, problems);
             yield return CheckScreen("reset-popup", () => { meta.ShowSettings(); meta.ConfirmReset(); }, problems);
+
+            // Gear (docs/17): the inventory empty and full, every slot tab, the boost summary, the characters and the roster.
+            yield return CheckScreen("inventory-empty", () => meta.ShowInventory(), problems);
+            GrantSomeGear();
+            yield return CheckScreen("inventory", () => meta.ShowInventory(), problems);
+            yield return CheckScreen("inventory-boots", () => meta.ShowInventory(3), problems);
+            yield return CheckScreen("inventory-boosts", () => { meta.ShowInventory(); meta.CurrentInventory.OpenBoostSummary(); }, problems);
+            yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
+            yield return CheckScreen("characters-roster", () => meta.ShowCharacters(true), problems);
             Report(problems);
+        }
+
+        /// <summary>Owned gear of every slot and rarity, some with spare copies (forge ready), one piece worn per slot.</summary>
+        static void GrantSomeGear()
+        {
+            var p = GameSession.Progress;
+            for (int s = 0; s < 4; s++)
+            {
+                for (int r = 0; r < 5; r++)
+                {
+                    GearDef[] pieces = GearCatalog.Pieces((GearSlot)s, (GearRarity)r);
+                    for (int i = 0; i < 3 - r / 2; i++) p.GrantGear(pieces[i].Id, i == 0 && r < 2 ? 5 : 1);
+                }
+                p.Equip(GearCatalog.Pieces((GearSlot)s, (GearRarity)(s + 1))[0].Id);
+            }
         }
 
         /// <summary>CUX-9 addendum (owner, 2026-10-23): no platform image is stretched. Every platform sprite of a region that has painted width pieces is drawn
@@ -384,6 +408,9 @@ namespace BoingUpSkyTower.Tests
             var outcome = rc.Session.BuildOutcome();
             var reward = GameSession.Progress.ApplyRun(GameSession.CurrentLevelId, outcome);
             yield return CheckScreen("run-results", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
+            rc.Hud.CloseOverlay();
+            reward.GearDrops = new List<string> { "gear_head_c01", "gear_body_u02", "gear_pants_r03", "gear_boots_e04", "gear_head_l01" };
+            yield return CheckScreen("run-results-gear", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
             rc.Hud.CloseOverlay();
 
             // Endless mode (owner decision 2026-10-20): its HUD (Floor / Best) and the game over overlay obey the same rules.
@@ -480,6 +507,9 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-tab1-chests", () => meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-tab2-powerups", () => meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-tab2-powerups-bought", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins); }, problems);
+            yield return CheckScreen("shop-chest-info-popup", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.OpenChestInfo(ChestKind.Golden); }, problems);
+            yield return CheckScreen("shop-chest-iron-reveal", () => { GameSession.Progress.AddGems(100); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Iron, 1); meta.CurrentShop.Reveal.Skip(); }, problems);
+            yield return CheckScreen("shop-chest-golden-ten-reveal", () => { GameSession.Progress.AddGems(3000); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Golden, 10); meta.CurrentShop.Reveal.Skip(); }, problems);
             yield return CheckScreen("shop-tab3-vip", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-gems-notbuyable-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(3); }, problems);
 
@@ -503,6 +533,7 @@ namespace BoingUpSkyTower.Tests
 
             // Power-up shop: the not-enough-coins popup (with an empty wallet) points to the coins section.
             GameSession.Progress.TrySpendCoins(GameSession.Progress.Coins);
+            yield return CheckScreen("shop-chest-need-gems-popup", () => { GameSession.Progress.TrySpendGems(GameSession.Progress.Gems); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Iron, 1); }, problems);
             yield return CheckScreen("shop-tab2-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_rocket"), PowerUpCurrency.Coins); }, problems);
             Report(problems);
         }

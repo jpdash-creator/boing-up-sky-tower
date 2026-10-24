@@ -395,6 +395,16 @@ namespace BoingUpSkyTower.Gameplay
                 },
                 PopupButton = (label, primary, y, action) => ToyKit.PopupAction(shopPopup.Find("Panel"), label, ToyKit.Button(primary ? 1 : 0), Color.white, y, action),
                 ClosePopup = ClosePopupInShop,
+                NewOverlay = () =>
+                {
+                    ClosePopupInShop();
+                    shopPopup = UiKit.Rect(shopRoot, "Popup");
+                    UiKit.Stretch(shopPopup);
+                    var dim = shopPopup.gameObject.AddComponent<Image>();
+                    dim.color = new Color(0f, 0f, 0f, 0.65f);
+                    return shopPopup;
+                },
+                CloseOverlay = ClosePopupInShop,
             };
             GameSession.Progress.LaunchPromoActive = GameSettings.LaunchPromo;
             shop = new ShopScreen(safe, GameSession.Progress, ShopCatalog.FromRepository(GameSession.Repo), art, host);
@@ -484,7 +494,8 @@ namespace BoingUpSkyTower.Gameplay
 
         public void ShowResults(RunSession s, RewardResult reward, bool hasNext)
         {
-            OpenOverlay("Level clear!", 980f);
+            bool drops = reward.GearDrops != null && reward.GearDrops.Count > 0;
+            OpenOverlay("Level clear!", drops ? 1170f : 980f);
             AudioManager.Play(Sfx.Win);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -504,6 +515,8 @@ namespace BoingUpSkyTower.Gameplay
             ToyKit.InfoPill(row2, ToyKit.Get("icon_flame"), "x" + s.State.BestCombo, new Color(1f, 0.78f, 0.35f), 270f, 104f);
             if (reward.FirstClear) ToyKit.InfoPill(row2, ToyKit.Get("icon_crown"), "First", new Color(1f, 0.9f, 0.4f), 270f, 104f);
             if (!string.IsNullOrEmpty(reward.UnlockedRegionId)) ToyKit.InfoPill(row2, ToyKit.Get("icon_flag"), "New", new Color(0.7f, 1f, 0.75f), 270f, 104f);
+            // Gear dropped by this clear (docs/17): icon tiles, nothing written out.
+            if (drops) GearUi.TileRow(panel, "GearDrops", reward.GearDrops, 650f, 150f, 12f);
             // Three equal round buttons (owner issue 16.7).
             OverlayRow(
                 MakeAct("Next", "Next level", 1, ToyKit.Get("icon_play"), 150f, () => { if (OnNext != null) OnNext(); }, hasNext),

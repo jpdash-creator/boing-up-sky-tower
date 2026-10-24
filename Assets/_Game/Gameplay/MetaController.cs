@@ -414,8 +414,8 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
                 case ToyKit.TabPlay: ShowMap(); break;
-                case ToyKit.TabGear: ShowMessage("Gear", "Hats, shirts and boots for Momo are coming soon."); break;
-                case ToyKit.TabHeroes: ShowMessage("Characters", "New characters are coming soon."); break;
+                case ToyKit.TabGear: if (CurrentScreen != "Inventory") ShowInventory(); break;
+                case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
                 default: ShowMessage("Daily rewards", "Daily rewards are coming soon."); break;
             }
         }
@@ -438,12 +438,75 @@ namespace BoingUpSkyTower.Gameplay
                 OpenPopup = (title, body, height) => OpenPopup(title, body, height),
                 PopupButton = (label, primary, y, action) => PopupButton(label, Btn(primary ? 1 : 0), Color.white, y, action),
                 ClosePopup = ClosePopup,
+                NewOverlay = NewOverlay,
+                CloseOverlay = ClosePopup,
             };
             shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
             shop.Build(tab, section);
             AddBack("Back", ShowMenu);
             coinText = shop.CoinText;     // RefreshWallet keeps these two current after every purchase
             gemText = shop.GemText;
+            RefreshWallet();
+        }
+
+        // ---------------- gear: inventory and characters (docs/17) ----------------
+
+        InventoryScreen inventory;
+        CharactersScreen characters;
+
+        /// <summary>The inventory while its screen is showing (tests drive it).</summary>
+        public InventoryScreen CurrentInventory { get { return CurrentScreen == "Inventory" ? inventory : null; } }
+        public CharactersScreen CurrentCharacters { get { return CurrentScreen == "Characters" ? characters : null; } }
+
+        GearHost MakeGearHost()
+        {
+            return new GearHost
+            {
+                Back = ShowMenu,
+                OpenCharacters = () => ShowCharacters(),
+                OpenInventory = () => ShowInventory(),
+                OpenChests = () => ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection),
+                NewOverlay = NewOverlay,
+                CloseOverlay = ClosePopup,
+            };
+        }
+
+        void GearBackground()
+        {
+            RegionDef cur = progress != null ? progress.CurrentRegion() : null;
+            RegionArt ra = art != null ? (art.ForRegion(cur != null ? cur.Index : 1) ?? art.ForRegion(1)) : null;
+            Background(ra != null ? ra.BgFar : null, new Color(0.45f, 0.72f, 0.95f, 1f));
+            Image veil = UiKit.AddImage(screenRoot, "BgVeil", null, new Color(1f, 1f, 1f, 0.12f));
+            veil.preserveAspect = false;
+            UiKit.Stretch(veil.rectTransform);
+            veil.transform.SetSiblingIndex(1);
+        }
+
+        /// <summary>Inventory: Momo with four gear slots, slot tabs, forge and the piece grid (docs/17 section E).</summary>
+        public void ShowInventory(int slotTab = 0)
+        {
+            NewScreen("Inventory");
+            GearBackground();
+            inventory = new InventoryScreen(screen, progress, art, MakeGearHost());
+            inventory.Build(slotTab);
+            AddBack("Back", ShowMenu);
+            AddTabBar(ToyKit.TabGear);
+            coinText = inventory.CoinText;
+            gemText = inventory.GemText;
+            RefreshWallet();
+        }
+
+        /// <summary>Characters: Momo in the middle, the inventory and roster buttons (docs/17 section A).</summary>
+        public void ShowCharacters(bool roster = false)
+        {
+            NewScreen("Characters");
+            GearBackground();
+            characters = new CharactersScreen(screen, progress, art, MakeGearHost());
+            characters.Build(roster);
+            AddBack("Back", ShowMenu);
+            AddTabBar(ToyKit.TabHeroes);
+            coinText = characters.CoinText;
+            gemText = characters.GemText;
             RefreshWallet();
         }
 
@@ -1517,6 +1580,17 @@ namespace BoingUpSkyTower.Gameplay
         {
             OpenPopup(title, body, 860f);
             PopupButton("OK", Btn(0), Color.white, 60f, ClosePopup);
+        }
+
+        /// <summary>A fresh full-screen dim layer for gear and chest overlays (they build their own card on it); ClosePopup removes it.</summary>
+        RectTransform NewOverlay()
+        {
+            ClosePopup();
+            popup = UiKit.Rect(canvas.transform, "Popup");
+            UiKit.Stretch(popup);
+            var dim = popup.gameObject.AddComponent<Image>();
+            dim.color = new Color(0f, 0f, 0f, 0.65f);
+            return popup;
         }
 
         void ClosePopup()

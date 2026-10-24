@@ -10,6 +10,16 @@ namespace BoingUpSkyTower.Simulation
     {
         public const int TicksPerSecond = 60;
 
+        /// <summary>A copy of every tunable (the run applies gear boosts to a copy, never to the shared default config).</summary>
+        public SimConfig Clone()
+        {
+            var c = (SimConfig)MemberwiseClone();
+            c.GemValues = (int[])GemValues.Clone();
+            c.GemRarityPercent = (int[])GemRarityPercent.Clone();
+            c.ClassCoinPercent = (int[])ClassCoinPercent.Clone();
+            return c;
+        }
+
         public Fx ScreenWidth = Fx.FromInt(10);
         public Fx PlayerHalfWidth = Fx.Half;
         /// <summary>Extra horizontal tolerance when landing on a platform edge.</summary>

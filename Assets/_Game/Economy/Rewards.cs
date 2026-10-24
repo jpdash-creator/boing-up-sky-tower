@@ -54,6 +54,8 @@ namespace BoingUpSkyTower.Economy
         public int PickupGems;       // gems picked up during the run
         public int HiddenGemReward;  // +1 gem for a hidden gem, first clear only
         public string UnlockedRegionId;
+        /// <summary>Gear piece ids dropped by this clear (docs/17 section B); null or empty when nothing dropped.</summary>
+        public System.Collections.Generic.List<string> GearDrops;
 
         public int TotalCoins { get { return PayoutCoins + PickupCoins; } }
         public int TotalGems { get { return RewardGems + PickupGems + HiddenGemReward; } }
@@ -119,6 +121,8 @@ namespace BoingUpSkyTower.Economy
             result.PickupGems = threeStarReplay || run.GemsCollected < 0 ? 0 : Math.Min(run.GemsCollected, MaxGems(level));
             result.HiddenGemReward = 0;
             result.RewardGems = 0;
+            // Gear drops (docs/17): every completed run rolls, replays included, at the odds of the level's place in the region.
+            result.GearDrops = GearDrops.Roll(level.Index, level.Seed, clearsBefore);
             return result;
         }
     }
