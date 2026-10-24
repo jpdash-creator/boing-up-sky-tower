@@ -1,0 +1,532 @@
+{
+  "canvas": [
+    1885,
+    2169
+  ],
+  "momoOffset": [
+    260,
+    320
+  ],
+  "momoSize": [
+    1365,
+    1649
+  ],
+  "reference": "Assets/Art/Characters/char_momo/char_momo/char_momo.png",
+  "drawOrder": {
+    "back": 0,
+    "body": 1,
+    "pants": 2,
+    "boots": 3,
+    "jacket": 4,
+    "head": 5
+  },
+  "layers": [
+    {
+      "slot": "head",
+      "index": 1,
+      "rarity": "Common",
+      "file": "layers/head_1.png",
+      "offset": [
+        406,
+        449
+      ],
+      "size": [
+        880,
+        832
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": false,
+      "review": "fail: cream cap has almost the fur colour, only blotches survive",
+      "icon": "icons/head_1.png",
+      "drawOrder": 5,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "head",
+      "index": 2,
+      "rarity": "Uncommon",
+      "file": "layers/head_2.png",
+      "offset": [
+        191,
+        391
+      ],
+      "size": [
+        1065,
+        890
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/head_2.png",
+      "drawOrder": 5,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "head",
+      "index": 3,
+      "rarity": "Rare",
+      "file": "layers/head_3.png",
+      "offset": [
+        214,
+        174
+      ],
+      "size": [
+        1142,
+        1107
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable: a bit of the redrawn left ear fringe remains",
+      "icon": "icons/head_3.png",
+      "drawOrder": 5,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "head",
+      "index": 4,
+      "rarity": "Epic",
+      "file": "layers/head_4.png",
+      "offset": [
+        74,
+        64
+      ],
+      "size": [
+        1369,
+        1217
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable: base left ear shows next to the hat (needs a hide mask)",
+      "icon": "icons/head_4.png",
+      "drawOrder": 5,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "head",
+      "index": 5,
+      "rarity": "Legendary",
+      "file": "layers/head_5.png",
+      "offset": [
+        420,
+        213
+      ],
+      "size": [
+        881,
+        1068
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/head_5.png",
+      "drawOrder": 5,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "head",
+      "index": 6,
+      "rarity": "Mythic",
+      "file": "layers/head_6.png",
+      "offset": [
+        338,
+        431
+      ],
+      "size": [
+        908,
+        670
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": false,
+      "review": "fail: thin cream headband on cream fur, only the bell survives",
+      "icon": "icons/head_6.png",
+      "drawOrder": 5,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "body",
+      "index": 1,
+      "rarity": "Common",
+      "file": "layers/body_1.png",
+      "offset": [
+        455,
+        1269
+      ],
+      "size": [
+        670,
+        719
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": false,
+      "review": "poor: tan vest low contrast to fur, lower half partly missing",
+      "icon": "icons/body_1.png",
+      "drawOrder": 1,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "body",
+      "index": 2,
+      "rarity": "Uncommon",
+      "file": "layers/body_2.png",
+      "offset": [
+        314,
+        1193
+      ],
+      "size": [
+        1014,
+        824
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/body_2.png",
+      "drawOrder": 1,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "body",
+      "index": 3,
+      "rarity": "Rare",
+      "file": "layers/body_3.png",
+      "offset": [
+        355,
+        1207
+      ],
+      "size": [
+        891,
+        834
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/body_3.png",
+      "drawOrder": 1,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "body",
+      "index": 4,
+      "rarity": "Epic",
+      "file": "layers/body_4.png",
+      "offset": [
+        223,
+        1187
+      ],
+      "size": [
+        1329,
+        836
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/body_4.png",
+      "drawOrder": 1,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "body",
+      "index": 5,
+      "rarity": "Legendary",
+      "file": "layers/body_5.png",
+      "offset": [
+        271,
+        1190
+      ],
+      "size": [
+        1312,
+        813
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/body_5.png",
+      "drawOrder": 1,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "body",
+      "index": 6,
+      "rarity": "Mythic",
+      "file": "layers/body_6.png",
+      "offset": [
+        334,
+        1286
+      ],
+      "size": [
+        940,
+        688
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/body_6.png",
+      "drawOrder": 1,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "pants",
+      "index": 1,
+      "rarity": "Common",
+      "file": "layers/pants_1.png",
+      "offset": [
+        454,
+        1634
+      ],
+      "size": [
+        884,
+        272
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": false,
+      "review": "fail: cream shorts have the fur colour",
+      "icon": "icons/pants_1.png",
+      "drawOrder": 2,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "pants",
+      "index": 2,
+      "rarity": "Uncommon",
+      "file": "layers/pants_2.png",
+      "offset": [
+        438,
+        1600
+      ],
+      "size": [
+        873,
+        306
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/pants_2.png",
+      "drawOrder": 2,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "pants",
+      "index": 3,
+      "rarity": "Rare",
+      "file": "layers/pants_3.png",
+      "offset": [
+        346,
+        1589
+      ],
+      "size": [
+        1172,
+        317
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "partial: knight set drawn as full armour, only waist-down kept; arm guards belong to the body slot",
+      "icon": "icons/pants_3.png",
+      "drawOrder": 2,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "pants",
+      "index": 4,
+      "rarity": "Epic",
+      "file": "layers/pants_4.png",
+      "offset": [
+        451,
+        1589
+      ],
+      "size": [
+        707,
+        317
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/pants_4.png",
+      "drawOrder": 2,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "pants",
+      "index": 5,
+      "rarity": "Legendary",
+      "file": "layers/pants_5.png",
+      "offset": [
+        467,
+        1589
+      ],
+      "size": [
+        644,
+        317
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/pants_5.png",
+      "drawOrder": 2,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "pants",
+      "index": 6,
+      "rarity": "Mythic",
+      "file": "layers/pants_6.png",
+      "offset": [
+        372,
+        1614
+      ],
+      "size": [
+        787,
+        292
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": false,
+      "review": "fail: white socks/shorts have the fur colour, only the blue stripes survive",
+      "icon": "icons/pants_6.png",
+      "drawOrder": 2,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "boots",
+      "index": 1,
+      "rarity": "Common",
+      "file": "layers/boots_1.png",
+      "offset": [
+        423,
+        1699
+      ],
+      "size": [
+        928,
+        404
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": false,
+      "review": "poor: white sneakers have the fur colour, outline and sole survive, fill is patchy",
+      "icon": "icons/boots_1.png",
+      "drawOrder": 3,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "boots",
+      "index": 2,
+      "rarity": "Uncommon",
+      "file": "layers/boots_2.png",
+      "offset": [
+        425,
+        1699
+      ],
+      "size": [
+        923,
+        417
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/boots_2.png",
+      "drawOrder": 3,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "boots",
+      "index": 3,
+      "rarity": "Rare",
+      "file": "layers/boots_3.png",
+      "offset": [
+        440,
+        1699
+      ],
+      "size": [
+        884,
+        404
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/boots_3.png",
+      "drawOrder": 3,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "boots",
+      "index": 4,
+      "rarity": "Epic",
+      "file": "layers/boots_4.png",
+      "offset": [
+        399,
+        1699
+      ],
+      "size": [
+        928,
+        434
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/boots_4.png",
+      "drawOrder": 3,
+      "backDrawOrder": null
+    },
+    {
+      "slot": "boots",
+      "index": 5,
+      "rarity": "Legendary",
+      "file": "layers/boots_5.png",
+      "offset": [
+        317,
+        1699
+      ],
+      "size": [
+        1039,
+        432
+      ],
+      "backOffset": [
+        230,
+        1699
+      ],
+      "backFile": "layers/boots_5_back.png",
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/boots_5.png",
+      "drawOrder": 3,
+      "backDrawOrder": 0
+    },
+    {
+      "slot": "boots",
+      "index": 6,
+      "rarity": "Mythic",
+      "file": "layers/boots_6.png",
+      "offset": [
+        391,
+        1699
+      ],
+      "size": [
+        929,
+        419
+      ],
+      "backOffset": null,
+      "backFile": null,
+      "usable": true,
+      "review": "usable",
+      "icon": "icons/boots_6.png",
+      "drawOrder": 3,
+      "backDrawOrder": null
+    }
+  ]
+}
