@@ -144,6 +144,7 @@ namespace BoingUpSkyTower.Gameplay
             int s = (int)slot;
             bool left = s < 2;
             GearDef d = progress.EquippedDef(slot);
+            if (!GearCatalog.HasArt(d)) d = null;   // a worn piece without painted art shows as an empty slot, never a glyph on a coloured tile
             Vector2 size = new Vector2(SlotTile, SlotTile);
             RectTransform t = d != null
                 ? GearUi.Tile(top, "Slot" + GearCatalog.SlotNames[s], d, GearTileState.Owned, progress.GearLevel(d.Id), 1, size, () => TapSlot(slot), false, slot, true)

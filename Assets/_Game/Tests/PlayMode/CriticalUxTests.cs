@@ -334,6 +334,7 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("characters-roster", () => meta.ShowCharacters(true), problems);
             // development builds: the three test characters in the roster, on the stage and in the inventory, each wearing the four test pieces
             CharacterCatalog.TestOverride = true;
+            CharacterCatalog.Selected = CharacterCatalog.Sporeling;
             yield return CheckScreen("characters-roster-dev", () => meta.ShowCharacters(true), problems);
             foreach (GearDef t in GearCatalog.TestPieces) { GameSession.Progress.GrantGear(t.Id); GameSession.Progress.Equip(t.Id); }
             yield return CheckScreen("characters-momo-testgear", () => meta.ShowCharacters(), problems);
