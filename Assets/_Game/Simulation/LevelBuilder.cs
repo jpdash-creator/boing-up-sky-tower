@@ -453,6 +453,12 @@ namespace BoingUpSkyTower.Simulation
 
             data.Platforms = ctx.Plats.ToArray();
             SnapPlatformWidths(cfg, data.Platforms);
+            if (hiddenGemPlaced && data.HiddenGemOnSidePlatform)
+            {
+                // The gem floats over its side platform, which the snap pass may have moved (clamped to the walls or separated from the spine platform).
+                for (int i = data.Platforms.Length - 1; i >= 0; i--)
+                    if (data.Platforms[i].Row == data.HiddenGemRow) { hiddenGemX = data.Platforms[i].X; data.HiddenGemX = hiddenGemX; break; }
+            }
 
             // ---- pickups ----
             data.Pickups = BuildPickups(cfg, spec, ctx, data.Platforms, rows, d, hiddenGemPlaced, hiddenGemX, hiddenGemY);
@@ -493,6 +499,33 @@ namespace BoingUpSkyTower.Simulation
                 plats[i].Width = w;
                 Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving ? plats[i].Amplitude : Fx.Zero);
                 plats[i].X = Fx.Clamp(plats[i].X, edge, screen - edge);   // a wider piece (and its swing) must stay inside the walls
+            }
+            SeparateSameRowPlatforms(screen, plats);
+        }
+
+        /// <summary>Visible air kept between two platforms of one row, swing included (Region2AuditTests / PlatformSeparationTests: touching platforms read as one broken strip).</summary>
+        public static readonly Fx MinRowGap = Fx.FromRatio(3, 10);
+
+        /// <summary>
+        /// Snapping widths to the painted set can close the gap the layout left between two platforms of the same row (hidden gem side platform,
+        /// dense patch extras): the later platform of the row (never the spine one, which the pickups and bounce rules refer to) slides away until
+        /// the gap is MinRowGap again, as far as the walls allow.
+        /// </summary>
+        private static void SeparateSameRowPlatforms(Fx screen, Platform[] plats)
+        {
+            for (int j = 1; j < plats.Length; j++)
+            {
+                if (plats[j].Width >= Fx.FromInt(9)) continue;
+                for (int i = j - 1; i >= 0 && plats[i].Row == plats[j].Row; i--)
+                {
+                    if (plats[i].Width >= Fx.FromInt(9)) continue;
+                    Fx need = plats[i].Width / 2 + plats[i].Amplitude + plats[j].Width / 2 + plats[j].Amplitude + MinRowGap;
+                    Fx dist = Fx.Abs(plats[j].X - plats[i].X);
+                    if (dist >= need) continue;
+                    Fx edge = plats[j].Width / 2 + plats[j].Amplitude;
+                    Fx nx = plats[j].X >= plats[i].X ? plats[i].X + need : plats[i].X - need;
+                    plats[j].X = Fx.Clamp(nx, edge, screen - edge);
+                }
             }
         }
 

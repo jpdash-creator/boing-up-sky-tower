@@ -41,6 +41,15 @@ namespace BoingUpSkyTower.Simulation
             }
         }
 
+        /// <summary>
+        /// True when the region's signature art (RegionArt.Signature) shows the hazards. Only the gong region has hazard art; in every other region
+        /// the signature art is a friendly platform (mushroom cap, flower, gum) and a wave hazard drawn with it looks like something to land on.
+        /// </summary>
+        public static bool HazardsUseSignatureArt(SignatureKind kind)
+        {
+            return kind == SignatureKind.SwingingGongs;
+        }
+
         /// <summary>The platform kind a signature adds to the spine (None for gongs, which are hazards).</summary>
         public static PlatformKind PlatformFor(SignatureKind kind)
         {

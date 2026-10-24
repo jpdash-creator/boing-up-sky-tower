@@ -67,6 +67,7 @@ namespace BoingUpSkyTower.Gameplay
         readonly Stack<SpriteRenderer> cuePool = new Stack<SpriteRenderer>();
         readonly Stack<SpriteRenderer> gongPool = new Stack<SpriteRenderer>();
         Sprite gongSprite;
+        static Sprite hazardSpikes;
         /// <summary>Views kept below / above the screen edges in endless mode, world units.</summary>
         const float WindowBelow = 3f, WindowAbove = 8f;
 
@@ -241,6 +242,32 @@ namespace BoingUpSkyTower.Gameplay
             camY = curKill + camHalfH;
             ApplyCamera();
             if (endless) UpdateEndlessWindow();
+        }
+
+        /// <summary>Red spiky ball with a dark outline (CUX-6: a hazard differs from every platform by shape, not by colour alone). 1 world unit wide, scaled by SetupHazard.</summary>
+        static Sprite MakeHazardSpikes()
+        {
+            const int n = 96;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            var px = new Color32[n * n];
+            const float spikes = 10f, baseR = 28f, tipR = 46f, outline = 4f;
+            for (int y = 0; y < n; y++)
+            {
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = x - (n - 1) * 0.5f, dy = y - (n - 1) * 0.5f;
+                    float rho = Mathf.Sqrt(dx * dx + dy * dy);
+                    float a = Mathf.Atan2(dy, dx) / (2f * Mathf.PI) * spikes;
+                    float tri = 1f - Mathf.Abs(2f * (a - Mathf.Floor(a)) - 1f);   // 0 between spikes, 1 at a tip
+                    float edge = baseR + (tipR - baseR) * tri;
+                    Color32 c = new Color32(0, 0, 0, 0);
+                    if (rho <= edge) c = rho > edge - outline ? new Color32(40, 10, 20, 255) : (rho < 10f ? new Color32(255, 235, 150, 255) : new Color32(235, 55, 45, 255));
+                    px[y * n + x] = c;
+                }
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), n);
         }
 
         static Sprite MakeWhite()
@@ -726,7 +753,9 @@ namespace BoingUpSkyTower.Gameplay
             Hazard[] hz = session.Data.Hazards;
             hazardTf = new Transform[hz.Length];
             hazardSr = new SpriteRenderer[hz.Length];
-            gongSprite = region != null && region.Signature.Length > 0 ? region.Signature[0] : null;
+            // Only the gong region has hazard art; elsewhere the signature art is a platform, so hazards (surviveWave) get a spiky code-drawn sprite.
+            bool signatureIsHazard = SignatureKinds.HazardsUseSignatureArt(SignatureKinds.FromModuleId(session.Region.Rules.SignatureModule));
+            gongSprite = signatureIsHazard && region != null && region.Signature.Length > 0 ? region.Signature[0] : (hazardSpikes ?? (hazardSpikes = MakeHazardSpikes()));
             if (endless) return;   // endless gongs come from UpdateEndlessWindow
             for (int i = 0; i < hz.Length; i++) SetupHazard(i, hz[i], null);
             hazLo = 0;
