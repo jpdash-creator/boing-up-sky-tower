@@ -28,7 +28,7 @@ namespace BoingUpSkyTower.Economy
     ///    (launch scope is 5 regions; the content still marks 6-20 live, so the limit lives here until the content is updated).
     ///  - Inside a region, level N unlocks when level N-1 has been cleared (assumption, doc 02 is silent).
     /// </summary>
-    public sealed partial class ProgressService
+    public sealed class ProgressService
     {
         readonly ContentRepository repo;
         readonly ISaveStore store;
@@ -45,7 +45,6 @@ namespace BoingUpSkyTower.Economy
             this.store = store;
             PlayableRegionLimit = playableRegionLimit;
             Data = store.Load();
-            Data.Migrate();
             EnsureEndlessFields();
             EnsurePowerUpFields();
         }

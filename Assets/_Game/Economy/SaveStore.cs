@@ -17,10 +17,7 @@ namespace BoingUpSkyTower.Economy
 
         public SaveData Load()
         {
-            if (json == null) return new SaveData();
-            SaveData d = JsonConvert.DeserializeObject<SaveData>(json);
-            d.Migrate();
-            return d;
+            return json == null ? new SaveData() : JsonConvert.DeserializeObject<SaveData>(json);
         }
 
         public void Save(SaveData data)
@@ -72,7 +69,6 @@ namespace BoingUpSkyTower.Economy
                 SaveData data = JsonConvert.DeserializeObject<SaveData>(File.ReadAllText(file));
                 if (data == null || data.Levels == null || data.UnlockedRegions == null) return null;
                 if (data.Version > SaveData.CurrentVersion) return null; // written by a newer app: do not guess
-                data.Migrate();   // version 1 saves gain the version 2 fields with safe defaults
                 return data;
             }
             catch (Exception)

@@ -14,7 +14,7 @@ namespace BoingUpSkyTower.Gameplay
     /// Meta scene: main menu, world map, level select (15 levels per region, stars, locks), level info popup,
     /// region gem-skip popup and settings. Built in code from the sliced art (no prefabs yet).
     /// </summary>
-    public sealed partial class MetaController : MonoBehaviour
+    public sealed class MetaController : MonoBehaviour
     {
         // World map (Tools/art_pipeline/build_world_map.py): 10 stitched segments of 3 regions each, bottom to top, in the Resources/Map chunks.
         [System.Serializable] class MapChunkMeta { public string file; public int height; }
@@ -355,13 +355,10 @@ namespace BoingUpSkyTower.Gameplay
             }
             if (art != null && art.Player != null)
             {
-                // The selected character in its colour, with the gear it wears layered on top (docs/15).
-                string heroId = progress.SelectedHeroId;
-                RectTransform m = GearArt.BuildDressedMomo(screen, "Momo", art.Player, progress.HeroDefs.Get(heroId), progress, heroId, 540f);
-                m.anchorMin = m.anchorMax = new Vector2(0.5f, 0.40f);
-                m.pivot = new Vector2(0.5f, 0.5f);
-                m.anchoredPosition = Vector2.zero;
-                momo = m;
+                Image m = UiKit.AddImage(screen, "Momo", art.Player, Color.white);
+                UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.40f), Vector2.zero, new Vector2(440f, 540f));
+                m.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                momo = m.rectTransform;
                 momoBase = momo.anchoredPosition;
             }
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
@@ -417,8 +414,8 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
                 case ToyKit.TabPlay: ShowMap(); break;
-                case ToyKit.TabGear: if (CurrentScreen != "Gear") ShowGear(); break;
-                case ToyKit.TabHeroes: if (CurrentScreen != "Heroes") ShowHeroes(); break;
+                case ToyKit.TabGear: ShowMessage("Gear", "Hats, shirts and boots for Momo are coming soon."); break;
+                case ToyKit.TabHeroes: ShowMessage("Characters", "New characters are coming soon."); break;
                 default: ShowMessage("Daily rewards", "Daily rewards are coming soon."); break;
             }
         }
@@ -441,7 +438,6 @@ namespace BoingUpSkyTower.Gameplay
                 OpenPopup = (title, body, height) => OpenPopup(title, body, height),
                 PopupButton = (label, primary, y, action) => PopupButton(label, Btn(primary ? 1 : 0), Color.white, y, action),
                 ClosePopup = ClosePopup,
-                PopupPanel = () => popup != null ? (RectTransform)popup.Find("Panel") : null,
             };
             shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
             shop.Build(tab, section);
