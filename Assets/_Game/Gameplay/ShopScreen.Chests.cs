@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The shop's Chests tab: two big chest cards, blue Iron and gold Golden, each with the chest picture, what it holds as icons and numbers (power-ups and coins),
+    /// The shop's Chests tab: two big chest cards, blue Iron and gold Golden, each with the chest picture, the character rarities it can drop with their odds, what else it holds (power-ups and coins),
     /// and two buttons: open 1 and open 10 with the gem price. Opening plays a reveal.
     /// Gems only; too few gems offers the gem packs through an icon. Menu screen only: no per-frame code except the reveal animation.
     /// </summary>
@@ -78,20 +78,64 @@ namespace BoingUpSkyTower.Gameplay
             pic.gameObject.AddComponent<A11yLabel>().Text = "What is in the " + look.Name;
             AddInfoDot(pic.transform);
 
-            // right side: the power-ups and coins it holds
+            // right side: character rarities with their odds, then the characters, power-ups and coins it holds
             RectTransform right = UiKit.Rect(card, "Contents");
             right.anchorMin = new Vector2(0f, 1f);
             right.anchorMax = new Vector2(1f, 1f);
             right.pivot = new Vector2(0.5f, 1f);
             right.offsetMin = new Vector2(360f, -330f);
             right.offsetMax = new Vector2(-40f, -34f);
-            BuildContentPills(right, kind, 90f, 110f);
+            BuildRarityChips(right, kind, 0f, 130f);
+            BuildContentPills(right, kind, 160f, 96f);
 
             BuildOpenButton(card, kind, 1, 0);
             BuildOpenButton(card, kind, 10, 1);
         }
 
-        /// <summary>Power-ups (bolt, count) and coins (coin, most) the chest holds, as two icon pills.</summary>
+        /// <summary>Three rarity boxes (the standard rarity colours and seams) with the odds of a character of that rarity as a number.</summary>
+        void BuildRarityChips(RectTransform parent, ChestKind kind, float y, float h)
+        {
+            int[] odds = ChestRolls.Percents(kind);
+            int low = (int)ChestRolls.LowestRarity(kind);
+            RectTransform row = UiKit.Rect(parent, "Rarities");
+            row.anchorMin = new Vector2(0f, 1f);
+            row.anchorMax = new Vector2(1f, 1f);
+            row.pivot = new Vector2(0.5f, 1f);
+            row.anchoredPosition = new Vector2(0f, -y);
+            row.sizeDelta = new Vector2(0f, h);
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.spacing = 12f;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+            for (int i = 0; i < odds.Length; i++)
+            {
+                var r = (CharacterRarity)(low + i);
+                RectTransform inner = RarityUi.Box(row, "Chip" + i, r, false, new Vector2(100f, h));
+                // pips: rarity by shape count, not colour alone
+                int pips = (int)r + 1;
+                for (int p = 0; p < pips; p++)
+                {
+                    Image dot = UiKit.AddImage(inner, "Pip" + p, Theme.RoundSprite, Color.white);
+                    dot.type = Image.Type.Sliced;
+                    dot.preserveAspect = false;
+                    dot.rectTransform.anchorMin = dot.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+                    dot.rectTransform.pivot = new Vector2(0.5f, 1f);
+                    dot.rectTransform.sizeDelta = new Vector2(14f, 14f);
+                    dot.rectTransform.anchoredPosition = new Vector2((p - (pips - 1) * 0.5f) * 20f, -8f);
+                }
+                Text t = UiKit.AddText(inner, "Odds", odds[i] + "%", 44, UiKit.ButtonInk, TextAnchor.LowerCenter, true);
+                t.horizontalOverflow = HorizontalWrapMode.Overflow;
+                DropOutline(t);
+                var trt = (RectTransform)t.transform;
+                trt.anchorMin = Vector2.zero;
+                trt.anchorMax = Vector2.one;
+                trt.offsetMin = new Vector2(0f, 6f);
+                trt.offsetMax = new Vector2(0f, -30f);
+                inner.parent.gameObject.AddComponent<A11yLabel>().Text = CharacterDefs.RarityNames[(int)r] + " character, " + odds[i] + " percent";
+            }
+        }
+
+        /// <summary>Characters (heroes, most), power-ups (bolt, count) and coins (coin, range) the chest holds, as icon pills.</summary>
         void BuildContentPills(RectTransform parent, ChestKind kind, float y, float h)
         {
             RectTransform row = UiKit.Rect(parent, "Holds");
@@ -105,8 +149,9 @@ namespace BoingUpSkyTower.Gameplay
             hl.childAlignment = TextAnchor.MiddleLeft;
             hl.childControlWidth = hl.childControlHeight = true;
             hl.childForceExpandWidth = hl.childForceExpandHeight = false;
-            ToyKit.InfoPill(row, ToyKit.Get("icon_bolt"), "x" + ChestRolls.PowerUpCount(kind), Color.white, 150f, h);
-            ToyKit.InfoPill(row, art != null ? art.CoinIcon : null, ChestRolls.MaxCoins(kind).ToString(), new Color(1f, 0.92f, 0.5f), 250f, h);
+            ToyKit.InfoPill(row, ToyKit.Get("icon_heroes"), "x" + ChestRolls.MaxCharacters(kind), Color.white, 190f, h);
+            ToyKit.InfoPill(row, ToyKit.Get("icon_bolt"), "x" + ChestRolls.PowerUpCount(kind), Color.white, 190f, h);
+            ToyKit.InfoPill(row, art != null ? art.CoinIcon : null, ChestRolls.MaxCoins(kind).ToString(), new Color(1f, 0.92f, 0.5f), 230f, h);
         }
 
         /// <summary>One open button: the chest count (x1, x10) and the gem price. Never disabled: too few gems explains itself on tap.</summary>
@@ -202,7 +247,8 @@ namespace BoingUpSkyTower.Gameplay
             box.pivot = new Vector2(0.5f, 1f);
             box.offsetMin = new Vector2(60f, -800f);
             box.offsetMax = new Vector2(-60f, -450f);
-            BuildContentPills(box, kind, 60f, 110f);
+            BuildRarityChips(box, kind, 0f, 130f);
+            BuildContentPills(box, kind, 160f, 96f);
             // every power-up type it can give
             RectTransform types = UiKit.Rect(panel, "Types");
             types.anchorMin = new Vector2(0f, 1f);
@@ -229,17 +275,26 @@ namespace BoingUpSkyTower.Gameplay
         {
             RectTransform overlay = host.NewOverlay();
             // what dropped, counted first so the card is only as tall as its contents (no empty space)
+            var chars = new List<string>();
+            var dups = new List<bool>();
             int coins = 0;
             var units = new Dictionary<string, int>();
             var order = new List<string>();
             foreach (ChestContents c in contents)
             {
+                chars.AddRange(c.Characters);
+                dups.AddRange(c.Duplicate);
                 coins += c.Coins;
                 foreach (string id in c.PowerUps) { if (!units.ContainsKey(id)) { units[id] = 0; order.Add(id); } units[id]++; }
             }
             int chipRows = (order.Count + 3) / 4;
             float chipsH = order.Count == 0 ? 0f : chipRows * 104f - 8f;
+            const float tile = 170f, gap = 12f;
+            const int cols = 5;
+            int charRows = (chars.Count + cols - 1) / cols;
+            float charsH = chars.Count == 0 ? 0f : Mathf.Min(520f, charRows * (tile + gap) - gap);
             float y = 410f;                                   // below the chest
+            float charsY = y; y += charsH + (charsH > 0f ? 30f : 0f);
             float chipsY = y; y += chipsH + (chipsH > 0f ? 30f : 0f);
             float coinY = y; y += 100f + 30f;
             float doneY = y;                                  // the green tick sits under the last block
@@ -255,6 +310,51 @@ namespace BoingUpSkyTower.Gameplay
             pic.rectTransform.pivot = new Vector2(0.5f, 1f);
             anim.Chest = pic.rectTransform;
             anim.ChestImage = pic;
+
+            // characters dropped: a rarity box each, a coin badge on a duplicate
+            RectTransform cvp = UiKit.Rect(panel, "CharViewport");
+            cvp.anchorMin = cvp.anchorMax = new Vector2(0.5f, 1f);
+            cvp.pivot = new Vector2(0.5f, 1f);
+            float cwidth = cols * tile + (cols - 1) * gap;
+            cvp.sizeDelta = new Vector2(cwidth + 10f, charsH);
+            cvp.anchoredPosition = new Vector2(0f, -charsY);
+            cvp.gameObject.AddComponent<RectMask2D>();
+            var chit = cvp.gameObject.AddComponent<Image>();
+            chit.color = new Color(0f, 0f, 0f, 0f);
+            RectTransform ccontent = UiKit.Rect(cvp, "CharContent");
+            ccontent.anchorMin = ccontent.anchorMax = new Vector2(0.5f, 1f);
+            ccontent.pivot = new Vector2(0.5f, 1f);
+            ccontent.anchoredPosition = Vector2.zero;
+            ccontent.sizeDelta = new Vector2(cwidth, Mathf.Max(10f, charRows * (tile + gap)));
+            var csr = cvp.gameObject.AddComponent<ScrollRect>();
+            csr.content = ccontent;
+            csr.viewport = cvp;
+            csr.horizontal = false;
+            csr.vertical = true;
+            csr.movementType = ScrollRect.MovementType.Clamped;
+            for (int i = 0; i < chars.Count; i++)
+            {
+                CharacterDef who = CharacterCatalog.Get(chars[i]);
+                RectTransform inner = RarityUi.Box(ccontent, "Drop" + i, who.Rarity, false, new Vector2(tile, tile));
+                var outer = (RectTransform)inner.parent;
+                outer.anchorMin = outer.anchorMax = new Vector2(0f, 1f);
+                outer.pivot = new Vector2(0f, 1f);
+                int inRow = Mathf.Min(cols, chars.Count - (i / cols) * cols);
+                outer.anchoredPosition = new Vector2((cols - inRow) * (tile + gap) * 0.5f + (i % cols) * (tile + gap), -(i / cols) * (tile + gap));
+                RectTransform face = MomoDoll.Build(inner, "Face", tile * 0.74f, who, art);
+                face.anchorMin = face.anchorMax = face.pivot = new Vector2(0.5f, 0.5f);
+                face.anchoredPosition = Vector2.zero;
+                if (dups[i])
+                {
+                    Image cn = UiKit.AddImage(outer, "DuplicateCoins", art != null ? art.CoinIcon : null, Color.white);
+                    cn.rectTransform.anchorMin = cn.rectTransform.anchorMax = new Vector2(1f, 0f);
+                    cn.rectTransform.pivot = new Vector2(1f, 0f);
+                    cn.rectTransform.anchoredPosition = new Vector2(-6f, 6f);
+                    cn.rectTransform.sizeDelta = new Vector2(60f, 60f);
+                }
+                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + (dups[i] ? ", already owned, turned into coins" : ", new character");
+                anim.Items.Add(outer);
+            }
 
             // power-ups gained: icon and count
             RectTransform chips = UiKit.Rect(panel, "PowerUps");

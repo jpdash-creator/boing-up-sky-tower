@@ -28,17 +28,17 @@ namespace BoingUpSkyTower.Gameplay
             public Action CloseOverlay;
         }
 
-        public const int TabChests = 0, TabPowerups = 1, TabVip = 2, TabGems = 3;
+        public const int TabChests = 0, TabPowerups = 1, TabCharacters = 2, TabGems = 3;
         public const int GemsSection = 0, CoinsSection = 1;
         /// <summary>Spending more gems than this asks for a confirmation first (docs/14 FR-SHOP-20).</summary>
         public const int ConfirmGemThreshold = 50;
 
-        public static readonly string[] TabNames = { "Chests and Gears", "Power-ups and Characters", "VIP and Battle Pass", "Gems and Coins" };
+        public static readonly string[] TabNames = { "Chests", "Power-ups", "Characters", "Coins and Gems" };
         static readonly string[] TabSoonText =
         {
-            "Open chests and equip boots, hats and accessories.",
-            "Buy power-ups for your runs and unlock new characters.",
-            "VIP membership and the season Battle Pass.",
+            "Open chests for characters, power-ups and coins.",
+            "Buy power-ups for your runs.",
+            "Buy new characters with gems.",
         };
 
         /// <summary>Tests set this to audit the development-build layout in the editor (where GameSettings.DevBuild is false).</summary>
@@ -55,7 +55,7 @@ namespace BoingUpSkyTower.Gameplay
 
         static readonly Color ListPriceColor = Theme.InkSoft;
         static readonly Color PromoPriceColor = new Color(0.03f, 0.48f, 0.27f, 1f);          // deep green on the light card (about 6:1)
-        static readonly string[] TabShort = { "Chests", "Power-ups", "VIP", "Gems" };
+        static readonly string[] TabShort = { "Chests", "Power-ups", "Characters", "Gems" };
         static readonly Color LaunchBadgeColor = new Color(1f, 0.82f, 0.25f, 1f);
         static readonly Color SpecialBadgeColor = new Color(0.62f, 0.90f, 1f, 1f);
 
@@ -154,15 +154,15 @@ namespace BoingUpSkyTower.Gameplay
 
         public Text StarText { get; private set; }
 
-        static readonly string[] SectionTitles = { "Chests", "Power-ups", "VIP", "Gems", "Coins" };
+        static readonly string[] SectionTitles = { "Chests", "Power-ups", "Characters", "Coins", "Gems" };
 
-        /// <summary>Index of the bottom tab for the current tab and section (Chests, Power-ups, VIP, Gems, Coins).</summary>
-        int BarIndex { get { return Tab == TabGems ? (Section == CoinsSection ? 4 : 3) : Tab; } }
+        /// <summary>Index of the bottom tab for the current tab and section (Chests, Power-ups, Characters, Coins, Gems).</summary>
+        int BarIndex { get { return Tab == TabGems ? (Section == CoinsSection ? 3 : 4) : Tab; } }
 
         void SelectBar(int i)
         {
-            if (i <= TabVip) { Tab = i; }
-            else { Tab = TabGems; Section = i == 4 ? CoinsSection : GemsSection; }
+            if (i <= TabCharacters) { Tab = i; }
+            else { Tab = TabGems; Section = i == 3 ? CoinsSection : GemsSection; }
             RebuildBody();
         }
 
@@ -189,9 +189,9 @@ namespace BoingUpSkyTower.Gameplay
             {
                 new ToyKit.BarItem { Icon = "icon_chest", Caption = "Chests", A11y = "Chests" },
                 new ToyKit.BarItem { Icon = "icon_bolt", Caption = "Power", A11y = "Power-ups" },
-                new ToyKit.BarItem { Icon = "icon_crown", Caption = "VIP", A11y = "VIP" },
-                new ToyKit.BarItem { Icon = "icon_gem", Caption = "Gems", A11y = "Gems" },
+                new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" },
                 new ToyKit.BarItem { Icon = "icon_coin", Caption = "Coins", A11y = "Coins" },
+                new ToyKit.BarItem { Icon = "icon_gem", Caption = "Gems", A11y = "Gems" },
             }, BarIndex, SelectBar);
             // The wallet texts were created by the header and stay valid; the host refreshes them on every wallet change.
             if (CoinText != null) UiKit.SetText(CoinText, progress.Coins.ToString());
@@ -220,7 +220,7 @@ namespace BoingUpSkyTower.Gameplay
             host.offsetMin = new Vector2(SideMargin, BottomMargin);
             host.offsetMax = new Vector2(-SideMargin, -ListTop);
             Theme.CardBacking(host);
-            Image icon = UiKit.AddImage(host, "Icon", ToyKit.Get(tab == TabChests ? "icon_chest" : "icon_crown"), Color.white);
+            Image icon = UiKit.AddImage(host, "Icon", ToyKit.Get(tab == TabChests ? "icon_chest" : "icon_heroes"), Color.white);
             UiKit.Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 150f), new Vector2(220f, 220f));
             icon.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             Text head = UiKit.AddText(host, "Soon", "Coming soon", 76, Theme.Ink, TextAnchor.MiddleCenter, true);
@@ -578,11 +578,12 @@ namespace BoingUpSkyTower.Gameplay
         static void AddBadgeTop(Transform card, string text, Color fill)
         {
             Image pill = UiKit.AddPanel(card, "NameBacking", fill);
-            Text t = UiKit.AddText(pill.transform, "Badge", text, 30, UiKit.ButtonInk, TextAnchor.MiddleCenter);
+            Text t = UiKit.AddText(pill.transform, "Badge", text, 24, UiKit.ButtonInk, TextAnchor.MiddleCenter);
             t.horizontalOverflow = HorizontalWrapMode.Overflow;
             DropOutline(t);
             UiKit.Stretch((RectTransform)t.transform);
-            UiKit.Place(pill.rectTransform, new Vector2(0f, 1f), new Vector2(16f, -14f), new Vector2(Mathf.Min(t.preferredWidth + 24f, 200f), 44f));
+            UiKit.Place(pill.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(Mathf.Min(t.preferredWidth + 24f, 200f), 40f));
+            pill.rectTransform.pivot = new Vector2(0.5f, 1f);
         }
 
         // ---------------- purchases ----------------

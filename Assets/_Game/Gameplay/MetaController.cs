@@ -361,6 +361,9 @@ namespace BoingUpSkyTower.Gameplay
                 momo = m.rectTransform;
                 momoBase = momo.anchoredPosition;
             }
+            // VIP: its own button on the home screen (coming soon)
+            Button vip = ToyKit.IconButton(screen, "Vip", "VIP, coming soon", 1, ToyKit.Get("icon_crown"), new Vector2(190f, 190f), () => ShowMessage("VIP", "VIP is coming soon."), 0.62f);
+            UiKit.Place((RectTransform)vip.transform, new Vector2(1f, 0.5f), new Vector2(-40f, 0f), new Vector2(190f, 190f));
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
             UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(500f, 44f));
             AddTabBar(ToyKit.TabPlay);
@@ -455,13 +458,13 @@ namespace BoingUpSkyTower.Gameplay
 
         public CharactersScreen CurrentCharacters { get { return CurrentScreen == "Characters" ? characters : null; } }
 
-        /// <summary>Characters: the chosen character on the land stage (the current region's backdrop, grass and the dirt oval) and the roster button.</summary>
-        public void ShowCharacters(bool roster = false)
+        /// <summary>Characters: the chosen character on the land stage (the current region's backdrop, grass and the dirt oval) and the list of characters below.</summary>
+        public void ShowCharacters()
         {
             NewScreen("Characters");
             Stage stage = StageScene.Build(screenRoot, art, progress, StageScene.CharacterLayout());
             characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage });
-            characters.Build(roster);
+            characters.Build();
             AddBack("Back", ShowMenu);
             AddTabBar(ToyKit.TabHeroes);
             coinText = characters.CoinText;

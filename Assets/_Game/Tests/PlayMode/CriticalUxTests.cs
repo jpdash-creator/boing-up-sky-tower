@@ -325,7 +325,6 @@ namespace BoingUpSkyTower.Tests
 
             // Characters: the chosen character on the land stage and the roster
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
-            yield return CheckScreen("characters-roster", () => meta.ShowCharacters(true), problems);
             CharacterCatalog.Selected = CharacterCatalog.Sporeling;
             yield return CheckScreen("characters-sporeling", () => meta.ShowCharacters(), problems);
             CharacterCatalog.Selected = CharacterCatalog.Momo;
@@ -506,7 +505,7 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-chest-info-popup", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.OpenChestInfo(ChestKind.Golden); }, problems);
             yield return CheckScreen("shop-chest-iron-reveal", () => { GameSession.Progress.AddGems(100); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Iron, 1); meta.CurrentShop.Reveal.Skip(); }, problems);
             yield return CheckScreen("shop-chest-golden-ten-reveal", () => { GameSession.Progress.AddGems(3000); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Golden, 10); meta.CurrentShop.Reveal.Skip(); }, problems);
-            yield return CheckScreen("shop-tab3-vip", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-tab3-characters", () => meta.ShowShop(ShopScreen.TabCharacters, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-gems-notbuyable-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(3); }, problems);
 
             // Development layout: "Buy (test)" and the test purchase popups.

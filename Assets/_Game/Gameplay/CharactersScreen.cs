@@ -5,15 +5,65 @@ using UnityEngine.UI;
 
 namespace BoingUpSkyTower.Gameplay
 {
+    /// <summary>The rectangle every character sits in: a rounded box in the rarity colour with a seam (border) around it (docs/21).</summary>
+    public static class RarityUi
+    {
+        /// <summary>Common light grey, Uncommon light green, Rare blue, Epic purple, Legendary yellow gold.</summary>
+        public static Color Fill(CharacterRarity r)
+        {
+            switch (r)
+            {
+                case CharacterRarity.Uncommon: return new Color(0.70f, 0.90f, 0.62f, 1f);
+                case CharacterRarity.Rare: return new Color(0.33f, 0.58f, 0.98f, 1f);
+                case CharacterRarity.Epic: return new Color(0.62f, 0.36f, 0.88f, 1f);
+                case CharacterRarity.Legendary: return new Color(1f, 0.82f, 0.22f, 1f);
+                default: return new Color(0.84f, 0.85f, 0.87f, 1f);
+            }
+        }
+
+        /// <summary>White seam for Common, Uncommon and Rare; golden seam for Epic and Legendary.</summary>
+        public static Color Seam(CharacterRarity r)
+        {
+            return r >= CharacterRarity.Epic ? new Color(0.86f, 0.60f, 0.06f, 1f) : Color.white;
+        }
+
+        /// <summary>A box with its seam; returns the inner area (children go there). <paramref name="size"/> is the outer size.</summary>
+        public static RectTransform Box(Transform parent, string name, CharacterRarity rarity, bool locked, Vector2 size)
+        {
+            Image outer = UiKit.AddImage(parent, name, Theme.RoundSprite, locked ? new Color(0.45f, 0.48f, 0.60f, 1f) : Seam(rarity));
+            outer.type = Image.Type.Sliced;
+            outer.preserveAspect = false;
+            outer.pixelsPerUnitMultiplier = 1.4f;
+            outer.rectTransform.sizeDelta = size;
+            Image inner = UiKit.AddImage(outer.transform, "Fill", Theme.RoundSprite, locked ? new Color(0.11f, 0.14f, 0.28f, 0.96f) : Fill(rarity));
+            inner.type = Image.Type.Sliced;
+            inner.preserveAspect = false;
+            inner.pixelsPerUnitMultiplier = 1.6f;
+            inner.raycastTarget = false;
+            inner.rectTransform.anchorMin = Vector2.zero;
+            inner.rectTransform.anchorMax = Vector2.one;
+            inner.rectTransform.offsetMin = new Vector2(8f, 8f);
+            inner.rectTransform.offsetMax = new Vector2(-8f, -8f);
+            return inner.rectTransform;
+        }
+    }
+
     /// <summary>
-    /// The character screen: the chosen character on the green land stage and one round button that opens the roster of the characters the player has
-    /// (bought or received). The rest of the roster are locked silhouettes. No words.
+    /// The character screen (docs/21): the chosen character on the green land stage on top, and below it a scrolling list of characters in rarity boxes,
+    /// five to a row. Owned ones are in colour (tap to choose), the rest are dark with a lock. No words.
     /// </summary>
     public sealed class CharactersScreen
     {
-        const int RosterSlots = 8, Columns = 4;
-        /// <summary>Doll height on screen: about 29 percent of the 1920 px reference, a touch larger than Momo in the run.</summary>
-        public const float DollH = 560f;
+        const int Columns = 5, Slots = 25;
+        const float Tile = 190f, Gap = 14f;
+        /// <summary>Character height on the stage.</summary>
+        public const float DollH = 420f;
+
+        /// <summary>What the screen needs from the menu: the land stage it stands on.</summary>
+        public sealed class Host
+        {
+            public Stage Stage;
+        }
 
         readonly RectTransform screen;
         readonly ProgressService progress;
@@ -21,15 +71,8 @@ namespace BoingUpSkyTower.Gameplay
         readonly Host host;
         RectTransform body;
 
-        public bool RosterOpen { get; private set; }
         public Text CoinText { get; private set; }
         public Text GemText { get; private set; }
-
-        /// <summary>What the screen needs from the menu: the land stage it stands on.</summary>
-        public sealed class Host
-        {
-            public Stage Stage;
-        }
 
         public CharactersScreen(RectTransform screen, ProgressService progress, ArtCatalog art, Host host)
         {
@@ -39,13 +82,21 @@ namespace BoingUpSkyTower.Gameplay
             this.host = host;
         }
 
-        public void Build(bool roster = false)
+        public void Build()
         {
-            RosterOpen = roster;
             if (body != null) UnityEngine.Object.Destroy(body.gameObject);
             ClearStage();
             body = UiKit.Rect(screen, "CharactersBody");
             UiKit.Stretch(body);
+
+            // the dark panel under the stage holds the list
+            Image panel = UiKit.AddImage(body, "ListPanel", null, new Color(0.17f, 0.23f, 0.42f, 1f));
+            panel.preserveAspect = false;
+            panel.raycastTarget = false;
+            panel.rectTransform.anchorMin = Vector2.zero;
+            panel.rectTransform.anchorMax = Vector2.one;
+            panel.rectTransform.offsetMin = Vector2.zero;
+            panel.rectTransform.offsetMax = new Vector2(0f, -host.Stage.GroundBottom);
 
             RectTransform row = UiKit.Rect(body, "Wallet");
             row.anchorMin = new Vector2(0f, 1f);
@@ -62,8 +113,8 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.SetText(CoinText, progress.Coins.ToString());
             UiKit.SetText(GemText, progress.Gems.ToString());
 
-            if (roster) BuildRoster();
-            else BuildStage();
+            BuildStage();
+            BuildList();
         }
 
         /// <summary>The doll lives on the stage (not in the screen body), so it is removed when the screen is rebuilt.</summary>
@@ -72,91 +123,95 @@ namespace BoingUpSkyTower.Gameplay
             if (host.Stage == null || host.Stage.Root == null) return;
             for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
             {
-                string n = host.Stage.Root.GetChild(i).name;
-                if (n == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
+                if (host.Stage.Root.GetChild(i).name == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
             }
         }
 
-        static void Anchor(RectTransform rt, Vector2 anchor, Vector2 pos, Vector2 size)
-        {
-            rt.anchorMin = rt.anchorMax = anchor;
-            rt.pivot = anchor;
-            rt.anchoredPosition = pos;
-            rt.sizeDelta = size;
-        }
-
-        /// <summary>The chosen character in the middle of the stage and the roster button under it.</summary>
+        /// <summary>The chosen character on the dirt oval.</summary>
         void BuildStage()
         {
-            // the chosen character stands on the dirt oval of the land stage, a little larger than in the run
-            CharacterDef who = CharacterCatalog.Selected;
-            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", DollH, who, art);
+            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", DollH, CharacterCatalog.Selected, art);
             host.Stage.Stand(doll);
-
-            Button more = ToyKit.IconButton(body, "MoreCharacters", "Choose a character", 0, ToyKit.Get("icon_heroes"), new Vector2(170f, 170f), () => Build(true), 0.6f);
-            Anchor((RectTransform)more.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 40f), new Vector2(170f, 170f));
-            ((RectTransform)more.transform).pivot = new Vector2(0.5f, 0f);
         }
 
-        /// <summary>The roster: the available characters (the chosen one ticked) and locked silhouettes until more characters exist. Production shows Momo only.</summary>
-        void BuildRoster()
+        void BuildList()
         {
-            float w = 190f, gap = 16f;
-            CharacterDef[] chars = CharacterCatalog.Available();
+            RectTransform vp = UiKit.Rect(body, "ListViewport");
+            vp.anchorMin = Vector2.zero;
+            vp.anchorMax = Vector2.one;
+            vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);
+            vp.offsetMax = new Vector2(0f, -(host.Stage.GroundBottom + 18f));
+            vp.gameObject.AddComponent<RectMask2D>();
+            var hit = vp.gameObject.AddComponent<Image>();
+            hit.color = new Color(0f, 0f, 0f, 0f);
+            float width = Columns * Tile + (Columns - 1) * Gap;
+            int rows = (Slots + Columns - 1) / Columns;
+            RectTransform content = UiKit.Rect(vp, "ListContent");
+            content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = new Vector2(width, rows * (Tile + Gap));
+            var sr = vp.gameObject.AddComponent<ScrollRect>();
+            sr.content = content;
+            sr.viewport = vp;
+            sr.horizontal = false;
+            sr.vertical = true;
+            sr.movementType = ScrollRect.MovementType.Elastic;
+            sr.scrollSensitivity = 60f;
+
             CharacterDef chosen = CharacterCatalog.Selected;
-            for (int i = 0; i < RosterSlots; i++)
+            for (int i = 0; i < Slots; i++)
             {
-                int r = i / Columns, c = i % Columns;
-                CharacterDef who = i < chars.Length ? chars[i] : null;
-                bool open = who != null;
-                bool isChosen = open && who.Id == chosen.Id;
-                Image tile = UiKit.AddImage(body, open ? who.Name : "Locked" + i, Theme.RoundSprite, open ? new Color(0.30f, 0.58f, 1f, 1f) : new Color(0.10f, 0.13f, 0.27f, 0.92f));
-                tile.type = Image.Type.Sliced;
-                tile.preserveAspect = false;
-                tile.pixelsPerUnitMultiplier = 1.2f;
-                float total = Columns * w + (Columns - 1) * gap;
-                Anchor(tile.rectTransform, new Vector2(0.5f, 1f), new Vector2(-total * 0.5f + c * (w + gap), -(240f + r * (w + gap))), new Vector2(w, w));
-                tile.rectTransform.pivot = new Vector2(0f, 1f);
-                tile.rectTransform.anchoredPosition = new Vector2(-total * 0.5f + c * (w + gap), -(240f + r * (w + gap)));
-                var b = tile.gameObject.AddComponent<Button>();
-                b.transition = Selectable.Transition.None;
-                tile.raycastTarget = true;
-                CharacterDef pick = who;
-                b.onClick.AddListener(() => { if (pick != null) { CharacterCatalog.Selected = pick; Build(false); } });
-                tile.gameObject.AddComponent<A11yLabel>().Text = open ? who.Name + (isChosen ? ", chosen" : "") : "Locked character";
-                if (open)
+                CharacterDef who = i < CharacterCatalog.All.Length ? CharacterCatalog.All[i] : null;
+                bool owned = who != null && CharacterCatalog.Owns(progress, who);
+                CharacterRarity rarity = who != null ? who.Rarity : CharacterRarity.Common;
+                RectTransform inner = RarityUi.Box(content, who != null ? "Char_" + who.Id : "Locked" + i, rarity, !owned, new Vector2(Tile, Tile));
+                RectTransform outer = (RectTransform)inner.parent;
+                outer.anchorMin = outer.anchorMax = new Vector2(0f, 1f);
+                outer.pivot = new Vector2(0f, 1f);
+                outer.anchoredPosition = new Vector2((i % Columns) * (Tile + Gap), -(i / Columns) * (Tile + Gap));
+
+                if (owned)
                 {
-                    RectTransform face = MomoDoll.Build(tile.transform, "Face", w * 0.66f, who, art);
-                    face.anchorMin = face.anchorMax = new Vector2(0.5f, 1f);
-                    face.pivot = new Vector2(0.5f, 1f);
-                    face.anchoredPosition = new Vector2(0f, -w * 0.04f);
-                }
-                else
-                {
-                    Image face = UiKit.AddImage(tile.transform, "Face", art != null ? art.Player : null, new Color(0.03f, 0.04f, 0.10f, 0.95f));
-                    face.rectTransform.anchorMin = new Vector2(0.1f, 0.08f);
-                    face.rectTransform.anchorMax = new Vector2(0.9f, 0.92f);
-                    face.rectTransform.offsetMin = face.rectTransform.offsetMax = Vector2.zero;
-                }
-                if (!open)
-                {
-                    Image lk = UiKit.AddImage(tile.transform, "Lock", ToyKit.Get("icon_lock"), Color.white);
-                    Anchor(lk.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(w * 0.42f, w * 0.42f));
-                    lk.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                }
-                else
-                {
-                    if (isChosen)
+                    RectTransform face = MomoDoll.Build(inner, "Face", Tile * 0.78f, who, art);
+                    face.anchorMin = face.anchorMax = new Vector2(0.5f, 0.5f);
+                    face.pivot = new Vector2(0.5f, 0.5f);
+                    face.anchoredPosition = Vector2.zero;
+                    if (who == chosen)
                     {
-                        Image tick = UiKit.AddImage(tile.transform, "Chosen", Glyphs.Check, Color.white);
-                        Anchor(tick.rectTransform, new Vector2(1f, 1f), new Vector2(-8f, -8f), new Vector2(w * 0.3f, w * 0.3f));
+                        Image tick = UiKit.AddImage(outer, "Chosen", Glyphs.Check, Color.white);
+                        tick.rectTransform.anchorMin = tick.rectTransform.anchorMax = new Vector2(1f, 1f);
+                        tick.rectTransform.pivot = new Vector2(1f, 1f);
+                        tick.rectTransform.anchoredPosition = new Vector2(-4f, -4f);
+                        tick.rectTransform.sizeDelta = new Vector2(56f, 56f);
                     }
                 }
+                else
+                {
+                    Image lk = UiKit.AddImage(inner, "Lock", ToyKit.Get("icon_lock"), Color.white);
+                    lk.rectTransform.anchorMin = lk.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                    lk.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                    lk.rectTransform.anchoredPosition = Vector2.zero;
+                    lk.rectTransform.sizeDelta = new Vector2(Tile * 0.4f, Tile * 0.4f);
+                }
+
+                var b = outer.gameObject.AddComponent<Button>();
+                b.transition = Selectable.Transition.None;
+                outer.GetComponent<Image>().raycastTarget = true;
+                CharacterDef pick = who;
+                if (owned) b.onClick.AddListener(() => { CharacterCatalog.Selected = pick; Build(); });
+                outer.gameObject.AddComponent<A11yLabel>().Text = owned
+                    ? who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + (who == chosen ? ", chosen" : "")
+                    : "Locked character";
             }
-            // back to the stage
-            Button back = ToyKit.GlyphButton(body, "ToStage", "Back to Momo", 2, Glyphs.Left, new Vector2(170f, 170f), () => Build(false));
-            Anchor((RectTransform)back.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 40f), new Vector2(170f, 170f));
-            ((RectTransform)back.transform).pivot = new Vector2(0.5f, 0f);
+        }
+
+        /// <summary>Picks a character as the tests do (the same as a tap on its tile).</summary>
+        public void Choose(CharacterDef who)
+        {
+            if (!CharacterCatalog.Owns(progress, who)) return;
+            CharacterCatalog.Selected = who;
+            Build();
         }
     }
 }

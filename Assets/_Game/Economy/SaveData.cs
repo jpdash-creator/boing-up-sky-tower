@@ -43,6 +43,8 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("inventory")] public InventoryData Inventory = new InventoryData();
         /// <summary>Last power-up loadout: up to 3 power-up ids (empty string = empty slot), remembered between runs.</summary>
         [JsonProperty("loadout")] public List<string> Loadout = new List<string>();
+        /// <summary>Characters owned through chests or the shop. Common characters of an unlocked region are owned without an entry.</summary>
+        [JsonProperty("characters")] public List<string> Characters = new List<string>();
         /// <summary>Chests opened so far: seeds the next chest roll so openings are repeatable.</summary>
         [JsonProperty("chestOpens")] public int ChestOpens;
     }

@@ -32,8 +32,8 @@ namespace BoingUpSkyTower.Gameplay
 
     public static class StageScene
     {
-        /// <summary>Character screen: the stage fills the screen down to the tab bar; the oval sits at about 55 percent of the height.</summary>
-        public static Stage CharacterLayout() { return new Stage { BackdropH = 820f, GroundBottom = -1f, OvalY = 1030f, OvalW = 720f, OvalH = 210f }; }
+        /// <summary>Character screen: the stage is the top 760 px; the list of characters sits on a dark panel below it.</summary>
+        public static Stage CharacterLayout() { return new Stage { BackdropH = 470f, GroundBottom = 760f, OvalY = 660f, OvalW = 600f, OvalH = 160f }; }
 
         static Sprite grass, oval, edge;
 

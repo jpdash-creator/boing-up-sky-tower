@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BoingUpSkyTower.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -86,6 +87,10 @@ namespace BoingUpSkyTower.Gameplay
         CharacterRig rig;
         readonly Dictionary<string, Sprite> parts = new Dictionary<string, Sprite>();
 
+        /// <summary>Rarity, region and powers of this character (Economy).</summary>
+        public CharacterSpec Info { get { return CharacterDefs.Get(Id); } }
+        public CharacterRarity Rarity { get { CharacterSpec i = Info; return i != null ? i.Rarity : CharacterRarity.Common; } }
+
         public CharacterRig Rig
         {
             get
@@ -108,7 +113,7 @@ namespace BoingUpSkyTower.Gameplay
         }
     }
 
-    /// <summary>The characters. Momo and the Sporeling for now; each region will unlock one more and the rest come from gems or chests (later).</summary>
+    /// <summary>The characters that exist (Momo and the Sporeling for now). Which ones the player has comes from <see cref="ProgressService.OwnsCharacter"/>.</summary>
     public static class CharacterCatalog
     {
         const string SelectedKey = "settings.character";
@@ -116,10 +121,8 @@ namespace BoingUpSkyTower.Gameplay
         public static readonly CharacterDef Momo = new CharacterDef { Id = "momo", Name = "Momo" };
         public static readonly CharacterDef Sporeling = new CharacterDef { Id = "sporeling", Name = "Sporeling" };
 
-        static readonly CharacterDef[] All = { Momo, Sporeling };
-
-        /// <summary>The characters the player can pick (bought or received). Everything we have is available until buying and unlocking exist.</summary>
-        public static CharacterDef[] Available() { return All; }
+        /// <summary>Every character with art, in list order (Common first).</summary>
+        public static readonly CharacterDef[] All = { Momo, Sporeling };
 
         public static CharacterDef Get(string id)
         {
@@ -127,10 +130,24 @@ namespace BoingUpSkyTower.Gameplay
             return Momo;
         }
 
-        /// <summary>The chosen character (Momo until another is picked).</summary>
+        public static bool Owns(ProgressService p, CharacterDef c) { return c == Momo || (p != null && p.OwnsCharacter(c.Id)); }
+
+        /// <summary>The characters the player has (bought, received or unlocked with a region).</summary>
+        public static CharacterDef[] Available(ProgressService p)
+        {
+            var list = new List<CharacterDef>(All.Length);
+            foreach (CharacterDef c in All) if (Owns(p, c)) list.Add(c);
+            return list.ToArray();
+        }
+
+        /// <summary>The chosen character (Momo until another is picked, and when the chosen one is not owned).</summary>
         public static CharacterDef Selected
         {
-            get { return Get(PlayerPrefs.GetString(SelectedKey, Momo.Id)); }
+            get
+            {
+                CharacterDef c = Get(PlayerPrefs.GetString(SelectedKey, Momo.Id));
+                return Owns(GameSession.Progress, c) ? c : Momo;
+            }
             set
             {
                 PlayerPrefs.SetString(SelectedKey, value != null ? value.Id : Momo.Id);
