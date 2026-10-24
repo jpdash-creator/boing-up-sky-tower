@@ -809,7 +809,10 @@ namespace BoingUpSkyTower.Gameplay
                     if (sp == null) continue;
                     SpriteRenderer sr = NewSprite("Worn" + slot, sp, order++, player);
                     sr.transform.localPosition = Vector3.zero;
-                    sr.transform.localScale = Vector3.one;
+                    // the layer is painted at the size of the Momo picture; imported at another pixels-per-unit it would be drawn several times too big,
+                    // so it is scaled to the player sprite's own bounds (a child inherits the player's scale)
+                    Vector2 mb = art != null && art.Player != null ? (Vector2)art.Player.bounds.size : (Vector2)sp.bounds.size;
+                    sr.transform.localScale = new Vector3(mb.x / sp.bounds.size.x, mb.y / sp.bounds.size.y, 1f);
                     list.Add(sr);
                 }
             }
