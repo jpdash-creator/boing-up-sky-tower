@@ -406,7 +406,7 @@ namespace BoingUpSkyTower.Simulation
                     int extras = 1 + rng.Next(3);
                     Fx[] usedX = new Fx[4];
                     Fx[] usedW = new Fx[4];
-                    usedX[0] = x; usedW[0] = w;
+                    usedX[0] = x; usedW[0] = amp.Raw > 0 ? SnapWidth(w, kind) + amp * 2 : w;   // a drifting spine platform sweeps +-amp: extras keep clear of the whole swing
                     int nUsed = 1;
                     for (int e = 0; e < extras; e++)
                     {
