@@ -789,6 +789,7 @@ namespace BoingUpSkyTower.Gameplay
         // no trail and no pops. Allocation free: three pooled renderers and the existing pop pool.
 
         SpriteRenderer fxShield, fxMagnet, fxBoost;
+        SpriteRenderer wingL, wingR, rocketPack, rocketFlame;   // Flight puts wings on Momo, Rocket a rocket pack (owner 2026-10-24)
         int prevPwMask, prevPwUsed, prevShieldSaves;
 
         static Sprite MakeRing()
@@ -820,6 +821,12 @@ namespace BoingUpSkyTower.Gameplay
             fxMagnet = NewSprite("FxMagnet", ring, 9);
             fxBoost = NewSprite("FxBoost", ring, 9);
             fxShield.enabled = fxMagnet.enabled = fxBoost.enabled = false;
+            wingL = NewSprite("WingL", PowerGearArt.Wing, 8);
+            wingR = NewSprite("WingR", PowerGearArt.Wing, 8);
+            wingR.flipX = true;
+            rocketPack = NewSprite("RocketPack", PowerGearArt.Pack, 8);
+            rocketFlame = NewSprite("RocketFlame", PowerGearArt.Flame, 7);
+            wingL.enabled = wingR.enabled = rocketPack.enabled = rocketFlame.enabled = false;
         }
 
         static int PowerMask(in SimState st)
@@ -853,8 +860,6 @@ namespace BoingUpSkyTower.Gameplay
                 Spawn(cx, cy, 2.6f, new Color(0.6f, 0.95f, 0.95f, 0.9f), 0.5f, 0.3f, ArtCatalog.Pick(art != null ? art.Sparkles : null, 0));
             }
             else if ((prevPwMask & ~mask) != 0) AudioManager.Play(Sfx.PowerEnd);
-            if (!reduced && (st.FlightTicks > 0 || st.RocketTicks > 0) && (st.Tick % 4) == 0)
-                Spawn(cx, cy - 0.3f, 0.8f, st.RocketTicks > 0 ? new Color(1f, 0.6f, 0.25f, 0.9f) : new Color(0.8f, 0.95f, 1f, 0.9f), 0.35f, -1.2f, ArtCatalog.Pick(art != null ? art.Sparkles : null, 0));
             prevPwMask = mask;
             prevPwUsed = st.PwUsed;
             prevShieldSaves = st.ShieldSaves;
@@ -864,7 +869,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (fxShield == null) return;
             SimState st = session.State;
-            bool shield = st.ShieldTicks > 0, magnet = st.MagnetTicks > 0, boost = st.FlightTicks > 0 || st.RocketTicks > 0;
+            bool shield = st.ShieldTicks > 0, magnet = st.MagnetTicks > 0, boost = false;   // the old ring is gone: Flight shows wings and Rocket a rocket pack
             if (fxShield.enabled != shield) fxShield.enabled = shield;
             if (fxMagnet.enabled != magnet) fxMagnet.enabled = magnet;
             if (fxBoost.enabled != boost) fxBoost.enabled = boost;
@@ -888,6 +893,38 @@ namespace BoingUpSkyTower.Gameplay
                 fxBoost.transform.position = new Vector3(cx, cy - 0.2f, 0f);
                 fxBoost.transform.localScale = new Vector3(k * 0.5f, k * 0.5f, 1f);
                 fxBoost.color = st.RocketTicks > 0 ? new Color(1f, 0.6f, 0.25f, 0.7f) : new Color(0.75f, 0.92f, 1f, 0.7f);
+            }
+        }
+
+        /// <summary>Wings (Flight) or a rocket pack with a flame (Rocket) on the player while the power-up runs. Reduced motion: no flapping, no flicker.</summary>
+        void UpdateGearFx(float cx, float cy, float h)
+        {
+            if (wingL == null) return;
+            SimState st = session.State;
+            bool wings = st.FlightTicks > 0, rocket = st.RocketTicks > 0;
+            if (wingL.enabled != wings) wingL.enabled = wingR.enabled = wings;
+            if (rocketPack.enabled != rocket) rocketPack.enabled = rocketFlame.enabled = rocket;
+            float t = st.Tick / 60f;
+            if (wings)
+            {
+                float flap = reduced ? 0f : Mathf.Sin(t * 14f);
+                float s = playerHeight * 0.95f / 2f;
+                float lift = 0.12f * playerHeight * flap;
+                wingL.transform.position = new Vector3(cx - playerHeight * 0.22f, cy + playerHeight * 0.05f + lift, 0f);
+                wingR.transform.position = new Vector3(cx + playerHeight * 0.22f, cy + playerHeight * 0.05f + lift, 0f);
+                wingL.transform.localScale = new Vector3(s, s * (1f + 0.12f * flap), 1f);
+                wingR.transform.localScale = new Vector3(s, s * (1f + 0.12f * flap), 1f);
+                wingL.transform.rotation = Quaternion.Euler(0f, 0f, 14f * flap);
+                wingR.transform.rotation = Quaternion.Euler(0f, 0f, -14f * flap);
+            }
+            if (rocket)
+            {
+                float s = playerHeight * 0.62f / 1.33f;
+                rocketPack.transform.position = new Vector3(cx, cy + playerHeight * 0.05f, 0f);
+                rocketPack.transform.localScale = new Vector3(s, s, 1f);
+                float flick = reduced ? 1f : 0.85f + 0.3f * Mathf.Abs(Mathf.Sin(t * 40f));
+                rocketFlame.transform.position = new Vector3(cx, cy - playerHeight * 0.30f, 0f);
+                rocketFlame.transform.localScale = new Vector3(s * 0.9f, s * flick, 1f);
             }
         }
 
@@ -1010,6 +1047,7 @@ namespace BoingUpSkyTower.Gameplay
             player.rotation = reduced ? Quaternion.identity : Quaternion.Euler(0f, 0f, Mathf.Clamp(-s.Vx.F() * 40f, -12f, 12f));
             playerSr.color = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;
             UpdatePowerFx(px, py + h * 0.5f);
+            UpdateGearFx(px, py + h * 0.5f, h);
 
             // Platforms (moving ones follow the sim, vanishing ones blink, crumbling ones fade).
             if (endless) UpdateEndlessWindow();

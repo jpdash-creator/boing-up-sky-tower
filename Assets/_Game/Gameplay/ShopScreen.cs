@@ -255,7 +255,7 @@ namespace BoingUpSkyTower.Gameplay
             return list;
         }
 
-        /// <summary>Grid rule for every shop list: the first row holds 4 cards, every later row up to 3; a row always spans the full width.</summary>
+        /// <summary>Grid rule for the pack lists: the first row holds 4 cards, every later row up to 3; a row always spans the full width.</summary>
         static void Cell(int i, int n, out int row, out int col, out int cols)
         {
             if (i < 4) { row = 0; col = i; cols = Mathf.Min(4, n); return; }
@@ -268,11 +268,21 @@ namespace BoingUpSkyTower.Gameplay
 
         static int RowCount(int n) { return n <= 4 ? 1 : 1 + (n - 4 + 2) / 3; }
 
-        /// <summary>Anchors a card in column col of cols (fractions of the width, so it fits every aspect).</summary>
-        static void PlaceCell(RectTransform crt, float y, int col, int cols, float h)
+        /// <summary>Power-up grid (owner 2026-10-24): rows of 3; a last row with fewer cards keeps the 3-column width and is centred.</summary>
+        static void Cell3(int i, int n, out int row, out int col, out int cols, out float offsetCols)
         {
-            crt.anchorMin = new Vector2(col / (float)cols, 1f);
-            crt.anchorMax = new Vector2((col + 1) / (float)cols, 1f);
+            row = i / 3;
+            col = i % 3;
+            cols = 3;
+            int inRow = Mathf.Min(3, n - row * 3);
+            offsetCols = (3 - inRow) * 0.5f;
+        }
+
+        /// <summary>Anchors a card in column col of cols (fractions of the width, so it fits every aspect).</summary>
+        static void PlaceCell(RectTransform crt, float y, int col, int cols, float h, float offsetCols = 0f)
+        {
+            crt.anchorMin = new Vector2((col + offsetCols) / (float)cols, 1f);
+            crt.anchorMax = new Vector2((col + offsetCols + 1) / (float)cols, 1f);
             crt.pivot = new Vector2(0.5f, 1f);
             crt.anchoredPosition = new Vector2(0f, -y);
             crt.sizeDelta = new Vector2(-ColGap, h);
@@ -320,23 +330,24 @@ namespace BoingUpSkyTower.Gameplay
                 give.GetComponent<A11yLabel>().Text = "Test only: add 3 of every power-up";
             }
             var defs = new System.Collections.Generic.List<PowerUpDef>(progress.PowerUpDefs.Implemented);
-            defs.Sort((x, y) => x.CoinPrice != y.CoinPrice ? y.CoinPrice.CompareTo(x.CoinPrice) : string.CompareOrdinal(x.Name, y.Name));   // dearest first, always (owner 2026-10-24)
-            RectTransform list = MakeList(RowCount(defs.Count) * (PowerCardH + CardGap), top);
+            defs.Sort((x, y) => x.CoinPrice != y.CoinPrice ? x.CoinPrice.CompareTo(y.CoinPrice) : y.Order.CompareTo(x.Order));   // cheapest first, Flight last (owner 2026-10-24)
+            RectTransform list = MakeList(((defs.Count + 2) / 3) * (PowerCardH + CardGap), top);
             for (int i = 0; i < defs.Count; i++)
             {
                 int row, col, cols;
-                Cell(i, defs.Count, out row, out col, out cols);
-                BuildPowerUpCard(list, row * (PowerCardH + CardGap), col, cols, defs[i]);
+                float off;
+                Cell3(i, defs.Count, out row, out col, out cols, out off);
+                BuildPowerUpCard(list, row * (PowerCardH + CardGap), col, cols, off, defs[i]);
             }
         }
 
         /// <summary>One power-up card: icon (tap for the description), name, owned count and one price button per currency.</summary>
-        void BuildPowerUpCard(RectTransform list, float y, int col, int cols, PowerUpDef def)
+        void BuildPowerUpCard(RectTransform list, float y, int col, int cols, float offsetCols, PowerUpDef def)
         {
             RectTransform crt = UiKit.Rect(list, "Panel");
             Transform card = crt;
             Theme.CardBacking(crt);
-            PlaceCell(crt, y, col, cols, PowerCardH);
+            PlaceCell(crt, y, col, cols, PowerCardH, offsetCols);
 
             Image icon = PowerUpUi.AddIcon(card, "Icon", def.Type, new Vector2(0.5f, 1f), new Vector2(0f, -36f), 130f, false);
             icon.rectTransform.pivot = new Vector2(0.5f, 1f);
@@ -574,8 +585,8 @@ namespace BoingUpSkyTower.Gameplay
 
         void Info(string title, string body)
         {
-            host.OpenPopup(title, body, 860f);
-            host.PopupButton("OK", false, 60f, host.ClosePopup);
+            host.OpenPopup(title, body, 720f);   // small info card (owner 2026-10-24)
+            host.PopupButton("OK", false, 40f, host.ClosePopup);
         }
 
         /// <summary>Tap on a gem pack. Development builds: confirm, then a TEST purchase grants the gems at once. Release builds: no billing yet.</summary>

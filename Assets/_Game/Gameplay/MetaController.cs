@@ -731,6 +731,7 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             float currentRise = 0f;
+            Dictionary<int, int> tagPlan = painted != null ? PlanTags(painted, repo) : null;
             int current = Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, Mathf.Max(1, GameSession.PlayableRegions));
             mapCurrent = current;
             for (int i = 1; i <= 30; i++)
@@ -743,7 +744,8 @@ namespace BoingUpSkyTower.Gameplay
                     if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;   // that page is not painted yet
                     PaintedMarker m = painted.pages[pg].markers[mk];
                     float prise = (pg * painted.height + m.y * painted.height) / total;
-                    AddRegionPin(region, new Vector2(m.x, prise), mk == 4 ? 2 : 1);
+                    int planned;
+                    AddRegionPin(region, new Vector2(m.x, prise), tagPlan != null && tagPlan.TryGetValue(i, out planned) ? planned : 1);
                     if (i == current) currentRise = prise;
                     continue;
                 }
@@ -828,6 +830,68 @@ namespace BoingUpSkyTower.Gameplay
             mapScroll.verticalNormalizedPosition = n;     // 0 = bottom of the map, 1 = top (the ScrollRect keeps its own bounds right)
         }
 
+        /// <summary>
+        /// Chooses where each region's name tag goes (owner 2026-10-24: every name must be readable): below, above, right or left of its pin, the first
+        /// place that stays on screen and overlaps no other pin, no other tag and no seam cloud. Positions are in map pixels (width 1080).
+        /// </summary>
+        static Dictionary<int, int> PlanTags(PaintedPages painted, ContentRepository repo)
+        {
+            const float pinHalf = 80f, tagH = 60f, gap = 8f, edge = 8f, cloudHalf = 110f;
+            var plan = new Dictionary<int, int>();
+            var centres = new Dictionary<int, Vector2>();
+            var widths = new Dictionary<int, float>();
+            float W = painted.width, H = painted.height;
+            for (int i = 1; i <= 30; i++)
+            {
+                int pg = (i - 1) / 5, mk = (i - 1) % 5;
+                if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;
+                PaintedMarker m = painted.pages[pg].markers[mk];
+                centres[i] = new Vector2(m.x * W, pg * H + m.y * H);
+                RegionDef r = repo.TryGetRegionByIndex(i);
+                string label = r != null && i <= GameSession.PlayableRegions ? r.Name : "Coming soon";
+                widths[i] = label.Length * 19f + 40f;
+            }
+            var placed = new List<Rect>();
+            foreach (var kv in centres) placed.Add(new Rect(kv.Value.x - pinHalf, kv.Value.y - pinHalf, pinHalf * 2f, pinHalf * 2f));
+            for (int pj = 1; pj < painted.pages.Length; pj++) placed.Add(new Rect(0f, pj * H - cloudHalf, W, cloudHalf * 2f));
+            int[] order = { 1, 2, 4, 3 };   // below, above, right, left
+            foreach (var kv in centres)
+            {
+                Vector2 c = kv.Value;
+                float w = widths[kv.Key];
+                int best = 1;
+                float bestScore = float.MaxValue;
+                foreach (int mode in order)
+                {
+                    Rect tag;
+                    switch (mode)
+                    {
+                        case 1: tag = new Rect(c.x - w / 2f, c.y - pinHalf - 6f - tagH, w, tagH); break;     // y grows upward on the map
+                        case 2: tag = new Rect(c.x - w / 2f, c.y + pinHalf + 6f, w, tagH); break;
+                        case 4: tag = new Rect(c.x + pinHalf + 10f, c.y - tagH / 2f, w, tagH); break;
+                        default: tag = new Rect(c.x - pinHalf - 10f - w, c.y - tagH / 2f, w, tagH); break;
+                    }
+                    float score = 0f;
+                    if (tag.xMin < edge) score += (edge - tag.xMin) * 10f + 1000f;
+                    if (tag.xMax > W - edge) score += (tag.xMax - (W - edge)) * 10f + 1000f;
+                    foreach (Rect o in placed)
+                    {
+                        if (Mathf.Abs(o.center.x - (c.x)) < 0.01f && Mathf.Abs(o.center.y - c.y) < 0.01f && Mathf.Abs(o.width - pinHalf * 2f) < 0.01f) continue;   // its own pin
+                        float ox = Mathf.Min(tag.xMax, o.xMax + gap) - Mathf.Max(tag.xMin, o.xMin - gap);
+                        float oy = Mathf.Min(tag.yMax, o.yMax + gap) - Mathf.Max(tag.yMin, o.yMin - gap);
+                        if (ox > 0f && oy > 0f) score += ox * oy + 500f;
+                    }
+                    if (score < bestScore - 0.01f) { bestScore = score; best = mode; }
+                    if (score <= 0f) break;
+                }
+                plan[kv.Key] = best;
+                float tx = best == 4 ? c.x + pinHalf + 10f : (best == 3 ? c.x - pinHalf - 10f - w : c.x - w / 2f);
+                float ty = best == 1 ? c.y - pinHalf - 6f - tagH : (best == 2 ? c.y + pinHalf + 6f : c.y - tagH / 2f);
+                placed.Add(new Rect(tx, ty, w, tagH));
+            }
+            return plan;
+        }
+
         /// <summary>A round pin on the map with a slim dark name tag beside it. Locked and not-yet-built regions show a padlock.</summary>
         void AddRegionPin(RegionDef region, Vector2 anchor, int tagMode = 0)   // 0 beside the pin, 1 below, 2 above
         {
@@ -877,7 +941,7 @@ namespace BoingUpSkyTower.Gameplay
 
             bool open = playable && unlocked;
             Image tag = Theme.GlassPanel(rt, "NameBacking", 30f);
-            tag.color = open ? new Color(0.05f, 0.08f, 0.22f, 0.78f) : new Color(0.16f, 0.14f, 0.28f, 0.78f);
+            tag.color = open ? new Color(0.05f, 0.08f, 0.22f, 0.92f) : new Color(0.16f, 0.14f, 0.28f, 0.92f);
             string label = playable ? region.Name : "Coming soon";
             Text name = UiKit.AddText(tag.transform, "Name", label, 36, open ? Color.white : new Color(0.88f, 0.88f, 0.95f, 1f), TextAnchor.MiddleCenter);
             name.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -887,6 +951,12 @@ namespace BoingUpSkyTower.Gameplay
             {
                 UiKit.Place(tag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 6f), new Vector2(w, 60f));
                 tag.rectTransform.pivot = new Vector2(0.5f, 0f);
+            }
+            else if (tagMode == 3 || tagMode == 4)
+            {
+                bool right = tagMode == 4;
+                UiKit.Place(tag.rectTransform, new Vector2(right ? 1f : 0f, 0.5f), new Vector2(right ? 10f : -10f, 0f), new Vector2(w, 60f));
+                tag.rectTransform.pivot = new Vector2(right ? 0f : 1f, 0.5f);
             }
             else if (tagMode == 1)
             {
@@ -1434,7 +1504,8 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform panel = UiKit.BuildPopupFrame(popup, title, art, new Vector2(860f, height), ClosePopup);
             Text b = UiKit.AddText(panel, "Body", body, 44, Color.white);
             UiKit.OnPanel(b);
-            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(0f, -240f), new Vector2(740f, 520f));
+            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(0f, -214f), new Vector2(740f, Mathf.Min(520f, height - 214f - 200f)));   // centred in the space between the title and the buttons
+            b.alignment = TextAnchor.MiddleCenter;
         }
 
         Button PopupButton(string label, Sprite sprite, Color tint, float y, Action action)
