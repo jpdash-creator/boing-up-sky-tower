@@ -55,8 +55,6 @@ namespace BoingUpSkyTower.Tests
             RunView.AspectOverride = 0f;
             PlayerPrefs.DeleteAll();
             GameSettings.ApplyTextScale();
-            TestRigArt.Remove();
-            CharacterCatalog.TestOverride = false;
             GameSession.Reset();
         }
 
@@ -325,37 +323,39 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("coming-soon-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(6)); }, problems);
             yield return CheckScreen("reset-popup", () => { meta.ShowSettings(); meta.ConfirmReset(); }, problems);
 
-            // Gear (docs/19): the inventory empty and full, every slot tab, the boost summary, the characters and the roster. Stand-in polygon art (TestRigArt).
+            // Gear (docs/17): the inventory empty and full, every slot tab, the boost summary, the characters and the roster.
             yield return CheckScreen("inventory-empty", () => meta.ShowInventory(), problems);
-            TestRigArt.Install();
             GrantSomeGear();
             yield return CheckScreen("inventory", () => meta.ShowInventory(), problems);
-            yield return CheckScreen("inventory-body", () => meta.ShowInventory(1), problems);
-            yield return CheckScreen("inventory-boots", () => meta.ShowInventory(2), problems);
+            yield return CheckScreen("inventory-boots", () => meta.ShowInventory(3), problems);
             yield return CheckScreen("info", () => meta.ShowInfo(), problems);
             yield return CheckScreen("info-open", () => { meta.ShowInfo(); meta.CurrentInfo.Select(BoingUpSkyTower.Simulation.PowerUp.Magnet); }, problems);
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
             yield return CheckScreen("characters-roster", () => meta.ShowCharacters(true), problems);
-            // development builds: the dev test character is listed in the roster (locked until its parts exist) and the inventory has the grant button
+            // development builds: the three test characters in the roster, on the stage and in the inventory, each wearing the four test pieces
             CharacterCatalog.TestOverride = true;
+            CharacterCatalog.Selected = CharacterCatalog.Sporeling;
             yield return CheckScreen("characters-roster-dev", () => meta.ShowCharacters(true), problems);
-            yield return CheckScreen("inventory-dev", () => meta.ShowInventory(), problems);
+            foreach (GearDef t in GearCatalog.TestPieces) { GameSession.Progress.GrantGear(t.Id); GameSession.Progress.Equip(t.Id); }
+            yield return CheckScreen("characters-momo-testgear", () => meta.ShowCharacters(), problems);
+            yield return CheckScreen("info-momo-testgear", () => meta.ShowInfo(), problems);
+            foreach (CharacterDef c in new[] { CharacterCatalog.Sporeling, CharacterCatalog.Moth, CharacterCatalog.Rootling })
+            {
+                CharacterCatalog.Selected = c;
+                yield return CheckScreen("characters-" + c.Id, () => meta.ShowCharacters(), problems);
+                yield return CheckScreen("inventory-" + c.Id, () => meta.ShowInventory(), problems);
+            }
+            CharacterCatalog.Selected = CharacterCatalog.Momo;
             CharacterCatalog.TestOverride = false;
-            // a character without polygon parts (Momo before his parts arrive) shows his single picture and no gear
-            TestRigArt.Remove();
-            GearCatalog.ArtProbe = d => d.Number <= 6;
-            yield return CheckScreen("characters-single-picture", () => meta.ShowCharacters(), problems);
-            yield return CheckScreen("inventory-single-picture", () => meta.ShowInventory(), problems);
-            TestRigArt.Remove();
             Report(problems);
         }
 
-        /// <summary>Docs/19: the run draws the character from its polygon parts and the worn gear parts; every part picture sits on the same canvas bounds.</summary>
+        /// <summary>Docs/18: the run draws the character from its parts and the worn gear parts; for Momo (no fit) every part picture sits on the same canvas bounds.</summary>
         static void AssertWornLayersFitPlayer(RunView view, List<string> problems)
         {
             SpriteRenderer[] parts = view.PartRenderers;
             SpriteRenderer[] worn = view.WornLayers;
-            if (parts.Length < 6) problems.Add("run: only " + parts.Length + " part pictures were built");
+            if (parts.Length < 9) problems.Add("run: only " + parts.Length + " part pictures were built");
             if (worn.Length == 0) problems.Add("run: no worn gear part was built although gear is worn");
             if (parts.Length == 0) return;
             Bounds a = parts[0].bounds;
@@ -367,16 +367,16 @@ namespace BoingUpSkyTower.Tests
             }
         }
 
-        /// <summary>Owned gear of every slot and rarity (pieces with stand-in art), one piece worn per slot.</summary>
+        /// <summary>Owned gear of every slot and rarity, some with spare copies (forge ready), one piece worn per slot.</summary>
         static void GrantSomeGear()
         {
             var p = GameSession.Progress;
-            for (int s = 0; s < GearCatalog.SlotCount; s++)
+            for (int s = 0; s < 4; s++)
             {
                 for (int r = 0; r < 5; r++)
                 {
                     GearDef[] pieces = GearCatalog.Pieces((GearSlot)s, (GearRarity)r);
-                    for (int i = 0; i < 6 - r; i++) p.GrantGear(pieces[i].Id);
+                    for (int i = 0; i < 3 - r / 2; i++) p.GrantGear(pieces[i].Id, i == 0 && r < 2 ? 5 : 1);
                 }
                 p.Equip(GearCatalog.Pieces((GearSlot)s, (GearRarity)(s + 1))[0].Id);
             }
@@ -423,7 +423,6 @@ namespace BoingUpSkyTower.Tests
             GameSettings.ReducedMotion = leftHanded;   // the second scenario also exercises reduced motion
             for (int i = 1; i <= 2; i++)
                 GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
-            TestRigArt.Install();
             GrantSomeGear();   // gear worn in the run: every layer must sit exactly on the player sprite
             GameSession.CurrentLevelId = "lvl_001_03";
             yield return Load("Run");
@@ -445,7 +444,7 @@ namespace BoingUpSkyTower.Tests
             var reward = GameSession.Progress.ApplyRun(GameSession.CurrentLevelId, outcome);
             yield return CheckScreen("run-results", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
             rc.Hud.CloseOverlay();
-            reward.GearDrops = new List<string> { "gear_head_c01", "gear_body_u02", "gear_boots_r03", "gear_boots_e04", "gear_head_l01" };
+            reward.GearDrops = new List<string> { "gear_head_c01", "gear_body_u02", "gear_pants_r03", "gear_boots_e04", "gear_head_l01" };
             yield return CheckScreen("run-results-gear", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
             rc.Hud.CloseOverlay();
 

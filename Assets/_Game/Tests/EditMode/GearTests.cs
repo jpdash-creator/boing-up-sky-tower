@@ -4,11 +4,13 @@ using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
 using BoingUpSkyTower.Gameplay;
 using BoingUpSkyTower.Simulation;
+using Newtonsoft.Json;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace BoingUpSkyTower.Tests
 {
-    /// <summary>Gear, drops, chests, worn boosts and the save migration (docs/17, docs/19): three slots, 180 pieces, no pants, no forge.</summary>
+    /// <summary>Gear, drops, chests, the forge, worn boosts and the save migration (docs/17).</summary>
     public class GearTests
     {
         ContentRepository repo;
@@ -17,7 +19,7 @@ namespace BoingUpSkyTower.Tests
         public void SetUp()
         {
             repo = ContentRepository.LoadFromResources();
-            GearCatalog.ArtProbe = d => true;   // these tests cover the rules for every piece; the art filter has its own tests below and in CharacterRigTests
+            GearCatalog.ArtProbe = d => true;   // these tests cover the rules for every piece; the art filter has its own tests (CharacterRigTests)
         }
 
         [TearDown]
@@ -28,13 +30,11 @@ namespace BoingUpSkyTower.Tests
         // ---- catalog ----
 
         [Test]
-        public void CatalogHas180PiecesInThreeSlotsWithTheRarityCountsPerSlot()
+        public void CatalogHas240PiecesWithTheRarityCountsPerSlot()
         {
-            Assert.AreEqual(3, GearCatalog.SlotCount);
-            Assert.AreEqual(3, System.Enum.GetValues(typeof(GearSlot)).Length, "head, body, boots: no pants");
-            Assert.AreEqual(180, GearCatalog.All.Count);
+            Assert.AreEqual(240, GearCatalog.All.Count);
             int[] expected = { 20, 16, 12, 8, 4 };
-            for (int s = 0; s < 3; s++)
+            for (int s = 0; s < 4; s++)
             {
                 int inSlot = 0;
                 for (int r = 0; r < 5; r++)
@@ -48,110 +48,51 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void IdsFollowSlotRarityLetterAndNumberAndArtIdIsTheId()
+        public void IdsAndNamesAreUniqueAndEveryPieceHasArt()
         {
             var ids = new HashSet<string>();
             var names = new HashSet<string>();
-            string letters = "curel";
             foreach (GearDef d in GearCatalog.All)
             {
                 Assert.IsTrue(ids.Add(d.Id), d.Id);
                 Assert.IsTrue(names.Add(d.Slot + "/" + d.Name), "name " + d.Name);
-                Assert.AreEqual("gear_" + GearCatalog.SlotNames[(int)d.Slot].ToLowerInvariant() + "_" + letters[(int)d.Rarity] + d.Number.ToString("D2"), d.Id);
-                Assert.AreEqual(d.Id, d.ArtId, "art id = id");
-                Assert.IsFalse(d.Id.Contains("pants"));
+                Assert.IsFalse(string.IsNullOrEmpty(d.ArtId));
                 Assert.AreSame(d, GearCatalog.Get(d.Id));
             }
-            Assert.IsNotNull(GearCatalog.Get("gear_head_c01"));
-            Assert.IsNotNull(GearCatalog.Get("gear_boots_l04"));
-            Assert.IsNull(GearCatalog.Get("gear_boots_l05"));
-            Assert.IsNull(GearCatalog.Get("gear_pants_c01"));
         }
 
         [Test]
-        public void EachSlotBoostsItsPowerUpsInTurnAndRarityPicksTheFixedSize()
+        public void EachSlotBoostsItsTwoPowerUpsAlternatingAndRarityPicksTheSize()
         {
             PowerUp[][] want =
             {
-                new[] { PowerUp.Shield, PowerUp.SlowTime },
-                new[] { PowerUp.Magnet, PowerUp.Flight, PowerUp.WallStick },
-                new[] { PowerUp.DoubleJump, PowerUp.Rocket },
+                new[] { PowerUp.Shield, PowerUp.SlowTime }, new[] { PowerUp.Magnet, PowerUp.Flight },
+                new[] { PowerUp.WallStick, PowerUp.Magnet }, new[] { PowerUp.DoubleJump, PowerUp.Rocket },
             };
             int[] pct = { 10, 20, 40, 75, 100 };
             foreach (GearDef d in GearCatalog.All)
             {
-                Assert.AreEqual(want[(int)d.Slot][(d.Number - 1) % want[(int)d.Slot].Length], d.Boost, d.Id);
+                Assert.AreEqual(want[(int)d.Slot][(d.Number - 1) % 2], d.Boost, d.Id);
                 Assert.AreEqual(pct[(int)d.Rarity], d.BoostPercent, d.Id);
             }
-            // every power-up of the slot appears in every rarity band that is big enough to alternate through all of them
-            for (int s = 0; s < 3; s++)
+            // both boosts appear in every rarity band of every slot (the band sizes are even)
+            for (int s = 0; s < 4; s++)
                 for (int r = 0; r < 5; r++)
                 {
-                    var seen = new HashSet<PowerUp>();
-                    foreach (GearDef d in GearCatalog.Pieces((GearSlot)s, (GearRarity)r)) seen.Add(d.Boost);
-                    Assert.AreEqual(want[s].Length, seen.Count, "slot " + s + " rarity " + r);
+                    int firsts = 0;
+                    foreach (GearDef d in GearCatalog.Pieces((GearSlot)s, (GearRarity)r)) if (d.Boost == want[s][0]) firsts++;
+                    Assert.AreEqual(GearCatalog.PiecesPerRarity[r] / 2, firsts);
                 }
         }
 
-        // ---- art: no art, no drop, no tile ----
-
         [Test]
-        public void APieceWithoutArtNeverDropsAndCannotBeWorn()
+        public void ForgeLevelsAddTenPercentOfTheBaseEach()
         {
-            GearCatalog.ArtProbe = d => false;
-            for (int i = 0; i < 500; i++) Assert.AreEqual(0, GearDrops.Roll(15, 9000 + i, i).Count, "nothing has art, nothing drops");
-            var types = new List<PowerUpDef>(PowerUpCatalog.BuiltIn().Implemented);
-            for (int i = 0; i < 200; i++)
-            {
-                Assert.AreEqual(0, ChestRolls.Roll(ChestKind.Iron, i, types).Gear.Count);
-                Assert.AreEqual(0, ChestRolls.Roll(ChestKind.Golden, i, types).Gear.Count);
-            }
-            var svc = NewService();
-            svc.GrantGear("gear_head_c01");
-            Assert.IsFalse(svc.Equip("gear_head_c01"), "no art: cannot be worn");
-            GearCatalog.ArtProbe = d => true;
-            Assert.IsTrue(svc.Equip("gear_head_c01"));
-            GearCatalog.ArtProbe = d => false;
-            Assert.IsNull(svc.EquippedDef(GearSlot.Head), "a worn piece whose art is gone counts as nothing worn");
-            Assert.AreEqual(0, svc.GearBoostPercents()[(int)PowerUp.Shield]);
-        }
-
-        [Test]
-        public void OnlyPiecesWithArtDropOrAppearInChests()
-        {
-            GearCatalog.ArtProbe = d => d.Rarity >= GearRarity.Rare && d.Number % 2 == 1;
-            int dropped = 0;
-            for (int i = 0; i < 3000; i++)
-                foreach (string id in GearDrops.Roll(15, 100 + i, i))
-                {
-                    Assert.IsTrue(GearCatalog.HasArt(GearCatalog.Get(id)), id);
-                    dropped++;
-                }
-            Assert.Greater(dropped, 100);
-            var types = new List<PowerUpDef>(PowerUpCatalog.BuiltIn().Implemented);
-            for (int i = 0; i < 500; i++)
-            {
-                foreach (string id in ChestRolls.Roll(ChestKind.Iron, i, types).Gear) Assert.IsTrue(GearCatalog.HasArt(GearCatalog.Get(id)), id);
-                foreach (string id in ChestRolls.Roll(ChestKind.Golden, i, types).Gear) Assert.IsTrue(GearCatalog.HasArt(GearCatalog.Get(id)), id);
-            }
-            Assert.AreEqual(180, GearCatalog.All.Count, "all definitions are kept");
-        }
-
-        [Test]
-        public void TheShippedPartFilesDecideWhichPiecesHaveArt()
-        {
-            GearCatalog.ArtProbe = null;   // the real check: the required part pictures exist in Resources/Characters/gear/<id>/
-            foreach (GearDef d in GearCatalog.All)
-            {
-                bool files = true;
-                foreach (string part in GearCatalog.RequiredParts(d.Slot))
-                    if (UnityEngine.Resources.Load<UnityEngine.Sprite>(GearCatalog.ArtRoot + d.ArtId + "/" + part) == null) files = false;
-                Assert.AreEqual(files, GearCatalog.HasArt(d), d.Id);
-            }
-            CollectionAssert.AreEqual(new[] { "head" }, GearCatalog.RequiredParts(GearSlot.Head));
-            CollectionAssert.AreEqual(new[] { "body" }, GearCatalog.RequiredParts(GearSlot.Body));
-            CollectionAssert.AreEqual(new[] { "body", "sleeveL", "sleeveR" }, GearCatalog.PartNames(GearSlot.Body));
-            CollectionAssert.AreEqual(new[] { "bootL", "bootR" }, GearCatalog.PartNames(GearSlot.Boots));
+            GearDef epic = GearCatalog.Pieces(GearSlot.Head, GearRarity.Epic)[0];
+            Assert.AreEqual(75, GearCatalog.BoostAtLevel(epic, 1));
+            Assert.AreEqual(75 + 7, GearCatalog.BoostAtLevel(epic, 2));   // 10 percent of 75, integer math
+            Assert.AreEqual(75 + 30, GearCatalog.BoostAtLevel(epic, 5));
+            Assert.AreEqual(GearCatalog.BoostAtLevel(epic, 5), GearCatalog.BoostAtLevel(epic, 9), "capped at level 5");
         }
 
         // ---- drops ----
@@ -173,13 +114,11 @@ namespace BoingUpSkyTower.Tests
         [TestCase(5, new[] { 40, 20, 10, 5, 2 })]
         [TestCase(10, new[] { 40, 20, 10, 5, 2 })]
         [TestCase(15, new[] { 80, 40, 20, 10, 5 })]
-        public void DropOddsPerLevelMatchTheSpecWithFixedSeeds(int levelIndex, int[] percents)
+        public void DropOddsPerLevelMatchTheSpec(int levelIndex, int[] percents)
         {
             Assert.AreEqual(percents, GearDrops.PercentsFor(levelIndex));
             const int rolls = 40000;
             int[] hits = CountHits(levelIndex, rolls);
-            int[] again = CountHits(levelIndex, rolls);
-            Assert.AreEqual(hits, again, "fixed seeds give fixed hits");
             for (int r = 0; r < 5; r++)
             {
                 double expected = rolls * percents[r] / 100.0;
@@ -196,19 +135,12 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void ADropIsRepeatableAndHitsPickAnyOfTheThreeSlots()
+        public void ADropIsRepeatableAndHitsPickAnySlot()
         {
             Assert.AreEqual(GearDrops.Roll(15, 777, 3), GearDrops.Roll(15, 777, 3));
             var slots = new HashSet<GearSlot>();
-            var pieces = new HashSet<string>();
-            for (int i = 0; i < 300; i++)
-                foreach (string id in GearDrops.Roll(15, 4242, i))
-                {
-                    slots.Add(GearCatalog.Get(id).Slot);
-                    pieces.Add(id);
-                }
-            Assert.AreEqual(3, slots.Count, "head, body and boots all drop");
-            Assert.Greater(pieces.Count, 20, "different pieces drop");
+            for (int i = 0; i < 200; i++) foreach (string id in GearDrops.Roll(15, 4242, i)) slots.Add(GearCatalog.Get(id).Slot);
+            Assert.AreEqual(4, slots.Count, "all four slots drop");
             bool differs = false;
             for (int i = 0; i < 30 && !differs; i++) differs = !ListEq(GearDrops.Roll(15, 777, i), GearDrops.Roll(15, 777, i + 1));
             Assert.IsTrue(differs, "the clear count changes the roll");
@@ -276,7 +208,6 @@ namespace BoingUpSkyTower.Tests
             Assert.IsNull(svc.EquippedId(GearSlot.Head));
             svc.Unequip(GearSlot.Boots);
             Assert.IsNull(svc.EquippedId(GearSlot.Boots));
-            Assert.AreEqual(3, svc.Data.Equipped.Count);
         }
 
         [Test]
@@ -294,27 +225,23 @@ namespace BoingUpSkyTower.Tests
 
         // ---- boosts ----
 
+        [Test]
+        public void BoostsAreSeparatePerPowerUpAndMagnetTakesTheLargerSource()
+        {
+            GearDef body = FindPiece(GearSlot.Body, GearRarity.Rare, PowerUp.Magnet);       // 40
+            GearDef pants = FindPiece(GearSlot.Pants, GearRarity.Epic, PowerUp.Magnet);     // 75
+            GearDef head = FindPiece(GearSlot.Head, GearRarity.Common, PowerUp.Shield);     // 10
+            int[] b = GearBoosts.Compute(new[] { head, body, pants, (GearDef)null }, new[] { 1, 1, 1, 1 });
+            Assert.AreEqual(75, b[(int)PowerUp.Magnet], "the larger Magnet source, no stacking");
+            Assert.AreEqual(10, b[(int)PowerUp.Shield]);
+            Assert.AreEqual(0, b[(int)PowerUp.Flight]);
+        }
+
         static GearDef FindPiece(GearSlot slot, GearRarity rarity, PowerUp boost)
         {
             foreach (GearDef d in GearCatalog.Pieces(slot, rarity)) if (d.Boost == boost) return d;
             Assert.Fail("no such piece");
             return null;
-        }
-
-        [Test]
-        public void BoostsAreSeparatePerPowerUpAndTheLargerSourceOfOnePowerUpWins()
-        {
-            GearDef body = FindPiece(GearSlot.Body, GearRarity.Rare, PowerUp.Magnet);       // 40
-            GearDef head = FindPiece(GearSlot.Head, GearRarity.Common, PowerUp.Shield);     // 10
-            GearDef boots = FindPiece(GearSlot.Boots, GearRarity.Epic, PowerUp.DoubleJump); // 75
-            int[] b = GearBoosts.Compute(new[] { head, body, boots });
-            Assert.AreEqual(40, b[(int)PowerUp.Magnet]);
-            Assert.AreEqual(10, b[(int)PowerUp.Shield]);
-            Assert.AreEqual(75, b[(int)PowerUp.DoubleJump]);
-            Assert.AreEqual(0, b[(int)PowerUp.Flight], "nothing stacks across powers");
-            GearDef head2 = FindPiece(GearSlot.Head, GearRarity.Legendary, PowerUp.Shield);  // 100
-            int[] c = GearBoosts.Compute(new[] { head, head2 });
-            Assert.AreEqual(100, c[(int)PowerUp.Shield], "two sources of one power-up: the larger one, no stacking");
         }
 
         [Test]
@@ -325,7 +252,8 @@ namespace BoingUpSkyTower.Tests
             svc.GrantGear(FindPiece(GearSlot.Boots, GearRarity.Legendary, PowerUp.Rocket).Id);       // +100 percent Rocket
             svc.GrantGear(FindPiece(GearSlot.Head, GearRarity.Rare, PowerUp.Shield).Id);              // +40 percent Shield
             svc.GrantGear(FindPiece(GearSlot.Body, GearRarity.Uncommon, PowerUp.Magnet).Id);          // +20 percent Magnet pull
-            foreach (GearDef d in GearCatalog.All) if (svc.OwnsGear(d.Id)) svc.Equip(d.Id);
+            foreach (GearSlot s in new[] { GearSlot.Boots, GearSlot.Head, GearSlot.Body })
+                foreach (GearDef d in GearCatalog.All) if (svc.OwnsGear(d.Id) && d.Slot == s) svc.Equip(d.Id);
             SimConfig run = svc.BuildRunConfig(baseCfg);
             Assert.AreEqual(baseCfg.RocketTicks * 2, run.RocketTicks);
             Assert.AreEqual(baseCfg.ShieldTicks * 140 / 100, run.ShieldTicks);
@@ -333,24 +261,6 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(baseCfg.FlightTicks, run.FlightTicks, "an unboosted power-up keeps its numbers");
             Assert.AreEqual(120, baseCfg.RocketTicks, "the shared config is never changed");
             Assert.AreNotSame(baseCfg, run);
-        }
-
-        [Test]
-        public void EveryBoostPercentOfThePowerUpsChangesItsConfigField()
-        {
-            // head: Shield, Slow Time; body: Magnet, Flight, Wall Stick; boots: Double Jump, Rocket (docs/19)
-            var baseCfg = new SimConfig();
-            int[] pct = { 10, 20, 40, 75, 100 };
-            for (int r = 0; r < 5; r++)
-            {
-                var one = new SimConfig();
-                var boost = new int[PowerUps.MaxType + 1];
-                boost[(int)PowerUp.WallStick] = pct[r];
-                boost[(int)PowerUp.DoubleJump] = pct[r];
-                GearBoosts.Apply(one, boost);
-                Assert.AreEqual((int)((long)baseCfg.WallStickWindowTicks * (100 + pct[r]) / 100), one.WallStickWindowTicks);
-                Assert.AreEqual((int)((long)baseCfg.DoubleJumpWindowTicks * (100 + pct[r]) / 100), one.DoubleJumpWindowTicks);
-            }
         }
 
         [Test]
@@ -369,7 +279,7 @@ namespace BoingUpSkyTower.Tests
         public void BoostedGearDoesNotChangeTheLevelLayoutOrTheSimulation()
         {
             var svc = NewService();
-            foreach (GearSlot s in new[] { GearSlot.Head, GearSlot.Body, GearSlot.Boots })
+            foreach (GearSlot s in new[] { GearSlot.Head, GearSlot.Body, GearSlot.Pants, GearSlot.Boots })
             {
                 GearDef top = GearCatalog.Pieces(s, GearRarity.Legendary)[0];
                 svc.GrantGear(top.Id);
@@ -392,6 +302,38 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(plain.State.Y.Raw, boosted.State.Y.Raw, id);
                 Assert.AreEqual(plain.State.Score, boosted.State.Score, id);
             }
+        }
+
+        // ---- forge ----
+
+        [Test]
+        public void ForgingNeedsThreeSpareCopiesAndStopsAtLevelFive()
+        {
+            var svc = NewService();
+            GearDef d = GearCatalog.Pieces(GearSlot.Pants, GearRarity.Common)[2];
+            svc.GrantGear(d.Id, 3);
+            Assert.IsFalse(svc.CanForge(d.Id), "3 copies: the piece keeps one, only 2 are spare");
+            Assert.IsFalse(svc.TryForge(d.Id));
+            svc.GrantGear(d.Id);
+            Assert.IsTrue(svc.TryForge(d.Id));
+            Assert.AreEqual(2, svc.GearLevel(d.Id));
+            Assert.AreEqual(1, svc.GearCount(d.Id));
+            svc.GrantGear(d.Id, 100);
+            Assert.AreEqual(3, svc.ForgeAll(), "levels 3, 4 and 5");
+            Assert.AreEqual(GearCatalog.MaxLevel, svc.GearLevel(d.Id));
+            Assert.IsFalse(svc.CanForge(d.Id));
+        }
+
+        [Test]
+        public void AForgedPieceBoostsMore()
+        {
+            var svc = NewService();
+            GearDef d = FindPiece(GearSlot.Boots, GearRarity.Common, PowerUp.Rocket);
+            svc.GrantGear(d.Id, 4);
+            svc.Equip(d.Id);
+            Assert.AreEqual(10, svc.GearBoostPercents()[(int)PowerUp.Rocket]);
+            svc.TryForge(d.Id);
+            Assert.AreEqual(11, svc.GearBoostPercents()[(int)PowerUp.Rocket]);
         }
 
         // ---- chests ----
@@ -422,34 +364,30 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void AnIronChestGivesCommonGearThreePowerUpsAndCoinsFromAllThreeSlots()
+        public void AnIronChestGivesCommonGearThreePowerUpsAndCoins()
         {
             var svc = NewService();
-            svc.AddGems(1000);
+            svc.AddGems(100);
             List<ChestContents> list;
-            Assert.AreEqual(ChestOpenResult.Ok, svc.TryOpenChests(ChestKind.Iron, 10, out list));
+            Assert.AreEqual(ChestOpenResult.Ok, svc.TryOpenChests(ChestKind.Iron, 1, out list));
             Assert.AreEqual(0, svc.Gems);
-            Assert.AreEqual(10, list.Count);
-            var slots = new HashSet<GearSlot>();
-            int gear = 0;
-            foreach (ChestContents c in list)
-            {
-                Assert.GreaterOrEqual(c.Gear.Count, 1, "Common is 100 percent");
-                Assert.LessOrEqual(c.Gear.Count, 3);
-                Assert.AreEqual(GearRarity.Common, GearCatalog.Get(c.Gear[0]).Rarity);
-                foreach (string g in c.Gear)
-                {
-                    Assert.LessOrEqual((int)GearCatalog.Get(g).Rarity, (int)GearRarity.Rare);
-                    slots.Add(GearCatalog.Get(g).Slot);
-                    gear++;
-                }
-                Assert.AreEqual(3, c.PowerUps.Count);
-                Assert.That(c.Coins, Is.InRange(100, 1000));
-            }
-            Assert.AreEqual(3, slots.Count, "ten chests roll all three slots");
+            Assert.AreEqual(1, list.Count);
+            ChestContents c = list[0];
+            Assert.GreaterOrEqual(c.Gear.Count, 1, "Common is 100 percent");
+            Assert.LessOrEqual(c.Gear.Count, 3);
+            Assert.AreEqual(GearRarity.Common, GearCatalog.Get(c.Gear[0]).Rarity);
+            foreach (string g in c.Gear) Assert.LessOrEqual((int)GearCatalog.Get(g).Rarity, (int)GearRarity.Rare);
+            Assert.AreEqual(3, c.PowerUps.Count);
+            Assert.That(c.Coins, Is.InRange(100, 1000));
+            Assert.AreEqual(c.Coins, svc.Coins);
+            int units = 0;
+            foreach (string id in c.PowerUps) { Assert.IsNotNull(svc.PowerUpDefs.Get(id)); units++; }
             int owned = 0;
-            foreach (var kv in svc.Data.Inventory.Gear) owned += kv.Value;
-            Assert.AreEqual(gear, owned);
+            foreach (var kv in svc.Data.Inventory.Powerups) owned += kv.Value;
+            Assert.AreEqual(units, owned);
+            int gear = 0;
+            foreach (var kv in svc.Data.Inventory.Gear) gear += kv.Value;
+            Assert.AreEqual(c.Gear.Count, gear);
         }
 
         [Test]
@@ -525,19 +463,13 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(10, a.Data.ChestOpens);
         }
 
-        // ---- save migration (version 1 and 2 -> 3) ----
-
-        static string TempDir()
-        {
-            string dir = Path.Combine(UnityEngine.Application.dataPath, "..", "Temp", "GearTests_" + System.Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(dir);
-            return dir;
-        }
+        // ---- save migration (version 1 -> 2) ----
 
         [Test]
         public void AVersionOneSaveLoadsWithEmptyGearAndKeepsItsProgress()
         {
-            string dir = TempDir();
+            string dir = Path.Combine(UnityEngine.Application.dataPath, "..", "Temp", "GearTests_" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
             try
             {
                 string path = Path.Combine(dir, "save.json");
@@ -549,47 +481,13 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(2, svc.GetProgress("lvl_001_01").Stars);
                 Assert.AreEqual(0, svc.OwnedGearKinds);
                 Assert.IsNull(svc.EquippedId(GearSlot.Head));
-                Assert.AreEqual(3, svc.Data.Equipped.Count);
+                Assert.AreEqual(4, svc.Data.Equipped.Count);
                 Assert.AreEqual(SaveData.CurrentVersion, svc.Data.Version);
                 svc.GrantGear(GearCatalog.Pieces(GearSlot.Head, GearRarity.Common)[0].Id);
                 var again = new ProgressService(repo, new FileSaveStore(path), 5);
                 Assert.AreEqual(1, again.OwnedGearKinds);
                 Assert.AreEqual(321, again.Coins);
-                StringAssert.Contains("\"version\": 3", File.ReadAllText(path));
-            }
-            finally { Directory.Delete(dir, true); }
-        }
-
-        [Test]
-        public void AVersionTwoSaveWithPantsForgeLevelsAndRemovedIdsIsMigrated()
-        {
-            string dir = TempDir();
-            try
-            {
-                string path = Path.Combine(dir, "save.json");
-                // the old format: four worn slots (head, body, pants, boots), forge levels, pants pieces and the dev test pieces
-                File.WriteAllText(path, "{\"version\":2,\"coins\":77,\"gems\":8,\"inventory\":{\"powerups\":{\"pw_flight\":1},"
-                    + "\"gear\":{\"gear_head_c01\":3,\"gear_body_u02\":1,\"gear_pants_c01\":2,\"gear_pants_l04\":1,\"gear_boots_e03\":1,\"gear_head_test\":1,\"gear_boots_c99\":4,\"gear_head_c02\":0},"
-                    + "\"gearLevels\":{\"gear_head_c01\":3}},"
-                    + "\"equipped\":[\"gear_head_c01\",\"gear_body_u02\",\"gear_pants_c01\",\"gear_boots_e03\"],\"chestOpens\":5}");
-                var svc = new ProgressService(repo, new FileSaveStore(path), 5);   // must not throw
-                Assert.AreEqual(77, svc.Coins);
-                Assert.AreEqual(1, svc.PowerUpCount("pw_flight"));
-                Assert.AreEqual(5, svc.Data.ChestOpens);
-                Assert.AreEqual(3, svc.OwnedGearKinds, "head_c01, body_u02 and boots_e03 are still pieces; pants, test and unknown ids are dropped");
-                Assert.AreEqual(3, svc.GearCount("gear_head_c01"), "owned copies are kept");
-                Assert.IsFalse(svc.OwnsGear("gear_pants_c01"));
-                Assert.IsFalse(svc.OwnsGear("gear_head_test"));
-                Assert.IsFalse(svc.OwnsGear("gear_boots_c99"));
-                CollectionAssert.AreEqual(new[] { "gear_head_c01", "gear_body_u02", "gear_boots_e03" }, svc.Data.Equipped, "the pants entry is gone, boots moved up to slot 3");
-                Assert.AreEqual(SaveData.CurrentVersion, svc.Data.Version);
-                svc.GrantGear("gear_head_c05");   // forces a save
-                string text = File.ReadAllText(path);
-                StringAssert.Contains("\"version\": 3", text);
-                StringAssert.DoesNotContain("gearLevels", text);
-                StringAssert.DoesNotContain("pants", text);
-                var again = new ProgressService(repo, new FileSaveStore(path), 5);
-                CollectionAssert.AreEqual(new[] { "gear_head_c01", "gear_body_u02", "gear_boots_e03" }, again.Data.Equipped);
+                StringAssert.Contains("\"version\": 2", File.ReadAllText(path));
             }
             finally { Directory.Delete(dir, true); }
         }
@@ -602,14 +500,18 @@ namespace BoingUpSkyTower.Tests
             data.Inventory.Gear["gear_nope_x99"] = 3;
             data.Inventory.Gear["gear_head_c01"] = 0;
             data.Inventory.Gear["gear_head_c02"] = 2;
+            data.Inventory.GearLevels["gear_head_c02"] = 9;
+            data.Inventory.GearLevels["gear_head_c05"] = 3;      // not owned
             data.Equipped = new List<string> { "gear_head_c02", "gear_head_c02", "gear_zzz", "", "extra" };   // wrong slot, unknown, too long
             store.Save(data);
             var svc = new ProgressService(repo, store, 5);
             Assert.AreEqual(1, svc.OwnedGearKinds);
-            Assert.AreEqual(3, svc.Data.Equipped.Count);
+            Assert.AreEqual(GearCatalog.MaxLevel, svc.GearLevel("gear_head_c02"));
+            Assert.AreEqual(1, svc.GearLevel("gear_head_c05"));
+            Assert.AreEqual(4, svc.Data.Equipped.Count);
             Assert.AreEqual("gear_head_c02", svc.EquippedId(GearSlot.Head));
             Assert.IsNull(svc.EquippedId(GearSlot.Body), "a head piece cannot sit in the body slot");
-            Assert.IsNull(svc.EquippedId(GearSlot.Boots));
+            Assert.IsNull(svc.EquippedId(GearSlot.Pants));
         }
 
         [Test]
@@ -621,7 +523,7 @@ namespace BoingUpSkyTower.Tests
             svc.ResetAll();
             Assert.AreEqual(0, svc.OwnedGearKinds);
             Assert.IsNull(svc.EquippedId(GearSlot.Boots));
-            Assert.AreEqual(3, svc.Data.Equipped.Count);
+            Assert.AreEqual(4, svc.Data.Equipped.Count);
         }
     }
 }

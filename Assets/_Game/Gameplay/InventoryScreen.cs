@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,14 +24,14 @@ namespace BoingUpSkyTower.Gameplay
     }
 
     /// <summary>
-    /// The inventory (docs/19 section D): the character small on the land stage wearing the equipped gear, two icon buttons (character info, characters), three icon
-    /// slot tabs (head, body, boots) and a 5 column grid of gear tiles showing only the gear picture on a rarity coloured tile; tap to wear or take off. A slot with
-    /// no owned piece with art shows an empty state icon. Icons only, no words. Menu screen: no per-frame code.
+    /// The inventory (owner reference 1, docs/17 section E): Momo in the middle on a soft scene, four rarity framed slot tiles around him, two icon buttons under
+    /// him (boost summary, characters), then four slot tabs, a forge button and a 5 column grid of the slot's pieces (owned in rarity colour, unowned as
+    /// dark silhouettes). Icons and numbers only. Menu screen: no per-frame code.
     /// </summary>
     public sealed class InventoryScreen
     {
-        public const float TopH = 860f, Side = 20f, DollH = 470f;
-        const float TabY = TopH + 20f, TabH = 126f, TabW = 220f, TabGap = 14f, GridTop = TopH + 170f, GridTile = 186f, GridGap = 12f, ButtonsY = 300f;
+        const float TopH = 1010f, Side = 20f, SlotTile = 190f, DollH = 520f, ButtonsTop = 800f;
+        const float TabY = TopH + 20f, TabH = 126f, GridTop = TopH + 170f, GridTile = 186f, GridGap = 12f;
         const int Columns = 5;
 
         readonly RectTransform screen;
@@ -38,6 +40,8 @@ namespace BoingUpSkyTower.Gameplay
         readonly GearHost host;
         RectTransform top, doll, tabRow, gridViewport, gridContent;
         ScrollRect scroll;
+        Text forgeText;
+        Button forgeButton;
 
         public int SlotTab { get; private set; }
         public Text CoinText { get; private set; }
@@ -54,6 +58,9 @@ namespace BoingUpSkyTower.Gameplay
         public void Build(int slotTab = 0)
         {
             SlotTab = Mathf.Clamp(slotTab, 0, GearCatalog.SlotCount - 1);
+            // development builds: the four mannequin test pieces are granted so they can be worn and the fit checked on Momo and on Pip
+            if (CharacterCatalog.ShowTest)
+                foreach (GearDef t in GearCatalog.TestPieces) if (!progress.OwnsGear(t.Id)) progress.GrantGear(t.Id);
             BuildPanel();
             BuildTop();
             BuildTabs();
@@ -72,7 +79,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void BuildPanel()
         {
-            // the dark lower part (the meta screen draws the scene behind it); it covers the whole width under the top scene
+            // the dark lower half of reference 1 (the meta screen draws the scene behind it); it covers the whole width under the top scene
             RectTransform bottom = UiKit.Rect(screen, "Panel");
             bottom.anchorMin = new Vector2(0f, 0f);
             bottom.anchorMax = new Vector2(1f, 1f);
@@ -112,59 +119,82 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.SetText(CoinText, progress.Coins.ToString());
             UiKit.SetText(GemText, progress.Gems.ToString());
 
-            // the chosen character on the dirt oval of the land stage, small, wearing the equipped gear (the same composite as in the run)
+            // the chosen character on the dirt oval of the land stage, the worn gear on him (same composite as in the run, a touch larger)
             if (host.Stage != null && host.Stage.Root != null)
             {
                 for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
                     if (host.Stage.Root.GetChild(i).name == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
                 CharacterDef who = CharacterCatalog.Selected;
-                doll = CharacterDoll.Build(host.Stage.Root, "Doll", progress, DollH, who, art);
+                doll = MomoDoll.Build(host.Stage.Root, "Doll", progress, DollH, who, art);
                 host.Stage.Stand(doll);
             }
 
-            // icon buttons beside the character: what the gear boosts (left), the characters (right)
+            // four slots: head and body on the left, pants and boots on the right
+            for (int s = 0; s < GearCatalog.SlotCount; s++) BuildSlotTile((GearSlot)s);
+
+            // two icon buttons under Momo: what the gear boosts, and the characters
             Button boosts = ToyKit.IconButton(top, "Boosts", "Character info: what my gear boosts", 1, ToyKit.Get("icon_bolt"), new Vector2(130f, 126f), () => { if (host.OpenInfo != null) host.OpenInfo(); }, 0.6f);
-            Anchor((RectTransform)boosts.transform, new Vector2(0f, 1f), new Vector2(Side, -ButtonsY), new Vector2(130f, 126f));
+            Anchor((RectTransform)boosts.transform, new Vector2(0.5f, 1f), new Vector2(-84f, -ButtonsTop), new Vector2(130f, 126f));
             Button heroes = ToyKit.IconButton(top, "Characters", "Characters", 0, ToyKit.Get("icon_heroes"), new Vector2(130f, 126f), () => { if (host.OpenCharacters != null) host.OpenCharacters(); }, 0.6f);
-            Anchor((RectTransform)heroes.transform, new Vector2(1f, 1f), new Vector2(-Side, -ButtonsY), new Vector2(130f, 126f));
-
-            // development builds: wear-test shortcut, grants every piece that has art (never shipped)
-            if (CharacterCatalog.ShowTest)
-            {
-                Button grant = ToyKit.IconButton(top, "GrantAll", "Development: get every piece that has art", 2, ToyKit.Get("icon_chest"), new Vector2(130f, 126f), () => GrantAllWithArt(), 0.6f);
-                Anchor((RectTransform)grant.transform, new Vector2(0f, 1f), new Vector2(Side, -(ButtonsY + 126f + 24f)), new Vector2(130f, 126f));
-            }
+            Anchor((RectTransform)heroes.transform, new Vector2(0.5f, 1f), new Vector2(84f, -ButtonsTop), new Vector2(130f, 126f));
         }
 
-        /// <summary>Development builds only: gives one copy of every piece that has art (all drops are normally random). Returns how many were added.</summary>
-        public int GrantAllWithArt()
+        void BuildSlotTile(GearSlot slot)
         {
-            int added = 0;
-            foreach (GearDef d in GearCatalog.All)
-            {
-                if (!GearCatalog.HasArt(d) || progress.OwnsGear(d.Id)) continue;
-                if (progress.GrantGear(d.Id)) added++;
-            }
-            if (added > 0) AudioManager.Play(Sfx.PowerUp);
-            Refresh();
-            return added;
+            int s = (int)slot;
+            bool left = s < 2;
+            GearDef d = progress.EquippedDef(slot);
+            if (!GearCatalog.HasArt(d)) d = null;   // a worn piece without painted art shows as an empty slot, never a glyph on a coloured tile
+            Vector2 size = new Vector2(SlotTile, SlotTile);
+            RectTransform t = d != null
+                ? GearUi.Tile(top, "Slot" + GearCatalog.SlotNames[s], d, GearTileState.Owned, progress.GearLevel(d.Id), 1, size, () => TapSlot(slot), false, slot, true)
+                : GearUi.Tile(top, "Slot" + GearCatalog.SlotNames[s], null, GearTileState.Empty, 1, 0, size, () => TapSlot(slot), false, slot);
+            float y = 200f + (s % 2) * (SlotTile + 70f);
+            Anchor(t, new Vector2(left ? 0f : 1f, 1f), new Vector2(left ? Side : -Side, -y), size);
         }
 
-        // ---- slot tabs ----
+        void TapSlot(GearSlot slot)
+        {
+            SelectSlotTab((int)slot);   // tapping a worn piece opens its slot list; the list item swaps or removes it
+        }
+
+        // ---- slot tabs and forge ----
 
         void BuildTabs()
         {
             if (tabRow != null) UnityEngine.Object.Destroy(tabRow.gameObject);
             tabRow = UiKit.Rect(screen, "Tabs");
             UiKit.Stretch(tabRow);
-            float total = GearCatalog.SlotCount * TabW + (GearCatalog.SlotCount - 1) * TabGap;
             for (int s = 0; s < GearCatalog.SlotCount; s++)
             {
                 int idx = s;
-                Button b = ToyKit.IconButton(tabRow, "Tab" + GearCatalog.SlotNames[s], GearCatalog.SlotNames[s] + " slot" + (s == SlotTab ? ", selected" : ""), s == SlotTab ? 0 : 2, Glyphs.ForSlot(s), new Vector2(TabW, TabH), () => SelectSlotTab(idx), 0.6f);
-                Anchor((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(-total * 0.5f + s * (TabW + TabGap), -TabY), new Vector2(TabW, TabH));
-                ((RectTransform)b.transform).pivot = new Vector2(0f, 1f);
-                ((RectTransform)b.transform).anchoredPosition = new Vector2(-total * 0.5f + s * (TabW + TabGap), -TabY);
+                Button b = ToyKit.IconButton(tabRow, "Tab" + GearCatalog.SlotNames[s], GearCatalog.SlotNames[s] + " slot" + (s == SlotTab ? ", selected" : ""), s == SlotTab ? 0 : 2, Glyphs.ForSlot(s), new Vector2(126f, TabH), () => SelectSlotTab(idx), 0.6f);
+                Anchor((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(Side + s * 134f, -TabY), new Vector2(126f, TabH));
+            }
+            int forgeable = progress.ForgeablePieces();
+            forgeButton = UiKit.AddButton(tabRow, "Forge", "", ToyKit.Button(forgeable > 0 ? 1 : 2), Color.white, new Vector2(250f, TabH), TapForge, 46);
+            Anchor((RectTransform)forgeButton.transform, new Vector2(1f, 1f), new Vector2(-Side, -TabY), new Vector2(250f, TabH));
+            forgeButton.GetComponent<A11yLabel>().Text = forgeable > 0 ? "Forge: merge spare copies, " + forgeable + " pieces ready" : "Forge: nothing to merge yet";
+            Image ai = UiKit.AddImage(forgeButton.transform, "Icon", Glyphs.Anvil, forgeable > 0 ? Color.white : new Color(1f, 1f, 1f, 0.55f));
+            Anchor(ai.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(80f, 80f));
+            ai.rectTransform.pivot = new Vector2(0f, 0.5f);
+            if (forgeable > 0)
+            {
+                forgeText = UiKit.AddText(forgeButton.transform, "Ready", forgeable.ToString(), 56, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+                forgeText.horizontalOverflow = HorizontalWrapMode.Overflow;
+                var o = forgeText.GetComponent<Outline>();
+                if (o != null) o.enabled = false;
+                var trt = (RectTransform)forgeText.transform;
+                trt.anchorMin = Vector2.zero;
+                trt.anchorMax = Vector2.one;
+                trt.offsetMin = new Vector2(110f, 0f);
+                trt.offsetMax = new Vector2(-20f, 0f);
+            }
+            else
+            {
+                Image lk = UiKit.AddImage(forgeButton.transform, "Locked", ToyKit.Get("icon_lock"), new Color(1f, 1f, 1f, 0.7f));
+                Anchor(lk.rectTransform, new Vector2(1f, 0.5f), new Vector2(-40f, 0f), new Vector2(66f, 66f));
+                lk.rectTransform.pivot = new Vector2(1f, 0.5f);
             }
         }
 
@@ -175,15 +205,31 @@ namespace BoingUpSkyTower.Gameplay
             BuildGrid(true);
         }
 
+        /// <summary>Forge: merges every piece with 3 spare copies into +1 level. Nothing to merge plays no change.</summary>
+        public void TapForge()
+        {
+            int levels = progress.ForgeAll();
+            if (levels > 0) AudioManager.Play(Sfx.PowerUp);
+            Refresh();
+        }
+
         // ---- grid ----
 
-        /// <summary>The owned pieces of the selected slot that have art, highest rarity first. Pieces that are not owned or have no art are not shown.</summary>
-        public List<GearDef> OwnedItems()
+        /// <summary>Owned pieces of the slot first (highest rarity first), then the pieces not found yet.</summary>
+        List<GearDef> GridItems()
         {
             var owned = new List<GearDef>();
+            var missing = new List<GearDef>();
             foreach (GearDef d in GearCatalog.All)
-                if ((int)d.Slot == SlotTab && GearCatalog.HasArt(d) && progress.OwnsGear(d.Id)) owned.Add(d);
-            owned.Sort((a, b) => a.Rarity != b.Rarity ? b.Rarity.CompareTo(a.Rarity) : a.Number.CompareTo(b.Number));
+            {
+                if ((int)d.Slot != SlotTab || !GearCatalog.HasArt(d)) continue;   // a piece without painted art does not show
+                (progress.OwnsGear(d.Id) ? owned : missing).Add(d);
+            }
+            Comparison<GearDef> byRarity = (a, b) => a.Rarity != b.Rarity ? b.Rarity.CompareTo(a.Rarity) : a.Number.CompareTo(b.Number);
+            owned.Sort(byRarity);
+            if (CharacterCatalog.ShowTest) owned.Insert(0, GearCatalog.TestPieces[SlotTab]);   // development builds: the mannequin test piece first
+            missing.Sort(byRarity);
+            owned.AddRange(missing);
             return owned;
         }
 
@@ -199,7 +245,7 @@ namespace BoingUpSkyTower.Gameplay
             gridViewport.gameObject.AddComponent<RectMask2D>();
             var hit = gridViewport.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
-            List<GearDef> items = OwnedItems();
+            List<GearDef> items = GridItems();
             int rows = (items.Count + Columns - 1) / Columns;
             gridContent = UiKit.Rect(gridViewport, "GridContent");
             gridContent.anchorMin = new Vector2(0f, 1f);
@@ -215,22 +261,13 @@ namespace BoingUpSkyTower.Gameplay
             scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.scrollSensitivity = 60f;
-            if (items.Count == 0)
-            {
-                // empty state: the slot's picture, dim, no text
-                Image empty = UiKit.AddImage(gridViewport, "Empty", Glyphs.ForSlot(SlotTab), new Color(0.46f, 0.52f, 0.72f, 0.7f));
-                empty.raycastTarget = false;
-                Anchor(empty.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 20f), new Vector2(260f, 260f));
-                empty.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                empty.gameObject.AddComponent<A11yLabel>().Text = "No " + GearCatalog.SlotNames[SlotTab] + " gear yet";
-                return;
-            }
             for (int i = 0; i < items.Count; i++)
             {
                 GearDef d = items[i];
                 int row = i / Columns, col = i % Columns;
+                bool owned = progress.OwnsGear(d.Id);
                 bool worn = progress.EquippedId(d.Slot) == d.Id;
-                RectTransform t = GearUi.Tile(gridContent, "Item" + i, d, new Vector2(GridTile, GridTile), () => TapItem(d), worn);
+                RectTransform t = GearUi.Tile(gridContent, "Item" + i, d, owned ? GearTileState.Owned : GearTileState.Missing, progress.GearLevel(d.Id), progress.GearCount(d.Id), new Vector2(GridTile, GridTile), () => TapItem(d), worn);
                 t.anchorMin = new Vector2(col / (float)Columns, 1f);
                 t.anchorMax = new Vector2((col + 1) / (float)Columns, 1f);
                 t.pivot = new Vector2(0.5f, 1f);
@@ -240,7 +277,7 @@ namespace BoingUpSkyTower.Gameplay
             scroll.verticalNormalizedPosition = keep;
         }
 
-        /// <summary>Tap on a piece: wear it (replacing what the slot wore), or take it off when it is the worn one.</summary>
+        /// <summary>Tap on a list piece: wear it, swap it, or take a worn piece off. A piece not found yet does nothing.</summary>
         public void TapItem(GearDef d)
         {
             if (d == null || !progress.OwnsGear(d.Id)) return;
@@ -249,7 +286,7 @@ namespace BoingUpSkyTower.Gameplay
             Refresh();
         }
 
-        /// <summary>Redraws what depends on the owned and worn gear (the character, the tabs and the grid) and keeps the scroll position.</summary>
+        /// <summary>Redraws what depends on the owned and worn gear (doll, slot tiles, forge, list) and keeps the scroll position.</summary>
         public void Refresh()
         {
             BuildTop();

@@ -7,229 +7,247 @@ using UnityEngine;
 
 namespace BoingUpSkyTower.Tests
 {
-    /// <summary>The polygon rig, the draw order, the single picture fallback, the roster and the info screen numbers (docs/19).</summary>
+    /// <summary>The character rig, the doll, the real gear icons, the art filter and the info screen numbers (docs/18).</summary>
     public class CharacterRigTests
     {
-        static readonly List<Object> made = new List<Object>();
+        static readonly GearSlot[] Slots = { GearSlot.Head, GearSlot.Body, GearSlot.Pants, GearSlot.Boots };
 
         [SetUp]
         public void SetUp()
         {
             GearCatalog.ArtProbe = d => true;
-            GearParts.ClearCache();
-            GearParts.Override = FakeGearParts;
         }
 
         [TearDown]
         public void TearDown()
         {
             GearCatalog.ArtProbe = null;
-            GearParts.Override = null;
-            GearParts.ClearCache();
             CharacterCatalog.TestOverride = false;
-            foreach (Object o in made) if (o != null) Object.DestroyImmediate(o);
-            made.Clear();
         }
 
-        static Sprite Pic(string name, int w = 8, int h = 10)
+        static ProgressService WearingAllTestPieces()
         {
-            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = name };
-            made.Add(tex);
-            Sprite s = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
-            s.name = name;
-            made.Add(s);
-            return s;
-        }
-
-        static List<GearPartEntry> FakeGearParts(GearDef d)
-        {
-            var list = new List<GearPartEntry>();
-            foreach (string p in GearCatalog.PartNames(d.Slot)) list.Add(new GearPartEntry { Part = p, Sprite = Pic(d.Id + "_" + p) });
-            return list;
-        }
-
-        static CharacterDef Fake(string id, params string[] missing)
-        {
-            var c = new CharacterDef { Id = id, Name = id, Production = true };
-            var skip = new HashSet<string>(missing);
-            c.PartLoader = part => skip.Contains(part) ? null : Pic(id + "_" + part);
-            return c;
-        }
-
-        static ProgressService NewService()
-        {
-            return new ProgressService(Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
-        }
-
-        static ProgressService WearingOneOfEach()
-        {
-            ProgressService svc = NewService();
-            foreach (string id in new[] { "gear_head_c01", "gear_body_u01", "gear_boots_r01" })
+            var svc = new ProgressService(Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
+            foreach (GearDef t in GearCatalog.TestPieces)
             {
-                svc.GrantGear(id);
-                Assert.IsTrue(svc.Equip(id), id);
+                svc.GrantGear(t.Id);
+                Assert.IsTrue(svc.Equip(t.Id));
             }
             return svc;
         }
 
-        static List<string> Names(List<PartDraw> l)
+        static GearDef Piece(GearSlot slot, GearRarity rarity, PowerUp boost)
         {
-            var n = new List<string>();
-            foreach (PartDraw d in l) n.Add(d.Name);
-            return n;
+            foreach (GearDef d in GearCatalog.Pieces(slot, rarity)) if (d.Boost == boost) return d;
+            Assert.Fail("no such piece");
+            return null;
         }
 
-        // ---- the rig ----
-
-        [Test]
-        public void RigJsonGivesTheCanvasAndThePartOrderAndDefaultsOtherwise()
+        static List<PartDraw> Draws(CharacterDef who, ProgressService svc)
         {
-            CharacterRig def = CharacterRig.FromJson(null);
-            Assert.AreEqual(1365f, def.CanvasW);
-            Assert.AreEqual(1649f, def.CanvasH);
-            CollectionAssert.AreEqual(new[] { "back", "legL", "legR", "body", "handL", "handR", "head" }, def.Order);
-            CharacterRig r = CharacterRig.FromJson("{\"id\":\"x\",\"canvas\":[800,1000],\"order\":[\"legL\",\"legR\",\"body\",\"handL\",\"handR\",\"head\"]}");
-            Assert.AreEqual(800f, r.CanvasW);
-            Assert.AreEqual(1000f, r.CanvasH);
-            Assert.AreEqual(6, r.Order.Length);
-            Assert.AreEqual(-1, r.IndexOf("back"));
-            CharacterRig bad = CharacterRig.FromJson("{\"canvas\":[0,0]}");
-            Assert.AreEqual(1365f, bad.CanvasW);
+            return PartsAssembler.Build(who, null, slot => svc.EquippedDef(slot));
         }
 
-        [Test]
-        public void TheDrawOrderIsBackLegsBootsBodyBodyGearHandsSleevesHeadHeadGear()
+        static int IndexOf(List<PartDraw> l, string name)
         {
-            CharacterDef who = Fake("full");
-            Assert.IsTrue(who.HasParts);
-            ProgressService svc = WearingOneOfEach();
-            List<PartDraw> draws = PartsAssembler.Build(who, null, slot => svc.EquippedDef(slot));
-            CollectionAssert.AreEqual(new[]
+            for (int i = 0; i < l.Count; i++) if (l[i].Name == name) return i;
+            Assert.Fail("no part " + name);
+            return -1;
+        }
+
+        // ---- parts: the character and the gear stacked back to front ----
+
+        [Test]
+        public void EveryCharacterHasItsNineParts()
+        {
+            CharacterCatalog.TestOverride = true;
+            foreach (CharacterDef c in CharacterCatalog.Available())
             {
-                "back", "legL", "legR", "Boots_bootL", "Boots_bootR", "body", "Body_body", "handL", "handR", "Body_sleeveL", "Body_sleeveR", "head", "Head_head",
-            }, Names(draws));
-            for (int i = 1; i < draws.Count; i++) Assert.Less(draws[i - 1].Z, draws[i].Z);
-            foreach (PartDraw d in draws) Assert.AreEqual(d.Name.Contains("_"), d.Gear, d.Name);
+                Assert.AreEqual(9, c.Rig.Order.Length, c.Id);
+                foreach (string part in c.Rig.Order) Assert.IsNotNull(c.PartSprite(part), c.Id + "/" + part);
+            }
+            Assert.AreEqual(4, CharacterCatalog.Available().Length);
         }
 
         [Test]
-        public void WithoutWornGearAndWithoutABackOnlyTheCharacterPartsAreDrawn()
+        public void GearPartsSitRightAboveTheCharacterPartTheyCover()
         {
-            CharacterDef who = Fake("nobackpack", "back");
-            Assert.IsTrue(who.HasParts, "back is optional");
-            List<PartDraw> draws = PartsAssembler.Build(who, null, null);
-            CollectionAssert.AreEqual(new[] { "legL", "legR", "body", "handL", "handR", "head" }, Names(draws));
-            List<PartDraw> none = PartsAssembler.Build(who, null, slot => null);
-            Assert.AreEqual(6, none.Count);
+            ProgressService svc = WearingAllTestPieces();
+            List<PartDraw> l = Draws(CharacterCatalog.Momo, svc);
+            Assert.AreEqual(9 + 2 + 3 + 2 + 1, l.Count, "nine character parts plus the parts of the four pieces");
+            Assert.Less(IndexOf(l, "torso"), IndexOf(l, "Pants_legL"), "the pants band goes over the torso");
+            Assert.Less(IndexOf(l, "Pants_legL"), IndexOf(l, "Body_torso"));
+            Assert.Less(IndexOf(l, "torso"), IndexOf(l, "armL"));
+            Assert.AreEqual(IndexOf(l, "footL") + 1, IndexOf(l, "Boots_footL"), "boots right above the foot");
+            Assert.AreEqual(IndexOf(l, "armL") + 1, IndexOf(l, "Body_armL"), "the sleeve right above the arm");
+            Assert.AreEqual(IndexOf(l, "head") + 1, IndexOf(l, "Head_head"), "the hat right above the head");
+            Assert.AreEqual(l.Count - 1, IndexOf(l, "Head_head"), "the hat is the last thing drawn");
+            Assert.Less(IndexOf(l, "back"), IndexOf(l, "legL"));
         }
 
         [Test]
-        public void BodyGearWithoutSleevesStillDrawsItsBody()
+        public void OnMomoEveryPartIsDrawnOnTheWholeCanvasUntouched()
         {
-            GearParts.Override = d => new List<GearPartEntry> { new GearPartEntry { Part = GearCatalog.PartNames(d.Slot)[0], Sprite = Pic(d.Id) } };
-            CharacterDef who = Fake("full");
-            ProgressService svc = NewService();
-            svc.GrantGear("gear_body_c02");
-            svc.Equip("gear_body_c02");
-            List<string> names = Names(PartsAssembler.Build(who, null, slot => svc.EquippedDef(slot)));
-            CollectionAssert.Contains(names, "Body_body");
-            CollectionAssert.DoesNotContain(names, "Body_sleeveL");
+            // Momo is the reference: no fit, so every character and gear part is drawn on exactly the canvas rect
+            foreach (PartDraw d in Draws(CharacterCatalog.Momo, WearingAllTestPieces()))
+            {
+                Assert.AreEqual(Vector2.zero, d.Min, d.Name);
+                Assert.AreEqual(Vector2.one, d.Max, d.Name);
+            }
         }
 
         [Test]
-        public void ACharacterWithoutItsPartsIsOnePictureAndGearDrawsNothing()
+        public void TheDollIsTheSameListThePartsAssemblerGives()
         {
-            CharacterDef partial = Fake("partial", "handL");   // one required part missing
-            Assert.IsFalse(partial.HasParts);
-            ProgressService svc = WearingOneOfEach();
-            Assert.IsNotNull(svc.EquippedDef(GearSlot.Body), "gear is worn");
-            var art = ScriptableObject.CreateInstance<ArtCatalog>();
-            made.Add(art);
-            art.Player = Pic("momo_picture");
-            List<PartDraw> draws = PartsAssembler.Build(partial, art, slot => svc.EquippedDef(slot));
-            Assert.AreEqual(1, draws.Count, "his single picture, no gear");
-            Assert.AreSame(art.Player, draws[0].Sprite);
-            Assert.IsFalse(draws[0].Gear);
+            var root = new GameObject("root", typeof(RectTransform));
+            try
+            {
+                CharacterCatalog.TestOverride = true;
+                foreach (CharacterDef who in CharacterCatalog.Available())
+                {
+                    ProgressService svc = WearingAllTestPieces();
+                    RectTransform doll = MomoDoll.Build(root.transform, "Doll", svc, 400f, who, null);
+                    List<PartDraw> l = Draws(who, svc);
+                    Assert.AreEqual(l.Count, doll.childCount, who.Id);
+                    for (int i = 0; i < l.Count; i++)
+                    {
+                        var rt = (RectTransform)doll.GetChild(i);
+                        Assert.AreEqual(l[i].Min, rt.anchorMin, who.Id + " " + l[i].Name);
+                        Assert.AreEqual(l[i].Max, rt.anchorMax, who.Id + " " + l[i].Name);
+                        Assert.IsTrue(rt.name.EndsWith(l[i].Name), rt.name);
+                    }
+                }
+            }
+            finally { Object.DestroyImmediate(root); }
         }
 
         [Test]
-        public void MissingPictureAndMissingArtNeverCrash()
+        public void TheSameGearIsFittedToEachBodyThroughItsRig()
         {
-            CharacterDef none = Fake("none", "legL", "legR", "body", "handL", "handR", "head", "back");
-            Assert.IsFalse(none.HasParts);
-            Assert.AreEqual(0, PartsAssembler.Build(none, null, null).Count);
-            Assert.AreEqual(0, PartsAssembler.Build(none, null, slot => NewService().EquippedDef(slot)).Count);
+            ProgressService svc = WearingAllTestPieces();
+            foreach (CharacterDef c in new[] { CharacterCatalog.Sporeling, CharacterCatalog.Moth, CharacterCatalog.Rootling })
+            {
+                SlotFit head = c.Rig.Fits.head;
+                Assert.Greater(head.scale, 0f, c.Id + " has a head fit");
+                List<PartDraw> l = Draws(c, svc);
+                PartDraw hat = l[IndexOf(l, "Head_head")];
+                Assert.AreEqual(head.scale, hat.Max.x - hat.Min.x, 0.0005f, c.Id + " hat width fraction is the fit scale");
+                Assert.AreEqual(head.scale, hat.Max.y - hat.Min.y, 0.0005f, c.Id + " hat height fraction is the fit scale");
+                SlotFit body = c.Rig.Fits.body;
+                PartDraw sleeve = l[IndexOf(l, "Body_armL")];
+                Assert.AreEqual(body.scale * body.parts.armL.scale, sleeve.Max.x - sleeve.Min.x, 0.0005f, c.Id + " the sleeve has its own fit on top of the jacket fit");
+                PartDraw torso = l[IndexOf(l, "Body_torso")];
+                Assert.AreEqual(body.scale, torso.Max.x - torso.Min.x, 0.0005f);
+                // the character parts themselves are never moved
+                PartDraw leg = l[IndexOf(l, "legL")];
+                Assert.AreEqual(Vector2.one, leg.Max);
+            }
         }
 
         [Test]
-        public void AFullCanvasPictureOfAnotherSizeIsScaledToTheCanvas()
+        public void TheRunPlacesAPartExactlyWhereTheFractionsSay()
         {
-            var d = new PartDraw { Sprite = Pic("a", 8, 10) };
-            Vector2 canvas = new Vector2(0.08f, 0.10f);   // 8 x 10 px at 100 ppu
-            Vector3 same = d.LocalScale(canvas);
-            Assert.AreEqual(1f, same.x, 0.0001f);
-            Assert.AreEqual(1f, same.y, 0.0001f);
-            var big = new PartDraw { Sprite = Pic("b", 16, 20) };
-            Vector3 half = big.LocalScale(canvas);
-            Assert.AreEqual(0.5f, half.x, 0.0001f);
-            Assert.AreEqual(0.5f, half.y, 0.0001f);
+            // the run draws a part as a child of the player transform (unit = the canvas): its world bounds must be the rect the rig gives
+            var tex = new Texture2D(8, 8);
+            Sprite sp = Sprite.Create(tex, new Rect(0, 0, 8, 8), new Vector2(0.5f, 0.5f), 0.5f);   // 16 x 16 units, centre pivot
+            var player = new GameObject("player");
+            var child = new GameObject("part", typeof(SpriteRenderer));
+            try
+            {
+                child.GetComponent<SpriteRenderer>().sprite = sp;
+                child.transform.SetParent(player.transform, false);
+                player.transform.localScale = new Vector3(-0.5f, 0.25f, 1f);   // scaled and facing left like in the run
+                player.transform.position = new Vector3(3f, 4f, 0f);
+                Vector2 canvas = sp.bounds.size;
+                var d = new PartDraw { Sprite = sp, Min = new Vector2(0.1f, 0.2f), Max = new Vector2(0.6f, 0.9f) };
+                Vector3 pos, scale;
+                d.LocalTransform(canvas, out pos, out scale);
+                child.transform.localScale = scale;
+                child.transform.localPosition = pos;
+                Bounds b = child.GetComponent<SpriteRenderer>().bounds;
+                Vector3 pc = player.transform.position;
+                float cw = canvas.x * 0.5f, ch = canvas.y * 0.25f;
+                Assert.AreEqual(0.5f * cw, b.size.x, 0.001f);
+                Assert.AreEqual(0.7f * ch, b.size.y, 0.001f);
+                Assert.AreEqual(pc.y + ((0.2f + 0.9f) * 0.5f - 0.5f) * ch, b.center.y, 0.001f);
+                Assert.AreEqual(pc.x - ((0.1f + 0.6f) * 0.5f - 0.5f) * cw, b.center.x, 0.001f, "mirrored with the player");
+            }
+            finally
+            {
+                Object.DestroyImmediate(player);
+                Object.DestroyImmediate(child);
+                Object.DestroyImmediate(sp);
+                Object.DestroyImmediate(tex);
+            }
         }
 
         [Test]
-        public void TheSameGearFitsEveryCharacterBecauseAllPartsAreFullCanvas()
-        {
-            ProgressService svc = WearingOneOfEach();
-            List<PartDraw> a = PartsAssembler.Build(Fake("a"), null, slot => svc.EquippedDef(slot));
-            List<PartDraw> b = PartsAssembler.Build(Fake("b"), null, slot => svc.EquippedDef(slot));
-            CollectionAssert.AreEqual(Names(a), Names(b));
-        }
-
-        // ---- roster ----
-
-        [Test]
-        public void ProductionShowsOnlyMomoAndDevelopmentAddsTheTestCharacter()
+        public void ProductionShowsOnlyMomo()
         {
             CharacterCatalog.TestOverride = false;
             Assert.AreEqual(1, CharacterCatalog.Available().Length);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Selected);
             CharacterCatalog.TestOverride = true;
-            CharacterDef[] all = CharacterCatalog.Available();
-            Assert.AreEqual(2, all.Length);
-            Assert.AreSame(CharacterCatalog.Momo, all[0]);
-            Assert.AreSame(CharacterCatalog.Sporeling, all[1]);
+            Assert.AreEqual(4, CharacterCatalog.Available().Length);
             Assert.IsFalse(CharacterCatalog.Sporeling.Production);
             Assert.IsTrue(CharacterCatalog.Momo.Production);
-            Assert.IsTrue(CharacterCatalog.Momo.Selectable, "Momo always works, with or without his parts");
         }
 
+        // ---- art: pieces without an icon never drop or show ----
+
         [Test]
-        public void ATestCharacterWithoutPartsIsListedButLockedAndNeverSelected()
+        public void OnlyPiecesWithArtDropOrAppearInChests()
         {
-            CharacterCatalog.TestOverride = true;
-            var locked = Fake("locked", "head");
-            locked.Production = false;
-            Assert.IsFalse(locked.Selectable);
-            var ready = Fake("ready");
-            ready.Production = false;
-            Assert.IsTrue(ready.Selectable);
-            if (!CharacterCatalog.Sporeling.HasParts)
+            GearCatalog.ArtProbe = d => d.Rarity >= GearRarity.Rare && d.Number % 2 == 1;
+            int dropped = 0;
+            for (int i = 0; i < 3000; i++)
             {
-                CharacterCatalog.Selected = CharacterCatalog.Sporeling;
-                Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Selected, "no parts: falls back to Momo, nothing breaks");
+                foreach (string id in GearDrops.Roll(15, 100 + i, i))
+                {
+                    Assert.IsTrue(GearCatalog.HasArt(GearCatalog.Get(id)), id);
+                    dropped++;
+                }
             }
-            CharacterCatalog.Selected = CharacterCatalog.Momo;
+            Assert.Greater(dropped, 100);
+            var types = new List<Economy.PowerUpDef>(PowerUpCatalog.BuiltIn().Implemented);
+            for (int i = 0; i < 500; i++)
+            {
+                foreach (string id in ChestRolls.Roll(ChestKind.Iron, i, types).Gear) Assert.IsTrue(GearCatalog.HasArt(GearCatalog.Get(id)), id);
+                foreach (string id in ChestRolls.Roll(ChestKind.Golden, i, types).Gear) Assert.IsTrue(GearCatalog.HasArt(GearCatalog.Get(id)), id);
+            }
+            Assert.AreEqual(240, GearCatalog.All.Count, "all definitions are kept");
         }
 
-        // ---- gear tile pictures ----
+        [Test]
+        public void TheShippedIconsDecideWhichPiecesHaveArt()
+        {
+            GearCatalog.ArtProbe = null;   // the real check: an icon in Resources/Art/GearIcons
+            int with = 0;
+            foreach (GearDef d in GearCatalog.All)
+            {
+                bool icon = GearIcons.Find(d) != null;
+                Assert.AreEqual(icon, GearCatalog.HasArt(d), d.Id);
+                if (icon) { with++; Assert.IsNotNull(GearParts.Find(d), d.Id + " has an icon, so it also has worn art"); }
+            }
+            Assert.Greater(with, 0, "some pieces are painted");
+            Assert.Less(with, 240, "not every piece is painted yet");
+        }
 
         [Test]
-        public void APieceWithoutArtHasNoTilePicture()
+        public void TheFourMannequinTestPiecesAreOutsideTheCatalogAndHaveRealArt()
         {
             GearCatalog.ArtProbe = null;
-            GearParts.Override = null;
-            GearIcons.Override = null;
-            GearDef d = GearCatalog.Get("gear_head_c01");
-            if (!GearCatalog.HasArt(d)) Assert.IsNull(GearIcons.Find(d));   // never a stand-in glyph
+            Assert.AreEqual(240, GearCatalog.All.Count);
+            Assert.AreEqual(4, GearCatalog.TestPieces.Count);
+            foreach (GearDef t in GearCatalog.TestPieces)
+            {
+                Assert.AreSame(t, GearCatalog.Get(t.Id));
+                Assert.IsTrue(GearCatalog.IsTestPiece(t));
+                Assert.IsFalse(new List<GearDef>(GearCatalog.All).Contains(t));
+                Assert.IsTrue(GearCatalog.HasArt(t), t.Id + " icon");
+                Assert.IsNotNull(GearParts.Find(t), t.Id + " parts");
+                foreach (GearDef d in GearCatalog.Pieces(t.Slot, t.Rarity)) Assert.AreNotEqual(t.Id, d.Id);
+            }
         }
 
         // ---- info screen numbers ----
@@ -237,11 +255,9 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void TheInfoRowsShowWhatTheRunConfigGives()
         {
-            ProgressService svc = WearingOneOfEach();
-            GearDef flight = null;
-            foreach (GearDef d in GearCatalog.Pieces(GearSlot.Body, GearRarity.Epic)) if (d.Boost == PowerUp.Flight) { flight = d; break; }
-            svc.GrantGear(flight.Id);
-            svc.Equip(flight.Id);
+            ProgressService svc = WearingAllTestPieces();
+            svc.GrantGear(Piece(GearSlot.Body, GearRarity.Epic, PowerUp.Flight).Id);
+            svc.Equip(Piece(GearSlot.Body, GearRarity.Epic, PowerUp.Flight).Id);
             var baseCfg = new SimConfig();
             SimConfig run = svc.BuildRunConfig(baseCfg);
             List<InfoRow> rows = GearInfo.Rows(svc, baseCfg);
@@ -256,10 +272,10 @@ namespace BoingUpSkyTower.Tests
                 else Assert.AreEqual(r.Before, r.After, r.Type + " unchanged");
                 foreach (GearDef d in r.Pieces) Assert.AreEqual(r.Type, d.Boost);
             }
-            InfoRow row = rows.Find(x => x.Type == PowerUp.Flight);
-            Assert.AreEqual(baseCfg.FlightTicks / 60f, row.Before, 0.0001f);
-            Assert.AreEqual(run.FlightTicks / 60f, row.After, 0.0001f);
-            Assert.AreEqual(75, row.Percent);
+            InfoRow flight = rows.Find(x => x.Type == PowerUp.Flight);
+            Assert.AreEqual(baseCfg.FlightTicks / 60f, flight.Before, 0.0001f);
+            Assert.AreEqual(run.FlightTicks / 60f, flight.After, 0.0001f);
+            Assert.AreEqual(75, flight.Percent);
             Assert.AreEqual("4.0 s", GearInfo.Format(4f, true));
         }
 
@@ -273,8 +289,7 @@ namespace BoingUpSkyTower.Tests
             SimConfig before = GameSession.BuildRunCfg();
             Assert.AreEqual(GameSession.Cfg.FlightTicks, before.FlightTicks, "nothing worn, nothing changes");
 
-            GearDef piece = null;
-            foreach (GearDef d in GearCatalog.Pieces(GearSlot.Body, GearRarity.Legendary)) if (d.Boost == PowerUp.Flight) { piece = d; break; }   // +100 percent
+            GearDef piece = Piece(GearSlot.Body, GearRarity.Legendary, PowerUp.Flight);   // +100 percent
             pr.GrantGear(piece.Id);
             Assert.IsTrue(pr.Equip(piece.Id));
             SimConfig after = GameSession.BuildRunCfg();

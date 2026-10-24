@@ -84,7 +84,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             // the chosen character stands on the dirt oval of the land stage, a little larger than in the run so the fit of the gear can be seen
             CharacterDef who = CharacterCatalog.Selected;
-            RectTransform doll = CharacterDoll.Build(host.Stage.Root, "Doll", progress, DollH, who, art);
+            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", progress, DollH, who, art);
             host.Stage.Stand(doll);
             if (who.IsTest) AddTestTag(host.Stage.Root, new Vector2(-330f, -(host.Stage.OvalY - 30f)));
 
@@ -100,7 +100,7 @@ namespace BoingUpSkyTower.Gameplay
             ((RectTransform)more.transform).pivot = new Vector2(0.5f, 0f);
         }
 
-        /// <summary>Small TEST tag (development builds only) under the test character, never shipped.</summary>
+        /// <summary>Small TEST tag (development builds only) under the test character: it is a recolour of Momo, never shipped.</summary>
         public static void AddTestTag(RectTransform parent, Vector2 topPos)
         {
             Image tag = UiKit.AddPanel(parent, "TestTag", new Color(0.95f, 0.25f, 0.25f, 0.95f));
@@ -124,9 +124,9 @@ namespace BoingUpSkyTower.Gameplay
             {
                 int r = i / Columns, c = i % Columns;
                 CharacterDef who = i < chars.Length ? chars[i] : null;
-                bool open = who != null && who.Selectable;   // a test character without its parts is listed but locked
+                bool open = who != null;
                 bool isChosen = open && who.Id == chosen.Id;
-                Image tile = UiKit.AddImage(body, who != null ? who.Name : "Locked" + i, Theme.RoundSprite, open ? new Color(0.30f, 0.58f, 1f, 1f) : new Color(0.10f, 0.13f, 0.27f, 0.92f));
+                Image tile = UiKit.AddImage(body, open ? who.Name : "Locked" + i, Theme.RoundSprite, open ? new Color(0.30f, 0.58f, 1f, 1f) : new Color(0.10f, 0.13f, 0.27f, 0.92f));
                 tile.type = Image.Type.Sliced;
                 tile.preserveAspect = false;
                 tile.pixelsPerUnitMultiplier = 1.2f;
@@ -138,12 +138,12 @@ namespace BoingUpSkyTower.Gameplay
                 b.transition = Selectable.Transition.None;
                 tile.raycastTarget = true;
                 CharacterDef pick = who;
-                b.onClick.AddListener(() => { if (pick != null && pick.Selectable) { CharacterCatalog.Selected = pick; Build(false); } });
-                tile.gameObject.AddComponent<A11yLabel>().Text = open ? who.Name + (isChosen ? ", chosen" : "") : (who != null ? who.Name + ", parts missing" : "Locked character");
+                b.onClick.AddListener(() => { if (pick != null) { CharacterCatalog.Selected = pick; Build(false); } });
+                tile.gameObject.AddComponent<A11yLabel>().Text = open ? who.Name + (isChosen ? ", chosen" : "") : "Locked character";
                 if (open)
                 {
                     // the character's own parts, no gear
-                    RectTransform face = CharacterDoll.Build(tile.transform, "Face", null, w * 0.66f, who, art);
+                    RectTransform face = MomoDoll.Build(tile.transform, "Face", null, w * 0.66f, who, art);
                     face.anchorMin = face.anchorMax = new Vector2(0.5f, 1f);
                     face.pivot = new Vector2(0.5f, 1f);
                     face.anchoredPosition = new Vector2(0f, -w * 0.04f);
@@ -161,19 +161,22 @@ namespace BoingUpSkyTower.Gameplay
                     Anchor(lk.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(w * 0.42f, w * 0.42f));
                     lk.rectTransform.pivot = new Vector2(0.5f, 0.5f);
                 }
-                else if (isChosen)
+                else
                 {
-                    Image tick = UiKit.AddImage(tile.transform, "Chosen", Glyphs.Check, Color.white);
-                    Anchor(tick.rectTransform, new Vector2(1f, 1f), new Vector2(-8f, -8f), new Vector2(w * 0.3f, w * 0.3f));
-                }
-                if (who != null && who.IsTest)
-                {
-                    Text t = UiKit.AddText(tile.transform, "Test", "TEST", 40, Color.white, TextAnchor.MiddleCenter, true);
-                    t.horizontalOverflow = HorizontalWrapMode.Overflow;
-                    var trt = (RectTransform)t.transform;
-                    trt.anchorMin = new Vector2(0f, 0f);
-                    trt.anchorMax = new Vector2(1f, 0.28f);
-                    trt.offsetMin = trt.offsetMax = Vector2.zero;
+                    if (isChosen)
+                    {
+                        Image tick = UiKit.AddImage(tile.transform, "Chosen", Glyphs.Check, Color.white);
+                        Anchor(tick.rectTransform, new Vector2(1f, 1f), new Vector2(-8f, -8f), new Vector2(w * 0.3f, w * 0.3f));
+                    }
+                    if (who.IsTest)
+                    {
+                        Text t = UiKit.AddText(tile.transform, "Test", "TEST", 40, Color.white, TextAnchor.MiddleCenter, true);
+                        t.horizontalOverflow = HorizontalWrapMode.Overflow;
+                        var trt = (RectTransform)t.transform;
+                        trt.anchorMin = new Vector2(0f, 0f);
+                        trt.anchorMax = new Vector2(1f, 0.28f);
+                        trt.offsetMin = trt.offsetMax = Vector2.zero;
+                    }
                 }
             }
             // back to the stage

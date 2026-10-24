@@ -15,7 +15,7 @@ namespace BoingUpSkyTower.Gameplay
         public float Before, After;
         public bool Seconds;
         public int Percent;
-        public readonly List<GearDef> Pieces = new List<GearDef>(3);
+        public readonly List<GearDef> Pieces = new List<GearDef>(4);
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ namespace BoingUpSkyTower.Gameplay
                 for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
                     if (host.Stage.Root.GetChild(i).name == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
                 CharacterDef who = CharacterCatalog.Selected;
-                RectTransform doll = CharacterDoll.Build(host.Stage.Root, "Doll", progress, 340f, who, art);
+                RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", progress, 340f, who, art);
                 host.Stage.Stand(doll);
             }
             body = UiKit.Rect(screen, "InfoBody");
@@ -261,7 +261,7 @@ namespace BoingUpSkyTower.Gameplay
             for (int i = 0; i < r.Pieces.Count; i++)
             {
                 GearDef d = r.Pieces[i];
-                RectTransform t = GearUi.Tile(strip, "Piece" + i, d, new Vector2(tile, tile));
+                RectTransform t = GearUi.Tile(strip, "Piece" + i, d, GearTileState.Owned, progress.GearLevel(d.Id), 1, new Vector2(tile, tile));
                 Anchor(t, new Vector2(0.5f, 0.5f), new Vector2(-total * 0.5f + i * (tile + 16f), 0f), new Vector2(tile, tile));
                 t.pivot = new Vector2(0f, 0.5f);
                 t.anchoredPosition = new Vector2(-total * 0.5f + i * (tile + 16f), 0f);
@@ -269,7 +269,7 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// Totals of what is worn, as three small plates in the stage beside the character: pieces worn of three, the best rarity (colour and pips) and the
+        /// Totals of what is worn, as three small plates in the stage beside the character: pieces worn of four, the best rarity (colour and pips) and the
         /// summed boost of all power-ups.
         /// </summary>
         void BuildTotals()
@@ -286,14 +286,14 @@ namespace BoingUpSkyTower.Gameplay
 
             RectTransform col = UiKit.Rect(body, "Totals");
             Anchor(col, new Vector2(1f, 1f), new Vector2(-Side, -236f), new Vector2(330f, 3 * 92f));
-            col.gameObject.AddComponent<A11yLabel>().Text = "Worn " + worn + " of 3 pieces" + (best >= 0 ? ", best " + GearCatalog.RarityNames[best] : "") + ", total boost " + sum + " percent";
+            col.gameObject.AddComponent<A11yLabel>().Text = "Worn " + worn + " of 4 pieces" + (best >= 0 ? ", best " + GearCatalog.RarityNames[best] : "") + ", total boost " + sum + " percent";
 
             // pieces worn
             RectTransform a = Plate(col, "WornPlate", 0);
             Image g = UiKit.AddImage(a, "WornIcon", Glyphs.Shirt, Color.white);
             Anchor(g.rectTransform, new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(60f, 60f));
             g.rectTransform.pivot = new Vector2(0f, 0.5f);
-            Num(a, "Worn", worn + "/3", Color.white, TextAnchor.MiddleRight, new Vector2(1f, 0.5f), new Vector2(-18f, 0f), new Vector2(200f, 76f));
+            Num(a, "Worn", worn + "/4", Color.white, TextAnchor.MiddleRight, new Vector2(1f, 0.5f), new Vector2(-18f, 0f), new Vector2(200f, 76f));
 
             // best rarity: its colour with its pips
             RectTransform b = Plate(col, "BestPlate", 1);

@@ -3,14 +3,23 @@ using System.Collections.Generic;
 using BoingUpSkyTower.Economy;
 using BoingUpSkyTower.Simulation;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 namespace BoingUpSkyTower.Gameplay
 {
+    public enum GearTileState
+    {
+        /// <summary>An owned piece: rarity coloured.</summary>
+        Owned,
+        /// <summary>A piece not owned yet: a dark silhouette (docs/17 section E).</summary>
+        Missing,
+        /// <summary>An empty slot: a dark plate with the dim slot picture.</summary>
+        Empty
+    }
+
     /// <summary>
-    /// The picture of one gear piece: ONLY the gear's own picture on a rarity coloured tile (docs/19 section D). Rarity is never colour alone: the tile colour AND 1 to 5
-    /// small pips say it (CUX-6). There are no words and no stand-in glyphs; a piece without art has no tile at all. Built in code, menu screens only.
+    /// The picture of one gear piece, drawn from rarity colour, slot glyph and pips (docs/17: icons everywhere, placeholders until the OpenArt pieces
+    /// arrive). Rarity is never colour alone: the frame colour AND 1 to 5 pips say it (CUX-6). Built in code, menu screens only.
     /// </summary>
     public static class GearUi
     {
@@ -30,17 +39,23 @@ namespace BoingUpSkyTower.Gameplay
 
         public static Color Frame(GearRarity r) { return Color.Lerp(Fill(r), Dark, 0.55f); }
 
-        /// <summary>Spoken label: rarity, name and what it boosts.</summary>
-        public static string Spoken(GearDef d)
+        /// <summary>Spoken label: rarity, slot, name and what it boosts.</summary>
+        public static string Spoken(GearDef d, int level, int count)
         {
             if (d == null) return "Empty slot";
-            return GearCatalog.RarityNames[(int)d.Rarity] + " " + d.Name + ", boosts " + PowerUpUi.Name(d.Boost) + " by " + d.BoostPercent + " percent";
+            string s = GearCatalog.RarityNames[(int)d.Rarity] + " " + d.Name + ", boosts " + PowerUpUi.Name(d.Boost) + " by " + GearCatalog.BoostAtLevel(d, level) + " percent";
+            if (level > 1) s += ", level " + level;
+            if (count > 1) s += ", " + count + " owned";
+            return s;
         }
 
-        /// <summary>One gear tile. It is a button when <paramref name="onClick"/> is given; <paramref name="equipped"/> adds the worn ring and tick.</summary>
-        public static RectTransform Tile(Transform parent, string name, GearDef def, Vector2 size, Action onClick = null, bool equipped = false)
+        /// <summary>
+        /// One gear tile. <paramref name="def"/> null with state Empty draws an empty slot of <paramref name="emptySlot"/>. Numbers (level, copies) show only on tiles
+        /// large enough for 16 sp text. Returns the tile root; it is a button when <paramref name="onClick"/> is given.
+        /// </summary>
+        public static RectTransform Tile(Transform parent, string name, GearDef def, GearTileState state, int level, int count, Vector2 size, Action onClick = null, bool equipped = false, GearSlot emptySlot = GearSlot.Head, bool showLevel = false)
         {
-            Image root = UiKit.AddImage(parent, name, Theme.RoundSprite, def != null ? Frame(def.Rarity) : new Color(0.10f, 0.13f, 0.27f, 1f));
+            Image root = UiKit.AddImage(parent, name, Theme.RoundSprite, state == GearTileState.Owned && def != null ? Frame(def.Rarity) : new Color(0.10f, 0.13f, 0.27f, 1f));
             root.type = Image.Type.Sliced;
             root.preserveAspect = false;
             root.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / (Mathf.Min(size.x, size.y) * 0.18f));
@@ -52,12 +67,12 @@ namespace BoingUpSkyTower.Gameplay
                 var b = root.gameObject.AddComponent<Button>();
                 b.transition = Selectable.Transition.None;
                 b.onClick.AddListener(() => { AudioManager.Play(Sfx.Tap); onClick(); });
-                root.gameObject.AddComponent<A11yLabel>().Text = Spoken(def) + (equipped ? ", worn" : "");
+                root.gameObject.AddComponent<A11yLabel>().Text = state == GearTileState.Owned ? Spoken(def, level, count) : (state == GearTileState.Empty ? "Empty " + GearCatalog.SlotNames[(int)emptySlot] + " slot" : "Not found yet: " + (def != null ? def.Name : ""));
             }
             float m = Mathf.Min(size.x, size.y);
             float inset = Mathf.Max(6f, m * 0.045f);
 
-            Image fill = UiKit.AddImage(root.transform, "Fill", Theme.RoundSprite, def != null ? Fill(def.Rarity) : new Color(0.17f, 0.21f, 0.36f, 1f));
+            Image fill = UiKit.AddImage(root.transform, "Fill", Theme.RoundSprite, state == GearTileState.Owned && def != null ? Fill(def.Rarity) : new Color(0.17f, 0.21f, 0.36f, 1f));
             fill.type = Image.Type.Sliced;
             fill.preserveAspect = false;
             fill.pixelsPerUnitMultiplier = root.pixelsPerUnitMultiplier * 1.15f;
@@ -66,43 +81,62 @@ namespace BoingUpSkyTower.Gameplay
             fill.rectTransform.offsetMin = new Vector2(inset, inset);
             fill.rectTransform.offsetMax = new Vector2(-inset, -inset);
 
-            // the gear's own picture (a tight crop of its parts composite); nothing is drawn while it has none
-            Sprite icon = def != null ? GearIcons.Find(def) : null;
+            // the real gear picture (a tight crop of the worn layer); only an EMPTY slot shows the slot glyph (owner 2026-10-24)
+            Sprite icon = state != GearTileState.Empty && def != null ? GearIcons.Find(def) : null;
             if (icon != null)
             {
-                Image pic = UiKit.AddImage(root.transform, "GearPic", icon, Color.white);
+                Color iconTint = state == GearTileState.Owned ? Color.white : new Color(0.07f, 0.09f, 0.20f, 0.95f);
+                Image pic = UiKit.AddImage(root.transform, "GearPic", icon, iconTint);
                 pic.preserveAspect = true;
-                pic.raycastTarget = false;
-                Corner(pic.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, m * 0.76f);
+                Corner(pic.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -m * 0.02f), m * 0.74f);
             }
-            if (def == null) return rt;
+            else
+            {
+                int slot = state == GearTileState.Empty ? (int)emptySlot : (def != null ? (int)def.Slot : 0);
+                Color glyphTint = state == GearTileState.Owned ? Color.white : (state == GearTileState.Empty ? new Color(0.36f, 0.42f, 0.60f, 0.9f) : new Color(0.07f, 0.09f, 0.20f, 0.95f));
+                Image g = UiKit.AddImage(root.transform, "Slot", Glyphs.ForSlot(slot), glyphTint);
+                Corner(g.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -m * 0.03f), m * 0.52f);
+            }
 
-            // rarity pips, bottom left (shape count, not colour alone)
+            if (state != GearTileState.Owned || def == null) return rt;
+
+            // boost: the small picture of the power-up this piece makes stronger, top right
+            Sprite pw = PowerUpUi.IconSprite(def.Boost);
+            if (pw != null)
+            {
+                Image bi = UiKit.AddImage(root.transform, "Boost", pw, Color.white);
+                Corner(bi.rectTransform, new Vector2(1f, 1f), new Vector2(-inset * 0.4f, -inset * 0.4f), m * 0.34f);
+                bi.rectTransform.pivot = new Vector2(1f, 1f);
+            }
+
+            // rarity pips, bottom left
             float pip = m * 0.07f, pipGap = m * 0.02f;
             for (int i = 0; i <= (int)def.Rarity; i++)
             {
                 Image p = UiKit.AddImage(root.transform, "Pip" + i, Theme.RoundSprite, Color.white);
                 p.type = Image.Type.Sliced;
                 p.preserveAspect = false;
-                p.raycastTarget = false;
                 p.rectTransform.anchorMin = p.rectTransform.anchorMax = new Vector2(0f, 0f);
                 p.rectTransform.pivot = new Vector2(0f, 0f);
                 p.rectTransform.sizeDelta = new Vector2(pip, pip);
                 p.rectTransform.anchoredPosition = new Vector2(inset * 1.4f + i * (pip + pipGap), inset * 1.4f);
             }
 
+            bool numbers = m >= 170f;
+            if (numbers && (level > 1 || showLevel))
+                NumberBadge(root.transform, "Level", level.ToString(), new Vector2(0f, 1f), new Vector2(inset * 0.6f, -inset * 0.6f), m);
+            if (numbers && count > 1)
+                NumberBadge(root.transform, "Count", "x" + count, new Vector2(1f, 0f), new Vector2(-inset * 0.6f, inset * 0.6f), m);
             if (equipped)
             {
                 Image ring = UiKit.AddImage(root.transform, "Worn", Theme.RingSprite, Color.white);
                 ring.type = Image.Type.Sliced;
                 ring.preserveAspect = false;
-                ring.raycastTarget = false;
                 ring.rectTransform.anchorMin = Vector2.zero;
                 ring.rectTransform.anchorMax = Vector2.one;
                 ring.rectTransform.offsetMin = new Vector2(-3f, -3f);
                 ring.rectTransform.offsetMax = new Vector2(3f, 3f);
                 Image tick = UiKit.AddImage(root.transform, "WornTick", Glyphs.Check, Color.white);
-                tick.raycastTarget = false;
                 Corner(tick.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -inset * 0.3f), m * 0.26f);
                 tick.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
@@ -117,25 +151,35 @@ namespace BoingUpSkyTower.Gameplay
             rt.sizeDelta = new Vector2(size, size);
         }
 
-        /// <summary>A centred row of small non-interactive gear tiles (results screen); pieces without art are left out. Returns the row.</summary>
+        static void NumberBadge(Transform tile, string name, string text, Vector2 anchor, Vector2 pos, float m)
+        {
+            Image back = UiKit.AddPanel(tile, "NameBacking", new Color(0.04f, 0.06f, 0.16f, 0.82f));
+            back.name = "NameBacking";
+            RectTransform brt = back.rectTransform;
+            brt.anchorMin = brt.anchorMax = anchor;
+            brt.pivot = anchor;
+            brt.anchoredPosition = pos;
+            brt.sizeDelta = new Vector2(Mathf.Max(0.30f * m, 40f + text.Length * 16f), 0.30f * m);
+            Text t = UiKit.AddText(back.transform, name, text, 42, Color.white, TextAnchor.MiddleCenter, true);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var o = t.GetComponent<Outline>();
+            if (o != null) o.enabled = false;
+            UiKit.Stretch((RectTransform)t.transform);
+        }
+
+        /// <summary>A centred row of small non-interactive gear tiles (results screen). Returns the row.</summary>
         public static RectTransform TileRow(Transform panel, string name, IList<string> ids, float yFromTop, float tile, float gap)
         {
-            var shown = new List<GearDef>(ids.Count);
-            for (int i = 0; i < ids.Count; i++)
-            {
-                GearDef d = GearCatalog.Get(ids[i]);
-                if (d != null && GearCatalog.HasArt(d)) shown.Add(d);
-            }
             RectTransform row = UiKit.Rect(panel, name);
             row.anchorMin = new Vector2(0.5f, 1f);
             row.anchorMax = new Vector2(0.5f, 1f);
             row.pivot = new Vector2(0.5f, 1f);
             row.anchoredPosition = new Vector2(0f, -yFromTop);
-            float total = Mathf.Max(0, shown.Count) * tile + Mathf.Max(0, shown.Count - 1) * gap;
+            float total = ids.Count * tile + (ids.Count - 1) * gap;
             row.sizeDelta = new Vector2(total, tile);
-            for (int i = 0; i < shown.Count; i++)
+            for (int i = 0; i < ids.Count; i++)
             {
-                RectTransform t = Tile(row, "Drop" + i, shown[i], new Vector2(tile, tile));
+                RectTransform t = Tile(row, "Drop" + i, GearCatalog.Get(ids[i]), GearTileState.Owned, 1, 1, new Vector2(tile, tile));
                 t.anchorMin = t.anchorMax = new Vector2(0f, 0.5f);
                 t.pivot = new Vector2(0f, 0.5f);
                 t.anchoredPosition = new Vector2(i * (tile + gap), 0f);
@@ -145,10 +189,11 @@ namespace BoingUpSkyTower.Gameplay
     }
 
     /// <summary>
-    /// The character with the worn gear: every part picture of the character and of the worn gear is a full-canvas Image stretched over one box, drawn back to front
-    /// in the order <see cref="PartsAssembler"/> gives. It is the same list the run draws, only larger. Missing part art draws nothing (CUX-10).
+    /// The character with the worn gear (docs/18, part based): every part picture of the character and of the worn gear is a full-canvas Image anchored to the
+    /// rectangle <see cref="PartsAssembler"/> gives it (the whole box for the character parts, the fitted rect for gear), drawn back to front. It is the same list
+    /// the run draws, only larger. Missing part art draws nothing (CUX-10).
     /// </summary>
-    public static class CharacterDoll
+    public static class MomoDoll
     {
         /// <summary>Builds the doll in a box of the given height (width follows the canvas). Returns the box. <paramref name="who"/> null = Momo.</summary>
         public static RectTransform Build(Transform parent, string name, ProgressService progress, float height, CharacterDef who = null, ArtCatalog art = null)
@@ -174,132 +219,63 @@ namespace BoingUpSkyTower.Gameplay
                 Image img = UiKit.AddImage(box, (d.Gear ? "Layer_" : "Part_") + d.Name, d.Sprite, Color.white);
                 img.preserveAspect = false;
                 img.raycastTarget = false;
-                UiKit.Stretch(img.rectTransform);
+                RectTransform rt = img.rectTransform;
+                rt.anchorMin = d.Min;
+                rt.anchorMax = d.Max;
+                rt.offsetMin = rt.offsetMax = Vector2.zero;
             }
         }
     }
 
     /// <summary>
-    /// Gear tile pictures: a tight crop of the piece's own parts composite on a transparent background, built once per piece at menu time (never during a run) and cached.
-    /// The parts are read back through a render texture at half size, laid over each other in draw order, cropped to what is painted and scaled to at most 256 px.
-    /// A piece that is not worn is unloaded again right after, so browsing 60 pieces does not keep 60 full-canvas pictures in memory. Null when the piece has no art.
+    /// Worn-layer art lookup. Layers are PNGs the size of the Momo picture, copied to Resources/Art/GearLayers. A piece's layer is found by its
+    /// own art id first (gear_head_c01), then by the pilot naming slot_n where n is the piece number (head_1 ...). Missing art gives null.
     /// </summary>
-    public static class GearIcons
+    public static class GearLayers
     {
-        const int MaxEdge = 256;
         static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
-
-        /// <summary>Tests replace the picture of a piece (no art files needed). Null restores the real composite.</summary>
-        public static Func<GearDef, Sprite> Override;
-
-        public static void ClearCache() { cache.Clear(); }
 
         public static Sprite Find(GearDef d)
         {
             if (d == null) return null;
-            if (Override != null) return Override(d);
+            Sprite s = Load(d.ArtId);
+            if (s != null) return s;
+            // the pilot sheets hold six looks per slot, Common to Legendary in order: a piece wears the look of its rarity until its own art is painted
+            return Load(GearCatalog.LookKey(d));
+        }
+
+        static Sprite Load(string file)
+        {
             Sprite s;
-            if (cache.TryGetValue(d.Id, out s)) return s;
-            s = Build(d);
-            cache[d.Id] = s;
+            if (cache.TryGetValue(file, out s)) return s;
+            s = Resources.Load<Sprite>("Art/GearLayers/" + file);
+            cache[file] = s;
             return s;
         }
+    }
 
-        static Sprite Build(GearDef d)
+    /// <summary>
+    /// Gear tile pictures: a tight crop of the worn layer on a transparent square (Tools/art_pipeline/export_gear_icons.py), in Resources/Art/GearIcons with the
+    /// same naming as <see cref="GearLayers"/>. Null when the piece has no art (<see cref="GearCatalog.HasArt"/> is then false).
+    /// </summary>
+    public static class GearIcons
+    {
+        static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
+
+        public static Sprite Find(GearDef d)
         {
-            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return null;   // no GPU (batch mode without graphics): no picture
-            bool wasCached = GearParts.IsCached(d);
-            List<GearPartEntry> parts = wasCached ? GearParts.Find(d) : GearParts.Load(d);
-            if (parts == null || parts.Count == 0) return null;
-            Color32[] acc = null;
-            int w = 0, h = 0;
-            Texture2D read = null;
-            foreach (GearPartEntry e in parts)
-            {
-                Texture tex = e.Sprite.texture;
-                if (acc == null)
-                {
-                    w = Mathf.Max(1, tex.width / 2);
-                    h = Mathf.Max(1, tex.height / 2);
-                    acc = new Color32[w * h];
-                    read = new Texture2D(w, h, TextureFormat.RGBA32, false);
-                }
-                else if (tex.width / 2 != w || tex.height / 2 != h) continue;   // a part on another canvas size cannot be laid over
-                RenderTexture rt = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32);
-                RenderTexture prev = RenderTexture.active;
-                Graphics.Blit(tex, rt);
-                RenderTexture.active = rt;
-                read.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-                RenderTexture.active = prev;
-                RenderTexture.ReleaseTemporary(rt);
-                Color32[] src = read.GetPixels32();
-                for (int i = 0; i < acc.Length; i++) acc[i] = Over(src[i], acc[i]);
-            }
-            if (read != null) UnityEngine.Object.Destroy(read);
-            if (!wasCached)
-                foreach (GearPartEntry e in parts) Resources.UnloadAsset(e.Sprite.texture);
-            if (acc == null) return null;
-
-            int x0 = w, y0 = h, x1 = -1, y1 = -1;
-            for (int y = 0; y < h; y++)
-            {
-                for (int x = 0; x < w; x++)
-                {
-                    if (acc[y * w + x].a <= 8) continue;
-                    if (x < x0) x0 = x;
-                    if (x > x1) x1 = x;
-                    if (y < y0) y0 = y;
-                    if (y > y1) y1 = y;
-                }
-            }
-            if (x1 < x0 || y1 < y0) return null;
-            int pad = Mathf.Max(2, (x1 - x0 + y1 - y0) / 60);
-            x0 = Mathf.Max(0, x0 - pad); y0 = Mathf.Max(0, y0 - pad);
-            x1 = Mathf.Min(w - 1, x1 + pad); y1 = Mathf.Min(h - 1, y1 + pad);
-            int cw = x1 - x0 + 1, ch = y1 - y0 + 1;
-            float k = Mathf.Min(1f, MaxEdge / (float)Mathf.Max(cw, ch));
-            int ow = Mathf.Max(1, Mathf.RoundToInt(cw * k)), oh = Mathf.Max(1, Mathf.RoundToInt(ch * k));
-            var outPx = new Color32[ow * oh];
-            for (int y = 0; y < oh; y++)
-            {
-                for (int x = 0; x < ow; x++)
-                {
-                    float sx = x0 + (x + 0.5f) / ow * cw - 0.5f, sy = y0 + (y + 0.5f) / oh * ch - 0.5f;
-                    outPx[y * ow + x] = Bilinear(acc, w, h, sx, sy);
-                }
-            }
-            var tex2 = new Texture2D(ow, oh, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp, name = d.Id + "_icon" };
-            tex2.SetPixels32(outPx);
-            tex2.Apply();
-            Sprite sp = Sprite.Create(tex2, new Rect(0, 0, ow, oh), new Vector2(0.5f, 0.5f), 100f);
-            sp.name = d.Id + "_icon";
-            return sp;
+            if (d == null) return null;
+            Sprite s = Load(d.ArtId);
+            return s != null ? s : Load(GearCatalog.LookKey(d));
         }
 
-        /// <summary>Straight-alpha "over": the source laid on the destination.</summary>
-        static Color32 Over(Color32 s, Color32 d)
+        static Sprite Load(string file)
         {
-            if (s.a == 0) return d;
-            if (s.a == 255 || d.a == 0) return s;
-            float sa = s.a / 255f, da = d.a / 255f, oa = sa + da * (1f - sa);
-            float ds = da * (1f - sa) / oa, ss = sa / oa;
-            return new Color32((byte)(s.r * ss + d.r * ds), (byte)(s.g * ss + d.g * ds), (byte)(s.b * ss + d.b * ds), (byte)(oa * 255f));
-        }
-
-        static Color32 Bilinear(Color32[] px, int w, int h, float x, float y)
-        {
-            int x0 = Mathf.Clamp(Mathf.FloorToInt(x), 0, w - 1), y0 = Mathf.Clamp(Mathf.FloorToInt(y), 0, h - 1);
-            int x1 = Mathf.Min(x0 + 1, w - 1), y1 = Mathf.Min(y0 + 1, h - 1);
-            float fx = Mathf.Clamp01(x - x0), fy = Mathf.Clamp01(y - y0);
-            Color32 a = px[y0 * w + x0], b = px[y0 * w + x1], c = px[y1 * w + x0], e = px[y1 * w + x1];
-            // premultiplied blend so transparent pixels do not darken the edge
-            float wa = (1 - fx) * (1 - fy), wb = fx * (1 - fy), wc = (1 - fx) * fy, we = fx * fy;
-            float al = a.a * wa + b.a * wb + c.a * wc + e.a * we;
-            if (al <= 0.001f) return new Color32(0, 0, 0, 0);
-            float r = (a.r * a.a * wa + b.r * b.a * wb + c.r * c.a * wc + e.r * e.a * we) / al;
-            float g = (a.g * a.a * wa + b.g * b.a * wb + c.g * c.a * wc + e.g * e.a * we) / al;
-            float bl = (a.b * a.a * wa + b.b * b.a * wb + c.b * c.a * wc + e.b * e.a * we) / al;
-            return new Color32((byte)Mathf.Clamp(r, 0, 255), (byte)Mathf.Clamp(g, 0, 255), (byte)Mathf.Clamp(bl, 0, 255), (byte)Mathf.Clamp(al, 0, 255));
+            Sprite s;
+            if (cache.TryGetValue(file, out s)) return s;
+            s = Resources.Load<Sprite>("Art/GearIcons/" + file);
+            cache[file] = s;
+            return s;
         }
     }
 }
