@@ -233,7 +233,8 @@ namespace BoingUpSkyTower.Gameplay
             if (d == null) return null;
             Sprite s = Load(d.ArtId);
             if (s != null) return s;
-            return Load(GearCatalog.SlotNames[(int)d.Slot].ToLowerInvariant() + "_" + d.Number);
+            // the pilot sheets hold six looks per slot, Common to Legendary in order: a piece wears the look of its rarity until its own art is painted
+            return Load(GearCatalog.SlotNames[(int)d.Slot].ToLowerInvariant() + "_" + ((int)d.Rarity + 1));
         }
 
         static Sprite Load(string file)

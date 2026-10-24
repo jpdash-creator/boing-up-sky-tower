@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BoingUpSkyTower.Economy;
 using BoingUpSkyTower.Simulation;
 using UnityEngine;
 
@@ -792,6 +793,29 @@ namespace BoingUpSkyTower.Gameplay
             hazardTf[i] = null;
         }
 
+        SpriteRenderer[] wornSr = new SpriteRenderer[0];
+
+        /// <summary>The worn gear: one layer per slot, a child of Momo (the layers are painted at the size of the Momo picture), so it moves, squashes and flips with him.</summary>
+        void BuildWornGear()
+        {
+            var list = new List<SpriteRenderer>(4);
+            ProgressService pr = GameSession.Progress;
+            if (pr != null)
+            {
+                int order = 11;
+                foreach (GearSlot slot in MomoDoll.DrawOrder)
+                {
+                    Sprite sp = GearLayers.Find(pr.EquippedDef(slot));
+                    if (sp == null) continue;
+                    SpriteRenderer sr = NewSprite("Worn" + slot, sp, order++, player);
+                    sr.transform.localPosition = Vector3.zero;
+                    sr.transform.localScale = Vector3.one;
+                    list.Add(sr);
+                }
+            }
+            wornSr = list.ToArray();
+        }
+
         void BuildPlayer()
         {
             playerSr = NewSprite("Momo", art != null ? art.Player : null, 10);
@@ -803,6 +827,7 @@ namespace BoingUpSkyTower.Gameplay
                 player.localScale = new Vector3(s, s, 1f);
             }
             else player.localScale = new Vector3(0.9f, playerHeight, 1f);
+            BuildWornGear();
         }
 
         Pop MakePop()
