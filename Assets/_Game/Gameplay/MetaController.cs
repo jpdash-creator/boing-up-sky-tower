@@ -341,7 +341,8 @@ namespace BoingUpSkyTower.Gameplay
         {
             NewScreen("Menu");
             lastMapOffset = -1f;   // the map opens on the current region again after a visit to the menu
-            RegionArt meadow = art != null ? art.ForRegion(1) : null;
+            RegionDef cur = progress != null ? progress.CurrentRegion() : null;   // the home page follows the region being played
+            RegionArt meadow = art != null ? (art.ForRegion(cur != null ? cur.Index : 1) ?? art.ForRegion(1)) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
             AddCurrencyBar();
             Sprite logo = ToyKit.Get("logo");

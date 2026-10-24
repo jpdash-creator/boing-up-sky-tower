@@ -131,6 +131,8 @@ namespace BoingUpSkyTower.Economy
         public bool NewBest;
         /// <summary>Coins before the daily cap (floors based, region factor applied).</summary>
         public int FullRateCoins;
+        /// <summary>Part of FullRateCoins that came from combo landings (5 each, region factor applied).</summary>
+        public int ComboCoins;
         /// <summary>Coins actually paid.</summary>
         public int Coins;
         /// <summary>True when the daily full-rate runs were used up and the over-cap multiplier applied.</summary>
@@ -158,8 +160,15 @@ namespace BoingUpSkyTower.Economy
 
         public static int FullRateCoins(int floors, double regionCoinFactor)
         {
+            return FullRateCoins(floors, 0, regionCoinFactor);
+        }
+
+        /// <summary>Floor coins plus the run's combo coins (SimState.Coins in endless), both scaled by the region factor.</summary>
+        public static int FullRateCoins(int floors, int comboCoins, double regionCoinFactor)
+        {
             long factor = (long)Math.Round(regionCoinFactor * 10000);
-            return (int)(((long)RawCoins(floors) * factor + 5000) / 10000);
+            long raw = RawCoins(floors) + (comboCoins < 0 ? 0 : comboCoins);
+            return (int)((raw * factor + 5000) / 10000);
         }
 
         public static int OverCapCoins(int fullRateCoins, double overCapMultiplier)

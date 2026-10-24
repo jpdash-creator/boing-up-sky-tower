@@ -796,6 +796,9 @@ namespace BoingUpSkyTower.Simulation
                 if (extra > 0) s.Coins += extra * Cfg.ExtraFloorCoins;
             }
 
+            // Endless (owner 2026-10-24): no gems, but every combo landing pays its combo coins like the campaign (settled with the floor coins at the end).
+            if (newRow && Endless && continuesCombo) s.Coins += Cfg.ComboLandingCoins;
+
             s.LastJumpFloors = gained;
             if (gained > s.BestJumpFloors) s.BestJumpFloors = gained;
             if (gained >= 1)

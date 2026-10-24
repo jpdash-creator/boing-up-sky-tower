@@ -168,7 +168,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 // The run is over for good (no revive in endless): best floor and coins are saved right now (CUX-8).
                 Haptics.Pulse();
-                EndlessReward er = GameSession.Progress.ApplyEndlessRun(Session.Region.Id, Session.State.Row, EndlessRewards.DayKey(System.DateTime.UtcNow));
+                EndlessReward er = GameSession.Progress.ApplyEndlessRun(Session.Region.Id, Session.State.Row, EndlessRewards.DayKey(System.DateTime.UtcNow), Session.State.Coins);
                 GameSession.LastResult = new RunResult { Endless = true, RegionId = Session.Region.Id, Floors = Session.State.Row, Score = Session.State.Score, EndlessReward = er };
                 Hud.ShowEndlessFailed(Session, er);
                 return;

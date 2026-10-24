@@ -48,7 +48,7 @@ namespace BoingUpSkyTower.Gameplay
         const float HeaderH = 520f;                                         // painted shop scene
         const float ListTop = HeaderH + 130f;                               // below the ribbon title
         const float BottomMargin = ToyKit.TabBarReserve + 4f;               // room for the icon tab bar
-        const float CardH = 520f, CardGap = 16f, PowerCardH = 640f, ButtonH = 126f;
+        const float CardH = 462f, CardGap = 14f, PowerCardH = 440f, ButtonH = 126f;   // compact cards (owner 2026-10-24): 4 in the first row, 3 in the next, full width
 
         static readonly Color ListPriceColor = Theme.InkSoft;
         static readonly Color PromoPriceColor = new Color(0.03f, 0.48f, 0.27f, 1f);          // deep green on the light card (about 6:1)
@@ -255,11 +255,24 @@ namespace BoingUpSkyTower.Gameplay
             return list;
         }
 
-        /// <summary>Anchors a card in one of the three columns (by fractions of the width, so it fits every aspect).</summary>
-        static void PlaceCell(RectTransform crt, float y, int col, float h)
+        /// <summary>Grid rule for every shop list: the first row holds 4 cards, every later row up to 3; a row always spans the full width.</summary>
+        static void Cell(int i, int n, out int row, out int col, out int cols)
         {
-            crt.anchorMin = new Vector2(col / 3f, 1f);
-            crt.anchorMax = new Vector2((col + 1) / 3f, 1f);
+            if (i < 4) { row = 0; col = i; cols = Mathf.Min(4, n); return; }
+            int k = i - 4;
+            row = 1 + k / 3;
+            col = k % 3;
+            int left = n - 4 - (row - 1) * 3;
+            cols = Mathf.Min(3, left);
+        }
+
+        static int RowCount(int n) { return n <= 4 ? 1 : 1 + (n - 4 + 2) / 3; }
+
+        /// <summary>Anchors a card in column col of cols (fractions of the width, so it fits every aspect).</summary>
+        static void PlaceCell(RectTransform crt, float y, int col, int cols, float h)
+        {
+            crt.anchorMin = new Vector2(col / (float)cols, 1f);
+            crt.anchorMax = new Vector2((col + 1) / (float)cols, 1f);
             crt.pivot = new Vector2(0.5f, 1f);
             crt.anchoredPosition = new Vector2(0f, -y);
             crt.sizeDelta = new Vector2(-ColGap, h);
@@ -268,7 +281,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>A kit button with a currency icon at the left and the price after it.</summary>
         Button PriceButton(RectTransform card, string name, int role, Sprite icon, string price, string a11y, Action onClick, float bottom)
         {
-            Button b = UiKit.AddButton(card, name, price, ToyKit.Button(role), Color.white, new Vector2(200f, ButtonH), onClick, 46);
+            Button b = UiKit.AddButton(card, name, price, ToyKit.Button(role), Color.white, new Vector2(200f, ButtonH), onClick, 40);
             var rt = (RectTransform)b.transform;
             rt.anchorMin = new Vector2(0f, 0f);
             rt.anchorMax = new Vector2(1f, 0f);
@@ -283,10 +296,10 @@ namespace BoingUpSkyTower.Gameplay
                 Image ic = UiKit.AddImage(b.transform, "Icon", icon, Color.white);
                 ic.rectTransform.anchorMin = ic.rectTransform.anchorMax = new Vector2(0f, 0.5f);
                 ic.rectTransform.pivot = new Vector2(0f, 0.5f);
-                ic.rectTransform.anchoredPosition = new Vector2(18f, 0f);
-                ic.rectTransform.sizeDelta = new Vector2(62f, 62f);
+                ic.rectTransform.anchoredPosition = new Vector2(14f, 0f);
+                ic.rectTransform.sizeDelta = new Vector2(52f, 52f);
                 var lrt = label.rectTransform;
-                lrt.offsetMin = new Vector2(76f, 0f);
+                lrt.offsetMin = new Vector2(62f, 0f);
                 lrt.offsetMax = new Vector2(-8f, 0f);
             }
             return b;
@@ -306,36 +319,61 @@ namespace BoingUpSkyTower.Gameplay
                 UiKit.Place((RectTransform)give.transform, new Vector2(0.5f, 1f), new Vector2(0f, -ListTop), new Vector2(760f, 126f));
                 give.GetComponent<A11yLabel>().Text = "Test only: add 3 of every power-up";
             }
-            var defs = progress.PowerUpDefs.Implemented;
-            RectTransform list = MakeList(((defs.Count + 2) / 3) * (PowerCardH + CardGap), top);
-            for (int i = 0; i < defs.Count; i++) BuildPowerUpCard(list, (i / 3) * (PowerCardH + CardGap), i % 3, defs[i]);
+            var defs = new System.Collections.Generic.List<PowerUpDef>(progress.PowerUpDefs.Implemented);
+            defs.Sort((x, y) => x.CoinPrice != y.CoinPrice ? y.CoinPrice.CompareTo(x.CoinPrice) : string.CompareOrdinal(x.Name, y.Name));   // dearest first, always (owner 2026-10-24)
+            RectTransform list = MakeList(RowCount(defs.Count) * (PowerCardH + CardGap), top);
+            for (int i = 0; i < defs.Count; i++)
+            {
+                int row, col, cols;
+                Cell(i, defs.Count, out row, out col, out cols);
+                BuildPowerUpCard(list, row * (PowerCardH + CardGap), col, cols, defs[i]);
+            }
         }
 
         /// <summary>One power-up card: icon (tap for the description), name, owned count and one price button per currency.</summary>
-        void BuildPowerUpCard(RectTransform list, float y, int col, PowerUpDef def)
+        void BuildPowerUpCard(RectTransform list, float y, int col, int cols, PowerUpDef def)
         {
             RectTransform crt = UiKit.Rect(list, "Panel");
             Transform card = crt;
             Theme.CardBacking(crt);
-            PlaceCell(crt, y, col, PowerCardH);
+            PlaceCell(crt, y, col, cols, PowerCardH);
 
-            Image icon = PowerUpUi.AddIcon(card, "Icon", def.Type, new Vector2(0.5f, 1f), new Vector2(0f, -22f), 150f, false);
+            Image icon = PowerUpUi.AddIcon(card, "Icon", def.Type, new Vector2(0.5f, 1f), new Vector2(0f, -36f), 130f, false);
             icon.rectTransform.pivot = new Vector2(0.5f, 1f);
             MakeInfo(icon, def.Name, def.Description + "\nTakes up to " + def.CarryCap + " into a run.");
-            Text name = UiKit.AddText(card, "Name", def.Name, 42, Theme.Ink, TextAnchor.MiddleCenter, true);
+            AddInfoDot(icon.transform);
+            Text name = UiKit.AddText(card, "Name", def.Name, 36, Theme.Ink, TextAnchor.MiddleCenter, true);
             name.GetComponent<Outline>().enabled = false;
-            name.horizontalOverflow = HorizontalWrapMode.Wrap;
-            UiKit.Place((RectTransform)name.transform, new Vector2(0.5f, 1f), new Vector2(0f, -184f), new Vector2(300f, 112f));
+            name.horizontalOverflow = HorizontalWrapMode.Overflow;
+            name.rectTransform.anchorMin = new Vector2(0f, 1f);
+            name.rectTransform.anchorMax = new Vector2(1f, 1f);
             name.rectTransform.pivot = new Vector2(0.5f, 1f);
+            name.rectTransform.offsetMin = new Vector2(6f, -230f);
+            name.rectTransform.offsetMax = new Vector2(-6f, -176f);
 
             int owned = progress.PowerUpCount(def.Id);
             bool justBought = def.Id == lastBoughtId;
-            Text own = UiKit.AddText(card, "Owned", (justBought ? "Bought! " : "x") + owned, 44, justBought ? PromoPriceColor : Theme.InkSoft, TextAnchor.MiddleCenter, true);
+            Text own = UiKit.AddText(card, "Owned", (justBought ? "Bought! " : "x") + owned, 36, justBought ? PromoPriceColor : Theme.InkSoft, TextAnchor.MiddleCenter, true);
             DropOutline(own);
-            UiKit.Place((RectTransform)own.transform, new Vector2(0.5f, 1f), new Vector2(0f, -300f), new Vector2(300f, 60f));
+            UiKit.Place((RectTransform)own.transform, new Vector2(0.5f, 1f), new Vector2(0f, -244f), new Vector2(300f, 48f));
             own.rectTransform.pivot = new Vector2(0.5f, 1f);
 
-            PriceButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 24f);
+            PriceButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 14f);
+        }
+
+        /// <summary>A very small circled i on the top-right corner of the icon. Looks like an info button; the whole icon is the tap target (48 dp rule).</summary>
+        static void AddInfoDot(Transform icon)
+        {
+            Image ring = UiKit.AddImage(icon, "Info", Glyphs.Ring, Theme.InkSoft);
+            ring.raycastTarget = false;
+            ring.rectTransform.anchorMin = ring.rectTransform.anchorMax = new Vector2(1f, 1f);
+            ring.rectTransform.pivot = new Vector2(1f, 1f);
+            ring.rectTransform.anchoredPosition = new Vector2(8f, 8f);
+            ring.rectTransform.sizeDelta = new Vector2(40f, 40f);
+            Text i = UiKit.AddText(ring.transform, "I", "i", 28, Theme.InkSoft, TextAnchor.MiddleCenter, true);
+            i.raycastTarget = false;
+            i.GetComponent<Outline>().enabled = false;
+            UiKit.Stretch((RectTransform)i.transform);
         }
 
         /// <summary>Makes a card image the tap target for its details popup.</summary>
@@ -417,16 +455,17 @@ namespace BoingUpSkyTower.Gameplay
         void BuildPackList(bool gems)
         {
             int count = gems ? catalog.GemPacks.Count : catalog.CoinPacks.Count;
-            RectTransform list = MakeList(((count + 2) / 3) * (CardH + CardGap), ListTop);
+            RectTransform list = MakeList(RowCount(count) * (CardH + CardGap), ListTop);
             bool promo = progress.LaunchPromoActive;
             int bestCoinIndex = promo ? BestCoinValueIndex() : -1;
             for (int i = 0; i < count; i++)
             {
                 int idx = i;
-                float y = (i / 3) * (CardH + CardGap);
-                int col = i % 3;
-                if (gems) BuildGemCard(list, y, col, idx, catalog.GemPacks[i], promo);
-                else BuildCoinCard(list, y, col, idx, catalog.CoinPacks[i], promo, i == bestCoinIndex);
+                int row, col, cols;
+                Cell(i, count, out row, out col, out cols);
+                float y = row * (CardH + CardGap);
+                if (gems) BuildGemCard(list, y, col, cols, idx, catalog.GemPacks[i], promo);
+                else BuildCoinCard(list, y, col, cols, idx, catalog.CoinPacks[i], promo, i == bestCoinIndex);
             }
         }
 
@@ -455,7 +494,7 @@ namespace BoingUpSkyTower.Gameplay
             return n;
         }
 
-        void BuildGemCard(RectTransform list, float y, int col, int index, GemPackDef pack, bool promo)
+        void BuildGemCard(RectTransform list, float y, int col, int cols, int index, GemPackDef pack, bool promo)
         {
             bool showPromo = promo && pack.UsdPromo < pack.UsdList;
             string price = ShopCatalog.FormatUsd(ShopCatalog.GemPackUsd(pack, promo));
@@ -465,10 +504,10 @@ namespace BoingUpSkyTower.Gameplay
             string buy = test ? "Buy (test)" : "Not available yet";
             string a11y = "Buy " + pack.Gems + " gems for " + price + (test ? ", test purchase" : ", not available yet");
             string more = Num(pack.Gems) + " gems for " + price + "." + (showPromo ? "\nLaunch offer: normally " + listPrice + "." : "") + (test ? "\nThis is a test purchase, no money is charged." : "\nBuying with real money opens with the store release.");
-            BuildCard(list, y, col, art != null ? art.GemIcon : null, Num(pack.Gems), listPrice, price, showPromo, special, buy, a11y, "Gem pack", more, () => TapGemPack(index), null);
+            BuildCard(list, y, col, cols, art != null ? art.GemIcon : null, Num(pack.Gems), listPrice, price, showPromo, special, buy, a11y, "Gem pack", more, () => TapGemPack(index), null);
         }
 
-        void BuildCoinCard(RectTransform list, float y, int col, int index, CoinPackDef pack, bool promo, bool best)
+        void BuildCoinCard(RectTransform list, float y, int col, int cols, int index, CoinPackDef pack, bool promo, bool best)
         {
             bool showPromo = promo && pack.GemsPromo < pack.GemsList;
             int cost = ShopCatalog.CoinPackGems(pack, promo);
@@ -476,40 +515,40 @@ namespace BoingUpSkyTower.Gameplay
             string price = cost + " gems";
             string a11y = "Buy " + pack.Coins + " coins for " + cost + " gems";
             string more = Num(pack.Coins) + " coins for " + price + "." + (showPromo ? "\nLaunch offer: normally " + listPrice + "." : "") + "\nPaid with gems from your wallet.";
-            BuildCard(list, y, col, art != null ? art.CoinIcon : null, Num(pack.Coins), listPrice != null ? pack.GemsList.ToString() : null, cost.ToString(), showPromo, best ? "Best value" : null, "Buy", a11y, "Coin pack", more, () => TapCoinPack(index), art != null ? art.GemIcon : null);
+            BuildCard(list, y, col, cols, art != null ? art.CoinIcon : null, Num(pack.Coins), listPrice != null ? pack.GemsList.ToString() : null, cost.ToString(), showPromo, best ? "Best value" : null, "Buy", a11y, "Coin pack", more, () => TapCoinPack(index), art != null ? art.GemIcon : null);
         }
 
         /// <summary>
         /// One pack card (three per row, SS3 style): the painted icon (tap for details), the amount, the crossed-out launch price when there is one,
         /// and one green price button. A short badge (Popular / Best value) sits at the top. Text is ink on the cream card (contrast above 12:1).
         /// </summary>
-        void BuildCard(RectTransform list, float y, int col, Sprite icon, string amount, string listPrice, string price, bool launch, string special, string buyLabel, string a11y, string infoTitle, string infoBody, Action onBuy, Sprite priceIcon)
+        void BuildCard(RectTransform list, float y, int col, int cols, Sprite icon, string amount, string listPrice, string price, bool launch, string special, string buyLabel, string a11y, string infoTitle, string infoBody, Action onBuy, Sprite priceIcon)
         {
             RectTransform crt = UiKit.Rect(list, "Panel");
             Transform card = crt;
             Theme.CardBacking(crt);
-            PlaceCell(crt, y, col, CardH);
+            PlaceCell(crt, y, col, cols, CardH);
 
             Image ic = UiKit.AddImage(card, "Icon", icon, Color.white);
             ic.preserveAspect = true;
-            UiKit.Place(ic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -76f), new Vector2(140f, 140f));
+            UiKit.Place(ic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -76f), new Vector2(130f, 130f));
             ic.rectTransform.pivot = new Vector2(0.5f, 1f);
             MakeInfo(ic, infoTitle, infoBody);
 
             if (special != null) AddBadgeTop(card, special, SpecialBadgeColor);
             else if (launch) AddBadgeTop(card, "Offer", LaunchBadgeColor);
 
-            Text amountText = UiKit.AddText(card, "Amount", amount, 58, Theme.Ink, TextAnchor.MiddleCenter, true);
+            Text amountText = UiKit.AddText(card, "Amount", amount, 46, Theme.Ink, TextAnchor.MiddleCenter, true);
             amountText.GetComponent<Outline>().enabled = false;
-            UiKit.Place((RectTransform)amountText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -222f), new Vector2(300f, 84f));
+            UiKit.Place((RectTransform)amountText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -208f), new Vector2(300f, 60f));
             amountText.rectTransform.pivot = new Vector2(0.5f, 1f);
 
             if (listPrice != null)
             {
-                Text lp = UiKit.AddText(card, "ListPrice", listPrice, 42, ListPriceColor, TextAnchor.MiddleCenter);
+                Text lp = UiKit.AddText(card, "ListPrice", listPrice, 34, ListPriceColor, TextAnchor.MiddleCenter);
                 lp.GetComponent<Outline>().enabled = false;
                 lp.horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.Place((RectTransform)lp.transform, new Vector2(0.5f, 1f), new Vector2(0f, -308f), new Vector2(300f, 60f));
+                UiKit.Place((RectTransform)lp.transform, new Vector2(0.5f, 1f), new Vector2(0f, -268f), new Vector2(300f, 44f));
                 lp.rectTransform.pivot = new Vector2(0.5f, 1f);
                 float w = Mathf.Min(lp.preferredWidth, 280f);
                 Image strike = UiKit.AddImage(lp.transform, "Strike", null, ListPriceColor);
@@ -524,11 +563,11 @@ namespace BoingUpSkyTower.Gameplay
         static void AddBadgeTop(Transform card, string text, Color fill)
         {
             Image pill = UiKit.AddPanel(card, "NameBacking", fill);
-            Text t = UiKit.AddText(pill.transform, "Badge", text, 36, UiKit.ButtonInk, TextAnchor.MiddleCenter);
+            Text t = UiKit.AddText(pill.transform, "Badge", text, 30, UiKit.ButtonInk, TextAnchor.MiddleCenter);
             t.horizontalOverflow = HorizontalWrapMode.Overflow;
             DropOutline(t);
             UiKit.Stretch((RectTransform)t.transform);
-            UiKit.Place(pill.rectTransform, new Vector2(0f, 1f), new Vector2(16f, -14f), new Vector2(Mathf.Min(t.preferredWidth + 28f, 220f), 50f));
+            UiKit.Place(pill.rectTransform, new Vector2(0f, 1f), new Vector2(16f, -14f), new Vector2(Mathf.Min(t.preferredWidth + 24f, 200f), 44f));
         }
 
         // ---------------- purchases ----------------

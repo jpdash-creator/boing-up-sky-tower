@@ -354,6 +354,22 @@ namespace BoingUpSkyTower.Economy
             return IsRegionPlayable(region) && IsRegionUnlocked(region);
         }
 
+        /// <summary>
+        /// The region the player is working on (owner 2026-10-24: the home page follows it): the first region, in order, that can be entered and still has
+        /// a level that is not cleared; when everything playable is cleared, the last playable region.
+        /// </summary>
+        public RegionDef CurrentRegion()
+        {
+            RegionDef last = null;
+            foreach (RegionDef r in repo.Regions)
+            {
+                if (!CanEnterRegion(r)) continue;
+                last = r;
+                foreach (LevelDef l in repo.LevelsOf(r.Id)) if (!IsLevelCleared(l.Id)) return r;
+            }
+            return last ?? repo.GetRegionByIndex(1);
+        }
+
         /// <summary>Index of the highest unlocked region (1 when nothing else is unlocked).</summary>
         public int HighestUnlockedRegionIndex()
         {
@@ -482,7 +498,7 @@ namespace BoingUpSkyTower.Economy
         /// daily cap rule of the remote config, and saves immediately. <paramref name="dayKey"/> is the UTC day, "yyyyMMdd".
         /// The region must be enterable.
         /// </summary>
-        public EndlessReward ApplyEndlessRun(string regionId, int floors, string dayKey)
+        public EndlessReward ApplyEndlessRun(string regionId, int floors, string dayKey, int comboCoins = 0)
         {
             RegionDef region = repo.GetRegion(regionId);
             if (!CanEnterRegion(region)) throw new InvalidOperationException("Region is locked: " + regionId);
@@ -495,8 +511,9 @@ namespace BoingUpSkyTower.Economy
             result.NewBest = floors > result.BestBefore;
             if (result.NewBest) Data.EndlessBest[regionId] = floors;
 
-            int full = EndlessRewards.FullRateCoins(floors, region.CoinFactor);
+            int full = EndlessRewards.FullRateCoins(floors, comboCoins, region.CoinFactor);
             result.FullRateCoins = full;
+            result.ComboCoins = (int)(((long)(comboCoins < 0 ? 0 : comboCoins) * (long)Math.Round(region.CoinFactor * 10000) + 5000) / 10000);
             result.Coins = full;
             if (full > 0)
             {

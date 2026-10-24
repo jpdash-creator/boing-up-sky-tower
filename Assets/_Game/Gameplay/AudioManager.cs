@@ -23,7 +23,7 @@ namespace BoingUpSkyTower.Gameplay
         const string SfxFolder = "Audio/sfx/";
         const string MusicLoopPath = "Audio/music/loop";
         const string MusicRegionPath = "Audio/music/region_";   // region_1 .. region_5
-        const int RegionTracks = 5;
+        const int RegionTracks = 30;   // one loop per region (owner 2026-10-24), loaded the first time the region is played
         const string MusicRunPath = "Audio/music/run";   // optional: when absent the run reuses the loop at a lower volume
 
         // Index = (int)Sfx. Same order as the enum.
@@ -107,7 +107,6 @@ namespace BoingUpSkyTower.Gameplay
             runClip = Resources.Load<AudioClip>(MusicRunPath);
             if (runClip == null) runClip = loopClip;
             regionClips = new AudioClip[RegionTracks + 1];
-            for (int r = 1; r <= RegionTracks; r++) regionClips[r] = Resources.Load<AudioClip>(MusicRegionPath + r);   // null when missing: the shared loop plays
 
             pool = new AudioSource[PoolSize];
             for (int i = 0; i < PoolSize; i++) pool[i] = NewSource("Sfx" + i, false);
@@ -172,6 +171,7 @@ namespace BoingUpSkyTower.Gameplay
             if (musicOn && wanted == MusicTrack.Meta) { clip = loopClip; vol = MetaMusicVolume; }
             else if (musicOn && wanted == MusicTrack.Run)
             {
+                if (wantedRegion >= 1 && wantedRegion <= RegionTracks && regionClips[wantedRegion] == null) regionClips[wantedRegion] = Resources.Load<AudioClip>(MusicRegionPath + wantedRegion);   // null when missing: the shared run loop plays
                 clip = wantedRegion >= 1 && wantedRegion <= RegionTracks && regionClips[wantedRegion] != null ? regionClips[wantedRegion] : runClip;
                 vol = RunMusicVolume;
             }

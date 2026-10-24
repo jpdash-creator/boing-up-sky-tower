@@ -166,6 +166,19 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
+        public void HomePageFollowsTheRegionBeingPlayed()
+        {
+            var svc = NewService();
+            Assert.AreEqual(1, svc.CurrentRegion().Index);
+            ClearRegion(svc, 1, starMask: 3);                               // every level of region 1 with 2 stars
+            Assert.AreEqual(2, svc.CurrentRegion().Index, "region 1 done: the home page shows region 2");
+            svc.ApplyRun("lvl_002_01", Won(starMask: 3));                   // reached level 2 of the new region
+            Assert.AreEqual(2, svc.CurrentRegion().Index);
+            ClearRegion(svc, 2, starMask: 3);
+            Assert.AreEqual(3, svc.CurrentRegion().Index, "and so on");
+        }
+
+        [Test]
         public void Level15ReportsTheRegionItUnlocked()
         {
             var svc = NewService();
