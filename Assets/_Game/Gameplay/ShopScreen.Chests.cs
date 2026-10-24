@@ -286,19 +286,7 @@ namespace BoingUpSkyTower.Gameplay
         void ShowReveal(ChestKind kind, int opens, List<ChestContents> contents)
         {
             RectTransform overlay = host.NewOverlay();
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, "", art, new Vector2(900f, 1560f), null);
-            var anim = overlay.gameObject.AddComponent<ChestRevealAnim>();
-            Reveal = anim;
-
-            // the chest, shaking, then bursting open
-            Sprite chest = ChestSprite(kind);
-            Image pic = UiKit.AddImage(panel, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
-            UiKit.Place(pic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(340f, 280f));
-            pic.rectTransform.pivot = new Vector2(0.5f, 1f);
-            anim.Chest = pic.rectTransform;
-            anim.ChestImage = pic;
-
-            // all gear dropped by the opening: one tile per piece, a scrolling grid
+            // what dropped, counted first so the card is only as tall as its contents (no empty space)
             var gearIds = new List<string>();
             int coins = 0;
             var units = new Dictionary<string, int>();
@@ -311,17 +299,39 @@ namespace BoingUpSkyTower.Gameplay
             }
             const float tile = 150f, gap = 10f;
             const int cols = 5;
+            int rows = (gearIds.Count + cols - 1) / cols;
+            float gearH = gearIds.Count == 0 ? 0f : Mathf.Min(570f, rows * (tile + gap) - gap);
+            int chipRows = (order.Count + 3) / 4;
+            float chipsH = order.Count == 0 ? 0f : chipRows * 104f - 8f;
+            float y = 410f;                                   // below the chest
+            float gearY = y; y += gearH + (gearH > 0f ? 30f : 0f);
+            float chipsY = y; y += chipsH + (chipsH > 0f ? 30f : 0f);
+            float coinY = y; y += 100f + 30f;
+            float doneY = y;                                  // the green tick sits under the last block
+            float panelH = doneY + 150f + 50f;
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, "", art, new Vector2(900f, panelH), null);
+            var anim = overlay.gameObject.AddComponent<ChestRevealAnim>();
+            Reveal = anim;
+
+            // the chest, shaking, then bursting open
+            Sprite chest = ChestSprite(kind);
+            Image pic = UiKit.AddImage(panel, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
+            UiKit.Place(pic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(340f, 280f));
+            pic.rectTransform.pivot = new Vector2(0.5f, 1f);
+            anim.Chest = pic.rectTransform;
+            anim.ChestImage = pic;
+
+            // all gear dropped by the opening: one tile per piece, a scrolling grid
             RectTransform vp = UiKit.Rect(panel, "GearViewport");
             vp.anchorMin = new Vector2(0.5f, 1f);
             vp.anchorMax = new Vector2(0.5f, 1f);
             vp.pivot = new Vector2(0.5f, 1f);
             float width = cols * tile + (cols - 1) * gap;
-            vp.sizeDelta = new Vector2(width + 10f, 570f);
-            vp.anchoredPosition = new Vector2(0f, -400f);
+            vp.sizeDelta = new Vector2(width + 10f, gearH);
+            vp.anchoredPosition = new Vector2(0f, -gearY);
             vp.gameObject.AddComponent<RectMask2D>();
             var vhit = vp.gameObject.AddComponent<Image>();
             vhit.color = new Color(0f, 0f, 0f, 0f);
-            int rows = (gearIds.Count + cols - 1) / cols;
             RectTransform content = UiKit.Rect(vp, "GearContent");
             content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
@@ -339,7 +349,9 @@ namespace BoingUpSkyTower.Gameplay
                 RectTransform t = GearUi.Tile(content, "Drop" + i, GearCatalog.Get(gearIds[i]), GearTileState.Owned, 1, 1, new Vector2(tile, tile));
                 t.anchorMin = t.anchorMax = new Vector2(0f, 1f);
                 t.pivot = new Vector2(0f, 1f);
-                t.anchoredPosition = new Vector2((i % cols) * (tile + gap), -(i / cols) * (tile + gap));
+                int inRow = Mathf.Min(cols, gearIds.Count - (i / cols) * cols);
+                float rowShift = (cols - inRow) * (tile + gap) * 0.5f;   // a short row is centred
+                t.anchoredPosition = new Vector2(rowShift + (i % cols) * (tile + gap), -(i / cols) * (tile + gap));
                 anim.Items.Add(t);
             }
 
@@ -347,8 +359,8 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform chips = UiKit.Rect(panel, "PowerUps");
             chips.anchorMin = chips.anchorMax = new Vector2(0.5f, 1f);
             chips.pivot = new Vector2(0.5f, 1f);
-            chips.anchoredPosition = new Vector2(0f, -990f);
-            chips.sizeDelta = new Vector2(820f, 200f);
+            chips.anchoredPosition = new Vector2(0f, -chipsY);
+            chips.sizeDelta = new Vector2(820f, Mathf.Max(10f, chipsH));
             for (int i = 0; i < order.Count; i++)
             {
                 PowerUpDef d = progress.PowerUpDefs.Get(order[i]);
@@ -356,7 +368,8 @@ namespace BoingUpSkyTower.Gameplay
                 RectTransform chip = UiKit.Rect(chips, "Chip" + i);
                 chip.anchorMin = chip.anchorMax = new Vector2(0f, 1f);
                 chip.pivot = new Vector2(0f, 1f);
-                chip.anchoredPosition = new Vector2(c * 205f, -r * 104f);
+                int inRowChips = Mathf.Min(4, order.Count - r * 4);
+                chip.anchoredPosition = new Vector2((820f - (inRowChips * 205f - 10f)) * 0.5f + c * 205f, -r * 104f);   // a short row is centred
                 chip.sizeDelta = new Vector2(195f, 96f);
                 Image ic = PowerUpUi.AddIcon(chip, "Icon", d.Type, new Vector2(0f, 0.5f), Vector2.zero, 90f, false);
                 ic.rectTransform.pivot = new Vector2(0f, 0.5f);
@@ -373,7 +386,7 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // coins gained
-            RectTransform coinRow = ToyKit.PillRow(panel, "Coins", 1215f, 100f);
+            RectTransform coinRow = ToyKit.PillRow(panel, "Coins", coinY, 100f);
             ToyKit.InfoPill(coinRow, art != null ? art.CoinIcon : null, "+" + coins, new Color(1f, 0.92f, 0.5f), 340f, 100f);
             anim.Items.Add(coinRow);
 
@@ -383,7 +396,8 @@ namespace BoingUpSkyTower.Gameplay
                 if (!anim.Done) anim.Skip();
                 else CloseOverlayAndRefresh();
             }, 0.56f);
-            UiKit.Place((RectTransform)done.transform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(150f, 150f));
+            UiKit.Place((RectTransform)done.transform, new Vector2(0.5f, 1f), new Vector2(0f, -doneY), new Vector2(150f, 150f));
+            ((RectTransform)done.transform).pivot = new Vector2(0.5f, 1f);
             anim.Begin(GameSettings.ReducedMotion);
         }
 
