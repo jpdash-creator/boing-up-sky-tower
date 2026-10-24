@@ -839,14 +839,40 @@ namespace BoingUpSkyTower.Gameplay
             int sprite = !playable ? 4 : (!unlocked ? 3 : (cleared >= region.Levels.Count ? 2 : (cleared > 0 ? 1 : 0)));
             Sprite nodeSprite = art != null ? ArtCatalog.Pick(art.MapNodes, sprite) : null;
 
-            const float pin = 110f;
-            Button b = UiKit.AddButton(mapContent, "Region" + region.Index, "", nodeSprite, Color.white, new Vector2(pin, pin), () => OnRegionTapped(region), 40);
-            b.GetComponent<A11yLabel>().Text = region.Name;
+            // The painted medallion of this region (docs/16 section D, owner 2026-10-24); the old node art is the fallback.
+            string slug = region.Id.Length > 11 ? region.Id.Substring(11) : region.Id;
+            Sprite painted = Resources.Load<Sprite>("Art/Pins/pin_" + slug);
+            bool current = region.Index == mapCurrent && unlocked && playable;
+            float pin = painted != null ? 160f : 110f;
+            Button b = UiKit.AddButton(mapContent, "Region" + region.Index, "", painted != null ? painted : nodeSprite, Color.white, new Vector2(pin, pin), () => OnRegionTapped(region), 40);
+            b.GetComponent<A11yLabel>().Text = region.Name + (unlocked ? "" : (playable ? ", locked" : ", coming soon"));
             RectTransform rt = (RectTransform)b.transform;
             rt.anchorMin = rt.anchorMax = anchor;
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = Vector2.zero;
             b.GetComponent<Image>().preserveAspect = true;
+            if (painted != null)
+            {
+                if (!(playable && unlocked)) b.GetComponent<Image>().color = new Color(0.55f, 0.58f, 0.68f, 1f);   // locked: grey, with a padlock on top
+                if (!(playable && unlocked))
+                {
+                    Image lk = UiKit.AddImage(rt, "Lock", ToyKit.Get("icon_lock"), Color.white);
+                    lk.rectTransform.anchorMin = lk.rectTransform.anchorMax = new Vector2(1f, 0f);
+                    lk.rectTransform.pivot = new Vector2(1f, 0f);
+                    lk.rectTransform.sizeDelta = new Vector2(72f, 72f);
+                    lk.rectTransform.anchoredPosition = new Vector2(8f, -4f);
+                    lk.raycastTarget = false;
+                }
+                else if (current)
+                {
+                    Image ring = UiKit.AddImage(rt, "CurrentRing", Glyphs.Ring, new Color(1f, 0.82f, 0.2f, 1f));
+                    ring.rectTransform.anchorMin = Vector2.zero;
+                    ring.rectTransform.anchorMax = Vector2.one;
+                    ring.rectTransform.offsetMin = new Vector2(-14f, -14f);
+                    ring.rectTransform.offsetMax = new Vector2(14f, 14f);
+                    ring.raycastTarget = false;
+                }
+            }
 
             bool open = playable && unlocked;
             Image tag = Theme.GlassPanel(rt, "NameBacking", 30f);
@@ -967,7 +993,7 @@ namespace BoingUpSkyTower.Gameplay
                 LevelDef l = levels[i];
                 bool isCur = l.Id == currentId;
                 nodes[i] = AddLevelNode(l, content, isCur);
-                nodes[i].anchorMin = nodes[i].anchorMax = new Vector2(PathX(i), 0f);
+                nodes[i].anchorMin = nodes[i].anchorMax = new Vector2(0.5f, 0f);
                 nodes[i].pivot = new Vector2(0.5f, 0.5f);
                 nodes[i].sizeDelta = new Vector2(nodeSize, nodeSize);
                 nodes[i].localScale = Vector3.one * (isCur ? 1.15f : 1f);
@@ -982,49 +1008,78 @@ namespace BoingUpSkyTower.Gameplay
         /// Horizontal position (0..1) of level node <paramref name="i"/> and of the flowing line: one smooth wave, level 1 at the far left, then the
         /// middle, the far right, the middle, the far left again. Neighbours are always at least a node apart sideways, so the path can be tight.
         /// </summary>
-        static readonly float[] PathLanes = { 0.15f, 0.62f, 0.28f, 0.80f, 0.42f, 0.86f, 0.30f, 0.70f, 0.18f, 0.64f, 0.30f, 0.82f, 0.44f, 0.76f, 0.36f };
+        // The level path is a snake (owner's sketch, 2026-10-24): three levels run left to right along a row, the road makes a hairpin turn at the
+        // right edge, three levels run right to left, a hairpin at the left edge, and so on up the screen. Level 1 is at the far left of the bottom row.
+        const int PathPerRow = 3;
+        static readonly float[] PathLanesLtr = { 0.16f, 0.50f, 0.84f };
 
-        static float PathX(float i)
+        /// <summary>Horizontal position (0..1) of level node <paramref name="i"/> on the snake.</summary>
+        static float PathX(int i)
         {
-            int k = Mathf.Clamp(Mathf.RoundToInt(i), 0, PathLanes.Length - 1);
-            return PathLanes[k];
+            int row = i / PathPerRow, k = i % PathPerRow;
+            return (row % 2 == 0) ? PathLanesLtr[k] : PathLanesLtr[PathPerRow - 1 - k];
         }
 
-        /// <summary>
-        /// The flowing line: a Catmull-Rom spline through the node lanes, so the road bends smoothly through every level and swings out to the
-        /// other side between them (no straight stretches, no dots).
-        /// </summary>
-        static float PathCurveX(float t)
-        {
-            int i = Mathf.Clamp(Mathf.FloorToInt(t), 0, PathLanes.Length - 2);
-            float f = Mathf.Clamp01(t - i);
-            float p0 = PathLanes[Mathf.Max(0, i - 1)], p1 = PathLanes[i], p2 = PathLanes[i + 1], p3 = PathLanes[Mathf.Min(PathLanes.Length - 1, i + 2)];
-            float f2 = f * f, f3 = f2 * f;
-            return 0.5f * (2f * p1 + (-p0 + p2) * f + (2f * p0 - 5f * p1 + 4f * p2 - p3) * f2 + (-p0 + 3f * p1 - 3f * p2 + p3) * f3);
-        }
+        /// <summary>Row of node <paramref name="i"/>, counted from the bottom.</summary>
+        static int PathRow(int i) { return i / PathPerRow; }
 
         /// <summary>
-        /// Draws the winding path as ONE thin translucent white line into a single texture, starting at the first level and flowing through every
-        /// node (owner, 2026-10-24). Built after the first layout pass, when the real width is known.
+        /// The road as a list of smooth points (canvas units) through every node, with a rounded hairpin turn between rows. A uniform Catmull-Rom spline
+        /// through the node centres and one apex point per turn: no straight stretches between rows, no dots. Each point carries the index of the
+        /// node it leads to (used to fade the part of the road that is still locked).
         /// </summary>
-        void BuildPathLine(RectTransform content, float w, float h, float yBase, float pitch, int count, int lastUnlocked)
+        static void BuildRoad(int count, float w, float yBase, float rowPitch, System.Collections.Generic.List<Vector2> pts, System.Collections.Generic.List<int> toNode)
+        {
+            var key = new System.Collections.Generic.List<Vector2>();
+            var keyNode = new System.Collections.Generic.List<int>();
+            // lead-in: the road starts a little before level 1
+            key.Add(new Vector2(PathX(0) * w - 70f, yBase)); keyNode.Add(0);
+            for (int i = 0; i < count; i++)
+            {
+                float y = yBase + PathRow(i) * rowPitch;
+                key.Add(new Vector2(PathX(i) * w, y)); keyNode.Add(i);
+                bool lastOfRow = (i % PathPerRow) == PathPerRow - 1;
+                if (lastOfRow && i + 1 < count)
+                {
+                    bool toRight = PathRow(i) % 2 == 0;
+                    float apexX = (toRight ? 0.975f : 0.025f) * w;
+                    key.Add(new Vector2(apexX, y + rowPitch * 0.5f)); keyNode.Add(i + 1);
+                }
+            }
+            key.Insert(0, key[0] + (key[0] - key[1]));     // phantom end points for the spline
+            keyNode.Insert(0, 0);
+            key.Add(key[key.Count - 1] + (key[key.Count - 1] - key[key.Count - 2]));
+            keyNode.Add(keyNode[keyNode.Count - 1]);
+            for (int k = 1; k + 2 < key.Count; k++)
+            {
+                Vector2 p0 = key[k - 1], p1 = key[k], p2 = key[k + 1], p3 = key[k + 2];
+                int steps = Mathf.Max(28, Mathf.CeilToInt((p2 - p1).magnitude * 1.5f / 1.2f));   // a stamp at least every 1.2 px: one unbroken line
+                for (int st = 0; st < steps; st++)
+                {
+                    float t = st / (float)steps, t2 = t * t, t3 = t2 * t;
+                    Vector2 q = 0.5f * (2f * p1 + (-p0 + p2) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (-p0 + 3f * p1 - 3f * p2 + p3) * t3);
+                    pts.Add(q);
+                    toNode.Add(keyNode[k + 1]);
+                }
+            }
+        }
+
+        /// <summary>Draws the road as ONE thin translucent white line (a hair of navy around it) into a single texture, under the nodes.</summary>
+        void BuildPathLine(RectTransform content, float w, float h, System.Collections.Generic.List<Vector2> pts, System.Collections.Generic.List<int> toNode, int lastUnlocked)
         {
             const float sc = 1f;
             int tw = Mathf.Max(8, Mathf.RoundToInt(w * sc)), th = Mathf.Max(8, Mathf.RoundToInt(h * sc));
             var oa = new float[tw * th];   // navy hairline alpha
             var fa = new float[tw * th];   // white fill alpha
-            float yEnd = yBase + (count - 1) * pitch;
             for (int pass = 0; pass < 2; pass++)
             {
-                float radius = (pass == 0 ? 8.5f : 5f) * sc;   // thin: about 10 canvas units wide in white, a hair of navy around it
+                float radius = (pass == 0 ? 8.5f : 5f) * sc;
                 float[] dst = pass == 0 ? oa : fa;
-                float baseAlpha = pass == 0 ? 0.22f : 0.6f;     // translucent: the picture shows through
-                for (float y = yBase; y <= yEnd + 0.01f; y += 1f)
+                float baseAlpha = pass == 0 ? 0.22f : 0.6f;
+                for (int n = 0; n < pts.Count; n++)
                 {
-                    float t = (y - yBase) / pitch;
-                    float x = PathCurveX(t) * w;
-                    float sa = baseAlpha * (t <= lastUnlocked + 0.01f ? 1f : 0.45f);
-                    int cx = Mathf.RoundToInt(x * sc), cy = Mathf.RoundToInt(y * sc), r = Mathf.CeilToInt(radius) + 1;
+                    float sa = baseAlpha * (toNode[n] <= lastUnlocked ? 1f : 0.45f);
+                    int cx = Mathf.RoundToInt(pts[n].x * sc), cy = Mathf.RoundToInt(pts[n].y * sc), r = Mathf.CeilToInt(radius) + 1;
                     for (int dy = -r; dy <= r; dy++)
                     {
                         int py = cy + dy;
@@ -1065,24 +1120,33 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// After the first layout pass: spaces the 15 nodes so that TEN of them fit the real height of the view (owner, 2026-10-24), builds the line
-        /// from level 1, and scrolls so the current level sits in the middle.
+        /// After the first layout pass: places the 15 nodes on the snake so that TEN levels fit the real height of the view (owner, 2026-10-24),
+        /// draws the road, and scrolls so the current level sits in the middle.
         /// </summary>
         System.Collections.IEnumerator LayoutPath(ScrollRect scroll, RectTransform content, RectTransform[] nodes, float nodeSize, int lastUnlocked, int currentIdx)
         {
             yield return null;
             if (scroll == null) yield break;
             RectTransform vpr = (RectTransform)scroll.viewport;
-            float vpH = vpr.rect.height;
+            float vpH = vpr.rect.height, w = vpr.rect.width;
             const float starRoom = 56f, edge = 24f;
-            // ten nodes: nine gaps plus one node with its stars must fit the view; never tighter than 106 (two apart in one lane would touch)
-            float pitch = Mathf.Clamp((vpH - nodeSize - starRoom - 2f * edge) / 9f, 106f, 200f);
+            // level 10 is the first node of row 3: rows 0..3 span three row gaps; they plus one node and its stars fill the view
+            float rowPitch = Mathf.Clamp((vpH - nodeSize - starRoom - 2f * edge) / 3f, 190f, 600f);
             float yBase = edge + starRoom + nodeSize * 0.5f;
-            float contentH = yBase * 2f + (nodes.Length - 1) * pitch;
+            int rows = (nodes.Length + PathPerRow - 1) / PathPerRow;
+            float contentH = yBase * 2f + (rows - 1) * rowPitch;
             content.sizeDelta = new Vector2(0f, contentH);
-            for (int i = 0; i < nodes.Length; i++) if (nodes[i] != null) nodes[i].anchoredPosition = new Vector2(0f, yBase + i * pitch);
-            BuildPathLine(content, vpr.rect.width, contentH, yBase, pitch, nodes.Length, lastUnlocked);
-            float y = yBase + currentIdx * pitch;
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                if (nodes[i] == null) continue;
+                nodes[i].anchorMin = nodes[i].anchorMax = new Vector2(PathX(i), 0f);
+                nodes[i].anchoredPosition = new Vector2(0f, yBase + PathRow(i) * rowPitch);
+            }
+            var pts = new System.Collections.Generic.List<Vector2>();
+            var toNode = new System.Collections.Generic.List<int>();
+            BuildRoad(nodes.Length, w, yBase, rowPitch, pts, toNode);
+            BuildPathLine(content, w, contentH, pts, toNode, lastUnlocked);
+            float y = yBase + PathRow(currentIdx) * rowPitch;
             float span = Mathf.Max(1f, contentH - vpH);
             scroll.verticalNormalizedPosition = Mathf.Clamp01((y - vpH * 0.5f) / span);
             var cg = content.GetComponent<CanvasGroup>();

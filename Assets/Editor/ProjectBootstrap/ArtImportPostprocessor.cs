@@ -51,7 +51,7 @@ namespace ProjectBootstrap
             }
         }
 
-        public override uint GetVersion() { return 6; }   // bump to re-import the art when the import rules change
+        public override uint GetVersion() { return 7; }   // bump to re-import the art when the import rules change
 
         /// <summary>Small square icons (power-ups): a single sprite, no mipmaps, 256 px, compressed.</summary>
         static void ApplyIcon(TextureImporter ti)
@@ -96,6 +96,7 @@ namespace ProjectBootstrap
 
         void OnPreprocessTexture()
         {
+            if (assetPath.StartsWith("Assets/Resources/Art/Pins/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/Ui/")) { ApplyUiKit((TextureImporter)assetImporter, assetPath); return; }
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
