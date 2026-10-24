@@ -51,7 +51,7 @@ namespace ProjectBootstrap
             }
         }
 
-        public override uint GetVersion() { return 7; }   // bump to re-import the art when the import rules change
+        public override uint GetVersion() { return 8; }   // bump to re-import the art when the import rules change
 
         /// <summary>Small square icons (power-ups): a single sprite, no mipmaps, 256 px, compressed.</summary>
         static void ApplyIcon(TextureImporter ti)
@@ -63,6 +63,19 @@ namespace ProjectBootstrap
             ti.filterMode = UnityEngine.FilterMode.Bilinear;
             ti.alphaIsTransparency = true;
             ti.maxTextureSize = 256;
+            ti.textureCompression = TextureImporterCompression.Compressed;
+        }
+
+        /// <summary>Chest pictures and worn-gear layers (docs/17): transparent sprites, no mipmaps, compressed; layers keep Momo's size so they line up.</summary>
+        static void ApplyPicture(TextureImporter ti, int maxSize)
+        {
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.spritePixelsPerUnit = 100f;
+            ti.mipmapEnabled = false;
+            ti.filterMode = UnityEngine.FilterMode.Bilinear;
+            ti.alphaIsTransparency = true;
+            ti.maxTextureSize = maxSize;
             ti.textureCompression = TextureImporterCompression.Compressed;
         }
 
@@ -99,6 +112,8 @@ namespace ProjectBootstrap
             if (assetPath.StartsWith("Assets/Resources/Art/Pins/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/Ui/")) { ApplyUiKit((TextureImporter)assetImporter, assetPath); return; }
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
+            if (assetPath.StartsWith("Assets/Resources/Art/Chests/")) { ApplyPicture((TextureImporter)assetImporter, 1024); return; }
+            if (assetPath.StartsWith("Assets/Resources/Art/GearLayers/")) { ApplyPicture((TextureImporter)assetImporter, 2048); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (!assetPath.StartsWith("Assets/Art/")) return;
             var ti = (TextureImporter)assetImporter;
