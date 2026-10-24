@@ -35,8 +35,8 @@ namespace BoingUpSkyTower.Gameplay
     {
         /// <summary>Character screen: the stage fills the screen down to the tab bar; the oval sits at about 55 percent of the height.</summary>
         public static Stage CharacterLayout() { return new Stage { BackdropH = 820f, GroundBottom = -1f, OvalY = 1030f, OvalW = 720f, OvalH = 210f }; }
-        /// <summary>Inventory: the stage is the top 1010 px above the dark panel.</summary>
-        public static Stage InventoryLayout() { return new Stage { BackdropH = 520f, GroundBottom = 1010f, OvalY = 720f, OvalW = 560f, OvalH = 150f }; }
+        /// <summary>Inventory: the stage is the top 860 px above the dark panel (the character is small, docs/19 section D).</summary>
+        public static Stage InventoryLayout() { return new Stage { BackdropH = 450f, GroundBottom = 860f, OvalY = 640f, OvalW = 520f, OvalH = 140f }; }
         /// <summary>Info screen: a smaller stage on top, the power-up rows below it.</summary>
         public static Stage InfoLayout() { return new Stage { BackdropH = 470f, GroundBottom = 590f, OvalY = 548f, OvalW = 440f, OvalH = 110f }; }
 

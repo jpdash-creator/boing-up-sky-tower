@@ -10,29 +10,25 @@ namespace BoingUpSkyTower.Economy
         Invalid
     }
 
-    /// <summary>Gear, worn gear, the forge and treasure chests (docs/17). Every public change saves once.</summary>
+    /// <summary>Gear, worn gear and treasure chests (docs/17, docs/19). Every public change saves once.</summary>
     public sealed partial class ProgressService
     {
         /// <summary>
-        /// Saves written before gear (version 1) or with bad entries get safe defaults and are marked as the current version:
-        /// unknown or non-positive entries are dropped, levels stay in 2..5, the worn list has 4 entries and each must be an owned piece of its own slot.
+        /// Saves written before gear (version 1), with the old four slot list (version 2: head, body, pants, boots) or with bad entries get safe defaults and are marked as
+        /// the current version: unknown or removed ids and non-positive counts are dropped (the pants slot and the forge levels are gone), the worn list has 3 entries and
+        /// each must be an owned piece of its own slot.
         /// </summary>
         void EnsureGearFields()
         {
             if (Data.Inventory == null) Data.Inventory = new InventoryData();
             if (Data.Inventory.Gear == null) Data.Inventory.Gear = new Dictionary<string, int>();
-            if (Data.Inventory.GearLevels == null) Data.Inventory.GearLevels = new Dictionary<string, int>();
             var bad = new List<string>();
             foreach (var kv in Data.Inventory.Gear) if (GearCatalog.Get(kv.Key) == null || kv.Value <= 0) bad.Add(kv.Key);
             foreach (string id in bad) Data.Inventory.Gear.Remove(id);
-            bad.Clear();
-            foreach (var kv in Data.Inventory.GearLevels) if (!Data.Inventory.Gear.ContainsKey(kv.Key) || kv.Value < 2) bad.Add(kv.Key);
-            foreach (string id in bad) Data.Inventory.GearLevels.Remove(id);
-            var fix = new List<string>();
-            foreach (var kv in Data.Inventory.GearLevels) if (kv.Value > GearCatalog.MaxLevel) fix.Add(kv.Key);
-            foreach (string id in fix) Data.Inventory.GearLevels[id] = GearCatalog.MaxLevel;
 
             if (Data.Equipped == null) Data.Equipped = new List<string>();
+            if (Data.Version < 3 && Data.Equipped.Count == 4)
+                Data.Equipped.RemoveAt(2);   // the old pants entry; boots move up to slot 2
             while (Data.Equipped.Count < GearCatalog.SlotCount) Data.Equipped.Add("");
             if (Data.Equipped.Count > GearCatalog.SlotCount) Data.Equipped.RemoveRange(GearCatalog.SlotCount, Data.Equipped.Count - GearCatalog.SlotCount);
             for (int s = 0; s < GearCatalog.SlotCount; s++)
@@ -54,13 +50,6 @@ namespace BoingUpSkyTower.Economy
         }
 
         public bool OwnsGear(string id) { return GearCount(id) > 0; }
-
-        /// <summary>Forge level of a piece, 1..5 (1 when it is not forged or not owned).</summary>
-        public int GearLevel(string id)
-        {
-            int n;
-            return id != null && Data.Inventory.GearLevels.TryGetValue(id, out n) ? n : 1;
-        }
 
         /// <summary>Distinct pieces owned.</summary>
         public int OwnedGearKinds { get { return Data.Inventory.Gear.Count; } }
@@ -90,13 +79,18 @@ namespace BoingUpSkyTower.Economy
             return string.IsNullOrEmpty(id) ? null : id;
         }
 
-        public GearDef EquippedDef(GearSlot slot) { return GearCatalog.Get(Data.Equipped[(int)slot]); }
+        /// <summary>The piece worn in a slot. A worn piece without art counts as nothing worn (it neither shows nor boosts) until its art exists.</summary>
+        public GearDef EquippedDef(GearSlot slot)
+        {
+            GearDef d = GearCatalog.Get(Data.Equipped[(int)slot]);
+            return GearCatalog.HasArt(d) ? d : null;
+        }
 
-        /// <summary>Wears an owned piece in its own slot, replacing what was there. Saves at once. False when the piece is not owned.</summary>
+        /// <summary>Wears an owned piece in its own slot, replacing what was there. Saves at once. False when the piece is not owned or has no art.</summary>
         public bool Equip(string id)
         {
             GearDef d = GearCatalog.Get(id);
-            if (d == null || !OwnsGear(id)) return false;
+            if (d == null || !OwnsGear(id) || !GearCatalog.HasArt(d)) return false;
             if (Data.Equipped[(int)d.Slot] == id) return true;
             Data.Equipped[(int)d.Slot] = id;
             Commit();
@@ -110,17 +104,12 @@ namespace BoingUpSkyTower.Economy
             Commit();
         }
 
-        /// <summary>Boost in percent per power-up (index = PowerUp enum value) from what is worn, forge levels included.</summary>
+        /// <summary>Boost in percent per power-up (index = PowerUp enum value) from what is worn.</summary>
         public int[] GearBoostPercents()
         {
             var worn = new GearDef[GearCatalog.SlotCount];
-            var levels = new int[GearCatalog.SlotCount];
-            for (int s = 0; s < worn.Length; s++)
-            {
-                worn[s] = EquippedDef((GearSlot)s);
-                levels[s] = worn[s] != null ? GearLevel(worn[s].Id) : 1;
-            }
-            return GearBoosts.Compute(worn, levels);
+            for (int s = 0; s < worn.Length; s++) worn[s] = EquippedDef((GearSlot)s);
+            return GearBoosts.Compute(worn);
         }
 
         /// <summary>A copy of <paramref name="baseCfg"/> with the worn gear's boosts applied. The shared config itself is never changed.</summary>
@@ -129,49 +118,6 @@ namespace BoingUpSkyTower.Economy
             SimConfig cfg = baseCfg.Clone();
             GearBoosts.Apply(cfg, GearBoostPercents());
             return cfg;
-        }
-
-        // ---- forge ----
-
-        /// <summary>True when the piece has the spare copies for a level (it keeps one copy) and is below the maximum level.</summary>
-        public bool CanForge(string id)
-        {
-            return GearCatalog.Get(id) != null && GearLevel(id) < GearCatalog.MaxLevel && GearCount(id) - 1 >= GearCatalog.ForgeCost;
-        }
-
-        /// <summary>Merges 3 spare copies of a piece into +1 level. Saves at once.</summary>
-        public bool TryForge(string id)
-        {
-            if (!CanForge(id)) return false;
-            Data.Inventory.Gear[id] = GearCount(id) - GearCatalog.ForgeCost;
-            Data.Inventory.GearLevels[id] = GearLevel(id) + 1;
-            Commit();
-            return true;
-        }
-
-        /// <summary>Forges every piece as far as its spare copies allow. Returns the number of levels gained.</summary>
-        public int ForgeAll()
-        {
-            int levels = 0;
-            foreach (GearDef d in GearCatalog.All)
-            {
-                while (CanForge(d.Id))
-                {
-                    Data.Inventory.Gear[d.Id] = GearCount(d.Id) - GearCatalog.ForgeCost;
-                    Data.Inventory.GearLevels[d.Id] = GearLevel(d.Id) + 1;
-                    levels++;
-                }
-            }
-            if (levels > 0) Commit();
-            return levels;
-        }
-
-        /// <summary>How many pieces could be forged right now (the forge button shows it).</summary>
-        public int ForgeablePieces()
-        {
-            int n = 0;
-            foreach (GearDef d in GearCatalog.All) if (CanForge(d.Id)) n++;
-            return n;
         }
 
         // ---- treasure chests (docs/17 section D) ----

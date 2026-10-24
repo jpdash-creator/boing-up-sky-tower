@@ -346,7 +346,7 @@ namespace BoingUpSkyTower.Gameplay
             sr.scrollSensitivity = 60f;
             for (int i = 0; i < gearIds.Count; i++)
             {
-                RectTransform t = GearUi.Tile(content, "Drop" + i, GearCatalog.Get(gearIds[i]), GearTileState.Owned, 1, 1, new Vector2(tile, tile));
+                RectTransform t = GearUi.Tile(content, "Drop" + i, GearCatalog.Get(gearIds[i]), new Vector2(tile, tile));
                 t.anchorMin = t.anchorMax = new Vector2(0f, 1f);
                 t.pivot = new Vector2(0f, 1f);
                 int inRow = Mathf.Min(cols, gearIds.Count - (i / cols) * cols);

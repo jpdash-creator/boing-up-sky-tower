@@ -806,8 +806,8 @@ namespace BoingUpSkyTower.Gameplay
         public SpriteRenderer[] PartRenderers { get { return partSr; } }
 
         /// <summary>
-        /// The player is the selected character built from its parts (docs/18): the same <see cref="PartsAssembler"/> list the character screens draw, every part a
-        /// child of the player transform placed on the canvas rectangle the rig gives it, so the run looks exactly like the character screen. The parts share one sorting group.
+        /// The player is the selected character built from its polygon parts (docs/19): the same <see cref="PartsAssembler"/> list the character screens draw, every part a
+        /// child of the player transform on the full canvas, so the run looks exactly like the character screen. A character without parts is one picture. The parts share one sorting group.
         /// </summary>
         void BuildPlayer()
         {
@@ -825,12 +825,9 @@ namespace BoingUpSkyTower.Gameplay
             {
                 PartDraw d = draws[i];
                 SpriteRenderer sr = NewSprite((d.Gear ? "Worn" : "Part") + d.Name, d.Sprite, i, player);
-                Vector2 size = d.Sprite.bounds.size;
-                if (i == 0) bodySize = size;
-                Vector3 pos, scale;
-                d.LocalTransform(bodySize, out pos, out scale);
-                sr.transform.localScale = scale;
-                sr.transform.localPosition = pos;
+                if (i == 0) bodySize = d.Sprite.bounds.size;
+                sr.transform.localScale = d.LocalScale(bodySize);
+                sr.transform.localPosition = Vector3.zero;
                 all.Add(sr);
                 if (d.Gear) worn.Add(sr);
             }

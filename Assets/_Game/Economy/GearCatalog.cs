@@ -5,16 +5,15 @@ using UnityEngine;
 
 namespace BoingUpSkyTower.Economy
 {
-    /// <summary>The four wearable slots (docs/17 section B), in the order head, body, pants, boots. The draw order of the worn layers is a separate rule (docs/17 section C).</summary>
+    /// <summary>The three wearable slots (docs/19 section A), in the order head, body, boots. There is no pants slot.</summary>
     public enum GearSlot
     {
         Head = 0,
         Body = 1,
-        Pants = 2,
-        Boots = 3
+        Boots = 2
     }
 
-    /// <summary>Rarity, lowest first. Shown by frame colour AND by 1 to 5 pips, never colour alone (CUX-6).</summary>
+    /// <summary>Rarity, lowest first. Shown by tile colour AND by 1 to 5 pips, never colour alone (CUX-6).</summary>
     public enum GearRarity
     {
         Common = 0,
@@ -24,7 +23,7 @@ namespace BoingUpSkyTower.Economy
         Legendary = 4
     }
 
-    /// <summary>One of the 240 wearable pieces. Boost: the single power-up it makes stronger, by Percent of that power-up's duration or effect.</summary>
+    /// <summary>One of the 180 wearable pieces. Boost: the single power-up it makes stronger, by Percent of that power-up's duration or effect.</summary>
     public sealed class GearDef
     {
         public string Id;
@@ -34,37 +33,31 @@ namespace BoingUpSkyTower.Economy
         public int Number;
         public string Name;
         public PowerUp Boost;
-        /// <summary>Base boost at level 1: 10, 20, 40, 75 or 100 percent by rarity.</summary>
+        /// <summary>Fixed boost: 10, 20, 40, 75 or 100 percent by rarity.</summary>
         public int BoostPercent;
-        /// <summary>Key of the worn-layer and tile art (Assets/Art/Gear/layers, later painted by OpenArt): same as Id.</summary>
+        /// <summary>Folder name of the piece's polygon parts (Resources/Characters/gear/&lt;ArtId&gt;/): same as Id.</summary>
         public string ArtId;
     }
 
     /// <summary>
-    /// The gear table (docs/17 section B): 4 slots x (Common 20, Uncommon 16, Rare 12, Epic 8, Legendary 4) = 240 pieces. Each piece boosts one
-    /// power-up, alternating inside a rarity band: head Shield / Slow Time, body Magnet / Flight, pants Wall Stick / Magnet, boots Double Jump / Rocket.
+    /// The gear table (docs/19 section A): 3 slots x (Common 20, Uncommon 16, Rare 12, Epic 8, Legendary 4) = 180 pieces. Each piece boosts one
+    /// power-up, rotating inside a rarity band: head Shield / Slow Time, body Magnet / Flight / Wall Stick, boots Double Jump / Rocket.
     /// Built in code (deterministic, names from word lists) so the table never drifts from the rules.
     /// </summary>
     public static class GearCatalog
     {
-        public const int SlotCount = 4;
+        public const int SlotCount = 3;
         public const int RarityCount = 5;
-        public const int MaxLevel = 5;
-        /// <summary>Duplicates of one piece the forge consumes for one level (docs/17 section E, proposed rule: to confirm).</summary>
-        public const int ForgeCost = 3;
-        /// <summary>Each forge level adds this percent of the base boost (proposed rule: to confirm).</summary>
-        public const int LevelBonusPercentOfBase = 10;
 
         public static readonly int[] PiecesPerRarity = { 20, 16, 12, 8, 4 };
         public static readonly int[] BoostPercentByRarity = { 10, 20, 40, 75, 100 };
-        public static readonly string[] SlotNames = { "Head", "Body", "Pants", "Boots" };
+        public static readonly string[] SlotNames = { "Head", "Body", "Boots" };
         public static readonly string[] RarityNames = { "Common", "Uncommon", "Rare", "Epic", "Legendary" };
 
         static readonly PowerUp[][] SlotBoosts =
         {
             new[] { PowerUp.Shield, PowerUp.SlowTime },
-            new[] { PowerUp.Magnet, PowerUp.Flight },
-            new[] { PowerUp.WallStick, PowerUp.Magnet },
+            new[] { PowerUp.Magnet, PowerUp.Flight, PowerUp.WallStick },
             new[] { PowerUp.DoubleJump, PowerUp.Rocket },
         };
 
@@ -82,28 +75,24 @@ namespace BoingUpSkyTower.Economy
         {
             new[] { "Cap", "Helm", "Hood", "Crown", "Bandana", "Visor" },
             new[] { "Vest", "Jacket", "Tunic", "Cloak", "Jersey", "Armor" },
-            new[] { "Shorts", "Trousers", "Leggings", "Kilt", "Overalls", "Cargos" },
             new[] { "Boots", "Sneakers", "Sandals", "Clogs", "Treads", "Slippers" },
         };
 
         static readonly char[] RarityLetter = { 'c', 'u', 'r', 'e', 'l' };
 
+        /// <summary>Resources folder of the gear parts: Characters/gear/&lt;pieceId&gt;/&lt;part&gt;.png.</summary>
+        public const string ArtRoot = "Characters/gear/";
+
         static GearDef[] all;
         static Dictionary<string, GearDef> byId;
         static GearDef[][][] bySlotRarity;
-        static GearDef[] testPieces;
 
         public static IReadOnlyList<GearDef> All { get { Ensure(); return all; } }
-
-        /// <summary>The four development-only test pieces (one per slot). Shown and granted only in development builds; not part of <see cref="All"/>.</summary>
-        public static IReadOnlyList<GearDef> TestPieces { get { Ensure(); return testPieces; } }
-
-        public static bool IsTestPiece(GearDef d) { return d != null && d.Number == 0; }
 
         static void Ensure()
         {
             if (all != null) return;
-            var list = new List<GearDef>(240);
+            var list = new List<GearDef>(180);
             var map = new Dictionary<string, GearDef>(256);
             var grid = new GearDef[SlotCount][][];
             for (int s = 0; s < SlotCount; s++)
@@ -120,28 +109,13 @@ namespace BoingUpSkyTower.Economy
                         {
                             Id = id, Slot = (GearSlot)s, Rarity = (GearRarity)r, Number = i + 1,
                             Name = Adjectives[r][i] + " " + Nouns[s][i % Nouns[s].Length],
-                            Boost = SlotBoosts[s][i % 2], BoostPercent = BoostPercentByRarity[r], ArtId = id
+                            Boost = SlotBoosts[s][i % SlotBoosts[s].Length], BoostPercent = BoostPercentByRarity[r], ArtId = id
                         };
                         list.Add(def);
                         map[id] = def;
                         grid[s][r][i] = def;
                     }
                 }
-            }
-            // four development-only test pieces (mannequin method, docs/18 section D): one per slot, not part of the 240, never dropped; layers and icons are
-            // Resources/Art/{GearLayers,GearIcons}/<slot>_test.png
-            testPieces = new GearDef[SlotCount];
-            PowerUp[] testBoost = { PowerUp.Shield, PowerUp.Flight, PowerUp.Magnet, PowerUp.Rocket };
-            for (int s = 0; s < SlotCount; s++)
-            {
-                string slotName = SlotNames[s].ToLowerInvariant();
-                var t = new GearDef
-                {
-                    Id = "gear_" + slotName + "_test", Slot = (GearSlot)s, Rarity = GearRarity.Rare, Number = 0,
-                    Name = "Test " + SlotNames[s], Boost = testBoost[s], BoostPercent = BoostPercentByRarity[(int)GearRarity.Rare], ArtId = slotName + "_test"
-                };
-                testPieces[s] = t;
-                map[t.Id] = t;
             }
             byId = map;
             bySlotRarity = grid;
@@ -162,32 +136,61 @@ namespace BoingUpSkyTower.Economy
             return bySlotRarity[(int)slot][(int)rarity];
         }
 
-        // ---- art: a piece without a painted icon never drops and never shows (owner 2026-10-24, docs/18 section E.4) ----
+        // ---- parts and art: a piece without its art never drops and never shows (owner 2026-10-24) ----
+
+        static readonly string[] HeadParts = { "head" };
+        static readonly string[] BodyParts = { "body", "sleeveL", "sleeveR" };
+        static readonly string[] BodyRequired = { "body" };
+        static readonly string[] BootParts = { "bootL", "bootR" };
+
+        /// <summary>Every part picture a piece of the slot can have (full-canvas PNGs). Body gear adds two short sleeves, boots are a pair.</summary>
+        public static string[] PartNames(GearSlot slot)
+        {
+            switch (slot)
+            {
+                case GearSlot.Head: return HeadParts;
+                case GearSlot.Body: return BodyParts;
+                default: return BootParts;
+            }
+        }
+
+        /// <summary>The parts a piece must have to count as painted: head.png, body.png, or both boots. The sleeves are optional.</summary>
+        public static string[] RequiredParts(GearSlot slot)
+        {
+            switch (slot)
+            {
+                case GearSlot.Head: return HeadParts;
+                case GearSlot.Body: return BodyRequired;
+                default: return BootParts;
+            }
+        }
 
         static Func<GearDef, bool> artProbe;
         static readonly Dictionary<string, bool> hasArt = new Dictionary<string, bool>();
 
-        /// <summary>Overrides the art check (tests). Null restores the default: the icon exists in Resources/Art/GearIcons.</summary>
+        /// <summary>Overrides the art check (tests). Null restores the default: the required part pictures exist in Resources/Characters/gear/&lt;id&gt;/.</summary>
         public static Func<GearDef, bool> ArtProbe
         {
             get { return artProbe; }
             set { artProbe = value; hasArt.Clear(); }
         }
 
-        /// <summary>File name (no extension) of the shared look of a piece: slot_n, n = rarity + 1 (head_2 ...). Layers and icons use the same names.</summary>
-        public static string LookKey(GearDef d)
-        {
-            return SlotNames[(int)d.Slot].ToLowerInvariant() + "_" + ((int)d.Rarity + 1);
-        }
+        /// <summary>Forgets the cached art checks (art files arrived or were removed).</summary>
+        public static void ClearArtCache() { hasArt.Clear(); }
 
-        /// <summary>True when the piece has its painted icon (its own art id first, then the shared look of its slot and rarity). All 240 definitions stay; only these can drop.</summary>
+        /// <summary>True when the piece has its part pictures. All 180 definitions stay; only these can drop, show, or be worn.</summary>
         public static bool HasArt(GearDef d)
         {
             if (d == null) return false;
             bool v;
             if (hasArt.TryGetValue(d.Id, out v)) return v;
             if (artProbe != null) v = artProbe(d);
-            else v = Resources.Load<Sprite>("Art/GearIcons/" + d.ArtId) != null || Resources.Load<Sprite>("Art/GearIcons/" + LookKey(d)) != null;
+            else
+            {
+                v = true;
+                foreach (string part in RequiredParts(d.Slot))
+                    if (Resources.Load<Sprite>(ArtRoot + d.ArtId + "/" + part) == null) { v = false; break; }
+            }
             hasArt[d.Id] = v;
             return v;
         }
@@ -199,14 +202,6 @@ namespace BoingUpSkyTower.Economy
             foreach (GearDef d in Pieces(slot, rarity)) if (HasArt(d)) list.Add(d);
             return list;
         }
-
-        /// <summary>Boost in percent of a piece at a forge level (1..5): the base plus 10 percent of the base per level above 1.</summary>
-        public static int BoostAtLevel(GearDef def, int level)
-        {
-            if (def == null) return 0;
-            int lv = level < 1 ? 1 : (level > MaxLevel ? MaxLevel : level);
-            return def.BoostPercent + def.BoostPercent * LevelBonusPercentOfBase * (lv - 1) / 100;
-        }
     }
 
     /// <summary>Total boost per power-up from what is worn, applied to the run config at run start.</summary>
@@ -214,9 +209,9 @@ namespace BoingUpSkyTower.Economy
     {
         /// <summary>
         /// Percent boost per PowerUp (index = enum value 0..11). Different power-ups are separate; when two worn pieces boost the same power-up
-        /// (Magnet comes from body and pants) the larger one applies, they do not stack (docs/17 section B, proposed rule).
+        /// the larger one applies, they do not stack (docs/19 section A: nothing stacks across powers).
         /// </summary>
-        public static int[] Compute(IList<GearDef> worn, IList<int> levels)
+        public static int[] Compute(IList<GearDef> worn)
         {
             var total = new int[PowerUps.MaxType + 1];
             if (worn == null) return total;
@@ -224,10 +219,8 @@ namespace BoingUpSkyTower.Economy
             {
                 GearDef d = worn[i];
                 if (d == null) continue;
-                int level = levels != null && i < levels.Count ? levels[i] : 1;
-                int pct = GearCatalog.BoostAtLevel(d, level);
                 int k = (int)d.Boost;
-                if (pct > total[k]) total[k] = pct;
+                if (d.BoostPercent > total[k]) total[k] = d.BoostPercent;
             }
             return total;
         }

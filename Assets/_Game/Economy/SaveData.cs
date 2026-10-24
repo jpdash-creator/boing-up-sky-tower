@@ -19,8 +19,6 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("powerups")] public Dictionary<string, int> Powerups = new Dictionary<string, int>();
         /// <summary>Gear piece id (gear_head_c01 ...) to owned copies, 1 or more. Added in save version 2 (docs/17); older saves load empty.</summary>
         [JsonProperty("gear")] public Dictionary<string, int> Gear = new Dictionary<string, int>();
-        /// <summary>Forge level (2..5) of a piece; a piece that is not listed is at level 1.</summary>
-        [JsonProperty("gearLevels")] public Dictionary<string, int> GearLevels = new Dictionary<string, int>();
     }
 
     /// <summary>
@@ -29,8 +27,11 @@ namespace BoingUpSkyTower.Economy
     /// </summary>
     public sealed class SaveData
     {
-        /// <summary>Version 2 (docs/17) added gear, the worn gear and the chest counter. All additions are optional fields, so version 1 files load unchanged.</summary>
-        public const int CurrentVersion = 2;
+        /// <summary>
+        /// Version 2 (docs/17) added gear, the worn gear and the chest counter. Version 3 (docs/19) has three gear slots (no pants) and no forge levels: loading an older
+        /// save drops the pants entry, the forge levels and every removed id. All additions are optional fields, so older files load unchanged.
+        /// </summary>
+        public const int CurrentVersion = 3;
 
         [JsonProperty("version")] public int Version = CurrentVersion;
         [JsonProperty("coins")] public int Coins;
@@ -47,7 +48,7 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("inventory")] public InventoryData Inventory = new InventoryData();
         /// <summary>Last power-up loadout: up to 3 power-up ids (empty string = empty slot), remembered between runs.</summary>
         [JsonProperty("loadout")] public List<string> Loadout = new List<string>();
-        /// <summary>Worn gear, exactly 4 entries in slot order head, body, pants, boots (empty string = nothing worn).</summary>
+        /// <summary>Worn gear, exactly 3 entries in slot order head, body, boots (empty string = nothing worn).</summary>
         [JsonProperty("equipped")] public List<string> Equipped = new List<string>();
         /// <summary>Chests opened so far: seeds the next chest roll so openings are repeatable.</summary>
         [JsonProperty("chestOpens")] public int ChestOpens;

@@ -10,7 +10,7 @@ namespace BoingUpSkyTower.Gameplay
     public static class Glyphs
     {
         const int N = 256;
-        static Sprite left, up, pause, cross, check, restart, ring, infinity, helmet, shirt, pants, boot, anvil;
+        static Sprite left, up, pause, cross, check, restart, ring, infinity, helmet, shirt, boot;
 
         public static Sprite Left { get { return left != null ? left : (left = Build(ChevronShape(-1f, 0f), "glyph_left")); } }
         public static Sprite Up { get { return up != null ? up : (up = Build(ChevronShape(0f, 1f), "glyph_up")); } }
@@ -23,26 +23,23 @@ namespace BoingUpSkyTower.Gameplay
         public static Sprite Infinity { get { return infinity != null ? infinity : (infinity = Build(InfinityShape(), "glyph_infinity")); } }
         public static Sprite Check { get { return check != null ? check : (check = Build(TickShape(), "glyph_check")); } }
 
-        // Slot pictures for the placeholder gear tiles (docs/17): head, body, pants, boots, plus the forge anvil.
+        // Slot pictures for the three slot tabs of the inventory (docs/19): head, body, boots.
         public static Sprite Helmet { get { return helmet != null ? helmet : (helmet = Build(HelmetShape(), "glyph_helmet", 0.05f)); } }
         public static Sprite Shirt { get { return shirt != null ? shirt : (shirt = Build(ShirtShape(), "glyph_shirt", 0.05f)); } }
-        public static Sprite Pants { get { return pants != null ? pants : (pants = Build(PantsShape(), "glyph_pants", 0.05f)); } }
         public static Sprite Boot { get { return boot != null ? boot : (boot = Build(BootShape(), "glyph_boot", 0.05f)); } }
-        public static Sprite Anvil { get { return anvil != null ? anvil : (anvil = Build(AnvilShape(), "glyph_anvil", 0.05f)); } }
 
-        /// <summary>The slot picture for a gear slot index 0..3 (head, body, pants, boots).</summary>
+        /// <summary>The slot picture for a gear slot index 0..2 (head, body, boots).</summary>
         public static Sprite ForSlot(int slot)
         {
             switch (slot)
             {
                 case 0: return Helmet;
                 case 1: return Shirt;
-                case 2: return Pants;
                 default: return Boot;
             }
         }
 
-        public static void Warmup() { Sprite hh = Helmet, ss = Shirt, pp = Pants, bb = Boot, aa = Anvil; WarmupBasic(); }
+        public static void Warmup() { Sprite hh = Helmet, ss = Shirt, bb = Boot; WarmupBasic(); }
 
         static void WarmupBasic() { Sprite a = Left, b = Up, c = Pause, d = Cross, e = Check, f = Restart, g = Ring, h = Infinity; }
 
@@ -95,35 +92,12 @@ namespace BoingUpSkyTower.Gameplay
             };
         }
 
-        static Sdf PantsShape()
-        {
-            return (x, y) =>
-            {
-                float d = Box(x, y, 0.5f, 0.70f, 0.26f, 0.10f, 0.04f);
-                d = Mathf.Min(d, Box(x, y, 0.35f, 0.38f, 0.10f, 0.32f, 0.04f));
-                d = Mathf.Min(d, Box(x, y, 0.65f, 0.38f, 0.10f, 0.32f, 0.04f));
-                return d;
-            };
-        }
-
         static Sdf BootShape()
         {
             return (x, y) =>
             {
                 float d = Box(x, y, 0.40f, 0.60f, 0.14f, 0.26f, 0.05f);
                 d = Mathf.Min(d, Box(x, y, 0.50f, 0.28f, 0.34f, 0.12f, 0.08f));
-                return d;
-            };
-        }
-
-        static Sdf AnvilShape()
-        {
-            return (x, y) =>
-            {
-                float d = Box(x, y, 0.5f, 0.66f, 0.34f, 0.10f, 0.04f);
-                d = Mathf.Min(d, Box(x, y, 0.5f, 0.50f, 0.12f, 0.10f, 0.02f));
-                d = Mathf.Min(d, Box(x, y, 0.5f, 0.28f, 0.26f, 0.10f, 0.04f));
-                d = Mathf.Min(d, Seg(x, y, 0.16f, 0.66f, 0.06f, 0.62f) - 0.05f);
                 return d;
             };
         }
