@@ -43,17 +43,19 @@ namespace BoingUpSkyTower.Economy
             {
                 bool hit = rng.Next(100) < percents[r];
                 if (!hit) continue;
-                drops.Add(RandomPiece(ref rng, (GearRarity)r).Id);
+                GearDef piece = RandomPiece(ref rng, (GearRarity)r);
+                if (piece != null) drops.Add(piece.Id);
             }
             return drops;
         }
 
-        /// <summary>A random slot, then a random piece of that slot and rarity.</summary>
+        /// <summary>A random slot, then a random piece of that slot and rarity that has art. Null when that slot and rarity has no painted piece yet (no drop).</summary>
         public static GearDef RandomPiece(ref Rng rng, GearRarity rarity)
         {
             var slot = (GearSlot)rng.Next(GearCatalog.SlotCount);
-            GearDef[] pieces = GearCatalog.Pieces(slot, rarity);
-            return pieces[rng.Next(pieces.Length)];
+            List<GearDef> pieces = GearCatalog.PiecesWithArt(slot, rarity);
+            if (pieces.Count == 0) return null;
+            return pieces[rng.Next(pieces.Count)];
         }
     }
 
@@ -115,7 +117,8 @@ namespace BoingUpSkyTower.Economy
             for (int i = 0; i < percents.Length; i++)
             {
                 if (rng.Next(100) >= percents[i]) continue;
-                result.Gear.Add(GearDrops.RandomPiece(ref rng, (GearRarity)((int)low + i)).Id);
+                GearDef piece = GearDrops.RandomPiece(ref rng, (GearRarity)((int)low + i));
+                if (piece != null) result.Gear.Add(piece.Id);
             }
             int units = PowerUpCount(kind);
             for (int i = 0; i < units; i++)

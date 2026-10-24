@@ -16,7 +16,14 @@ namespace BoingUpSkyTower.Tests
         ContentRepository repo;
 
         [SetUp]
-        public void SetUp() { repo = ContentRepository.LoadFromResources(); }
+        public void SetUp()
+        {
+            repo = ContentRepository.LoadFromResources();
+            GearCatalog.ArtProbe = d => true;   // these tests cover the rules for every piece; the art filter has its own tests (CharacterRigTests)
+        }
+
+        [TearDown]
+        public void TearDown() { GearCatalog.ArtProbe = null; }
 
         ProgressService NewService() { return new ProgressService(repo, new MemorySaveStore(), 5); }
 

@@ -81,10 +81,22 @@ namespace BoingUpSkyTower.Gameplay
             fill.rectTransform.offsetMin = new Vector2(inset, inset);
             fill.rectTransform.offsetMax = new Vector2(-inset, -inset);
 
-            int slot = state == GearTileState.Empty ? (int)emptySlot : (def != null ? (int)def.Slot : 0);
-            Color glyphTint = state == GearTileState.Owned ? Color.white : (state == GearTileState.Empty ? new Color(0.36f, 0.42f, 0.60f, 0.9f) : new Color(0.07f, 0.09f, 0.20f, 0.95f));
-            Image g = UiKit.AddImage(root.transform, "Slot", Glyphs.ForSlot(slot), glyphTint);
-            Corner(g.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -m * 0.03f), m * 0.52f);
+            // the real gear picture (a tight crop of the worn layer); only an EMPTY slot shows the slot glyph (owner 2026-10-24)
+            Sprite icon = state != GearTileState.Empty && def != null ? GearIcons.Find(def) : null;
+            if (icon != null)
+            {
+                Color iconTint = state == GearTileState.Owned ? Color.white : new Color(0.07f, 0.09f, 0.20f, 0.95f);
+                Image pic = UiKit.AddImage(root.transform, "Icon", icon, iconTint);
+                pic.preserveAspect = true;
+                Corner(pic.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -m * 0.02f), m * 0.74f);
+            }
+            else
+            {
+                int slot = state == GearTileState.Empty ? (int)emptySlot : (def != null ? (int)def.Slot : 0);
+                Color glyphTint = state == GearTileState.Owned ? Color.white : (state == GearTileState.Empty ? new Color(0.36f, 0.42f, 0.60f, 0.9f) : new Color(0.07f, 0.09f, 0.20f, 0.95f));
+                Image g = UiKit.AddImage(root.transform, "Slot", Glyphs.ForSlot(slot), glyphTint);
+                Corner(g.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -m * 0.03f), m * 0.52f);
+            }
 
             if (state != GearTileState.Owned || def == null) return rt;
 
@@ -177,36 +189,39 @@ namespace BoingUpSkyTower.Gameplay
     }
 
     /// <summary>
-    /// Momo with the worn gear drawn over him (docs/17 section C): the base picture plus one layer per worn slot, all the same size as the Momo picture
-    /// so they line up, drawn in the fixed order back, body, pants, boots, jacket, head. A piece with no layer art yet draws nothing (CUX-10).
+    /// The character with the worn gear drawn over him (docs/17 section C, docs/18 section B): the body picture plus one layer per worn slot, all placed through the
+    /// character's rig (identity for Momo, so every layer has exactly the body's rect), drawn in the fixed order pants, boots, body, head. It is the same
+    /// composite as in the run, only larger. A piece with no layer art draws nothing (CUX-10).
     /// </summary>
     public static class MomoDoll
     {
         /// <summary>Slots in draw order after Momo's body: pants, boots, then the jacket (body slot), then head gear.</summary>
         public static readonly GearSlot[] DrawOrder = { GearSlot.Pants, GearSlot.Boots, GearSlot.Body, GearSlot.Head };
 
-        /// <summary>Resolves the worn-layer picture of a piece, or null while it has none. The pilot layers are named slot_n (head_1, body_3 ...).</summary>
+        /// <summary>Resolves the worn-layer picture of a piece, or null while it has none. The pilot layers are named slot_n (head_2, body_3 ...).</summary>
         public static Func<GearDef, Sprite> LayerFor = GearLayers.Find;
 
-        /// <summary>Builds the doll in a box of the given height (width follows the picture). Returns the box.</summary>
-        public static RectTransform Build(Transform parent, string name, Sprite momo, ProgressService progress, float height)
+        /// <summary>Builds the doll in a box of the given height (width follows the picture). Returns the box. <paramref name="who"/> null = Momo.</summary>
+        public static RectTransform Build(Transform parent, string name, Sprite body, ProgressService progress, float height, CharacterDef who = null)
         {
             RectTransform box = UiKit.Rect(parent, name);
-            float aspect = momo != null ? momo.rect.width / momo.rect.height : 0.8f;
+            float aspect = body != null ? body.rect.width / body.rect.height : 0.8f;
             box.sizeDelta = new Vector2(height * aspect, height);
-            Image baseImg = UiKit.AddImage(box, "Momo", momo, momo != null ? Color.white : new Color(1f, 0.85f, 0.4f, 1f));
+            Color tint = who != null ? who.BodyColor : Color.white;
+            Image baseImg = UiKit.AddImage(box, "Momo", body, body != null ? tint : new Color(1f, 0.85f, 0.4f, 1f));
             baseImg.preserveAspect = true;
             UiKit.Stretch(baseImg.rectTransform);
-            Refresh(box, progress);
+            Refresh(box, progress, who);
             return box;
         }
 
-        /// <summary>Rebuilds the layers above Momo from what is worn now.</summary>
-        public static void Refresh(RectTransform box, ProgressService progress)
+        /// <summary>Rebuilds the layers above the body from what is worn now.</summary>
+        public static void Refresh(RectTransform box, ProgressService progress, CharacterDef who = null)
         {
             for (int i = box.childCount - 1; i >= 0; i--)
                 if (box.GetChild(i).name.StartsWith("Layer")) UnityEngine.Object.Destroy(box.GetChild(i).gameObject);
             if (progress == null) return;
+            CharacterRig rig = who != null ? who.Rig : CharacterRig.Identity;
             foreach (GearSlot slot in DrawOrder)
             {
                 GearDef d = progress.EquippedDef(slot);
@@ -214,8 +229,13 @@ namespace BoingUpSkyTower.Gameplay
                 Sprite s = LayerFor != null ? LayerFor(d) : null;
                 if (s == null) continue;
                 Image img = UiKit.AddImage(box, "Layer_" + slot, s, Color.white);
-                img.preserveAspect = true;
-                UiKit.Stretch(img.rectTransform);
+                img.preserveAspect = false;
+                RectTransform rt = img.rectTransform;
+                Vector2 nmin, nmax;
+                rig.NormalizedRect(slot, out nmin, out nmax);
+                rt.anchorMin = nmin;
+                rt.anchorMax = nmax;
+                rt.offsetMin = rt.offsetMax = Vector2.zero;
             }
         }
     }
@@ -234,7 +254,7 @@ namespace BoingUpSkyTower.Gameplay
             Sprite s = Load(d.ArtId);
             if (s != null) return s;
             // the pilot sheets hold six looks per slot, Common to Legendary in order: a piece wears the look of its rarity until its own art is painted
-            return Load(GearCatalog.SlotNames[(int)d.Slot].ToLowerInvariant() + "_" + ((int)d.Rarity + 1));
+            return Load(GearCatalog.LookKey(d));
         }
 
         static Sprite Load(string file)
@@ -242,6 +262,31 @@ namespace BoingUpSkyTower.Gameplay
             Sprite s;
             if (cache.TryGetValue(file, out s)) return s;
             s = Resources.Load<Sprite>("Art/GearLayers/" + file);
+            cache[file] = s;
+            return s;
+        }
+    }
+
+    /// <summary>
+    /// Gear tile pictures: a tight crop of the worn layer on a transparent square (Tools/art_pipeline/export_gear_icons.py), in Resources/Art/GearIcons with the
+    /// same naming as <see cref="GearLayers"/>. Null when the piece has no art (<see cref="GearCatalog.HasArt"/> is then false).
+    /// </summary>
+    public static class GearIcons
+    {
+        static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
+
+        public static Sprite Find(GearDef d)
+        {
+            if (d == null) return null;
+            Sprite s = Load(d.ArtId);
+            return s != null ? s : Load(GearCatalog.LookKey(d));
+        }
+
+        static Sprite Load(string file)
+        {
+            Sprite s;
+            if (cache.TryGetValue(file, out s)) return s;
+            s = Resources.Load<Sprite>("Art/GearIcons/" + file);
             cache[file] = s;
             return s;
         }

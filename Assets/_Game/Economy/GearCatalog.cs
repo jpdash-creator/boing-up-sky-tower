@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using BoingUpSkyTower.Simulation;
+using UnityEngine;
 
 namespace BoingUpSkyTower.Economy
 {
@@ -137,6 +139,44 @@ namespace BoingUpSkyTower.Economy
         {
             Ensure();
             return bySlotRarity[(int)slot][(int)rarity];
+        }
+
+        // ---- art: a piece without a painted icon never drops and never shows (owner 2026-10-24, docs/18 section E.4) ----
+
+        static Func<GearDef, bool> artProbe;
+        static readonly Dictionary<string, bool> hasArt = new Dictionary<string, bool>();
+
+        /// <summary>Overrides the art check (tests). Null restores the default: the icon exists in Resources/Art/GearIcons.</summary>
+        public static Func<GearDef, bool> ArtProbe
+        {
+            get { return artProbe; }
+            set { artProbe = value; hasArt.Clear(); }
+        }
+
+        /// <summary>File name (no extension) of the shared look of a piece: slot_n, n = rarity + 1 (head_2 ...). Layers and icons use the same names.</summary>
+        public static string LookKey(GearDef d)
+        {
+            return SlotNames[(int)d.Slot].ToLowerInvariant() + "_" + ((int)d.Rarity + 1);
+        }
+
+        /// <summary>True when the piece has its painted icon (its own art id first, then the shared look of its slot and rarity). All 240 definitions stay; only these can drop.</summary>
+        public static bool HasArt(GearDef d)
+        {
+            if (d == null) return false;
+            bool v;
+            if (hasArt.TryGetValue(d.Id, out v)) return v;
+            if (artProbe != null) v = artProbe(d);
+            else v = Resources.Load<Sprite>("Art/GearIcons/" + d.ArtId) != null || Resources.Load<Sprite>("Art/GearIcons/" + LookKey(d)) != null;
+            hasArt[d.Id] = v;
+            return v;
+        }
+
+        /// <summary>The pieces of one slot and rarity that have art (possibly none).</summary>
+        public static List<GearDef> PiecesWithArt(GearSlot slot, GearRarity rarity)
+        {
+            var list = new List<GearDef>();
+            foreach (GearDef d in Pieces(slot, rarity)) if (HasArt(d)) list.Add(d);
+            return list;
         }
 
         /// <summary>Boost in percent of a piece at a forge level (1..5): the base plus 10 percent of the base per level above 1.</summary>

@@ -328,10 +328,34 @@ namespace BoingUpSkyTower.Tests
             GrantSomeGear();
             yield return CheckScreen("inventory", () => meta.ShowInventory(), problems);
             yield return CheckScreen("inventory-boots", () => meta.ShowInventory(3), problems);
-            yield return CheckScreen("inventory-boosts", () => { meta.ShowInventory(); meta.CurrentInventory.OpenBoostSummary(); }, problems);
+            yield return CheckScreen("info", () => meta.ShowInfo(), problems);
+            yield return CheckScreen("info-open", () => { meta.ShowInfo(); meta.CurrentInfo.Select(BoingUpSkyTower.Simulation.PowerUp.Magnet); }, problems);
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
             yield return CheckScreen("characters-roster", () => meta.ShowCharacters(true), problems);
+            // development builds: the test character Pip in the roster, on the stage, and the switch on region 2's level screen
+            CharacterCatalog.TestOverride = true;
+            CharacterCatalog.Selected = CharacterCatalog.Pip;
+            yield return CheckScreen("characters-roster-dev", () => meta.ShowCharacters(true), problems);
+            yield return CheckScreen("characters-pip", () => meta.ShowCharacters(), problems);
+            yield return CheckScreen("inventory-pip", () => meta.ShowInventory(), problems);
+            yield return CheckScreen("levels-region2-dev", () => meta.ShowLevels(GameSession.Repo.GetRegionByIndex(2)), problems);
+            CharacterCatalog.Selected = CharacterCatalog.Momo;
+            CharacterCatalog.TestOverride = false;
             Report(problems);
+        }
+
+        /// <summary>Docs/18: every worn layer is scaled to the player sprite's bounds (same size, same centre), so gear is never several times too big in the run.</summary>
+        static void AssertWornLayersFitPlayer(RunView view, List<string> problems)
+        {
+            SpriteRenderer body = view.PlayerRenderer;
+            SpriteRenderer[] worn = view.WornLayers;
+            if (worn.Length == 0) problems.Add("run: no worn layer was built although gear is worn");
+            foreach (SpriteRenderer w in worn)
+            {
+                Bounds a = body.bounds, b = w.bounds;
+                if (Vector3.Distance(a.size, b.size) > 0.02f * a.size.magnitude || Vector3.Distance(a.center, b.center) > 0.02f * a.size.magnitude)
+                    problems.Add("run: " + w.name + " bounds " + b + " differ from the player " + a);
+            }
         }
 
         /// <summary>Owned gear of every slot and rarity, some with spare copies (forge ready), one piece worn per slot.</summary>
@@ -390,10 +414,12 @@ namespace BoingUpSkyTower.Tests
             GameSettings.ReducedMotion = leftHanded;   // the second scenario also exercises reduced motion
             for (int i = 1; i <= 2; i++)
                 GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
+            GrantSomeGear();   // gear worn in the run: every layer must sit exactly on the player sprite
             GameSession.CurrentLevelId = "lvl_001_03";
             yield return Load("Run");
             var rc = Object.FindFirstObjectByType<RunController>();
             var problems = new List<string>();
+            AssertWornLayersFitPlayer(rc.View, problems);
             yield return CheckScreen("run-intro", () => { }, problems);
             rc.Hud.SkipIntro();
             int frame = 0;

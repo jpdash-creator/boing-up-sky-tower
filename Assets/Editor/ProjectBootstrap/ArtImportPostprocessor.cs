@@ -114,6 +114,8 @@ namespace ProjectBootstrap
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/Chests/")) { ApplyPicture((TextureImporter)assetImporter, 1024); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/GearLayers/")) { ApplyPicture((TextureImporter)assetImporter, 2048); return; }
+            if (assetPath.StartsWith("Assets/Resources/Art/GearIcons/")) { ApplyIcon((TextureImporter)assetImporter); return; }
+            if (assetPath.StartsWith("Assets/Resources/Characters/")) { ApplyPicture((TextureImporter)assetImporter, 2048); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (!assetPath.StartsWith("Assets/Art/")) return;
             var ti = (TextureImporter)assetImporter;

@@ -15,6 +15,9 @@ namespace BoingUpSkyTower.Gameplay
         public Action OpenCharacters;
         public Action OpenInventory;
         public Action OpenChests;
+        public Action OpenInfo;
+        /// <summary>The land stage built behind the screen (backdrop, ground, dirt oval); the doll stands on it.</summary>
+        public Stage Stage;
         /// <summary>A fresh full-screen dim overlay (the meta popup layer); closing it is <see cref="CloseOverlay"/>.</summary>
         public Func<RectTransform> NewOverlay;
         public Action CloseOverlay;
@@ -27,7 +30,7 @@ namespace BoingUpSkyTower.Gameplay
     /// </summary>
     public sealed class InventoryScreen
     {
-        const float TopH = 1010f, Side = 20f, SlotTile = 190f, DollH = 520f, DollTop = 250f;
+        const float TopH = 1010f, Side = 20f, SlotTile = 190f, DollH = 520f, ButtonsTop = 800f;
         const float TabY = TopH + 20f, TabH = 126f, GridTop = TopH + 170f, GridTile = 186f, GridGap = 12f;
         const int Columns = 5;
 
@@ -113,18 +116,24 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.SetText(CoinText, progress.Coins.ToString());
             UiKit.SetText(GemText, progress.Gems.ToString());
 
-            // Momo in the middle, the worn gear on him
-            doll = MomoDoll.Build(top, "Doll", art != null ? art.Player : null, progress, DollH);
-            Anchor(doll, new Vector2(0.5f, 1f), new Vector2(0f, -DollTop), doll.sizeDelta);
+            // the chosen character on the dirt oval of the land stage, the worn gear on him (same composite as in the run, a touch larger)
+            if (host.Stage != null && host.Stage.Root != null)
+            {
+                for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
+                    if (host.Stage.Root.GetChild(i).name == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
+                CharacterDef who = CharacterCatalog.Selected;
+                doll = MomoDoll.Build(host.Stage.Root, "Doll", who.Body(art), progress, DollH, who);
+                host.Stage.Stand(doll);
+            }
 
             // four slots: head and body on the left, pants and boots on the right
             for (int s = 0; s < GearCatalog.SlotCount; s++) BuildSlotTile((GearSlot)s);
 
             // two icon buttons under Momo: what the gear boosts, and the characters
-            Button boosts = ToyKit.IconButton(top, "Boosts", "What my gear boosts", 1, ToyKit.Get("icon_bolt"), new Vector2(130f, 126f), OpenBoostSummary, 0.6f);
-            Anchor((RectTransform)boosts.transform, new Vector2(0.5f, 1f), new Vector2(-84f, -(DollTop + DollH + 30f)), new Vector2(130f, 126f));
+            Button boosts = ToyKit.IconButton(top, "Boosts", "Character info: what my gear boosts", 1, ToyKit.Get("icon_bolt"), new Vector2(130f, 126f), () => { if (host.OpenInfo != null) host.OpenInfo(); }, 0.6f);
+            Anchor((RectTransform)boosts.transform, new Vector2(0.5f, 1f), new Vector2(-84f, -ButtonsTop), new Vector2(130f, 126f));
             Button heroes = ToyKit.IconButton(top, "Characters", "Characters", 0, ToyKit.Get("icon_heroes"), new Vector2(130f, 126f), () => { if (host.OpenCharacters != null) host.OpenCharacters(); }, 0.6f);
-            Anchor((RectTransform)heroes.transform, new Vector2(0.5f, 1f), new Vector2(84f, -(DollTop + DollH + 30f)), new Vector2(130f, 126f));
+            Anchor((RectTransform)heroes.transform, new Vector2(0.5f, 1f), new Vector2(84f, -ButtonsTop), new Vector2(130f, 126f));
         }
 
         void BuildSlotTile(GearSlot slot)
@@ -209,7 +218,7 @@ namespace BoingUpSkyTower.Gameplay
             var missing = new List<GearDef>();
             foreach (GearDef d in GearCatalog.All)
             {
-                if ((int)d.Slot != SlotTab) continue;
+                if ((int)d.Slot != SlotTab || !GearCatalog.HasArt(d)) continue;   // a piece without painted art does not show
                 (progress.OwnsGear(d.Id) ? owned : missing).Add(d);
             }
             Comparison<GearDef> byRarity = (a, b) => a.Rarity != b.Rarity ? b.Rarity.CompareTo(a.Rarity) : a.Number.CompareTo(b.Number);
@@ -278,37 +287,6 @@ namespace BoingUpSkyTower.Gameplay
             BuildTop();
             BuildTabs();
             BuildGrid();
-        }
-
-        // ---- boost summary ----
-
-        public void OpenBoostSummary()
-        {
-            if (host.NewOverlay == null) return;
-            RectTransform overlay = host.NewOverlay();
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, "", art, new Vector2(860f, 1090f), host.CloseOverlay);
-            int[] boost = progress.GearBoostPercents();
-            var list = new List<PowerUpDef>(progress.PowerUpDefs.Implemented);
-            for (int i = 0; i < list.Count; i++)
-            {
-                PowerUpDef def = list[i];
-                int pct = boost[(int)def.Type];
-                float y = 170f + i * 130f;
-                Image ic = PowerUpUi.AddIcon(panel, "Power" + i, def.Type, new Vector2(0f, 1f), new Vector2(60f, -y), 112f, pct <= 0);
-                ic.rectTransform.pivot = new Vector2(0f, 1f);
-                Image bar = UiKit.AddPanel(panel, "RowsBacking", new Color(0.93f, 0.95f, 1f, 1f));
-                Anchor(bar.rectTransform, new Vector2(0f, 1f), new Vector2(200f, -(y + 6f)), new Vector2(600f, 100f));
-                float frac = Mathf.Clamp01(pct / 200f);
-                Image fill = UiKit.AddPanel(bar.transform, "Fill", pct > 0 ? new Color(0.17f, 0.74f, 0.47f, 1f) : new Color(0.7f, 0.74f, 0.84f, 1f));
-                fill.rectTransform.anchorMin = new Vector2(0f, 0f);
-                fill.rectTransform.anchorMax = new Vector2(Mathf.Max(0.05f, frac), 1f);
-                fill.rectTransform.offsetMin = new Vector2(6f, 6f);
-                fill.rectTransform.offsetMax = new Vector2(-6f, -6f);
-                Text t = UiKit.AddText(bar.transform, "Percent", pct > 0 ? "+" + pct + "%" : "0", 52, Theme.Ink, TextAnchor.MiddleCenter, true);
-                t.horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.OnPanel(t);
-                UiKit.Stretch((RectTransform)t.transform);
-            }
         }
     }
 }

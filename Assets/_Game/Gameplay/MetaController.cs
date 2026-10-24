@@ -465,28 +465,28 @@ namespace BoingUpSkyTower.Gameplay
                 Back = ShowMenu,
                 OpenCharacters = () => ShowCharacters(),
                 OpenInventory = () => ShowInventory(),
+                OpenInfo = () => ShowInfo(),
+                Stage = gearStage,
                 OpenChests = () => ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection),
                 NewOverlay = NewOverlay,
                 CloseOverlay = ClosePopup,
             };
         }
 
-        void GearBackground()
+        Stage gearStage;
+        InfoScreen info;
+
+        /// <summary>The land stage behind the character, inventory and info screens: the current region's backdrop, grass and the dirt oval (docs/18).</summary>
+        void GearBackground(Stage layout)
         {
-            RegionDef cur = progress != null ? progress.CurrentRegion() : null;
-            RegionArt ra = art != null ? (art.ForRegion(cur != null ? cur.Index : 1) ?? art.ForRegion(1)) : null;
-            Background(ra != null ? ra.BgFar : null, new Color(0.45f, 0.72f, 0.95f, 1f));
-            Image veil = UiKit.AddImage(screenRoot, "BgVeil", null, new Color(1f, 1f, 1f, 0.12f));
-            veil.preserveAspect = false;
-            UiKit.Stretch(veil.rectTransform);
-            veil.transform.SetSiblingIndex(1);
+            gearStage = StageScene.Build(screenRoot, art, progress, layout);
         }
 
         /// <summary>Inventory: Momo with four gear slots, slot tabs, forge and the piece grid (docs/17 section E).</summary>
         public void ShowInventory(int slotTab = 0)
         {
             NewScreen("Inventory");
-            GearBackground();
+            GearBackground(StageScene.InventoryLayout());
             inventory = new InventoryScreen(screen, progress, art, MakeGearHost());
             inventory.Build(slotTab);
             AddBack("Back", ShowMenu);
@@ -500,7 +500,7 @@ namespace BoingUpSkyTower.Gameplay
         public void ShowCharacters(bool roster = false)
         {
             NewScreen("Characters");
-            GearBackground();
+            GearBackground(StageScene.CharacterLayout());
             characters = new CharactersScreen(screen, progress, art, MakeGearHost());
             characters.Build(roster);
             AddBack("Back", ShowMenu);
@@ -509,6 +509,30 @@ namespace BoingUpSkyTower.Gameplay
             gemText = characters.GemText;
             RefreshWallet();
         }
+
+        /// <summary>Character info: the power-ups before and after the worn gear (docs/18 section E.3).</summary>
+        public void ShowInfo()
+        {
+            NewScreen("Info");
+            GearBackground(StageScene.InfoLayout());
+            Image panel = UiKit.AddImage(screenRoot, "InfoPanel", null, new Color(0.17f, 0.23f, 0.42f, 1f));
+            panel.preserveAspect = false;
+            panel.raycastTarget = false;
+            panel.rectTransform.anchorMin = Vector2.zero;
+            panel.rectTransform.anchorMax = Vector2.one;
+            panel.rectTransform.offsetMin = Vector2.zero;
+            panel.rectTransform.offsetMax = new Vector2(0f, -gearStage.GroundBottom);
+            panel.transform.SetSiblingIndex(1);
+            info = new InfoScreen(screen, progress, art, MakeGearHost());
+            info.Build();
+            AddBack("Back", () => ShowCharacters());
+            AddTabBar(ToyKit.TabHeroes);
+            coinText = info.CoinText;
+            gemText = info.GemText;
+            RefreshWallet();
+        }
+
+        public InfoScreen CurrentInfo { get { return CurrentScreen == "Info" ? info : null; } }
 
         // ---------------- world map ----------------
 
@@ -1085,12 +1109,27 @@ namespace BoingUpSkyTower.Gameplay
             titleRow.pivot = new Vector2(0.5f, 1f);
             titleRow.anchoredPosition = new Vector2(0f, -244f);
             titleRow.sizeDelta = new Vector2(-40f, 176f);
+            bool testChar = region.Index == 2 && CharacterCatalog.ShowTest;
             Text hdr = UiKit.AddText(titleRow, "Header", region.Name, 64, Color.white, TextAnchor.MiddleLeft, true);
             var hrt = (RectTransform)hdr.transform;
             hrt.anchorMin = Vector2.zero;
             hrt.anchorMax = Vector2.one;
             hrt.offsetMin = new Vector2(24f, 0f);
-            hrt.offsetMax = new Vector2(-170f, 0f);
+            hrt.offsetMax = new Vector2(testChar ? -320f : -170f, 0f);
+            if (testChar)
+            {
+                // development builds only: the test character Pip, enterable from this region's level screen (docs/18 section E.5). Tap toggles Pip and Momo.
+                bool pipOn = CharacterCatalog.Selected.Id == CharacterCatalog.Pip.Id;
+                CharacterDef pip = CharacterCatalog.Pip;
+                Button pb = ToyKit.IconButton(titleRow, "TestCharacter", pipOn ? "Test character Pip, on" : "Test character Pip, off", pipOn ? 0 : 2, Glyphs.Ring, new Vector2(136f, 136f), () => { CharacterCatalog.Selected = pipOn ? CharacterCatalog.Momo : CharacterCatalog.Pip; ShowLevels(region); }, 0.72f);
+                UiKit.Place((RectTransform)pb.transform, new Vector2(1f, 0.5f), new Vector2(-150f, 0f), new Vector2(136f, 136f));
+                ((RectTransform)pb.transform).pivot = new Vector2(1f, 0.5f);
+                Image face = UiKit.AddImage(pb.transform, "Face", pip.Body(art), pip.BodyColor);
+                face.raycastTarget = false;
+                face.rectTransform.anchorMin = new Vector2(0.15f, 0.12f);
+                face.rectTransform.anchorMax = new Vector2(0.85f, 0.88f);
+                face.rectTransform.offsetMin = face.rectTransform.offsetMax = Vector2.zero;
+            }
             Button endlessIcon = ToyKit.IconButton(titleRow, "Endless", "Endless mode", 1, Glyphs.Infinity, new Vector2(136f, 136f), () => OnEndlessTapped(region), 0.72f);
             UiKit.Place((RectTransform)endlessIcon.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(136f, 136f));
             endlessIcon.GetComponent<RectTransform>().pivot = new Vector2(1f, 0.5f);

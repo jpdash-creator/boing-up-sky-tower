@@ -686,6 +686,7 @@ PlayerSettings:
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
     Android: TMP_PRESENT
+    Standalone: TMP_PRESENT
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

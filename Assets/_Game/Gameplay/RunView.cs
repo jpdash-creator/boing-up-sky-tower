@@ -794,25 +794,33 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         SpriteRenderer[] wornSr = new SpriteRenderer[0];
+        CharacterDef who;
+        Sprite bodySprite;
+        Color bodyColor = Color.white;
 
-        /// <summary>The worn gear: one layer per slot, a child of Momo (the layers are painted at the size of the Momo picture), so it moves, squashes and flips with him.</summary>
+        /// <summary>The worn layers of the player (tests compare their bounds with the player sprite's).</summary>
+        public SpriteRenderer[] WornLayers { get { return wornSr; } }
+        public SpriteRenderer PlayerRenderer { get { return playerSr; } }
+
+        /// <summary>
+        /// The worn gear: one layer per slot, a child of the player sprite, so it moves, squashes and flips with it. Every layer is placed through the character's
+        /// rig and scaled to the body sprite's own bounds (the layers are painted at the size of the Momo picture; imported at another pixels-per-unit they
+        /// would be drawn several times too big), so the gear has the same proportions as on the character screens.
+        /// </summary>
         void BuildWornGear()
         {
             var list = new List<SpriteRenderer>(4);
             ProgressService pr = GameSession.Progress;
-            if (pr != null)
+            if (pr != null && bodySprite != null)
             {
+                CharacterRig rig = who != null ? who.Rig : CharacterRig.Identity;
                 int order = 11;
                 foreach (GearSlot slot in MomoDoll.DrawOrder)
                 {
                     Sprite sp = GearLayers.Find(pr.EquippedDef(slot));
                     if (sp == null) continue;
                     SpriteRenderer sr = NewSprite("Worn" + slot, sp, order++, player);
-                    sr.transform.localPosition = Vector3.zero;
-                    // the layer is painted at the size of the Momo picture; imported at another pixels-per-unit it would be drawn several times too big,
-                    // so it is scaled to the player sprite's own bounds (a child inherits the player's scale)
-                    Vector2 mb = art != null && art.Player != null ? (Vector2)art.Player.bounds.size : (Vector2)sp.bounds.size;
-                    sr.transform.localScale = new Vector3(mb.x / sp.bounds.size.x, mb.y / sp.bounds.size.y, 1f);
+                    rig.PlaceSprite(sr.transform, sp, bodySprite, slot);
                     list.Add(sr);
                 }
             }
@@ -821,15 +829,19 @@ namespace BoingUpSkyTower.Gameplay
 
         void BuildPlayer()
         {
-            playerSr = NewSprite("Momo", art != null ? art.Player : null, 10);
+            who = CharacterCatalog.Selected;
+            bodySprite = who.Body(art);
+            bodyColor = who.BodyColor;
+            playerSr = NewSprite("Momo", bodySprite, 10);
             player = playerSr.transform;
-            if (art != null && art.Player != null)
+            if (bodySprite != null)
             {
-                Vector2 size = art.Player.bounds.size;
+                Vector2 size = bodySprite.bounds.size;
                 float s = playerHeight / size.y;
                 player.localScale = new Vector3(s, s, 1f);
             }
             else player.localScale = new Vector3(0.9f, playerHeight, 1f);
+            playerSr.color = bodyColor;
             BuildWornGear();
         }
 
@@ -1093,9 +1105,9 @@ namespace BoingUpSkyTower.Gameplay
             float stretch = reduced ? 1f : 1f + Mathf.Clamp(Mathf.Abs(vy) * 1.6f, 0f, 0.25f) - squash * 0.22f;
             float h = playerHeight * stretch;
             float widthFactor = 1f / Mathf.Max(0.7f, stretch);
-            if (art != null && art.Player != null)
+            if (bodySprite != null)
             {
-                Vector2 size = art.Player.bounds.size;
+                Vector2 size = bodySprite.bounds.size;
                 float sy = h / size.y;
                 float sx = (playerHeight / size.y) * widthFactor;
                 float facing = s.Vx.Raw < -1000 ? -1f : (s.Vx.Raw > 1000 ? 1f : Mathf.Sign(player.localScale.x));
@@ -1103,7 +1115,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             player.position = new Vector3(px, py + h * 0.5f, 0f);
             player.rotation = reduced ? Quaternion.identity : Quaternion.Euler(0f, 0f, Mathf.Clamp(-s.Vx.F() * 40f, -12f, 12f));
-            playerSr.color = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;
+            playerSr.color = s.Invuln > 0 && (reduced || (tick / 10) % 2 == 0) ? new Color(bodyColor.r, bodyColor.g, bodyColor.b, 0.55f) : bodyColor;
             UpdatePowerFx(px, py + h * 0.5f);
             UpdateGearFx(px, py + h * 0.5f, h);
 
