@@ -445,7 +445,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public void ShowFailed(RunSession s, bool canAffordRevive)
         {
-            OpenOverlay("You fell!", 800f);
+            OpenOverlay(s.GoalLost ? "Wall bounce!" : "You fell!", 800f);
             AudioManager.Play(Sfx.Fail);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();

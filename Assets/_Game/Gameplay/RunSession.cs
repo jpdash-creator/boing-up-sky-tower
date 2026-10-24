@@ -16,7 +16,7 @@ namespace BoingUpSkyTower.Gameplay
         public static int ReviveCostFor(int revivesUsed) { return revivesUsed <= 0 ? 2 : 5; }
         public int NextReviveCost { get { return ReviveCostFor(State.RevivesUsed); } }
         /// <summary>Endless runs have no revive: the result (best floor, coins) is saved the moment the player falls (CUX-8), so a revive would double pay.</summary>
-        public bool CanRevive { get { return !IsEndless && State.RevivesUsed < MaxRevives; } }
+        public bool CanRevive { get { return !IsEndless && !GoalLost && State.RevivesUsed < MaxRevives; } }
 
         public readonly SimConfig Cfg;
         /// <summary>The campaign level, or null in endless mode.</summary>
@@ -38,8 +38,10 @@ namespace BoingUpSkyTower.Gameplay
         public int WorldVersion { get; private set; }
 
         public bool GoalReached { get; private set; }
-        public bool Failed { get { return State.Dead && !GoalReached; } }
-        public bool Over { get { return GoalReached || State.Dead; } }
+        /// <summary>The goal became impossible while alive (NoWallBounce after a wall bounce): the run ends, a revive cannot undo it.</summary>
+        public bool GoalLost { get; private set; }
+        public bool Failed { get { return (State.Dead || GoalLost) && !GoalReached; } }
+        public bool Over { get { return GoalReached || State.Dead || GoalLost; } }
 
         public RunSession(ContentRepository repo, SimConfig cfg, string levelId, bool stripGems = false)
         {
@@ -95,6 +97,7 @@ namespace BoingUpSkyTower.Gameplay
                 return;
             }
             if (GoalEvaluator.IsComplete(Spec, State)) GoalReached = true;
+            else if (GoalEvaluator.IsFailed(Spec, State)) GoalLost = true;
         }
 
         /// <summary>Pays the revive price from the wallet and puts the player back on the highest landed platform.</summary>

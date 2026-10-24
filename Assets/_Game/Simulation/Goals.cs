@@ -17,6 +17,15 @@ namespace BoingUpSkyTower.Simulation
             return total;
         }
 
+        /// <summary>
+        /// True when the goal can no longer be met whatever the player does next, although the player is still alive: a NoWallBounce run
+        /// after its first wall bounce. The run ends there instead of letting the player climb to a top that no longer counts.
+        /// </summary>
+        public static bool IsFailed(LevelSpec spec, SimState s)
+        {
+            return spec.Goal.Type == GoalType.NoWallBounce && s.WallBounces > 0 && !IsComplete(spec, s);
+        }
+
         public static bool IsComplete(LevelSpec spec, SimState s)
         {
             GoalSpec g = spec.Goal;
