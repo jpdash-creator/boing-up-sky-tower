@@ -240,6 +240,10 @@ namespace BoingUpSkyTower.Simulation
                     case GoalType.NoWallBounce:
                         rows = Goal.Value > 0 ? Goal.Value : DefaultRows;
                         break;
+                    case GoalType.ComboChain:
+                        // Doc 25: the combo levels are level 5 (90 rows) and level 10 (150 rows); other combo specs keep the default
+                        rows = LevelIndex == 5 ? 90 : (LevelIndex == 10 ? 150 : DefaultRows);
+                        break;
                     default:
                         rows = DefaultRows;
                         break;

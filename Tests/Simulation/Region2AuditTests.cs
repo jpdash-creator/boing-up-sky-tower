@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -68,8 +69,11 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Assert.False(SignatureKinds.HazardsUseSignatureArt(k), k.ToString());
             SimConfig cfg = new SimConfig();
             int waveLevelsInPlatformRegions = 0;
-            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, 5))
+            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, 5).Where(l => l.Spec.LevelIndex == 9))
             {
+                // the survive-wave goal is gone from the campaign (doc 25); the wave section is still part of the builder, so level 9 is built with that goal here
+                ll.Spec.Goal = new GoalSpec { Type = GoalType.SurviveWave };
+                ll.Spec.Rows = 120;
                 LevelData d = LevelBuilder.Build(cfg, ll.Spec);
                 if (d.Hazards.Length > 0 && !SignatureKinds.HazardsUseSignatureArt(ll.Spec.Signature)) waveLevelsInPlatformRegions++;
             }

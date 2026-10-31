@@ -738,8 +738,8 @@ namespace BoingUpSkyTower.Gameplay
             switch (pk.Kind)
             {
                 case PickupKind.Star: return 1.0f;
-                case PickupKind.Gem: return 0.75f + 0.1f * Mathf.Clamp(pk.Tag, 0, 3);
-                case PickupKind.HiddenGem: return 1.1f;
+                case PickupKind.Gem: return pk.Tag == SimConfig.DoubleGemTag ? 1.3f : 0.75f + 0.1f * Mathf.Clamp(pk.Tag, 0, 3);   // a double gem (worth 2) is drawn clearly bigger: size, not only colour (CUX-6)
+                case PickupKind.HiddenGem: return pk.Tag == 1 ? 1.35f : 1.1f;
                 default: return 0.7f;
             }
         }
@@ -767,7 +767,7 @@ namespace BoingUpSkyTower.Gameplay
                 if (art != null)
                 {
                     if (pk.Kind == PickupKind.Star) sprite = art.StarFilled;
-                    else sprite = ArtCatalog.Pick(art.GemSizes, pk.Kind == PickupKind.HiddenGem ? 2 : Mathf.Min(pk.Tag, 2));
+                    else sprite = ArtCatalog.Pick(art.GemSizes, pk.Kind == PickupKind.HiddenGem ? 2 : Mathf.Min(pk.Tag, 2));   // Tag 4 (double) uses the biggest gem
                 }
                 var sr = NewSprite("pick" + pk.Id, sprite, 5);
                 float diameter = VisualDiameter(pk);
@@ -779,7 +779,7 @@ namespace BoingUpSkyTower.Gameplay
                 }
                 else sr.transform.localScale = new Vector3(diameter, diameter, 1f);
                 if (pk.Kind == PickupKind.HiddenGem) sr.color = new Color(1f, 0.6f, 1f, 1f);
-                else if (pk.Kind == PickupKind.Gem) sr.color = RarityTint[Mathf.Clamp(pk.Tag, 0, 3)];
+                else if (pk.Kind == PickupKind.Gem) sr.color = pk.Tag == SimConfig.DoubleGemTag ? new Color(1f, 0.95f, 0.55f, 1f) : RarityTint[Mathf.Clamp(pk.Tag, 0, 3)];
                 sr.transform.position = new Vector3(pk.X.F(), PickupVisualY(pk), 0f);
                 pickupSr[i] = sr;
             }
@@ -837,6 +837,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The first part picture of the player; its bounds are the canvas (tests).</summary>
         public SpriteRenderer PlayerRenderer { get { return playerSr; } }
         public SpriteRenderer[] PartRenderers { get { return partSr; } }
+        /// <summary>The character this run draws (read by the AltTester level sweep, LevelSweepApi).</summary>
+        public CharacterDef Character { get { return who; } }
 
         /// <summary>
         /// The player is the selected character built from its parts (docs/18): the same <see cref="PartsAssembler"/> list the character screens draw, every part a

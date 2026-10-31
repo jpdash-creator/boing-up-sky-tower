@@ -74,6 +74,7 @@ namespace BoingUpSkyTower.Gameplay
             canvas = UiKit.CreateCanvas("MetaUi", 0);
             canvas.transform.SetParent(transform, false);
             progress.Changed += RefreshWallet;
+            progress.RecordLogin();   // reward statistics: today's login (saves only the first time each day)
 
             if (!string.IsNullOrEmpty(GameSession.PendingRegionId))
             {
@@ -91,6 +92,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void Update()
         {
+            if (progress != null) progress.FeedPlayTime(Time.unscaledDeltaTime, true);   // reward statistics: menu play time
             if (mapContent != null && mapViewport != null && (Mathf.Abs(mapViewport.rect.width - mapWidthSeen) > 0.5f || Mathf.Abs(mapViewport.rect.height - mapHeightSeen) > 0.5f) && mapViewport.rect.width > 2f)
             {
                 float norm = mapScroll.verticalNormalizedPosition;
@@ -354,19 +356,20 @@ namespace BoingUpSkyTower.Gameplay
             {
                 // the SELECTED character, drawn from its parts like the character screen (rebuilt on every visit, so a new choice shows at once)
                 RectTransform doll = MomoDoll.Build(screen, "Momo", 540f, CharacterCatalog.Selected, art);
-                UiKit.Place(doll, new Vector2(0.38f, 0.40f), Vector2.zero, doll.sizeDelta);
+                UiKit.Place(doll, new Vector2(0.5f, 0.40f), Vector2.zero, doll.sizeDelta);
                 doll.pivot = new Vector2(0.5f, 0.5f);
                 momo = doll;
                 momoBase = momo.anchoredPosition;
             }
             AddComingSoonColumn();
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
-            UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(500f, 44f));
+            UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(300f, 44f));   // bottom centre, clear of the bundle timer button at the left
             AddTabBar(ToyKit.TabPlay);
+            BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
         }
 
         /// <summary>
-        /// Home right-side column (docs/22 points 2, 7, 8; docs/23): VIP, Bundles and Daily Rewards, all Coming Soon. Each is a 140 px button (at least 48 dp)
+        /// Home right-side column (docs/22 points 2, 7, 8; docs/23): Subscription (live, opens ShowSubscription), Bundles and Daily Rewards (Coming Soon). Each is a 140 px button (at least 48 dp)
         /// with a dim look and a small lock icon on top as the only marker (the accessibility labels say "coming soon"). 22 px (more than 8 dp) between buttons.
         /// The column sits right of the logo's bottom edge, below the wallet row and above the tab bar. A tap shows the Coming soon message and nothing else.
         /// The Bundles icon is Resources/Art/Ui/icon_bundle (a brown bag tied with a string) when that file exists, the gem icon until then.
@@ -374,14 +377,16 @@ namespace BoingUpSkyTower.Gameplay
         void AddComingSoonColumn()
         {
             const float size = 140f, gap = 22f, top = 680f, width = 140f;
-            string[] names = { "VIP", "Bundles", "Daily Rewards" };
-            string[] labels = { "VIP, coming soon", "Bundles, coming soon", "Daily rewards, coming soon" };
+            string[] names = { "Subscription", "Bundles", "Rewards" };
+            string[] labels = { "Subscription", "Bundles, coming soon", progress != null && progress.HasClaimable() ? "Rewards, something to claim" : "Rewards" };
             Sprite[] icons = { ToyKit.Get("icon_crown"), ToyKit.Get("icon_bundle") ?? ToyKit.Get("icon_gem"), ToyKit.Get("icon_daily") };
             for (int i = 0; i < names.Length; i++)
             {
                 string what = names[i];
-                Button b = ToyKit.IconButton(screen, what, labels[i], 2, icons[i], new Vector2(size, size), () => ShowMessage("Coming soon", what + " is coming soon."), 0.5f);
+                Button b = ToyKit.IconButton(screen, what, labels[i], 2, icons[i], new Vector2(size, size), what == "Subscription" ? (Action)ShowSubscription : what == "Rewards" ? (Action)ShowRewards : () => ShowMessage("Coming soon", what + " is coming soon."), 0.5f);
                 UiKit.Place((RectTransform)b.transform, new Vector2(1f, 1f), new Vector2(-24f, -(top + i * (size + gap))), new Vector2(size, size));
+                if (what == "Rewards" && progress != null && progress.HasClaimable()) ToyKit.AddBadge(b.transform);   // red dot: something to claim
+                if (what == "Subscription" || what == "Rewards") continue;   // a live button (docs/26): full colour, no lock
                 b.GetComponent<Image>().color = new Color(0.78f, 0.8f, 0.86f, 1f);   // dim look
                 Transform glyph = b.transform.Find("Glyph");
                 if (glyph != null)
@@ -441,19 +446,18 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
                 case ToyKit.TabPlay: ShowMap(); break;
-                case ToyKit.TabChests: if (CurrentScreen != "Treasure") ShowTreasureChests(); break;
+                case ToyKit.TabChests: if (CurrentScreen != "Shop" || shop == null || shop.Tab != ShopScreen.TabChests) ShowTreasureChests(); break;
                 case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
             }
         }
 
         // ---------------- treasure chests ----------------
 
-        TreasureChestScreen treasure;
         Action treasureReturn;
         bool treasureWithPlay = true;
 
         /// <summary>The Treasure Chest screen while it is showing (null on every other screen). Tests drive purchases through it.</summary>
-        public TreasureChestScreen CurrentTreasure { get { return CurrentScreen == "Treasure" ? treasure : null; } }
+        public TreasureChestScreen CurrentTreasure { get { return CurrentScreen == "Shop" && shop != null ? shop.Treasure : null; } }
 
         /// <summary>Where Back goes from the chests: the screen that opened them. The bar keeps PLAY only where the caller had it (home, shop).</summary>
         Action TreasureReturnFor(string from)
@@ -476,27 +480,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Treasure Chest screen (docs/22 point 3): opened from the bottom bar Chests tab and the shop's first section; Back returns to the caller.</summary>
         public void ShowTreasureChests()
         {
-            if (CurrentScreen != "Treasure") treasureReturn = TreasureReturnFor(CurrentScreen);
-            NewScreen("Treasure");
-            SkyBackground();
-            var host = new TreasureChestScreen.Host
-            {
-                NewOverlay = NewOverlay,
-                CloseOverlay = ClosePopup,
-                BuyGemPack = index =>
-                {
-                    ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection);   // the shop's gem purchase flow for that pack
-                    if (shop != null) shop.TapGemPack(index);
-                },
-            };
-            treasure = new TreasureChestScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
-            treasure.Build();
-            Action back = treasureReturn;
-            AddBack("Back", () => { if (back != null) back(); else ShowMenu(); });
-            AddTabBar(ToyKit.TabChests, treasureWithPlay);
-            coinText = treasure.CoinText;
-            gemText = treasure.GemText;
-            RefreshWallet();
+            // docs/26: the Treasure Shop is the Chests tab of the shop (ShopChrome look); Back goes home like every shop page.
+            ShowShop(ShopScreen.TabChests);
         }
 
         // ---------------- shop ----------------
@@ -509,6 +494,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Shop (docs/14): four tabs, only Gems and Coins is live. Opens on that tab by default.</summary>
         public void ShowShop(int tab = ShopScreen.TabPowerups, int section = ShopScreen.GemsSection)
         {
+            if (CurrentScreen != "Shop" && CurrentScreen != "Subscription") treasureReturn = TreasureReturnFor(CurrentScreen);   // Back returns to the caller (home, map, levels)
             NewScreen("Shop");
             SkyBackground();
             progress.LaunchPromoActive = GameSettings.LaunchPromo;
@@ -520,12 +506,71 @@ namespace BoingUpSkyTower.Gameplay
                 NewOverlay = NewOverlay,
                 CloseOverlay = ClosePopup,
                 OpenTreasureChests = ShowTreasureChests,
+                OpenSubscription = ShowSubscription,
             };
             shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
             shop.Build(tab, section);
-            AddBack("Back", ShowMenu);
+            Action shopBack = treasureReturn;
+            AddBack("Back", () => { if (shopBack != null) shopBack(); else ShowMenu(); });
             coinText = shop.CoinText;     // RefreshWallet keeps these two current after every purchase
             gemText = shop.GemText;
+            RefreshWallet();
+        }
+
+        // ---------------- subscription (docs/26 section 2) ----------------
+
+        SubscriptionScreen subscription;
+        Action subscriptionReturn;
+
+        /// <summary>The Subscription page while it is showing (null on every other screen). Tests drive purchases through it.</summary>
+        public SubscriptionScreen CurrentSubscription { get { return CurrentScreen == "Subscription" ? subscription : null; } }
+
+        /// <summary>Subscription page: opened from the home button and from the shop header; Back returns to the caller.</summary>
+        public void ShowSubscription()
+        {
+            if (CurrentScreen != "Subscription") subscriptionReturn = CurrentScreen == "Shop" ? (Action)(() => ShowShop()) : ShowMenu;
+            NewScreen("Subscription");
+            Background(null, new Color(0.30f, 0.18f, 0.10f, 1f));   // brown wood look of the shop pages
+            var host = new ShopScreen.Host
+            {
+                OpenPopup = (title, body, height) => OpenPopup(title, body, height),
+                PopupButton = (label, primary, y, action) => PopupButton(label, Btn(primary ? 1 : 0), Color.white, y, action),
+                ClosePopup = ClosePopup,
+                NewOverlay = NewOverlay,
+                CloseOverlay = ClosePopup,
+            };
+            subscription = new SubscriptionScreen(screen, progress, progress.SubscriptionDefs, art, host);
+            subscription.Build();
+            Action back = subscriptionReturn;
+            AddBack("Back", () => { if (back != null) back(); else ShowMenu(); });
+            AddTabBar(-1);
+            coinText = subscription.CoinText;
+            gemText = subscription.GemText;
+            starText = subscription.StarText;
+            RefreshWallet();
+        }
+
+        // ---------------- rewards (docs/26 section 4) ----------------
+
+        RewardsScreen rewards;
+
+        /// <summary>The Rewards screen while it is showing (null on every other screen). Tests drive claims through it.</summary>
+        public RewardsScreen CurrentRewards { get { return CurrentScreen == "Rewards" ? rewards : null; } }
+
+        public void ShowRewards() { ShowRewards(RewardTab.Main); }
+
+        /// <summary>Rewards: tabs Main | Daily | Weekly, opened from the home button; Back returns to the home screen.</summary>
+        public void ShowRewards(RewardTab tab)
+        {
+            NewScreen("Rewards");
+            Background(null, new Color(0.30f, 0.34f, 0.64f, 1f));   // the blue-purple quest look
+            progress.RecordLogin();
+            var host = new RewardsScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup };
+            rewards = new RewardsScreen(screen, progress, repo, art, host);
+            rewards.Build(tab);
+            AddBack("Back", ShowMenu);
+            coinText = rewards.CoinText;
+            gemText = rewards.GemText;
             RefreshWallet();
         }
 
@@ -902,6 +947,7 @@ namespace BoingUpSkyTower.Gameplay
             AddPillRow();
             AddBack("Menu", ShowMenu);
             AddTabBar(-1, false);
+            BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
 
             CenterMap(currentRise);
             StartCoroutine(CenterMapAgain(currentRise));
@@ -1492,7 +1538,9 @@ namespace BoingUpSkyTower.Gameplay
                 DropOutline(num);
                 UiKit.Stretch((RectTransform)num.transform);
             }
-            if (unlocked && complex && art != null && art.GemIcon != null)
+            // Doc 25: the gem icon marks the levels that hold gems to collect on the way (8 and 15); the combo levels (5 and 10) have none.
+            bool gemLevel = level.Index == 8 || level.Index == 15;
+            if (unlocked && gemLevel && art != null && art.GemIcon != null)
             {
                 Image gem = UiKit.AddImage(rt, "GemBadge", art.GemIcon, Color.white);
                 gem.rectTransform.anchorMin = gem.rectTransform.anchorMax = new Vector2(1f, 1f);
@@ -1742,6 +1790,19 @@ namespace BoingUpSkyTower.Gameplay
             var dim = popup.gameObject.AddComponent<Image>();
             dim.color = new Color(0f, 0f, 0f, 0.65f);
             return popup;
+        }
+
+        /// <summary>The popup services the bundle timer offer needs (docs/26): the shared modal popup and the full-screen overlay.</summary>
+        ShopScreen.Host BundleHost()
+        {
+            return new ShopScreen.Host
+            {
+                OpenPopup = (title, body, height) => OpenPopup(title, body, height),
+                PopupButton = (label, primary, y, action) => PopupButton(label, Btn(primary ? 1 : 0), Color.white, y, action),
+                ClosePopup = ClosePopup,
+                NewOverlay = NewOverlay,
+                CloseOverlay = ClosePopup,
+            };
         }
 
         void ClosePopup()

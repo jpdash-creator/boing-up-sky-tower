@@ -122,7 +122,10 @@ namespace BoingUpSkyTower.Simulation.Tests
             int checkedLevels = 0;
             foreach (LoadedLevel ll in Levels(1, 1))
             {
-                if (ll.Spec.Goal.Type != GoalType.SurviveWave) continue;
+                if (ll.Spec.LevelIndex != 9) continue;
+                // the survive-wave goal is gone from the campaign (doc 25), the wave section of the builder remains: level 9 is built with that goal here
+                ll.Spec.Goal = new GoalSpec { Type = GoalType.SurviveWave };
+                ll.Spec.Rows = 120;
                 LevelData d = LevelBuilder.Build(cfg, ll.Spec);
                 Assert.True(d.Hazards.Length > 0);
                 LevelBot bot = new LevelBot(new Sim(cfg, d, ll.Spec), ll.Spec, d, 200000);

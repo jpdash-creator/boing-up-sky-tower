@@ -106,6 +106,9 @@ namespace BoingUpSkyTower.Gameplay
             if (Over) return;
             if ((input & SimInput.PowerMask) != 0) input = TakePowerUnits(input);
             Sim.Step(ref State, input);
+            if (State.Combo >= 3 && lastCombo < 3) comboChains++;   // reward statistics: a chain reached 3 landings
+            lastCombo = State.Combo;
+            if (State.BestCombo > bestComboSeen) bestComboSeen = State.BestCombo;
             if (IsEndless)
             {
                 // Keep the tower 60 rows above the player. Growth happens once per 40 rows (about every 15 s), never per frame.
@@ -209,6 +212,7 @@ namespace BoingUpSkyTower.Gameplay
                 // Flight and Rocket exclude each other inside one tick as well (the lower id wins, like the simulation)
                 if (p == PowerUp.Rocket && (result & PowerUps.InputBit(PowerUp.Flight)) != 0) continue;
                 stock[i]--;
+                powerUpsUsed++;
                 result |= bit;
             }
             return result;
@@ -241,8 +245,38 @@ namespace BoingUpSkyTower.Gameplay
                 Score = State.Score,
                 CoinsCollected = State.Coins,
                 GemsCollected = State.Gems,
-                HiddenGems = State.HiddenGems
+                HiddenGems = State.HiddenGems,
+                GemPickupsTotal = CountGemPickups(false),
+                GemPickupsTaken = CountGemPickups(true),
+                ComboChains = comboChains - reportedChains,
+                BestCombo = bestComboSeen,
+                PowerUpsUsed = powerUpsUsed - reportedPowerUps
             };
+        }
+
+        // ---- reward statistics (docs/26 section 4): combo chains reaching 3 landings, best combo, power-up units used ----
+
+        int lastCombo, comboChains, bestComboSeen, powerUpsUsed, reportedChains, reportedPowerUps;
+
+        /// <summary>Marks the combo chains and power-up units counted so far as reported, so the next outcome only carries new ones (a revive keeps the session).</summary>
+        public void MarkStatsReported()
+        {
+            reportedChains = comboChains;
+            reportedPowerUps = powerUpsUsed;
+        }
+
+        /// <summary>Gem pickups the level holds (or, with <paramref name="takenOnly"/>, the ones collected). Called at the end of a run only.</summary>
+        int CountGemPickups(bool takenOnly)
+        {
+            int n = 0;
+            if (Data == null || Data.Pickups == null) return 0;
+            for (int i = 0; i < Data.Pickups.Length; i++)
+            {
+                if (Data.Pickups[i].Kind != PickupKind.Gem) continue;
+                if (takenOnly && (State.PickupTaken == null || i >= State.PickupTaken.Length || !State.PickupTaken[i])) continue;
+                n++;
+            }
+            return n;
         }
 
         /// <summary>The extra rule line shown under the goal before the level starts ("Don't touch the walls."), or null when the level has no such rule.</summary>
@@ -258,7 +292,7 @@ namespace BoingUpSkyTower.Gameplay
             GoalSpec g = spec.Goal;
             switch (g.Type)
             {
-                case GoalType.ReachFloor: return "Reach floor " + g.Value;
+                case GoalType.ReachFloor: return spec.LevelIndex == 8 || spec.LevelIndex == 15 ? "Reach floor " + g.Value + " and grab the gems" : "Reach floor " + g.Value;
                 case GoalType.CollectCoins: return "Collect " + g.Count + " coins";
                 case GoalType.ComboChain: return "Chain " + g.Count + " jump" + (g.Count == 1 ? "" : "s") + " of " + g.Value + "+ floors";
                 case GoalType.NoWallBounce: return "Reach floor " + g.Value;

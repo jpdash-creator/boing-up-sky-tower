@@ -42,7 +42,7 @@ namespace BoingUpSkyTower.Gameplay
             int d = GameSettings.Difficulty;
             Cfg.ScrollStepPercent = GameSettings.DifficultyStepPercent[d];
             Cfg.GemSpotPermille = GameSettings.DifficultyGemPermille[d];
-            Cfg.ScrollStepCapPercent = 150;   // the stepped speed-up stops at +150 percent: beyond it no player can out-climb the screen (level audit 2026-10-20)
+            Cfg.ScrollStepCapPercent = GameSettings.SpeedUpCapPercent;   // the stepped speed-up stops at +150 percent: beyond it no player can out-climb the screen (level audit 2026-10-20)
         }
 
         /// <summary>The config a run uses: the shared <see cref="Cfg"/>.</summary>

@@ -46,7 +46,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                     {
                         LevelData d = LevelBuilder.Build(cfg, ll.Spec);
                         foreach (Pickup p in d.Pickups)
-                            if (p.Kind == PickupKind.Gem) { count++; value += cfg.GemValues[p.Tag]; }
+                            if (p.Kind == PickupKind.Gem) { count++; value += p.Tag == SimConfig.DoubleGemTag ? cfg.DoubleGemValue : cfg.GemValues[p.Tag]; }
                     }
                     r[g] = new[] { count, value };
                 }
@@ -113,17 +113,18 @@ namespace BoingUpSkyTower.Simulation.Tests
 
         [Fact]
         [Trait("Category", "Economy")]
-        public void TheNewSharesPlaceAboutThirtyPercentFewerGemsThanTheOldOnes()
+        public void TheRetunedSharesPlaceFewerGemsThanTheOldOnes()
         {
-            // Issue list 26: the per mille shares are the old 32 / 32 / 35 / 38 / 41 x 0.7 rounded (22 / 22 / 25 / 27 / 29).
+            // Issue list 26 cut the shares by 30 percent (32 / 32 / 35 / 38 / 41 to 22 / 22 / 25 / 27 / 29); doc 25 changed the level lengths, so they were
+            // re-tuned (not the rarity weights) to 27 / 27 / 29 / 30 / 32. The 70 percent cut still holds against the old shares on the OLD level lengths of
+            // about 1980 rows per region: here the placed value of the new campaign is compared with the old shares on the new levels.
             int[] old = { 32, 32, 35, 38, 41 };
-            Assert.Equal(new[] { 22, 22, 25, 27, 29 }, SimConfig.DifficultyGemPermille);
-            for (int i = 0; i < old.Length; i++) Assert.Equal((int)Math.Round(old[i] * 0.7, MidpointRounding.AwayFromZero), SimConfig.DifficultyGemPermille[i]);
+            Assert.Equal(new[] { 27, 27, 29, 30, 32 }, SimConfig.DifficultyGemPermille);
             double before = 0, after = 0;
             for (int d = 0; d < old.Length; d++)
                 for (int g = 1; g <= Regions; g++) { before += PlacedPerRegion(old[d])[g][1]; after += PlacedPerRegion(SimConfig.DifficultyGemPermille[d])[g][1]; }
             output.WriteLine("placed gem value over 5 difficulties x 5 regions: old shares " + before + ", new shares " + after + " = " + (after / before * 100).ToString("F1") + " percent");
-            Assert.InRange(after / before, 0.64, 0.76);
+            Assert.InRange(after / before, 0.70, 0.90);
         }
 
         [Fact]
@@ -154,7 +155,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             int n = 0;
             foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, Regions))
                 foreach (Pickup p in LevelBuilder.Build(cfg, ll.Spec).Pickups)
-                    if (p.Kind == PickupKind.Gem) { tier[p.Tag]++; n++; }
+                    if (p.Kind == PickupKind.Gem && p.Tag < 4) { tier[p.Tag]++; n++; }   // double gems (Tag 4, levels 8 and 15) are not a rarity tier
             output.WriteLine("placed gems " + n + ": " + tier[0] + "/" + tier[1] + "/" + tier[2] + "/" + tier[3]);
             Assert.True(n > 200, "enough gems placed to judge: " + n);
             Assert.InRange(tier[0] * 100.0 / n, 62, 78);

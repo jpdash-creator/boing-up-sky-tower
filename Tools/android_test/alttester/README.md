@@ -141,3 +141,84 @@ and the `dense` flag (6 or more, the 'stacked platforms' case). At the end it wr
 Written without Unity, a compiler or a device. The planner (`AutopilotPlanner`) is new code modelled on `LevelBot`, so the first run may show levels that
 the LevelBot proves solvable but the autopilot does not clear at skill 0 (goals such as FindHiddenGem and ComboChain are only roughly handled). Check
 first that `lvl_001_01` is cleared at skill 0 (EditMode test `PerfectAutopilotClearsRegionOneLevelOne`, PlayMode test `AutopilotClearsRegionOneLevelOneAtSkillZero`).
+
+## Level sweep: every level of a region on the phone (stream T1)
+
+`level_sweep.py` plays levels 1 to 15 of a region through the real UI with the game's own Autopilot, checks a per-level checklist and writes a results table.
+It replaces nothing: `autoplay_r1.py` (adb only, no UI) stays the quick check of the autopilot; the sweep is the UI-level test for the restructured campaign (doc 25).
+
+### What it does per level
+
+1. Opens the region's level screen and taps the circle `Level<N>` (scrolls the grid when it is off screen). Reads the popup (`Goal`, `Rule` and its font style),
+   screenshot `level_NN_popup.png`.
+2. Taps `PLAY`, then opens the pause overlay and taps `Restart` once: two attempts of the same level, to compare the random layouts.
+3. After the intro: checks the character, the power-up buttons and the HUD, attaches the Autopilot (`LevelSweepApi.AttachAutopilot`) and polls the run state twice a second.
+   Screenshot `level_NN_midrun.png` at half the rows. A pause caused by an interruption is resumed.
+4. At the end: screenshot `level_NN_result.png` (result overlay), result read from the game, then `Level select`.
+5. Verdict: **PASS** = cleared within `--time-limit` game seconds (default 300); **FAIL** = fell, wall touched, timeout (no new best row for `--stall` seconds), error;
+   **SKIP** = goal type the autopilot does not play (`--skip-goals`, default `SurviveWave,BossChase`).
+
+Screenshots go to `E:/Unity/device_shots/alttester/`. The table goes to `E:/Unity/logs/alttester_levels.md` and `.json` (rewritten after every level; a new run for other
+levels is merged into the same files, `--fresh` starts over). Columns: level, goal, rows (climbed/target), platforms, special platform kinds seen (of those placed), result,
+time, gems and coins (taken/placed), stars, fail reason, verdict, checks.
+
+### Checklist (verified from the game state; a failed item sets exit code 1 and is listed under "Checklist failures")
+
+| Item | How |
+|---|---|
+| Popup shows the right goal text | popup `Goal` text equals `RunSession.DescribeGoal` of the level (`LevelPreview`) |
+| Level 7 italic wall rule; no rule elsewhere | object `Rule` exists, text matches, `fontStyle` is Italic (read with `get_component_property`; "unknown" counts as ok); a rule on any other level fails |
+| Combo levels show no gem icon | no `GemBadge` child on the level circle, no `GemPill` in the run HUD, 0 gem pickups placed |
+| Levels 8 and 15 have gems | gem pickups placed > 0 |
+| Run goal equals popup goal | goal text and target row |
+| Run uses the selected character | `RunView.Character.Id` equals `CharacterCatalog.Selected.Id` (`--character momo` or `sporeling` selects one first) |
+| Power-up button count | owned types at start = `PowerUpBar.ButtonCount` = number of `Power<Type>` objects on screen |
+| Random layout differs between two attempts | `layoutHash` (FNV over all platforms) and `attemptSeed` of attempt 1 and 2 (`RunSession.LayoutInfo` is in the table too) |
+
+### How the test sets the flags (no adb prefs file, no intent extra)
+
+The game side is `Assets/_Game/Gameplay/LevelSweepApi.cs`: a static class that AltTester calls with `call_static_method` (type `BoingUpSkyTower.Gameplay.LevelSweepApi`,
+assembly `BoingUpSkyTower.Gameplay`). `SetFlags(true, true)` sets SYSTEM_TEST and GAME_JUMP_TEST through `GameSettings` (PlayerPrefs plus `ApplyFlags`), so every level is open and the Autopilot
+is allowed; the script verifies `unlockAll` and `autopilot` in the reply and stops with a clear message otherwise. `--jump-test off` leaves levels on real progress.
+Other methods: `Ping`, `GetFlags`, `SelectCharacter`, `SetSpeed`, `LevelPreview(region, level)`, `RunState()`, `AttachAutopilot(skill, seed, depth)`, `Resume`.
+All are marked `[Preserve]` against IL2CPP stripping; if a call still fails with "type not found", add the class to a `link.xml`.
+The app data is cleared at launch (fresh save), so the sweep never depends on earlier progress.
+
+### Commands for the lead (phone connected by USB, screen on and unlocked)
+
+```bash
+# 1. build the alttester APK (Unity closed, no other build running), see 'Steps for the owner' above
+BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectPath . -executeMethod BoingUpSkyTower.Editor.Build.AndroidBuild.BuildFromCommandLine -logFile Logs/build_alttester.log
+# 2. start AltTester Desktop (leave it on port 13000)
+E:/tools/alttester_desktop/AltTesterDesktopPackageWindows__2_4_0/AltTesterDesktop__v2.4.0.exe
+# 3. install and run the sweep (leave out --install when the alttester APK is already on the phone)
+python Tools/android_test/alttester/run_all.py --levels 1-15 --region 1 --install
+#    identical: python Tools/android_test/alttester/level_sweep.py --levels 1-15 --region 1 --install
+```
+
+Useful options: `--skill 0` (perfect player: a fall then points at an unfair level), `--speed 2` (game at double speed), `--time-limit 300`, `--character sporeling`,
+`--no-relayout` (do not restart each level once), `--stop-on-fail`, `--no-launch` (use the running game; it must be in the main menu), `--keep-data`, `--fresh`.
+The phone is picked with `ANDROID_SERIAL` (default `96355505`, the owner's phone, so an attached emulator does not break adb).
+
+Expected duration: the autopilot plays in real time. About 1.5 to 3 minutes for a 60 to 150 row level plus about 25 s of UI per level (popup, intro, restart, result):
+roughly **45 to 60 minutes for levels 1 to 15** at `--speed 1`, about 25 to 35 minutes at `--speed 2`. These are estimates; the first run gives the real figure.
+
+Resume from level N (after a crash, or to re-check fixes): `python Tools/android_test/alttester/run_all.py --levels 8-15 --region 1`. The app data is cleared at launch and
+all levels are open through `SetFlags`, so any start level works. Earlier rows for levels 1 to 7 stay in the results files unless you pass `--fresh`. A single level: `--levels 7`.
+
+### Dry run without a device
+
+```bash
+python -m py_compile Tools/android_test/alttester/level_sweep.py Tools/android_test/alttester/run_all.py
+python -m unittest Tools/android_test/alttester/test_level_sweep.py -v
+```
+
+`test_level_sweep.py` runs the helpers, the table and JSON writing and whole mock levels (cleared, fell, stalled, skipped, level 7 rule, same layout, combo with gem badge) with a fake game,
+a fake bridge and a fake clock. It cannot check the real object names, AltTester timing or the C# side.
+
+### Not verified yet (sweep)
+
+Written without Unity or a device: `LevelSweepApi.cs` and the `RunView.Character` property are not compiled; nothing ran against the game. Expect to adjust on the first run:
+the exact reply shape of `call_static_method` for a string result (the script unwraps one or two JSON layers), object names (`Pause`, `Restart`, `Level select`, `GemPill`, `Power<Type>`,
+`GemBadge`, `Goal`, `Rule`) which come from the UI code, whether `Pause` is tappable while the intro still shows, and whether leaving a run returns to the region's level screen
+(the script falls back to Play, then Region<N>). The Rule font style read is optional. `tests.py` still names the old toggle 'Test: all levels open' (now GAME_JUMP_TEST / SYSTEM_TEST); the sweep does not use it.

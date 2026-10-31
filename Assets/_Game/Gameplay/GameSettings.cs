@@ -88,9 +88,19 @@ namespace BoingUpSkyTower.Gameplay
             set { PlayerPrefs.SetInt(DifficultyKey, Mathf.Clamp(value, 0, DifficultyNames.Length - 1)); PlayerPrefs.Save(); }
         }
 
+        /// <summary>Cap of the stepped speed-up in percent (GameSession.ApplyDifficulty uses the same value).</summary>
+        public const int SpeedUpCapPercent = 150;
+
+        /// <summary>Highest speed-up the steps can reach on a difficulty: ScrollStepMaxSteps steps of DifficultyStepPercent, limited by the cap.</summary>
+        public static int MaxSpeedUpPercent(int level)
+        {
+            int p = DifficultyStepPercent[level] * new BoingUpSkyTower.Simulation.SimConfig().ScrollStepMaxSteps;
+            return p > SpeedUpCapPercent ? SpeedUpCapPercent : p;
+        }
+
         public static string DifficultyLabel(int level)
         {
-            return DifficultyNames[level] + "  (+" + DifficultyStepPercent[level] + "% / 5 s)";
+            return DifficultyNames[level] + "  (up to +" + MaxSpeedUpPercent(level) + "%)";
         }
 
         public static readonly int[] TextPercents = { 100, 115, 130 };

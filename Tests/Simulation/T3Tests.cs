@@ -115,8 +115,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             LevelSpec b = T3.Spec(777, 700, 10, SignatureKind.SwingingGongs, GoalType.SurviveWave);
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
-            Assert.Equal(1813719923655701579L, LevelBuilder.Build(cfg, a).ComputeHash());   // re-rolled 2026-10-31 (doc 24: region 1 special platforms and the level 3 to 15 ramp)
-            Assert.Equal(-1742250685013077405L, LevelBuilder.Build(cfg, b).ComputeHash());   // level 10 now builds with the ramped difficulty (floor 0.708 vs 0.7)
+            Assert.Equal(-7839884808577442138L, LevelBuilder.Build(cfg, a).ComputeHash());   // re-rolled 2026-10-31 (doc 24: region 1 special platforms and the level 3 to 15 ramp)
+            Assert.Equal(-5175047465905895765L, LevelBuilder.Build(cfg, b).ComputeHash());   // level 10 now builds with the ramped difficulty (floor 0.708 vs 0.7)
         }
 
         [Fact]
@@ -155,38 +155,39 @@ namespace BoingUpSkyTower.Simulation.Tests
         [InlineData(SignatureKind.BounceCaps, PlatformKind.BounceCap)]
         [InlineData(SignatureKind.DriftingPlatforms, PlatformKind.Moving)]
         [InlineData(SignatureKind.StickyGum, PlatformKind.Sticky)]
-        public void SignatureAppearsOnlyPerTemplate(SignatureKind sig, PlatformKind kind)
+        public void SignatureAppearsPerTheInLevelRamp(SignatureKind sig, PlatformKind kind)
         {
+            // Doc 25: every level ramps its special rows from the low to the high share of the level table; the signature platform is one of the kinds.
+            // The generic specials of regions without their own new kinds (Moving, Crumble, Vanishing, Slippery, Sticky, Bounce) and the region 1 set are allowed too.
             SimConfig cfg = new SimConfig();
-            int l3 = 0, l6 = 0, l12 = 0;
+            int[] levels = { 1, 3, 6, 12, 15 };
+            int[] sigCount = new int[levels.Length];
             for (int seed = 1; seed <= 12; seed++)
             {
-                foreach (int level in new int[] { 1, 2 })
+                for (int li = 0; li < levels.Length; li++)
                 {
-                    LevelData none = LevelBuilder.Build(cfg, T3.Spec(seed * 977, 300, level, sig, GoalType.ReachFloor, 60));
-                    for (int i = 0; i < none.Platforms.Length; i++)
+                    LevelData d = LevelBuilder.Build(cfg, T3.Spec(seed * 977, 150 + li * 100, levels[li], sig, GoalType.ReachFloor, 60));
+                    sigCount[li] += T3.Count(d, kind);
+                    bool[] seen = new bool[d.Rows + 2];
+                    int special = 0;
+                    for (int i = 0; i < d.Platforms.Length; i++)
                     {
-                        PlatformKind pk = none.Platforms[i].Kind;
-                        // region 1 (doc 24): level 2 may carry a light touch of the new platforms (see Region1PlatformTests), never the flower
-                        bool lightTouch = sig == SignatureKind.BounceFlowers && level == 2 && PlatformKinds.IsRegion1New(pk) && !PlatformKinds.IsLaunch(pk);
-                        Assert.True(pk == PlatformKind.Normal || pk == PlatformKind.Crumble || lightTouch);
+                        Platform p = d.Platforms[i];
+                        if (p.Row < 1 || seen[p.Row]) continue;
+                        seen[p.Row] = true;
+                        if (p.Kind == PlatformKind.Normal) continue;
+                        special++;
+                        bool allowed = p.Kind == kind || p.Kind == PlatformKind.Moving || p.Kind == PlatformKind.Crumble || p.Kind == PlatformKind.Vanishing || p.Kind == PlatformKind.Slippery
+                            || p.Kind == PlatformKind.Sticky || p.Kind == PlatformKind.Bounce || (sig == SignatureKind.BounceFlowers && PlatformKinds.IsRegion1New(p.Kind));
+                        Assert.True(allowed, "unexpected " + p.Kind);
                     }
-                    Assert.Empty(none.Hazards);
+                    int mean = (cfg.RampLowPercent[levels[li]] + cfg.RampHighPercent[levels[li]]) / 2;
+                    Assert.InRange(special, d.Rows * (mean - 10) / 100, d.Rows * (mean + 5) / 100);
+                    Assert.Empty(d.Hazards);
                 }
-                l3 += T3.Count(LevelBuilder.Build(cfg, T3.Spec(seed * 977, 150, 3, sig, GoalType.ReachFloor, 60)), kind);
-                l6 += T3.Count(LevelBuilder.Build(cfg, T3.Spec(seed * 977, 350, 6, sig, GoalType.ReachFloor, 60)), kind);
-                l12 += T3.Count(LevelBuilder.Build(cfg, T3.Spec(seed * 977, 700, 12, sig, GoalType.ReachFloor, 60)), kind);
-                // no other special kinds ever appear
-                LevelData any = LevelBuilder.Build(cfg, T3.Spec(seed * 977, 700, 12, sig, GoalType.ReachFloor, 60));
-                for (int i = 0; i < any.Platforms.Length; i++)
-                    Assert.True(any.Platforms[i].Kind == PlatformKind.Normal || any.Platforms[i].Kind == PlatformKind.Crumble || any.Platforms[i].Kind == kind
-                        || (sig == SignatureKind.BounceFlowers && PlatformKinds.IsRegion1New(any.Platforms[i].Kind)));   // region 1 also uses its seven new platforms (doc 24)
             }
-            Assert.True(l3 > 0, "level 3 introduces the signature");
-            Assert.True(l6 > l3, "level 4+ has the normal (larger) share: " + l3 + " vs " + l6);
-            Assert.True(l12 > l6, "share grows with d: " + l6 + " vs " + l12);
-            // share never exceeds the doc 08 maximum of 40 percent
-            Assert.True(l12 <= 12 * 60 * 40 / 100 + 40);
+            Assert.True(sigCount[0] > 0, "the tutorial level already shows the signature platform");
+            Assert.True(sigCount[4] > sigCount[0], "share grows with the level: " + sigCount[0] + " vs " + sigCount[4]);
         }
 
         [Fact]
@@ -762,8 +763,10 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Platform p = FirstOnRow(d, r);
                 Platform prev = FirstOnRow(d, r - 1);
                 bool authored = Fx.Abs(p.Width - T3.F(3.0)) < Fx.FromRatio(2, 100) && Fx.Abs((p.Y - prev.Y) - T3.F(3.6)) < Fx.FromRatio(2, 100);
-                if (authored) { run++; if (run == 6) starts.Add(r - 5); } else run = 0;
+                if (authored) run++;
+                else { if (run >= 6) starts.Add(r - 1 - 5); run = 0; }   // a chunk is the last 6 rows of an authored-looking run
             }
+            if (run >= 6) starts.Add(80 - 5);
             Assert.True(starts.Count >= 3, "several chunks spliced: " + starts.Count);
             Assert.Equal(cfg.ChunkStartRow, starts[0]);
             Assert.True(starts.Contains(80 - 6 + 1), "one chunk ends the level");

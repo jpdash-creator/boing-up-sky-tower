@@ -207,6 +207,15 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Hides a part the painted art already shows (bees, petal pair, spikes, ladybug body, fluffy head).</summary>
         static void Hide(SpriteRenderer sr) { sr.color = Hidden; }
 
+        /// <summary>Ease out back from t = 0 (flat) to t = 1 (open): overshoots a little then settles at 1.</summary>
+        static float SpringBack(float t)
+        {
+            t = Mathf.Clamp01(t);
+            const float c1 = 1.70158f, c3 = c1 + 1f;
+            float u = t - 1f;
+            return Mathf.Lerp(0.3f, 1f, 1f + c3 * u * u * u + c1 * u * u);
+        }
+
         static float ArrowRot(int dir) { return dir >= 0 ? -90f : 90f; }   // the triangle points up; right = clockwise
 
         /// <summary>
@@ -258,11 +267,34 @@ namespace BoingUpSkyTower.Gameplay
                             Put(ps[k], x + (k - 1) * 0.28f, y + 0.72f, 0.16f, 0.16f, 0f, new Color(1f, 1f, 1f, a));
                         }
                         float open = Mathf.Max(0.15f, w * 0.5f - 0.3f);
-                        float off = Mathf.Lerp(open, 0.12f, prog);
+                        // Painted daisy: the petals only pull in over the last 30 percent of the countdown and the flower row squashes (below).
+                        int since = ct[p.Id] >= 0 ? tick - ct[p.Id] : -1;
+                        int closeT = sim.Cfg.SnapCloseTicks, shutEnd = closeT + sim.Cfg.SnapReopenTicks;
+                        float late = phase == 2 ? 1f : (phase == 1 ? Mathf.Clamp01((since - closeT * 0.7f) / (closeT * 0.3f)) : 0f);
+                        float off = Mathf.Lerp(open, 0.12f, painted[i] ? late : prog);
                         Put(ps[3], x - off, y + 0.3f, 0.5f, 0.5f, -90f, new Color(1f, 1f, 1f, 0.95f));   // left petal points to the middle
                         Put(ps[4], x + off, y + 0.3f, 0.5f, 0.5f, 90f, new Color(1f, 1f, 1f, 0.95f));
                         if (baseSr != null) { Color c = baseSr.color; c.a = phase == 2 ? 0.25f : 1f; baseSr.color = c; }   // shut: you fall through
-                        if (painted[i]) { Hide(ps[3]); Hide(ps[4]); }                  // the painted flower row replaces the petal pair; the countdown pips stay
+                        if (painted[i] && baseSr != null)
+                        {
+                            // Squash (a deliberate animation, not a stretched image: the bake itself is uniform): flat while counting until 70 percent, then down to 0.45
+                            // by the close, flat (0.3) and dim while shut, and a springy rebound (ease out back) around the reopen. Reduced motion: no squash, the dim only.
+                            // The walking surface stays where it is: the centre rises by the share of the sprite that sits below the surface.
+                            float k = 1f;
+                            if (!reduced)
+                            {
+                                if (phase == 1) k = Mathf.Lerp(1f, 0.45f, late);
+                                else if (phase == 2) k = since >= shutEnd - 8 ? SpringBack((since - (shutEnd - 8)) / 22f) : Mathf.Lerp(0.45f, 0.3f, Mathf.Clamp01((since - closeT) / 12f));
+                                else if (since >= shutEnd && since < shutEnd + 14) k = SpringBack((since - (shutEnd - 8)) / 22f);
+                            }
+                            Transform bt = baseSr.transform;
+                            Vector3 ls = bt.localScale;
+                            bt.localScale = new Vector3(ls.x, ls.x * k, ls.z);
+                            Vector3 bp = bt.position;
+                            bp.y += (y - bp.y) * (1f - k);   // (y - bp.y) is the distance from the sprite centre up to the surface
+                            bt.position = bp;
+                        }
+                        if (painted[i] && phase == 0) { Hide(ps[3]); Hide(ps[4]); }   // idle: only the painted flowers; the petal pair appears while closing and shut
                         break;
                     }
                 case PlatformKind.Dandelion:

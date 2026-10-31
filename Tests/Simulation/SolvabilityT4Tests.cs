@@ -246,52 +246,34 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void RegionsOneToFiveLevelsOneAndTwoHaveNoSignatureElements()
+        public void EveryLevelCarriesItsSpecialPlatformsAndOnlyRegion5HasGongs()
         {
+            // Doc 25 replaced "levels 1 and 2 have no signature elements": every level of every region ramps special platforms inside the level
+            // (level 1: 10 to 30 percent), the gongs of region 5 start at level 3, there are no authored chunks and no survive-wave hazards elsewhere.
             string root = ContentLoader.FindRoot();
             if (root == null) return;
             SimConfig cfg = new SimConfig();
-            int checkedLevels = 0, signatureLevels = 0;
+            int checkedLevels = 0;
             foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, 5))
             {
                 LevelData d = LevelBuilder.Build(cfg, ll.Spec);
                 int index = ll.Spec.LevelIndex;
                 int special = 0;
-                for (int i = 0; i < d.Platforms.Length; i++) if (d.Platforms[i].Kind != PlatformKind.Normal && d.Platforms[i].Kind != PlatformKind.Crumble) special++;
-                if (index == 2 && ll.Spec.Signature == SignatureKind.BounceFlowers)
+                bool[] seen = new bool[d.Rows + 2];
+                for (int i = 0; i < d.Platforms.Length; i++)
                 {
-                    // Doc 24 (owner list 26): level 2 of region 1 gets a light touch of the new platforms: at most 2 safe ones and 1 hazard type,
-                    // no flower, no launcher, no gong hazards, no chunks.
-                    int hazardType = 0;
-                    for (int i = 0; i < d.Platforms.Length; i++)
-                    {
-                        PlatformKind k = d.Platforms[i].Kind;
-                        if (k == PlatformKind.Normal || k == PlatformKind.Crumble) continue;
-                        Assert.True(PlatformKinds.IsRegion1New(k) && !PlatformKinds.IsLaunch(k), ll.Id + " has " + k);
-                        if (PlatformKinds.IsHazardType(k)) hazardType++;
-                    }
-                    Assert.True(special <= 3 && hazardType <= 1, ll.Id + ": " + special + " specials, " + hazardType + " hazard types");
-                    Assert.Empty(d.Hazards);
-                    Assert.Empty(ll.Spec.FixedChunks);
-                    checkedLevels++;
+                    Platform p = d.Platforms[i];
+                    if (p.Row < 1 || p.Row > d.Rows || seen[p.Row]) continue;
+                    seen[p.Row] = true;
+                    if (p.Kind != PlatformKind.Normal) special++;
                 }
-                else if (index <= 2)
-                {
-                    Assert.Equal(0, special);
-                    Assert.Empty(d.Hazards);
-                    Assert.Empty(ll.Spec.FixedChunks);
-                    checkedLevels++;
-                }
-                else if (index == 3 || index == 4 || index == 6)
-                {
-                    // plain reach/collect levels of a signature region show the signature
-                    if (ll.Spec.Signature == SignatureKind.SwingingGongs) Assert.True(d.Hazards.Length > 0, ll.Id);
-                    else Assert.True(special > 0, ll.Id);
-                    signatureLevels++;
-                }
+                if (ll.Spec.Goal.Type != GoalType.ComboChain) Assert.True(special >= d.Rows * cfg.RampLowPercent[index] / 100 * 6 / 10, ll.Id + ": only " + special + " special rows");
+                if (ll.Spec.Signature == SignatureKind.SwingingGongs && index >= 3) Assert.True(d.Hazards.Length > 0, ll.Id);
+                else Assert.Empty(d.Hazards);
+                Assert.Empty(ll.Spec.FixedChunks);
+                checkedLevels++;
             }
-            Assert.Equal(10, checkedLevels);
-            Assert.Equal(15, signatureLevels);
+            Assert.Equal(75, checkedLevels);
         }
 
         [Fact]
@@ -306,7 +288,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                     Assert.NotNull(ChunkLibrary.Get(id));
                     chunked++;
                 }
-            Assert.Equal(15, chunked); // L5, L10, L15 in five regions
+            Assert.Equal(0, chunked); // doc 25: no authored chunks in the campaign any more (the library stays for tests)
         }
 
         [Fact]
@@ -317,18 +299,18 @@ namespace BoingUpSkyTower.Simulation.Tests
             List<LoadedLevel> all = ContentLoader.LoadRegions(root, 1, 5);
             Assert.Equal(75, all.Count);
             LoadedLevel l15 = all.Find(x => x.Id == "lvl_005_15");
-            Assert.Equal(GoalType.BossChase, l15.Spec.Goal.Type);
-            Assert.Equal(250, l15.Spec.Goal.Value);
-            Assert.True(l15.Spec.Ramp);
+            Assert.Equal(GoalType.ReachFloor, l15.Spec.Goal.Type);   // doc 25: no boss chase goal any more, level 15 reaches the last platform
+            Assert.Equal(150, l15.Spec.Goal.Value);
+            Assert.False(l15.Spec.Ramp);
             Assert.Equal(SignatureKind.SwingingGongs, l15.Spec.Signature);
             Assert.Equal(4, l15.Spec.Class);
-            Assert.Equal(new string[] { "chunk_gauntlet_a" }, l15.Spec.FixedChunks);
+            Assert.Empty(l15.Spec.FixedChunks);
             Assert.Equal(3, l15.Spec.Stars.Length);
             Assert.Equal(StarSpec.KindCoins, l15.Spec.Stars[1].Kind);
-            Assert.True(l15.Spec.Stars[1].Value >= 95); // raised targets (coin_star_targets.json)
+            Assert.True(l15.Spec.Stars[1].Value >= 20); // coin target of the star (coin_star_targets.json, rescaled for the doc 25 lengths)
             LoadedLevel l9 = all.Find(x => x.Id == "lvl_001_09");
             Assert.Equal(GoalType.ReachFloor, l9.Spec.Goal.Type); // the timed goal was removed (owner, 2026-10-19)
-            Assert.Equal(180, l9.Spec.Goal.Value);
+            Assert.Equal(120, l9.Spec.Goal.Value);
             Assert.Equal(SignatureKind.BounceFlowers, l9.Spec.Signature);
             // effective difficulty applies the region offset: d + offset (1 - d)
             LoadedLevel l1 = all.Find(x => x.Id == "lvl_005_01");

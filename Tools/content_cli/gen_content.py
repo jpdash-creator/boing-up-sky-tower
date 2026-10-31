@@ -53,23 +53,25 @@ REGIONS = [
 # Tests/Simulation/SOLVABILITY_REPORT.md and Assets/_Game/Simulation/NOTES.md.
 SPEEDRUN_TIME_SEC = 75
 
-# index -> (class, d, goal)
+# index -> (class, d, goal). Doc 25 (owner list 27): rows per level 60 / 90 (L2-5) / 120 (L6-9) / 150 (L10-15); every level reaches the last
+# platform except level 5 and 10 (combo chain, the ladder sits at the top), level 7 (no wall touch) and levels 8 and 15 (reach the last platform
+# with gems). Survive wave, hidden gem search and boss chase goals are gone from the campaign.
 LEVELS = {
     1: ("simple", 0.05, {"type": "reachFloor", "value": 60}),
     2: ("simple", 0.10, {"type": "reachFloor", "value": 90}),
-    3: ("simple", 0.15, {"type": "reachFloor", "value": 120}),
-    4: ("simple", 0.22, {"type": "reachFloor", "value": 100}),
-    5: ("complex", 0.40, {"type": "comboChain", "value": 3, "count": 2}),
-    6: ("medium", 0.35, {"type": "reachFloor", "value": 160}),
+    3: ("simple", 0.15, {"type": "reachFloor", "value": 90}),
+    4: ("simple", 0.22, {"type": "reachFloor", "value": 90}),
+    5: ("complex", 0.40, {"type": "comboChain", "value": 3, "count": 3}),
+    6: ("medium", 0.35, {"type": "reachFloor", "value": 120}),
     7: ("medium", 0.42, {"type": "noWallBounce", "value": 120}),
-    8: ("medium", 0.50, {"type": "findHiddenGem"}),
-    9: ("medium", 0.58, {"type": "reachFloor", "value": 180}),
-    10: ("complex", 0.70, {"type": "surviveWave"}),
-    11: ("hard", 0.62, {"type": "comboChain", "value": 6, "count": 1}),
-    12: ("hard", 0.70, {"type": "reachFloor", "value": 200}),
-    13: ("hard", 0.78, {"type": "reachFloor", "value": 220}),
-    14: ("hard", 0.86, {"type": "reachFloor", "value": 240}),
-    15: ("highly_complex", 1.00, {"type": "bossChase", "value": 250}),
+    8: ("medium", 0.50, {"type": "reachFloor", "value": 120}),
+    9: ("medium", 0.58, {"type": "reachFloor", "value": 120}),
+    10: ("complex", 0.70, {"type": "comboChain", "value": 4, "count": 3}),
+    11: ("hard", 0.62, {"type": "reachFloor", "value": 150}),
+    12: ("hard", 0.70, {"type": "reachFloor", "value": 150}),
+    13: ("hard", 0.78, {"type": "reachFloor", "value": 150}),
+    14: ("hard", 0.86, {"type": "reachFloor", "value": 150}),
+    15: ("highly_complex", 1.00, {"type": "reachFloor", "value": 150}),
 }
 NORMAL_LEVELS = [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14]
 
@@ -161,10 +163,6 @@ def make_level(r, region_id, i):
         "stars": [{"type": "clear"}, {"type": "coins", "value": coin_star_target(level_id, i)}, {"type": "noRevive"}],
         "rewards": {"coinPayout": coin_payout(i), "replayCoinPercent": 40, "gems": gem_rewards(i)},
     }
-    if i in (5, 10):
-        level["overrides"] = {"fixedChunks": ["chunk_complex_a"]}
-    if i == 15:
-        level["overrides"] = {"fixedChunks": ["chunk_gauntlet_a"], "ramp": True}
     return level
 
 

@@ -9,14 +9,16 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The Treasure Chest screen (docs/22 point 3): one row per chest (Iron, then Golden) with the chest picture, the name, an (i) button, and Buy and Buy 10
-    /// with the gem price on the right. Buying asks first (every price is above 50 gems), plays a reveal of about 1.2 s that a tap skips (reduced motion shows the
-    /// result at once) and ends on a Collect button. Too few gems offers the smallest gem pack that covers the shortfall. Gems only, power-ups and coins only.
-    /// Menu screen only: no per-frame code except the reveal animation.
+    /// The Treasure Shop page (docs/22 point 3, restyled by docs/26 section 1 like reference SS13). It is a PAGE of the shop (the Chests tab of
+    /// <see cref="ShopScreen"/>), built inside <see cref="ShopChrome"/>: a red CHEST ribbon and two cards, IRON CHEST (blue) and GOLD CHEST (gold), each with
+    /// the chest picture on the left, the title top right, DIRECT coloured text of what is inside (no (i) button) and the buttons Open 1 (green) and
+    /// Open 10 (yellow) with the gem price at the bottom right. Opening asks first (every price is above 50 gems), plays a reveal of about 1.2 s that a tap
+    /// skips (reduced motion shows the result at once) and ends on a Collect button. Too few gems offers the smallest gem pack that covers the shortfall.
+    /// Gems only; power-ups and coins only. Menu screen only: no per-frame code except the reveal animation.
     /// </summary>
     public sealed class TreasureChestScreen
     {
-        /// <summary>What the screen needs from the meta scene: the dim overlay layer and the way to the gem pack purchase. It never owns a canvas.</summary>
+        /// <summary>What the page needs from its host: the dim overlay layer and the way to the gem pack purchase. It never owns a canvas.</summary>
         public sealed class Host
         {
             public Func<RectTransform> NewOverlay;
@@ -25,8 +27,9 @@ namespace BoingUpSkyTower.Gameplay
             public Action<int> BuyGemPack;
         }
 
-        const float RowMinH = 360f, RowPrefH = 440f, RowGap = 24f, SideMargin = 28f, TopReserve = 290f;
-        const float BuyW = 340f, BuyH = 150f, InfoSize = 126f;
+        const float CardBaseH = 700f, RowGap = 24f;
+        const float BuyH = 150f, BuyBottom = 18f;
+        const float TitleH = 110f;
         const float ListRowH = 100f;
         const int MaxListRows = 6;
 
@@ -35,9 +38,8 @@ namespace BoingUpSkyTower.Gameplay
         readonly ShopCatalog catalog;
         readonly ArtCatalog art;
         readonly Host host;
+        float cardH = CardBaseH;
 
-        public Text CoinText { get; private set; }
-        public Text GemText { get; private set; }
         /// <summary>The reveal of the last opening (tests skip its animation through it); null when none is showing.</summary>
         public ChestRevealAnim Reveal { get; private set; }
 
@@ -66,122 +68,121 @@ namespace BoingUpSkyTower.Gameplay
             return s;
         }
 
-        /// <summary>The (i) text of a chest: exactly what it gives (docs/22 point 3). Characters are listed as coming soon while they are switched off.</summary>
-        public static string InfoText(ChestKind kind)
+        // ---------------- the direct text of a chest ----------------
+
+        static readonly string[] RarityNames = { "Common", "Uncommon", "Rare", "Epic", "Legendary" };
+
+        /// <summary>Rarity colours (Common grey, Uncommon green, Rare blue, Epic purple, Legendary gold); darker shades on the gold card so the words stay readable.</summary>
+        static Color RarityColor(int rarity, bool onGold)
         {
-            if (kind == ChestKind.Iron)
-                return "Iron Chest, " + ChestRolls.IronPrice + " gems: each chest gives " + ChestRolls.IronPowerUps + " power-up and " + Num(ChestRolls.IronMinCoins) + " to " + Num(ChestRolls.IronMaxCoins) + " coins.\n\n"
-                    + "The power-up is random from all 7 types, 1 in 7 each.\n\n"
-                    + "Characters: coming soon, chances will be listed here.";
-            return "Gold Chest, " + ChestRolls.GoldenPrice + " gems: each chest gives " + ChestRolls.GoldenPowerUps + " power-ups and " + Num(ChestRolls.GoldenMinCoins) + " to " + Num(ChestRolls.GoldenMaxCoins) + " coins.\n\n"
-                + "Each power-up random from all 7 types (same type may repeat).\n\n"
-                + "Characters: coming soon.";
+            switch (rarity)
+            {
+                case 0: return onGold ? new Color(0.30f, 0.30f, 0.34f) : new Color(0.80f, 0.82f, 0.86f);
+                case 1: return onGold ? new Color(0.02f, 0.36f, 0.12f) : new Color(0.45f, 0.98f, 0.50f);
+                case 2: return onGold ? new Color(0.05f, 0.25f, 0.75f) : new Color(0.55f, 0.78f, 1f);
+                case 3: return onGold ? new Color(0.45f, 0.10f, 0.60f) : new Color(0.84f, 0.60f, 1f);
+                default: return onGold ? new Color(0.50f, 0.26f, 0.0f) : new Color(1f, 0.86f, 0.30f);
+            }
+        }
+
+        static string Colored(string text, Color c) { return "<color=#" + ColorUtility.ToHtmlStringRGB(c) + ">" + text + "</color>"; }
+
+        /// <summary>What a chest gives, as plain text (accessibility label and tests): for example "Contains 1 power-up and 400 to 600 coins."</summary>
+        public static string DescriptionText(ChestKind kind)
+        {
+            int pu = ChestRolls.PowerUpCount(kind);
+            return "Contains " + pu + (pu == 1 ? " power-up" : " power-ups") + " and " + Num(ChestRolls.MinCoins(kind)) + " to " + Num(ChestRolls.MaxCoins(kind)) + " coins.";
+        }
+
+        /// <summary>The same text with coloured words (coins gold, power-ups green, character rarities in their colours) plus the characters line.</summary>
+        public static string DescriptionRich(ChestKind kind)
+        {
+            bool gold = kind == ChestKind.Golden;
+            Color coins = gold ? new Color(0.45f, 0.24f, 0.0f) : new Color(1f, 0.86f, 0.30f);
+            Color power = gold ? new Color(0.02f, 0.36f, 0.12f) : new Color(0.45f, 0.98f, 0.50f);
+            int pu = ChestRolls.PowerUpCount(kind);
+            string text = "Contains " + Colored(pu + (pu == 1 ? " power-up" : " power-ups"), power) + " and " + Colored(Num(ChestRolls.MinCoins(kind)) + " to " + Num(ChestRolls.MaxCoins(kind)) + " coins", coins) + ".";
+            if (!ChestRolls.CharactersEnabled) return text + "\nCharacters: coming soon";
+            int low = (int)ChestRolls.LowestRarity(kind);
+            string chars = "";
+            for (int i = 0; i < 3 && low + i < RarityNames.Length; i++)
+                chars += (i > 0 ? ", " : "") + Colored(RarityNames[low + i], RarityColor(low + i, gold));
+            return text + "\nCharacters: " + chars + ", up to " + ChestRolls.MaxCharacters(kind);
         }
 
         // ---------------- build ----------------
 
-        public void Build()
+        /// <summary>Builds the two chest cards into the shop's content rect (scrolls when the screen is short or the text is large).</summary>
+        public void BuildPage(RectTransform content)
         {
-            // wallet (coins, gems) at the top right; the back button sits at the top left
-            RectTransform wallet = UiKit.Rect(screen, "Wallet");
-            wallet.anchorMin = new Vector2(0f, 1f);
-            wallet.anchorMax = new Vector2(1f, 1f);
-            wallet.pivot = new Vector2(0.5f, 1f);
-            wallet.offsetMin = new Vector2(190f, -118f);
-            wallet.offsetMax = new Vector2(-16f, -18f);
-            var whl = wallet.gameObject.AddComponent<HorizontalLayoutGroup>();
-            whl.spacing = 10f;
-            whl.childControlWidth = whl.childControlHeight = true;
-            whl.childForceExpandWidth = whl.childForceExpandHeight = true;
-            CoinText = ToyKit.WalletPillFlex(wallet, "CoinsPill", art != null ? art.CoinIcon : null, Color.white, 100f);
-            GemText = ToyKit.WalletPillFlex(wallet, "GemsPill", art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 100f);
-            UiKit.SetText(CoinText, progress.Coins.ToString());
-            UiKit.SetText(GemText, progress.Gems.ToString());
-
-            // title on a dark backing
-            Image titleBack = Theme.GlassPanel(screen, "TitleBacking", 30f);
-            RectTransform tb = titleBack.rectTransform;
-            tb.anchorMin = new Vector2(0f, 1f);
-            tb.anchorMax = new Vector2(1f, 1f);
-            tb.pivot = new Vector2(0.5f, 1f);
-            tb.offsetMin = new Vector2(190f, -262f);
-            tb.offsetMax = new Vector2(-190f, -136f);
-            Text title = UiKit.AddText(titleBack.transform, "Title", "Treasure chests", 62, Color.white, TextAnchor.MiddleCenter, true);
-            title.horizontalOverflow = HorizontalWrapMode.Overflow;
-            UiKit.Stretch((RectTransform)title.transform);
-
-            // the two chest rows share the space between the title and the tab bar; they shrink to a minimum height on short screens
-            RectTransform rows = UiKit.Rect(screen, "Rows");
-            rows.anchorMin = Vector2.zero;
-            rows.anchorMax = Vector2.one;
-            rows.offsetMin = new Vector2(SideMargin, ToyKit.TabBarReserve);
-            rows.offsetMax = new Vector2(-SideMargin, -TopReserve);
-            var vl = rows.gameObject.AddComponent<VerticalLayoutGroup>();
-            vl.spacing = RowGap;
-            vl.childAlignment = TextAnchor.UpperCenter;
-            vl.childControlWidth = vl.childControlHeight = true;
-            vl.childForceExpandWidth = true;
-            vl.childForceExpandHeight = false;
-            BuildRow(rows, ChestKind.Iron);
-            BuildRow(rows, ChestKind.Golden);
+            cardH = CardBaseH + (Mathf.Max(1f, UiKit.TextScale) - 1f) * 650f;
+            RectTransform list = ShopChrome.ScrollArea(content, 2f * cardH + RowGap + 16f);
+            BuildChestCard(list, ChestKind.Iron, 0f);
+            BuildChestCard(list, ChestKind.Golden, cardH + RowGap);
         }
 
-        void BuildRow(RectTransform rows, ChestKind kind)
+        void BuildChestCard(RectTransform list, ChestKind kind, float y)
         {
-            RectTransform row = UiKit.Rect(rows, kind + "Row");
-            var le = row.gameObject.AddComponent<LayoutElement>();
-            le.minHeight = RowMinH;
-            le.preferredHeight = RowPrefH;
-            le.flexibleHeight = 0f;
-            Theme.CardBacking(row);
+            bool gold = kind == ChestKind.Golden;
+            RectTransform card = ShopChrome.Card(list, kind + "Card", gold ? ShopChrome.FrameColor.Gold : ShopChrome.FrameColor.Blue);
+            card.anchorMin = new Vector2(0f, 1f);
+            card.anchorMax = new Vector2(1f, 1f);
+            card.pivot = new Vector2(0.5f, 1f);
+            card.anchoredPosition = new Vector2(0f, -y);
+            card.sizeDelta = new Vector2(0f, cardH);
 
             Sprite chest = ChestArt(kind);
-            Image pic = UiKit.AddImage(row, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
+            Image pic = UiKit.AddImage(card, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
             pic.preserveAspect = true;
-            pic.rectTransform.anchorMin = new Vector2(0.03f, 0.05f);
-            pic.rectTransform.anchorMax = new Vector2(0.34f, 0.76f);
+            pic.rectTransform.anchorMin = new Vector2(0.02f, 0.08f);
+            pic.rectTransform.anchorMax = new Vector2(0.38f, 0.92f);
             pic.rectTransform.offsetMin = pic.rectTransform.offsetMax = Vector2.zero;
 
-            // the title at the top centre of the section (clear of the (i) at the top right)
-            Text name = UiKit.AddText(row, "Name", ChestName(kind), 54, Theme.Ink, TextAnchor.MiddleCenter, true);
-            UiKit.OnPanel(name);
+            // title top right, in the card's colour scheme
+            Color titleCol = gold ? new Color(0.33f, 0.14f, 0.02f) : new Color(0.82f, 0.93f, 1f);
+            Color baseCol = gold ? new Color(0.20f, 0.08f, 0.02f) : Color.white;
+            Text name = UiKit.AddText(card, "Name", ChestName(kind).ToUpperInvariant(), 58, titleCol, TextAnchor.MiddleRight, true);
+            if (gold) name.GetComponent<Outline>().enabled = false;
             name.horizontalOverflow = HorizontalWrapMode.Overflow;
             RectTransform nrt = name.rectTransform;
-            nrt.anchorMin = new Vector2(0.16f, 0.78f);
-            nrt.anchorMax = new Vector2(0.84f, 0.98f);
-            nrt.offsetMin = nrt.offsetMax = Vector2.zero;
+            nrt.anchorMin = new Vector2(0.40f, 1f);
+            nrt.anchorMax = new Vector2(0.97f, 1f);
+            nrt.pivot = new Vector2(0.5f, 1f);
+            nrt.anchoredPosition = new Vector2(0f, -20f);
+            nrt.sizeDelta = new Vector2(0f, TitleH);
 
-            // a small (i): the touch target stays 126 px (48 dp), only the drawn circle is small
-            Button info = UiKit.AddHitArea(row, "Info", "About the " + ChestName(kind) + ": what it gives", new Vector2(1f, 1f), new Vector2(-8f, -4f), new Vector2(InfoSize, InfoSize), () => OpenInfo(kind));
-            RectTransform hit = (RectTransform)info.transform;
-            hit.pivot = new Vector2(1f, 1f);
-            Image dot = ToyKit.Sliced(info.transform, "Dot", ToyKit.Button(2), 28f);
-            UiKit.Place(dot.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(72f, 72f));
-            Text i = UiKit.AddText(dot.transform, "I", "i", 44, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
-            i.GetComponent<Outline>().enabled = false;
-            UiKit.Stretch((RectTransform)i.transform);
+            // direct text: what is inside, coloured by what it is
+            Text desc = UiKit.AddText(card, "Contents", DescriptionRich(kind), 42, baseCol, TextAnchor.UpperLeft);
+            if (gold) desc.GetComponent<Outline>().enabled = false;
+            desc.horizontalOverflow = HorizontalWrapMode.Wrap;
+            desc.verticalOverflow = VerticalWrapMode.Overflow;
+            RectTransform drt = desc.rectTransform;
+            drt.anchorMin = new Vector2(0.40f, 0f);
+            drt.anchorMax = new Vector2(0.97f, 1f);
+            drt.offsetMin = new Vector2(0f, BuyBottom + BuyH + 14f);
+            drt.offsetMax = new Vector2(0f, -(20f + TitleH + 6f));
+            card.gameObject.AddComponent<A11yLabel>().Text = ChestName(kind) + ". " + DescriptionText(kind) + (ChestRolls.CharactersEnabled ? "" : " Characters: coming soon.");
 
-            // Buy and Buy 10 side by side at the bottom right
-            BuildBuyButton(row, kind, 1, 0.37f, 0.67f, 0f, -12f);
-            BuildBuyButton(row, kind, 10, 0.67f, 0.97f, 12f, 0f);
+            BuildBuyButton(card, kind, 1, 0.40f, 0.685f, 0f, -8f);
+            BuildBuyButton(card, kind, 10, 0.685f, 0.97f, 8f, 0f);
         }
 
-        /// <summary>One buy button: the count on the top line, the gem icon and price below. Never disabled: too few gems explains itself on tap.</summary>
-        void BuildBuyButton(RectTransform row, ChestKind kind, int opens, float x0, float x1, float padMin, float padMax)
+        /// <summary>One open button: "Open 1" or "Open 10" on the top line, the gem icon and price below. Never disabled: too few gems explains itself on tap.</summary>
+        void BuildBuyButton(RectTransform card, ChestKind kind, int opens, float x0, float x1, float padMin, float padMax)
         {
             int price = ChestRolls.Price(kind, opens);
             string chests = opens == 1 ? "1 " + ChestName(kind) : "10 " + ChestName(kind) + "s";
-            Button b = UiKit.AddButton(row, "Buy" + opens, "", ToyKit.Button(opens == 1 ? 1 : 0), Color.white, new Vector2(BuyW, BuyH), () => TapBuy(kind, opens), 40);
-            b.GetComponent<A11yLabel>().Text = "Buy " + chests + " for " + Num(price) + " gems";
+            Button b = UiKit.AddButton(card, "Open" + opens, "", ToyKit.Button(opens == 1 ? 1 : 0), Color.white, new Vector2(280f, BuyH), () => TapBuy(kind, opens), 40);
+            b.GetComponent<A11yLabel>().Text = "Open " + chests + " for " + Num(price) + " gems";
             b.GetComponent<Image>().raycastTarget = true;
             var rt = (RectTransform)b.transform;
             rt.anchorMin = new Vector2(x0, 0f);
             rt.anchorMax = new Vector2(x1, 0f);
             rt.pivot = new Vector2(0.5f, 0f);
-            rt.offsetMin = new Vector2(padMin, 24f);
-            rt.offsetMax = new Vector2(padMax, 24f + BuyH);
+            rt.offsetMin = new Vector2(padMin, BuyBottom);
+            rt.offsetMax = new Vector2(padMax, BuyBottom + BuyH);
 
-            Text label = UiKit.AddText(b.transform, "Count", opens == 1 ? "Buy" : "Buy 10", 40, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+            Text label = UiKit.AddText(b.transform, "Count", opens == 1 ? "Open 1" : "Open 10", 40, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
             label.horizontalOverflow = HorizontalWrapMode.Overflow;
             label.GetComponent<Outline>().enabled = false;
             RectTransform lrt = label.rectTransform;
@@ -194,14 +195,14 @@ namespace BoingUpSkyTower.Gameplay
             line.anchorMax = new Vector2(0.96f, 0.52f);
             line.offsetMin = line.offsetMax = Vector2.zero;
             var hl = line.gameObject.AddComponent<HorizontalLayoutGroup>();
-            hl.spacing = 8f;
+            hl.spacing = 6f;
             hl.childAlignment = TextAnchor.MiddleCenter;
             hl.childControlWidth = hl.childControlHeight = true;
             hl.childForceExpandWidth = hl.childForceExpandHeight = false;
             Image gem = UiKit.AddImage(line, "Gem", art != null ? art.GemIcon : null, Color.white);
             var gle = gem.gameObject.AddComponent<LayoutElement>();
-            gle.preferredWidth = gle.preferredHeight = 56f;
-            Text cost = UiKit.AddText(line, "Cost", Num(price), 46, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+            gle.preferredWidth = gle.preferredHeight = 52f;
+            Text cost = UiKit.AddText(line, "Cost", Num(price), 44, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
             cost.horizontalOverflow = HorizontalWrapMode.Overflow;
             cost.GetComponent<Outline>().enabled = false;
         }
@@ -271,46 +272,11 @@ namespace BoingUpSkyTower.Gameplay
             if (idx >= 0)
             {
                 GemPackDef pack = catalog.GemPacks[idx];
-                string label = "Get " + Num(pack.Gems) + " gems (" + ShopCatalog.FormatUsd(ShopCatalog.GemPackUsd(pack, GameSettings.LaunchPromo)) + ")";
+                string label = "Get " + Num(pack.Gems) + " gems (" + ShopChrome.PriceText(ShopCatalog.GemPackUsd(pack, progress.LaunchPromoActive)) + ")";
                 Button buy = UiKit.AddButton(panel, "GetGems", label, ToyKit.Button(1), Color.white, new Vector2(760f, 130f), () => { if (host.BuyGemPack != null) host.BuyGemPack(idx); }, 44);
                 UiKit.Place((RectTransform)buy.transform, new Vector2(0.5f, 0f), new Vector2(0f, 230f), new Vector2(760f, 130f));
             }
             ToyKit.PopupAction(panel, "Close", null, Color.white, 60f, host.CloseOverlay);
-        }
-
-        // ---------------- (i) info ----------------
-
-        /// <summary>The (i) panel: text only, on the popup's cream backing, scrolling when it does not fit, closed by the red X.</summary>
-        public void OpenInfo(ChestKind kind)
-        {
-            if (host.NewOverlay == null) return;
-            RectTransform overlay = host.NewOverlay();
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, ChestName(kind), art, new Vector2(780f, 920f), host.CloseOverlay);
-            RectTransform vp = UiKit.Rect(panel, "InfoViewport");
-            vp.anchorMin = Vector2.zero;
-            vp.anchorMax = Vector2.one;
-            vp.offsetMin = new Vector2(56f, 56f);
-            vp.offsetMax = new Vector2(-56f, -210f);
-            vp.gameObject.AddComponent<RectMask2D>();
-            var hit = vp.gameObject.AddComponent<Image>();
-            hit.color = new Color(0f, 0f, 0f, 0f);   // gives the ScrollRect something to drag on
-            Text body = UiKit.AddText(vp, "InfoText", InfoText(kind), 44, Theme.Ink, TextAnchor.UpperCenter);
-            UiKit.OnPanel(body);
-            RectTransform brt = body.rectTransform;
-            brt.anchorMin = new Vector2(0f, 1f);
-            brt.anchorMax = new Vector2(1f, 1f);
-            brt.pivot = new Vector2(0.5f, 1f);
-            brt.offsetMin = brt.offsetMax = Vector2.zero;
-            var fit = body.gameObject.AddComponent<ContentSizeFitter>();
-            fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            var sr = vp.gameObject.AddComponent<ScrollRect>();
-            sr.content = brt;
-            sr.viewport = vp;
-            sr.horizontal = false;
-            sr.vertical = true;
-            sr.movementType = ScrollRect.MovementType.Clamped;
-            sr.scrollSensitivity = 60f;
         }
 
         // ---------------- reveal ----------------

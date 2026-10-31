@@ -73,7 +73,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Base scroll speed as a percent of the difficulty-blended speed (owner, 2026-10-19: +20 percent).</summary>
         public int ScrollBasePercent = 120;
         /// <summary>Chance, in per mille, that a gem spot (one per row of a campaign level) holds a gem. See <see cref="DifficultyGemPermille"/>.</summary>
-        public int GemSpotPermille = 22;
+        public int GemSpotPermille = 27;
         /// <summary>
         /// GemSpotPermille per difficulty (Relaxed, Easy, Normal, Hard, Insane). The owner asked for 2.5, 2.5, 3.5, 4.5, 5 percent (issue list 24 point 5).
         /// Measured with one spot per row: 2.5 percent places only about 62 gems per region (target 70 to 110) and 4.5 / 5 percent place 112 / 130,
@@ -81,8 +81,10 @@ namespace BoingUpSkyTower.Simulation
         /// (78 to 103 placed gems per region on every difficulty). Rarity weights are unchanged.
         /// Owner issue list 26 (2026-10-31): 30 percent fewer gems in game, so the shares are x0.7 rounded: 2.2, 2.2, 2.5, 2.7 and 2.9 percent
         /// (about 55 to 75 placed gems per region on every difficulty).
+        /// Doc 25 (owner list 27: levels of 60 to 150 rows, no gems on the combo levels 5 and 10, double gems on levels 8 and 15) re-tuned the shares, not the rarity
+        /// weights, to 2.7, 2.7, 2.9, 3.0 and 3.2 percent: 56 to 73 placed gem value per region on every difficulty (target 55 to 75).
         /// </summary>
-        public static readonly int[] DifficultyGemPermille = { 22, 22, 25, 27, 29 };
+        public static readonly int[] DifficultyGemPermille = { 27, 27, 29, 30, 32 };
         public int ScrollStepSeconds = 5;
         public int ScrollStepPercent = 4;
         public int ScrollStepCapPercent = 50;
@@ -241,9 +243,21 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Share of rows with a new special platform: SpecialShareLevel3Percent at level 3 rising linearly to SpecialShareLevel15Percent at level 15.</summary>
         public int SpecialShareLevel3Percent = 15;
         public int SpecialShareLevel15Percent = 55;
-        /// <summary>Level 2 is a light touch: this many non-hazard and at most this many hazard-type special platforms. Level 1 has none.</summary>
-        public int Level2SafeSpecials = 2;
-        public int Level2HazardSpecials = 1;
+        /// <summary>
+        /// Doc 25 (owner list 27): share of rows with a special platform, ramping INSIDE each level from the low value at the first rows to the high value at the
+        /// last rows. Index = level 1..15 (index 0 unused): L1 10 to 30, L2 to 5 30 to 50, L6 to 14 40 to 60, L15 50 to 70 percent.
+        /// </summary>
+        public int[] RampLowPercent = { 0, 10, 30, 30, 30, 30, 40, 40, 40, 40, 40, 40, 40, 40, 40, 50 };
+        public int[] RampHighPercent = { 0, 30, 50, 50, 50, 50, 60, 60, 60, 60, 60, 60, 60, 60, 60, 70 };
+        /// <summary>Doc 25: platforms per row (percent): 130 platforms per 100 rows, the spine platform of each row plus planned row mates.</summary>
+        public int PlatformsPerRowPercent = 130;
+        /// <summary>Doc 25: levels with gems (8 and 15) make this percent of the gems double gems (worth DoubleGemValue). Tag 4 of a Gem pickup.</summary>
+        public int DoubleGemPercent = 25;
+        public int DoubleGemValue = 2;
+        /// <summary>Gem pickup Tag of a double gem (tiers 0 to 3 are the rarities 1/2/5/10).</summary>
+        public const int DoubleGemTag = 4;
+        /// <summary>Level 8 only: the hidden bonus gem is a double gem with this percent chance.</summary>
+        public int HiddenBonusDoublePercent = 30;
         /// <summary>Hazard-type specials (Thorn Bush, Snap Daisy) are rare early: at most one per this many rows up to level HazardEarlyLastLevel (owner decision).</summary>
         public int HazardEarlyRowsPerHazard = 6;
         public int HazardEarlyLastLevel = 6;

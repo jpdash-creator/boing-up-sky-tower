@@ -190,3 +190,10 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-10-31,T61,reg001_newplat_sheetB,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,oBkk0YNpt0tEdA37ZWD0,done,30,approvals/T61-region1-new-platforms.md,B dandelion/thorn
 2026-10-31,T61,reg001_newplat_sheetC,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,FgODnEEUDPPCCovIZt62,done,30,approvals/T61-region1-new-platforms.md,C ladybug/seesaw
 2026-10-31,T62,reg001_newplat_redo_wind_daisy,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,3TezJyYTrj2k9waM1PkK,done,30,approvals/T61-region1-new-platforms.md,owner approved redo of wind petal + snap daisy (30 credits); owner picked A2 (hive), B2 (dandelion+thorn), C2 (ladybug+seesaw)
+2026-11-01,T63,shop_tickets,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,4p5FgfaTLmaCwOgk0Ssy,done,30,approvals/T63-shop-art.md,owner approved 135 credits (5 calls)
+2026-11-01,T63,shop_bag_icon,byte-plus-seedream-5-lite,image2image,2K 1:1 x2 refs=style bible,none,URenrnIAjCuRAxDHpK05,done,30,approvals/T63-shop-art.md,
+2026-11-01,T63,shop_bundle_hero,byte-plus-seedream-5-lite,image2image,2K 4:3 x1 refs=style bible,none,xm1DDIFpih9xVtsxzvaL,done,15,approvals/T63-shop-art.md,
+2026-11-01,T63,shop_gem_piles,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,qMsPmeOc0F6I1nfHCWNS,done,30,approvals/T63-shop-art.md,
+2026-11-01,T63,shop_coin_piles,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,3uFbZKRhZOCLHRzb1Yp6,done,30,approvals/T63-shop-art.md,retry after PARALLEL_LIMIT failure (no credits charged for the failed submit)
+2026-11-01,T64,ticket_weekly_redo,byte-plus-seedream-5-lite,image2image,2K 1:1 x1 refs=style bible,none,kvkReYa7h0IpVkq5kSIf,done,15,approvals/T63-shop-art.md,owner approved 30 credits: regenerate tickets as separate images (previous cut tickets overlapped)
+2026-11-01,T64,ticket_monthly_redo,byte-plus-seedream-5-lite,image2image,2K 1:1 x1 refs=style bible,none,rKblwFQIHXjRQXPQqGXK,done,15,approvals/T63-shop-art.md,

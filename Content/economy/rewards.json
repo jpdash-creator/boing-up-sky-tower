@@ -1,0 +1,284 @@
+{
+  "_doc": "docs/26 section 4. Kept identical to RewardCatalog.BuiltIn() by RewardsTests. Rewards: gems, coins, powerups (random units).",
+  "stars": [
+    {
+      "id": "s_25",
+      "title": "25 stars",
+      "target": 25,
+      "gems": 20
+    },
+    {
+      "id": "s_50",
+      "title": "50 stars",
+      "target": 50,
+      "coins": 1000
+    },
+    {
+      "id": "s_75",
+      "title": "75 stars",
+      "target": 75,
+      "gems": 30
+    },
+    {
+      "id": "s_100",
+      "title": "100 stars",
+      "target": 100,
+      "coins": 1500
+    },
+    {
+      "id": "s_125",
+      "title": "125 stars",
+      "target": 125,
+      "gems": 40,
+      "powerups": 1
+    },
+    {
+      "id": "s_150",
+      "title": "150 stars",
+      "target": 150,
+      "coins": 2000
+    },
+    {
+      "id": "s_175",
+      "title": "175 stars",
+      "target": 175,
+      "gems": 60,
+      "powerups": 2
+    },
+    {
+      "id": "s_200",
+      "title": "200 stars",
+      "target": 200,
+      "gems": 80,
+      "powerups": 3
+    },
+    {
+      "id": "s_225",
+      "title": "225 stars",
+      "target": 225,
+      "gems": 100,
+      "powerups": 5
+    }
+  ],
+  "regions": [
+    {
+      "id": "r_1",
+      "title": "Meadow Springs cleared",
+      "target": 1,
+      "gems": 50,
+      "coins": 2000
+    },
+    {
+      "id": "r_2",
+      "title": "Mushroom Grove cleared",
+      "target": 2,
+      "gems": 50,
+      "coins": 2000
+    },
+    {
+      "id": "r_3",
+      "title": "Sunny Beach cleared",
+      "target": 3,
+      "gems": 50,
+      "coins": 2000
+    },
+    {
+      "id": "r_4",
+      "title": "Candy Canyon cleared",
+      "target": 4,
+      "gems": 50,
+      "coins": 2000
+    },
+    {
+      "id": "r_5",
+      "title": "Bamboo Temple cleared",
+      "target": 5,
+      "gems": 50,
+      "coins": 2000
+    }
+  ],
+  "dailyActions": [
+    {
+      "id": "d_login",
+      "title": "Log in today",
+      "stat": "login",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "d_play5",
+      "title": "Play for 5 minutes",
+      "stat": "playSec",
+      "target": 300,
+      "points": 10
+    },
+    {
+      "id": "d_level1",
+      "title": "Complete a level",
+      "stat": "levels",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "d_level3",
+      "title": "Complete 3 levels",
+      "stat": "levels",
+      "target": 3,
+      "points": 10
+    },
+    {
+      "id": "d_combo3",
+      "title": "Do a combo of 3 or more",
+      "stat": "combos",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "d_hard",
+      "title": "Play a hard level",
+      "stat": "hard",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "d_nowall",
+      "title": "Clear the no-wall level",
+      "stat": "noWall",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "d_gemlevel",
+      "title": "Clear a gem level",
+      "stat": "gemLevel",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "d_allgems",
+      "title": "Collect all gems in a level",
+      "stat": "allGems",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "d_powerup",
+      "title": "Use a power-up",
+      "stat": "powerups",
+      "target": 1,
+      "points": 10
+    }
+  ],
+  "dailyMilestones": [
+    {
+      "id": "dp_20",
+      "title": "20 points",
+      "target": 20,
+      "gems": 10
+    },
+    {
+      "id": "dp_40",
+      "title": "40 points",
+      "target": 40,
+      "coins": 500
+    },
+    {
+      "id": "dp_60",
+      "title": "60 points",
+      "target": 60,
+      "gems": 15
+    },
+    {
+      "id": "dp_80",
+      "title": "80 points",
+      "target": 80,
+      "coins": 1000
+    },
+    {
+      "id": "dp_100",
+      "title": "100 points",
+      "target": 100,
+      "gems": 20,
+      "powerups": 1
+    }
+  ],
+  "weekly": [
+    {
+      "id": "w_login7",
+      "title": "Log in every day of the week",
+      "stat": "loginDays",
+      "target": 7,
+      "gems": 30
+    },
+    {
+      "id": "w_play100",
+      "title": "Play for 100 minutes",
+      "stat": "playMin",
+      "target": 100,
+      "coins": 500
+    },
+    {
+      "id": "w_play150",
+      "title": "Play for 150 minutes",
+      "stat": "playMin",
+      "target": 150,
+      "gems": 20
+    },
+    {
+      "id": "w_combos5",
+      "title": "Do 5 combos",
+      "stat": "combos",
+      "target": 5,
+      "coins": 300
+    },
+    {
+      "id": "w_combos10",
+      "title": "Do 10 combos",
+      "stat": "combos",
+      "target": 10,
+      "gems": 10
+    },
+    {
+      "id": "w_combos25",
+      "title": "Do 25 combos",
+      "stat": "combos",
+      "target": 25,
+      "gems": 20
+    },
+    {
+      "id": "w_combos50",
+      "title": "Do 50 combos",
+      "stat": "combos",
+      "target": 50,
+      "powerups": 1
+    },
+    {
+      "id": "w_levels15",
+      "title": "Clear 15 levels",
+      "stat": "levels",
+      "target": 15,
+      "gems": 40
+    },
+    {
+      "id": "w_gems30",
+      "title": "Collect 30 gems in levels",
+      "stat": "gems",
+      "target": 30,
+      "coins": 1000
+    },
+    {
+      "id": "w_nowall",
+      "title": "Clear the no-wall level",
+      "stat": "noWall",
+      "target": 1,
+      "gems": 15
+    },
+    {
+      "id": "w_stars3",
+      "title": "Earn 3 stars on 5 levels",
+      "stat": "stars3",
+      "target": 5,
+      "gems": 25
+    }
+  ]
+}

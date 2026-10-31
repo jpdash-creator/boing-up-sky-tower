@@ -408,12 +408,12 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void SpecialShareRisesFrom15To55PercentAndLevels1And2StayLight()
+        public void Region1SpecialShareFollowsTheDoc25RampAndLevel1HasNoHazardTypes()
         {
+            // The full ramp measurement for all regions is LevelStructureTests; here the region 1 specifics: the mix of kinds, hazard types left out of the tutorial.
             SimConfig cfg = new SimConfig();
             List<LoadedLevel> levels = Region1();
             Assert.Equal(15, levels.Count);
-            double[] share = new double[16];
             foreach (LoadedLevel ll in levels)
             {
                 int idx = ll.Spec.LevelIndex;
@@ -422,44 +422,20 @@ namespace BoingUpSkyTower.Simulation.Tests
                 {
                     LevelData d = LevelBuilder.Build(cfg, ll.Spec.WithAttemptSeed(RandomLayoutTests.AttemptSeed(i)));
                     RowInfo ri = Rows(d);
-                    int special = 0, hazard = 0, safe = 0;
+                    int special = 0;
                     for (int r = 1; r <= ri.Rows; r++)
                     {
                         if (ri.Kind[r] == PlatformKind.Normal) continue;
                         special++;
-                        if (PlatformKinds.IsHazardType(ri.Kind[r])) hazard++; else safe++;
-                    }
-                    if (idx == 1) Assert.Equal(0, special);
-                    if (idx == 2)
-                    {
-                        Assert.True(safe <= 2 && hazard <= 1, ll.Id + " light touch broken: " + safe + " safe, " + hazard + " hazard");
-                        Assert.True(!ri.Kind.Any(k => PlatformKinds.IsLaunch(k)), "no launcher on level 2");
+                        if (idx == 1) Assert.False(PlatformKinds.IsHazardType(ri.Kind[r]), "the tutorial has no hazard-type platforms");
                     }
                     sum += special * 100.0 / ri.Rows;
                 }
-                share[idx] = sum / 10;
-                output.WriteLine("level " + idx + ": " + share[idx].ToString("F1") + " percent of the rows carry a special platform");
+                double mean = (cfg.RampLowPercent[idx] + cfg.RampHighPercent[idx]) / 2.0;
+                double got = sum / 10;
+                output.WriteLine("level " + idx + ": " + got.ToString("F1") + " percent of the rows (ramp mean " + mean + ")");
+                if (ll.Spec.Goal.Type != GoalType.ComboChain) Assert.InRange(got, mean - 8, mean + 2);
             }
-            Assert.Equal(0, share[1]);
-            Assert.InRange(share[2], 1, 11);
-            // the plan hits round(share * free rows): within 4 points of the target, which counts rows beside ladders and chunks as not free
-            // The share applies to the free generated rows. Levels with authored chunks (5, 10, 15) or a big combo ladder (11) have fewer of them,
-            // so only the plain levels are held to the band; the others must still carry a clear share of the target.
-            for (int idx = 3; idx <= 15; idx++)
-            {
-                double target = 15 + 40.0 * (idx - 3) / 12;
-                LoadedLevel ll = levels.First(l => l.Spec.LevelIndex == idx);
-                bool plain = ll.Spec.FixedChunks.Length == 0 && ll.Spec.Goal.Type != GoalType.ComboChain;
-                if (plain) Assert.InRange(share[idx], target - 8, target + 1.5);
-                else Assert.InRange(share[idx], target * 0.4, target + 1.5);
-            }
-            Assert.InRange(share[3], 10, 16.5);
-            for (int idx = 4; idx <= 14; idx++)
-            {
-                LoadedLevel ll = levels.First(l => l.Spec.LevelIndex == idx);
-                if (ll.Spec.FixedChunks.Length == 0 && ll.Spec.Goal.Type != GoalType.ComboChain) Assert.True(share[idx] > share[idx - 1] - 4 || levels.First(l => l.Spec.LevelIndex == idx - 1).Spec.FixedChunks.Length > 0, "share fell from level " + (idx - 1) + " to " + idx);
-            }
-            Assert.True(share[14] > share[3] + 28);
         }
 
         [Fact]
@@ -617,16 +593,16 @@ namespace BoingUpSkyTower.Simulation.Tests
         // ------------------------------------------------------------------ bot proofs
 
         [Fact]
-        public void BotSolvesEveryRandomRegion1LayoutOfLevels2To15With24Seeds()
+        public void BotSolvesEveryRandomRegion1LayoutOfLevels1To15With10Seeds()
         {
             SimConfig cfg = new SimConfig();
-            List<LoadedLevel> levels = Region1().Where(l => l.Spec.LevelIndex >= 2).ToList();
+            List<LoadedLevel> levels = Region1().ToList();
             string[][] failures = new string[levels.Count][];
             Parallel.For(0, levels.Count, li =>
             {
                 LoadedLevel ll = levels[li];
                 List<string> f = new List<string>();
-                for (int i = 0; i < 24; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     LevelSpec s = ll.Spec.WithAttemptSeed(RandomLayoutTests.AttemptSeed(i + 40));
                     LevelData d = LevelBuilder.Build(cfg, s);

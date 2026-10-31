@@ -363,7 +363,7 @@ namespace BoingUpSkyTower.Tests
             var l15 = NewService();
             for (int i = 1; i <= 14; i++) l15.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
             RewardResult first = l15.ApplyRun("lvl_001_15", Won(gems: 3));
-            Assert.GreaterOrEqual(first.RewardGems, 5, "the first clear of level 15 guarantees 5 gems");
+            Assert.GreaterOrEqual(first.RewardGems, 5 + EconomyRules.Level15DoubleGemBonus, "the first clear of level 15 guarantees 5 gems plus the double-gem bonus (doc 25)");
             Assert.AreEqual(3, first.PickupGems);
             RewardResult again = l15.ApplyRun("lvl_001_15", Won(gems: 3));
             Assert.AreEqual(0, again.RewardGems, "milestone gems pay on the first clear only");
@@ -411,7 +411,19 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void HiddenGemIsTheGoalAndPaysNoExtraGem()
+        public void HiddenGemOfLevel8PaysItsValueOnTheFirstClearOnly()
+        {
+            var svc = NewService();
+            for (int i = 1; i <= 7; i++) svc.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
+            RunOutcome run = Won();
+            run.HiddenGems = 2;   // a double bonus gem
+            RewardResult first = svc.ApplyRun("lvl_001_08", run);
+            Assert.AreEqual(2, first.HiddenGemReward);
+            Assert.AreEqual(0, svc.ApplyRun("lvl_001_08", run).HiddenGemReward, "first clear only");
+        }
+
+        [Test]
+        public void HiddenGemOnOtherLevelsPaysNoExtraGem()
         {
             var svc = NewService();
             RunOutcome run = Won();

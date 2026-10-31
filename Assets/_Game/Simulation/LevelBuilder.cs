@@ -145,9 +145,9 @@ namespace BoingUpSkyTower.Simulation
                 ladderV = spec.Goal.Value < 2 ? 2 : spec.Goal.Value;
                 int cnt = spec.Goal.Count < 1 ? 1 : spec.Goal.Count;
                 ladderLen = ladderV * cnt + 2;
-                ladderStart = rows * 30 / 100;
+                // Doc 25: the ladder sits at the TOP of a combo level (the run ends on it, so the whole level has to be climbed first).
+                ladderStart = rows - 2 - ladderLen;
                 if (ladderStart < 5) ladderStart = 5;
-                if (ladderStart + ladderLen > rows - 2) ladderStart = rows - 2 - ladderLen;
                 for (int r = ladderStart; r < ladderStart + ladderLen; r++) locked[r] = true;
                 data.LadderStartRow = ladderStart;
                 data.LadderEndRow = ladderStart + ladderLen - 1;
@@ -197,7 +197,9 @@ namespace BoingUpSkyTower.Simulation
             }
 
             int gemRow = -1;
-            if (spec.Goal.Type == GoalType.FindHiddenGem)
+            // The hidden gem is the goal of a FindHiddenGem level (legacy) and the bonus gem of level 8 (doc 25).
+            bool hiddenGemLevel = spec.Goal.Type == GoalType.FindHiddenGem || (!spec.Endless && spec.LevelIndex == 8 && spec.Goal.Type != GoalType.ComboChain);
+            if (hiddenGemLevel)
             {
                 gemRow = rows / 2;
                 while (gemRow < rows - 3 && locked[gemRow]) gemRow++;
@@ -212,10 +214,25 @@ namespace BoingUpSkyTower.Simulation
             bool balanced = spec.AttemptSeed != 0;
             // Region special platforms (doc 24): when the region has a set of new platforms the level plans its special rows (the signature flower is
             // one of the options) with exact counts for the level, for the base layout and for every attempt seed.
-            bool specials = idx >= 2 && spec.ActiveNewPlatforms().Length > 0;
-            PlatformKind[] specialPlan = specials ? SpecialPlatforms.Plan(cfg, spec, sigKind, rows, locked, gemRow) : null;
+            // Doc 25: every region with a signature (or a set of new platforms) ramps its special rows inside the level, from level 1 on.
+            bool specials = !spec.Endless && (spec.Signature != SignatureKind.None || spec.ActiveNewPlatforms().Length > 0);
+            PlatformKind[] specialPlan = specials ? SpecialPlatforms.Plan(cfg, spec, SignatureKinds.PlatformFor(spec.Signature), rows, locked, gemRow) : null;
             bool[] sigRow = !specials && balanced && sigShare > 0 ? PlanSignatureRows(spec, sigKind, sigShare, rows, locked, gemRow) : null;
             int prevDir = 0;
+
+            // Doc 25: 1.3 platforms per row = the spine platform of every row plus row mates on round(0.3 x rows) rows. The rows are drawn up front
+            // (own Rng stream, so the count is the level's, whatever the attempt seed); a row mate that does not fit is carried to the next row.
+            bool[] extraRow = new bool[rows + 3];
+            int extraWanted = (rows * (cfg.PlatformsPerRowPercent - 100) + 50) / 100;
+            {
+                Rng er = new Rng(spec.Seed ^ 0x2545F491);
+                List<int> cand = new List<int>(rows);
+                for (int r = 2; r <= rows; r++) if (!locked[r] && r != gemRow) cand.Add(r);
+                for (int i = cand.Count - 1; i > 0; i--) { int j = er.Next(i + 1); int t = cand[i]; cand[i] = cand[j]; cand[j] = t; }
+                for (int i = 0; i < cand.Count && i < extraWanted; i++) extraRow[cand[i]] = true;
+            }
+            Rng exRng = new Rng(spec.Seed ^ 0x6C8E9CF5);
+            int extraDebt = 0;
             int[] patternBag = new int[3];
             int patternBagPos = 3;
 
@@ -390,6 +407,8 @@ namespace BoingUpSkyTower.Simulation
                 if (kind == PlatformKind.Moving && w > cfg.DriftMaxWidth) w = cfg.DriftMaxWidth;
                 if (PlatformKinds.IsRegion1New(kind)) w = SpecialPlatforms.ConstrainWidth(cfg, kind, w);
                 if (row == gemRow && w > Fx.FromRatio(35, 10)) w = Fx.FromRatio(35, 10);
+                if (extraRow[row] && w > Fx.FromInt(4)) w = Fx.FromInt(4);   // a row with a mate keeps room for it
+                w = SnapWidth(w, kind);                                       // painted widths only; the final snap pass finds nothing left to change
                 // Narrow platforms get smaller gaps so one jump always works (owner, 2026-10-20).
                 gap = Fx.Min(gap, SmallPlatformGapCap(maxGap, Fx.Min(w, prevW)));
                 gap = SpecialPlatforms.ConstrainGap(cfg, kind, prevKind, gap);   // hive neighbours: room for the bob
@@ -433,6 +452,7 @@ namespace BoingUpSkyTower.Simulation
                     period = 2 * rng.Range(90, 150);
                     phase = rng.Next(period);
                 }
+                else if (kind == PlatformKind.Vanishing) phase = rng.Next(cfg.VanishVisibleTicks + cfg.VanishHiddenTicks);
                 ctx.Add(row, kind, x, y, w, amp, period, phase, pdir);
 
                 if (row == gemRow)
@@ -470,52 +490,11 @@ namespace BoingUpSkyTower.Simulation
                     data.HiddenGemRow = row;
                     data.HiddenGemX = hiddenGemX;
                 }
-                else if (rowPattern == 1)
+                else if (extraRow[row] || extraDebt > 0)
                 {
-                    // Dense patch: 1 to 3 extra small platforms on the same row. The spine platform above stays reachable; these are
-                    // choices, and about one in four crumbles, so the player has to read each jump.
-                    int extras = 1 + rng.Next(3);
-                    Fx[] usedX = new Fx[4];
-                    Fx[] usedW = new Fx[4];
-                    usedX[0] = x; usedW[0] = amp.Raw > 0 ? SnapWidth(w, kind) + amp * 2 : w;   // a drifting spine platform sweeps +-amp: extras keep clear of the whole swing
-                    int nUsed = 1;
-                    for (int e = 0; e < extras; e++)
-                    {
-                        Fx w2 = rng.Range(Fx.FromRatio(15, 10), Fx.FromRatio(26, 10));
-                        Fx x2 = rng.Range(w2 / 2, screen - w2 / 2);
-                        bool free = true;
-                        for (int u = 0; u < nUsed; u++) if (Fx.Abs(x2 - usedX[u]) < (w2 + usedW[u]) / 2 + Fx.FromRatio(6, 10)) free = false;
-                        if (!free || !OptionalPlatformFits(ctx.Plats, y)) continue;
-                        Platform ex = new Platform();
-                        ex.Id = ctx.Plats.Count;
-                        ex.Row = row;
-                        ex.X = x2;
-                        ex.Y = y;
-                        ex.Width = w2;
-                        ex.Kind = rng.Next(100) < 25 ? PlatformKind.Crumble : PlatformKind.Normal;
-                        ctx.Plats.Add(ex);
-                        usedX[nUsed] = x2; usedW[nUsed] = w2; nUsed++;
-                    }
-                }
-                else
-                {
-                    // Optional second platform on the same row (easy levels give more choices), as in LevelGenerator.
-                    int secondChance = (Fx.FromInt(50) * (Fx.One - d)).FloorToInt();
-                    if (kind == PlatformKind.Normal && rng.Next(100) < secondChance && OptionalPlatformFits(ctx.Plats, y))
-                    {
-                        Fx x2 = screen - x;
-                        if (Fx.Abs(x2 - x) >= (w + w) / 2 + Fx.One)
-                        {
-                            Platform extra = new Platform();
-                            extra.Id = ctx.Plats.Count;
-                            extra.Row = row;
-                            extra.Kind = PlatformKind.Normal;
-                            extra.X = Fx.Clamp(x2, lo, hi);
-                            extra.Y = y;
-                            extra.Width = w;
-                            ctx.Plats.Add(extra);
-                        }
-                    }
+                    // Row mate (doc 25: 1.3 platforms per row). A mate that finds no spot moves to a later row (extraDebt).
+                    if (TryAddRowMate(ctx, ref exRng, row, y, x, w, amp, screen)) { if (!extraRow[row]) extraDebt--; }
+                    else if (extraRow[row]) extraDebt++;
                 }
 
                 prevX = x; prevW = w; prevKind = kind; prevDir = pdir;
@@ -537,6 +516,32 @@ namespace BoingUpSkyTower.Simulation
             // ---- hazards ----
             data.Hazards = BuildHazards(cfg, spec, ctx, data.Platforms, data.Pickups, rows, d, wave, waveStart, waveEnd, ladderStart, ladderLen);
             return data;
+        }
+
+        /// <summary>
+        /// Adds one row mate (a Normal platform, one in five crumbles) beside the spine platform of <paramref name="row"/>: a painted width, clear of the
+        /// spine platform (and of its whole swing) by MinRowGap + 0.3, inside the walls, only while the stack rule has room. False when no spot was found.
+        /// </summary>
+        private static bool TryAddRowMate(Ctx ctx, ref Rng rng, int row, Fx y, Fx x, Fx w, Fx amp, Fx screen)
+        {
+            if (!OptionalPlatformFits(ctx.Plats, y)) return false;
+            for (int attempt = 0; attempt < 14; attempt++)
+            {
+                Fx w2 = SnapWidth(rng.Range(Fx.FromRatio(15, 10), Fx.FromRatio(40, 10)), PlatformKind.Normal);
+                Fx x2 = rng.Range(w2 / 2, screen - w2 / 2);
+                if (Fx.Abs(x2 - x) < (w2 + w) / 2 + amp + MinRowGap + Fx.FromRatio(3, 10)) continue;
+                Platform ex = new Platform();
+                ex.Id = ctx.Plats.Count;
+                ex.Row = row;
+                ex.X = x2;
+                ex.Y = y;
+                ex.Width = w2;
+                ex.Kind = rng.Next(100) < 20 ? PlatformKind.Crumble : PlatformKind.Normal;
+                if (ex.Kind == PlatformKind.Crumble) ex.Width = SnapWidth(w2, PlatformKind.Crumble);
+                ctx.Plats.Add(ex);
+                return true;
+            }
+            return false;
         }
 
         // ------------------------------------------------------------------------------------------
@@ -677,6 +682,7 @@ namespace BoingUpSkyTower.Simulation
                 int count = (int)(expected / 1000);
                 if (gemRng.Next(1000) < (int)(expected % 1000)) count++;
                 if (count > spots) count = spots;
+                if (spec.Goal.Type == GoalType.ComboChain) count = 0;   // doc 25: combo chain levels have no gem pickups
                 int[] pool = new int[spots];
                 for (int i = 0; i < spots; i++) pool[i] = lo + i;
                 for (int i = 0; i < count; i++)
@@ -689,6 +695,15 @@ namespace BoingUpSkyTower.Simulation
                 System.Array.Sort(gemRows);
                 gemTiers = new int[count];
                 for (int gi = 0; gi < count; gi++) gemTiers[gi] = GemTierAt(cfg, spec.LevelIndex * 16 + gi);
+                // Doc 25: on the gem levels (8 and 15) round(25 percent) of the gems are double gems (Tag 4, worth DoubleGemValue), picked by a seeded shuffle.
+                if (!spec.Endless && (spec.LevelIndex == 8 || spec.LevelIndex == 15) && count > 0)
+                {
+                    int doubles = (count * cfg.DoubleGemPercent + 50) / 100;
+                    int[] order = new int[count];
+                    for (int i = 0; i < count; i++) order[i] = i;
+                    for (int i = count - 1; i > 0; i--) { int j = gemRng.Next(i + 1); int t2 = order[i]; order[i] = order[j]; order[j] = t2; }
+                    for (int i = 0; i < doubles; i++) gemTiers[order[i]] = 4;
+                }
             }
 
             // Economy v2: no coin pickups. Three stars on the way up (about a quarter, half and 85 percent of the level), each on a
@@ -716,6 +731,8 @@ namespace BoingUpSkyTower.Simulation
                 Pickup g = new Pickup();
                 g.Kind = PickupKind.HiddenGem;
                 g.X = hgx; g.Y = hgy; g.Radius = cfg.HiddenGemRadius;
+                // Level 8 bonus gem (doc 25): a double one (Tag 1, worth 2) for HiddenBonusDoublePercent of the attempts.
+                if (!spec.Endless && spec.LevelIndex == 8 && spec.Goal.Type != GoalType.FindHiddenGem) g.Tag = (int)(((uint)spec.Seed * 2654435761u) >> 8) % 100 < cfg.HiddenBonusDoublePercent ? 1 : 0;
                 list.Add(g);
             }
 

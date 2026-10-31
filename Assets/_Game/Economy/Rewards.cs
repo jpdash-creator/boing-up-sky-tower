@@ -17,6 +17,10 @@ namespace BoingUpSkyTower.Economy
         public const int ReplayPercent = CoinPayoutRules.ReplayPercent;
         /// <summary>Anti-tamper ceiling on pickup gems one run can report (a level holds far fewer: about 15 on the longest at the highest difficulty).</summary>
         public const int MaxPickupGemsPerRun = 400;
+        /// <summary>Doc 25: the first clear of level 15 pays this extra bonus (one double gem, worth 2) on top of the milestone gems.</summary>
+        public const int Level15DoubleGemBonus = 2;
+        /// <summary>Doc 25: the hidden bonus gem of level 8 pays its value (1, or 2 for a double one) on the first clear only.</summary>
+        public const int Level8HiddenGemMax = 2;
     }
 
     /// <summary>What a finished run reports to the economy. Build it from SimState and StarEvaluator.</summary>
@@ -32,6 +36,13 @@ namespace BoingUpSkyTower.Economy
         public int GemsCollected;
         /// <summary>Hidden gems collected in the run (SimState.HiddenGems). Pays +1 gem on the first clear of the level only (owner decision 2026-10-19).</summary>
         public int HiddenGems;
+        // Reward statistics (docs/26 section 4); zero when a caller does not fill them. The combo and power-up numbers are the NEW ones since the last report.
+        /// <summary>Gem pickups the level holds (after a replay strips them) and how many of them the run collected: all taken = "collect all gems".</summary>
+        public int GemPickupsTotal, GemPickupsTaken;
+        /// <summary>Combo chains that reached 3 landings or more, and the best chain length.</summary>
+        public int ComboChains, BestCombo;
+        /// <summary>Power-up units used.</summary>
+        public int PowerUpsUsed;
 
         public int Stars
         {
@@ -119,6 +130,8 @@ namespace BoingUpSkyTower.Economy
                 GemRewardDef g = level.Rewards.Gems;
                 result.RewardGems = CoinPayoutRules.MilestoneGems(level.Seed, g.Chance, g.Min, g.Max, g.FirstClearGuaranteed ?? 0);
             }
+            if (firstClear && level.Index == 15) result.RewardGems += EconomyRules.Level15DoubleGemBonus;
+            if (firstClear && level.Index == 8) result.HiddenGemReward = Math.Min(Math.Max(run.HiddenGems, 0), EconomyRules.Level8HiddenGemMax);
             return result;
         }
     }

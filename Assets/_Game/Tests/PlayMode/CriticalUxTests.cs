@@ -540,12 +540,11 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-tab2-powerups-bought", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins); }, problems);
             // Treasure Chest screen (docs/22 point 3): rows, the (i) texts, the confirmation, the single and the ten reveal
             yield return CheckScreen("treasure-chests", () => meta.ShowTreasureChests(), problems);
-            yield return CheckScreen("treasure-chest-info", () => { meta.ShowTreasureChests(); meta.CurrentTreasure.OpenInfo(ChestKind.Iron); }, problems);
-            yield return CheckScreen("treasure-chest-info-golden", () => { meta.ShowTreasureChests(); meta.CurrentTreasure.OpenInfo(ChestKind.Golden); }, problems);
+            yield return CheckScreen("shop-tab-chests", () => meta.ShowShop(ShopScreen.TabChests), problems);   // the (i) popups are gone: the text sits on the cards (docs/26)
             yield return CheckScreen("treasure-confirm", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Golden, 10); }, problems);
             yield return CheckScreen("treasure-reveal-single", () => { GameSession.Progress.AddGems(100); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Iron, 1); meta.CurrentTreasure.Reveal.Skip(); }, problems);
             yield return CheckScreen("treasure-reveal-ten", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Golden, 10); meta.CurrentTreasure.Reveal.Skip(); }, problems);
-            yield return CheckScreen("shop-tab3-characters", () => meta.ShowShop(ShopScreen.TabCharacters, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-tab-bundles", () => meta.ShowShop(ShopScreen.TabBundles), problems);
             yield return CheckScreen("shop-gems-notbuyable-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(3); }, problems);
 
             // Development layout: "Buy (test)" and the test purchase popups.
@@ -570,6 +569,176 @@ namespace BoingUpSkyTower.Tests
             GameSession.Progress.TrySpendCoins(GameSession.Progress.Coins);
             yield return CheckScreen("treasure-need-gems", () => { GameSession.Progress.TrySpendGems(GameSession.Progress.Gems); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Iron, 1); }, problems);
             yield return CheckScreen("shop-tab2-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_rocket"), PowerUpCurrency.Coins); }, problems);
+
+            // Rewards (docs/26 section 4): the three tabs with something claimable (stars, points, play time), and the "Reward!" card
+            for (int lvl = 1; lvl <= 9; lvl++) GameSession.Progress.ApplyRun("lvl_001_0" + lvl, new RunOutcome { Completed = true, StarMask = 7, Score = 100, CoinsCollected = 10 });
+            GameSession.Progress.RecordLogin();
+            GameSession.Progress.AddPlaySeconds(600);
+            yield return CheckScreen("rewards-main", () => meta.ShowRewards(RewardTab.Main), problems);
+            yield return CheckScreen("rewards-daily", () => meta.ShowRewards(RewardTab.Daily), problems);
+            yield return CheckScreen("rewards-weekly", () => meta.ShowRewards(RewardTab.Weekly), problems);
+            yield return CheckScreen("rewards-claim-card", () =>
+            {
+                meta.ShowRewards(RewardTab.Daily);
+                var sample = new RewardClaimOutcome { Result = RewardClaimResult.Ok, Gems = 40, Coins = 2000 };
+                sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_shield");
+                meta.CurrentRewards.ShowClaimed(sample);
+            }, problems);
+            Report(problems);
+        }
+
+        // ---- subscription page (docs/26 section 2): release and test layouts, an active plan with Claim, the claimed state with countdown, the popups ----
+
+        [UnityTest]
+        public IEnumerator SubscriptionScreenHasNoOverlapAndFitsEveryAspect() { return SubscriptionAudit(100); }
+
+        /// <summary>CUX-5: the subscription page survives the 130 percent text size too.</summary>
+        [UnityTest]
+        public IEnumerator SubscriptionScreenSurvives130PercentText() { return SubscriptionAudit(130); }
+
+        /// <summary>Clean wallet, optionally with a running plan; the show action may run once per aspect, so every state is rebuilt from scratch.</summary>
+        static void SubscriptionState(string plan, bool claimedToday)
+        {
+            GameSession.Progress.ResetAll();
+            GameSession.Progress.SubscriptionClock = () => System.DateTime.UtcNow;
+            GameSession.Progress.SubscriptionLocalOffset = null;
+            if (plan == null) return;
+            GameSession.Progress.GrantTestSubscriptionPurchase(plan, true);
+            if (claimedToday) GameSession.Progress.ClaimDaily();
+        }
+
+        IEnumerator SubscriptionAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            ShopScreen.TestPurchasesOverride = null;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+
+            // Release layout: price buttons only, the buy tap says "Not available yet".
+            yield return CheckScreen("subscription-release", () => { SubscriptionState(null, false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("subscription-release-buy-popup", () => { SubscriptionState(null, false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("weekly"); }, problems);
+            yield return CheckScreen("subscription-opened-from-shop", () => { SubscriptionState(null, false); meta.ShowShop(); meta.ShowSubscription(); }, problems);
+
+            // Development layout: the test note, the confirm popup, then an active plan.
+            ShopScreen.TestPurchasesOverride = true;
+            yield return CheckScreen("subscription-test", () => { SubscriptionState(null, false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("subscription-test-confirm-popup", () => { SubscriptionState(null, false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("monthly"); }, problems);
+            yield return CheckScreen("subscription-weekly-active-claim", () => { SubscriptionState("weekly", false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("subscription-weekly-claimed-popup", () => { SubscriptionState("weekly", false); meta.ShowSubscription(); meta.CurrentSubscription.TapClaim(); }, problems);
+            yield return CheckScreen("subscription-weekly-come-back-tomorrow", () => { SubscriptionState("weekly", true); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("subscription-monthly-active-claim", () => { SubscriptionState("monthly", false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("subscription-monthly-come-back-tomorrow", () => { SubscriptionState("monthly", true); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("subscription-other-plan-popup", () => { SubscriptionState("monthly", false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("weekly"); }, problems);
+            ShopScreen.TestPurchasesOverride = null;
+            Report(problems);
+        }
+
+        // ---- bundles page and timer offer (docs/26 section 3) ----
+
+        [UnityTest]
+        public IEnumerator BundlesPageAndTimerOfferHaveNoOverlapAndFitEveryAspect() { return BundlesAudit(100); }
+
+        /// <summary>CUX-5: the bundles page, its popups and the timer offer survive the 130 percent text size too.</summary>
+        [UnityTest]
+        public IEnumerator BundlesPageAndTimerOfferSurvive130PercentText() { return BundlesAudit(130); }
+
+        static GameObject bundlesTestCanvas;
+
+        static void MetaUiActive(bool on)
+        {
+            foreach (Canvas c in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None)) if (c.name == "MetaUi") c.gameObject.SetActive(on);
+        }
+
+        static void DropBundlesCanvas()
+        {
+            if (bundlesTestCanvas != null) Object.DestroyImmediate(bundlesTestCanvas);
+            bundlesTestCanvas = null;
+        }
+
+        /// <summary>A popup host for the page when it is drawn on its own canvas: the same modal "Popup" panel the Meta scene uses.</summary>
+        static ShopScreen.Host BundlesTestHost(Canvas canvas, ArtCatalog art)
+        {
+            RectTransform popup = null;
+            var host = new ShopScreen.Host();
+            host.ClosePopup = () => { if (popup != null) Object.DestroyImmediate(popup.gameObject); popup = null; };
+            host.CloseOverlay = host.ClosePopup;
+            host.NewOverlay = () =>
+            {
+                host.ClosePopup();
+                popup = UiKit.Rect(canvas.transform, "Popup");
+                UiKit.Stretch(popup);
+                popup.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.65f);
+                return popup;
+            };
+            host.OpenPopup = (title, body, height) =>
+            {
+                RectTransform panel = UiKit.BuildPopupFrame(host.NewOverlay(), title, art, new Vector2(860f, height), host.ClosePopup);
+                Text b = UiKit.AddText(panel, "Body", body, 44, Color.white);
+                UiKit.OnPanel(b);
+                UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(0f, -214f), new Vector2(740f, Mathf.Min(520f, height - 214f - 200f)));
+                b.alignment = TextAnchor.MiddleCenter;
+            };
+            host.PopupButton = (label, primary, y, action) => ToyKit.PopupAction(popup.Find("Panel"), label, ToyKit.Button(primary ? 1 : 0), Color.white, y, action);
+            return host;
+        }
+
+        /// <summary>Draws the Bundles page the way the shop does (scene, ribbon, body, tab bar) on its own canvas, with the Meta canvas hidden so only the page is audited.</summary>
+        static ShopScreen.Host ShowBundlesPage(int gems, int coins)
+        {
+            DropBundlesCanvas();
+            MetaUiActive(false);
+            GameSession.Progress.ResetAll();
+            GameSession.Progress.AddGems(gems);
+            GameSession.Progress.AddCoins(coins);
+            Canvas canvas = UiKit.CreateCanvas("BundlesTestUi", 20);
+            bundlesTestCanvas = canvas.gameObject;
+            RectTransform screen = UiKit.SafeArea(canvas.transform);
+            Text c, g, s;
+            ShopChrome.BuildScene(screen, GameSession.Art, GameSession.Progress, out c, out g, out s);
+            RectTransform body = ShopChrome.BuildBody(screen, "Bundles", ShopChrome.RibbonColor.Yellow);
+            ShopScreen.Host host = BundlesTestHost(canvas, GameSession.Art);
+            BundlesScreen.Build(body, GameSession.Progress, GameSession.Art, host, null);
+            ShopChrome.BuildTabBar(screen, ShopChrome.TabBundles, null, null);
+            return host;
+        }
+
+        static void ClickByName(string name)
+        {
+            foreach (Button b in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
+                if (b.gameObject.activeInHierarchy && b.name.StartsWith(name)) { b.onClick.Invoke(); return; }
+        }
+
+        /// <summary>Clean wallet with a running timer offer (the play-time counter is ticked past the longest gap).</summary>
+        static void TimerOfferState()
+        {
+            DropBundlesCanvas();
+            MetaUiActive(true);
+            GameSession.Progress.ResetAll();
+            for (int i = 0; i < 70 && GameSession.Progress.CurrentTimerOffer(System.DateTime.UtcNow) == null; i++) GameSession.Progress.TickPlayTime(60);
+        }
+
+        IEnumerator BundlesAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+
+            yield return CheckScreen("bundles-page-empty-wallet", () => ShowBundlesPage(0, 0), problems);
+            yield return CheckScreen("bundles-page-rich", () => ShowBundlesPage(5000, 500), problems);
+            yield return CheckScreen("bundles-not-enough-gems-popup", () => { ShowBundlesPage(0, 0); ClickByName("Buy"); }, problems);
+            yield return CheckScreen("bundles-confirm-popup", () => { ShowBundlesPage(5000, 0); ClickByName("Buy"); }, problems);
+            yield return CheckScreen("bundles-bought-popup", () => { ShowBundlesPage(5000, 0); ClickByName("Buy"); ClickByName("Buy for"); }, problems);
+            yield return CheckScreen("bundles-refresh-popup", () => { ShowBundlesPage(5000, 500); ClickByName("Refresh"); }, problems);
+            yield return CheckScreen("bundles-refresh-popup-broke", () => { ShowBundlesPage(0, 0); ClickByName("Refresh"); }, problems);
+            DropBundlesCanvas();
+            MetaUiActive(true);
+
+            // Timer offer: the corner button on the home and map screens, and its popup.
+            yield return CheckScreen("timer-offer-home", () => { TimerOfferState(); meta.ShowMenu(); }, problems);
+            yield return CheckScreen("timer-offer-map", () => { TimerOfferState(); meta.ShowMap(); }, problems);
+            yield return CheckScreen("timer-offer-popup", () => { TimerOfferState(); meta.ShowMenu(); ClickByName("BundleOffer"); }, problems);
             Report(problems);
         }
     }

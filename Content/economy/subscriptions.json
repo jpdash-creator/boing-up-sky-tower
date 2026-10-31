@@ -1,0 +1,16 @@
+[
+  {
+    "id": "weekly", "order": 1, "name": "Weekly Subscription",
+    "priceUsd": 1.49, "days": 7,
+    "instantGems": 100,
+    "daily": { "gems": 10, "coins": 500 },
+    "powerUpEveryClaims": 0, "powerUpCount": 0
+  },
+  {
+    "id": "monthly", "order": 2, "name": "Monthly Subscription",
+    "priceUsd": 4.99, "days": 30,
+    "instantGems": 200,
+    "daily": { "gems": 10, "coins": 600 },
+    "powerUpEveryClaims": 5, "powerUpCount": 1
+  }
+]

@@ -15553,7 +15553,7 @@
       "candidates": 3,
       "name": "Shop/offer art: vip pass",
       "purpose": "Monetization/shop surface art.",
-      "prompt": "Match the art style of the reference image exactly (outline weight, neon rim light and glow, glossy shading, colour saturation), but draw only the new subject described here, not the reference's layout or objects. Game shop illustration: a golden VIP crown on a velvet cushion with sparkles, glossy highlights, sparkle accents. cute chibi cartoon with neon rim light and glow, thick consistent dark-hue outline, saturated gradient colors, glossy sparkle accents, top-left light, clean vector-like edges, solid flat #808080 mid-grey background, no text, no watermark",
+      "prompt": "Match the art style of the reference image exactly (outline weight, neon rim light and glow, glossy shading, colour saturation), but draw only the new subject described here, not the reference's layout or objects. Game shop illustration: a golden Subscription crown on a velvet cushion with sparkles, glossy highlights, sparkle accents. cute chibi cartoon with neon rim light and glow, thick consistent dark-hue outline, saturated gradient colors, glossy sparkle accents, top-left light, clean vector-like edges, solid flat #808080 mid-grey background, no text, no watermark",
       "aspect": "1:1",
       "size": "2K",
       "reference": [
@@ -16342,7 +16342,7 @@
       "tier": "std",
       "name": "UI sheet: tabs shop",
       "purpose": "UI elements sliced in Unity (9-slice). Text is always rendered by Unity UI, never baked into the art.",
-      "prompt": "Match the art style of the reference image exactly (outline weight, neon rim light and glow, glossy shading, colour saturation), but draw only the new subject described here, not the reference's layout or objects. Game UI element sheet: ten shop tab icons in a row-grid: gems, characters, outfits, boots, hats, accessories, power-ups, offers, chests, VIP, simple symbols, no letters. Elements separated on a grid, consistent glass-and-neon style. cute chibi cartoon with neon rim light and glow, thick consistent dark-hue outline, saturated gradient colors, glossy sparkle accents, top-left light, clean vector-like edges, solid flat #808080 mid-grey background, no text, no watermark",
+      "prompt": "Match the art style of the reference image exactly (outline weight, neon rim light and glow, glossy shading, colour saturation), but draw only the new subject described here, not the reference's layout or objects. Game UI element sheet: ten shop tab icons in a row-grid: gems, characters, outfits, boots, hats, accessories, power-ups, offers, chests, Subscription, simple symbols, no letters. Elements separated on a grid, consistent glass-and-neon style. cute chibi cartoon with neon rim light and glow, thick consistent dark-hue outline, saturated gradient colors, glossy sparkle accents, top-left light, clean vector-like edges, solid flat #808080 mid-grey background, no text, no watermark",
       "aspect": "4:3",
       "size": "2K",
       "reference": [

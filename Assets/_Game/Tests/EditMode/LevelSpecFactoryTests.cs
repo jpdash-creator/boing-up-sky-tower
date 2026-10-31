@@ -50,11 +50,11 @@ namespace BoingUpSkyTower.Tests
         {
             var repo = ContentRepository.LoadFromResources();
             var l15 = LevelSpecFactory.Build(repo, "lvl_005_15");
-            Assert.AreEqual(GoalType.BossChase, l15.Goal.Type);
-            Assert.AreEqual(250, l15.Goal.Value);
+            Assert.AreEqual(GoalType.ReachFloor, l15.Goal.Type);   // doc 25: level 15 reaches the last platform (150 rows), no boss chase
+            Assert.AreEqual(150, l15.Goal.Value);
             Assert.AreEqual(4, l15.Class);
-            Assert.IsTrue(l15.Ramp);
-            CollectionAssert.AreEqual(new[] { "chunk_gauntlet_a" }, l15.FixedChunks);
+            Assert.IsFalse(l15.Ramp);
+            Assert.AreEqual(0, l15.FixedChunks.Length);
             Assert.AreEqual(SignatureKind.SwingingGongs, l15.Signature);
             Assert.AreEqual(3, l15.Stars.Length);
             Assert.AreEqual(StarSpec.KindClear, l15.Stars[0].Kind);

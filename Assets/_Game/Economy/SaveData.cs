@@ -49,5 +49,11 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("chestOpens")] public int ChestOpens;
         /// <summary>Gem pack ids (gempack_50 ...) that already received the once-only first-purchase double on this account. Additive field, no version bump.</summary>
         [JsonProperty("firstPurchase")] public List<string> FirstPurchase = new List<string>();
+        /// <summary>Rewards tracking and claims (docs/26 section 4): day and week counters, claimed ids. Additive field, no version bump.</summary>
+        [JsonProperty("rewards")] public RewardsData Rewards = new RewardsData();
+        /// <summary>Gem bundles (docs/26 section 3): the saved offer set, the draw counter and the timer offer. Additive field, no version bump; see ProgressService.Bundles.cs.</summary>
+        [JsonProperty("bundles")] public BundleSaveData Bundles = new BundleSaveData();
+        /// <summary>Subscription state (docs/26 section 2). Additive field, no version bump; old saves load with no subscription.</summary>
+        [JsonProperty("subscription")] public SubscriptionData Subscription = new SubscriptionData();
     }
 }

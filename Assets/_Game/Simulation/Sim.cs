@@ -846,11 +846,12 @@ namespace BoingUpSkyTower.Simulation
                     case PickupKind.Star: s.StarMask |= 1 << Pickups[i].Tag; s.Stars++; break;
                     case PickupKind.Gem:
                         {
+                            if (Pickups[i].Tag == SimConfig.DoubleGemTag) { s.Gems += Cfg.DoubleGemValue; break; }   // doc 25: a double gem is worth 2
                             int tier = Pickups[i].Tag < 0 ? 0 : (Pickups[i].Tag >= Cfg.GemValues.Length ? Cfg.GemValues.Length - 1 : Pickups[i].Tag);
                             s.Gems += Cfg.GemValues[tier];
                             break;
                         }
-                    default: s.HiddenGems++; break;
+                    default: s.HiddenGems += Pickups[i].Tag == 1 ? Cfg.DoubleGemValue : 1; break;   // Tag 1 = a double bonus gem (level 8)
                 }
             }
         }

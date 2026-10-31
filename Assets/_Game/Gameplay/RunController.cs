@@ -45,6 +45,7 @@ namespace BoingUpSkyTower.Gameplay
             GameSession.EndlessMode = false;
             GameSession.CurrentLevelId = levelId;
             GameSession.ApplyDifficulty();
+            if (GameSession.Progress != null) GameSession.Progress.RecordLevelStarted(GameSettings.Difficulty);   // reward statistics: a hard level was played
             // Every attempt (first start, retry, next level, re-entering the Run scene) gets a new layout seed; a revive keeps the same session and layout.
             GameSession.AttemptSeed = GameSession.NewAttemptSeed();
             BeginRun(new RunSession(GameSession.Repo, GameSession.BuildRunCfg(), levelId, GameSession.Progress != null && GameSession.Progress.IsLevelCleared(levelId), GameSession.AttemptSeed));
@@ -63,6 +64,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void BeginRun(RunSession session)
         {
+            ReportRunStats();   // combos and power-ups of the previous attempt (retry, next level)
             if (Session != null && GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);   // units used in the previous attempt (retry, next level)
             if (View != null) Destroy(View.gameObject);
             if (Hud != null) Destroy(Hud.gameObject);
@@ -127,11 +129,15 @@ namespace BoingUpSkyTower.Gameplay
         void OnApplicationPause(bool paused) { if (paused) Pause(); }
         void OnApplicationFocus(bool focus) { if (!focus) Pause(); }
 
+        float bundleTickAcc;   // run time toward the 45 minute bundle timer (ProgressService.TickPlayTime)
+
         void Tick()
         {
             if (Session == null) return;
             float dt = Mathf.Min(Time.deltaTime, 0.1f);   // the game never changes timeScale; deltaTime also honours Time.captureFramerate in tests
             Input.Update();
+            if (!Paused && !Session.Over && GameSession.Progress != null) GameSession.Progress.FeedPlayTime(dt, false);   // reward statistics: play time (no file write in a run)
+            if (!Paused && !Session.Over && GameSession.Progress != null) { bundleTickAcc += dt; if (bundleTickAcc >= 1f) { GameSession.Progress.TickPlayTime(bundleTickAcc, true); bundleTickAcc = 0f; } }   // bundle timer: run time counts, no offer starts in a run, no file write
 
             bool introDone = Hud.IntroRemaining <= 0f;
             if (!Paused && !Session.Over && introDone)
@@ -174,6 +180,7 @@ namespace BoingUpSkyTower.Gameplay
                 // The run is over for good (no revive in endless): best floor and coins are saved right now (CUX-8).
                 Haptics.Pulse();
                 EndlessReward er = GameSession.Progress.ApplyEndlessRun(Session.Region.Id, Session.State.Row, EndlessRewards.DayKey(System.DateTime.UtcNow), Session.State.Coins);
+                ReportRunStats();
                 GameSession.LastResult = new RunResult { Endless = true, RegionId = Session.Region.Id, Floors = Session.State.Row, Score = Session.State.Score, EndlessReward = er };
                 Hud.ShowEndlessFailed(Session, er);
                 return;
@@ -181,6 +188,8 @@ namespace BoingUpSkyTower.Gameplay
             if (Session.GoalReached)
             {
                 RewardResult reward = GameSession.Progress.ApplyRun(Session.Level.Id, Session.BuildOutcome());
+                Session.MarkStatsReported();   // the outcome carried the combo and power-up statistics
+                GameSession.Progress.FlushPlayTime();
                 LastReward = reward;
                 GameSession.LastResult = new RunResult { LevelId = Session.Level.Id, Completed = true, Reward = reward, Stars = reward.Stars, Score = Session.State.Score };
                 Hud.ShowResults(Session, reward, GameSession.NextLevel(Session.Level) != null && GameSession.Progress.IsLevelUnlocked(GameSession.NextLevel(Session.Level)));
@@ -188,8 +197,18 @@ namespace BoingUpSkyTower.Gameplay
             else
             {
                 Haptics.Pulse();
+                ReportRunStats();
                 ShowFailedOffer();
             }
+        }
+
+        /// <summary>Reward statistics of a run that did not complete a level (or ended endless): new combo chains, best combo, power-ups used, pending play time. Safe to call repeatedly.</summary>
+        void ReportRunStats()
+        {
+            if (Session == null || GameSession.Progress == null) return;
+            GameSession.Progress.RecordRunStats(Session.BuildOutcome());
+            Session.MarkStatsReported();
+            GameSession.Progress.FlushPlayTime();
         }
 
         public void Pause()
@@ -197,6 +216,7 @@ namespace BoingUpSkyTower.Gameplay
             if (Session == null || Session.Over || Paused) return;
             Paused = true;
             if (GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);
+            ReportRunStats();
             Hud.ShowPause();
         }
 
@@ -262,6 +282,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public void ExitToMeta()
         {
+            ReportRunStats();
             if (Session != null && GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);
             GameSession.PendingRegionId = Session != null ? Session.Region.Id : null;
             GameSession.EndlessMode = false;

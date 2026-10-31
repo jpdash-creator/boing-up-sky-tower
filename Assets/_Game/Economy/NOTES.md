@@ -53,3 +53,9 @@ Build `RunOutcome` from the finished `SimState`: `StarMask = StarEvaluator.Earne
 - `PowerUpCatalog.PriceFor`: unit price x quantity, 5 units -10 percent, 10 or more -20 percent, half up.
 - Prices (coins / gems): Flight 2,400 / 20, Rocket 2,000 / 16, Double Jump 900 / 8, Wall Stick 800 / 8, Shield 1,000 / 10, Magnet 900 / 8, Slow Time 1,200 / 10. A 3-star level pays about 150 coins, so a Flight costs about 16 levels (docs/15 conflicts X-2, X-3 still open).
 - Tests: `Assets/_Game/Tests/EditMode/PowerUpTests.cs` (class `PowerUpEconomyTests`).
+
+## Bundles (docs/26 section 3, 2026-10-31)
+- Data: `Content/economy/bundles.json` (1,000 bundles) is made by `python Tools/content_cli/gen_bundles.py`, which also writes the identical copy `Assets/Resources/Content/bundles.json`. The game loads that copy through `Resources` (`BundleCatalog.LoadFromResources`, path `Content/bundles`), NOT through the content manifest (so `content_manifest.json` does not go stale and no Unity regeneration is needed). A missing file gives an empty catalog and the page shows a notice. Schema: `Content/schemas/bundle.schema.json`; tests: `Tests/content/test_bundles.py` (python) and `Assets/_Game/Tests/EditMode/BundleTests.cs`.
+- Save (additive, no version bump): `SaveData.Bundles` (`BundleSaveData`: the 6 offer ids, seed, draw counter, timer state: next offer in play seconds, current id, expiry UTC ticks, last id, count).
+- `ProgressService.Bundles.cs`: `Bundles`, `BundleClock`, `CurrentBundleOffers`, `RefreshBundleOffers(payWithCoins)` (100 coins or 5 gems), `TryBuyBundle` (atomic, one save, no stock cap), `CurrentTimerOffer(now)`, `TimerOfferPrice` (30 percent off, rounded up), `TimerOfferSecondsLeft`, `TryBuyTimerOffer`, `DismissTimerOffer`, `TickPlayTime(seconds, inRun)`.
+- UI: `Gameplay/BundlesScreen.cs` (the page and the chip/card helpers), `Gameplay/BundleTimerButton.cs` (corner button and popup on the home and map screens).

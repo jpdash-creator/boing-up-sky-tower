@@ -74,7 +74,7 @@
     "difficulty": 0.15,
     "goal": {
       "type": "reachFloor",
-      "value": 120
+      "value": 90
     },
     "stars": [
       {
@@ -107,7 +107,7 @@
     "difficulty": 0.22,
     "goal": {
       "type": "reachFloor",
-      "value": 100
+      "value": 90
     },
     "stars": [
       {
@@ -141,7 +141,7 @@
     "goal": {
       "type": "comboChain",
       "value": 3,
-      "count": 2
+      "count": 3
     },
     "stars": [
       {
@@ -163,11 +163,6 @@
         "min": 1,
         "max": 3
       }
-    },
-    "overrides": {
-      "fixedChunks": [
-        "chunk_complex_a"
-      ]
     }
   },
   {
@@ -179,7 +174,7 @@
     "difficulty": 0.35,
     "goal": {
       "type": "reachFloor",
-      "value": 160
+      "value": 120
     },
     "stars": [
       {
@@ -244,7 +239,8 @@
     "class": "medium",
     "difficulty": 0.5,
     "goal": {
-      "type": "findHiddenGem"
+      "type": "reachFloor",
+      "value": 120
     },
     "stars": [
       {
@@ -277,7 +273,7 @@
     "difficulty": 0.58,
     "goal": {
       "type": "reachFloor",
-      "value": 180
+      "value": 120
     },
     "stars": [
       {
@@ -309,7 +305,9 @@
     "class": "complex",
     "difficulty": 0.7,
     "goal": {
-      "type": "surviveWave"
+      "type": "comboChain",
+      "value": 4,
+      "count": 3
     },
     "stars": [
       {
@@ -332,11 +330,6 @@
         "max": 3,
         "firstClearGuaranteed": 1
       }
-    },
-    "overrides": {
-      "fixedChunks": [
-        "chunk_complex_a"
-      ]
     }
   },
   {
@@ -347,9 +340,8 @@
     "class": "hard",
     "difficulty": 0.62,
     "goal": {
-      "type": "comboChain",
-      "value": 6,
-      "count": 1
+      "type": "reachFloor",
+      "value": 150
     },
     "stars": [
       {
@@ -382,7 +374,7 @@
     "difficulty": 0.7,
     "goal": {
       "type": "reachFloor",
-      "value": 200
+      "value": 150
     },
     "stars": [
       {
@@ -415,7 +407,7 @@
     "difficulty": 0.78,
     "goal": {
       "type": "reachFloor",
-      "value": 220
+      "value": 150
     },
     "stars": [
       {
@@ -448,7 +440,7 @@
     "difficulty": 0.86,
     "goal": {
       "type": "reachFloor",
-      "value": 240
+      "value": 150
     },
     "stars": [
       {
@@ -478,10 +470,10 @@
     "index": 15,
     "seed": 1797093,
     "class": "highly_complex",
-    "difficulty": 1.0,
+    "difficulty": 1,
     "goal": {
-      "type": "bossChase",
-      "value": 250
+      "type": "reachFloor",
+      "value": 150
     },
     "stars": [
       {
@@ -499,7 +491,7 @@
       "coinPayout": 900,
       "replayCoinPercent": 40,
       "gems": {
-        "chance": 1.0,
+        "chance": 1,
         "min": 5,
         "max": 5,
         "firstClearGuaranteed": 5,
@@ -507,12 +499,6 @@
         "replayChance": 0.5,
         "replayAmount": 2
       }
-    },
-    "overrides": {
-      "fixedChunks": [
-        "chunk_gauntlet_a"
-      ],
-      "ramp": true
     }
   }
 ]

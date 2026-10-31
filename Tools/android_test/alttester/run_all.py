@@ -5,7 +5,9 @@
 Prerequisites (README.md): AltTester Desktop is running on the PC, the phone is connected through adb.
 --install  installs E:/Unity/builds/boingupskytower_alttester.apk first.  --no-launch  uses the game that is already running.
 --long  also runs the long tests (region 1 autopilot, up to 45 min); --only region1 runs just that one.
---skip-if-offline  prints SKIP and exits 0 when AltTester Desktop / the alttester build cannot be reached (instead of FAIL)."""
+--skip-if-offline  prints SKIP and exits 0 when AltTester Desktop / the alttester build cannot be reached (instead of FAIL).
+--levels 1-15 --region 1  runs the LEVEL SWEEP instead of the tests above (level_sweep.py: the in-game Autopilot plays every level, checklist per level,
+results in E:/Unity/logs/alttester_levels.md/.json). It takes its own options (--skill, --speed, --time-limit, --fresh, --install, --no-launch ...), see README.md."""
 import os
 import sys
 import time
@@ -17,6 +19,9 @@ import tests  # noqa: E402
 
 
 def main():
+    if "--levels" in sys.argv or "--sweep" in sys.argv:
+        import level_sweep
+        return level_sweep.main([a for a in sys.argv[1:] if a != "--sweep"])
     if not altbt.device_connected():
         print("no device connected (adb devices)")
         return 2
