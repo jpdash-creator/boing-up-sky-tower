@@ -58,12 +58,14 @@ namespace BoingUpSkyTower.Gameplay
                 Text title = UiKit.AddText(safe, "Title", "BOING UP: SKY TOWER", 120, Color.white);
                 UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -260f), new Vector2(1000f, 160f));
             }
-            if (art != null && art.Player != null)
+            if (art != null)
             {
-                Image m = UiKit.AddImage(safe, "Momo", art.Player, Color.white);
-                UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(460f, 560f));
-                m.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                momoRt = m.rectTransform;
+                // the character the player chose, drawn from its parts (Momo when nothing else is chosen or owned yet)
+                RectTransform doll = MomoDoll.Build(safe, "Momo", 560f, CharacterCatalog.Selected, art);
+                doll.anchorMin = doll.anchorMax = new Vector2(0.5f, 0.42f);
+                doll.pivot = new Vector2(0.5f, 0.5f);
+                doll.anchoredPosition = Vector2.zero;
+                momoRt = doll;
                 momoBase = momoRt.anchoredPosition;
             }
 

@@ -50,12 +50,13 @@ namespace BoingUpSkyTower.Gameplay
 
     /// <summary>
     /// The character screen (docs/21): the chosen character on the green land stage on top, and below it a scrolling list of characters in rarity boxes,
-    /// five to a row. Owned ones are in colour (tap to choose), the rest are dark with a lock. No words.
+    /// five to a row. Only owned characters are shown (tap to choose). The Sporeling appears once region 2 is unlocked. No words.
     /// </summary>
     public sealed class CharactersScreen
     {
-        const int Columns = 5, Slots = 25;
-        const float Tile = 190f, Gap = 14f;
+        const int Columns = 5;
+        /// <summary>Tile 176 and gap 12 make the row 928 wide: side margins of 76 px on the 1080 reference (at least 24); the content has 24 px of padding on top.</summary>
+        const float Tile = 176f, Gap = 12f, TopPad = 24f;
         /// <summary>Character height on the stage.</summary>
         public const float DollH = 420f;
 
@@ -144,13 +145,14 @@ namespace BoingUpSkyTower.Gameplay
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
+            CharacterDef[] owned = CharacterCatalog.Available(progress);
+            int rows = Mathf.Max(1, (owned.Length + Columns - 1) / Columns);
             float width = Columns * Tile + (Columns - 1) * Gap;
-            int rows = (Slots + Columns - 1) / Columns;
             RectTransform content = UiKit.Rect(vp, "ListContent");
             content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
             content.anchoredPosition = Vector2.zero;
-            content.sizeDelta = new Vector2(width, rows * (Tile + Gap));
+            content.sizeDelta = new Vector2(width, TopPad + rows * (Tile + Gap) + 16f);
             var sr = vp.gameObject.AddComponent<ScrollRect>();
             sr.content = content;
             sr.viewport = vp;
@@ -159,50 +161,37 @@ namespace BoingUpSkyTower.Gameplay
             sr.movementType = ScrollRect.MovementType.Elastic;
             sr.scrollSensitivity = 60f;
 
+            // only the characters the player has are shown (no locked or placeholder slots, no lock icons)
             CharacterDef chosen = CharacterCatalog.Selected;
-            for (int i = 0; i < Slots; i++)
+            for (int i = 0; i < owned.Length; i++)
             {
-                CharacterDef who = i < CharacterCatalog.All.Length ? CharacterCatalog.All[i] : null;
-                bool owned = who != null && CharacterCatalog.Owns(progress, who);
-                CharacterRarity rarity = who != null ? who.Rarity : CharacterRarity.Common;
-                RectTransform inner = RarityUi.Box(content, who != null ? "Char_" + who.Id : "Locked" + i, rarity, !owned, new Vector2(Tile, Tile));
+                CharacterDef who = owned[i];
+                CharacterRarity rarity = who.Rarity;
+                RectTransform inner = RarityUi.Box(content, "Char_" + who.Id, rarity, false, new Vector2(Tile, Tile));
                 RectTransform outer = (RectTransform)inner.parent;
                 outer.anchorMin = outer.anchorMax = new Vector2(0f, 1f);
                 outer.pivot = new Vector2(0f, 1f);
-                outer.anchoredPosition = new Vector2((i % Columns) * (Tile + Gap), -(i / Columns) * (Tile + Gap));
+                outer.anchoredPosition = new Vector2((i % Columns) * (Tile + Gap), -(TopPad + (i / Columns) * (Tile + Gap)));
 
-                if (owned)
+                RectTransform face = MomoDoll.Build(inner, "Face", Tile * 0.78f, who, art);
+                face.anchorMin = face.anchorMax = new Vector2(0.5f, 0.5f);
+                face.pivot = new Vector2(0.5f, 0.5f);
+                face.anchoredPosition = Vector2.zero;
+                if (who == chosen)
                 {
-                    RectTransform face = MomoDoll.Build(inner, "Face", Tile * 0.78f, who, art);
-                    face.anchorMin = face.anchorMax = new Vector2(0.5f, 0.5f);
-                    face.pivot = new Vector2(0.5f, 0.5f);
-                    face.anchoredPosition = Vector2.zero;
-                    if (who == chosen)
-                    {
-                        Image tick = UiKit.AddImage(outer, "Chosen", Glyphs.Check, Color.white);
-                        tick.rectTransform.anchorMin = tick.rectTransform.anchorMax = new Vector2(1f, 1f);
-                        tick.rectTransform.pivot = new Vector2(1f, 1f);
-                        tick.rectTransform.anchoredPosition = new Vector2(-4f, -4f);
-                        tick.rectTransform.sizeDelta = new Vector2(56f, 56f);
-                    }
-                }
-                else
-                {
-                    Image lk = UiKit.AddImage(inner, "Lock", ToyKit.Get("icon_lock"), Color.white);
-                    lk.rectTransform.anchorMin = lk.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-                    lk.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                    lk.rectTransform.anchoredPosition = Vector2.zero;
-                    lk.rectTransform.sizeDelta = new Vector2(Tile * 0.4f, Tile * 0.4f);
+                    Image tick = UiKit.AddImage(outer, "Chosen", Glyphs.Check, Color.white);
+                    tick.rectTransform.anchorMin = tick.rectTransform.anchorMax = new Vector2(1f, 1f);
+                    tick.rectTransform.pivot = new Vector2(1f, 1f);
+                    tick.rectTransform.anchoredPosition = new Vector2(-4f, -4f);
+                    tick.rectTransform.sizeDelta = new Vector2(48f, 48f);
                 }
 
                 var b = outer.gameObject.AddComponent<Button>();
                 b.transition = Selectable.Transition.None;
                 outer.GetComponent<Image>().raycastTarget = true;
                 CharacterDef pick = who;
-                if (owned) b.onClick.AddListener(() => { CharacterCatalog.Selected = pick; Build(); });
-                outer.gameObject.AddComponent<A11yLabel>().Text = owned
-                    ? who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + (who == chosen ? ", chosen" : "")
-                    : "Locked character";
+                b.onClick.AddListener(() => { CharacterCatalog.Selected = pick; Build(); });
+                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + (who == chosen ? ", chosen" : "");
             }
         }
 

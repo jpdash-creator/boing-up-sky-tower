@@ -342,6 +342,9 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Testing aid for development builds (Settings > "Test: all levels open"): every level and region of the playable set counts as unlocked. Off in tests and release builds.</summary>
         public static bool TestUnlockAll;
 
+        /// <summary>Testing aid (dev flag SYSTEM_TEST): every character counts as owned. Off in tests and release builds.</summary>
+        public static bool TestAllCharacters;
+
         public bool IsRegionUnlocked(RegionDef region)
         {
             return TestUnlockAll || region.Index == 1 || Data.UnlockedRegions.Contains(region.Id);

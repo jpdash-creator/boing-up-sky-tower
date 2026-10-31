@@ -12,18 +12,48 @@ namespace BoingUpSkyTower.Gameplay
         const string LeftKey = "settings.lefthanded";
         const string TextKey = "settings.textpercent";
         const string DifficultyKey = "settings.difficulty";
-        const string TestUnlockKey = "settings.testunlock";
+        const string GameJumpKey = "settings.gamejumptest";
+        const string SystemTestKey = "settings.systemtest";
         const string PromoKey = "settings.launchpromo";
         const string FirstPurchaseKey = "settings.firstpurchasedouble";
 
         /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
         public static bool DevBuild { get { return Debug.isDebugBuild && !Application.isEditor; } }
 
-        /// <summary>Testing aid: all levels and regions open. Only has an effect in a development build.</summary>
-        public static bool TestUnlockAll
+        /// <summary>
+        /// Dev flag GAME_JUMP_TEST (development builds only, default OFF): on = every level and region open; off = levels and regions follow real progress
+        /// (home, shop, chests and characters stay as they are). Only counts while SYSTEM_TEST is on; with SYSTEM_TEST off it is ignored.
+        /// </summary>
+        public static bool GameJumpTest
         {
-            get { return DevBuild && PlayerPrefs.GetInt(TestUnlockKey, 1) == 1; }
-            set { PlayerPrefs.SetInt(TestUnlockKey, value ? 1 : 0); PlayerPrefs.Save(); BoingUpSkyTower.Economy.ProgressService.TestUnlockAll = value && DevBuild; }
+            get { return DevBuild && PlayerPrefs.GetInt(GameJumpKey, 0) == 1; }
+            set { PlayerPrefs.SetInt(GameJumpKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
+        }
+
+        /// <summary>
+        /// Dev flag SYSTEM_TEST (development builds only, default ON): on = everything open (levels, regions, all characters, test purchases, Autopilot);
+        /// off = fully real production behaviour. Release builds are always real.
+        /// </summary>
+        public static bool SystemTest
+        {
+            get { return DevBuild && PlayerPrefs.GetInt(SystemTestKey, 1) == 1; }
+            set { PlayerPrefs.SetInt(SystemTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
+        }
+
+        /// <summary>The effective "every level and region open" state: SYSTEM_TEST and GAME_JUMP_TEST both on (the single value ProgressService.TestUnlockAll is driven from).</summary>
+        public static bool TestUnlockAll { get { return EffectiveUnlockAll(DevBuild, SystemTest, GameJumpTest); } }
+
+        /// <summary>The flag matrix as pure functions (tested): levels and regions open only when SYSTEM_TEST and GAME_JUMP_TEST are both on; release builds are always real.</summary>
+        public static bool EffectiveUnlockAll(bool devBuild, bool systemTest, bool gameJumpTest) { return devBuild && systemTest && gameJumpTest; }
+
+        /// <summary>All characters owned, test gem purchases and dev tools (Autopilot): only SYSTEM_TEST in a development build.</summary>
+        public static bool EffectiveSystemTools(bool devBuild, bool systemTest) { return devBuild && systemTest; }
+
+        /// <summary>Pushes the flags into ProgressService (levels, regions, all characters). Called on boot and when a flag changes.</summary>
+        public static void ApplyFlags()
+        {
+            BoingUpSkyTower.Economy.ProgressService.TestUnlockAll = TestUnlockAll;
+            BoingUpSkyTower.Economy.ProgressService.TestAllCharacters = SystemTest;
         }
 
         /// <summary>

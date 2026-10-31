@@ -341,8 +341,8 @@ namespace BoingUpSkyTower.Gameplay
         {
             NewScreen("Menu");
             lastMapOffset = -1f;   // the map opens on the current region again after a visit to the menu
-            RegionDef cur = progress != null ? progress.CurrentRegion() : null;   // the home page follows the region being played
-            RegionArt meadow = art != null ? (art.ForRegion(cur != null ? cur.Index : 1) ?? art.ForRegion(1)) : null;
+            int latest = progress != null ? Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, Mathf.Max(1, GameSession.PlayableRegions)) : 1;   // the latest UNLOCKED region (docs/23)
+            RegionArt meadow = art != null ? (art.ForRegion(latest) ?? art.ForRegion(1)) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
             AddCurrencyBar();
             Sprite logo = ToyKit.Get("logo");
@@ -353,12 +353,12 @@ namespace BoingUpSkyTower.Gameplay
                 lg.rectTransform.pivot = new Vector2(0.5f, 1f);
                 lg.raycastTarget = false;
             }
-            if (art != null && art.Player != null)
             {
-                Image m = UiKit.AddImage(screen, "Momo", art.Player, Color.white);
-                UiKit.Place(m.rectTransform, new Vector2(0.38f, 0.40f), Vector2.zero, new Vector2(440f, 540f));
-                m.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                momo = m.rectTransform;
+                // the SELECTED character, drawn from its parts like the character screen (rebuilt on every visit, so a new choice shows at once)
+                RectTransform doll = MomoDoll.Build(screen, "Momo", 540f, CharacterCatalog.Selected, art);
+                UiKit.Place(doll, new Vector2(0.38f, 0.40f), Vector2.zero, doll.sizeDelta);
+                doll.pivot = new Vector2(0.5f, 0.5f);
+                momo = doll;
                 momoBase = momo.anchoredPosition;
             }
             AddComingSoonColumn();
@@ -368,23 +368,22 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// Home right-side column (docs/22 points 2, 7, 8): VIP, Bundles and Daily Rewards, all Coming Soon. Each is a 170 px button (at least 48 dp) with a lock
-        /// and a dim look, plus a visible "Coming soon" text tag over its lower edge, so the state is never colour alone. 24 px (more than 8 dp) between buttons.
+        /// Home right-side column (docs/22 points 2, 7, 8; docs/23): VIP, Bundles and Daily Rewards, all Coming Soon. Each is a 140 px button (at least 48 dp)
+        /// with a dim look and a small lock icon on top as the only marker (the accessibility labels say "coming soon"). 22 px (more than 8 dp) between buttons.
         /// The column sits right of the logo's bottom edge, below the wallet row and above the tab bar. A tap shows the Coming soon message and nothing else.
+        /// The Bundles icon is Resources/Art/Ui/icon_bundle (a brown bag tied with a string) when that file exists, the gem icon until then.
         /// </summary>
         void AddComingSoonColumn()
         {
-            const float size = 140f, tagH = 62f, tagGap = 4f, gap = 22f, top = 500f, width = 300f;
+            const float size = 140f, gap = 22f, top = 680f, width = 140f;
             string[] names = { "VIP", "Bundles", "Daily Rewards" };
             string[] labels = { "VIP, coming soon", "Bundles, coming soon", "Daily rewards, coming soon" };
-            string[] icons = { "icon_crown", "icon_gem", "icon_daily" };
+            Sprite[] icons = { ToyKit.Get("icon_crown"), ToyKit.Get("icon_bundle") ?? ToyKit.Get("icon_gem"), ToyKit.Get("icon_daily") };
             for (int i = 0; i < names.Length; i++)
             {
                 string what = names[i];
-                RectTransform item = UiKit.Rect(screen, "Soon" + what.Replace(" ", ""));
-                UiKit.Place(item, new Vector2(1f, 1f), new Vector2(-24f, -(top + i * (size + tagGap + tagH + gap))), new Vector2(width, size + tagGap + tagH));
-                Button b = ToyKit.IconButton(item, what, labels[i], 2, ToyKit.Get(icons[i]), new Vector2(size, size), () => ShowMessage("Coming soon", what + " is coming soon."), 0.5f);
-                UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(size, size));
+                Button b = ToyKit.IconButton(screen, what, labels[i], 2, icons[i], new Vector2(size, size), () => ShowMessage("Coming soon", what + " is coming soon."), 0.5f);
+                UiKit.Place((RectTransform)b.transform, new Vector2(1f, 1f), new Vector2(-24f, -(top + i * (size + gap))), new Vector2(size, size));
                 b.GetComponent<Image>().color = new Color(0.78f, 0.8f, 0.86f, 1f);   // dim look
                 Transform glyph = b.transform.Find("Glyph");
                 if (glyph != null)
@@ -394,13 +393,6 @@ namespace BoingUpSkyTower.Gameplay
                 }
                 Image lockIcon = UiKit.AddImage(b.transform, "Lock", ToyKit.Get("icon_lock"), Color.white);
                 UiKit.Place(lockIcon.rectTransform, new Vector2(1f, 1f), new Vector2(-4f, -4f), new Vector2(36f, 36f));
-                // the text tag, as wide as its text, in its own row below the button
-                Image tag = UiKit.AddPanel(item, "SoonTag", new Color(0.06f, 0.07f, 0.16f, 0.94f));
-                Text t = UiKit.AddText(tag.transform, "Text", "Coming soon", 30, Color.white, TextAnchor.MiddleCenter);
-                t.horizontalOverflow = HorizontalWrapMode.Overflow;
-                DropOutline(t);
-                UiKit.Stretch((RectTransform)t.transform);
-                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 0f), Vector2.zero, new Vector2(Mathf.Min(t.preferredWidth + 28f, width), tagH));
             }
         }
 
@@ -517,7 +509,7 @@ namespace BoingUpSkyTower.Gameplay
         public ShopScreen CurrentShop { get { return CurrentScreen == "Shop" ? shop : null; } }
 
         /// <summary>Shop (docs/14): four tabs, only Gems and Coins is live. Opens on that tab by default.</summary>
-        public void ShowShop(int tab = ShopScreen.TabGems, int section = ShopScreen.GemsSection)
+        public void ShowShop(int tab = ShopScreen.TabPowerups, int section = ShopScreen.GemsSection)
         {
             NewScreen("Shop");
             SkyBackground();
@@ -1107,7 +1099,7 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // The name tag is built from the real map size (see ReplanTags): first a default one below the pin, replaced once the map has its size.
-            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = playable ? region.Name : "Coming soon", Open = playable && unlocked };
+            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = playable ? region.Name : (region.Index >= 26 ? region.Name + "\nComing soon" : "Coming soon"), Open = playable && unlocked };
             pinTags.Add(pt);
             BuildPinTag(pt, tagMode, tagDx, tagDy, tagMaxW);
         }
@@ -1445,6 +1437,8 @@ namespace BoingUpSkyTower.Gameplay
             OpenPopup("Endless", "", 1300f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
+            Transform endTitle = panel.Find("Title");
+            if (endTitle != null) { var etr = (RectTransform)endTitle; etr.anchoredPosition = new Vector2(0f, etr.anchoredPosition.y); etr.sizeDelta = new Vector2(540f, etr.sizeDelta.y); }   // centred on the panel (the frame leaves room for the X by shifting it 30 left)
             Image inf = UiKit.AddImage(panel, "EndlessIcon", ToyKit.Button(1), Color.white);
             inf.type = Image.Type.Sliced;
             inf.preserveAspect = false;
@@ -1539,6 +1533,17 @@ namespace BoingUpSkyTower.Gameplay
             Text goal = UiKit.AddText(panel, "Goal", RunSession.DescribeGoal(spec), 46, Theme.Ink, TextAnchor.MiddleCenter, true);
             DropOutline(goal);
             UiKit.Place((RectTransform)goal.transform, new Vector2(0.5f, 1f), new Vector2(0f, -170f), new Vector2(760f, 110f));
+            string rule = RunSession.GoalRule(spec);
+            if (rule != null)
+            {
+                // Level rule before PLAY: small italic line under the goal (e.g. "Don't touch the walls.").
+                goal.rectTransform.anchoredPosition = new Vector2(0f, -140f);
+                goal.rectTransform.sizeDelta = new Vector2(760f, 80f);
+                Text ruleText = UiKit.AddText(panel, "Rule", rule, 38, Theme.Ink, TextAnchor.MiddleCenter, true);
+                ruleText.fontStyle = FontStyle.Italic;
+                DropOutline(ruleText);
+                UiKit.Place((RectTransform)ruleText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -215f), new Vector2(760f, 65f));
+            }
             for (int i = 0; i < 3; i++)
             {
                 bool got = i < starsHave;
@@ -1584,7 +1589,7 @@ namespace BoingUpSkyTower.Gameplay
 
             bool dev = GameSettings.DevBuild;
             const float rowH = 148f;
-            int rows = 7 + (dev ? 1 : 0);
+            int rows = 7 + (dev ? 2 : 0);
             // One cream card holds the icon rows (icon, short label, switch or value button).
             RectTransform card = UiKit.Rect(screen, "Card");
             card.anchorMin = new Vector2(0f, 1f);
@@ -1605,7 +1610,8 @@ namespace BoingUpSkyTower.Gameplay
                 ShowSettings();   // rebuild so the new size applies to every label
             });
             AddValueRow(card, r++ * rowH, "icon_dial", "Difficulty", GameSettings.DifficultyNames[GameSettings.Difficulty], ShowDifficultyList);
-            if (dev) AddSwitchRow(card, r++ * rowH, "icon_lock", "All levels open", () => GameSettings.TestUnlockAll, v => GameSettings.TestUnlockAll = v);
+            if (dev) AddSwitchRow(card, r++ * rowH, "icon_lock", "GAME_JUMP_TEST", () => GameSettings.GameJumpTest, v => GameSettings.GameJumpTest = v);
+            if (dev) AddSwitchRow(card, r++ * rowH, "icon_lock", "SYSTEM_TEST", () => GameSettings.SystemTest, v => GameSettings.SystemTest = v);
 
             Button reset = UiKit.AddButton(screen, "Reset", "Reset progress", ToyKit.Button(3), Color.white, new Vector2(560f, 130f), ConfirmReset, 46);
             UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(560f, 130f));

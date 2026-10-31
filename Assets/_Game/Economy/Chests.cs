@@ -123,6 +123,7 @@ namespace BoingUpSkyTower.Economy
         {
             CharacterSpec c = CharacterDefs.Get(id);
             if (c == null) return false;
+            if (TestAllCharacters) return true;
             if (Data.Characters.Contains(id)) return true;
             if (c.Rarity != CharacterRarity.Common || c.Region <= 0) return false;
             if (c.Region == 1) return true;

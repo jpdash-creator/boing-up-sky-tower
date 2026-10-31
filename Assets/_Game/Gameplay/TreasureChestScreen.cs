@@ -25,7 +25,7 @@ namespace BoingUpSkyTower.Gameplay
             public Action<int> BuyGemPack;
         }
 
-        const float RowMinH = 420f, RowPrefH = 540f, RowGap = 24f, SideMargin = 28f, TopReserve = 290f;
+        const float RowMinH = 360f, RowPrefH = 440f, RowGap = 24f, SideMargin = 28f, TopReserve = 290f;
         const float BuyW = 340f, BuyH = 150f, InfoSize = 126f;
         const float ListRowH = 100f;
         const int MaxListRows = 6;
@@ -52,7 +52,7 @@ namespace BoingUpSkyTower.Gameplay
 
         static string Num(int n) { return n.ToString("N0", CultureInfo.InvariantCulture); }
 
-        public static string ChestName(ChestKind kind) { return kind == ChestKind.Iron ? "Iron chest" : "Golden chest"; }
+        public static string ChestName(ChestKind kind) { return kind == ChestKind.Iron ? "Iron Chest" : "Gold Chest"; }
 
         static readonly Dictionary<ChestKind, Sprite> chestSprites = new Dictionary<ChestKind, Sprite>();
 
@@ -73,7 +73,7 @@ namespace BoingUpSkyTower.Gameplay
                 return "Iron Chest, " + ChestRolls.IronPrice + " gems: each chest gives " + ChestRolls.IronPowerUps + " power-up and " + Num(ChestRolls.IronMinCoins) + " to " + Num(ChestRolls.IronMaxCoins) + " coins.\n\n"
                     + "The power-up is random from all 7 types, 1 in 7 each.\n\n"
                     + "Characters: coming soon, chances will be listed here.";
-            return "Golden Chest, " + ChestRolls.GoldenPrice + " gems: each chest gives " + ChestRolls.GoldenPowerUps + " power-ups and " + Num(ChestRolls.GoldenMinCoins) + " to " + Num(ChestRolls.GoldenMaxCoins) + " coins.\n\n"
+            return "Gold Chest, " + ChestRolls.GoldenPrice + " gems: each chest gives " + ChestRolls.GoldenPowerUps + " power-ups and " + Num(ChestRolls.GoldenMinCoins) + " to " + Num(ChestRolls.GoldenMaxCoins) + " coins.\n\n"
                 + "Each power-up random from all 7 types (same type may repeat).\n\n"
                 + "Characters: coming soon.";
         }
@@ -138,32 +138,36 @@ namespace BoingUpSkyTower.Gameplay
             Sprite chest = ChestArt(kind);
             Image pic = UiKit.AddImage(row, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
             pic.preserveAspect = true;
-            pic.rectTransform.anchorMin = new Vector2(0.03f, 0.1f);
-            pic.rectTransform.anchorMax = new Vector2(0.30f, 0.9f);
+            pic.rectTransform.anchorMin = new Vector2(0.03f, 0.05f);
+            pic.rectTransform.anchorMax = new Vector2(0.34f, 0.76f);
             pic.rectTransform.offsetMin = pic.rectTransform.offsetMax = Vector2.zero;
 
-            Text name = UiKit.AddText(row, "Name", ChestName(kind), 54, Theme.Ink, TextAnchor.LowerLeft, true);
+            // the title at the top centre of the section (clear of the (i) at the top right)
+            Text name = UiKit.AddText(row, "Name", ChestName(kind), 54, Theme.Ink, TextAnchor.MiddleCenter, true);
             UiKit.OnPanel(name);
+            name.horizontalOverflow = HorizontalWrapMode.Overflow;
             RectTransform nrt = name.rectTransform;
-            nrt.anchorMin = new Vector2(0.31f, 0.5f);
-            nrt.anchorMax = new Vector2(0.63f, 0.92f);
+            nrt.anchorMin = new Vector2(0.16f, 0.78f);
+            nrt.anchorMax = new Vector2(0.84f, 0.98f);
             nrt.offsetMin = nrt.offsetMax = Vector2.zero;
 
-            Button info = UiKit.AddButton(row, "Info", "i", ToyKit.Button(2), Color.white, new Vector2(InfoSize, InfoSize), () => OpenInfo(kind), 64);
-            info.GetComponent<A11yLabel>().Text = "About the " + ChestName(kind) + ": what it gives";
-            info.GetComponent<Image>().raycastTarget = true;
-            RectTransform irt = (RectTransform)info.transform;
-            irt.anchorMin = irt.anchorMax = new Vector2(0.31f, 0.3f);
-            irt.pivot = new Vector2(0f, 0.5f);
-            irt.anchoredPosition = Vector2.zero;
-            irt.sizeDelta = new Vector2(InfoSize, InfoSize);
+            // a small (i): the touch target stays 126 px (48 dp), only the drawn circle is small
+            Button info = UiKit.AddHitArea(row, "Info", "About the " + ChestName(kind) + ": what it gives", new Vector2(1f, 1f), new Vector2(-8f, -4f), new Vector2(InfoSize, InfoSize), () => OpenInfo(kind));
+            RectTransform hit = (RectTransform)info.transform;
+            hit.pivot = new Vector2(1f, 1f);
+            Image dot = ToyKit.Sliced(info.transform, "Dot", ToyKit.Button(2), 28f);
+            UiKit.Place(dot.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(72f, 72f));
+            Text i = UiKit.AddText(dot.transform, "I", "i", 44, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+            i.GetComponent<Outline>().enabled = false;
+            UiKit.Stretch((RectTransform)i.transform);
 
-            BuildBuyButton(row, kind, 1, 0.5f * (BuyH + RowGap));
-            BuildBuyButton(row, kind, 10, -0.5f * (BuyH + RowGap));
+            // Buy and Buy 10 side by side at the bottom right
+            BuildBuyButton(row, kind, 1, 0.37f, 0.67f, 0f, -12f);
+            BuildBuyButton(row, kind, 10, 0.67f, 0.97f, 12f, 0f);
         }
 
         /// <summary>One buy button: the count on the top line, the gem icon and price below. Never disabled: too few gems explains itself on tap.</summary>
-        void BuildBuyButton(RectTransform row, ChestKind kind, int opens, float y)
+        void BuildBuyButton(RectTransform row, ChestKind kind, int opens, float x0, float x1, float padMin, float padMax)
         {
             int price = ChestRolls.Price(kind, opens);
             string chests = opens == 1 ? "1 " + ChestName(kind) : "10 " + ChestName(kind) + "s";
@@ -171,11 +175,11 @@ namespace BoingUpSkyTower.Gameplay
             b.GetComponent<A11yLabel>().Text = "Buy " + chests + " for " + Num(price) + " gems";
             b.GetComponent<Image>().raycastTarget = true;
             var rt = (RectTransform)b.transform;
-            rt.anchorMin = new Vector2(0.64f, 0.5f);
-            rt.anchorMax = new Vector2(0.97f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.offsetMin = new Vector2(0f, y - BuyH * 0.5f);
-            rt.offsetMax = new Vector2(0f, y + BuyH * 0.5f);
+            rt.anchorMin = new Vector2(x0, 0f);
+            rt.anchorMax = new Vector2(x1, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.offsetMin = new Vector2(padMin, 24f);
+            rt.offsetMax = new Vector2(padMax, 24f + BuyH);
 
             Text label = UiKit.AddText(b.transform, "Count", opens == 1 ? "Buy" : "Buy 10", 40, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
             label.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -281,7 +285,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (host.NewOverlay == null) return;
             RectTransform overlay = host.NewOverlay();
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, ChestName(kind), art, new Vector2(900f, 1100f), host.CloseOverlay);
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, ChestName(kind), art, new Vector2(780f, 920f), host.CloseOverlay);
             RectTransform vp = UiKit.Rect(panel, "InfoViewport");
             vp.anchorMin = Vector2.zero;
             vp.anchorMax = Vector2.one;
@@ -290,7 +294,7 @@ namespace BoingUpSkyTower.Gameplay
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);   // gives the ScrollRect something to drag on
-            Text body = UiKit.AddText(vp, "InfoText", InfoText(kind), 44, Theme.Ink, TextAnchor.UpperLeft);
+            Text body = UiKit.AddText(vp, "InfoText", InfoText(kind), 44, Theme.Ink, TextAnchor.UpperCenter);
             UiKit.OnPanel(body);
             RectTransform brt = body.rectTransform;
             brt.anchorMin = new Vector2(0f, 1f);
@@ -335,7 +339,7 @@ namespace BoingUpSkyTower.Gameplay
             var types = new List<PowerUpDef>();
             foreach (PowerUpDef d in progress.PowerUpDefs.Implemented) if (counts.ContainsKey(d.Id)) types.Add(d);
 
-            const float chestY = 200f, chestH = 170f, coinsY = 390f, listY = 510f;   // the chest starts below the title
+            const float chestY = 255f, chestH = 170f, coinsY = 445f, listY = 565f;   // the chest starts below the title
             float listH = Mathf.Min(types.Count, MaxListRows) * ListRowH;
             float panelH = listY + listH + 24f + 130f + 40f;
             string title = opens == 1 ? ChestName(kind) : "10 " + ChestName(kind) + "s";

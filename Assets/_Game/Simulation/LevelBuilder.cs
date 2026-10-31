@@ -36,6 +36,37 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Rows kept free at the top for the final chunk when chunks are spliced at intervals.</summary>
         private const int ChunkEndReserve = 12;
 
+        /// <summary>
+        /// Balanced mode: the rows that carry the level's signature platform. Exactly round(share * free rows) of the generated rows (not ladder, chunk or
+        /// hidden gem rows), picked by a seeded shuffle. Bounce kinds are never chained, so they take no row next to another bounce row or a chunk.
+        /// </summary>
+        private static bool[] PlanSignatureRows(LevelSpec spec, PlatformKind sigKind, int sigShare, int rows, bool[] locked, int gemRow)
+        {
+            Rng pr = new Rng(spec.Seed ^ 0x3C6EF372);
+            List<int> cand = new List<int>(rows);
+            for (int r = 1; r <= rows; r++) if (!locked[r] && r != gemRow) cand.Add(r);
+            bool bounce = sigKind == PlatformKind.Bounce || sigKind == PlatformKind.BounceCap;
+            // Bounce kinds are never chained, so the independent draws of a base layout end up at share / (1 + share), not at share: match that effective mix.
+            int want = bounce ? (cand.Count * sigShare + (100 + sigShare) / 2) / (100 + sigShare) : (cand.Count * sigShare + 50) / 100;
+            for (int i = cand.Count - 1; i > 0; i--)
+            {
+                int j = pr.Next(i + 1);
+                int t = cand[i]; cand[i] = cand[j]; cand[j] = t;
+            }
+            bool[] pick = new bool[rows + 3];
+            int got = 0;
+            for (int i = 0; i < cand.Count && got < want; i++)
+            {
+                int r = cand[i];
+                // Never in the last three rows: a bounce flight right below the goal row overshoots it (found by the random layout bot proof).
+                // Nor within two rows of the hidden gem row: arriving on the gem platform from a bounce flight (bounce, gem, bounce) was unsolvable.
+                if (bounce && (r > rows - 3 || (gemRow > 0 && r >= gemRow - 2 && r <= gemRow + 2) || pick[r - 1] || pick[r + 1] || locked[r - 1] || locked[r + 1])) continue;
+                pick[r] = true;
+                got++;
+            }
+            return pick;
+        }
+
         private static int PercentLerp(int easy, int hard, Fx d)
         {
             return Fx.Lerp(Fx.FromInt(easy), Fx.FromInt(hard), d).FloorToInt();
@@ -172,6 +203,16 @@ namespace BoingUpSkyTower.Simulation
                 if (locked[gemRow]) { gemRow = rows / 2; while (gemRow > 3 && locked[gemRow]) gemRow--; }
             }
 
+            // Balanced mode (random attempt layouts, spec.AttemptSeed != 0): the SAME numbers as the level's own seed, but spread by a shuffle instead of
+            // independent coin flips. The signature platforms (flowers, caps, drifters, gum) get exactly round(share * free rows) rows at random places,
+            // and the layout patterns come out of a shuffled bag (every third block uses each pattern once), so two attempts of one level always hold
+            // the same mix of special platforms and the same share of dense and zigzag stretches; only the places and sizes change.
+            // Base layouts (AttemptSeed 0, golden hashes) keep the original independent draws, bit for bit.
+            bool balanced = spec.AttemptSeed != 0;
+            bool[] sigRow = balanced && sigShare > 0 ? PlanSignatureRows(spec, sigKind, sigShare, rows, locked, gemRow) : null;
+            int[] patternBag = new int[3];
+            int patternBagPos = 3;
+
             bool wave = spec.Goal.Type == GoalType.SurviveWave;
             int waveStart = rows * cfg.WaveStartPercent / 100;
             int waveEnd = rows * cfg.WaveEndPercent / 100;
@@ -303,7 +344,17 @@ namespace BoingUpSkyTower.Simulation
                 // (about 15 seconds of climbing): ladder, dense patches of small platforms (some crumble), or a zigzag of mid-size ones.
                 if (row > LevelGenerator.FixedRows && patternLeft <= 0)
                 {
-                    pattern = rng.Next(3);
+                    if (balanced)
+                    {
+                        if (patternBagPos >= 3)
+                        {
+                            patternBag[0] = 0; patternBag[1] = 1; patternBag[2] = 2;
+                            for (int bi = 2; bi > 0; bi--) { int bj = rng.Next(bi + 1); int bt = patternBag[bi]; patternBag[bi] = patternBag[bj]; patternBag[bj] = bt; }
+                            patternBagPos = 0;
+                        }
+                        pattern = patternBag[patternBagPos++];
+                    }
+                    else pattern = rng.Next(3);
                     patternLeft = rng.Range(6, 11);
                 }
                 patternLeft--;
@@ -315,7 +366,8 @@ namespace BoingUpSkyTower.Simulation
                 if (afterBounce) gap = Fx.Min(gap, cfg.BounceNextGapMax);
 
                 PlatformKind kind = PlatformKind.Normal;
-                if (sigShare > 0 && row != gemRow && rng.Next(100) < sigShare) kind = sigKind;
+                if (balanced) { if (sigRow != null && sigRow[row]) kind = sigKind; }
+                else if (sigShare > 0 && row != gemRow && rng.Next(100) < sigShare) kind = sigKind;
                 // Bounce platforms are never chained: the landing speed on a bounce pad is set by the previous flight,
                 // so two pads in a row would make the second one pure luck.
                 if (afterBounce && (kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap)) kind = PlatformKind.Normal;
@@ -378,7 +430,8 @@ namespace BoingUpSkyTower.Simulation
                         Fx off = t < 2 ? sep : sep + Fx.One;
                         Fx cand = (t & 1) == 0 ? x + off : x - off;
                         cand = Fx.Clamp(cand, ws / 2, screen - ws / 2);
-                        if (Fx.Abs(cand - x) >= sep - Fx.FromRatio(5, 100) && Fx.Abs(cand - prevX) <= limS && CountInWindow(ctx.Plats, y) <= MaxPerWindow - 1)
+                        if (Fx.Abs(cand - x) >= sep - Fx.FromRatio(5, 100) && Fx.Abs(cand - prevX) <= limS && CountInWindow(ctx.Plats, y) <= MaxPerWindow - 1
+                            && (!balanced || Fx.Abs(cand - prevX) >= (prevW + ws) / 2 + Fx.FromRatio(5, 10)))   // random layouts: the gem platform is not straight above the previous platform
                         {
                             xs = cand; found = true;
                         }
@@ -452,7 +505,7 @@ namespace BoingUpSkyTower.Simulation
             }
 
             data.Platforms = ctx.Plats.ToArray();
-            SnapPlatformWidths(cfg, data.Platforms);
+            data.Platforms = SnapPlatformWidths(cfg, data.Platforms, data.HiddenGemOnSidePlatform ? data.HiddenGemRow : -1);
             if (hiddenGemPlaced && data.HiddenGemOnSidePlatform)
             {
                 // The gem floats over its side platform, which the snap pass may have moved (clamped to the walls or separated from the spine platform).
@@ -490,7 +543,7 @@ namespace BoingUpSkyTower.Simulation
             return best;
         }
 
-        private static void SnapPlatformWidths(SimConfig cfg, Platform[] plats)
+        private static Platform[] SnapPlatformWidths(SimConfig cfg, Platform[] plats, int keepRow)
         {
             Fx screen = cfg.ScreenWidth;
             for (int i = 0; i < plats.Length; i++)
@@ -501,6 +554,39 @@ namespace BoingUpSkyTower.Simulation
                 plats[i].X = Fx.Clamp(plats[i].X, edge, screen - edge);   // a wider piece (and its swing) must stay inside the walls
             }
             SeparateSameRowPlatforms(screen, plats);
+            return DropTouchingExtras(plats, keepRow);
+        }
+
+        /// <summary>Platforms of one row that still have less than this much air between them after the separation pass (walls stopped the slide).</summary>
+        private static readonly Fx TouchLimit = Fx.FromRatio(5, 100);
+
+        /// <summary>
+        /// Safety net for random layouts: an optional extra platform that the walls pinned against its row mate (so the separation could not open
+        /// the gap) is dropped; extras are only choices, the spine platform of the row always stays. The gem side platform row is kept.
+        /// </summary>
+        private static Platform[] DropTouchingExtras(Platform[] plats, int keepRow)
+        {
+            bool[] drop = null;
+            int dropped = 0;
+            for (int j = 1; j < plats.Length; j++)
+            {
+                if (plats[j].Width >= Fx.FromInt(9) || plats[j].Row == keepRow) continue;
+                for (int i = j - 1; i >= 0 && plats[i].Row == plats[j].Row; i--)
+                {
+                    if (plats[i].Width >= Fx.FromInt(9) || (drop != null && drop[i])) continue;
+                    Fx gap = Fx.Abs(plats[j].X - plats[i].X) - plats[i].Width / 2 - plats[i].Amplitude - plats[j].Width / 2 - plats[j].Amplitude;
+                    if (gap >= TouchLimit) continue;
+                    if (drop == null) drop = new bool[plats.Length];
+                    drop[j] = true; dropped++;
+                    break;
+                }
+            }
+            if (dropped == 0) return plats;
+            Platform[] kept = new Platform[plats.Length - dropped];
+            int k = 0;
+            for (int i = 0; i < plats.Length; i++)
+                if (!drop[i]) { kept[k] = plats[i]; kept[k].Id = k; k++; }
+            return kept;
         }
 
         /// <summary>Visible air kept between two platforms of one row, swing included (Region2AuditTests / PlatformSeparationTests: touching platforms read as one broken strip).</summary>
@@ -840,23 +926,21 @@ namespace BoingUpSkyTower.Simulation
             Rng r = new Rng(spec.Seed ^ 0x5A3C9E17);
             Fx screen = cfg.ScreenWidth;
             List<Hazard> list = new List<Hazard>();
+            // Balanced mode (random attempt layouts): the number of hazard rows per density zone is exactly round(chance * rows) (at least one),
+            // placed by a shuffle, so every attempt of a level has the same hazard count. Base layouts keep the independent draws.
+            bool[] hitRow = null, twinRow = null;
+            if (spec.AttemptSeed != 0) PlanHazardRows(cfg, spec, d, rows, wave, waveStart, waveEnd, gongRegion, ladderStart, ladderLen, out hitRow, out twinRow);
             for (int row = 2; row <= rows; row++)
             {
                 if (ladderStart >= 0 && row >= ladderStart && row < ladderStart + ladderLen) continue;
                 bool inWave = wave && row >= waveStart && row <= waveEnd;
-                int chance = 0;
-                if (inWave) chance = cfg.WaveDensityPercent;
-                else if (gongRegion)
-                {
-                    chance = PercentLerp(cfg.GongDensityEasyPercent, cfg.GongDensityHardPercent, d);
-                    if (spec.LevelIndex == 3) chance /= 2;
-                }
+                int chance = HazardChance(cfg, spec, d, inWave, gongRegion);
                 if (chance <= 0) continue;
                 int count = 0;
-                if (r.Next(100) < chance)
+                if (hitRow != null ? hitRow[row] : r.Next(100) < chance)
                 {
                     count = 1;
-                    if (inWave && r.Next(100) < chance / 2) count = 2;
+                    if (inWave && (hitRow != null ? twinRow[row] : r.Next(100) < chance / 2)) count = 2;
                 }
                 int side = r.Next(2) == 0 ? -1 : 1;
                 for (int k = 0; k < count; k++)
@@ -889,6 +973,59 @@ namespace BoingUpSkyTower.Simulation
             Hazard[] arr = list.ToArray();
             for (int i = 0; i < arr.Length; i++) arr[i].Id = i;
             return arr;
+        }
+
+        private static int HazardChance(SimConfig cfg, LevelSpec spec, Fx d, bool inWave, bool gongRegion)
+        {
+            int chance = 0;
+            if (inWave) chance = cfg.WaveDensityPercent;
+            else if (gongRegion)
+            {
+                chance = PercentLerp(cfg.GongDensityEasyPercent, cfg.GongDensityHardPercent, d);
+                if (spec.LevelIndex == 3) chance /= 2;
+            }
+            return chance;
+        }
+
+        /// <summary>
+        /// Balanced mode: per density zone (wave rows, plain gong rows) exactly round(chance * zone rows) hazard rows, at least one when the chance is
+        /// above 0, chosen by a seeded shuffle; inside the wave zone round(chance / 2 * hit rows) of them hold two hazards.
+        /// </summary>
+        private static void PlanHazardRows(SimConfig cfg, LevelSpec spec, Fx d, int rows, bool wave, int waveStart, int waveEnd, bool gongRegion,
+            int ladderStart, int ladderLen, out bool[] hit, out bool[] twin)
+        {
+            hit = new bool[rows + 3];
+            twin = new bool[rows + 3];
+            Rng pr = new Rng(spec.Seed ^ 0x2C1B3C6D);
+            for (int zone = 0; zone < 2; zone++)
+            {
+                bool inWave = zone == 1;
+                if (inWave && !wave) continue;
+                int chance = HazardChance(cfg, spec, d, inWave, gongRegion);
+                if (chance <= 0) continue;
+                List<int> zoneRows = new List<int>();
+                for (int row = 2; row <= rows; row++)
+                {
+                    if (ladderStart >= 0 && row >= ladderStart && row < ladderStart + ladderLen) continue;
+                    if ((wave && row >= waveStart && row <= waveEnd) != inWave) continue;
+                    zoneRows.Add(row);
+                }
+                if (zoneRows.Count == 0) continue;
+                int want = (zoneRows.Count * chance + 50) / 100;
+                if (want < 1) want = 1;
+                if (want > zoneRows.Count) want = zoneRows.Count;
+                for (int i = 0; i < want; i++)
+                {
+                    int j = i + pr.Next(zoneRows.Count - i);
+                    int t = zoneRows[i]; zoneRows[i] = zoneRows[j]; zoneRows[j] = t;
+                    hit[zoneRows[i]] = true;
+                }
+                if (inWave)
+                {
+                    int two = (want * (chance / 2) + 50) / 100;
+                    for (int i = 0; i < two; i++) twin[zoneRows[i]] = true;
+                }
+            }
         }
 
         /// <summary>Redraws of one gong before it is dropped (region 5 placement filter).</summary>

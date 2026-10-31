@@ -325,9 +325,11 @@ namespace BoingUpSkyTower.Tests
 
             // Characters: the chosen character on the land stage and the roster
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
+            ProgressService.TestAllCharacters = true;   // SYSTEM_TEST: the Sporeling is owned, so the roster has two tiles
             CharacterCatalog.Selected = CharacterCatalog.Sporeling;
             yield return CheckScreen("characters-sporeling", () => meta.ShowCharacters(), problems);
             CharacterCatalog.Selected = CharacterCatalog.Momo;
+            ProgressService.TestAllCharacters = false;
             Report(problems);
         }
 
@@ -501,7 +503,6 @@ namespace BoingUpSkyTower.Tests
             // Release layout: the gem buttons say "Not available yet".
             yield return CheckScreen("shop-gems", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-coins", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection), problems);
-            yield return CheckScreen("shop-tab1-chests", () => meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-tab2-powerups", () => meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-tab2-powerups-bought", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins); }, problems);
             // Treasure Chest screen (docs/22 point 3): rows, the (i) texts, the confirmation, the single and the ten reveal
@@ -523,7 +524,7 @@ namespace BoingUpSkyTower.Tests
 
             // Coin popups: confirm above 50 gems, not enough gems, done.
             yield return CheckScreen("shop-coin-confirm-popup", () => { meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection); meta.CurrentShop.TapCoinPack(4); }, problems);
-            yield return CheckScreen("shop-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection); meta.CurrentShop.TapCoinPack(6); }, problems);
+            yield return CheckScreen("shop-coin-short-goes-to-gems",() => { meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection); meta.CurrentShop.TapCoinPack(6); }, problems);
             yield return CheckScreen("shop-coins-done-popup", () => { meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection); meta.CurrentShop.TapCoinPack(0); }, problems);
 
             // Promo off: list prices only, no crossed-out price and no Launch offer badge.

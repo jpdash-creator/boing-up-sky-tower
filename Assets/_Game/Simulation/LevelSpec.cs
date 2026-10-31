@@ -126,6 +126,39 @@ namespace BoingUpSkyTower.Simulation
         public const int DefaultRows = 60;
 
         public int Seed;
+        /// <summary>
+        /// Per-attempt seed (0 = none: the base layout of the level, used by tests and the golden hashes). Informational: <see cref="Seed"/> already holds
+        /// MixAttemptSeed(base seed, AttemptSeed) when this is set, so the run can be reproduced from (level, AttemptSeed).
+        /// </summary>
+        public int AttemptSeed;
+
+        /// <summary>
+        /// Layout seed of one attempt: attempt 0 keeps the level's own seed (the base layout), any other value gives a different, fully
+        /// deterministic layout. The builder keeps every difficulty setting of the level (it only draws from the level's ranges), so a new seed
+        /// means a different but equally hard layout.
+        /// </summary>
+        public static int MixAttemptSeed(int baseSeed, int attemptSeed)
+        {
+            if (attemptSeed == 0) return baseSeed;
+            unchecked
+            {
+                uint z = (uint)baseSeed * 0x9E3779B1u ^ (uint)attemptSeed * 0x85EBCA6Bu;
+                z = (z ^ (z >> 16)) * 0x7FEB352Du;
+                z = (z ^ (z >> 15)) * 0x846CA68Bu;
+                z ^= z >> 16;
+                return (int)z;
+            }
+        }
+
+        /// <summary>A copy of this (base) spec whose layout seed is mixed with <paramref name="attemptSeed"/> (0 returns an identical copy). Call it on the base spec only.</summary>
+        public LevelSpec WithAttemptSeed(int attemptSeed)
+        {
+            LevelSpec c = (LevelSpec)MemberwiseClone();
+            c.Seed = MixAttemptSeed(Seed, attemptSeed);
+            c.AttemptSeed = attemptSeed;
+            return c;
+        }
+
         /// <summary>Effective difficulty d in 0..1 (region offset already applied, see LevelGenerator.EffectiveDifficulty).</summary>
         public Fx Difficulty;
         /// <summary>Level number inside the region, 1..15. Drives the signature template (1-2 none, 3 gentle, 4+ normal).</summary>

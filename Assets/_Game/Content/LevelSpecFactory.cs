@@ -22,7 +22,12 @@ namespace BoingUpSkyTower.Content
             }
         }
 
-        public static LevelSpec Build(LevelDef level, RegionDef region)
+        /// <summary>
+        /// Spec of a campaign level. <paramref name="attemptSeed"/> 0 gives the level's own (base) layout, used by tests and the golden hashes; any other
+        /// value mixes into the layout seed so that every attempt plays a different but equally hard and always solvable layout (difficulty, goal,
+        /// star targets and pickup rules are the level's and never change).
+        /// </summary>
+        public static LevelSpec Build(LevelDef level, RegionDef region, int attemptSeed = 0)
         {
             if (level == null) throw new ContentException("(null)", "LevelDef is null.");
             if (region == null) throw new ContentException(level.Id, "RegionDef is null.");
@@ -47,6 +52,7 @@ namespace BoingUpSkyTower.Content
                 stars[i] = new StarSpec { Kind = StarSpec.KindFromId(level.Stars[i].Type), Value = level.Stars[i].Value ?? 0 };
             }
             spec.Stars = stars;
+            if (attemptSeed != 0) { spec.AttemptSeed = attemptSeed; spec.Seed = LevelSpec.MixAttemptSeed(level.Seed, attemptSeed); }
 
             if (level.Overrides != null)
             {

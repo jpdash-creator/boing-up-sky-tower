@@ -186,6 +186,15 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)goal.transform, new Vector2(0.5f, 1f), new Vector2(100f, -246f), new Vector2(260f, 100f));
             goal.rectTransform.pivot = new Vector2(0.5f, 1f);
             flag.gameObject.SetActive(!endless);
+            string rule = endless ? null : RunSession.GoalRule(session.Spec);
+            if (rule != null)
+            {
+                // Level rule shown before the run starts (e.g. "Don't touch the walls."), small italic, centred under the goal.
+                Text ruleText = UiKit.AddText(introRoot, "Rule", rule, 40, new Color(1f, 0.95f, 0.6f), TextAnchor.MiddleCenter, true);
+                ruleText.fontStyle = FontStyle.Italic;
+                UiKit.Place((RectTransform)ruleText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -360f), new Vector2(720f, 70f));
+                back.rectTransform.sizeDelta = new Vector2(780f, 660f);   // room for the rule line above the control hints
+            }
             // Controls hint: left, right, jump as small plates with the same glyphs as the real buttons.
             Sprite[] glyphs = { Glyphs.Left, Glyphs.Left, Glyphs.Up };
             for (int i = 0; i < 3; i++)
@@ -463,7 +472,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             bool offerAd = s.AdReviveOffered && (adReady || s.AdRewardPending);
             bool offerGems = s.CanRevive;
-            OpenOverlay(s.GoalLost ? "Wall bounce!" : "You fell!", offerGems ? (offerAd ? 1060f : 940f) : 800f);
+            OpenOverlay(s.GoalLost ? "Wall touched!" : "You fell!", offerGems ? (offerAd ? 1060f : 940f) : (s.GoalLost ? 880f : 800f));
             AudioManager.Play(Sfx.Fail);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -473,6 +482,13 @@ namespace BoingUpSkyTower.Gameplay
             ToyKit.InfoPill(row, ToyKit.Get("icon_tower"), s.State.Row.ToString(), Color.white, 270f, 104f);
             ToyKit.InfoPill(row, ToyKit.Get("icon_flag"), target.ToString(), new Color(1f, 0.95f, 0.6f), 270f, 104f);
             ProgressBar(panel, 345f, s.State.Row / (float)target);
+            if (s.GoalLost)
+            {
+                // The reason, crisp and centred under the progress bar.
+                Text why = UiKit.AddText(panel, "Reason", "This level fails on any wall touch.", 38, Theme.Ink, TextAnchor.MiddleCenter, true);
+                why.fontStyle = FontStyle.Italic;
+                UiKit.Place((RectTransform)why.transform, new Vector2(0.5f, 1f), new Vector2(0f, -415f), new Vector2(780f, 90f));
+            }
             if (offerGems)
             {
                 if (offerAd)
@@ -525,6 +541,8 @@ namespace BoingUpSkyTower.Gameplay
             OpenOverlay("You fell!", 900f);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
+            Transform endTitle = panel.Find("Title");
+            if (endTitle != null) { var etr = (RectTransform)endTitle; etr.anchoredPosition = new Vector2(0f, etr.anchoredPosition.y); etr.sizeDelta = new Vector2(540f, etr.sizeDelta.y); }   // centred on the panel (the frame shifts it 30 left to leave room for the X)
             RectTransform row1 = ToyKit.PillRow(panel, "Result", 215f, 104f);
             ToyKit.InfoPill(row1, ToyKit.Get("icon_tower"), r.Floors.ToString(), Color.white, 270f, 104f);
             ToyKit.InfoPill(row1, ToyKit.Get("icon_crown"), (r.NewBest ? r.Floors : r.BestBefore).ToString(), new Color(1f, 0.9f, 0.4f), 270f, 104f);

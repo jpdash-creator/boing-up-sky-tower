@@ -78,6 +78,30 @@ namespace BoingUpSkyTower.Gameplay
                 return seed == 0 ? 1 : seed;
             }
         }
+        /// <summary>
+        /// Campaign layout seed of the attempt that is running (0 = the level's base layout). A new one is drawn for EVERY attempt (start, retry, next level),
+        /// so the platforms change each time (owner issue 2026-10-31); the run keeps it so it can be reproduced from its LayoutInfo.
+        /// </summary>
+        public static int AttemptSeed;
+        /// <summary>QA and tests: a non-zero value is used for every campaign attempt instead of a random one (reproduce a reported layout).</summary>
+        public static int FixedAttemptSeed;
+        static int attemptCounter;
+
+        /// <summary>A fresh attempt seed: UTC ticks plus a per-process counter run through an integer hash, never 0 (0 means the base layout).</summary>
+        public static int NewAttemptSeed()
+        {
+            if (FixedAttemptSeed != 0) return FixedAttemptSeed;
+            unchecked
+            {
+                long t = System.DateTime.UtcNow.Ticks;
+                attemptCounter++;
+                uint z = (uint)(t ^ (t >> 32)) + (uint)attemptCounter * 0x9E3779B9u;
+                z = (z ^ (z >> 16)) * 0x85EBCA6Bu;
+                z = (z ^ (z >> 13)) * 0xC2B2AE35u;
+                z ^= z >> 16;
+                return z == 0u ? 1 : (int)z;
+            }
+        }
         /// <summary>Meta opens the level select of this region when it loads (set by the Run scene on exit).</summary>
         public static string PendingRegionId;
         public static RunResult LastResult;
@@ -88,7 +112,7 @@ namespace BoingUpSkyTower.Gameplay
             PerformanceSettings.Apply();
             Theme.Warmup();
             ApplyDifficulty();
-            ProgressService.TestUnlockAll = GameSettings.TestUnlockAll;
+            GameSettings.ApplyFlags();
             GameSettings.ApplyTextScale();
             Repo = ContentRepository.LoadFromResources();
             Progress = new ProgressService(Repo, new FileSaveStore(Path.Combine(Application.persistentDataPath, "save.json")), PlayableRegions);
@@ -110,6 +134,7 @@ namespace BoingUpSkyTower.Gameplay
             EndlessMode = false;
             EndlessRegionId = null;
             EndlessSeed = 0;
+            AttemptSeed = 0;
             Initialized = true;
         }
 
@@ -125,6 +150,7 @@ namespace BoingUpSkyTower.Gameplay
             EndlessMode = false;
             EndlessRegionId = null;
             EndlessSeed = 0;
+            AttemptSeed = 0;
         }
 
         /// <summary>The next level after this one in play order, or null if it is the last playable one.</summary>

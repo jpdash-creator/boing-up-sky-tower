@@ -17,7 +17,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public static bool Allowed
         {
-            get { return GameSettings.DevBuild || (ForceEnable && (Application.isEditor || Debug.isDebugBuild)); }
+            get { return GameSettings.SystemTest || (ForceEnable && (Application.isEditor || Debug.isDebugBuild)); }
         }
 
         public AutopilotBrain Brain { get; private set; }

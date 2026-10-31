@@ -41,6 +41,13 @@ namespace BoingUpSkyTower.Gameplay
         public readonly bool IsEndless;
         /// <summary>Seed of the endless tower; stored with the run so it can be rebuilt (replay, server check).</summary>
         public readonly int Seed;
+        /// <summary>Campaign: the attempt seed of this run's layout (0 = base layout). Endless: always 0 (its tower seed is <see cref="Seed"/>).</summary>
+        public readonly int AttemptSeed;
+        /// <summary>One-line description of the layout for logs and bug reports: level, attempt seed and the resulting layout seed.</summary>
+        public string LayoutInfo
+        {
+            get { return IsEndless ? "endless " + Region.Id + " seed " + Seed : Level.Id + " attempt " + AttemptSeed + " layoutSeed " + Spec.Seed; }
+        }
         /// <summary>Endless tower, null for campaign levels.</summary>
         public readonly EndlessTower Tower;
         /// <summary>Changes every time the endless tower grew (the view then extends its world). Always 0 for campaign levels.</summary>
@@ -52,12 +59,17 @@ namespace BoingUpSkyTower.Gameplay
         public bool Failed { get { return (State.Dead || GoalLost) && !GoalReached; } }
         public bool Over { get { return GoalReached || State.Dead || GoalLost; } }
 
-        public RunSession(ContentRepository repo, SimConfig cfg, string levelId, bool stripGems = false)
+        /// <summary>
+        /// Campaign attempt. <paramref name="attemptSeed"/> picks the layout: 0 = the level's base layout (tests), any other value a different layout of the
+        /// same difficulty. The same (level, attemptSeed) always rebuilds the same layout, so a run can be reproduced from <see cref="LayoutInfo"/>.
+        /// </summary>
+        public RunSession(ContentRepository repo, SimConfig cfg, string levelId, bool stripGems = false, int attemptSeed = 0)
         {
             Cfg = cfg;
             Level = repo.GetLevel(levelId);
             Region = repo.GetRegion(Level.Region);
-            Spec = LevelSpecFactory.Build(Level, Region);
+            AttemptSeed = attemptSeed;
+            Spec = LevelSpecFactory.Build(Level, Region, attemptSeed);
             Data = LevelBuilder.Build(cfg, Spec);
             if (stripGems) StripGems(Data);   // owner 2026-10-24: a level that was cleared before shows no gems again
             Sim = new Sim(cfg, Data, Spec);
@@ -191,6 +203,12 @@ namespace BoingUpSkyTower.Gameplay
             };
         }
 
+        /// <summary>The extra rule line shown under the goal before the level starts ("Don't touch the walls."), or null when the level has no such rule.</summary>
+        public static string GoalRule(LevelSpec spec)
+        {
+            return !spec.Endless && spec.Goal.Type == GoalType.NoWallBounce ? "Don't touch the walls." : null;
+        }
+
         /// <summary>Short goal text for the HUD and the level info popup.</summary>
         public static string DescribeGoal(LevelSpec spec)
         {
@@ -201,7 +219,7 @@ namespace BoingUpSkyTower.Gameplay
                 case GoalType.ReachFloor: return "Reach floor " + g.Value;
                 case GoalType.CollectCoins: return "Collect " + g.Count + " coins";
                 case GoalType.ComboChain: return "Chain " + g.Count + " jump" + (g.Count == 1 ? "" : "s") + " of " + g.Value + "+ floors";
-                case GoalType.NoWallBounce: return "Reach floor " + g.Value + " without a wall bounce";
+                case GoalType.NoWallBounce: return "Reach floor " + g.Value;
                 case GoalType.FindHiddenGem: return "Find the hidden gem";
                 case GoalType.Speedrun: return "Reach floor " + g.Value + " in " + g.TimeSec + " s";
                 case GoalType.SurviveWave: return "Survive the wave and reach the top";
