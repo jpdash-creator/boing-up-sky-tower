@@ -13,7 +13,7 @@ namespace BoingUpSkyTower.Gameplay
     /// </summary>
     public sealed class RunHud : MonoBehaviour
     {
-        public Action OnPause, OnResume, OnRetry, OnNext, OnMenu, OnRevive;
+        public Action OnPause, OnResume, OnRetry, OnNext, OnMenu, OnRevive, OnReviveAd;
         /// <summary>A power-up button was pressed (loadout slot 0..2). The run controller latches it into the next tick's input.</summary>
         public Action<int> OnPower;
         /// <summary>The close mark of the current overlay (pause: resume, end screens: back to the level select).</summary>
@@ -371,7 +371,9 @@ namespace BoingUpSkyTower.Gameplay
         ShopScreen shop;
 
         /// <summary>The full Shop on top of the paused run; Back returns to the pause menu and the run continues where it was.</summary>
-        void OpenShop()
+        void OpenShop() { OpenShopTab(ShopScreen.TabPowerups); }
+
+        void OpenShopTab(int tab)
         {
             if (overlay == null || shopRoot != null || GameSession.Progress == null || GameSession.Repo == null) return;
             overlay.gameObject.SetActive(false);
@@ -408,7 +410,7 @@ namespace BoingUpSkyTower.Gameplay
             };
             GameSession.Progress.LaunchPromoActive = GameSettings.LaunchPromo;
             shop = new ShopScreen(safe, GameSession.Progress, ShopCatalog.FromRepository(GameSession.Repo), art, host);
-            shop.Build(ShopScreen.TabPowerups, ShopScreen.GemsSection);
+            shop.Build(tab, ShopScreen.GemsSection);
             Button back = ToyKit.GlyphButton(safe, "Back", "Back to pause", 2, Glyphs.Left, new Vector2(150f, 150f), CloseShop);
             UiKit.Place((RectTransform)back.transform, new Vector2(0f, 1f), new Vector2(20f, -20f), new Vector2(150f, 150f));
             GameSession.Progress.Changed += RefreshShopWallet;
@@ -453,9 +455,15 @@ namespace BoingUpSkyTower.Gameplay
             fill.rectTransform.offsetMax = new Vector2(-5f, -5f);
         }
 
-        public void ShowFailed(RunSession s, bool canAffordRevive)
+        /// <summary>
+        /// Run failed. First revive: [Revive: Watch ad (free)] (only while an ad is ready) and [Revive: 5 gems]; second revive: [Revive: 10 gems] only.
+        /// Retry, Shop and Home stay one tap away. Every revive button carries a text label, an icon and the price.
+        /// </summary>
+        public void ShowFailed(RunSession s, int gems, bool adReady)
         {
-            OpenOverlay(s.GoalLost ? "Wall bounce!" : "You fell!", 800f);
+            bool offerAd = s.AdReviveOffered && (adReady || s.AdRewardPending);
+            bool offerGems = s.CanRevive;
+            OpenOverlay(s.GoalLost ? "Wall bounce!" : "You fell!", offerGems ? (offerAd ? 1060f : 940f) : 800f);
             AudioManager.Play(Sfx.Fail);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -465,12 +473,50 @@ namespace BoingUpSkyTower.Gameplay
             ToyKit.InfoPill(row, ToyKit.Get("icon_tower"), s.State.Row.ToString(), Color.white, 270f, 104f);
             ToyKit.InfoPill(row, ToyKit.Get("icon_flag"), target.ToString(), new Color(1f, 0.95f, 0.6f), 270f, 104f);
             ProgressBar(panel, 345f, s.State.Row / (float)target);
-            // Four equal round buttons (owner issue 16.1): retry, revive, shop and home.
+            if (offerGems)
+            {
+                if (offerAd)
+                {
+                    string adLabel = s.AdRewardPending ? "Revive: Free" : "Revive: Watch ad (free)";
+                    ReviveButton(panel, adLabel, ToyKit.Get("icon_play"), 1, 480f, () => { if (OnReviveAd != null) OnReviveAd(); });
+                }
+                string gemLabel = "Revive: " + s.NextReviveCost + " gems";
+                int cost = s.NextReviveCost;
+                // Too few gems: the button stays enabled and opens the Gems tab of the shop; the revive is taken by tapping again.
+                ReviveButton(panel, gemLabel, ToyKit.Get("icon_gem"), 0, offerAd ? 330f : 400f, () =>
+                {
+                    if (GameSession.Progress != null && GameSession.Progress.Gems < cost) OpenShopTab(ShopScreen.TabGems);
+                    else if (OnRevive != null) OnRevive();
+                });
+            }
             OverlayRow(
                 MakeAct("Retry", "Try again", 1, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
-                MakeAct("Revive " + s.NextReviveCost, "Revive for " + s.NextReviveCost + " gems", 0, ToyKit.Get("icon_gem"), 150f, () => { if (OnRevive != null) OnRevive(); }, canAffordRevive),
                 MakeAct("Shop", "Shop", 0, ToyKit.Get("icon_shop"), 150f, OpenShop),
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
+        }
+
+        /// <summary>A wide revive button: icon at the left, text label with the price (CUX-4: 130 px tall, CUX-5: text, not colour only).</summary>
+        void ReviveButton(Transform panel, string label, Sprite icon, int role, float y, Action act)
+        {
+            Button b = UiKit.AddButton(panel, label, label, ToyKit.Button(role == 1 ? 1 : 0), Color.white, new Vector2(740f, 130f), act, 44);
+            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(740f, 130f));
+            Text t = b.GetComponentInChildren<Text>();
+            if (t != null)
+            {
+                var tr = (RectTransform)t.transform;
+                tr.offsetMin = new Vector2(120f, tr.offsetMin.y);
+                t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            }
+            if (icon != null)
+            {
+                Image ic = UiKit.AddImage(b.transform, "Icon", icon, Color.white);
+                ic.raycastTarget = false;
+                RectTransform r = ic.rectTransform;
+                r.anchorMin = r.anchorMax = new Vector2(0f, 0.5f);
+                r.pivot = new Vector2(0.5f, 0.5f);
+                r.anchoredPosition = new Vector2(80f, 0f);
+                r.sizeDelta = new Vector2(84f, 84f);
+            }
         }
 
         /// <summary>Endless game over: floor, best (or NEW BEST), score and coins paid; no revive in endless. Try again starts a new tower.</summary>

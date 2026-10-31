@@ -84,16 +84,16 @@ namespace BoingUpSkyTower.Economy
             return Get(PowerUps.IdOf(type));
         }
 
-        // id, display name, description, trigger, duration s, uses, carry cap, coins, gems, implemented
+        // id, display name, description, trigger, duration s, uses, carry cap, coins, gems (docs/22 4.3: 50 gems for the 1,000-coin types, 75 for the 1,500-coin types), implemented
         static readonly object[][] Rows =
         {
-            new object[] { PowerUp.Flight, "Flight", "Fly upward for 4 seconds and steer left and right. Gongs cannot hurt you.", "button", 4, 1, 1, 1500, 0, true },
-            new object[] { PowerUp.Rocket, "Rocket", "A strong boost straight up, about 8 floors in 2 seconds. Stops before the last floors of a level.", "button", 2, 1, 1, 1500, 0, true },
-            new object[] { PowerUp.DoubleJump, "Double Jump", "Jump again in mid-air, twice within 30 seconds.", "button", 30, 2, 3, 1000, 0, true },
-            new object[] { PowerUp.WallStick, "Wall Stick", "For 10 seconds you stick to the side walls for up to 1.5 seconds. Jump to leap off.", "button", 10, 1, 2, 1000, 0, true },
-            new object[] { PowerUp.Shield, "Shield", "Blocks the next gong hit, or saves you once if you fall off the bottom. Lasts up to 30 seconds.", "button", 30, 1, 2, 1000, 0, true },
-            new object[] { PowerUp.Magnet, "Magnet", "Gems and stars come to you from farther away for 10 seconds.", "button", 10, 1, 2, 1000, 0, true },
-            new object[] { PowerUp.SlowTime, "Slow Time", "The rising danger zone moves 40 percent slower for 6 seconds.", "button", 6, 1, 2, 1500, 0, true },
+            new object[] { PowerUp.Flight, "Flight", "Fly upward for 4 seconds and steer left and right. Gongs cannot hurt you.", "button", 4, 1, 1, 1500, 75, true },
+            new object[] { PowerUp.Rocket, "Rocket", "A strong boost straight up, about 8 floors in 2 seconds. Stops before the last floors of a level.", "button", 2, 1, 1, 1500, 75, true },
+            new object[] { PowerUp.DoubleJump, "Double Jump", "Jump again in mid-air, twice within 30 seconds.", "button", 30, 2, 3, 1000, 50, true },
+            new object[] { PowerUp.WallStick, "Wall Stick", "For 10 seconds you stick to the side walls for up to 1.5 seconds. Jump to leap off.", "button", 10, 1, 2, 1000, 50, true },
+            new object[] { PowerUp.Shield, "Shield", "Blocks the next gong hit, or saves you once if you fall off the bottom. Lasts up to 30 seconds.", "button", 30, 1, 2, 1000, 50, true },
+            new object[] { PowerUp.Magnet, "Magnet", "Gems and stars come to you from farther away for 10 seconds.", "button", 10, 1, 2, 1000, 50, true },
+            new object[] { PowerUp.SlowTime, "Slow Time", "The rising danger zone moves 40 percent slower for 6 seconds.", "button", 6, 1, 2, 1500, 75, true },
             new object[] { PowerUp.SpringBoots, "Spring Boots", "The next 3 jumps are 20 percent higher.", "button", 0, 3, 2, 1000, 0, false },
             new object[] { PowerUp.CoinDoubler, "Coin Doubler", "Doubles the coins paid at the end of this level.", "button", 0, 1, 1, 120, 0, false },
             new object[] { PowerUp.StarSeeker, "Star Seeker", "Arrows at the screen edge point to stars you have not collected yet.", "button", 12, 1, 2, 800, 0, false },

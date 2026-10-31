@@ -401,7 +401,9 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("run-hud", () => { }, problems);
             yield return CheckScreen("run-pause", () => rc.Hud.ShowPause(), problems);
             rc.Hud.CloseOverlay();
-            yield return CheckScreen("run-failed", () => rc.Hud.ShowFailed(rc.Session, true), problems);
+            yield return CheckScreen("run-failed", () => rc.Hud.ShowFailed(rc.Session, 10, true), problems);
+            rc.Hud.CloseOverlay();
+            yield return CheckScreen("run-failed-gems-only", () => rc.Hud.ShowFailed(rc.Session, 0, false), problems);
             rc.Hud.CloseOverlay();
             var outcome = rc.Session.BuildOutcome();
             var reward = GameSession.Progress.ApplyRun(GameSession.CurrentLevelId, outcome);
@@ -502,9 +504,13 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-tab1-chests", () => meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-tab2-powerups", () => meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-tab2-powerups-bought", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins); }, problems);
-            yield return CheckScreen("shop-chest-info-popup", () => { meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.OpenChestInfo(ChestKind.Golden); }, problems);
-            yield return CheckScreen("shop-chest-iron-reveal", () => { GameSession.Progress.AddGems(100); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Iron, 1); meta.CurrentShop.Reveal.Skip(); }, problems);
-            yield return CheckScreen("shop-chest-golden-ten-reveal", () => { GameSession.Progress.AddGems(3000); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Golden, 10); meta.CurrentShop.Reveal.Skip(); }, problems);
+            // Treasure Chest screen (docs/22 point 3): rows, the (i) texts, the confirmation, the single and the ten reveal
+            yield return CheckScreen("treasure-chests", () => meta.ShowTreasureChests(), problems);
+            yield return CheckScreen("treasure-chest-info", () => { meta.ShowTreasureChests(); meta.CurrentTreasure.OpenInfo(ChestKind.Iron); }, problems);
+            yield return CheckScreen("treasure-chest-info-golden", () => { meta.ShowTreasureChests(); meta.CurrentTreasure.OpenInfo(ChestKind.Golden); }, problems);
+            yield return CheckScreen("treasure-confirm", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Golden, 10); }, problems);
+            yield return CheckScreen("treasure-reveal-single", () => { GameSession.Progress.AddGems(100); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Iron, 1); meta.CurrentTreasure.Reveal.Skip(); }, problems);
+            yield return CheckScreen("treasure-reveal-ten", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Golden, 10); meta.CurrentTreasure.Reveal.Skip(); }, problems);
             yield return CheckScreen("shop-tab3-characters", () => meta.ShowShop(ShopScreen.TabCharacters, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-gems-notbuyable-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(3); }, problems);
 
@@ -528,7 +534,7 @@ namespace BoingUpSkyTower.Tests
 
             // Power-up shop: the not-enough-coins popup (with an empty wallet) points to the coins section.
             GameSession.Progress.TrySpendCoins(GameSession.Progress.Coins);
-            yield return CheckScreen("shop-chest-need-gems-popup", () => { GameSession.Progress.TrySpendGems(GameSession.Progress.Gems); meta.ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); meta.CurrentShop.TapOpenChest(ChestKind.Iron, 1); }, problems);
+            yield return CheckScreen("treasure-need-gems", () => { GameSession.Progress.TrySpendGems(GameSession.Progress.Gems); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Iron, 1); }, problems);
             yield return CheckScreen("shop-tab2-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_rocket"), PowerUpCurrency.Coins); }, problems);
             Report(problems);
         }

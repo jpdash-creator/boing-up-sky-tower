@@ -23,6 +23,8 @@ namespace BoingUpSkyTower.Economy
         public CharacterRarity Rarity;
         /// <summary>Region index whose unlock gives this Common character; 0 for the others.</summary>
         public int Region;
+        /// <summary>Price in gems in the shop (0 while unpriced). A duplicate from a chest refunds 25 percent of it as gems.</summary>
+        public int GemPrice;
         public PowerUp[] Powers = new PowerUp[0];
     }
 
@@ -33,8 +35,6 @@ namespace BoingUpSkyTower.Economy
         public static readonly int[] CooldownSeconds = { 0, 30, 22, 15, 10 };
         /// <summary>How many powers a character of this rarity has.</summary>
         public static readonly int[] PowerCount = { 0, 1, 1, 2, 3 };
-        /// <summary>Coins a duplicate from a chest turns into.</summary>
-        public static readonly int[] DuplicateCoins = { 100, 200, 500, 1000, 2000 };
 
         public static readonly CharacterSpec Momo = new CharacterSpec { Id = "momo", Name = "Momo", Rarity = CharacterRarity.Common, Region = 1 };
         public static readonly CharacterSpec Sporeling = new CharacterSpec { Id = "sporeling", Name = "Sporeling", Rarity = CharacterRarity.Common, Region = 2 };

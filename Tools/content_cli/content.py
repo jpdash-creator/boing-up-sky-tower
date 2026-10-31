@@ -245,15 +245,18 @@ def validate():
         errors.append("modules must cover regions 1-30, missing %s" % sorted(set(range(1, 31)) - covered))
 
     # --- economy (doc 08 section 8) ---
-    # Owner tables (docs/14): promo never above list, more gems per dollar as the price rises (1.5 percent tolerance for the
-    # owner's rounded price points), unique SKUs and ids.
+    # Owner tables (docs/22 4.1): from the 100-gem pack up the price per gem strictly falls (the 50 pack is the entry price and
+    # is exempt), the promo ladder never gets worse, unique SKUs and ids. First-purchase double only on packs of 50 to 1,000 gems.
     for key in ("usdList", "usdPromo"):
-        ladder = sorted(packs, key=lambda p: p[key])
-        rates = [p["gems"] / p[key] for p in ladder]
-        for a, b in zip(rates, rates[1:]):
-            if b < a * 0.985:
-                errors.append("gem packs (%s) must give more gems per dollar as price rises" % key)
+        ladder = sorted([p for p in packs if p["gems"] >= 100], key=lambda p: p["gems"])
+        per_gem = [p[key] / p["gems"] for p in ladder]
+        for a, b in zip(per_gem, per_gem[1:]):
+            if not b < a:
+                errors.append("gem packs (%s) must cost strictly less per gem from the 100 pack up" % key)
                 break
+    for p in packs:
+        if p["firstPurchaseDouble"] != (p["gems"] <= 1000):
+            errors.append("gem pack %s: first-purchase double belongs on packs of 50 to 1000 gems only" % p["id"])
     for p in packs:
         if p["usdPromo"] > p["usdList"]:
             errors.append("gem pack %s: promo price above list price" % p["id"])
@@ -264,6 +267,9 @@ def validate():
     for p in coin_packs:
         if p["gemsPromo"] > p["gemsList"]:
             errors.append("coin pack %s: promo price above list price" % p["id"])
+    rates = [p["coins"] / p["gemsList"] for p in sorted(coin_packs, key=lambda p: p["coins"])]
+    if any(b < a - 1e-9 for a, b in zip(rates, rates[1:])):
+        errors.append("coin packs must give the same or more coins per gem as they grow")
     if len({p["id"] for p in coin_packs}) != len(coin_packs):
         errors.append("duplicate coin pack id")
     ids = [x["id"] for x in items]

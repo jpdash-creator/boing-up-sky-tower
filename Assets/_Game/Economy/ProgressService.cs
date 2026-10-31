@@ -103,10 +103,10 @@ namespace BoingUpSkyTower.Economy
         // ---- shop (docs/14) ----
 
         /// <summary>
-        /// Launch promotion switch (default on). While on, packs cost their promotional price. Later driven by the remote config flag
+        /// Launch promotion switch (default OFF). While on, packs cost their promotional price. Later driven by the remote config flag
         /// shop.launchPromo.enabled; when it is off the list price applies.
         /// </summary>
-        public bool LaunchPromoActive { get; set; } = true;
+        public bool LaunchPromoActive { get; set; }   // OFF by default (owner 2026-10-25); the game sets it from GameSettings.LaunchPromo
 
         /// <summary>Gem price of a coin pack under the current promotion state.</summary>
         public int CoinPackPrice(CoinPackDef pack)
@@ -120,10 +120,7 @@ namespace BoingUpSkyTower.Economy
         /// </summary>
         public ShopResult GrantTestGemPurchase(GemPackDef pack)
         {
-            if (pack == null || pack.Gems <= 0) return ShopResult.Invalid;
-            Data.Gems = SaturatingAdd(Data.Gems, pack.Gems);
-            Commit();
-            return ShopResult.Ok;
+            return CreditGemPack(pack);   // ProgressService.Shop.cs: doubles the first purchase of packs 50 to 1,000 while that switch is on
         }
 
         /// <summary>

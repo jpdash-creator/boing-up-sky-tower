@@ -356,17 +356,52 @@ namespace BoingUpSkyTower.Gameplay
             if (art != null && art.Player != null)
             {
                 Image m = UiKit.AddImage(screen, "Momo", art.Player, Color.white);
-                UiKit.Place(m.rectTransform, new Vector2(0.5f, 0.40f), Vector2.zero, new Vector2(440f, 540f));
+                UiKit.Place(m.rectTransform, new Vector2(0.38f, 0.40f), Vector2.zero, new Vector2(440f, 540f));
                 m.rectTransform.pivot = new Vector2(0.5f, 0.5f);
                 momo = m.rectTransform;
                 momoBase = momo.anchoredPosition;
             }
-            // VIP: its own button on the home screen (coming soon)
-            Button vip = ToyKit.IconButton(screen, "Vip", "VIP, coming soon", 1, ToyKit.Get("icon_crown"), new Vector2(190f, 190f), () => ShowMessage("VIP", "VIP is coming soon."), 0.62f);
-            UiKit.Place((RectTransform)vip.transform, new Vector2(1f, 0.5f), new Vector2(-40f, 0f), new Vector2(190f, 190f));
+            AddComingSoonColumn();
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
             UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(500f, 44f));
             AddTabBar(ToyKit.TabPlay);
+        }
+
+        /// <summary>
+        /// Home right-side column (docs/22 points 2, 7, 8): VIP, Bundles and Daily Rewards, all Coming Soon. Each is a 170 px button (at least 48 dp) with a lock
+        /// and a dim look, plus a visible "Coming soon" text tag over its lower edge, so the state is never colour alone. 24 px (more than 8 dp) between buttons.
+        /// The column sits right of the logo's bottom edge, below the wallet row and above the tab bar. A tap shows the Coming soon message and nothing else.
+        /// </summary>
+        void AddComingSoonColumn()
+        {
+            const float size = 140f, tagH = 62f, tagGap = 4f, gap = 22f, top = 500f, width = 300f;
+            string[] names = { "VIP", "Bundles", "Daily Rewards" };
+            string[] labels = { "VIP, coming soon", "Bundles, coming soon", "Daily rewards, coming soon" };
+            string[] icons = { "icon_crown", "icon_gem", "icon_daily" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                string what = names[i];
+                RectTransform item = UiKit.Rect(screen, "Soon" + what.Replace(" ", ""));
+                UiKit.Place(item, new Vector2(1f, 1f), new Vector2(-24f, -(top + i * (size + tagGap + tagH + gap))), new Vector2(width, size + tagGap + tagH));
+                Button b = ToyKit.IconButton(item, what, labels[i], 2, ToyKit.Get(icons[i]), new Vector2(size, size), () => ShowMessage("Coming soon", what + " is coming soon."), 0.5f);
+                UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(size, size));
+                b.GetComponent<Image>().color = new Color(0.78f, 0.8f, 0.86f, 1f);   // dim look
+                Transform glyph = b.transform.Find("Glyph");
+                if (glyph != null)
+                {
+                    ((RectTransform)glyph).anchoredPosition = new Vector2(0f, -8f);
+                    glyph.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.85f);
+                }
+                Image lockIcon = UiKit.AddImage(b.transform, "Lock", ToyKit.Get("icon_lock"), Color.white);
+                UiKit.Place(lockIcon.rectTransform, new Vector2(1f, 1f), new Vector2(-4f, -4f), new Vector2(36f, 36f));
+                // the text tag, as wide as its text, in its own row below the button
+                Image tag = UiKit.AddPanel(item, "SoonTag", new Color(0.06f, 0.07f, 0.16f, 0.94f));
+                Text t = UiKit.AddText(tag.transform, "Text", "Coming soon", 30, Color.white, TextAnchor.MiddleCenter);
+                t.horizontalOverflow = HorizontalWrapMode.Overflow;
+                DropOutline(t);
+                UiKit.Stretch((RectTransform)t.transform);
+                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 0f), Vector2.zero, new Vector2(Mathf.Min(t.preferredWidth + 28f, width), tagH));
+            }
         }
 
         /// <summary>Currency pills (coins, gems, total stars) with the round settings gear at the right (owner issue 14, SS2).</summary>
@@ -395,7 +430,7 @@ namespace BoingUpSkyTower.Gameplay
 
         /// <summary>
         /// The persistent bottom tab bar (docs/16 section C). With <paramref name="withPlay"/> false (World Map and Level screen, owner issue 16.3) the
-        /// middle PLAY button is left out. Daily is not built yet and says so.
+        /// middle PLAY button is left out. The bar holds Shop, Chests, PLAY, Heroes (Daily moved to the home column, docs/22 point 8).
         /// </summary>
         void AddTabBar(int selected, bool withPlay = true)
         {
@@ -406,8 +441,7 @@ namespace BoingUpSkyTower.Gameplay
             };
             if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true });
             items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
-            items.Add(new ToyKit.BarItem { Icon = "icon_daily", Caption = "Daily", A11y = "Daily rewards" });
-            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabPlay, ToyKit.TabHeroes, ToyKit.TabDaily } : new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabHeroes, ToyKit.TabDaily };
+            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabPlay, ToyKit.TabHeroes } : new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabHeroes };
             ToyKit.BuildIconBar(screen, items.ToArray(), selected < 0 ? -1 : System.Array.IndexOf(tabOf, selected), i => OnTab(tabOf[i]));
         }
 
@@ -417,10 +451,62 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
                 case ToyKit.TabPlay: ShowMap(); break;
-                case ToyKit.TabChests: ShowShop(ShopScreen.TabChests, ShopScreen.GemsSection); break;
+                case ToyKit.TabChests: if (CurrentScreen != "Treasure") ShowTreasureChests(); break;
                 case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
-                default: ShowMessage("Daily rewards", "Daily rewards are coming soon."); break;
             }
+        }
+
+        // ---------------- treasure chests ----------------
+
+        TreasureChestScreen treasure;
+        Action treasureReturn;
+        bool treasureWithPlay = true;
+
+        /// <summary>The Treasure Chest screen while it is showing (null on every other screen). Tests drive purchases through it.</summary>
+        public TreasureChestScreen CurrentTreasure { get { return CurrentScreen == "Treasure" ? treasure : null; } }
+
+        /// <summary>Where Back goes from the chests: the screen that opened them. The bar keeps PLAY only where the caller had it (home, shop).</summary>
+        Action TreasureReturnFor(string from)
+        {
+            switch (from)
+            {
+                case "Map": treasureWithPlay = false; return ShowMap;
+                case "Levels":
+                    {
+                        treasureWithPlay = false;
+                        RegionDef r = currentRegionId != null ? repo.GetRegion(currentRegionId) : null;
+                        if (r == null) return ShowMenu;
+                        return () => ShowLevels(r);
+                    }
+                case "Shop": treasureWithPlay = true; return () => ShowShop();
+                default: treasureWithPlay = true; return ShowMenu;
+            }
+        }
+
+        /// <summary>Treasure Chest screen (docs/22 point 3): opened from the bottom bar Chests tab and the shop's first section; Back returns to the caller.</summary>
+        public void ShowTreasureChests()
+        {
+            if (CurrentScreen != "Treasure") treasureReturn = TreasureReturnFor(CurrentScreen);
+            NewScreen("Treasure");
+            SkyBackground();
+            var host = new TreasureChestScreen.Host
+            {
+                NewOverlay = NewOverlay,
+                CloseOverlay = ClosePopup,
+                BuyGemPack = index =>
+                {
+                    ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection);   // the shop's gem purchase flow for that pack
+                    if (shop != null) shop.TapGemPack(index);
+                },
+            };
+            treasure = new TreasureChestScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
+            treasure.Build();
+            Action back = treasureReturn;
+            AddBack("Back", () => { if (back != null) back(); else ShowMenu(); });
+            AddTabBar(ToyKit.TabChests, treasureWithPlay);
+            coinText = treasure.CoinText;
+            gemText = treasure.GemText;
+            RefreshWallet();
         }
 
         // ---------------- shop ----------------
@@ -443,6 +529,7 @@ namespace BoingUpSkyTower.Gameplay
                 ClosePopup = ClosePopup,
                 NewOverlay = NewOverlay,
                 CloseOverlay = ClosePopup,
+                OpenTreasureChests = ShowTreasureChests,
             };
             shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
             shop.Build(tab, section);
@@ -756,7 +843,8 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             float currentRise = 0f;
-            Dictionary<int, int> tagPlan = painted != null ? PlanTags(painted, repo) : null;
+            pinTags.Clear();
+            tagLayout = painted;
             int current = Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, Mathf.Max(1, GameSession.PlayableRegions));
             mapCurrent = current;
             for (int i = 1; i <= 30; i++)
@@ -769,8 +857,7 @@ namespace BoingUpSkyTower.Gameplay
                     if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;   // that page is not painted yet
                     PaintedMarker m = painted.pages[pg].markers[mk];
                     float prise = (pg * painted.height + m.y * painted.height) / total;
-                    int planned;
-                    AddRegionPin(region, new Vector2(m.x, prise), tagPlan != null && tagPlan.TryGetValue(i, out planned) ? planned : 1);
+                    AddRegionPin(region, new Vector2(m.x, prise), 1);
                     if (i == current) currentRise = prise;
                     continue;
                 }
@@ -783,6 +870,13 @@ namespace BoingUpSkyTower.Gameplay
                 float rise = (span.bottom + span.height * inSeg) / total;
                 AddRegionPin(region, new Vector2(side, rise));
                 if (i == current) currentRise = rise;
+            }
+
+            if (painted != null)
+            {
+                var replanner = mapContent.gameObject.AddComponent<MapTagReplanner>();
+                replanner.Content = mapContent;
+                replanner.OnSize = ReplanTags;   // plans the tags against the real content size, again when it changes
             }
 
             // Soft cloud bands over the joins between the painted pages (owner, 2026-10-24: clouds separate the six sets).
@@ -855,70 +949,118 @@ namespace BoingUpSkyTower.Gameplay
             mapScroll.verticalNormalizedPosition = n;     // 0 = bottom of the map, 1 = top (the ScrollRect keeps its own bounds right)
         }
 
-        /// <summary>
-        /// Chooses where each region's name tag goes (owner 2026-10-24: every name must be readable): below, above, right or left of its pin, the first
-        /// place that stays on screen and overlaps no other pin, no other tag and no seam cloud. Positions are in map pixels (width 1080).
-        /// </summary>
-        static Dictionary<int, int> PlanTags(PaintedPages painted, ContentRepository repo)
+        /// <summary>Where one region's name tag sits: Mode 1 below, 2 above, 4 right, 3 left of the pin, shifted by Dx/Dy map units, text wrapped at MaxW.</summary>
+        struct TagSpot { public int Mode; public float Dx, Dy, MaxW, Score; }
+
+        static float TagOverlap(Rect a, Rect b, bool hard)
         {
-            const float pinHalf = 80f, tagH = 60f, gap = 8f, edge = 8f, cloudHalf = 110f;
-            var plan = new Dictionary<int, int>();
-            var centres = new Dictionary<int, Vector2>();
-            var widths = new Dictionary<int, float>();
-            float W = painted.width, H = painted.height;
-            for (int i = 1; i <= 30; i++)
-            {
-                int pg = (i - 1) / 5, mk = (i - 1) % 5;
-                if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;
-                PaintedMarker m = painted.pages[pg].markers[mk];
-                centres[i] = new Vector2(m.x * W, pg * H + m.y * H);
-                RegionDef r = repo.TryGetRegionByIndex(i);
-                string label = r != null && i <= GameSession.PlayableRegions ? r.Name : "Coming soon";
-                widths[i] = label.Length * 19f + 40f;
-            }
-            var placed = new List<Rect>();
-            foreach (var kv in centres) placed.Add(new Rect(kv.Value.x - pinHalf, kv.Value.y - pinHalf, pinHalf * 2f, pinHalf * 2f));
-            for (int pj = 1; pj < painted.pages.Length; pj++) placed.Add(new Rect(0f, pj * H - cloudHalf, W, cloudHalf * 2f));
+            float ox = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin);
+            float oy = Mathf.Min(a.yMax, b.yMax) - Mathf.Max(a.yMin, b.yMin);
+            if (ox <= 0f || oy <= 0f) return 0f;
+            return hard ? ox * oy + 1000f : ox * oy * 0.01f;
+        }
+
+        /// <summary>
+        /// Candidate search for every name tag (owner 2026-10-25: no tag covers a pin or another tag). For each pin, in order, candidates are tried
+        /// from the most natural to the least: text width (single line, then wrapped at 340 and 240 units), then the shift along the pin's side
+        /// (0, +-50, +-100 ... units), then below, above, right, left. A candidate is free when, on the REAL map content size (width and height read from
+        /// mapContent once it is laid out, re-planned when that size changes), it stays 44 units inside the edges, keeps 8 units from every pin (160 wide, plus the padlock) and from
+        /// every tag placed before it. The first free candidate wins; if none is free the one with the least overlap is used (seam clouds only soften the
+        /// choice). Text never shrinks.
+        /// </summary>
+        static Dictionary<int, TagSpot> PlanTags(List<PinTag> pinList, PaintedPages painted, Vector2 mapSize)
+        {
+            const float gap = 8f, edge = TagKit.EdgeMargin, cloudHalf = 110f;
+            var ownPin = new Rect(-80f, -84f, 168f, 164f);                                   // the pin button plus its padlock (8 right, 4 below)
+            var otherPin = new Rect(-80f - gap, -84f - gap, 168f + 2f * gap, 164f + 2f * gap);
+            float[] scales = { 1f };   // the REAL map size is planned (mapSize), no guessed scales
+            float[] maxWs = { TagKit.MapTextMaxWidth, 340f, 240f, 190f };
+            float[] offs = { 0f, 50f, -50f, 100f, -100f, 150f, -150f, 220f, -220f, 300f, -300f, 400f, -400f };
+            float[] exts = { 0f, 40f, 90f };   // pushes the tag further from its pin when the pin's own side is crowded
             int[] order = { 1, 2, 4, 3 };   // below, above, right, left
-            foreach (var kv in centres)
+            var plan = new Dictionary<int, TagSpot>();
+            var keys = new List<int>();
+            var centres = new List<Vector2>();   // map pixels of the painted art (y grows upward)
+            var labels = new List<string>();
+            float pw = mapSize.x, ph = mapSize.y / Mathf.Max(1, painted.pages.Length);   // one painted page is ph high; seams sit at multiples of it
+            foreach (PinTag pt in pinList)
             {
-                Vector2 c = kv.Value;
-                float w = widths[kv.Key];
-                int best = 1;
+                keys.Add(pt.Region.Index);
+                centres.Add(new Vector2(pt.Anchor.x * mapSize.x, pt.Anchor.y * mapSize.y));   // real pin centres (y grows upward)
+                labels.Add(pt.Label);
+            }
+            int n = keys.Count;
+            var placedRel = new Rect[n];   // each placed tag, relative to its own pin centre
+            for (int k = 0; k < n; k++)
+            {
                 float bestScore = float.MaxValue;
-                foreach (int mode in order)
+                var best = new TagSpot { Mode = 1, MaxW = maxWs[0] };
+                Rect bestRel = new Rect(0f, 0f, 0f, 0f);
+                float widestWord = TagKit.WidestWord(labels[k], 36, false, true);   // a wrap width below this would split a word
+                float prevW = -1f;
+                for (int wi = 0; wi < maxWs.Length && bestScore > 0f; wi++)
                 {
-                    Rect tag;
-                    switch (mode)
+                    float effW = Mathf.Max(maxWs[wi], widestWord);   // widen instead of splitting a word
+                    if (Mathf.Abs(effW - prevW) < 0.5f) continue;   // same effective width as the previous candidate (widths run from wide to narrow)
+                    prevW = effW;
+                    Vector2 sz = TagKit.BackingSize(labels[k], 36, false, true, effW);
+                    for (int ei = 0; ei < exts.Length && bestScore > 0f; ei++)
+                    for (int oi = 0; oi < offs.Length && bestScore > 0f; oi++)
                     {
-                        case 1: tag = new Rect(c.x - w / 2f, c.y - pinHalf - 6f - tagH, w, tagH); break;     // y grows upward on the map
-                        case 2: tag = new Rect(c.x - w / 2f, c.y + pinHalf + 6f, w, tagH); break;
-                        case 4: tag = new Rect(c.x + pinHalf + 10f, c.y - tagH / 2f, w, tagH); break;
-                        default: tag = new Rect(c.x - pinHalf - 10f - w, c.y - tagH / 2f, w, tagH); break;
+                        for (int oo = 0; oo < order.Length && bestScore > 0f; oo++)
+                        {
+                            int mode = order[oo];
+                            bool vertical = mode == 1 || mode == 2;   // below / above slide sideways, right / left slide up and down
+                            float off = offs[oi], ext = exts[ei];
+                            if (!vertical && Mathf.Abs(off) > 220f) continue;
+                            float dx = vertical ? off : 0f, dy = vertical ? 0f : off;
+                            Rect rel;
+                            switch (mode)
+                            {
+                                case 1: rel = new Rect(-sz.x / 2f + dx, -86f - ext - sz.y, sz.x, sz.y); break;     // the tag's top is 6 below the pin's bottom
+                                case 2: rel = new Rect(-sz.x / 2f + dx, 86f + ext, sz.x, sz.y); break;
+                                case 4: rel = new Rect(90f + ext, -sz.y / 2f + dy, sz.x, sz.y); break;
+                                default: rel = new Rect(-90f - ext - sz.x, -sz.y / 2f + dy, sz.x, sz.y); break;
+                            }
+                            float score = 0f;
+                            for (int si = 0; si < scales.Length; si++)
+                            {
+                                float s = scales[si];
+                                Vector2 c = centres[k] * s;
+                                var tag = new Rect(c.x + rel.x, c.y + rel.y, rel.width, rel.height);
+                                if (tag.xMin < edge) score += (edge - tag.xMin) * 10f + 1000f;
+                                if (tag.xMax > pw * s - edge) score += (tag.xMax - (pw * s - edge)) * 10f + 1000f;
+                                for (int j = 0; j < n; j++)
+                                {
+                                    Vector2 cj = centres[j] * s;
+                                    Rect pr = j == k ? ownPin : otherPin;
+                                    score += TagOverlap(tag, new Rect(cj.x + pr.x, cj.y + pr.y, pr.width, pr.height), true);
+                                    if (j < k)
+                                    {
+                                        Rect t2 = placedRel[j];
+                                        score += TagOverlap(tag, new Rect(cj.x + t2.x - gap, cj.y + t2.y - gap, t2.width + 2f * gap, t2.height + 2f * gap), true);
+                                    }
+                                }
+                                for (int pj = 1; pj < painted.pages.Length; pj++)
+                                    score += TagOverlap(tag, new Rect(0f, pj * ph * s - cloudHalf, pw * s, cloudHalf * 2f), false);
+                            }
+                            if (score < bestScore - 0.001f)
+                            {
+                                bestScore = score;
+                                best = new TagSpot { Mode = mode, Dx = dx + (mode == 4 ? ext : (mode == 3 ? -ext : 0f)), Dy = dy + (mode == 2 ? ext : (mode == 1 ? -ext : 0f)), MaxW = effW, Score = score };
+                                bestRel = rel;
+                            }
+                        }
                     }
-                    float score = 0f;
-                    if (tag.xMin < edge) score += (edge - tag.xMin) * 10f + 1000f;
-                    if (tag.xMax > W - edge) score += (tag.xMax - (W - edge)) * 10f + 1000f;
-                    foreach (Rect o in placed)
-                    {
-                        if (Mathf.Abs(o.center.x - (c.x)) < 0.01f && Mathf.Abs(o.center.y - c.y) < 0.01f && Mathf.Abs(o.width - pinHalf * 2f) < 0.01f) continue;   // its own pin
-                        float ox = Mathf.Min(tag.xMax, o.xMax + gap) - Mathf.Max(tag.xMin, o.xMin - gap);
-                        float oy = Mathf.Min(tag.yMax, o.yMax + gap) - Mathf.Max(tag.yMin, o.yMin - gap);
-                        if (ox > 0f && oy > 0f) score += ox * oy + 500f;
-                    }
-                    if (score < bestScore - 0.01f) { bestScore = score; best = mode; }
-                    if (score <= 0f) break;
                 }
-                plan[kv.Key] = best;
-                float tx = best == 4 ? c.x + pinHalf + 10f : (best == 3 ? c.x - pinHalf - 10f - w : c.x - w / 2f);
-                float ty = best == 1 ? c.y - pinHalf - 6f - tagH : (best == 2 ? c.y + pinHalf + 6f : c.y - tagH / 2f);
-                placed.Add(new Rect(tx, ty, w, tagH));
+                plan[keys[k]] = best;
+                placedRel[k] = bestRel;
             }
             return plan;
         }
 
         /// <summary>A round pin on the map with a slim dark name tag beside it. Locked and not-yet-built regions show a padlock.</summary>
-        void AddRegionPin(RegionDef region, Vector2 anchor, int tagMode = 0)   // 0 beside the pin, 1 below, 2 above
+        void AddRegionPin(RegionDef region, Vector2 anchor, int tagMode = 0, float tagDx = 0f, float tagDy = 0f, float tagMaxW = TagKit.MapTextMaxWidth)   // mode: 0 beside the pin, 1 below, 2 above, 3 left, 4 right
         {
             bool playable = progress.IsRegionPlayable(region);
             bool unlocked = progress.IsRegionUnlocked(region);
@@ -964,37 +1106,83 @@ namespace BoingUpSkyTower.Gameplay
                 }
             }
 
-            bool open = playable && unlocked;
-            Image tag = Theme.GlassPanel(rt, "NameBacking", 30f);
-            tag.color = open ? new Color(0.05f, 0.08f, 0.22f, 0.92f) : new Color(0.16f, 0.14f, 0.28f, 0.92f);
-            string label = playable ? region.Name : "Coming soon";
-            Text name = UiKit.AddText(tag.transform, "Name", label, 36, open ? Color.white : new Color(0.88f, 0.88f, 0.95f, 1f), TextAnchor.MiddleCenter);
-            name.horizontalOverflow = HorizontalWrapMode.Overflow;
-            float w = name.preferredWidth + 40f;
-            bool tagRight = anchor.x < 0.5f;
+            // The name tag is built from the real map size (see ReplanTags): first a default one below the pin, replaced once the map has its size.
+            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = playable ? region.Name : "Coming soon", Open = playable && unlocked };
+            pinTags.Add(pt);
+            BuildPinTag(pt, tagMode, tagDx, tagDy, tagMaxW);
+        }
+
+        /// <summary>One pin and its name tag (rebuilt when the planner moves it).</summary>
+        sealed class PinTag { public RegionDef Region; public RectTransform Pin; public Vector2 Anchor; public string Label; public bool Open; public GameObject Tag; }
+
+        readonly List<PinTag> pinTags = new List<PinTag>();
+        PaintedPages tagLayout;
+
+        /// <summary>Runs the tag planner once the map content has its real size, and again whenever that size changes (aspect, rotation).</summary>
+        sealed class MapTagReplanner : MonoBehaviour
+        {
+            public RectTransform Content;
+            public System.Action<Vector2> OnSize;
+            Vector2 last = new Vector2(-1f, -1f);
+
+            void LateUpdate()
+            {
+                if (Content == null || OnSize == null) return;
+                Vector2 s = Content.rect.size;
+                if (s.x < 2f || s.y < 2f) return;
+                if ((s - last).sqrMagnitude < 0.25f) return;
+                last = s;
+                OnSize(s);
+            }
+        }
+
+        void ReplanTags(Vector2 size)
+        {
+            if (tagLayout == null || pinTags.Count == 0) return;
+            Dictionary<int, TagSpot> plan = PlanTags(pinTags, tagLayout, size);
+            foreach (PinTag pt in pinTags)
+            {
+                TagSpot sp;
+                if (pt.Pin != null && plan.TryGetValue(pt.Region.Index, out sp)) BuildPinTag(pt, sp.Mode, sp.Dx, sp.Dy, sp.MaxW);
+            }
+        }
+
+        void BuildPinTag(PinTag pt, int tagMode, float tagDx, float tagDy, float tagMaxW)
+        {
+            if (pt.Tag != null) { pt.Tag.SetActive(false); Destroy(pt.Tag); pt.Tag = null; }
+            RectTransform rt = pt.Pin;
+            bool open = pt.Open;
+            // The backing is measured from the text (TagKit): padding >= 12 dp sides / 6 dp top and bottom, solid, long names wrap between words.
+            Text name;
+            Image tag = TagKit.Build(rt, "NameBacking", pt.Label, 36, open ? Color.white : new Color(0.88f, 0.88f, 0.95f, 1f),
+                open ? new Color(0.05f, 0.08f, 0.22f, 0.95f) : new Color(0.16f, 0.14f, 0.28f, 0.95f), tagMaxW, out name);
+            pt.Tag = tag.gameObject;
+            Vector2 tagSize = tag.rectTransform.sizeDelta;
+            bool tagRight = pt.Anchor.x < 0.5f;
             if (tagMode == 2)
             {
-                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 6f), new Vector2(w, 60f));
+                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 6f), tagSize);
                 tag.rectTransform.pivot = new Vector2(0.5f, 0f);
             }
             else if (tagMode == 3 || tagMode == 4)
             {
                 bool right = tagMode == 4;
-                UiKit.Place(tag.rectTransform, new Vector2(right ? 1f : 0f, 0.5f), new Vector2(right ? 10f : -10f, 0f), new Vector2(w, 60f));
+                UiKit.Place(tag.rectTransform, new Vector2(right ? 1f : 0f, 0.5f), new Vector2(right ? 10f : -10f, 0f), tagSize);
                 tag.rectTransform.pivot = new Vector2(right ? 0f : 1f, 0.5f);
             }
             else if (tagMode == 1)
             {
-                // painted pages: the name sits under the marker, centred, so it stays inside the screen on every shape
-                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -6f), new Vector2(w, 60f));
+                // painted pages: the name sits under the marker, centred
+                UiKit.Place(tag.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -6f), tagSize);
                 tag.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
             else
             {
-                UiKit.Place(tag.rectTransform, new Vector2(tagRight ? 1f : 0f, 0.5f), new Vector2(tagRight ? 10f : -10f, 0f), new Vector2(w, 60f));
+                UiKit.Place(tag.rectTransform, new Vector2(tagRight ? 1f : 0f, 0.5f), new Vector2(tagRight ? 10f : -10f, 0f), tagSize);
                 tag.rectTransform.pivot = new Vector2(tagRight ? 0f : 1f, 0.5f);
             }
-            UiKit.Stretch((RectTransform)name.transform);
+            tag.rectTransform.anchoredPosition += new Vector2(tagDx, tagDy);   // the planner's free spot (PlanTags)
+            TagKit.KeepInside(tag.rectTransform, mapContent);   // safety net: near the left or right edge the tag shifts inward instead of being cut
         }
 
         public void OnRegionTapped(RegionDef region)
@@ -1359,14 +1547,14 @@ namespace BoingUpSkyTower.Gameplay
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
             RectTransform pays = ToyKit.PillRow(panel, "Pays", 440f, 96f);
-            if (starsHave >= 1)
+            if (starsHave >= 3)
             {
-                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "67%", new Color(1f, 0.92f, 0.5f), 250f, 96f);   // replays pay 67 percent of the coins and no gems
+                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "50%", new Color(1f, 0.92f, 0.5f), 250f, 96f);   // 3-star levels: replays pay 50 percent of the coins and no gems
             }
             else
             {
-                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "30", new Color(1f, 0.92f, 0.5f), 220f, 96f);
-                ToyKit.InfoPill(pays, art != null ? art.StarFilled : null, "+40", Color.white, 220f, 96f);
+                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "70", new Color(1f, 0.92f, 0.5f), 220f, 96f);
+                ToyKit.InfoPill(pays, art != null ? art.StarFilled : null, "+60", Color.white, 220f, 96f);
                 ToyKit.InfoPill(pays, ToyKit.Get("icon_flame"), "+5", new Color(1f, 0.78f, 0.35f), 220f, 96f);
             }
             if (p != null && p.BestScore > 0)

@@ -72,8 +72,15 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Scroll speed steps up by ScrollStepPercent every ScrollStepSeconds after the first jump, up to ScrollStepCapPercent.</summary>
         /// <summary>Base scroll speed as a percent of the difficulty-blended speed (owner, 2026-10-19: +20 percent).</summary>
         public int ScrollBasePercent = 120;
-        /// <summary>Chance, in percent, that a coin spot is a gem instead (difficulty setting: 5, 5, 7, 9, 10).</summary>
-        public int GemInsteadOfCoinPercent = 5;
+        /// <summary>Chance, in per mille, that a gem spot (one per row of a campaign level) holds a gem. See <see cref="DifficultyGemPermille"/>.</summary>
+        public int GemSpotPermille = 32;
+        /// <summary>
+        /// GemSpotPermille per difficulty (Relaxed, Easy, Normal, Hard, Insane). The owner asked for 2.5, 2.5, 3.5, 4.5, 5 percent (issue list 24 point 5).
+        /// Measured with one spot per row: 2.5 percent places only about 62 gems per region (target 70 to 110) and 4.5 / 5 percent place 112 / 130,
+        /// and a 2x spread cannot fit the 1.57x target band, so the shares are tuned to 3.2, 3.2, 3.5, 3.8 and 4.1 percent
+        /// (78 to 103 placed gems per region on every difficulty). Rarity weights are unchanged.
+        /// </summary>
+        public static readonly int[] DifficultyGemPermille = { 32, 32, 35, 38, 41 };
         public int ScrollStepSeconds = 5;
         public int ScrollStepPercent = 4;
         public int ScrollStepCapPercent = 50;

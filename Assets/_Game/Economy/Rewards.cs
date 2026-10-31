@@ -10,11 +10,13 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Extra coin payout percent per star beyond the first (doc 08: "base + star bonus", amount unspecified).</summary>
         public const int StarBonusPercentPerExtraStar = 10;
 
-        // Economy v2 (owner, 2026-10-20): coins are paid at the end of a level, never picked up.
-        public const int ClearCoins = 30;
-        public const int StarCoins = 40;
-        /// <summary>Owner 2026-10-24: once a level has been cleared (any stars), replays pay this percent of the coins and drop no gems.</summary>
-        public const int ReplayPercent = 67;
+        // Economy v3 (owner, issue list 24 point 6, 2026-10-25): clear 70 + 60 per star + 5 per combo step, times the region coin factor.
+        public const int ClearCoins = CoinPayoutRules.ClearCoins;
+        public const int StarCoins = CoinPayoutRules.StarCoins;
+        /// <summary>Once a level has 3 stars, replays pay this percent of the coins and drop no gems; below 3 stars a replay pays in full.</summary>
+        public const int ReplayPercent = CoinPayoutRules.ReplayPercent;
+        /// <summary>Anti-tamper ceiling on pickup gems one run can report (a level holds far fewer: about 15 on the longest at the highest difficulty).</summary>
+        public const int MaxPickupGemsPerRun = 400;
     }
 
     /// <summary>What a finished run reports to the economy. Build it from SimState and StarEvaluator.</summary>
@@ -73,12 +75,6 @@ namespace BoingUpSkyTower.Economy
             return level.LevelClass == LevelDef.ClassComplex || level.LevelClass == LevelDef.ClassHighlyComplex;
         }
 
-        /// <summary>Most gems one clear of this level can ever pay: 2 on level 15, 1 elsewhere.</summary>
-        public static int MaxGems(LevelDef level)
-        {
-            return level.LevelClass == LevelDef.ClassHighlyComplex ? 2 : 1;
-        }
-
         static int Percent(double chance)
         {
             return (int)Math.Round(chance * 100.0);
@@ -95,17 +91,15 @@ namespace BoingUpSkyTower.Economy
             result.FirstClear = firstClear;
             result.Stars = stars;
 
-            // Economy v2 payout: (clear 30 + 40 per star + 5 per combo step) x region factor. Once the level has 3 stars,
-            // replays pay half and drop no gems (owner rule); levels with fewer stars keep full coins and gems.
+            // Economy v3 payout: (clear 70 + 60 per star + 5 per combo step) x region factor. Once the level already has 3 stars, replays pay half and
+            // drop no gems (owner rule); levels with fewer stars keep full coins and gems.
             int prevStars = before == null ? 0 : before.Stars;
-            bool threeStarReplay = !firstClear;   // any earlier clear: replay
-            long factor = (long)Math.Round(region.CoinFactor * 10000);
+            bool reducedReplay = CoinPayoutRules.IsReducedReplay(prevStars);
             int comboRaw = run.CoinsCollected < 0 ? 0 : run.CoinsCollected;
-            long baseCoins = EconomyRules.ClearCoins + (long)EconomyRules.StarCoins * stars;
-            long gross = (baseCoins * factor + 5000) / 10000;
-            long combo = ((long)comboRaw * factor + 5000) / 10000;
-            long starPart = ((long)EconomyRules.StarCoins * stars * factor + 5000) / 10000;
-            if (threeStarReplay)
+            long gross = CoinPayoutRules.Scale(CoinPayoutRules.BaseCoins(stars), region.CoinFactor);
+            long combo = CoinPayoutRules.Scale(comboRaw, region.CoinFactor);
+            long starPart = CoinPayoutRules.Scale((long)EconomyRules.StarCoins * stars, region.CoinFactor);
+            if (reducedReplay)
             {
                 gross = gross * EconomyRules.ReplayPercent / 100;
                 combo = combo * EconomyRules.ReplayPercent / 100;
@@ -115,10 +109,16 @@ namespace BoingUpSkyTower.Economy
             result.StarBonusCoins = (int)starPart;
             result.ComboCoins = (int)combo;
             result.PickupCoins = 0;
-            // Gems are rare (owner 2026-10-24): they come only from the level's planned gem pickups, never on a replay, and never above the level's cap.
-            result.PickupGems = threeStarReplay || run.GemsCollected < 0 ? 0 : Math.Min(run.GemsCollected, MaxGems(level));
+            // Gems (issue list 24 point 5): the gems the player picked up in the run (kept as reported, up to an anti-tamper ceiling), none on a
+            // replay of a 3-star level, plus the milestone gems of a first clear of level 5, 10 and 15 (L15 guarantees 5).
+            result.PickupGems = reducedReplay || run.GemsCollected < 0 ? 0 : Math.Min(run.GemsCollected, EconomyRules.MaxPickupGemsPerRun);
             result.HiddenGemReward = 0;
             result.RewardGems = 0;
+            if (firstClear && IsMilestone(level) && level.Rewards != null && level.Rewards.Gems != null)
+            {
+                GemRewardDef g = level.Rewards.Gems;
+                result.RewardGems = CoinPayoutRules.MilestoneGems(level.Seed, g.Chance, g.Min, g.Max, g.FirstClearGuaranteed ?? 0);
+            }
             return result;
         }
     }

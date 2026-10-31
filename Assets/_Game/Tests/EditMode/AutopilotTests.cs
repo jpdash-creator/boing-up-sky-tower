@@ -22,7 +22,7 @@ namespace BoingUpSkyTower.Tests
         {
             var cfg = new SimConfig();
             cfg.ScrollStepPercent = GameSettings.DifficultyStepPercent[difficulty];
-            cfg.GemInsteadOfCoinPercent = GameSettings.DifficultyGemPercent[difficulty];
+            cfg.GemSpotPermille = GameSettings.DifficultyGemPermille[difficulty];
             cfg.ScrollStepCapPercent = 400;
             return cfg;
         }

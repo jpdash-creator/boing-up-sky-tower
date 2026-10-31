@@ -14,6 +14,7 @@ namespace BoingUpSkyTower.Gameplay
         const string DifficultyKey = "settings.difficulty";
         const string TestUnlockKey = "settings.testunlock";
         const string PromoKey = "settings.launchpromo";
+        const string FirstPurchaseKey = "settings.firstpurchasedouble";
 
         /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
         public static bool DevBuild { get { return Debug.isDebugBuild && !Application.isEditor; } }
@@ -35,10 +36,20 @@ namespace BoingUpSkyTower.Gameplay
             set { PlayerPrefs.SetInt(PromoKey, value ? 1 : 0); PlayerPrefs.Save(); }
         }
 
+        /// <summary>
+        /// First-purchase double (docs/22 4.1): on = the first purchase of each gem pack of 50 to 1,000 gems gives double gems, once per pack.
+        /// Default OFF (owner 2026-10-25); the owner turns it on later (placeholder for a remote config flag, a development build can flip the PlayerPref).
+        /// </summary>
+        public static bool FirstPurchaseDouble
+        {
+            get { return PlayerPrefs.GetInt(FirstPurchaseKey, 0) == 1; }
+            set { PlayerPrefs.SetInt(FirstPurchaseKey, value ? 1 : 0); PlayerPrefs.Save(); }
+        }
+
         /// <summary>Game difficulty (owner, 2026-10-19): scroll speed grows by this percent every 5 seconds.</summary>
         public static readonly int[] DifficultyStepPercent = { 20, 40, 60, 80, 100 };
-        /// <summary>Chance in percent that a coin spot is a gem. Default 5, at most 10.</summary>
-        public static readonly int[] DifficultyGemPercent = { 5, 5, 7, 9, 10 };
+        /// <summary>Chance in per mille that a gem spot (one per level row) holds a gem (owner 2026-10-25: halved; tuned values live in SimConfig).</summary>
+        public static readonly int[] DifficultyGemPermille = BoingUpSkyTower.Simulation.SimConfig.DifficultyGemPermille;
         public static readonly string[] DifficultyNames = { "Relaxed", "Easy", "Normal", "Hard", "Insane" };
 
         public static int Difficulty

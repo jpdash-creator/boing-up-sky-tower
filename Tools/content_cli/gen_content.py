@@ -88,19 +88,19 @@ def write(rel, data):
 
 # Shop tables (owner brief 2026-10-20, docs/14-shop-requirements.md). The promo price is a launch promotion: the player pays usdPromo
 # (gemsPromo for coin packs) while the remote flag shop.launchPromo.enabled is on, the list price is shown crossed out.
-GEM_PACKS = [  # (name, gems, usdList, usdPromo, badge)
-    ("pinch", 10, 0.99, 0.49, ""), ("handful", 20, 1.99, 0.99, ""), ("pouch", 50, 3.99, 1.99, ""),
-    ("sack", 100, 7.99, 3.99, "popular"), ("chest", 200, 11.99, 5.99, ""), ("vault", 500, 19.99, 9.99, ""),
-    ("treasury", 1000, 29.99, 14.99, "best_value"),
+GEM_PACKS = [  # (gems, usdList, usdPromo, inrList, badge); owner table docs/22 4.1, the promo prices are placeholders (promo is OFF)
+    (50, 0.79, 0.49, 75, ""), (100, 1.49, 0.79, 142, "popular"), (200, 2.49, 1.29, 237, ""), (500, 5.99, 2.99, 569, ""),
+    (1000, 10.99, 5.49, 1044, "best_value"), (2000, 20.99, 10.49, 1994, ""), (5000, 49.99, 24.99, 4749, ""),
+    (10000, 89.99, 44.99, 8549, ""), (15000, 119.99, 59.99, 11399, ""),
 ]
-COIN_PACKS = [  # (coins, gemsList, gemsPromo)
-    (100, 10, 5), (200, 20, 10), (500, 50, 25), (1000, 100, 50), (2000, 200, 100), (5000, 500, 200), (10000, 1000, 500),
+COIN_PACKS = [  # (coins, gemsList, gemsPromo); owner table docs/22 4.2
+    (1000, 50, 25), (2000, 100, 50), (5000, 250, 125), (10000, 500, 250), (20000, 900, 450), (50000, 2200, 1100), (100000, 4000, 2000),
 ]
 
 
 def gem_packs():
-    return [{"id": "gempack_" + n, "gems": g, "usdList": ul, "usdPromo": up,
-             "sku": "boingupskytower.gems." + n, "badge": b} for n, g, ul, up, b in GEM_PACKS]
+    return [{"id": "gempack_%d" % g, "gems": g, "usdList": ul, "usdPromo": up, "inrList": inr, "firstPurchaseDouble": g <= 1000,
+             "sku": "boingupskytower.gems.%d" % g, "badge": b} for g, ul, up, inr, b in GEM_PACKS]
 
 
 def coin_packs():

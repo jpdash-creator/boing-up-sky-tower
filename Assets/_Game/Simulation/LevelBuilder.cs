@@ -558,20 +558,33 @@ namespace BoingUpSkyTower.Simulation
             Fx wallMin = Fx.FromRatio(7, 10), wallMax = screen - Fx.FromRatio(7, 10);
             List<Pickup> list = new List<Pickup>(rows / 4 + 8);
 
-            // Gems are rare (owner 2026-10-24). The plan comes from a separate stream so it never shifts the star layout:
-            //   ordinary levels 8 percent for exactly one gem, levels 5 and 10 60 percent for one, level 15 always one and 40 percent for a second.
-            // Every gem is a plain 1-gem pickup on a risky edge spot; the reward calculator caps the payout again.
+            // Gem spots (owner 2026-10-25, issue list 24 point 5): every row from 4 to three rows below the limit is one gem spot, and
+            // GemSpotPermille / 1000 of the spots hold a gem (difficulty setting, see SimConfig.DifficultyGemPermille). The count is the exact expected
+            // value rounded at random (so a region never swings far from its average) and the rows are drawn without repeats from a separate stream,
+            // so gems never shift the star layout. The rarity of gem n of level L is the golden-ratio sequence at index L * 16 + n mapped to
+            // GemRarityPercent (70/22/7/1 for 1/2/5/10 gems), which spreads rare gems evenly across the levels of a region.
+            // Every gem sits on a risky edge spot. Milestone gems (L5, L10, L15 first clear) are paid by the reward calculator, not placed here.
             r.Next(100);   // keeps the star stream where it was before the gem plan changed
-            int gemCount = PlannedGems(spec.LevelIndex, gemRng);
-            int[] gemRows = new int[gemCount];
+            int[] gemRows, gemTiers;
             {
                 int lo = 4, hi = limitRow - 3 < 5 ? 5 : limitRow - 3;
-                int span = hi - lo + 1, slice = span / (gemCount + 1);
-                for (int gi = 0; gi < gemCount; gi++)
+                int spots = hi - lo + 1;
+                long expected = (long)spots * cfg.GemSpotPermille;   // in thousandths of a gem
+                int count = (int)(expected / 1000);
+                if (gemRng.Next(1000) < (int)(expected % 1000)) count++;
+                if (count > spots) count = spots;
+                int[] pool = new int[spots];
+                for (int i = 0; i < spots; i++) pool[i] = lo + i;
+                for (int i = 0; i < count; i++)
                 {
-                    int pick = lo + ((gi + 1) * span) / (gemCount + 1) - slice / 2 + gemRng.Next(slice > 0 ? slice : 1);
-                    gemRows[gi] = pick > hi ? hi : (pick < lo ? lo : pick);
+                    int j = i + gemRng.Next(spots - i);
+                    int t = pool[i]; pool[i] = pool[j]; pool[j] = t;
                 }
+                gemRows = new int[count];
+                System.Array.Copy(pool, gemRows, count);
+                System.Array.Sort(gemRows);
+                gemTiers = new int[count];
+                for (int gi = 0; gi < count; gi++) gemTiers[gi] = GemTierAt(cfg, spec.LevelIndex * 16 + gi);
             }
 
             // Economy v2: no coin pickups. Three stars on the way up (about a quarter, half and 85 percent of the level), each on a
@@ -591,7 +604,7 @@ namespace BoingUpSkyTower.Simulation
                     }
                 }
                 for (int gi = 0; gi < gemRows.Length; gi++)
-                    if (gemRows[gi] == row) list.Add(MakePickup(cfg, PickupKind.Gem, EdgeX(ctx, row, screen, wallMin, wallMax), ctx.Y[row] + Fx.FromRatio(12, 10), 0));
+                    if (gemRows[gi] == row) list.Add(MakePickup(cfg, PickupKind.Gem, EdgeX(ctx, row, screen, wallMin, wallMax), ctx.Y[row] + Fx.FromRatio(12, 10), gemTiers[gi]));
             }
 
             if (hiddenGem)
@@ -662,18 +675,14 @@ namespace BoingUpSkyTower.Simulation
             return row < 5 ? 5 : (row > rows - 2 ? rows - 2 : row);
         }
 
-        /// <summary>How many gem pickups a campaign level carries (owner odds, 2026-10-24).</summary>
-        public static int PlannedGems(int levelIndex, Rng rng)
+        /// <summary>
+        /// Rarity tier (0 common, 1 rare, 2 epic, 3 legendary) of the gem at <paramref name="index"/> of the golden-ratio sequence
+        /// (low discrepancy: any run of indices matches GemRarityPercent far more closely than random draws would).
+        /// </summary>
+        public static int GemTierAt(SimConfig cfg, int index)
         {
-            int roll = rng.Next(100);
-            if (levelIndex == 15) return 1 + (rng.Next(100) < 40 ? 1 : 0);
-            if (levelIndex == 5 || levelIndex == 10) return roll < 60 ? 1 : 0;
-            return roll < 8 ? 1 : 0;
-        }
-
-        private static int DrawRarity(SimConfig cfg, Rng rng)
-        {
-            int roll = rng.Next(100), acc = 0;
+            uint u = unchecked((uint)((ulong)(uint)(index + 1) * 2654435769UL));
+            int roll = (int)(((ulong)u * 100UL) >> 32), acc = 0;
             for (int i = 0; i < cfg.GemRarityPercent.Length; i++)
             {
                 acc += cfg.GemRarityPercent[i];
@@ -770,6 +779,8 @@ namespace BoingUpSkyTower.Simulation
                 Pickup o = list[j];
                 if (o.Kind == PickupKind.Coin) continue;
                 Fx dx = o.X - pk.X, dy = o.Y - pk.Y;
+                // Reject far pairs before squaring: dy * dy overflows the Q16.16 range once |dy| passes about 181 u (taller levels), which faked conflicts.
+                if (Fx.Abs(dx) >= PickupMinGap || Fx.Abs(dy) >= PickupMinGap) continue;
                 if (dx * dx + dy * dy < gapSq) return j;
             }
             return -1;

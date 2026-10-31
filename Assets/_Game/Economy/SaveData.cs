@@ -47,5 +47,7 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("characters")] public List<string> Characters = new List<string>();
         /// <summary>Chests opened so far: seeds the next chest roll so openings are repeatable.</summary>
         [JsonProperty("chestOpens")] public int ChestOpens;
+        /// <summary>Gem pack ids (gempack_50 ...) that already received the once-only first-purchase double on this account. Additive field, no version bump.</summary>
+        [JsonProperty("firstPurchase")] public List<string> FirstPurchase = new List<string>();
     }
 }

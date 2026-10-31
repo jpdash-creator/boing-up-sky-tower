@@ -26,6 +26,8 @@ namespace BoingUpSkyTower.Gameplay
             /// <summary>A fresh full-screen dim overlay layer for the chest reveal and info cards (docs/17); null where the host has none (chests then do nothing).</summary>
             public Func<RectTransform> NewOverlay;
             public Action CloseOverlay;
+            /// <summary>Opens the Treasure Chest screen (the Shop's first section links to it).</summary>
+            public Action OpenTreasureChests;
         }
 
         public const int TabChests = 0, TabPowerups = 1, TabCharacters = 2, TabGems = 3;
@@ -51,7 +53,8 @@ namespace BoingUpSkyTower.Gameplay
         const float HeaderH = 520f;                                         // painted shop scene
         const float ListTop = HeaderH + 130f;                               // below the ribbon title
         const float BottomMargin = ToyKit.TabBarReserve + 4f;               // room for the icon tab bar
-        const float CardH = 462f, CardGap = 14f, PowerCardH = 440f, ButtonH = 126f;   // compact cards (owner 2026-10-24): 4 in the first row, 3 in the next, full width
+        // Pack cards are 560 tall: below the amount sits a note slot (first-purchase text or the gem shortfall); power-up cards hold a coins and a gems button.
+        const float CardH = 560f, CardGap = 14f, PowerCardH = 590f, ButtonH = 126f;   // compact cards (owner 2026-10-24): 4 in the first row, 3 in the next, full width
 
         static readonly Color ListPriceColor = Theme.InkSoft;
         static readonly Color PromoPriceColor = new Color(0.03f, 0.48f, 0.27f, 1f);          // deep green on the light card (about 6:1)
@@ -374,6 +377,8 @@ namespace BoingUpSkyTower.Gameplay
             own.rectTransform.pivot = new Vector2(0.5f, 1f);
 
             PriceButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 14f);
+            if (def.GemPrice > 0)
+                PriceButton(crt, "BuyGems", 0, art != null ? art.GemIcon : null, Num(def.GemPrice), "Buy " + def.Name + " for " + Num(def.GemPrice) + " gems", () => TapBuyPowerUp(def, PowerUpCurrency.Gems), 14f + ButtonH + 10f);
         }
 
         /// <summary>A very small circled i on the top-right corner of the icon. Looks like an info button; the whole icon is the tap target (48 dp rule).</summary>
@@ -469,6 +474,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void BuildPackList(bool gems)
         {
+            progress.FirstPurchaseDoubleActive = GameSettings.FirstPurchaseDouble;   // switch, OFF by default
             int count = gems ? catalog.GemPacks.Count : catalog.CoinPacks.Count;
             RectTransform list = MakeList(RowCount(count) * (CardH + CardGap), ListTop);
             bool promo = progress.LaunchPromoActive;
@@ -517,9 +523,10 @@ namespace BoingUpSkyTower.Gameplay
             string special = pack.Badge == "popular" ? "Popular" : (pack.Badge == "best_value" ? "Best value" : null);
             bool test = TestPurchasesEnabled;
             string buy = test ? "Buy (test)" : "Not available yet";
-            string a11y = "Buy " + pack.Gems + " gems for " + price + (test ? ", test purchase" : ", not available yet");
-            string more = Num(pack.Gems) + " gems for " + price + "." + (showPromo ? "\nLaunch offer: normally " + listPrice + "." : "") + (test ? "\nThis is a test purchase, no money is charged." : "\nBuying with real money opens with the store release.");
-            BuildCard(list, y, col, cols, art != null ? art.GemIcon : null, Num(pack.Gems), listPrice, price, showPromo, special, buy, a11y, "Gem pack", more, () => TapGemPack(index), null);
+            bool first = progress.IsFirstPurchaseAvailable(pack);   // switch on, pack 50 to 1,000 gems, not bought before on this account
+            string a11y = "Buy " + pack.Gems + " gems for " + price + (first ? ", first purchase: x2 gems" : "") + (test ? ", test purchase" : ", not available yet");
+            string more = Num(pack.Gems) + " gems for " + price + "." + (pack.InrList > 0 ? "\nIn India: Rs " + Num(pack.InrList) + "." : "") + (showPromo ? "\nLaunch offer: normally " + listPrice + "." : "") + (first ? "\nFirst purchase: x2 gems, you get " + Num(progress.GemsFromPack(pack)) + "." : "") + (test ? "\nThis is a test purchase, no money is charged." : "\nBuying with real money opens with the store release.");
+            BuildCard(list, y, col, cols, art != null ? art.GemIcon : null, Num(pack.Gems), listPrice, price, showPromo, special, buy, a11y, "Gem pack", more, () => TapGemPack(index), null, first ? FirstPurchaseText : null);
         }
 
         void BuildCoinCard(RectTransform list, float y, int col, int cols, int index, CoinPackDef pack, bool promo, bool best)
@@ -530,32 +537,59 @@ namespace BoingUpSkyTower.Gameplay
             string price = cost + " gems";
             string a11y = "Buy " + pack.Coins + " coins for " + cost + " gems";
             string more = Num(pack.Coins) + " coins for " + price + "." + (showPromo ? "\nLaunch offer: normally " + listPrice + "." : "") + "\nPaid with gems from your wallet.";
+            // A pack the player cannot afford always shows the gem shortfall and turns its button into a link that buys gems (docs/22 4.2).
+            int shortfall = cost - progress.Gems;
+            if (shortfall > 0)
+            {
+                string needNote = "Costs " + Num(cost) + " gems\nShort by " + Num(shortfall) + " gems";
+                BuildCard(list, y, col, cols, art != null ? art.CoinIcon : null, Num(pack.Coins), listPrice != null ? pack.GemsList.ToString() : null, cost.ToString(), showPromo, best ? "Best value" : null, "Get gems",
+                    "Short by " + shortfall + " gems for " + pack.Coins + " coins. Get gems", "Coin pack", more + "\nYou are short by " + Num(shortfall) + " gems.", () => TapGetGems(shortfall), null, needNote, "Get gems");
+                return;
+            }
             BuildCard(list, y, col, cols, art != null ? art.CoinIcon : null, Num(pack.Coins), listPrice != null ? pack.GemsList.ToString() : null, cost.ToString(), showPromo, best ? "Best value" : null, "Buy", a11y, "Coin pack", more, () => TapCoinPack(index), art != null ? art.GemIcon : null);
+        }
+
+        /// <summary>Text on a gem pack card that still has its once-only first-purchase double.</summary>
+        public const string FirstPurchaseText = "First purchase: x2 gems";
+
+        /// <summary>The "Get gems" link on a coin pack the player cannot afford: opens the Gems section and offers the smallest gem pack that covers the shortfall.</summary>
+        public void TapGetGems(int shortfall)
+        {
+            Tab = TabGems;
+            SelectSection(GemsSection);
+            int idx = catalog.SmallestGemPackCovering(shortfall);
+            if (idx >= 0) TapGemPack(idx);
         }
 
         /// <summary>
         /// One pack card (three per row, SS3 style): the painted icon (tap for details), the amount, the crossed-out launch price when there is one,
         /// and one green price button. A short badge (Popular / Best value) sits at the top. Text is ink on the cream card (contrast above 12:1).
         /// </summary>
-        void BuildCard(RectTransform list, float y, int col, int cols, Sprite icon, string amount, string listPrice, string price, bool launch, string special, string buyLabel, string a11y, string infoTitle, string infoBody, Action onBuy, Sprite priceIcon)
+        void BuildCard(RectTransform list, float y, int col, int cols, Sprite icon, string amount, string listPrice, string price, bool launch, string special, string buyLabel, string a11y, string infoTitle, string infoBody, Action onBuy, Sprite priceIcon, string note = null, string buttonText = null)
         {
             RectTransform crt = UiKit.Rect(list, "Panel");
             Transform card = crt;
             Theme.CardBacking(crt);
             PlaceCell(crt, y, col, cols, CardH);
 
+            // The badge (Popular / Best value / Offer) comes first: the icon sits below it (a little smaller when a badge is shown), the card's upper border stays visible.
+            float badgeBottom = 0f;
+            if (special != null) badgeBottom = AddBadgeTop(card, special, SpecialBadgeColor, cols);
+            else if (launch) badgeBottom = AddBadgeTop(card, "Offer", LaunchBadgeColor, cols);
+            float iconTop = Mathf.Max(76f, badgeBottom - 12f);
+            float iconSize = Mathf.Clamp(190f - iconTop, 70f, 130f);
+            float amountTop = Mathf.Max(208f, iconTop + iconSize + 10f);   // the amount always sits under the icon, never over it
+            float shift = amountTop - 208f;
+
             Image ic = UiKit.AddImage(card, "Icon", icon, Color.white);
             ic.preserveAspect = true;
-            UiKit.Place(ic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -76f), new Vector2(130f, 130f));
+            UiKit.Place(ic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -iconTop), new Vector2(iconSize, iconSize));
             ic.rectTransform.pivot = new Vector2(0.5f, 1f);
-            MakeInfo(ic, infoTitle, infoBody);
-
-            if (special != null) AddBadgeTop(card, special, SpecialBadgeColor);
-            else if (launch) AddBadgeTop(card, "Offer", LaunchBadgeColor);
+            ic.raycastTarget = false;   // decorative: not a touch target (the pack details are in the button's label)
 
             Text amountText = UiKit.AddText(card, "Amount", amount, 46, Theme.Ink, TextAnchor.MiddleCenter, true);
             amountText.GetComponent<Outline>().enabled = false;
-            UiKit.Place((RectTransform)amountText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -208f), new Vector2(300f, 60f));
+            UiKit.Place((RectTransform)amountText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -amountTop), new Vector2(300f, 60f));
             amountText.rectTransform.pivot = new Vector2(0.5f, 1f);
 
             if (listPrice != null)
@@ -563,7 +597,7 @@ namespace BoingUpSkyTower.Gameplay
                 Text lp = UiKit.AddText(card, "ListPrice", listPrice, 34, ListPriceColor, TextAnchor.MiddleCenter);
                 lp.GetComponent<Outline>().enabled = false;
                 lp.horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.Place((RectTransform)lp.transform, new Vector2(0.5f, 1f), new Vector2(0f, -268f), new Vector2(300f, 44f));
+                UiKit.Place((RectTransform)lp.transform, new Vector2(0.5f, 1f), new Vector2(0f, -(268f + shift)), new Vector2(300f, 44f));
                 lp.rectTransform.pivot = new Vector2(0.5f, 1f);
                 float w = Mathf.Min(lp.preferredWidth, 280f);
                 Image strike = UiKit.AddImage(lp.transform, "Strike", null, ListPriceColor);
@@ -571,19 +605,43 @@ namespace BoingUpSkyTower.Gameplay
                 strike.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             }
 
-            PriceButton(crt, "Buy", 1, priceIcon, price, a11y, onBuy, 14f);
+            // Note slot under the amount: "First purchase: x2 gems" on a gem pack, the price and gem shortfall on a coin pack the player cannot afford yet.
+            if (note != null)
+            {
+                Text nt = UiKit.AddText(card, "Note", note, 30, buttonText != null ? Theme.Ink : PromoPriceColor, TextAnchor.MiddleCenter, true);
+                DropOutline(nt);
+                nt.horizontalOverflow = HorizontalWrapMode.Wrap;
+                nt.verticalOverflow = VerticalWrapMode.Truncate;
+                nt.resizeTextForBestFit = true;
+                nt.resizeTextMinSize = 18;
+                nt.resizeTextMaxSize = 30;
+                nt.rectTransform.anchorMin = new Vector2(0f, 1f);
+                nt.rectTransform.anchorMax = new Vector2(1f, 1f);
+                nt.rectTransform.pivot = new Vector2(0.5f, 1f);
+                nt.rectTransform.offsetMin = new Vector2(8f, -392f);
+                nt.rectTransform.offsetMax = new Vector2(-8f, -((listPrice != null ? 316f : 276f) + shift));
+            }
+
+            PriceButton(crt, "Buy", buttonText != null ? 0 : 1, priceIcon, buttonText ?? price, a11y, onBuy, 14f);
         }
 
-        /// <summary>A short badge at the top-left of a card, as wide as its text. Dark text on a light fill (contrast above 10:1).</summary>
-        static void AddBadgeTop(Transform card, string text, Color fill)
+        /// <summary>
+        /// A short badge centred near the top of a card (smaller font: the 16 sp floor, not scaled up), moved slightly lower so the card's upper border
+        /// stays visible. The backing is measured from the text (TagKit). Dark text on a light fill (contrast above 10:1). Returns the badge's bottom edge,
+        /// in pixels below the top of the card.
+        /// </summary>
+        static float AddBadgeTop(Transform card, string text, Color fill, int cols)
         {
-            Image pill = UiKit.AddPanel(card, "NameBacking", fill);
-            Text t = UiKit.AddText(pill.transform, "Badge", text, 24, UiKit.ButtonInk, TextAnchor.MiddleCenter);
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            const float top = 20f, padX = 8f * UiKit.PxPerDp;
+            // One line always (never wrapped, so no word is split): the backing is as wide as the measured text plus padding. The 16 sp text is
+            // short ("Popular", "Best value", "Offer") and fits every card.
+            Text t;
+            Image pill = TagKit.Build(card, "NameBacking", text, 24, UiKit.ButtonInk, fill, 4000f, out t, false, false, padX);
             DropOutline(t);
-            UiKit.Stretch((RectTransform)t.transform);
-            UiKit.Place(pill.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(Mathf.Min(t.preferredWidth + 24f, 200f), 40f));
+            Vector2 size = pill.rectTransform.sizeDelta;
+            UiKit.Place(pill.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -top), size);
             pill.rectTransform.pivot = new Vector2(0.5f, 1f);
+            return top + size.y;
         }
 
         // ---------------- purchases ----------------
@@ -604,13 +662,19 @@ namespace BoingUpSkyTower.Gameplay
                 Info("Not available yet", "Buying gems with real money is not open yet. It arrives with the store release.");
                 return;
             }
+            progress.FirstPurchaseDoubleActive = GameSettings.FirstPurchaseDouble;
             string price = ShopCatalog.FormatUsd(ShopCatalog.GemPackUsd(pack, progress.LaunchPromoActive));
-            host.OpenPopup("Confirm test buy", "TEST PURCHASE\n" + Num(pack.Gems) + " gems for " + price + ".\nNo money is charged.", 1180f);
+            int credit = progress.GemsFromPack(pack);
+            host.OpenPopup("Confirm test buy", "TEST PURCHASE\n" + Num(pack.Gems) + " gems for " + price + ".\n" + (credit > pack.Gems ? FirstPurchaseText + ": you get " + Num(credit) + " gems.\n" : "") + "No money is charged.", 1180f);
             host.PopupButton("Confirm", true, 230f, () =>
             {
                 host.ClosePopup();
+                int added = progress.GemsFromPack(pack);
                 if (progress.GrantTestGemPurchase(pack) == ShopResult.Ok)
-                    Info("Test buy complete", "+" + Num(pack.Gems) + " gems added.\nThis was a test purchase.");
+                {
+                    RebuildBody();   // the first-purchase text goes away and the coin cards re-check what the player can afford
+                    Info("Test buy complete", "+" + Num(added) + " gems added.\nThis was a test purchase.");
+                }
             });
             host.PopupButton("Cancel", false, 60f, host.ClosePopup);
         }
@@ -623,7 +687,7 @@ namespace BoingUpSkyTower.Gameplay
             int price = progress.CoinPackPrice(pack);
             if (progress.Gems < price)
             {
-                host.OpenPopup("Not enough gems", "You need " + Num(price) + " gems and have " + Num(progress.Gems) + ".\nGet more gems first.", 1180f);
+                host.OpenPopup("Not enough gems", "You need " + Num(price) + " gems and have " + Num(progress.Gems) + ".\nYou are short by " + Num(price - progress.Gems) + " gems. Get more gems first.", 1180f);
                 host.PopupButton("Get more gems", true, 230f, () =>
                 {
                     host.ClosePopup();
@@ -647,7 +711,11 @@ namespace BoingUpSkyTower.Gameplay
         {
             host.ClosePopup();
             ShopResult result = progress.TryBuyCoinPack(pack);
-            if (result == ShopResult.Ok) Info("Coins purchased", "+" + Num(pack.Coins) + " coins added.");
+            if (result == ShopResult.Ok)
+            {
+                RebuildBody();   // cards the player can no longer afford now show their gem shortfall
+                Info("Coins purchased", "+" + Num(pack.Coins) + " coins added.");
+            }
             else Info("Not enough gems", "You do not have enough gems for this pack.");
         }
     }

@@ -1,0 +1,19 @@
+{
+  "name": "BoingUpSkyTower.Ads.LevelPlay",
+  "rootNamespace": "BoingUpSkyTower.Gameplay",
+  "references": [
+    "BoingUpSkyTower.Gameplay",
+    "Unity.LevelPlay"
+  ],
+  "includePlatforms": [
+    "Android"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

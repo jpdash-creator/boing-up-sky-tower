@@ -140,7 +140,7 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void ReviveCostsTwoThenFiveGemsAndNeedsThem()
+        public void ReviveCostsFiveThenTenGemsAndNeedsThem()
         {
             var progress = new ProgressService(repo, new MemorySaveStore(), 5);
             var s = new RunSession(repo, new SimConfig(), "lvl_001_01");
@@ -148,19 +148,19 @@ namespace BoingUpSkyTower.Tests
             s.State.Y = Fx.FromInt(-200);
             s.Step(0);
             Assert.IsFalse(s.TryRevive(progress), "no gems");
-            progress.AddGems(10);
-            Assert.AreEqual(2, s.NextReviveCost);
+            progress.AddGems(20);
+            Assert.AreEqual(5, s.NextReviveCost);
             Assert.IsTrue(s.TryRevive(progress));
-            Assert.AreEqual(8, progress.Gems, "the first revive costs 2");
+            Assert.AreEqual(15, progress.Gems, "the first revive costs 5");
             Assert.IsFalse(s.State.Dead);
             Assert.AreEqual(1, s.State.RevivesUsed);
             s.State.Grounded = false;
             s.State.Y = Fx.FromInt(-200);
             s.State.Invuln = 0;
             s.Step(0);
-            Assert.AreEqual(5, s.NextReviveCost);
+            Assert.AreEqual(10, s.NextReviveCost);
             Assert.IsTrue(s.TryRevive(progress));
-            Assert.AreEqual(3, progress.Gems, "the second revive costs 5");
+            Assert.AreEqual(5, progress.Gems, "the second revive costs 10");
             s.State.Grounded = false;
             s.State.Y = Fx.FromInt(-200);
             s.State.Invuln = 0;

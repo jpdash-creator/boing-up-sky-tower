@@ -118,6 +118,10 @@ namespace BoingUpSkyTower.Content
         [JsonProperty("gems", Required = Required.Always)] public int Gems { get; set; }
         [JsonProperty("usdList")] public double UsdList { get; set; }
         [JsonProperty("usdPromo")] public double UsdPromo { get; set; }
+        /// <summary>Indian rupee list price (docs/22 4.1); informational until real billing shows the store's localised price.</summary>
+        [JsonProperty("inrList")] public int InrList { get; set; }
+        /// <summary>True for the packs where the once-only first-purchase double applies (50 to 1,000 gems, docs/22 4.1).</summary>
+        [JsonProperty("firstPurchaseDouble")] public bool FirstPurchaseDouble { get; set; }
         [JsonProperty("sku", Required = Required.Always)] public string Sku { get; set; }
         [JsonProperty("badge")] public string Badge { get; set; }
         /// <summary>Legacy fields of the pre-docs/14 manifest (kept so a stale manifest still loads until it is regenerated).</summary>

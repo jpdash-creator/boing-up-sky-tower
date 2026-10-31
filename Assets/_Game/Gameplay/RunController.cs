@@ -93,6 +93,8 @@ namespace BoingUpSkyTower.Gameplay
             Hud.OnMenu = ExitToMeta;
             Hud.OnNext = PlayNext;
             Hud.OnRevive = Revive;
+            Hud.OnReviveAd = ReviveByAd;
+            AdService.Preload();
             Hud.OnPower = slot => Input.LatchPower(slot);
         }
 
@@ -183,7 +185,7 @@ namespace BoingUpSkyTower.Gameplay
             else
             {
                 Haptics.Pulse();
-                Hud.ShowFailed(Session, Session.CanRevive && GameSession.Progress.Gems >= Session.NextReviveCost);
+                ShowFailedOffer();
             }
         }
 
@@ -202,14 +204,50 @@ namespace BoingUpSkyTower.Gameplay
             Input.Clear();
         }
 
+        void ShowFailedOffer()
+        {
+            Hud.ShowFailed(Session, GameSession.Progress != null ? GameSession.Progress.Gems : 0, AdService.IsRewardedReady);
+        }
+
+        bool adBusy;
+
+        void AfterRevive()
+        {
+            endHandled = false;
+            Hud.CloseOverlay();
+            Input.Clear();
+        }
+
+        /// <summary>Revive for gems (5, then 10). The wallet is charged inside TryRevive only after the revive happened.</summary>
         void Revive()
         {
-            if (Session.TryRevive(GameSession.Progress))
+            if (adBusy || Session == null) return;
+            if (Session.TryRevive(GameSession.Progress)) AfterRevive();
+        }
+
+        /// <summary>
+        /// Free revive through a rewarded ad (first revive only). Nothing is spent. If the ad was watched but the revive did not go through,
+        /// the next tap revives for free without another ad. An early close or an error grants nothing.
+        /// </summary>
+        void ReviveByAd()
+        {
+            if (adBusy || Session == null) return;
+            if (Session.AdRewardPending) { if (Session.TryReviveFree()) AfterRevive(); return; }
+            if (!AdService.IsRewardedReady) { ShowFailedOffer(); return; }   // the ad vanished: redraw with the gem option only
+            adBusy = true;
+            RunSession sess = Session;
+            AdService.ShowRewarded(granted =>
             {
-                endHandled = false;
-                Hud.CloseOverlay();
-                Input.Clear();
-            }
+                adBusy = false;
+                if (this == null || sess != Session) return;               // left the run while the ad was up
+                if (granted)
+                {
+                    sess.MarkAdWatched();
+                    if (sess.TryReviveFree()) AfterRevive();
+                    else ShowFailedOffer();                                // reward kept: the offer now reads "Revive: Free"
+                }
+                else ShowFailedOffer();
+            });
         }
 
         void PlayNext()

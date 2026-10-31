@@ -20,29 +20,42 @@ namespace BoingUpSkyTower.Economy
     /// <summary>What one chest gave.</summary>
     public sealed class ChestContents
     {
-        /// <summary>Character ids that dropped (up to 1 from an Iron chest, up to 3 from a Golden one).</summary>
+        /// <summary>Character ids that dropped. Always empty while <see cref="ChestRolls.CharactersEnabled"/> is false.</summary>
         public readonly List<string> Characters = new List<string>();
-        /// <summary>Per character above: true when the player already had it (it turned into coins).</summary>
+        /// <summary>Per character above: true when the player already had it (it turned into gems).</summary>
         public readonly List<bool> Duplicate = new List<bool>();
-        /// <summary>Power-up ids, one entry per unit (3 in an Iron chest, 6 in a Golden one; the same type may repeat).</summary>
+        /// <summary>Power-up ids, one entry per unit (1 in an Iron chest, 3 in a Golden one; the same type may repeat).</summary>
         public readonly List<string> PowerUps = new List<string>();
-        /// <summary>All coins of this chest, duplicate refunds included.</summary>
+        /// <summary>All coins of this chest.</summary>
         public int Coins;
+        /// <summary>Gems refunded for duplicate characters (25 percent of the character's gem price).</summary>
+        public int Gems;
     }
 
     /// <summary>
-    /// Treasure chests, opened with gems only (docs/21). Iron: up to 1 character (Common 100, Uncommon 50, Rare 25 percent, the best hit wins), 3 power-ups and
-    /// 800 to 1000 coins. Golden: up to 3 characters (Rare 100, Epic 50, Legendary 25 percent, each rolls on its own), 6 power-ups and 2500 to 3000 coins.
-    /// Open 10 costs 10 times the single price (no discount). A rarity with no finished character drops nothing.
+    /// Treasure chests, opened with gems only (docs/22 point 3). Iron: 1 power-up and 400 to 600 coins. Golden: 3 power-ups and 1,000 to 1,400 coins.
+    /// Each power-up is one of the implemented types with equal chance. Open 10 costs 10 times the single price (no discount).
+    /// Characters are switched off behind <see cref="CharactersEnabled"/> (the roll code stays for when they launch).
     /// </summary>
     public static class ChestRolls
     {
-        public const int IronPowerUps = 3, GoldenPowerUps = 6;
-        public const int IronMinCoins = 800, IronMaxCoins = 1000, GoldenMinCoins = 2500, GoldenMaxCoins = 3000;
-        public static readonly int[] IronPercent = { 100, 50, 25 };        // Common, Uncommon, Rare
-        public static readonly int[] GoldenPercent = { 100, 50, 25 };      // Rare, Epic, Legendary
+        /// <summary>Master switch for characters in chests. OFF until characters launch (docs/22 owner answer 1).</summary>
+        public const bool CharactersEnabled = false;
+        /// <summary>A duplicate character refunds this share of its gem price, paid in gems.</summary>
+        public const int DuplicateRefundPercent = 25;
+
+        public const int IronPowerUps = 1, GoldenPowerUps = 3;
+        public const int IronMinCoins = 400, IronMaxCoins = 600, GoldenMinCoins = 1000, GoldenMaxCoins = 1400;
+        public static readonly int[] IronPercent = { 100, 50, 25 };        // Common, Uncommon, Rare (used only when characters are enabled)
+        public static readonly int[] GoldenPercent = { 100, 50, 25 };      // Rare, Epic, Legendary (used only when characters are enabled)
         public const int IronMaxCharacters = 1, GoldenMaxCharacters = 3;
         public const int IronPrice = 100, IronPriceTen = 1000, GoldenPrice = 300, GoldenPriceTen = 3000;
+
+        /// <summary>Gems a duplicate character turns into.</summary>
+        public static int DuplicateRefundGems(int characterGemPrice)
+        {
+            return characterGemPrice <= 0 ? 0 : characterGemPrice * DuplicateRefundPercent / 100;
+        }
 
         public static int Price(ChestKind kind, int opens)
         {
@@ -72,15 +85,18 @@ namespace BoingUpSkyTower.Economy
         {
             var rng = new Rng(SeedOf(kind, openIndex));
             var result = new ChestContents();
-            int[] percents = Percents(kind);
-            int low = (int)LowestRarity(kind), cap = MaxCharacters(kind);
-            // best rarity first, so the one-character Iron chest keeps its best hit
-            for (int i = percents.Length - 1; i >= 0; i--)
+            if (CharactersEnabled)
             {
-                bool hit = rng.Next(100) < percents[i];
-                List<CharacterSpec> pool = CharacterDefs.OfRarity((CharacterRarity)(low + i));
-                int pick = pool.Count > 0 ? rng.Next(pool.Count) : 0;
-                if (hit && pool.Count > 0 && result.Characters.Count < cap) result.Characters.Add(pool[pick].Id);
+                int[] percents = Percents(kind);
+                int low = (int)LowestRarity(kind), cap = MaxCharacters(kind);
+                // best rarity first, so the one-character Iron chest keeps its best hit
+                for (int i = percents.Length - 1; i >= 0; i--)
+                {
+                    bool hit = rng.Next(100) < percents[i];
+                    List<CharacterSpec> pool = CharacterDefs.OfRarity((CharacterRarity)(low + i));
+                    int pick = pool.Count > 0 ? rng.Next(pool.Count) : 0;
+                    if (hit && pool.Count > 0 && result.Characters.Count < cap) result.Characters.Add(pool[pick].Id);
+                }
             }
             int units = PowerUpCount(kind);
             for (int i = 0; i < units; i++)
@@ -125,7 +141,7 @@ namespace BoingUpSkyTower.Economy
 
         /// <summary>
         /// Opens 1 or 10 chests for gems only. Debits the gems and credits the characters, power-ups and coins in one step and saves once (atomic).
-        /// A character the player already has turns into coins. Nothing changes unless the result is Ok. <paramref name="contents"/> has one entry per chest.
+        /// A character the player already has turns into gems (25 percent of its gem price). Nothing changes unless the result is Ok. <paramref name="contents"/> has one entry per chest.
         /// </summary>
         public ChestOpenResult TryOpenChests(ChestKind kind, int opens, out List<ChestContents> contents)
         {
@@ -144,7 +160,7 @@ namespace BoingUpSkyTower.Economy
                 {
                     bool dup = OwnsCharacter(cid);
                     c.Duplicate.Add(dup);
-                    if (dup) c.Coins += CharacterDefs.DuplicateCoins[(int)CharacterDefs.Get(cid).Rarity];
+                    if (dup) c.Gems += ChestRolls.DuplicateRefundGems(CharacterDefs.Get(cid).GemPrice);
                     else Data.Characters.Add(cid);
                 }
                 foreach (string pid in c.PowerUps)
@@ -153,6 +169,7 @@ namespace BoingUpSkyTower.Economy
                     if (have < PowerUpDefs.Get(pid).MaxStack) Data.Inventory.Powerups[pid] = have + 1;   // a full stack takes no more
                 }
                 Data.Coins = SaturatingAdd(Data.Coins, c.Coins);
+                if (c.Gems > 0) Data.Gems = SaturatingAdd(Data.Gems, c.Gems);
                 contents.Add(c);
             }
             Commit();
