@@ -197,3 +197,5 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-01,T63,shop_coin_piles,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,3uFbZKRhZOCLHRzb1Yp6,done,30,approvals/T63-shop-art.md,retry after PARALLEL_LIMIT failure (no credits charged for the failed submit)
 2026-11-01,T64,ticket_weekly_redo,byte-plus-seedream-5-lite,image2image,2K 1:1 x1 refs=style bible,none,kvkReYa7h0IpVkq5kSIf,done,15,approvals/T63-shop-art.md,owner approved 30 credits: regenerate tickets as separate images (previous cut tickets overlapped)
 2026-11-01,T64,ticket_monthly_redo,byte-plus-seedream-5-lite,image2image,2K 1:1 x1 refs=style bible,none,rKblwFQIHXjRQXPQqGXK,done,15,approvals/T63-shop-art.md,
+2026-11-01,T65,rewards_icons,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,vyhNCAvgPGhvCNhRoVT5,done,30,approvals/T65-rewards-ui-art.md,owner approved 60 credits
+2026-11-01,T65,rewards_ui_panels,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,XC4FML1SiKA83vaMMbWk,done,30,approvals/T65-rewards-ui-art.md,

@@ -94,138 +94,6 @@ CHARACTERS = [
     ("ziggy", "Ziggy", "alien", "mint green, three eyes, antenna with a star, silver jumpsuit"),
 ]
 
-OUTFITS = [  # (id, name, description, rarity)
-    ("sunny_tee", "Sunny Tee", "bright yellow t-shirt with a smiling sun patch", "common"),
-    ("cloud_hoodie", "Cloud Hoodie", "fluffy white hoodie with a cloud-shaped hood", "common"),
-    ("leaf_vest", "Leaf Vest", "green vest with leaf-shaped buttons", "common"),
-    ("stripe_sweater", "Stripe Sweater", "chunky knit sweater with pastel stripes", "common"),
-    ("denim_overalls", "Denim Overalls", "blue denim overalls with a front pocket", "common"),
-    ("berry_dress", "Berry Dress", "pink dress with berry prints and a ribbon", "common"),
-    ("mint_jacket", "Mint Jacket", "mint-green zip jacket with white trim", "common"),
-    ("sailor_top", "Sailor Top", "navy and white sailor top with a square collar", "common"),
-    ("patch_poncho", "Patchwork Poncho", "colourful patchwork poncho", "common"),
-    ("cozy_cardigan", "Cozy Cardigan", "warm orange cardigan with big buttons", "common"),
-    ("sporty_jersey", "Sporty Jersey", "red and white striped sports jersey, no numbers or letters", "common"),
-    ("picnic_apron", "Picnic Apron", "red gingham apron with a heart pocket", "common"),
-    ("rain_slicker", "Rain Slicker", "shiny yellow raincoat with a hood", "common"),
-    ("scarf_tunic", "Scarf Tunic", "simple tunic with a long striped scarf", "common"),
-    ("neon_bomber", "Neon Bomber Jacket", "glossy black bomber jacket with glowing cyan and pink piping", "rare"),
-    ("candy_swirl", "Candy Swirl Dress", "pink and white swirl-candy dress with a lollipop belt", "rare"),
-    ("frost_parka", "Frost Parka", "ice-blue parka with white fur hood", "rare"),
-    ("buccaneer_coat", "Buccaneer Coat", "navy captain coat with gold buttons and a red sash", "rare"),
-    ("bamboo_robe", "Bamboo Robe", "jade green robe with a bamboo pattern and red belt", "rare"),
-    ("mushroom_cape", "Mushroom Cape", "purple cape with white mushroom spots", "rare"),
-    ("toy_overalls", "Toy Factory Overalls", "primary-colour block overalls with gear badges", "rare"),
-    ("ghostlight_gown", "Ghost-Light Gown", "violet gown with soft green glowing hem", "rare"),
-    ("crystal_vest", "Crystal Vest", "cyan vest with faceted magenta crystal shoulder pieces", "rare"),
-    ("steam_aviator", "Steam Aviator Jacket", "brass-buttoned leather jacket with teal pipes", "rare"),
-    ("reef_wrap", "Reef Wrap", "coral and deep-blue wrap with tiny shell decorations", "rare"),
-    ("carnival_coat", "Carnival Coat", "rainbow neon striped showman coat", "rare"),
-    ("forge_plate", "Forge Plate Armor", "charcoal armor with glowing red lava cracks", "epic"),
-    ("jungle_regalia", "Jungle Regalia", "emerald and amber ceremonial tunic with feathers", "epic"),
-    ("cloud_royal", "Cloud Kingdom Robes", "white and lavender royal robes with golden trim", "epic"),
-    ("astro_suit", "Astro Suit", "black and cyan space suit with glowing panels", "epic"),
-    ("laser_grid_suit", "Laser-Grid Suit", "electric blue suit with pink glowing grid lines", "epic"),
-    ("dragon_scale_coat", "Dragon-Scale Coat", "crimson scaled coat with gold clasps", "epic"),
-    ("sandstorm_cloak", "Sandstorm Cloak", "sand and turquoise flowing cloak", "epic"),
-    ("moon_tux", "Moon Carnival Tux", "glowing rainbow-trim tuxedo with a moon brooch", "epic"),
-    ("neon_kimono", "Neon Kimono", "ink-black kimono with glowing cherry-blossom pattern", "epic"),
-    ("aurora_gown", "Aurora Gown", "flowing gown with animated-looking aurora gradient, shimmering foil", "legendary"),
-    ("golden_champion", "Golden Champion Armor", "polished gold armor with a radiant glow", "legendary"),
-    ("starlight_cape", "Starlight Cape", "deep blue cape filled with glowing stars", "legendary"),
-    ("chrono_mantle", "Chrono Mantle", "chrono-violet mantle with floating glowing shards", "legendary"),
-    ("prism_hero", "Prism Hero Suit", "crystal prism suit refracting rainbow light", "legendary"),
-]
-
-BOOTS = [
-    ("red_sneakers", "Red Sneakers", "classic red sneakers with white soles", "common"),
-    ("rain_boots", "Yellow Rain Boots", "shiny yellow rubber boots", "common"),
-    ("sprout_shoes", "Sprout Shoes", "green shoes with little leaf sprouts", "common"),
-    ("moccasins", "Moccasins", "soft tan moccasins with beads", "common"),
-    ("canvas_hightops", "Canvas High-Tops", "blue canvas high-top sneakers", "common"),
-    ("fuzzy_slippers", "Fuzzy Slippers", "pink fluffy slippers", "common"),
-    ("hiking_boots", "Hiking Boots", "brown chunky boots with orange laces", "common"),
-    ("wooden_clogs", "Wooden Clogs", "wooden clogs with painted flowers", "common"),
-    ("beach_sandals", "Beach Sandals", "aqua sandals with a shell charm", "common"),
-    ("knit_boots", "Knit Boots", "cream knit boots with a pom-pom", "common"),
-    ("cloud_runner", "Cloud Runner Boots", "white cloud-puff running boots with sky-blue soles", "rare"),
-    ("spring_coils", "Spring Coil Boots", "boots with visible chunky metal springs", "rare"),
-    ("frost_skates", "Frost Skates", "ice-blue ice skates with white laces", "rare"),
-    ("buccaneer_boots", "Buccaneer Boots", "navy pirate boots with gold buckles", "rare"),
-    ("bamboo_geta", "Bamboo Geta", "raised wooden sandals with jade straps", "rare"),
-    ("neon_trainers", "Neon Trainers", "black trainers with glowing cyan and pink soles", "rare"),
-    ("bubble_boots", "Bubble Boots", "transparent bubble-soled boots", "rare"),
-    ("mini_rocket_boots", "Mini Rocket Boots", "boots with tiny rocket thrusters", "rare"),
-    ("candy_cane_boots", "Candy Cane Boots", "red and white striped candy boots", "rare"),
-    ("gear_boots", "Gear Boots", "brass boots with turning gear details", "rare"),
-    ("lava_stompers", "Lava Stompers", "charcoal boots with glowing red cracks", "epic"),
-    ("crystal_kicks", "Crystal Kicks", "cyan crystal-faceted sneakers", "epic"),
-    ("ghost_slippers", "Ghost Slippers", "translucent violet slippers with a green glow", "epic"),
-    ("jetstream_boots", "Jetstream Boots", "silver boots with blue jet flames", "epic"),
-    ("dragon_claw_boots", "Dragon Claw Boots", "crimson boots with golden claw toes", "epic"),
-    ("gravity_boots", "Gravity Boots", "dark boots with floating glowing rings", "epic"),
-    ("pixel_kicks", "Pixel Kicks", "blocky pixel-style neon sneakers", "epic"),
-    ("aurora_wing_boots", "Aurora Wing Boots", "boots with small shimmering aurora wings", "legendary"),
-    ("golden_sprinters", "Golden Sprinters", "gleaming gold racing boots", "legendary"),
-    ("comet_trailblazers", "Comet Trailblazers", "deep-blue boots leaving a comet tail", "legendary"),
-]
-
-HATS = [
-    ("sun_hat", "Sun Hat", "wide straw hat with a yellow ribbon", "common"),
-    ("knit_beanie", "Knit Beanie", "cozy striped beanie with a pom-pom", "common"),
-    ("baseball_cap", "Baseball Cap", "red cap worn forward with a plain front", "common"),
-    ("bow_headband", "Bow Headband", "pink headband with a big bow", "common"),
-    ("leaf_crown", "Leaf Crown", "crown woven from green leaves", "common"),
-    ("bucket_hat", "Bucket Hat", "denim bucket hat", "common"),
-    ("chef_hat", "Chef Hat", "tall white chef hat", "common"),
-    ("chunky_headphones", "Chunky Headphones", "big neon headphones", "common"),
-    ("propeller_cap", "Propeller Cap", "colourful cap with a spinning propeller", "common"),
-    ("flower_crown", "Flower Crown", "crown of pastel flowers", "common"),
-    ("wizard_hat", "Wizard Hat", "purple pointed hat with golden stars", "rare"),
-    ("pirate_tricorn", "Pirate Tricorn", "navy tricorn hat with a gold trim and no skull emblem", "rare"),
-    ("tiny_knight_helm", "Tiny Knight Helm", "shiny silver helmet with a red plume", "rare"),
-    ("crystal_tiara", "Crystal Tiara", "tiara with cyan and magenta crystals", "rare"),
-    ("cloud_halo", "Cloud Halo", "small fluffy cloud floating as a halo", "rare"),
-    ("bamboo_straw_hat", "Bamboo Straw Hat", "cone-shaped bamboo hat", "rare"),
-    ("mushroom_cap", "Mushroom Cap", "red mushroom cap with white spots", "rare"),
-    ("aviator_goggles", "Aviator Cap & Goggles", "brown leather cap with brass goggles", "rare"),
-    ("party_cone", "Party Hat", "rainbow party cone hat with confetti", "rare"),
-    ("ghost_hood", "Ghost Hood", "white sheet hood with big eyes", "rare"),
-    ("dragon_horns", "Dragon Horns", "crimson horns with golden tips", "epic"),
-    ("astro_helmet", "Astro Helmet", "clear space helmet with cyan glow", "epic"),
-    ("laser_visor", "Laser Visor", "wrap-around visor with glowing pink lasers", "epic"),
-    ("magma_crown", "Magma Crown", "charcoal crown dripping glowing lava", "epic"),
-    ("moon_jester", "Moon Jester Hat", "rainbow neon jester hat with moon bells", "epic"),
-    ("kabuto_helm", "Kabuto Helm", "ink-black helmet with cherry-blossom crest", "epic"),
-    ("neon_halo_ring", "Neon Halo Ring", "glowing neon ring floating above the head", "epic"),
-    ("sunburst_crown", "Sunburst Crown", "radiant golden crown with sun rays", "legendary"),
-    ("chrono_crown", "Chrono Crown", "violet crown with floating glowing shards", "legendary"),
-    ("prism_crown", "Prism Crown", "crystal crown refracting rainbow light", "legendary"),
-]
-
-ACCESSORIES = [  # (id, name, description, rarity, kind back|face)
-    ("tiny_backpack", "Tiny Backpack", "small red backpack with a keychain", "common", "back"),
-    ("angel_wings", "Angel Wings", "small white feathered wings with a soft glow", "rare", "back"),
-    ("bat_wings", "Bat Wings", "small purple bat wings", "rare", "back"),
-    ("mini_jetpack", "Mini Jetpack", "tiny silver jetpack with blue flames", "epic", "back"),
-    ("hero_cape", "Hero Cape", "flowing red cape with a gold clasp", "common", "back"),
-    ("balloon_bundle", "Balloon Bundle", "bundle of three pastel balloons", "rare", "back"),
-    ("glider_umbrella", "Glider Umbrella", "open yellow umbrella on the back", "common", "back"),
-    ("paper_lantern", "Paper Lantern Pole", "red paper lantern on a short pole", "rare", "back"),
-    ("star_satchel", "Star Satchel", "navy satchel covered in glowing stars", "epic", "back"),
-    ("aurora_wings", "Aurora Wings", "large shimmering aurora-gradient wings", "legendary", "back"),
-    ("round_glasses", "Round Glasses", "big round pink glasses", "common", "face"),
-    ("star_shades", "Star Shades", "star-shaped sunglasses", "rare", "face"),
-    ("heart_mask", "Heart Mask", "small heart-shaped face mask", "common", "face"),
-    ("cat_whiskers", "Cat Whiskers", "painted whiskers on cheeks", "common", "face"),
-    ("monocle", "Monocle", "gold monocle with a chain", "rare", "face"),
-    ("bandana", "Bandana", "red bandana covering the lower face", "common", "face"),
-    ("cheek_sparkles", "Cheek Sparkles", "glowing star stickers on cheeks", "rare", "face"),
-    ("pixel_shades", "Pixel Shades", "blocky pixel sunglasses with neon edge", "epic", "face"),
-    ("curly_moustache", "Curly Moustache", "big curly brown moustache", "rare", "face"),
-    ("prism_visor", "Prism Visor", "crystal visor splitting light into rainbows", "legendary", "face"),
-]
-
 TRAILS = [
     ("rainbow_ribbon", "Rainbow Ribbon", "smooth rainbow gradient ribbon"),
     ("neon_cyan", "Neon Cyan", "glowing cyan light ribbon with white core"),
@@ -343,10 +211,10 @@ def build():
         reference=["fnd_momo_master (selected)"], depends_on=["fnd_momo_master"])
 
     add(id="fnd_rig_template_guide", cls="foundation", phase="A1", group="style", tier="std", candidates=0, fixed_images=0,
-        name="Paper-doll rig template guide (NOT generated)", purpose="Standard body canvas/skeleton every outfit and boot aligns to.",
+        name="Paper-doll rig template guide (NOT generated)", purpose="Standard body canvas/skeleton every character aligns to.",
         prompt="(manual - draw the template in Krita/Unity 2D Animation; no OpenArt credits)", aspect="n/a", size="n/a",
         path="Art/Characters/_rig/body_template.psd", manual=["Create guide image: T-pose silhouette with pivots, layer order from doc 04 section 3"],
-        notes=["Outfits/boots/hats generated with this guide as a reference image (image2image)."])
+        notes=["Characters are generated with this guide as a reference image (image2image)."])
 
     add(id="fnd_logo", cls="foundation", phase="A1", group="brand", tier="hero", candidates=6,
         name="Boing Up: Sky Tower logo / wordmark concepts", purpose="Game logo exploration. Final wordmark text is added in Unity/vector, not trusted from AI.",
@@ -377,35 +245,6 @@ def build():
     # ---------- Cosmetics ----------
     rar_note = {"common": "flat clean colours, no glow beyond rim light", "rare": "subtle extra glow accent",
                 "epic": "strong glow and detailed accents", "legendary": "radiant glow, animated-foil feel (static art; shimmer added in Unity)"}
-    for iid, name, desc, rar in OUTFITS:
-        add(id="out_" + iid, cls="outfit", phase="D", group="cosmetics_outfit_" + rar, candidates=3, tier="std",
-            name=name + " (" + rar + ")", purpose="Outfit layer on the shared chibi rig.",
-            prompt=("Game costume piece '" + name + "': " + desc + ", shown as a flat garment aligned to a chibi body torso, no body inside, symmetrical front view, "
-                    "rarity feel: " + rar + " (" + rar_note[rar] + "). " + STYLE + ", " + KEY),
-            aspect="1:1", size="1K", mode="image2image", reference=["Art/Characters/_rig/body_template", "fnd_style_bible"],
-            depends_on=["fnd_rig_template_guide"], path="Art/Items/outfit/outfit_%s_front.png" % iid,
-            checks=["Garment only, no body inside", "Symmetric and aligned to the torso template", "Sleeves/arms handled as separate layers if needed"])
-    for iid, name, desc, rar in BOOTS:
-        add(id="bts_" + iid, cls="boots", phase="D", group="cosmetics_boots_" + rar, candidates=3, tier="std",
-            name=name + " (" + rar + ")", purpose="Boots; generate ONE boot, mirror for left/right (AI cannot do matching pairs).",
-            prompt=("A single right-side-facing chibi game boot '" + name + "': " + desc + ", chunky, rounded toe, small detail accent, rarity feel: " + rar
-                    + " (" + rar_note[rar] + "). " + STYLE + ", " + KEY),
-            aspect="1:1", size="1K", reference=["fnd_style_bible"], depends_on=["out_sunny_tee"],
-            path="Art/Items/boots/boots_%s_R.png" % iid, post=["Mirror to create _L", "Trim, pivot at ankle, template overlap check"])
-    for iid, name, desc, rar in HATS:
-        add(id="hat_" + iid, cls="hat", phase="D", group="cosmetics_hat_" + rar, candidates=3, tier="std",
-            name=name + " (" + rar + ")", purpose="Head item aligned to the head layer pivot.",
-            prompt=("Game hat '" + name + "': " + desc + ", front view, designed to sit on a round chibi head, no head or face inside, symmetrical, rarity feel: "
-                    + rar + " (" + rar_note[rar] + "). " + STYLE + ", " + KEY),
-            aspect="1:1", size="1K", reference=["fnd_style_bible"], depends_on=["out_sunny_tee"],
-            path="Art/Items/hat/hat_%s_front.png" % iid)
-    for iid, name, desc, rar, kind in ACCESSORIES:
-        where = "worn on the back, shown flat from behind-front" if kind == "back" else "worn on the face, front view, no face inside"
-        add(id="acc_" + iid, cls="accessory", phase="D", group="cosmetics_accessory_" + rar, candidates=3, tier="std",
-            name=name + " (" + rar + ", " + kind + ")", purpose="Accessory slot item (" + kind + ").",
-            prompt=("Game accessory '" + name + "': " + desc + ", " + where + ", symmetrical, rarity feel: " + rar + " (" + rar_note[rar] + "). " + STYLE + ", " + KEY),
-            aspect="1:1", size="1K", reference=["fnd_style_bible"], depends_on=["out_sunny_tee"],
-            path="Art/Items/acc/acc_%s_%s.png" % (iid, kind))
     for iid, name, desc in TRAILS:
         add(id="trl_" + iid, cls="trail", phase="D", group="cosmetics_trail", candidates=3, tier="std",
             name="Trail: " + name, purpose="Light-trail ribbon + particle sprites (doc 08 signature visual).",
@@ -574,16 +413,13 @@ def build():
             aspect=asp, size="2K", reference=["fnd_style_bible", "fnd_momo_master"], depends_on=["fnd_momo_master"], path="Art/Marketing/%s_v1.png" % mid,
             manual=["Add logo/text in vector tools", "Export store-required sizes"])
 
-    # Phase-1 test set (doc 07): 3 outfits, 3 boots, Meadow Springs full set. Proves the pipeline before bulk runs.
-    test_ids = {"out_sunny_tee", "out_cloud_hoodie", "out_leaf_vest", "bts_red_sneakers", "bts_rain_boots", "bts_cloud_runner"}
+    # Phase-1 test set: Meadow Springs full set (gear test set dropped 2026-11-01). Proves the pipeline before bulk runs.
     for a in ASSETS:
-        if a["id"] in test_ids or a["id"].startswith("reg001_"):
+        if a["id"].startswith("reg001_"):
             a["phase"] = "B"; a["group"] = "phase1_test"
-        if a["id"] in test_ids and a["cls"] in ("outfit", "boots"):
-            a["notes"].append("Phase-1 pipeline test: review alignment, mirroring and trim BEFORE approving the bulk cosmetic batches")
     for a in ASSETS:
-        if a["phase"] in ("D",) and a["id"] not in test_ids:
-            a["depends_on"] = sorted(set(a["depends_on"] + ["out_sunny_tee"]))
+        if a["phase"] in ("D",):
+            a["depends_on"] = sorted(set(a["depends_on"] + ["fnd_style_bible"]))
     for a in ASSETS:
         a["model"] = LOCKED_MODEL
         refs = " ".join(a["reference"])

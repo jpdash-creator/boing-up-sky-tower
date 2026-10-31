@@ -10,7 +10,7 @@ namespace BoingUpSkyTower.Gameplay
     /// <summary>
     /// The shared look of every shop page (docs/26 section 1, reference screenshots SS11 to SS15): the Momo shopkeeper scene across the top on a
     /// brownish wood background, a ribbon title, framed cards, and the bottom tab bar Bundles | Chests | Power-ups | Coins | Gems (the selected tab is
-    /// yellow with its caption, the others are blue icon-only, a tab can carry a red dot). Menu screens only: everything is built once in code,
+    /// yellow, the others are blue icon-only, a tab can carry a red dot). Menu screens only: everything is built once in code,
     /// nothing runs per frame. All touch targets are at least 48 dp; every position is an anchor or a fraction of the width, so it fits 9:16, 9:19.5,
     /// 9:21 and 3:4, the safe area and 130 percent text.
     ///
@@ -33,9 +33,8 @@ namespace BoingUpSkyTower.Gameplay
 
         public const int TabBundles = 0, TabChests = 1, TabPowerups = 2, TabCoins = 3, TabGems = 4, TabCount = 5;
         /// <summary>Page titles by tab (ribbon text).</summary>
-        public static readonly string[] TabNames = { "Bundles", "Chests", "Power-ups", "Coins", "Gems" };
+        public static readonly string[] TabNames = { "Bundles", "Chests", "Power Ups", "Coins", "Gems" };
         /// <summary>Short captions of the selected tab.</summary>
-        static readonly string[] TabCaptions = { "Bundles", "Chests", "Power", "Coins", "Gems" };
         static readonly string[] TabIcons = { "icon_bundle", "icon_chest", "icon_bolt", "icon_coin", "icon_gem" };
 
         public const float SceneHeight = 440f, RibbonW = 620f, RibbonH = 170f, SideMargin = 28f;
@@ -198,7 +197,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>A ribbon with a title. Yellow uses the painted kit ribbon (ink text); red and blue are drawn in code (white text).</summary>
         public static Text Ribbon(Transform parent, string title, RibbonColor color, Vector2 anchor, Vector2 pos, Vector2 size)
         {
-            if (color == RibbonColor.Yellow && ToyKit.Get("ribbon_gold") != null) return ToyKit.Ribbon(parent, title, anchor, pos, size);
+            color = RibbonColor.Yellow;   // owner (issue list 27): every shop page has the same yellow ribbon; the parameter stays for API compatibility
+            if (ToyKit.Get("ribbon_gold") != null) return StyleTitle(ToyKit.Ribbon(parent, title, anchor, pos, size));
             Color band, tail, hi, ink;
             bool darkInk = color == RibbonColor.Yellow;
             switch (color)
@@ -230,7 +230,15 @@ namespace BoingUpSkyTower.Gameplay
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiKit.Place(text.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, bandSize);
             text.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            return text;
+            return StyleTitle(text);
+        }
+
+        /// <summary>The page header look: Pascal Case words in italic, smaller than the kit default (still above the 16 sp floor).</summary>
+        static Text StyleTitle(Text t)
+        {
+            t.fontStyle = FontStyle.Italic;
+            t.fontSize = Mathf.RoundToInt(52f * UiKit.TextScale);
+            return t;
         }
 
         /// <summary>The fill colour of a card frame (text colours are chosen against it by the pages).</summary>
@@ -394,24 +402,10 @@ namespace BoingUpSkyTower.Gameplay
                 rt.offsetMax = new Vector2(i == TabCount - 1 ? 0f : -gap * 0.5f, 0f);
                 Image ic = UiKit.AddImage(b.transform, "Icon", ToyKit.Get(TabIcons[i]), Color.white);
                 var irt = ic.rectTransform;
-                irt.anchorMin = irt.anchorMax = new Vector2(0.5f, on ? 0.77f : 0.5f);
+                irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 0.5f);
                 irt.pivot = new Vector2(0.5f, 0.5f);
                 irt.anchoredPosition = Vector2.zero;
-                float isz = on ? 56f : 86f;
-                irt.sizeDelta = new Vector2(isz, isz);
-                if (on)
-                {
-                    Text cap = UiKit.AddText(b.transform, "Caption", TabCaptions[i], 42, UiKit.ButtonInk, TextAnchor.LowerCenter, true);
-                    var co = cap.GetComponent<Outline>();
-                    if (co != null) co.enabled = false;
-                    cap.horizontalOverflow = HorizontalWrapMode.Overflow;
-                    var crt = (RectTransform)cap.transform;
-                    crt.anchorMin = new Vector2(0f, 0f);
-                    crt.anchorMax = new Vector2(1f, 0f);
-                    crt.pivot = new Vector2(0.5f, 0f);
-                    crt.offsetMin = new Vector2(0f, 6f);
-                    crt.offsetMax = new Vector2(0f, 88f);
-                }
+                irt.sizeDelta = new Vector2(86f, 86f);   // icons only: no caption text (the accessibility label names the tab)
                 if (dots != null && i < dots.Length && dots[i]) ToyKit.AddBadge(b.transform);
             }
             return root;

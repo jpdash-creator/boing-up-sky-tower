@@ -10,7 +10,7 @@ namespace BoingUpSkyTower.Simulation
     {
         public const int TicksPerSecond = 60;
 
-        /// <summary>A copy of every tunable (the run applies gear boosts to a copy, never to the shared default config).</summary>
+        /// <summary>A copy of every tunable (the run applies power-up boosts to a copy, never to the shared default config).</summary>
         public SimConfig Clone()
         {
             var c = (SimConfig)MemberwiseClone();

@@ -155,9 +155,9 @@
       "points": 10
     },
     {
-      "id": "d_allgems",
-      "title": "Collect all gems in a level",
-      "stat": "allGems",
+      "id": "d_stars2",
+      "title": "Earn 2 stars in a level",
+      "stat": "stars2",
       "target": 1,
       "points": 10
     },
@@ -260,10 +260,10 @@
       "gems": 40
     },
     {
-      "id": "w_gems30",
-      "title": "Collect 30 gems in levels",
-      "stat": "gems",
-      "target": 30,
+      "id": "w_stars20",
+      "title": "Earn 20 stars in levels",
+      "stat": "starsEarned",
+      "target": 20,
       "coins": 1000
     },
     {

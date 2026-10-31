@@ -243,14 +243,15 @@ namespace BoingUpSkyTower.Economy
             {
                 // a replay of a cleared level: the level counters take at most 3 such replays per day, across all levels
                 RewardPeriod day = Rw.Day;
-                if (StatOf(day, RewardStat.Replays) >= RewardStat.MaxCountedReplaysPerDay) return;   // gems collected on replays are not a thing (pickups are stripped), so nothing else is lost
+                if (StatOf(day, RewardStat.Replays) >= RewardStat.MaxCountedReplaysPerDay) return;   // replays beyond the daily limit count nothing
                 day.Stats[RewardStat.Replays] = StatOf(day, RewardStat.Replays) + 1;
             }
             AddBoth(RewardStat.Levels, 1);
             if (level.Index == 7) AddBoth(RewardStat.NoWall, 1);
             if (level.Index == 8 || level.Index == 15) AddBoth(RewardStat.GemLevel, 1);
-            if (run.GemPickupsTotal > 0 && run.GemPickupsTaken >= run.GemPickupsTotal) AddBoth(RewardStat.AllGems, 1);
-            AddBoth(RewardStat.Gems, Math.Max(0, run.GemsCollected) + Math.Max(0, run.HiddenGems));
+            int stars = run.Stars;   // star pickups are never stripped on replays, so these two counters work on every level
+            if (stars >= 2) AddBoth(RewardStat.Stars2, 1);
+            if (stars > 0) AddBoth(RewardStat.StarsEarned, stars);
             if ((run.StarMask & 7) == 7) AddBoth(RewardStat.Stars3, 1);
         }
 
@@ -391,12 +392,37 @@ namespace BoingUpSkyTower.Economy
             RolloverRewards();
             if (IsRewardClaimed(tab, e)) { outcome.Result = RewardClaimResult.AlreadyClaimed; return outcome; }
             if (RewardProgress(tab, e) < RewardTarget(tab, e)) { outcome.Result = RewardClaimResult.NotReady; return outcome; }
+            PayReward(tab, e, outcome);
+            outcome.Result = RewardClaimResult.Ok;
+            Commit();
+            return outcome;
+        }
 
+        /// <summary>
+        /// Claims everything that is ready in a tab in one step: all rewards are paid and marked together and saved once (atomic). The outcome adds
+        /// up gems, coins and power-up units; Result is NotReady when nothing was ready.
+        /// </summary>
+        public RewardClaimOutcome ClaimAll(RewardTab tab)
+        {
+            var outcome = new RewardClaimOutcome { Result = RewardClaimResult.NotReady };
+            RolloverRewards();
+            var ready = new List<RewardEntry>();
+            foreach (RewardEntry e in ClaimableEntries(tab)) if (IsRewardReady(tab, e)) ready.Add(e);
+            if (ready.Count == 0) return outcome;
+            foreach (RewardEntry e in ready) PayReward(tab, e, outcome);
+            outcome.Result = RewardClaimResult.Ok;
+            Commit();
+            return outcome;
+        }
+
+        /// <summary>Pays one reward into the wallet and the power-up stock and marks it claimed, without saving (the caller saves once).</summary>
+        void PayReward(RewardTab tab, RewardEntry e, RewardClaimOutcome outcome)
+        {
             RewardsData r = Rw;
             Data.Gems = SaturatingAdd(Data.Gems, Math.Max(0, e.Gems));
             Data.Coins = SaturatingAdd(Data.Coins, Math.Max(0, e.Coins));
-            outcome.Gems = Math.Max(0, e.Gems);
-            outcome.Coins = Math.Max(0, e.Coins);
+            outcome.Gems = SaturatingAdd(outcome.Gems, Math.Max(0, e.Gems));
+            outcome.Coins = SaturatingAdd(outcome.Coins, Math.Max(0, e.Coins));
             if (e.PowerUps > 0)
             {
                 var types = new List<PowerUpDef>(PowerUpDefs.Implemented);
@@ -418,9 +444,6 @@ namespace BoingUpSkyTower.Economy
             else if (tab == RewardTab.Daily) r.Day.Claimed.Add(e.Id);
             else r.Week.Claimed.Add(e.Id);
             r.Claims++;
-            outcome.Result = RewardClaimResult.Ok;
-            Commit();
-            return outcome;
         }
     }
 }

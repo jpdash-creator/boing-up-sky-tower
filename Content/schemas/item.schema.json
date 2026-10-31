@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "properties": {
     "id": {"type": "string", "pattern": "^[a-z]+_[a-z0-9_]+$"},
-    "slot": {"type": "string", "enum": ["character", "outfit", "boots", "hat", "accessory", "trail", "powerup"]},
+    "slot": {"type": "string", "enum": ["character", "trail", "powerup"]},
     "rarity": {"type": "string", "enum": ["common", "rare", "epic", "legendary", "event"]},
     "bundle": {"type": "string"},
     "sprites": {"type": "object"},

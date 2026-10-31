@@ -2,7 +2,7 @@
 
 2D vertical-jumper for Android + iOS. Unity 6 LTS (C#), 2D URP. Data-driven: regions, levels, items and offers are JSON plus asset bundles, never hardcoded in scenes.
 
-**Design docs** (source of truth, read before changing rules or numbers): `E:\Source\Game Ideas\boing-up-sky-tower\docs\`. Doc 08 (rules addendum) wins over docs 01, 02, 05. Doc 09 records the accepted review decisions.
+**Design docs** (source of truth, read before changing rules or numbers): `E:\Source\Game Ideas\boing-up-sky-tower\docs\`. **Economy numbers: `docs/27-economy-tables-from-code.md` (read from the code), then docs 22 and 26; they win over docs 05, 08, 13, 14, 15.** Doc 08 (rules addendum) wins over docs 01, 02, 05 for everything else. Doc 09 records the accepted review decisions. (`E:\Source\Game Ideas\boing-tower-docs` and `E:\Code\boing-tower-game` are stale copies; do not use them.)
 
 ## CRITICAL REQUIREMENTS (owner, 2026-10-19): seamless gameplay, no improper overlap, accessibility
 User experience and accessibility are critical. Gameplay must be seamless and never choppy; screen items must never overlap improperly. The full mandatory rule set (CUX-1 to CUX-10) is in `.claude/rules/ux-gameplay-critical.md` (always loaded) and `docs/11-critical-ux-gameplay-requirements.md`. Headlines: 60 fps with fixed-step sim + interpolation, zero per-frame allocations, instant input, no overlapping or clipped UI on any aspect, 48 dp touch targets, readable contrast, no colour-only cues, reduced motion/haptics/left-handed options, clean sliced art. CUX tests (category `CriticalUX`) must stay green; a failing CUX test blocks a commit.
@@ -12,8 +12,8 @@ User experience and accessibility are critical. Gameplay must be seamless and ne
 - **Originality:** never mention, name or imitate any existing jumper game in code, art, prompts, store text or comments. Generic genre mechanics only.
 - **Determinism:** the simulation and the level generator use fixed-point/integer math and the seeded RNG (xoshiro). No `float`, `UnityEngine.Random`, `Time.deltaTime` or `Physics` in `Simulation/` or generator code. Same seed gives the same level on every device and on the server.
 - **Server authority:** currencies, purchases, chests and leaderboard scores are decided server-side. No secrets in the client.
-- **Cosmetics only:** items never change gameplay stats. Ranked runs disallow consumables and permanent upgrades.
-- **IDs are permanent:** content IDs (`region_021_dragon_peak`, `lvl_021_01`, `boots_cloud_runner`) never change once shipped.
+- **No gear (owner 2026-10-24 and 2026-11-01):** there are no outfits, boots, hats or accessories. Characters (docs 20, 21) and power-ups are the only items; Ranked runs stay neutral and disallow consumables.
+- **IDs are permanent:** content IDs (`region_021_dragon_peak`, `lvl_021_01`, `pw_flight`) never change once shipped.
 - **No allocations** in gameplay loops. Pool platforms and particles.
 - Behaviour is code (rare app updates); content is data + bundles (frequent). Only assets and data are downloaded, never code.
 
@@ -48,12 +48,12 @@ Open items waiting on the owner are logged in `.claude/pendingdecisions/` (asset
 ## Key numbers (doc 08)
 - 30 regions x 15 levels; regions 1-20 `live`, 21-30 `teaser`. **Playable now: regions 1-5 (75 levels)**; the world map shows 6-30 as "Coming soon". Level classes: L5/L10 complex, L15 highly complex.
 - Scroll (owner, 2026-10-20): the screen scrolls after the first jump, the bottom edge kills, base 120 percent, steps 20/40/60/80/100 percent per 5 s by difficulty (Settings), cap +400 percent, "SPEED UP +N%" cue. Jump: `JumpBase` 19, `JumpSpeedFactor` 0.58, standing peak 4.51 u = 1.3 median row gaps, full speed 7.33 u = 2.1 gaps, normal gaps capped at 4.2 u (layout uses `LayoutJumpBase`, see `Assets/_Game/Simulation/NOTES.md`).
-- Economy v2: no coin pickups; 3 collectible stars per level; gems in rarity tiers 1/2/5/10 (70/22/7/1 percent); coins paid at the end = 30 + 40 per star + 5 per combo step (times region factor); 3-star replays pay 50 percent and drop no gems; revive 2 gems then 5 (max 2 per run).
+- Economy v3 (docs 22, 27): no coin pickups; 3 collectible stars per level; gems in rarity tiers 1/2/5/10 (70/22/7/1 percent) on 2.7 to 3.2 percent of rows; coins paid at the end = 70 + 60 per star + 5 per combo step (times region factor 1.00 to 1.12); replays of a 3-star level pay 50 percent and drop no gems; revive 5 gems then 10 (max 2 per run), the first can be free by rewarded ad.
 - Fonts: Lilita One (display) + Nunito Bold (body), `Assets/Resources/Fonts`.
 - Region offset `d_eff = d + offset * (1 - d)`, offset 0.0 to 0.25 across regions 1-30.
 - Endless speed: +4% per 25 floors, cap +150%. Constants in `Content/config/remote_config.json`.
 - Endless mode (owner decision 2026-10-20): "Endless" pill at the bottom of each region's level screen (shows `best N`). `EndlessTower` (Simulation) grows in 40-row chunks from a per-run seed (`GameSession.EndlessSeed`), `RunSession(repo, cfg, region, seed)`, `RunView` creates/recycles platform views on demand, HUD shows Floor N / Best N, game over has no revive. Coins: `floors/2 + 50 x (floors/100)` x region factor, 3 full-rate runs per UTC day then x0.5; best floor per region in the save. Details: `Assets/_Game/Simulation/NOTES.md`, `Assets/_Game/Economy/NOTES.md`.
-- Coins : gems : USD = 100 : 1 : about $0.011. Gem packs in `Content/economy/gem_packs.json` and coin packs (bought with gems) in `coin_packs.json`; the owner shop tables of docs/14 replace the older ladder (see the conflict list there).
+- **1 gem = 20 coins (fixed, doc 22).** Gem packs (9, 50 to 15,000 gems, $0.79 to $119.99) in `Content/economy/gem_packs.json`; coin packs (7, 1,000 to 100,000 coins for 50 to 4,000 gems) in `coin_packs.json`; power-ups 1,000 coins / 50 gems or 1,500 coins / 75 gems (`powerups.json`); chests Iron 100 gems (1 power-up + 400 to 600 coins) and Gold 300 gems (3 power-ups + 1,000 to 1,400 coins), open 10 = 10x; Subscription Weekly $1.49 and Monthly $4.99 (`subscriptions.json`); 1,000 gem-priced bundles (`bundles.json`); Rewards Main/Daily/Weekly (`rewards.json`). Chest return is validated by `ChestTests.ChestReturnIsBetween70And105PercentOfThePriceAndGoldenMaxStaysBelowIt` (70 to 105% of the Open 1 price, Golden max below its price). Daily "earn 2 stars in a level" and weekly "earn 20 stars" replaced the gem tasks, which were impossible on cleared levels. Full tables in gems, coins and dollars: `docs/27-economy-tables-from-code.md`. `remote_config.json` `coinsPerGem` is 20; the unused `vipGemsPerDay` and per-level `rewards.replayCoinPercent` were removed (RC 1, doc 28).
 - Score = floors x 10 + combo^2 x 5 (the sim score has no coins term since economy v2; doc 08 still lists "+ coins"). Floor = platform row index. Screen about 10 units wide. These are prototype values.
 
 ## Open / next

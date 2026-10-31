@@ -161,7 +161,7 @@ def make_level(r, region_id, i):
         "difficulty": d,
         "goal": goal,
         "stars": [{"type": "clear"}, {"type": "coins", "value": coin_star_target(level_id, i)}, {"type": "noRevive"}],
-        "rewards": {"coinPayout": coin_payout(i), "replayCoinPercent": 40, "gems": gem_rewards(i)},
+        "rewards": {"coinPayout": coin_payout(i), "gems": gem_rewards(i)},
     }
     return level
 
@@ -202,17 +202,14 @@ def main():
     write("economy/gem_packs.json", gem_packs())
     write("economy/coin_packs.json", coin_packs())
 
-    write("items/items.json", [{
-        "id": "boots_cloud_runner", "slot": "boots", "rarity": "rare", "bundle": "items_boots_01",
-        "sprites": {"left": "boots_cloud_runner_L", "right": "boots_cloud_runner_R"},
-        "price": {"gems": 150}, "tags": ["cloud", "season1"], "availableFrom": None, "availableTo": None}])
+    write("items/items.json", [])  # gear dropped 2026-11-01: no purchasable items for now
 
     write("config/remote_config.json", {
         "ramp": {"rampFloors": 25, "rampPercent": 4, "rampCap": 150, "playerSpeedShare": 0.5},
         "generator": {"endlessDifficultyFloors": 400, "screenWidthUnits": 10},
         "score": {"floorPoints": 10, "comboPointsMultiplier": 5, "coinPoints": 1},
-        "economy": {"coinsPerGem": 100, "replayCoinPercent": 40, "regionCoinScalePercent": 3,
-                    "vipGemsPerDay": 25, "endlessCoinDailyFullRateRuns": 3,
+        "economy": {"coinsPerGem": 20, "replayCoinPercent": 50, "regionCoinScalePercent": 3,
+                    "endlessCoinDailyFullRateRuns": 3,
                     "endlessCoinOverCapMultiplier": 0.5},
     })
     print("generated %d regions, %d levels" % (len(REGIONS), len(REGIONS) * 15))

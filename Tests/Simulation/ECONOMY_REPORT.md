@@ -7,7 +7,7 @@ play every level for a time estimate. Full per-level and per-region tables are g
 
 Assumptions: "c" is the share of placed gem value a player actually picks up (gems sit on risky spots). The bot picks up about
 80 percent on its solving line (region 1: 127 of 158) without detours, so c = 60 percent is used as the realistic human case
-(100 and 30 percent also shown). Human time = 2 x bot time (guess). Prices: revive 2 then 5 gems (max 2 per run), region skip =
+(100 and 30 percent also shown). Human time = 2 x bot time (guess). Prices: revive 5 then 10 gems (the figures below were produced with the older 2 then 5 and 100 coins per gem; the next run of `EconomyTests` regenerates `ECONOMY_TABLES.md` with 5/10 and 20) (max 2 per run), region skip =
 `unlock.gemSkip` of the next region (100, 116, 133, 150, 166). Gem tiers 1/2/5/10 gems at 70/22/7/1 percent (expected 1.59 per pickup).
 
 ## Headline numbers
@@ -22,7 +22,7 @@ Assumptions: "c" is the share of placed gem value a player actually picks up (ge
 
 - Gems per level: mean 10.7, median 10, range 0 (lvl_002_01) to 35 (lvl_003_15). 11 of 75 levels pay 2 gems or less.
 - Gems per region: 140 to 204 placed, plus about 11 milestone gems (L15 pays 10 on 3 stars; L5 and L10 add 0 to 2). Milestones are only about 6 percent of income.
-- 3-star coin payout is flat per level: (30 + 120) x region factor = 150 (region 1) to 168 (region 5), so 2250 to 2520 coins per region before combo (combo adds 5 per step; the bot line adds 53 to 516 per region). At 100 coins per gem that is 22 to 25 gem-equivalents per region.
+- 3-star coin payout is flat per level: (30 + 120) x region factor = 150 (region 1) to 168 (region 5), so 2250 to 2520 coins per region before combo (combo adds 5 per step; the bot line adds 53 to 516 per region). At the current 20 coins per gem that is 113 to 126 gem-equivalents (the generated table used 100 coins per gem when this report was written) per region.
 
 ## Time to afford a region skip by playing
 
@@ -42,7 +42,7 @@ Reading: buying the next region by play alone costs about the whole preceding re
 
 ## Do revives drain more than a player earns?
 
-Average income is 6.3 to 9.0 gems per level (c=60 percent, including milestones). A first revive (2 gems) is 22 to 32 percent of one level's income; a full revive pair (2 + 5 = 7 gems) is 0.8 to 1.1 levels of income. Occasional revives are sustainable (3.2 to 4.5 first revives per level of income), but a player who buys both revives on every run earns roughly nothing net. Gems collected in a failed run are lost (a failed run pays nothing), so a revive is the only way to keep them. A replay of a 3-star level pays no gems, so any revive there is pure cost. Conclusion: revives do not drain the typical player, they do drain a player who relies on them every run.
+Average income is 6.3 to 9.0 gems per level (c=60 percent, including milestones). A first revive (now 5 gems; this paragraph was computed with the old 2) is 22 to 32 percent of one level's income; a full revive pair (now 5 + 10 = 15 gems; computed with the old 2 + 5 = 7) is 0.8 to 1.1 levels of income. Occasional revives are sustainable (3.2 to 4.5 first revives per level of income), but a player who buys both revives on every run earns roughly nothing net. Gems collected in a failed run are lost (a failed run pays nothing), so a revive is the only way to keep them. A replay of a 3-star level pays no gems, so any revive there is pure cost. Conclusion: revives do not drain the typical player, they do drain a player who relies on them every run.
 
 ## Verdict
 
@@ -53,7 +53,7 @@ Inflow is **adequate and not inflated**: about 10 gems per level, about 160 to 2
 1. **Skip prices outgrow gem income.** Prices rise 100 to 166 by region 6 (400 by region 20 per `Economy/NOTES.md`) while gem income per region stays flat around 140 to 216 and does not scale with the region. Region 4 (0.99) and region 5 (0.91) are already near 100 percent of everything placed in the preceding region; at c=60 percent regions 2, 4 and 5 cannot be afforded from one pass of the region before them. Recommendation: either scale gem density or tier odds with region index, or accept that later skips are a purchase and not a play goal (and say so in the shop copy).
 2. **Gem farming through a 2-star loop.** Pickup gems pay in full on every replay until the level has 3 stars (`Rewards.cs` line 112), and the layout is deterministic per seed. A player can take only the gems, skip the third star and replay forever. Best case lvl_003_15: 35 gems per about 5 bot minutes (about 3.4 gems per minute with the 2x human factor), roughly double the normal 1.3 to 1.7. Recommendation: pay pickup gems only on the first clear of a level (or only the gems not yet collected, tracked per level), or cap replay gems.
 3. **Very uneven gem distribution.** 0 to 35 gems per level (median 10); the 1 percent legendary (10 gems) and 7 percent epic (5 gems) dominate variance: lvl_003_15 has 35 gems from 15 pickups, lvl_004_15 has 11 from 10. 11 of 75 levels give 2 or fewer gems, so the "gems per level" a player feels is lumpy and the L15 milestone (fixed 10) is the only guaranteed income. Recommendation: floor of about 5 placed gems per level, or move rare tiers to a fixed placement.
-4. **Content and config disagree on the 3-star replay rate.** `EconomyRules.ThreeStarReplayPercent` = 50 (owner rule), but `Content/config/remote_config.json` `economy.replayCoinPercent` = 40 and every level JSON has `replayCoinPercent` 40, and level `rewards.coinPayout` (60, 65, ...) is obsolete under v2 (the formula pays 150 at 3 stars). Remote Config will overwrite the rule if it is ever wired. Recommendation: set both to 50 or delete the unused fields.
+4. **Resolved (RC 1, 2026-11-01).** The unread per-level `rewards.replayCoinPercent` field was deleted from all level files, the model and the schema; `remote_config.json` `economy.replayCoinPercent` = 50 matches the rule `ReplayPercent` = 50. Still open: level `rewards.coinPayout` (60, 65, ...) is obsolete under v2 (the formula pays 150 at 3 stars). Remote Config would overwrite the rule if it is ever wired.
 5. **Failed runs lose their gems.** Combined with revive prices this nudges players to buy revives to bank gems (good for monetisation, risky for fairness). Worth an explicit owner decision; no change made.
-6. **Coins have no clear gem sink here.** One 3-star pass pays about 22 to 25 gem-equivalents at `coinsPerGem` 100, and a skip is 10,000 to 16,600 coin-equivalents, so if coins can ever be converted to gems the skip is trivially affordable. Confirm coins cannot buy gems.
+6. **Coins have no clear gem sink here.** One 3-star pass pays about 22 to 25 gem-equivalents at the old `coinsPerGem` 100 (now fixed to 20, RC 1), and a skip is 10,000 to 16,600 coin-equivalents, so if coins can ever be converted to gems the skip is trivially affordable. Confirm coins cannot buy gems.
 7. **Minor.** `Economy/NOTES.md` item 6 says hidden gems pay no wallet gems, but `Rewards.cs` pays +1 gem on the first clear of a level with a hidden gem (not counted in the tables above); NOTES is stale. The human-time factor (2x) is a guess; real play-test timings would sharpen the time-to-afford figures.

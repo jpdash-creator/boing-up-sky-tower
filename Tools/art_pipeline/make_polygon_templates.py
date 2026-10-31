@@ -3,8 +3,6 @@
     PYTHONPATH=E:/pylibs python Tools/art_pipeline/make_polygon_templates.py [out_dir]
 
 Character templates (one part group per image, so the model fills exactly that shape): char_head, char_body, char_hands, char_legs, char_back.
-Gear templates (three variants side by side, one slot per image): gear_head, gear_body (body + the two hands, sleeves go on the upper part of the hands),
-gear_boots (the two legs with feet, boots go on the feet and ankle).
 polygons.json records, per template image and per cell, the scale and offset that map the assembled doll (canvas 1365 x 1649) into that image, so a cut
 part can be placed back exactly (assembled = (sheet - offset) / scale).
 """
@@ -36,7 +34,6 @@ GROUPS = {
     "char_legs":  ["legL", "legR", "footL", "footR"],
     "char_back":  ["back"],
 }
-GEAR = {"gear_head": ["head"], "gear_body": ["body", "handL", "handR"], "gear_boots": ["legL", "legR", "footL", "footR"]}
 
 
 def bbox(names):
@@ -86,22 +83,6 @@ def main():
         draw_group(ImageDraw.Draw(img), parts, s, ox, oy)
         img.save(os.path.join(out, name + ".png"))
         meta["templates"][name] = {"parts": parts, "cells": [{"scale": s, "offset": [ox, oy]}]}
-    # gear: three cells side by side
-    for name, parts in GEAR.items():
-        bx0, by0, bx1, by1 = bbox(parts)
-        gw, gh = bx1 - bx0, by1 - by0
-        cw = SW / 3
-        s = min(cw * 0.86 / gw, SH * 0.80 / gh)
-        img = Image.new("RGB", (SW, SH), MAGENTA)
-        d = ImageDraw.Draw(img)
-        cells = []
-        for i in range(3):
-            ox = i * cw + (cw - gw * s) / 2 - bx0 * s
-            oy = (SH - gh * s) / 2 - by0 * s
-            draw_group(d, parts, s, ox, oy)
-            cells.append({"scale": s, "offset": [ox, oy]})
-        img.save(os.path.join(out, name + ".png"))
-        meta["templates"][name] = {"parts": parts, "cells": cells}
     json.dump(meta, open(os.path.join(out, "polygons.json"), "w"), indent=2)
     print("wrote", out)
 

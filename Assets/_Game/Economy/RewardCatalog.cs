@@ -24,9 +24,9 @@ namespace BoingUpSkyTower.Economy
         public const string Hard = "hard";              // levels played on difficulty 3 (Hard) or more
         public const string NoWall = "noWall";          // no-wall-touch level (level 7) cleared
         public const string GemLevel = "gemLevel";      // gem levels (8 and 15) cleared
-        public const string AllGems = "allGems";        // levels cleared with every gem pickup of the level collected
+        public const string Stars2 = "stars2";          // levels cleared with 2 or more stars (works on replays: star pickups are not stripped)
         public const string PowerUps = "powerups";      // power-up units used
-        public const string Gems = "gems";              // gems collected in levels
+        public const string StarsEarned = "starsEarned"; // stars earned in completed levels (sum of the star count of each counted clear)
         public const string Stars3 = "stars3";          // 3-star clears
         public const string Replays = "replays";        // day: replays of already cleared levels that were counted (at most MaxCountedReplaysPerDay)
         public const string LoginMask = "loginMask";    // week: bit 0 = Monday ... bit 6 = Sunday
@@ -117,7 +117,7 @@ namespace BoingUpSkyTower.Economy
             new object[] { "d_hard", "Play a hard level", RewardStat.Hard, 1 },
             new object[] { "d_nowall", "Clear the no-wall level", RewardStat.NoWall, 1 },
             new object[] { "d_gemlevel", "Clear a gem level", RewardStat.GemLevel, 1 },
-            new object[] { "d_allgems", "Collect all gems in a level", RewardStat.AllGems, 1 },
+            new object[] { "d_stars2", "Earn 2 stars in a level", RewardStat.Stars2, 1 },
             new object[] { "d_powerup", "Use a power-up", RewardStat.PowerUps, 1 },
         };
 
@@ -138,7 +138,7 @@ namespace BoingUpSkyTower.Economy
             new object[] { "w_combos25", "Do 25 combos", RewardStat.Combos, 25, 20, 0, 0 },
             new object[] { "w_combos50", "Do 50 combos", RewardStat.Combos, 50, 0, 0, 1 },
             new object[] { "w_levels15", "Clear 15 levels", RewardStat.Levels, 15, 40, 0, 0 },
-            new object[] { "w_gems30", "Collect 30 gems in levels", RewardStat.Gems, 30, 0, 1000, 0 },
+            new object[] { "w_stars20", "Earn 20 stars in levels", RewardStat.StarsEarned, 20, 0, 1000, 0 },
             new object[] { "w_nowall", "Clear the no-wall level", RewardStat.NoWall, 1, 15, 0, 0 },
             new object[] { "w_stars3", "Earn 3 stars on 5 levels", RewardStat.Stars3, 5, 25, 0, 0 },
         };

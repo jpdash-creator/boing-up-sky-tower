@@ -19,8 +19,8 @@ namespace BoingUpSkyTower.Simulation.Tests
         public const int Regions = 5;
         // Economy v3 constants (Rewards.cs EconomyRules, issue list 24 point 6).
         const int ClearCoins = CoinPayoutRules.ClearCoins, StarCoins = CoinPayoutRules.StarCoins;
-        // Revive prices (RunSession.ReviveCostFor): 2 then 5, max 2 per run.
-        const int Revive1 = 2, Revive2 = 5;
+        // Revive prices (RunSession.ReviveCostFor): 5 then 10, max 2 per run.
+        const int Revive1 = 5, Revive2 = 10;
         // Assumption: a human needs this many times the bot's tick count for the same level (bot plays near-optimally).
         const double HumanTimeFactor = 2.0;
 
@@ -207,14 +207,14 @@ namespace BoingUpSkyTower.Simulation.Tests
                 sb.AppendLine();
                 sb.AppendLine("## Revive drain per region (c=60%)");
                 sb.AppendLine();
-                sb.AppendLine("A run pays " + Revive1 + " then " + Revive2 + " gems (7 for both). 'Sustainable first revives per level' = average gems earned per level / " + Revive1 + ". A replay of a 3-star level pays no gems, so revives there are pure loss.");
+                sb.AppendLine("A run pays " + Revive1 + " then " + Revive2 + " gems (" + (Revive1 + Revive2) + " for both). 'Sustainable first revives per level' = average gems earned per level / " + Revive1 + ". A replay of a 3-star level pays no gems, so revives there are pure loss.");
                 sb.AppendLine();
-                sb.AppendLine("| Region | Avg gems per level | Sustainable first revives per level | Levels of income one 2+5 revive pair costs |");
+                sb.AppendLine("| Region | Avg gems per level | Sustainable first revives per level | Levels of income one 5+10 revive pair costs |");
                 sb.AppendLine("|---|---|---|---|");
                 for (int g = 1; g <= Regions; g++)
                 {
                     double per = (0.6 * placed[g] + mile[g]) / n[g];
-                    sb.AppendLine("| " + g + " | " + per.ToString("F2") + " | " + (per / Revive1).ToString("F2") + " | " + (7.0 / Math.Max(per, 0.001)).ToString("F1") + " |");
+                    sb.AppendLine("| " + g + " | " + per.ToString("F2") + " | " + (per / Revive1).ToString("F2") + " | " + ((double)(Revive1 + Revive2) / Math.Max(per, 0.001)).ToString("F1") + " |");
                 }
 
                 sb.AppendLine();

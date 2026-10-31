@@ -47,7 +47,11 @@ namespace BoingUpSkyTower.Gameplay
         public static bool TestPurchasesEnabled { get { return TestPurchasesOverride ?? GameSettings.SystemTest; } }
 
         // Layout (reference pixels). Cards are anchored by fractions of the content width.
-        const float CardGap = 14f, ColGap = 16f, PowerCardH = 710f, ButtonH = 126f;
+        const float CardGap = 14f, ColGap = 16f, ButtonH = 126f;
+        // Power-up card (gold like the coin and gem cards): a face with the (i), the icon, the name and the count, then a dark strip with the two price buttons.
+        const float PowerStripH = 20f + ButtonH + 10f + ButtonH + 12f;
+        static float PowerFaceH { get { return 262f + (Mathf.Max(1f, UiKit.TextScale) - 1f) * 200f; } }
+        static float PowerCardH { get { return PowerFaceH + PowerStripH; } }
 
         static readonly Color PromoPriceColor = new Color(0.02f, 0.30f, 0.15f, 1f);          // deep green on the gold card (about 6:1)
         static readonly Color OnBlue = new Color(0.86f, 0.93f, 1f, 1f);                       // secondary text on the blue power-up cards
@@ -126,13 +130,6 @@ namespace BoingUpSkyTower.Gameplay
             if (StarText != null) UiKit.SetText(StarText, ShopChrome.TotalStars(progress).ToString());
         }
 
-        static ShopChrome.RibbonColor RibbonFor(int tab)
-        {
-            if (tab == TabChests) return ShopChrome.RibbonColor.Red;
-            if (tab == TabPowerups) return ShopChrome.RibbonColor.Blue;
-            return ShopChrome.RibbonColor.Yellow;
-        }
-
         void RebuildBody()
         {
             if (page != null)
@@ -146,8 +143,7 @@ namespace BoingUpSkyTower.Gameplay
                 UnityEngine.Object.Destroy(bar.gameObject);
             }
             treasure = null;
-            string title = Tab == TabChests ? "CHEST" : ShopChrome.TabNames[Tab].ToUpperInvariant();
-            body = ShopChrome.BuildBody(screen, title, RibbonFor(Tab));
+            body = ShopChrome.BuildBody(screen, ShopChrome.TabNames[Tab], ShopChrome.RibbonColor.Yellow);   // same yellow italic header on every page
             page = (RectTransform)body.parent;
             switch (Tab)
             {
@@ -253,54 +249,72 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>One power-up card: icon (the (i) button gives the description), name, owned count and one price button per currency.</summary>
+        /// <summary>
+        /// One power-up card in the coin and gem card colours: a gold face with the (i) at the top left, the icon centred in the face, the name and the owned
+        /// count under it, and a dark strip along the bottom with one green coins and one yellow gems button.
+        /// </summary>
         void BuildPowerUpCard(RectTransform list, float y, int col, int cols, float offsetCols, PowerUpDef def)
         {
-            RectTransform crt = ShopChrome.Card(list, "Panel", ShopChrome.FrameColor.Blue);
+            RectTransform crt = ShopChrome.Card(list, "Panel", ShopChrome.FrameColor.Gold);
             Transform card = crt;
             PlaceCell(crt, y, col, cols, PowerCardH, offsetCols);
+            float k = Mathf.Max(1f, UiKit.TextScale) - 1f;
+            float nameH = 60f + k * 100f;
 
-            // The (i) button sits at the top right of the card (a full 48 dp target); the icon starts below it so they never overlap.
-            Image icon = PowerUpUi.AddIcon(card, "Icon", def.Type, new Vector2(0.5f, 1f), new Vector2(0f, -(UiKit.MinTouchPx + 6f)), 120f, false);
+            Image strip = ToyKit.Sliced(card, "Fill", Theme.RoundSprite, 26f);
+            strip.color = new Color(0.66f, 0.36f, 0.08f, 1f);
+            strip.rectTransform.anchorMin = new Vector2(0f, 0f);
+            strip.rectTransform.anchorMax = new Vector2(1f, 0f);
+            strip.rectTransform.pivot = new Vector2(0.5f, 0f);
+            strip.rectTransform.offsetMin = new Vector2(9f, 9f);
+            strip.rectTransform.offsetMax = new Vector2(-9f, 9f + PowerStripH);
+
+            // the icon, centred across the face (the (i) sits at the top left, clear of it)
+            Image icon = PowerUpUi.AddIcon(card, "Icon", def.Type, new Vector2(0.5f, 1f), new Vector2(0f, -12f), 110f, false);
             icon.rectTransform.pivot = new Vector2(0.5f, 1f);
             icon.raycastTarget = false;
             AddInfoButton(card, def.Name, def.Description + "\nYou can own and use as many as you like.");
-            Text name = UiKit.AddText(card, "Name", def.Name, 36, Color.white, TextAnchor.MiddleCenter, true);
+            Text name = UiKit.AddText(card, "Name", def.Name, 36, Theme.Ink, TextAnchor.MiddleCenter, true);
+            DropOutline(name);
             name.horizontalOverflow = HorizontalWrapMode.Overflow;
             name.rectTransform.anchorMin = new Vector2(0f, 1f);
             name.rectTransform.anchorMax = new Vector2(1f, 1f);
             name.rectTransform.pivot = new Vector2(0.5f, 1f);
-            name.rectTransform.offsetMin = new Vector2(6f, -(UiKit.MinTouchPx + 6f + 120f + 74f));
-            name.rectTransform.offsetMax = new Vector2(-6f, -(UiKit.MinTouchPx + 6f + 120f + 2f));
+            name.rectTransform.offsetMin = new Vector2(6f, -(128f + nameH));
+            name.rectTransform.offsetMax = new Vector2(-6f, -128f);
 
             int owned = progress.PowerUpCount(def.Id);
             bool justBought = def.Id == lastBoughtId;
-            Text own = UiKit.AddText(card, "Owned", (justBought ? "Bought! " : "x") + owned, 36, justBought ? new Color(1f, 0.92f, 0.5f) : OnBlue, TextAnchor.MiddleCenter, true);
+            Text own = UiKit.AddText(card, "Owned", (justBought ? "Bought! " : "x") + owned, 36, justBought ? PromoPriceColor : Theme.Ink, TextAnchor.MiddleCenter, true);
             DropOutline(own);
-            UiKit.Place((RectTransform)own.transform, new Vector2(0.5f, 1f), new Vector2(0f, -(UiKit.MinTouchPx + 6f + 120f + 84f)), new Vector2(300f, 72f));
+            own.horizontalOverflow = HorizontalWrapMode.Overflow;
+            own.rectTransform.anchorMin = new Vector2(0f, 1f);
+            own.rectTransform.anchorMax = new Vector2(1f, 1f);
             own.rectTransform.pivot = new Vector2(0.5f, 1f);
+            own.rectTransform.offsetMin = new Vector2(6f, -(130f + nameH * 2f));
+            own.rectTransform.offsetMax = new Vector2(-6f, -(130f + nameH));
 
-            BottomButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 18f, 18f);
+            BottomButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 20f, 22f);
             if (def.GemPrice > 0)
-                BottomButton(crt, "BuyGems", 0, art != null ? art.GemIcon : null, Num(def.GemPrice), "Buy " + def.Name + " for " + Num(def.GemPrice) + " gems", () => TapBuyPowerUp(def, PowerUpCurrency.Gems), 18f + ButtonH + 10f, 18f);
+                BottomButton(crt, "BuyGems", 0, art != null ? art.GemIcon : null, Num(def.GemPrice), "Buy " + def.Name + " for " + Num(def.GemPrice) + " gems", () => TapBuyPowerUp(def, PowerUpCurrency.Gems), 20f + ButtonH + 10f, 22f);
         }
 
-        /// <summary>The (i) info button at the top right of a power-up card: a transparent 48 dp target with a small circled i drawn in it.</summary>
+        /// <summary>The (i) info button at the top LEFT of a power-up card: a 48 dp target with a small circled i drawn at its top left corner.</summary>
         void AddInfoButton(Transform card, string title, string body)
         {
             Image hit = UiKit.AddImage(card, "Info", null, new Color(0f, 0f, 0f, 0f));
-            hit.rectTransform.anchorMin = hit.rectTransform.anchorMax = new Vector2(1f, 1f);
-            hit.rectTransform.pivot = new Vector2(1f, 1f);
-            hit.rectTransform.anchoredPosition = new Vector2(-10f, -10f);
+            hit.rectTransform.anchorMin = hit.rectTransform.anchorMax = new Vector2(0f, 1f);
+            hit.rectTransform.pivot = new Vector2(0f, 1f);
+            hit.rectTransform.anchoredPosition = new Vector2(4f, -4f);
             hit.rectTransform.sizeDelta = new Vector2(UiKit.MinTouchPx, UiKit.MinTouchPx);
             MakeInfo(hit, title, body);
-            Image ring = UiKit.AddImage(hit.transform, "Ring", Glyphs.Ring, OnBlue);
+            Image ring = UiKit.AddImage(hit.transform, "Ring", Glyphs.Ring, Theme.Ink);
             ring.raycastTarget = false;
-            ring.rectTransform.anchorMin = ring.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            ring.rectTransform.anchorMin = ring.rectTransform.anchorMax = new Vector2(0f, 1f);
             ring.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            ring.rectTransform.anchoredPosition = Vector2.zero;
-            ring.rectTransform.sizeDelta = new Vector2(56f, 56f);
-            Text i = UiKit.AddText(ring.transform, "I", "i", 28, OnBlue, TextAnchor.MiddleCenter, true);
+            ring.rectTransform.anchoredPosition = new Vector2(34f, -34f);
+            ring.rectTransform.sizeDelta = new Vector2(50f, 50f);
+            Text i = UiKit.AddText(ring.transform, "I", "i", 28, Theme.Ink, TextAnchor.MiddleCenter, true);
             i.raycastTarget = false;
             i.GetComponent<Outline>().enabled = false;
             UiKit.Stretch((RectTransform)i.transform);

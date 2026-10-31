@@ -20,7 +20,7 @@ Build `RunOutcome` from the finished `SimState`: `StarMask = StarEvaluator.Earne
 - Region 1 is always unlocked; clearing level 15 unlocks the next region if it is playable.
 - Gem skip: pay `unlock.gemSkip` (region 2 = 100 ... region 20 = 400) to unlock the NEXT locked region without clearing the previous one.
 - Teaser regions can never be entered. `playableRegionLimit` (5 for this milestone) restricts live regions in the build; content still marks regions 6-20 live.
-- Coins: end-of-level payout = base * region coinFactor, plus a star bonus, reduced to the level's `replayCoinPercent` (40) on replays. In-run pickups always pay in full.
+- Coins: end-of-level payout = base * region coinFactor, plus a star bonus, reduced to the replay percent (50, `EconomyRules.ReplayPercent`; `remote_config.json` `economy.replayCoinPercent`) once the level has 3 stars. In-run pickups always pay in full.
 - Gems: normal levels only from in-run gem pickups. Milestones: L5 and L10 roll the content chance (25 percent for 1-3 gems) on first clear, L10 guarantees 1; L15 first clear gives 5 plus a star bonus (+2 for two stars, +5 for three), replays 50 percent for 2. Rolls use the Simulation `Rng` seeded from the level seed and the clear count, so a server can recompute them.
 - Level N unlocks when level N-1 of the same region is cleared. Best stars use the union of earned star bits; score keeps the maximum.
 

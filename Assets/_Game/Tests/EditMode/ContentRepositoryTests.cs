@@ -36,11 +36,11 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(15, lv.Count, reg.Id);
                 for (int i = 0; i < 15; i++) Assert.AreEqual(i + 1, lv[i].Index, reg.Id);
             }
-            Assert.IsNotEmpty(Repo.Items);
+            Assert.IsNotNull(Repo.Items); // gear dropped 2026-11-01: the item list is empty by design
             Assert.IsNotEmpty(Repo.GemPacks);
             Assert.IsNotEmpty(Repo.Modules);
             Assert.AreEqual(25, Repo.RemoteConfig.Ramp.RampFloors);
-            Assert.AreEqual(100, Repo.RemoteConfig.Economy.CoinsPerGem);
+            Assert.AreEqual(20, Repo.RemoteConfig.Economy.CoinsPerGem);
         }
 
         [Test]

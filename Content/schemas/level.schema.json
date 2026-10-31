@@ -46,11 +46,10 @@
     },
     "rewards": {
       "type": "object",
-      "required": ["coinPayout", "replayCoinPercent", "gems"],
+      "required": ["coinPayout", "gems"],
       "additionalProperties": false,
       "properties": {
         "coinPayout": {"type": "integer", "minimum": 0},
-        "replayCoinPercent": {"type": "integer", "minimum": 0, "maximum": 100},
         "gems": {
           "type": "object",
           "required": ["chance", "min", "max"],

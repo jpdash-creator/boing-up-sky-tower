@@ -46,6 +46,32 @@ namespace BoingUpSkyTower.Tests
             Simulate(ChestKind.Golden, 1000, 1400, 3, GoldenReferenceGems);
         }
 
+        /// <summary>Doc 22 section 4.5 validator: chest return 70 to 105 percent of the gem price (Open 1), and the best Golden roll never beats its price.</summary>
+        [Test]
+        public void ChestReturnIsBetween70And105PercentOfThePriceAndGoldenMaxStaysBelowIt()
+        {
+            List<PowerUpDef> types = Types();
+            double avgPowerUpGems = 0.0, maxPowerUpGems = 0.0;
+            foreach (PowerUpDef d in types)
+            {
+                double v = (double)d.CoinPrice / CoinsPerGem;
+                avgPowerUpGems += v / types.Count;
+                if (v > maxPowerUpGems) maxPowerUpGems = v;
+            }
+            Assert.AreEqual(60.71, avgPowerUpGems, 0.01, "average value of one random power-up in gems");
+
+            foreach (ChestKind kind in new[] { ChestKind.Iron, ChestKind.Golden })
+            {
+                double avgCoins = (ChestRolls.MinCoins(kind) + ChestRolls.MaxCoins(kind)) / 2.0;
+                double averageGems = avgCoins / CoinsPerGem + ChestRolls.PowerUpCount(kind) * avgPowerUpGems;
+                double ratio = averageGems / ChestRolls.Price(kind, 1);
+                Assert.That(ratio, Is.InRange(0.70, 1.05), kind + " chest return (average gems / Open 1 price)");
+            }
+
+            double goldenMax = ChestRolls.MaxCoins(ChestKind.Golden) / (double)CoinsPerGem + ChestRolls.PowerUpCount(ChestKind.Golden) * maxPowerUpGems;
+            Assert.Less(goldenMax, ChestRolls.Price(ChestKind.Golden, 1), "best possible Golden chest is still below its price");
+        }
+
         static void Simulate(ChestKind kind, int minCoins, int maxCoins, int units, double referenceGems)
         {
             List<PowerUpDef> types = Types();

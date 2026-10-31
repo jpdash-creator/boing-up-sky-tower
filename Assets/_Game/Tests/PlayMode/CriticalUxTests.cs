@@ -577,6 +577,7 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("rewards-main", () => meta.ShowRewards(RewardTab.Main), problems);
             yield return CheckScreen("rewards-daily", () => meta.ShowRewards(RewardTab.Daily), problems);
             yield return CheckScreen("rewards-weekly", () => meta.ShowRewards(RewardTab.Weekly), problems);
+            yield return CheckScreen("rewards-main-region3", () => { meta.ShowRewards(RewardTab.Main); meta.CurrentRewards.SelectRegion(3); }, problems);   // a locked region: lock on the circle, empty bar
             yield return CheckScreen("rewards-claim-card", () =>
             {
                 meta.ShowRewards(RewardTab.Daily);
@@ -730,8 +731,8 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("bundles-not-enough-gems-popup", () => { ShowBundlesPage(0, 0); ClickByName("Buy"); }, problems);
             yield return CheckScreen("bundles-confirm-popup", () => { ShowBundlesPage(5000, 0); ClickByName("Buy"); }, problems);
             yield return CheckScreen("bundles-bought-popup", () => { ShowBundlesPage(5000, 0); ClickByName("Buy"); ClickByName("Buy for"); }, problems);
-            yield return CheckScreen("bundles-refresh-popup", () => { ShowBundlesPage(5000, 500); ClickByName("Refresh"); }, problems);
-            yield return CheckScreen("bundles-refresh-popup-broke", () => { ShowBundlesPage(0, 0); ClickByName("Refresh"); }, problems);
+            yield return CheckScreen("bundles-refreshed-with-coins", () => { ShowBundlesPage(5000, 500); ClickByName("RefreshCoins"); }, problems);
+            yield return CheckScreen("bundles-refresh-toast-broke", () => { ShowBundlesPage(0, 0); ClickByName("RefreshGems"); }, problems);
             DropBundlesCanvas();
             MetaUiActive(true);
 

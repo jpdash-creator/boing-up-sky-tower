@@ -24,7 +24,7 @@ Cute, glossy, neon-rimmed chibi world art (OpenArt generated, locked style bible
 
 ## Operating Context
 
-One thumb on a 6 to 6.8 inch phone, often outdoors or in transit, sound often off, interrupted by calls and notifications (the game must pause). Screens: main menu, world map (scrollable, 30 region pins), level select (15 levels, stars), level popup, run HUD, pause/fail/results overlays, settings, shop (4 tabs), later character and inventory screens.
+One thumb on a 6 to 6.8 inch phone, often outdoors or in transit, sound often off, interrupted by calls and notifications (the game must pause). Screens: main menu, world map (scrollable, 30 region pins), level select (15 levels, stars), level popup, run HUD, pause/fail/results overlays, settings, shop (5 tabs: Bundles, Chests, Power-ups, Coins, Gems, plus a Subscription button), Rewards (Main, Daily, Weekly), Heroes (characters).
 
 ## Capabilities and Constraints
 
@@ -32,7 +32,7 @@ One thumb on a 6 to 6.8 inch phone, often outdoors or in transit, sound often of
 - The OpenArt art that the owner picked is good and stays (backgrounds, map, level nodes, map pins, currency icons, character, popup frame, close icon, platform sets). The redesign is of the UI chrome around it: surfaces, buttons, tabs, typography, spacing, motion.
 - Fonts: Lilita One (display) and Nunito Bold (body), already in the game.
 - OpenArt credits are never spent without the owner's explicit approval per batch.
-- Shop and monetisation follow docs/14 and docs/15; the audience includes children, so no manipulative patterns, clear prices, confirmations for gem spends.
+- Shop and monetisation follow docs/22, docs/26 and the economy tables of docs/27 (docs/14 and docs/15 are older); the audience includes children, so no manipulative patterns, clear prices, confirmations for gem spends.
 
 ## Brand Commitments
 

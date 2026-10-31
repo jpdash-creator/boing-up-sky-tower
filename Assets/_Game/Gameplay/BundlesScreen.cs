@@ -23,8 +23,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Chips per row: 5 chips (one of them the wider coin chip) are 740 px wide, which fits the narrowest supported canvas (9:21).</summary>
         public const int ChipsPerRow = 5;
 
-        const float CardPad = 26f, IconSize = 140f, NameH = 184f, PriceW = 250f, PriceH = ShopChrome.PriceButtonH;
-        const float CardGap = 22f, RefreshRowH = 140f;
+        const float CardPad = 26f, IconSize = 140f, NameH = 140f, PriceW = 380f, PriceH = ShopChrome.PriceButtonH, StripH = ShopChrome.PriceButtonH + 22f;
+        const float CardGap = 22f, RefreshRowH = 140f, RefreshBtnW = 190f;
 
         static readonly Color ChipFrame = new Color(0.42f, 0.24f, 0.10f, 1f);
         static readonly Color ChipFill = new Color(0.99f, 0.95f, 0.84f, 1f);
@@ -159,45 +159,56 @@ namespace BoingUpSkyTower.Gameplay
             return sb.ToString();
         }
 
+        /// <summary>Height of a bundle card: name row, chips, then the dark price strip (like the Coins and Gems pages).</summary>
+        public static float CardHeight(BundleDef def)
+        {
+            return CardPad + NameH + 14f + ChipBlockHeight(ChipRows(def)) + 14f + StripH + 9f;
+        }
+
         /// <summary>
-        /// One bundle card (frame, bag icon, name, chips, green price button) placed at the top of <paramref name="parent"/> from y, full width.
-        /// Returns the card height. <paramref name="price"/> is the gem price shown (the list price on the page).
+        /// One bundle card in the Coins and Gems page look (gold card, dark strip along the bottom with the green price button) placed at the top of
+        /// <paramref name="parent"/> from y, full width. Returns the card height. <paramref name="price"/> is the gem price shown.
         /// </summary>
         public static float AddCard(RectTransform parent, BundleDef def, ArtCatalog art, float y, int price, Action onBuy)
         {
-            int rows = ChipRows(def);
             float chipTop = CardPad + NameH + 14f;
-            float h = chipTop + ChipBlockHeight(rows) + CardPad;
-            ShopChrome.FrameColor frame = def.Tier <= 1 ? ShopChrome.FrameColor.Blue : ShopChrome.FrameColor.Gold;
-            bool dark = frame == ShopChrome.FrameColor.Blue;   // dark card: white names; gold card: ink names
+            float h = CardHeight(def);
 
-            RectTransform card = ShopChrome.Card(parent, "Bundle_" + def.Id, frame);
+            RectTransform card = ShopChrome.Card(parent, "Bundle_" + def.Id, ShopChrome.FrameColor.Gold);
             card.anchorMin = new Vector2(0f, 1f);
             card.anchorMax = new Vector2(1f, 1f);
             card.pivot = new Vector2(0.5f, 1f);
             card.anchoredPosition = new Vector2(0f, -y);
             card.sizeDelta = new Vector2(0f, h);
 
+            Image strip = ToyKit.Sliced(card, "Fill", Theme.RoundSprite, 26f);
+            strip.color = new Color(0.66f, 0.36f, 0.08f, 1f);
+            strip.rectTransform.anchorMin = new Vector2(0f, 0f);
+            strip.rectTransform.anchorMax = new Vector2(1f, 0f);
+            strip.rectTransform.pivot = new Vector2(0.5f, 0f);
+            strip.rectTransform.offsetMin = new Vector2(9f, 9f);
+            strip.rectTransform.offsetMax = new Vector2(-9f, 9f + StripH);
+
             float icon = IconSize + (Mathf.Clamp(def.Tier, 1, 3) - 2) * 14f;   // the bag grows with the tier
             Image bag = UiKit.AddImage(card, "Bag", BagIcon(art), Color.white);
             bag.preserveAspect = true;
             UiKit.Place(bag.rectTransform, new Vector2(0f, 1f), new Vector2(CardPad, -CardPad - (IconSize - icon) * 0.5f), new Vector2(icon, icon));
 
-            Text name = UiKit.AddText(card, "Name", def.Name, 48, dark ? Color.white : UiKit.PanelInk, TextAnchor.MiddleLeft, true);
-            if (!dark) UiKit.OnPanel(name);
+            Text name = UiKit.AddText(card, "Name", def.Name, 52, UiKit.PanelInk, TextAnchor.MiddleLeft, true);
+            UiKit.OnPanel(name);
             var nrt = (RectTransform)name.transform;
             nrt.anchorMin = new Vector2(0f, 1f);
             nrt.anchorMax = new Vector2(1f, 1f);
             nrt.pivot = new Vector2(0f, 1f);
             nrt.offsetMin = new Vector2(CardPad + IconSize + 34f, -(CardPad + NameH));
-            nrt.offsetMax = new Vector2(-(CardPad + PriceW + 14f), -CardPad);
+            nrt.offsetMax = new Vector2(-CardPad, -CardPad);
 
             string a11y = "Buy " + def.Name + " for " + Num(price) + " gems: " + Describe(def, ", ");
             Button buy = ShopChrome.PriceButton(card, "Buy", 1, art != null ? art.GemIcon : null, Num(price), a11y, onBuy, 44);
             var brt = (RectTransform)buy.transform;
-            brt.anchorMin = brt.anchorMax = new Vector2(1f, 1f);
-            brt.pivot = new Vector2(1f, 1f);
-            brt.anchoredPosition = new Vector2(-CardPad, -(CardPad + (NameH - PriceH) * 0.5f));
+            brt.anchorMin = brt.anchorMax = new Vector2(0.5f, 0f);
+            brt.pivot = new Vector2(0.5f, 0f);
+            brt.anchoredPosition = new Vector2(0f, 9f + (StripH - PriceH) * 0.5f);
             brt.sizeDelta = new Vector2(PriceW, PriceH);
 
             AddChips(card, def, art, CardPad, chipTop);
@@ -222,27 +233,36 @@ namespace BoingUpSkyTower.Gameplay
             var heights = new float[offers.Count];
             for (int i = 0; i < offers.Count; i++)
             {
-                heights[i] = CardPad + NameH + 14f + ChipBlockHeight(ChipRows(offers[i])) + CardPad;
+                heights[i] = CardHeight(offers[i]);
                 total += heights[i] + CardGap;
             }
             total += 20f;
             RectTransform list = ShopChrome.ScrollArea(body, total);
 
             // top row: a caption on the left, the Refresh button on the right
-            Text cap = UiKit.AddText(list, "Caption", "Today's bundles", 52, Color.white, TextAnchor.MiddleLeft, true);
+            Text cap = UiKit.AddText(list, "Caption", "Today's bundles", 44, Color.white, TextAnchor.MiddleLeft, true);
             var crt = (RectTransform)cap.transform;
             crt.anchorMin = new Vector2(0f, 1f);
             crt.anchorMax = new Vector2(1f, 1f);
             crt.pivot = new Vector2(0f, 1f);
             crt.offsetMin = new Vector2(8f, -RefreshRowH);
-            crt.offsetMax = new Vector2(-(300f + 24f), 0f);
-            Button refresh = UiKit.AddButton(list, "Refresh", "Refresh", ToyKit.Button(0), Color.white, new Vector2(300f, RefreshRowH - 10f), () => OpenRefresh(body, progress, art, host, refreshWallet), 44);
-            refresh.GetComponent<A11yLabel>().Text = "Refresh bundles, costs " + ProgressService.BundleRefreshCoins + " coins or " + ProgressService.BundleRefreshGems + " gems";
-            var rrt = (RectTransform)refresh.transform;
-            rrt.anchorMin = rrt.anchorMax = new Vector2(1f, 1f);
-            rrt.pivot = new Vector2(1f, 1f);
-            rrt.anchoredPosition = new Vector2(-8f, -5f);
-            rrt.sizeDelta = new Vector2(300f, RefreshRowH - 10f);
+            crt.offsetMax = new Vector2(-(2f * RefreshBtnW + 16f + 8f + 16f), 0f);
+            for (int k = 0; k < 2; k++)
+            {
+                bool withCoins = k == 1;
+                int cost = withCoins ? ProgressService.BundleRefreshCoins : ProgressService.BundleRefreshGems;
+                bool can = withCoins ? progress.Coins >= cost : progress.Gems >= cost;
+                string unit = withCoins ? "coins" : "gems";
+                Sprite coin = art != null ? art.CoinIcon : null, gem = art != null ? art.GemIcon : null;
+                Button rb = ShopChrome.PriceButton(list, withCoins ? "RefreshCoins" : "RefreshGems", withCoins ? 0 : 1, withCoins ? coin : gem,
+                    cost.ToString(), "Show 6 other bundles for " + cost + " " + unit, () => TapRefresh(body, progress, art, host, refreshWallet, withCoins, cap), 44);
+                if (!can) rb.GetComponent<Image>().color = new Color(0.55f, 0.55f, 0.55f, 1f);   // dimmed: cannot pay now (the tap explains why)
+                var rrt = (RectTransform)rb.transform;
+                rrt.anchorMin = rrt.anchorMax = new Vector2(1f, 1f);
+                rrt.pivot = new Vector2(1f, 1f);
+                rrt.anchoredPosition = new Vector2(-8f - (withCoins ? 0f : RefreshBtnW + 16f), -5f);
+                rrt.sizeDelta = new Vector2(RefreshBtnW, RefreshRowH - 10f);
+            }
 
             float y = RefreshRowH + CardGap;
             for (int i = 0; i < offers.Count; i++)
@@ -318,34 +338,53 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- refresh ----------------
 
-        static void OpenRefresh(RectTransform body, ProgressService progress, ArtCatalog art, ShopScreen.Host host, Action refreshWallet)
-        {
-            bool canCoins = progress.Coins >= ProgressService.BundleRefreshCoins;
-            bool canGems = progress.Gems >= ProgressService.BundleRefreshGems;
-            string text = "Show 6 other bundles.\nYou have " + Num(progress.Coins) + " coins and " + Num(progress.Gems) + " gems."
-                          + (canCoins || canGems ? "" : "\nYou need " + ProgressService.BundleRefreshCoins + " coins or " + ProgressService.BundleRefreshGems + " gems.");
-            host.OpenPopup("New bundles", text, 1300f);
-            Button coins = host.PopupButton("Pay " + ProgressService.BundleRefreshCoins + " coins", true, 400f, () => DoRefresh(body, progress, art, host, refreshWallet, true));
-            Button gems = host.PopupButton("Pay " + ProgressService.BundleRefreshGems + " gems", false, 230f, () => DoRefresh(body, progress, art, host, refreshWallet, false));
-            if (coins != null) coins.interactable = canCoins;
-            if (gems != null) gems.interactable = canGems;
-            host.PopupButton("Cancel", false, 60f, host.ClosePopup);
-        }
-
-        static void DoRefresh(RectTransform body, ProgressService progress, ArtCatalog art, ShopScreen.Host host, Action refreshWallet, bool withCoins)
+        static void TapRefresh(RectTransform body, ProgressService progress, ArtCatalog art, ShopScreen.Host host, Action refreshWallet, bool withCoins, Text caption)
         {
             BundleResult r = progress.RefreshBundleOffers(withCoins);
-            host.ClosePopup();
             if (r == BundleResult.Ok)
             {
                 AudioManager.Play(Sfx.Tap);
                 if (refreshWallet != null) refreshWallet();
                 Build(body, progress, art, host, refreshWallet);
+                return;
             }
-            else
+            // nothing was spent: a short message in the caption's place
+            BundleToast.Show(caption, r == BundleResult.NotEnoughCoins ? "Not enough coins" : (r == BundleResult.NotEnoughGems ? "Not enough gems" : "No bundles right now"));
+        }
+    }
+
+    /// <summary>Shows a short message in place of a caption for two seconds, then puts the caption back. Menu screens only.</summary>
+    public sealed class BundleToast : MonoBehaviour
+    {
+        Text text;
+        string original;
+        Color originalColor;
+        float left;
+
+        public static void Show(Text caption, string message)
+        {
+            if (caption == null) return;
+            var t = caption.GetComponent<BundleToast>();
+            if (t == null)
             {
-                Info(host, withCoins ? "Not enough coins" : "Not enough gems", "You cannot pay for a refresh right now.");
+                t = caption.gameObject.AddComponent<BundleToast>();
+                t.text = caption;
+                t.original = caption.text;
+                t.originalColor = caption.color;
             }
+            caption.text = message;
+            caption.color = new Color(1f, 0.55f, 0.5f, 1f);
+            t.left = 2f;
+            AudioManager.Play(Sfx.Fail);
+        }
+
+        void Update()
+        {
+            if (left <= 0f) return;
+            left -= Time.unscaledDeltaTime;
+            if (left > 0f) return;
+            text.text = original;
+            text.color = originalColor;
         }
     }
 }

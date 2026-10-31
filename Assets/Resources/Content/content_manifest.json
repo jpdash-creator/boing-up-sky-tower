@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contentHash": "34264e2b50b66e33a2e23667eae794642592eb961af514fd1fceb2f3de205bd3",
+  "contentHash": "38031dab5af71ce68e334f426a0c5ca5a9a114c283491429bfb17f386c5aa78f",
   "regions": [
     {
       "id": "region_001_meadow_springs",
@@ -1440,7 +1440,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1473,7 +1472,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1506,7 +1504,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1539,7 +1536,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1573,7 +1569,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -1606,7 +1601,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1639,7 +1633,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1672,7 +1665,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1705,7 +1697,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1739,7 +1730,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -1773,7 +1763,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1806,7 +1795,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1839,7 +1827,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1872,7 +1859,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1905,7 +1891,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -1942,7 +1927,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1975,7 +1959,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2008,7 +1991,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2041,7 +2023,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2075,7 +2056,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -2108,7 +2088,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2141,7 +2120,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2174,7 +2152,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2207,7 +2184,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2241,7 +2217,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -2275,7 +2250,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2308,7 +2282,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2341,7 +2314,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2374,7 +2346,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2407,7 +2378,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -2444,7 +2414,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2477,7 +2446,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2510,7 +2478,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2543,7 +2510,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2577,7 +2543,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -2610,7 +2575,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2643,7 +2607,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2676,7 +2639,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2709,7 +2671,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2743,7 +2704,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -2777,7 +2737,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2810,7 +2769,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2843,7 +2801,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2876,7 +2833,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2909,7 +2865,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -2946,7 +2901,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2979,7 +2933,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3012,7 +2965,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3045,7 +2997,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3079,7 +3030,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -3112,7 +3062,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3145,7 +3094,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3178,7 +3126,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3211,7 +3158,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3245,7 +3191,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -3279,7 +3224,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3312,7 +3256,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3345,7 +3288,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3378,7 +3320,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3411,7 +3352,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -3448,7 +3388,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3481,7 +3420,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3514,7 +3452,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3547,7 +3484,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3581,7 +3517,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -3614,7 +3549,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3647,7 +3581,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3680,7 +3613,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3713,7 +3645,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3747,7 +3678,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -3781,7 +3711,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3814,7 +3743,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3847,7 +3775,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3880,7 +3807,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3913,7 +3839,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -3950,7 +3875,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3983,7 +3907,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4016,7 +3939,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4049,7 +3971,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4083,7 +4004,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -4116,7 +4036,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4149,7 +4068,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4182,7 +4100,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4215,7 +4132,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4249,7 +4165,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -4283,7 +4198,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4316,7 +4230,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4349,7 +4262,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4382,7 +4294,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4415,7 +4326,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -4452,7 +4362,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4485,7 +4394,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4518,7 +4426,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4551,7 +4458,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4585,7 +4491,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -4618,7 +4523,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4651,7 +4555,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4684,7 +4587,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4717,7 +4619,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4751,7 +4652,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -4785,7 +4685,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4818,7 +4717,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4851,7 +4749,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4884,7 +4781,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4917,7 +4813,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -4954,7 +4849,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -4987,7 +4881,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5020,7 +4913,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5053,7 +4945,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5087,7 +4978,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -5120,7 +5010,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5153,7 +5042,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5186,7 +5074,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5219,7 +5106,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5253,7 +5139,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -5287,7 +5172,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5320,7 +5204,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5353,7 +5236,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5386,7 +5268,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5419,7 +5300,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -5456,7 +5336,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5489,7 +5368,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5522,7 +5400,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5555,7 +5432,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5589,7 +5465,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -5622,7 +5497,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5655,7 +5529,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5688,7 +5561,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5721,7 +5593,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5755,7 +5626,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -5789,7 +5659,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5822,7 +5691,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5855,7 +5723,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5888,7 +5755,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5921,7 +5787,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -5958,7 +5823,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -5991,7 +5855,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6024,7 +5887,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6057,7 +5919,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6091,7 +5952,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -6124,7 +5984,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6157,7 +6016,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6190,7 +6048,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6223,7 +6080,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6257,7 +6113,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -6291,7 +6146,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6324,7 +6178,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6357,7 +6210,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6390,7 +6242,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6423,7 +6274,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -6460,7 +6310,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6493,7 +6342,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6526,7 +6374,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6559,7 +6406,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6593,7 +6439,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -6626,7 +6471,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6659,7 +6503,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6692,7 +6535,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6725,7 +6567,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6759,7 +6600,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -6793,7 +6633,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6826,7 +6665,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6859,7 +6697,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6892,7 +6729,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6925,7 +6761,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -6962,7 +6797,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -6995,7 +6829,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7028,7 +6861,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7061,7 +6893,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7095,7 +6926,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -7128,7 +6958,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7161,7 +6990,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7194,7 +7022,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7227,7 +7054,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7261,7 +7087,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -7295,7 +7120,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7328,7 +7152,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7361,7 +7184,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7394,7 +7216,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7427,7 +7248,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -7464,7 +7284,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7497,7 +7316,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7530,7 +7348,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7563,7 +7380,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7597,7 +7413,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -7630,7 +7445,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7663,7 +7477,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7696,7 +7509,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7729,7 +7541,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7763,7 +7574,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -7797,7 +7607,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7830,7 +7639,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7863,7 +7671,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7896,7 +7703,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7929,7 +7735,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -7966,7 +7771,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -7999,7 +7803,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8032,7 +7835,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8065,7 +7867,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8099,7 +7900,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -8132,7 +7932,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8165,7 +7964,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8198,7 +7996,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8231,7 +8028,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8265,7 +8061,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -8299,7 +8094,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8332,7 +8126,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8365,7 +8158,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8398,7 +8190,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8431,7 +8222,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -8468,7 +8258,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8501,7 +8290,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8534,7 +8322,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8567,7 +8354,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8601,7 +8387,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -8634,7 +8419,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8667,7 +8451,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8700,7 +8483,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8733,7 +8515,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8767,7 +8548,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -8801,7 +8581,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8834,7 +8613,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8867,7 +8645,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8900,7 +8677,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -8933,7 +8709,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -8970,7 +8745,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9003,7 +8777,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9036,7 +8809,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9069,7 +8841,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9103,7 +8874,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -9136,7 +8906,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9169,7 +8938,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9202,7 +8970,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9235,7 +9002,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9269,7 +9035,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -9303,7 +9068,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9336,7 +9100,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9369,7 +9132,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9402,7 +9164,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9435,7 +9196,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -9472,7 +9232,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9505,7 +9264,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9538,7 +9296,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9571,7 +9328,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9605,7 +9361,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -9638,7 +9393,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9671,7 +9425,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9704,7 +9457,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9737,7 +9489,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9771,7 +9522,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -9805,7 +9555,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9838,7 +9587,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9871,7 +9619,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9904,7 +9651,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -9937,7 +9683,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -9974,7 +9719,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10007,7 +9751,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10040,7 +9783,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10073,7 +9815,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10107,7 +9848,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -10140,7 +9880,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10173,7 +9912,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10206,7 +9944,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10239,7 +9976,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10273,7 +10009,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -10307,7 +10042,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10340,7 +10074,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10373,7 +10106,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10406,7 +10138,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10439,7 +10170,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -10476,7 +10206,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10509,7 +10238,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10542,7 +10270,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10575,7 +10302,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10609,7 +10335,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -10642,7 +10367,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10675,7 +10399,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10708,7 +10431,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10741,7 +10463,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10775,7 +10496,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -10809,7 +10529,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10842,7 +10561,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10875,7 +10593,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10908,7 +10625,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -10941,7 +10657,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -10978,7 +10693,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11011,7 +10725,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11044,7 +10757,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11077,7 +10789,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11111,7 +10822,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -11144,7 +10854,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11177,7 +10886,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11210,7 +10918,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11243,7 +10950,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11277,7 +10983,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -11311,7 +11016,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11344,7 +11048,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11377,7 +11080,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11410,7 +11112,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11443,7 +11144,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -11480,7 +11180,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11513,7 +11212,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11546,7 +11244,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11579,7 +11276,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11613,7 +11309,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -11646,7 +11341,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11679,7 +11373,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11712,7 +11405,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11745,7 +11437,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11779,7 +11470,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -11813,7 +11503,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11846,7 +11535,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11879,7 +11567,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11912,7 +11599,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -11945,7 +11631,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -11982,7 +11667,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12015,7 +11699,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12048,7 +11731,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12081,7 +11763,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12115,7 +11796,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -12148,7 +11828,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12181,7 +11860,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12214,7 +11892,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12247,7 +11924,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12281,7 +11957,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -12315,7 +11990,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12348,7 +12022,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12381,7 +12054,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12414,7 +12086,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12447,7 +12118,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -12484,7 +12154,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12517,7 +12186,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12550,7 +12218,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12583,7 +12250,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12617,7 +12283,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -12650,7 +12315,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12683,7 +12347,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12716,7 +12379,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12749,7 +12411,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12783,7 +12444,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -12817,7 +12477,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12850,7 +12509,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12883,7 +12541,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12916,7 +12573,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -12949,7 +12605,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -12986,7 +12641,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13019,7 +12673,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13052,7 +12705,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13085,7 +12737,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13119,7 +12770,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -13152,7 +12802,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13185,7 +12834,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13218,7 +12866,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13251,7 +12898,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13285,7 +12931,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -13319,7 +12964,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13352,7 +12996,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13385,7 +13028,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13418,7 +13060,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13451,7 +13092,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -13488,7 +13128,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13521,7 +13160,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13554,7 +13192,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13587,7 +13224,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13621,7 +13257,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -13654,7 +13289,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13687,7 +13321,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13720,7 +13353,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13753,7 +13385,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13787,7 +13418,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -13821,7 +13451,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13854,7 +13483,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13887,7 +13515,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13920,7 +13547,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -13953,7 +13579,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -13990,7 +13615,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14023,7 +13647,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14056,7 +13679,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14089,7 +13711,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14123,7 +13744,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -14156,7 +13776,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14189,7 +13808,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14222,7 +13840,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14255,7 +13872,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14289,7 +13905,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -14323,7 +13938,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14356,7 +13970,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14389,7 +14002,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14422,7 +14034,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14455,7 +14066,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -14492,7 +14102,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14525,7 +14134,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14558,7 +14166,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14591,7 +14198,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14625,7 +14231,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -14658,7 +14263,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14691,7 +14295,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14724,7 +14327,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14757,7 +14359,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14791,7 +14392,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -14825,7 +14425,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14858,7 +14457,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14891,7 +14489,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14924,7 +14521,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -14957,7 +14553,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -14994,7 +14589,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15027,7 +14621,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15060,7 +14653,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15093,7 +14685,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15127,7 +14718,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -15160,7 +14750,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15193,7 +14782,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15226,7 +14814,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15259,7 +14846,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15293,7 +14879,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -15327,7 +14912,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15360,7 +14944,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15393,7 +14976,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15426,7 +15008,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15459,7 +15040,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -15496,7 +15076,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15529,7 +15108,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15562,7 +15140,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15595,7 +15172,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15629,7 +15205,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -15662,7 +15237,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15695,7 +15269,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15728,7 +15301,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15761,7 +15333,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15795,7 +15366,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -15829,7 +15399,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15862,7 +15431,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15895,7 +15463,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15928,7 +15495,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -15961,7 +15527,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -15998,7 +15563,6 @@
       ],
       "rewards": {
         "coinPayout": 60,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16031,7 +15595,6 @@
       ],
       "rewards": {
         "coinPayout": 65,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16064,7 +15627,6 @@
       ],
       "rewards": {
         "coinPayout": 75,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16097,7 +15659,6 @@
       ],
       "rewards": {
         "coinPayout": 80,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16131,7 +15692,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -16164,7 +15724,6 @@
       ],
       "rewards": {
         "coinPayout": 90,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16197,7 +15756,6 @@
       ],
       "rewards": {
         "coinPayout": 95,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16230,7 +15788,6 @@
       ],
       "rewards": {
         "coinPayout": 105,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16263,7 +15820,6 @@
       ],
       "rewards": {
         "coinPayout": 110,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16297,7 +15853,6 @@
       ],
       "rewards": {
         "coinPayout": 300,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.25,
           "min": 1,
@@ -16331,7 +15886,6 @@
       ],
       "rewards": {
         "coinPayout": 120,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16364,7 +15918,6 @@
       ],
       "rewards": {
         "coinPayout": 125,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16397,7 +15950,6 @@
       ],
       "rewards": {
         "coinPayout": 135,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16430,7 +15982,6 @@
       ],
       "rewards": {
         "coinPayout": 140,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -16463,7 +16014,6 @@
       ],
       "rewards": {
         "coinPayout": 900,
-        "replayCoinPercent": 40,
         "gems": {
           "chance": 1,
           "min": 5,
@@ -16476,27 +16026,7 @@
       }
     }
   ],
-  "items": [
-    {
-      "id": "boots_cloud_runner",
-      "slot": "boots",
-      "rarity": "rare",
-      "bundle": "items_boots_01",
-      "sprites": {
-        "left": "boots_cloud_runner_L",
-        "right": "boots_cloud_runner_R"
-      },
-      "price": {
-        "gems": 150
-      },
-      "tags": [
-        "cloud",
-        "season1"
-      ],
-      "availableFrom": null,
-      "availableTo": null
-    }
-  ],
+  "items": [],
   "gemPacks": [
     {
       "id": "gempack_50",
@@ -16922,10 +16452,9 @@
       "coinPoints": 1
     },
     "economy": {
-      "coinsPerGem": 100,
+      "coinsPerGem": 20,
       "replayCoinPercent": 50,
       "regionCoinScalePercent": 3,
-      "vipGemsPerDay": 25,
       "endlessCoinDailyFullRateRuns": 3,
       "endlessCoinOverCapMultiplier": 0.5
     }

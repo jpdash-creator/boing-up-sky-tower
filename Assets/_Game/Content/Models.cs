@@ -77,7 +77,6 @@ namespace BoingUpSkyTower.Content
     public sealed class RewardsDef
     {
         [JsonProperty("coinPayout", Required = Required.Always)] public int CoinPayout { get; set; }
-        [JsonProperty("replayCoinPercent", Required = Required.Always)] public int ReplayCoinPercent { get; set; }
         [JsonProperty("gems")] public GemRewardDef Gems { get; set; }
     }
 
@@ -189,7 +188,6 @@ namespace BoingUpSkyTower.Content
         [JsonProperty("coinsPerGem", Required = Required.Always)] public int CoinsPerGem { get; set; }
         [JsonProperty("replayCoinPercent", Required = Required.Always)] public int ReplayCoinPercent { get; set; }
         [JsonProperty("regionCoinScalePercent", Required = Required.Always)] public int RegionCoinScalePercent { get; set; }
-        [JsonProperty("vipGemsPerDay", Required = Required.Always)] public int VipGemsPerDay { get; set; }
         [JsonProperty("endlessCoinDailyFullRateRuns", Required = Required.Always)] public int EndlessCoinDailyFullRateRuns { get; set; }
         [JsonProperty("endlessCoinOverCapMultiplier", Required = Required.Always)] public double EndlessCoinOverCapMultiplier { get; set; }
     }

@@ -565,10 +565,9 @@ namespace BoingUpSkyTower.Gameplay
             NewScreen("Rewards");
             Background(null, new Color(0.30f, 0.34f, 0.64f, 1f));   // the blue-purple quest look
             progress.RecordLogin();
-            var host = new RewardsScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup };
+            var host = new RewardsScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup, Back = ShowMenu };
             rewards = new RewardsScreen(screen, progress, repo, art, host);
-            rewards.Build(tab);
-            AddBack("Back", ShowMenu);
+            rewards.Build(tab);   // its own Back arrow sits bottom left
             coinText = rewards.CoinText;
             gemText = rewards.GemText;
             RefreshWallet();
@@ -1781,7 +1780,7 @@ namespace BoingUpSkyTower.Gameplay
             PopupButton("OK", Btn(0), Color.white, 60f, ClosePopup);
         }
 
-        /// <summary>A fresh full-screen dim layer for gear and chest overlays (they build their own card on it); ClosePopup removes it.</summary>
+        /// <summary>A fresh full-screen dim layer for chest overlays (they build their own card on it); ClosePopup removes it.</summary>
         RectTransform NewOverlay()
         {
             ClosePopup();

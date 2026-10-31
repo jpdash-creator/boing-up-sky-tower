@@ -27,9 +27,12 @@ namespace BoingUpSkyTower.Gameplay
             public Action<int> BuyGemPack;
         }
 
-        const float CardBaseH = 700f, RowGap = 24f;
-        const float BuyH = 150f, BuyBottom = 18f;
-        const float TitleH = 110f;
+        // Compact cards (owner issue list 27): both fit one screen at 100% text on every aspect; at 130% the page scrolls.
+        const float CardBaseH = 424f, RowGap = 14f;
+        const float BuyBottom = 14f, TextTop = 14f;
+        static float TextK { get { return Mathf.Max(1f, UiKit.TextScale) - 1f; } }
+        static float BuyH { get { return 140f + TextK * 40f; } }
+        static float TitleH { get { return 60f + TextK * 220f; } }
         const float ListRowH = 100f;
         const int MaxListRows = 6;
 
@@ -115,8 +118,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Builds the two chest cards into the shop's content rect (scrolls when the screen is short or the text is large).</summary>
         public void BuildPage(RectTransform content)
         {
-            cardH = CardBaseH + (Mathf.Max(1f, UiKit.TextScale) - 1f) * 650f;
-            RectTransform list = ShopChrome.ScrollArea(content, 2f * cardH + RowGap + 16f);
+            cardH = CardBaseH + TextK * 700f;
+            RectTransform list = ShopChrome.ScrollArea(content, 2f * cardH + RowGap);
             BuildChestCard(list, ChestKind.Iron, 0f);
             BuildChestCard(list, ChestKind.Golden, cardH + RowGap);
         }
@@ -131,40 +134,42 @@ namespace BoingUpSkyTower.Gameplay
             card.anchoredPosition = new Vector2(0f, -y);
             card.sizeDelta = new Vector2(0f, cardH);
 
+            // left column: the title on top (wraps to two lines at large text), the chest picture under it
+            Color titleCol = gold ? new Color(0.33f, 0.14f, 0.02f) : new Color(0.82f, 0.93f, 1f);
+            Color baseCol = gold ? new Color(0.20f, 0.08f, 0.02f) : Color.white;
+            Text name = UiKit.AddText(card, "Name", ChestName(kind).ToUpperInvariant(), 44, titleCol, TextAnchor.MiddleLeft, true);
+            if (gold) name.GetComponent<Outline>().enabled = false;
+            name.horizontalOverflow = HorizontalWrapMode.Wrap;
+            name.verticalOverflow = VerticalWrapMode.Overflow;
+            RectTransform nrt = name.rectTransform;
+            nrt.anchorMin = new Vector2(0.03f, 1f);
+            nrt.anchorMax = new Vector2(0.35f, 1f);
+            nrt.pivot = new Vector2(0.5f, 1f);
+            nrt.anchoredPosition = new Vector2(0f, -TextTop);
+            nrt.sizeDelta = new Vector2(0f, TitleH);
+
             Sprite chest = ChestArt(kind);
             Image pic = UiKit.AddImage(card, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
             pic.preserveAspect = true;
-            pic.rectTransform.anchorMin = new Vector2(0.02f, 0.08f);
-            pic.rectTransform.anchorMax = new Vector2(0.38f, 0.92f);
-            pic.rectTransform.offsetMin = pic.rectTransform.offsetMax = Vector2.zero;
+            pic.rectTransform.anchorMin = new Vector2(0.02f, 0f);
+            pic.rectTransform.anchorMax = new Vector2(0.36f, 1f);
+            pic.rectTransform.offsetMin = new Vector2(0f, 14f);
+            pic.rectTransform.offsetMax = new Vector2(0f, -(TextTop + TitleH + 6f));
 
-            // title top right, in the card's colour scheme
-            Color titleCol = gold ? new Color(0.33f, 0.14f, 0.02f) : new Color(0.82f, 0.93f, 1f);
-            Color baseCol = gold ? new Color(0.20f, 0.08f, 0.02f) : Color.white;
-            Text name = UiKit.AddText(card, "Name", ChestName(kind).ToUpperInvariant(), 58, titleCol, TextAnchor.MiddleRight, true);
-            if (gold) name.GetComponent<Outline>().enabled = false;
-            name.horizontalOverflow = HorizontalWrapMode.Overflow;
-            RectTransform nrt = name.rectTransform;
-            nrt.anchorMin = new Vector2(0.40f, 1f);
-            nrt.anchorMax = new Vector2(0.97f, 1f);
-            nrt.pivot = new Vector2(0.5f, 1f);
-            nrt.anchoredPosition = new Vector2(0f, -20f);
-            nrt.sizeDelta = new Vector2(0f, TitleH);
-
-            // direct text: what is inside, coloured by what it is
+            // right column: the direct text (what is inside, coloured by what it is) above the two buttons
             Text desc = UiKit.AddText(card, "Contents", DescriptionRich(kind), 42, baseCol, TextAnchor.UpperLeft);
             if (gold) desc.GetComponent<Outline>().enabled = false;
             desc.horizontalOverflow = HorizontalWrapMode.Wrap;
             desc.verticalOverflow = VerticalWrapMode.Overflow;
             RectTransform drt = desc.rectTransform;
-            drt.anchorMin = new Vector2(0.40f, 0f);
+            drt.anchorMin = new Vector2(0.38f, 0f);
             drt.anchorMax = new Vector2(0.97f, 1f);
-            drt.offsetMin = new Vector2(0f, BuyBottom + BuyH + 14f);
-            drt.offsetMax = new Vector2(0f, -(20f + TitleH + 6f));
+            drt.offsetMin = new Vector2(0f, BuyBottom + BuyH + 10f);
+            drt.offsetMax = new Vector2(0f, -TextTop);
             card.gameObject.AddComponent<A11yLabel>().Text = ChestName(kind) + ". " + DescriptionText(kind) + (ChestRolls.CharactersEnabled ? "" : " Characters: coming soon.");
 
-            BuildBuyButton(card, kind, 1, 0.40f, 0.685f, 0f, -8f);
-            BuildBuyButton(card, kind, 10, 0.685f, 0.97f, 8f, 0f);
+            BuildBuyButton(card, kind, 1, 0.38f, 0.675f, 0f, -6f);
+            BuildBuyButton(card, kind, 10, 0.675f, 0.97f, 6f, 0f);
         }
 
         /// <summary>One open button: "Open 1" or "Open 10" on the top line, the gem icon and price below. Never disabled: too few gems explains itself on tap.</summary>

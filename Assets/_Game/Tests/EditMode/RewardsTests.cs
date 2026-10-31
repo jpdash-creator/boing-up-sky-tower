@@ -173,27 +173,43 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void NoWallGemLevelAllGemsGemsAndThreeStarsComeFromTheRunResult()
+        public void NoWallGemLevelAndStarCountersComeFromTheRunResult()
         {
             ProgressService svc = NewService();
             ClearLevels(svc, 1, 6);
             Assert.AreEqual(0, Daily(svc, RewardStat.NoWall));
+            Assert.AreEqual(6, Daily(svc, RewardStat.StarsEarned), "6 first clears with 1 star each");
+            Assert.AreEqual(0, Daily(svc, RewardStat.Stars2));
             svc.ApplyRun("lvl_001_07", Won());
             Assert.AreEqual(1, Daily(svc, RewardStat.NoWall), "level 7 is the no-wall-touch level");
             Assert.AreEqual(1, Weekly(svc, RewardStat.NoWall));
             Assert.AreEqual(0, Daily(svc, RewardStat.GemLevel));
 
-            svc.ApplyRun("lvl_001_08", new RunOutcome { Completed = true, StarMask = 7, GemsCollected = 5, HiddenGems = 2, GemPickupsTotal = 3, GemPickupsTaken = 3 });
+            svc.ApplyRun("lvl_001_08", new RunOutcome { Completed = true, StarMask = 7, GemsCollected = 5, HiddenGems = 2 });
             Assert.AreEqual(1, Daily(svc, RewardStat.GemLevel), "level 8 is a gem level");
-            Assert.AreEqual(1, Daily(svc, RewardStat.AllGems));
-            Assert.AreEqual(7, Daily(svc, RewardStat.Gems), "gems and the hidden gem collected in levels");
+            Assert.AreEqual(1, Daily(svc, RewardStat.Stars2), "3 stars is also 2 or more");
             Assert.AreEqual(1, Daily(svc, RewardStat.Stars3));
+            Assert.AreEqual(10, Daily(svc, RewardStat.StarsEarned), "7 + 3 stars");
 
-            svc.ApplyRun("lvl_001_09", new RunOutcome { Completed = true, StarMask = 3, GemsCollected = 1, GemPickupsTotal = 3, GemPickupsTaken = 2 });
-            Assert.AreEqual(1, Daily(svc, RewardStat.AllGems), "2 of 3 gem pickups is not all of them");
+            svc.ApplyRun("lvl_001_09", new RunOutcome { Completed = true, StarMask = 3 });
+            Assert.AreEqual(2, Daily(svc, RewardStat.Stars2), "2 stars counts");
             Assert.AreEqual(1, Daily(svc, RewardStat.Stars3), "2 stars is not a 3-star clear");
-            svc.ApplyRun("lvl_001_10", new RunOutcome { Completed = true, StarMask = 1, GemPickupsTotal = 0, GemPickupsTaken = 0 });
-            Assert.AreEqual(1, Daily(svc, RewardStat.AllGems), "a level without gem pickups never counts as all gems");
+            Assert.AreEqual(12, Daily(svc, RewardStat.StarsEarned));
+            Assert.AreEqual(12, Weekly(svc, RewardStat.StarsEarned));
+            svc.ApplyRun("lvl_001_10", new RunOutcome { Completed = true, StarMask = 1 });
+            Assert.AreEqual(2, Daily(svc, RewardStat.Stars2), "1 star is not 2 stars");
+        }
+
+        [Test]
+        public void StarCountersWorkOnReplaysOfClearedLevelsAndSkipFailedRuns()
+        {
+            ProgressService svc = NewService();
+            ClearLevels(svc, 1, 1);
+            svc.ApplyRun("lvl_001_01", Won(3));   // replay of a cleared level: stripped gems do not matter, the stars still count
+            Assert.AreEqual(1, Daily(svc, RewardStat.Stars2));
+            Assert.AreEqual(3, Daily(svc, RewardStat.StarsEarned), "1 star (first clear) + 2 stars (replay)");
+            svc.ApplyRun("lvl_001_01", new RunOutcome { Completed = false, StarMask = 7 });
+            Assert.AreEqual(3, Daily(svc, RewardStat.StarsEarned), "a failed run counts no stars");
         }
 
         [Test]
@@ -265,7 +281,7 @@ namespace BoingUpSkyTower.Tests
             svc.RecordLevelStarted(3);
             svc.RecordRunStats(new RunOutcome { ComboChains = 1, BestCombo = 3, PowerUpsUsed = 1 });
             ClearLevels(svc, 1, 7);
-            svc.ApplyRun("lvl_001_08", new RunOutcome { Completed = true, StarMask = 1, GemsCollected = 2, GemPickupsTotal = 2, GemPickupsTaken = 2 });
+            svc.ApplyRun("lvl_001_08", new RunOutcome { Completed = true, StarMask = 3 });   // 2 stars: the "earn 2 stars in a level" action (always possible, also on cleared levels)
             Assert.AreEqual(100, svc.DailyPoints());
 
             int gems = svc.Gems, coins = svc.Coins;
@@ -480,6 +496,39 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(1000 + 1500 + 2000 + 5 * 2000, svc.Coins - coins);
             Assert.AreEqual(1 + 2 + 3 + 5, TotalPowerUps(svc) - units);
             Assert.IsFalse(svc.HasClaimable(RewardTab.Main));
+        }
+
+        [Test]
+        public void ClaimAllPaysEverythingReadyInOneSave()
+        {
+            ProgressService svc = NewService();
+            ClearLevels(svc, 1, 15, 7);   // 45 stars, region 1 cleared: s_25 and r_1 ready
+            int gems = svc.Gems, coins = svc.Coins, saves = 0;
+            svc.Changed += () => saves++;
+            RewardClaimOutcome res = svc.ClaimAll(RewardTab.Main);
+            Assert.AreEqual(RewardClaimResult.Ok, res.Result);
+            Assert.AreEqual(1, saves, "one save for everything");
+            Assert.AreEqual(70, res.Gems);
+            Assert.AreEqual(2000, res.Coins);
+            Assert.AreEqual(gems + 70, svc.Gems);
+            Assert.AreEqual(coins + 2000, svc.Coins);
+            Assert.IsFalse(svc.HasClaimable(RewardTab.Main));
+            Assert.AreEqual(RewardClaimResult.NotReady, svc.ClaimAll(RewardTab.Main).Result, "nothing left");
+            Assert.AreEqual(1, saves, "an empty claim saves nothing");
+            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Main, "r_1").Result);
+        }
+
+        [Test]
+        public void ClaimAllOnDailyAndWeeklyKeepsTabsApart()
+        {
+            ProgressService svc = NewService();
+            svc.RecordLogin();
+            svc.AddPlaySeconds(300);   // 20 points
+            Assert.AreEqual(RewardClaimResult.NotReady, svc.ClaimAll(RewardTab.Weekly).Result);
+            RewardClaimOutcome res = svc.ClaimAll(RewardTab.Daily);
+            Assert.AreEqual(RewardClaimResult.Ok, res.Result);
+            Assert.AreEqual(10, res.Gems);
+            Assert.IsTrue(svc.IsRewardClaimed(RewardTab.Daily, svc.RewardDefs.Find(RewardTab.Daily, "dp_20")));
         }
 
         // ---- red dot, saving ----
