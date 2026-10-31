@@ -73,14 +73,16 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Base scroll speed as a percent of the difficulty-blended speed (owner, 2026-10-19: +20 percent).</summary>
         public int ScrollBasePercent = 120;
         /// <summary>Chance, in per mille, that a gem spot (one per row of a campaign level) holds a gem. See <see cref="DifficultyGemPermille"/>.</summary>
-        public int GemSpotPermille = 32;
+        public int GemSpotPermille = 22;
         /// <summary>
         /// GemSpotPermille per difficulty (Relaxed, Easy, Normal, Hard, Insane). The owner asked for 2.5, 2.5, 3.5, 4.5, 5 percent (issue list 24 point 5).
         /// Measured with one spot per row: 2.5 percent places only about 62 gems per region (target 70 to 110) and 4.5 / 5 percent place 112 / 130,
         /// and a 2x spread cannot fit the 1.57x target band, so the shares are tuned to 3.2, 3.2, 3.5, 3.8 and 4.1 percent
         /// (78 to 103 placed gems per region on every difficulty). Rarity weights are unchanged.
+        /// Owner issue list 26 (2026-10-31): 30 percent fewer gems in game, so the shares are x0.7 rounded: 2.2, 2.2, 2.5, 2.7 and 2.9 percent
+        /// (about 55 to 75 placed gems per region on every difficulty).
         /// </summary>
-        public static readonly int[] DifficultyGemPermille = { 32, 32, 35, 38, 41 };
+        public static readonly int[] DifficultyGemPermille = { 22, 22, 25, 27, 29 };
         public int ScrollStepSeconds = 5;
         public int ScrollStepPercent = 4;
         public int ScrollStepCapPercent = 50;
@@ -189,6 +191,69 @@ namespace BoingUpSkyTower.Simulation
         public int WaveStartPercent = 35;
         public int WaveEndPercent = 65;
 
+        // ---------------------------------------------------------------------------------------
+        // Region 1 special platforms (doc 24, owner issue list 26). Ticks are 60 per second, speeds in u per tick.
+        // ---------------------------------------------------------------------------------------
+
+        /// <summary>Wind Petal: sideways push while standing on it (about 2.5 u/s), flips every WindFlipTicks (2.5 s); the cue shows for the last WindCueTicks (0.5 s) before a flip.</summary>
+        public Fx WindPush = Fx.FromRatio(25, 600);
+        public int WindFlipTicks = 150;
+        public int WindCueTicks = 30;
+        /// <summary>Wind Petals are at least this wide so the gust never blows a landed player straight off (u).</summary>
+        public Fx WindMinWidth = Fx.FromInt(3);
+
+        /// <summary>Bee Hive Lift: half amplitude of the vertical bob (peak to peak 2.4 u = about 0.8 of a 3 u row) and the full period (3 s).</summary>
+        public Fx HiveBobAmplitude = Fx.FromRatio(12, 10);
+        public int HivePeriodTicks = 180;
+        /// <summary>Rows next to a hive keep their vertical gap in this range (u): at least HiveGapMin so the bobbing hive never touches the neighbour, at most NormalGapMax - amplitude so every bob height stays within a jump.</summary>
+        public Fx HiveGapMin = Fx.FromRatio(26, 10);
+
+        /// <summary>Snap Daisy: closes SnapCloseTicks (1.5 s) after landing, stays shut SnapReopenTicks (2 s), then opens again. The 3-step countdown ticks every SnapCloseTicks / 3.</summary>
+        public int SnapCloseTicks = 90;
+        public int SnapReopenTicks = 120;
+
+        /// <summary>Dandelion Puff: launch speed is the normal jump speed times this (jump height x1.3) and the launch carries DandelionVx sideways (about 4 u over the flight).</summary>
+        public Fx DandelionLaunch = Fx.FromRatio(114, 100);
+        public Fx DandelionVx = Fx.FromRatio(72, 1000);
+        /// <summary>Distance range (u, centre to centre) of the platform placed after a dandelion in the direction of its arrow.</summary>
+        public Fx DandelionNextDxMin = Fx.FromRatio(22, 10);
+        public Fx DandelionNextDxMax = Fx.FromRatio(38, 10);
+
+        /// <summary>Thorn Bush: a landing (or step) on the thorny half, beyond ThornDeadZone from the centre, hops the player away from the thorns. Never damages, never ends the run.</summary>
+        public Fx ThornKnockVx = Fx.FromRatio(13, 100);
+        public Fx ThornKnockVy = Fx.FromRatio(12, 100);
+        public Fx ThornDeadZone = Fx.FromRatio(15, 100);
+        /// <summary>Thorn Bushes are at least this wide so the safe half is a fair landing spot (u).</summary>
+        public Fx ThornMinWidth = Fx.FromInt(4);
+
+        /// <summary>Ladybug Rider: runs along a short path; while the player stands on it the path advances LadybugBoostPercent of the normal speed (150 = 1.5x).</summary>
+        public int LadybugBoostPercent = 150;
+        public Fx LadybugAmplitudeMin = Fx.FromRatio(8, 10);
+        public Fx LadybugAmplitudeMax = Fx.FromRatio(14, 10);
+        public Fx LadybugMaxWidth = Fx.FromInt(4);
+
+        /// <summary>Seesaw Leaf: slides the player toward the tilted edge (1.8 u/s); landings within SeesawDeadZone of the centre tilt toward the direction of travel.</summary>
+        public Fx SeesawSlide = Fx.FromRatio(18, 600);
+        public Fx SeesawDeadZone = Fx.FromRatio(2, 10);
+        public Fx SeesawMinWidth = Fx.FromInt(3);
+
+        // ---- Generator: how many rows carry a new special platform (percent of free rows), by campaign level ----
+        /// <summary>Share of rows with a new special platform: SpecialShareLevel3Percent at level 3 rising linearly to SpecialShareLevel15Percent at level 15.</summary>
+        public int SpecialShareLevel3Percent = 15;
+        public int SpecialShareLevel15Percent = 55;
+        /// <summary>Level 2 is a light touch: this many non-hazard and at most this many hazard-type special platforms. Level 1 has none.</summary>
+        public int Level2SafeSpecials = 2;
+        public int Level2HazardSpecials = 1;
+        /// <summary>Hazard-type specials (Thorn Bush, Snap Daisy) are rare early: at most one per this many rows up to level HazardEarlyLastLevel (owner decision).</summary>
+        public int HazardEarlyRowsPerHazard = 6;
+        public int HazardEarlyLastLevel = 6;
+        /// <summary>Endless: the special share rises from level-3 to level-15 values over this many floors.</summary>
+        public int EndlessSpecialRampFloors = 150;
+
+        // ---- Difficulty ramp (all regions): from level 3 the layout difficulty never falls below a floor that rises from level 3 to 15 ----
+        public int RampFloorLevel3Permille = 300;
+        public int RampFloorLevel15Permille = 1000;
+
         // Campaign scroll ramp (BossChase, LevelSpec.Ramp): same step formula as the endless ramp, clamped.
         public int CampaignRampCapPercent = 60;
 
@@ -220,39 +285,36 @@ namespace BoingUpSkyTower.Simulation
         // Durations are in ticks (60 per second), speeds in u per tick.
         // ---------------------------------------------------------------------------------------
 
-        /// <summary>Flight: 4 s of flight, rising at 8 u/s with normal air steering; hazards cannot hit; 1 s of slow fall after it.</summary>
-        public int FlightTicks = 240;
+        // Rework 2026-10-31 (owner): every tap ADDS the base time onto the remaining time (no maximum); every owned type is usable in a run.
+        /// <summary>Flight: 10 s of flight per tap, rising at 8 u/s with normal air steering; gongs cannot hurt; 1 s of slow fall after it.</summary>
+        public int FlightTicks = 600;
         public Fx FlightRise = Fx.FromRatio(8, 60);
         public int FlightGraceTicks = 60;
-        /// <summary>Rocket: 2 s straight up at 14 u/s (28 u, about 8 rows), no steering; 1 s of slow fall after it.</summary>
-        public int RocketTicks = 120;
-        public Fx RocketRise = Fx.FromRatio(14, 60);
+        /// <summary>Rocket: per tap an auto-climb of RocketFloors rows in RocketTicks (4 s), no steering; gongs cannot hurt; 1 s of slow fall after it.</summary>
+        public int RocketTicks = 240;
+        public int RocketFloors = 20;
         public int RocketSlowFallTicks = 60;
         /// <summary>Flight and Rocket stop this many rows under the top row of a campaign level, so they can never skip the finish.</summary>
         public int PowerFlightRowsBelowTop = 3;
         /// <summary>Slow fall after Flight/Rocket: gravity is scaled to this percent and the fall speed is capped.</summary>
         public int SlowFallGravityPercent = 35;
         public Fx SlowFallMaxSpeed = Fx.FromRatio(6, 60);
-        /// <summary>Double Jump: one unit arms this many extra air jumps (standing-jump strength) for DoubleJumpWindowTicks.</summary>
-        public int DoubleJumpCount = 2;
+        /// <summary>Double Jump (timed): 30 s per tap in which every air phase has one extra standing-jump-strength air jump.</summary>
         public int DoubleJumpWindowTicks = 1800;
-        /// <summary>Wall Stick: one unit enables sticking for 10 s; each stick holds up to 1.5 s; a wall jump launches away from the wall.</summary>
-        public int WallStickWindowTicks = 600;
+        /// <summary>Wall Stick: one tap enables sticking for 30 s; each stick holds up to 1.5 s; a wall jump launches away from the wall.</summary>
+        public int WallStickWindowTicks = 1800;
         public int WallHoldTicks = 90;
         public Fx WallJumpVx = Fx.FromRatio(6, 60);
         /// <summary>Ticks after leaving a wall before it can hold again.</summary>
         public int WallStickCooldownTicks = 15;
-        /// <summary>Shield: armed for up to 30 s; absorbs the next gong hit, or the next fall under the kill line (rescue to a platform, once).</summary>
-        public int ShieldTicks = 1800;
-        /// <summary>The rescue platform is the lowest solid one at least this far above the kill line.</summary>
-        public Fx ShieldRescueMargin = Fx.FromInt(3);
-        public int ShieldInvulnTicks = 90;
-        /// <summary>Magnet: 10 s; every pickup counts as this much larger (a star then collects from about 3 u).</summary>
-        public int MagnetTicks = 600;
+        /// <summary>Shield: 60 s per tap during which gongs cannot hurt at all (no knockback, no hit).</summary>
+        public int ShieldTicks = 3600;
+        /// <summary>Magnet: 30 s per tap; every pickup counts as this much larger (a star then collects from about 3 u).</summary>
+        public int MagnetTicks = 1800;
         public Fx MagnetExtraRadius = Fx.FromInt(2);
-        /// <summary>Slow Time: 6 s with the auto-scroll reduced by this percent.</summary>
-        public int SlowTimeTicks = 360;
-        public int SlowTimePercent = 40;
+        /// <summary>Slow Time: 30 s per tap with the auto-scroll (kill line) exactly this percent slower.</summary>
+        public int SlowTimeTicks = 1800;
+        public int SlowTimePercent = 50;
 
         /// <summary>Jump launch speed (per tick) for a given horizontal speed magnitude.</summary>
         public Fx JumpSpeed(Fx absVx)

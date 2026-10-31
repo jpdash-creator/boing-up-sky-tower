@@ -11,6 +11,19 @@ namespace BoingUpSkyTower.Gameplay
         public bool Valid { get { return W > 0f && BodyRight > BodyLeft; } }
     }
 
+    /// <summary>One painted piece of a region 1 special platform (doc 24): a real, unscaled slab for one width (Thorn Bush: one per thorny side, Dir -1 left, +1 right).</summary>
+    [Serializable]
+    public struct KindPiece
+    {
+        /// <summary>(int)PlatformKind.</summary>
+        public int Kind;
+        /// <summary>-1 / +1 for the Thorn Bush thorny side, 0 for every other kind.</summary>
+        public int Dir;
+        public float WidthUnits;
+        public Sprite Sprite;
+        public PlatformMetric Metric;
+    }
+
     /// <summary>Sprites of one region. Filled by the editor tool ArtCatalogBuilder from Assets/Art (see Assets/Art/NOTES.md).</summary>
     [Serializable]
     public sealed class RegionArt
@@ -36,6 +49,39 @@ namespace BoingUpSkyTower.Gameplay
         public Color PlatTop, PlatSide;
         public Sprite[] Props = new Sprite[0];
         public Sprite[] Signature = new Sprite[0];
+        /// <summary>
+        /// Painted sprite per special platform kind, index = (int)PlatformKind (doc 24: the region 1 width sheets from OpenArt fill it later).
+        /// Missing or null entries fall back to the tinted normal platform with the code-drawn overlays of SpecialPlatformFx.
+        /// </summary>
+        public Sprite[] KindSprites = new Sprite[0];
+        /// <summary>Every painted width of every special kind (Assets/Art/Regions/.../tiles/&lt;kind&gt;_widths, filled by ArtCatalogBuilder). Empty = no art yet.</summary>
+        public KindPiece[] KindPieces = new KindPiece[0];
+        /// <summary>Seesaw Leaf pivot knob (its own sprite: the leaf tilts, the knob stays) and the distance from the walking surface to its top, in baked pixels.</summary>
+        public Sprite SeesawKnob;
+        public float SeesawKnobTopDropPx;
+
+        /// <summary>Index into KindPieces of the painted piece for this kind, thorny side and width (nearest width within 1 unit), or -1 when there is none.</summary>
+        public int KindPieceIndex(BoingUpSkyTower.Simulation.PlatformKind kind, int dir, float width)
+        {
+            if (KindPieces == null) return -1;
+            int k = (int)kind;
+            int best = -1;
+            float bestDist = 1.01f;
+            for (int i = 0; i < KindPieces.Length; i++)
+            {
+                if (KindPieces[i].Kind != k || KindPieces[i].Sprite == null) continue;
+                if (KindPieces[i].Dir != 0 && KindPieces[i].Dir != dir) continue;
+                float d = Mathf.Abs(KindPieces[i].WidthUnits - width);
+                if (d < bestDist) { bestDist = d; best = i; }
+            }
+            return best;
+        }
+
+        public Sprite KindSprite(BoingUpSkyTower.Simulation.PlatformKind kind)
+        {
+            int i = (int)kind;
+            return KindSprites != null && i >= 0 && i < KindSprites.Length ? KindSprites[i] : null;
+        }
     }
 
     /// <summary>

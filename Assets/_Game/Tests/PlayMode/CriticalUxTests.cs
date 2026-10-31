@@ -311,14 +311,11 @@ namespace BoingUpSkyTower.Tests
             var levels = GameSession.Repo.LevelsOf(r1.Id);
             yield return CheckScreen("level-popup", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); }, problems);
             yield return CheckScreen("locked-popup", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[12]); }, problems);
-            // Power-ups (docs/15 FR-INV-5): the loadout picker without stock (shop hint), the chooser, the endless start popup, then with stock.
-            yield return CheckScreen("loadout-chooser-empty", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); meta.CurrentPicker.OpenChooser(0); }, problems);
+            // Power-ups: no loadout any more (2026-10-31); the level and endless popups with and without owned power-ups look the same.
             yield return CheckScreen("endless-popup-empty", () => { meta.ShowLevels(r1); meta.OnEndlessTapped(r1); }, problems);
             GrantAllPowerUps(3);
-            GameSession.Progress.SetLoadout(new List<string> { "pw_doublejump", "pw_flight", "pw_slowtime" });
-            yield return CheckScreen("level-popup-loadout", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); }, problems);
-            yield return CheckScreen("loadout-chooser", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); meta.CurrentPicker.OpenChooser(1); }, problems);
-            yield return CheckScreen("endless-popup-loadout", () => { meta.ShowLevels(r1); meta.OnEndlessTapped(r1); }, problems);
+            yield return CheckScreen("level-popup-with-powerups", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); }, problems);
+            yield return CheckScreen("endless-popup-with-powerups", () => { meta.ShowLevels(r1); meta.OnEndlessTapped(r1); }, problems);
             yield return CheckScreen("region-locked-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(2)); }, problems);
             yield return CheckScreen("coming-soon-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(6)); }, problems);
             yield return CheckScreen("reset-popup", () => { meta.ShowSettings(); meta.ConfirmReset(); }, problems);
@@ -442,12 +439,11 @@ namespace BoingUpSkyTower.Tests
             for (int i = 1; i <= 2; i++)
                 GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
             GrantAllPowerUps(3);
-            GameSession.Progress.SetLoadout(new List<string> { "pw_flight", "pw_doublejump", "pw_shield" });
             GameSession.CurrentLevelId = "lvl_001_03";
             yield return Load("Run");
             var rc = Object.FindFirstObjectByType<RunController>();
             var problems = new List<string>();
-            Assert.AreEqual(3, rc.Hud.Powers.ButtonCount, "one button per loadout slot");
+            Assert.AreEqual(7, rc.Hud.Powers.ButtonCount, "one button per owned type, no loadout limit");
             yield return CheckScreen("run-powerups-intro", () => { }, problems);   // the buttons wait until the intro text is gone
             Assert.IsFalse(rc.Hud.Powers.Visible, "hidden during the intro");
             rc.Hud.SkipIntro();
@@ -457,8 +453,9 @@ namespace BoingUpSkyTower.Tests
             for (frame = 1; frame <= 60; frame++) yield return null;
             Assert.IsTrue(rc.Hud.Powers.Visible);
 
-            // thumb side: the buttons sit on the jump side, in the lower half, and are well over 48 dp
-            for (int i = 0; i < 3; i++)
+            // thumb side: the buttons sit on the jump side, are well over 48 dp, keep at least 8 dp between ALL pairs and never touch the pad
+            var rects = new List<Rect>();
+            for (int i = 0; i < 7; i++)
             {
                 RectTransform b = rc.Hud.Powers.ButtonRect(i);
                 Assert.IsNotNull(b, "button " + i);
@@ -466,19 +463,55 @@ namespace BoingUpSkyTower.Tests
                 Assert.GreaterOrEqual(b.rect.height, UiKit.MinTouchPx - 1f);
                 Assert.IsNotNull(b.GetComponent<A11yLabel>());
                 StringAssert.Contains("left", b.GetComponent<A11yLabel>().Text, "spoken label names the units left");
+                rects.Add(LayoutRect(b));
+            }
+            for (int i = 0; i < rects.Count; i++)
+            {
+                for (int j = i + 1; j < rects.Count; j++)
+                    Assert.GreaterOrEqual(RectDistance(rects[i], rects[j]), UiKit.MinSpacingPx, "power-up buttons " + i + " and " + j + " are closer than 8 dp");
+                foreach (HoldButton pad in new[] { rc.Hud.Pad.Left, rc.Hud.Pad.Right, rc.Hud.Pad.Jump })
+                    Assert.GreaterOrEqual(RectDistance(rects[i], LayoutRect((RectTransform)pad.transform)), UiKit.MinSpacingPx, "power-up button " + i + " is too close to the pad");
             }
             yield return CheckScreen("run-powerups-ready", () => { }, problems);
 
-            // activate all three through the input path: rings drain, counts turn into seconds, nothing overlaps
-            rc.Input.LatchPower(0);
-            rc.Input.LatchPower(1);
-            rc.Input.LatchPower(2);
+            // activate every type through the input path: rings drain, counts stay, seconds show, nothing overlaps; Rocket is refused while Flight runs
+            foreach (PowerUp t in new[] { PowerUp.Flight, PowerUp.Rocket, PowerUp.DoubleJump, PowerUp.WallStick, PowerUp.Shield, PowerUp.Magnet, PowerUp.SlowTime })
+                rc.Input.LatchPower(t);
             for (frame = 61; frame <= 90; frame++) yield return null;
-            Assert.AreEqual(3, rc.Session.State.PwUsed, "the three buttons reached the simulation");
+            Assert.AreEqual(6, rc.Session.State.PwUsed, "six buttons reached the simulation, the Rocket waits for the Flight");
             yield return CheckScreen("run-powerups-active", () => { }, problems);
+            // stacking: another tap on the Magnet adds the full 30 s onto the remaining time
+            int magnetBefore = rc.Session.State.MagnetTicks;
+            rc.Input.LatchPower(PowerUp.Magnet);
+            for (frame = 91; frame <= 100; frame++) yield return null;
+            Assert.Greater(rc.Session.State.MagnetTicks, magnetBefore + 1500, "a second tap adds the base time");
+            yield return CheckScreen("run-powerups-stacked", () => { }, problems);
             rc.Session.SettlePowerUps(GameSession.Progress);
             Assert.AreEqual(2, GameSession.Progress.PowerUpCount("pw_flight"), "a used unit is gone after the run settles");
+            Assert.AreEqual(1, GameSession.Progress.PowerUpCount("pw_magnet"), "two taps used two units");
+            Assert.AreEqual(3, GameSession.Progress.PowerUpCount("pw_rocket"), "a refused tap costs nothing");
             Report(problems);
+        }
+
+        /// <summary>
+        /// Layout rectangle in canvas reference pixels from anchor, anchored position, pivot and size of a child of the HUD root, so it does not
+        /// depend on the canvas scale or on the aspect (power-up buttons and pad buttons are siblings).
+        /// </summary>
+        static Rect LayoutRect(RectTransform rt)
+        {
+            Vector2 size = rt.rect.size;
+            Vector2 parent = ((RectTransform)rt.parent).rect.size;
+            float x = rt.anchorMin.x * parent.x + rt.anchoredPosition.x - rt.pivot.x * size.x;
+            float y = rt.anchorMin.y * parent.y + rt.anchoredPosition.y - rt.pivot.y * size.y;
+            return new Rect(x, y, size.x, size.y);
+        }
+
+        /// <summary>Empty space between two rectangles (0 when they touch or overlap; the larger axis gap when separated on both).</summary>
+        static float RectDistance(Rect a, Rect b)
+        {
+            float dx = Mathf.Max(0f, Mathf.Max(a.xMin - b.xMax, b.xMin - a.xMax));
+            float dy = Mathf.Max(0f, Mathf.Max(a.yMin - b.yMax, b.yMin - a.yMax));
+            return Mathf.Sqrt(dx * dx + dy * dy);
         }
 
         // ---- shop (docs/14): all four tabs, both sections, promo on and off, and the shop popups ----

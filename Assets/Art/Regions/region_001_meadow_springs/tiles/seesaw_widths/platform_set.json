@@ -1,0 +1,53 @@
+{
+  "asset": "seesaw_widths",
+  "kind": "seesaw",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 588,
+      "h": 202,
+      "bodyLeft": 55,
+      "bodyRight": 556,
+      "surfaceY": 52,
+      "bodyBottom": 135,
+      "width": 3.0,
+      "file": "reg001_seesaw_w3.png",
+      "ppu": 167.0,
+      "kind": "seesaw",
+      "dir": 0
+    },
+    {
+      "w": 755,
+      "h": 202,
+      "bodyLeft": 55,
+      "bodyRight": 723,
+      "surfaceY": 52,
+      "bodyBottom": 135,
+      "width": 4.0,
+      "file": "reg001_seesaw_w4.png",
+      "ppu": 167.0,
+      "kind": "seesaw",
+      "dir": 0
+    },
+    {
+      "w": 1082,
+      "h": 207,
+      "bodyLeft": 49,
+      "bodyRight": 1051,
+      "surfaceY": 55,
+      "bodyBottom": 140,
+      "width": 6.0,
+      "file": "reg001_seesaw_w6.png",
+      "ppu": 167.0,
+      "kind": "seesaw",
+      "dir": 0
+    }
+  ],
+  "knob": {
+    "file": "reg001_seesaw_knob.png",
+    "w": 161,
+    "h": 66,
+    "topDropPx": 67,
+    "ppu": 167.0
+  }
+}

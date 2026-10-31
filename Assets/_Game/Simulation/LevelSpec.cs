@@ -64,6 +64,25 @@ namespace BoingUpSkyTower.Simulation
         }
     }
 
+    /// <summary>
+    /// The new special platforms of each region (doc 24: region 1 first, regions 2 to 5 add theirs later by adding a case here, nothing else
+    /// in the builder or the endless tower changes). A level or endless tower uses the set of its signature unless LevelSpec.NewPlatforms is set.
+    /// </summary>
+    public static class RegionPlatformSets
+    {
+        private static readonly PlatformKind[] NoneSet = new PlatformKind[0];
+        private static readonly PlatformKind[] Region1Set =
+        {
+            PlatformKind.WindPetal, PlatformKind.HiveLift, PlatformKind.SnapDaisy, PlatformKind.Dandelion,
+            PlatformKind.ThornBush, PlatformKind.Ladybug, PlatformKind.Seesaw
+        };
+
+        public static PlatformKind[] For(SignatureKind signature)
+        {
+            return signature == SignatureKind.BounceFlowers ? Region1Set : NoneSet;
+        }
+    }
+
     public static class GoalTypes
     {
         /// <summary>Maps the content JSON goal type string (reachFloor, collectCoins, ...) to GoalType; unknown gives ReachFloor.</summary>
@@ -161,6 +180,30 @@ namespace BoingUpSkyTower.Simulation
 
         /// <summary>Effective difficulty d in 0..1 (region offset already applied, see LevelGenerator.EffectiveDifficulty).</summary>
         public Fx Difficulty;
+        /// <summary>
+        /// New special platform kinds this level may use (RegionPlatformSets). Null = the set of <see cref="Signature"/>, empty = none.
+        /// </summary>
+        public PlatformKind[] NewPlatforms;
+
+        public PlatformKind[] ActiveNewPlatforms()
+        {
+            return NewPlatforms != null ? NewPlatforms : RegionPlatformSets.For(Signature);
+        }
+
+        /// <summary>
+        /// Difficulty the builder and the scroll use (doc 24, all regions): levels 1 and 2 and endless keep <see cref="Difficulty"/>; from level 3 it never
+        /// falls below a floor that rises linearly from SimConfig.RampFloorLevel3Permille (level 3) to RampFloorLevel15Permille (level 15), so every
+        /// level from 3 on is clearly harder than the one before, whatever its content value is.
+        /// </summary>
+        public Fx EffectiveDifficulty(SimConfig cfg)
+        {
+            if (Endless || LevelIndex < 3) return Difficulty;
+            int idx = LevelIndex > 15 ? 15 : LevelIndex;
+            int permille = cfg.RampFloorLevel3Permille + (cfg.RampFloorLevel15Permille - cfg.RampFloorLevel3Permille) * (idx - 3) / 12;
+            Fx floor = Fx.FromRatio(permille, 1000);
+            return Difficulty > floor ? Difficulty : floor;
+        }
+
         /// <summary>Level number inside the region, 1..15. Drives the signature template (1-2 none, 3 gentle, 4+ normal).</summary>
         public int LevelIndex = 1;
         /// <summary>0 simple, 1 medium, 2 hard, 3 complex, 4 highly complex.</summary>

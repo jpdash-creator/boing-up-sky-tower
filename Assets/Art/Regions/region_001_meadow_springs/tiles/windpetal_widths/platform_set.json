@@ -1,0 +1,59 @@
+{
+  "asset": "windpetal_widths",
+  "kind": "windpetal",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 549,
+      "h": 157,
+      "bodyLeft": 24,
+      "bodyRight": 525,
+      "surfaceY": 52,
+      "bodyBottom": 132,
+      "width": 3.0,
+      "file": "reg001_windpetal_w3.png",
+      "ppu": 167.0,
+      "kind": "windpetal",
+      "dir": 0
+    },
+    {
+      "w": 716,
+      "h": 157,
+      "bodyLeft": 24,
+      "bodyRight": 692,
+      "surfaceY": 52,
+      "bodyBottom": 132,
+      "width": 4.0,
+      "file": "reg001_windpetal_w4.png",
+      "ppu": 167.0,
+      "kind": "windpetal",
+      "dir": 0
+    },
+    {
+      "w": 1050,
+      "h": 157,
+      "bodyLeft": 24,
+      "bodyRight": 1026,
+      "surfaceY": 52,
+      "bodyBottom": 132,
+      "width": 6.0,
+      "file": "reg001_windpetal_w6.png",
+      "ppu": 167.0,
+      "kind": "windpetal",
+      "dir": 0
+    },
+    {
+      "w": 1384,
+      "h": 157,
+      "bodyLeft": 24,
+      "bodyRight": 1360,
+      "surfaceY": 52,
+      "bodyBottom": 132,
+      "width": 8.0,
+      "file": "reg001_windpetal_w8.png",
+      "ppu": 167.0,
+      "kind": "windpetal",
+      "dir": 0
+    }
+  ]
+}

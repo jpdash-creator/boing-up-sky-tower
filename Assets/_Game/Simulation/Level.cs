@@ -84,6 +84,7 @@ namespace BoingUpSkyTower.Simulation
                 Platform p = Platforms[i];
                 h = Mix(h, p.Row); h = Mix(h, (int)p.Kind); h = Mix(h, p.X.Raw); h = Mix(h, p.Y.Raw);
                 h = Mix(h, p.Width.Raw); h = Mix(h, p.Amplitude.Raw); h = Mix(h, p.Period); h = Mix(h, p.Phase);
+                if (p.Dir != 0) h = Mix(h, p.Dir);   // only the region 1 specials use it: older levels keep their hashes
             }
             for (int i = 0; i < Hazards.Length; i++)
             {

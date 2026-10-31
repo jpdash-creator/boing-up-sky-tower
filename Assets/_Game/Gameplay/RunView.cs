@@ -83,6 +83,7 @@ namespace BoingUpSkyTower.Gameplay
         Sprite[] patterns;
         SpriteRenderer[] cueSr;
         SpriteRenderer dangerBand;
+        SpecialPlatformFx specialFx;   // placeholder overlays of the region 1 special platforms (doc 24)
 
         /// <summary>Tallest supported aspect (9:21 and a margin). Backgrounds and walls are sized for it so any phone is covered.</summary>
         public const float TallestAspect = 0.4f;
@@ -214,6 +215,7 @@ namespace BoingUpSkyTower.Gameplay
             cam = camera;
             region = art != null ? art.ForRegion(s.Region.Index) : null;
             white = MakeWhite();
+            specialFx = new SpecialPlatformFx((n, sp, o) => NewSprite(n, sp, o), white, reduced);
 
             worldRoot = new GameObject("RunWorld").transform;
             worldRoot.SetParent(transform, false);
@@ -435,6 +437,13 @@ namespace BoingUpSkyTower.Gameplay
             return best;
         }
 
+        /// <summary>Index into region.KindPieces of the painted piece of a region 1 special platform (kind, thorny side Platform.Dir, nearest baked width), or -1 (no art yet: tinted normal platform plus code overlays).</summary>
+        int KindPieceIndexFor(Platform p, float width)
+        {
+            if (region == null || !SpecialPlatformFx.Handles(p.Kind)) return -1;
+            return region.KindPieceIndex(p.Kind, p.Dir < 0 ? -1 : 1, width);
+        }
+
         PlatformMetric PlatformMetricFor(Platform p)
         {
             if (region == null || region.Metrics == null) return default(PlatformMetric);
@@ -453,6 +462,8 @@ namespace BoingUpSkyTower.Gameplay
         Sprite PlatformSprite(Platform p)
         {
             if (region == null) return null;
+            // Art hook (doc 24): a painted sprite for a special platform kind (RegionArt.KindSprite, from the OpenArt width sheets) wins; until then the normal platform is tinted.
+            if (SpecialPlatformFx.Handles(p.Kind)) { Sprite ks = region.KindSprite(p.Kind); if (ks != null) return ks; }
             switch (p.Kind)
             {
                 case PlatformKind.Moving: return region.Moving ?? region.Normal;
@@ -499,7 +510,7 @@ namespace BoingUpSkyTower.Gameplay
                 case PlatformKind.Sticky: return new Color(1f, 0.7f, 0.9f, 1f);
                 case PlatformKind.Slippery: return new Color(0.7f, 0.9f, 1f, 1f);
                 case PlatformKind.Vanishing: return new Color(0.8f, 0.7f, 1f, 1f);
-                default: return Color.white;
+                default: return SpecialPlatformFx.Handles(kind) ? SpecialPlatformFx.Tint(kind) : Color.white;
             }
         }
 
@@ -515,6 +526,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void ResizePlatformArrays(int n)
         {
+            if (specialFx != null) specialFx.Resize(n);
             if (platformSr == null)
             {
                 platformSr = new SpriteRenderer[n];
@@ -549,7 +561,22 @@ namespace BoingUpSkyTower.Gameplay
             platformOffX[i] = 0f;
             int piece = PieceIndex(p, width);
             int wp = WidthPieceIndex(p, width);
-            if (wp >= 0)
+            int kp = KindPieceIndexFor(p, width);
+            if (kp >= 0)
+            {
+                // Painted special platform (doc 24) for this kind and width (Thorn Bush: the baked piece of its thorny side, Platform.Dir): ONE uniform scale, never stretched.
+                KindPiece kpc = region.KindPieces[kp];
+                Sprite sp = kpc.Sprite;
+                PlatformMetric m = kpc.Metric;
+                float ppu = sp.pixelsPerUnit;
+                float s = width / ((m.BodyRight - m.BodyLeft) / ppu);
+                sr.sprite = sp;
+                sr.drawMode = SpriteDrawMode.Simple;
+                sr.transform.localScale = new Vector3(s, s, 1f);
+                platformBaseScaleX[i] = s;
+                platformOffY[i] = -(m.H * 0.5f - m.SurfaceY) / ppu * s;
+            }
+            else if (wp >= 0)
             {
                 // A real painted piece for exactly this width: ONE uniform scale, never stretched (owner rule, CUX-9 addendum).
                 Sprite sp = region.WidthPieces[wp];
@@ -597,9 +624,17 @@ namespace BoingUpSkyTower.Gameplay
                 platformBaseScaleX[i] = width;
                 platformOffY[i] = -0.2f;
             }
-            sr.color = PlatformTint(p.Kind);
+            sr.color = kp >= 0 ? Color.white : PlatformTint(p.Kind);   // painted art keeps its own colours; the tint is only the placeholder
+            sr.flipX = false;                                          // a pooled ladybug view may still be mirrored
+            sr.transform.rotation = Quaternion.identity;   // a pooled seesaw view may still be tilted
             platformSr[i] = sr;
             platformTf[i] = sr.transform;
+            if (SpecialPlatformFx.Handles(p.Kind))
+            {
+                if (region != null) specialFx.SetKnob(region.SeesawKnob, region.SeesawKnobTopDropPx);
+                specialFx.Attach(i, p, kp >= 0);
+            }
+            else specialFx.Release(i);
 
             // Non-colour cue (CUX-6): a pattern strip on the walking surface.
             int cue = p.Kind == PlatformKind.Sticky ? 0 : p.Kind == PlatformKind.Slippery ? 1 : p.Kind == PlatformKind.Vanishing ? 2 : ((p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) && piece < 0 && wp < 0) ? 4 : -1;
@@ -625,6 +660,7 @@ namespace BoingUpSkyTower.Gameplay
             platPool.Push(platformSr[i]);
             platformSr[i] = null;
             platformTf[i] = null;
+            specialFx.Release(i);
             if (cueSr[i] != null)
             {
                 cueSr[i].gameObject.SetActive(false);
@@ -898,7 +934,7 @@ namespace BoingUpSkyTower.Gameplay
             int m = 0;
             if (st.FlightTicks > 0) m |= 1 << (int)PowerUp.Flight;
             if (st.RocketTicks > 0) m |= 1 << (int)PowerUp.Rocket;
-            if (st.DoubleJumps > 0) m |= 1 << (int)PowerUp.DoubleJump;
+            if (st.DoubleJumpTicks > 0) m |= 1 << (int)PowerUp.DoubleJump;
             if (st.WallStickTicks > 0) m |= 1 << (int)PowerUp.WallStick;
             if (st.ShieldTicks > 0) m |= 1 << (int)PowerUp.Shield;
             if (st.MagnetTicks > 0) m |= 1 << (int)PowerUp.Magnet;
@@ -910,7 +946,7 @@ namespace BoingUpSkyTower.Gameplay
         void DerivePowerFx()
         {
             SimState st = session.State;
-            if (st.PwUsed == 0 && prevPwMask == 0 && st.ShieldSaves == 0) return;   // no loadout in use: nothing to do
+            if (st.PwUsed == 0 && prevPwMask == 0 && st.ShieldSaves == 0) return;   // no power-up in use: nothing to do
             int mask = PowerMask(in st);
             float cx = st.X.F(), cy = st.Y.F() + 0.5f;
             if (st.PwUsed > prevPwUsed)
@@ -1023,7 +1059,7 @@ namespace BoingUpSkyTower.Gameplay
                 if (prevVy < 0f && st.GroundId >= 0 && st.GroundId < plats.Length)
                 {
                     PlatformKind k = plats[st.GroundId].Kind;
-                    bounce = k == PlatformKind.Bounce || k == PlatformKind.BounceCap;
+                    bounce = PlatformKinds.IsLaunch(k);   // flower, cap and dandelion launch
                 }
                 AudioManager.Play(bounce ? Sfx.Bounce : Sfx.Jump);
             }
@@ -1122,8 +1158,15 @@ namespace BoingUpSkyTower.Gameplay
                 Platform p = plats[i];
                 float x = p.Kind == PlatformKind.Moving ? session.Sim.PlatformX(p.Id, tick).F() : p.X.F();
                 float y = p.Y.F();
+                if (SpecialPlatformFx.Handles(p.Kind))
+                {
+                    // Ladybug path (with its boost) and Bee Hive bob come from the Sim; the overlay layer animates the rest (wind arrows, countdown, tilt ...).
+                    if (p.Kind == PlatformKind.Ladybug) x = session.Sim.PlatformXAt(in s, p.Id).F();
+                    else if (p.Kind == PlatformKind.HiveLift) y = session.Sim.PlatformY(p.Id, tick).F();
+                }
                 var sr = platformSr[i];
                 platformTf[i].position = new Vector3(x + platformOffX[i], y + platformOffY[i], 0f);
+                if (SpecialPlatformFx.Handles(p.Kind)) specialFx.Update(i, p, session.Sim, in s, tick, x, y, sr);
                 if (p.Kind == PlatformKind.Vanishing || p.Kind == PlatformKind.Crumble)
                 {
                     bool solid = session.Sim.IsSolid(p.Id, tick, s.CrumbleTick);

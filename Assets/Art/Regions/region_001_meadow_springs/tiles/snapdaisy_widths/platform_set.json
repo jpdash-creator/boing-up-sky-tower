@@ -1,0 +1,72 @@
+{
+  "asset": "snapdaisy_widths",
+  "kind": "snapdaisy",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 354,
+      "h": 108,
+      "bodyLeft": 12,
+      "bodyRight": 346,
+      "surfaceY": 18,
+      "bodyBottom": 101,
+      "width": 2.0,
+      "file": "reg001_snapdaisy_w2.png",
+      "ppu": 167.0,
+      "kind": "snapdaisy",
+      "dir": 0
+    },
+    {
+      "w": 521,
+      "h": 109,
+      "bodyLeft": 11,
+      "bodyRight": 512,
+      "surfaceY": 19,
+      "bodyBottom": 102,
+      "width": 3.0,
+      "file": "reg001_snapdaisy_w3.png",
+      "ppu": 167.0,
+      "kind": "snapdaisy",
+      "dir": 0
+    },
+    {
+      "w": 688,
+      "h": 109,
+      "bodyLeft": 11,
+      "bodyRight": 679,
+      "surfaceY": 19,
+      "bodyBottom": 102,
+      "width": 4.0,
+      "file": "reg001_snapdaisy_w4.png",
+      "ppu": 167.0,
+      "kind": "snapdaisy",
+      "dir": 0
+    },
+    {
+      "w": 1022,
+      "h": 109,
+      "bodyLeft": 11,
+      "bodyRight": 1013,
+      "surfaceY": 19,
+      "bodyBottom": 102,
+      "width": 6.0,
+      "file": "reg001_snapdaisy_w6.png",
+      "ppu": 167.0,
+      "kind": "snapdaisy",
+      "dir": 0
+    },
+    {
+      "w": 1356,
+      "h": 109,
+      "bodyLeft": 11,
+      "bodyRight": 1347,
+      "surfaceY": 19,
+      "bodyBottom": 102,
+      "width": 8.0,
+      "file": "reg001_snapdaisy_w8.png",
+      "ppu": 167.0,
+      "kind": "snapdaisy",
+      "dir": 0
+    }
+  ]
+}

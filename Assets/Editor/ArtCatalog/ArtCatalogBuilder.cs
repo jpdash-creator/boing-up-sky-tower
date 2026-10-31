@@ -139,6 +139,7 @@ namespace BoingUpSkyTower.Editor
                     };
                 }
             }
+            LoadKindPieces(ra, regionDir);
             string surfacePath = tiles + "/surface.json";
             if (File.Exists(surfacePath))
             {
@@ -191,6 +192,67 @@ namespace BoingUpSkyTower.Editor
             ra.Props = Folder(regionDir + "/props/reg00" + r + "_props");
             ra.Signature = Folder(regionDir + "/hazards/reg00" + r + "_signature");
             return ra;
+        }
+
+        /// <summary>
+        /// Region special platforms (doc 24): every tiles/&lt;kind&gt;_widths folder (windpetal, hivelift, snapdaisy, dandelion, thornbush, ladybug, seesaw) holds a
+        /// platform_set.json written by Tools/art_pipeline/bake_region1_new_platforms.py with one real, unscaled piece per width. Fills RegionArt.KindPieces,
+        /// KindSprites (the piece nearest 3 units per kind, the "has art" marker) and the seesaw knob.
+        /// </summary>
+        static void LoadKindPieces(RegionArt ra, string regionDir)
+        {
+            string tilesDir = regionDir + "/tiles";
+            if (!Directory.Exists(tilesDir)) return;
+            var pieces = new System.Collections.Generic.List<KindPiece>();
+            int maxKind = 0;
+            foreach (string dirRaw in Directory.GetDirectories(tilesDir, "*_widths").OrderBy(d => d, StringComparer.Ordinal))
+            {
+                string dir = dirRaw.Replace('\\', '/');
+                string json = dir + "/platform_set.json";
+                if (!File.Exists(json)) continue;
+                JObject root = JObject.Parse(File.ReadAllText(json));
+                if (root["kind"] == null) continue;   // reg00N_widths (normal, crumble, moving, bounce) is loaded above
+                BoingUpSkyTower.Simulation.PlatformKind kind;
+                if (!Enum.TryParse((string)root["kind"], true, out kind)) { Debug.LogWarning("[ArtCatalog] Unknown platform kind in " + json); continue; }
+                foreach (JToken pc in (JArray)root["pieces"])
+                {
+                    Sprite sp = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)pc["file"]);
+                    if (sp == null) { Debug.LogWarning("[ArtCatalog] Missing sprite " + dir + "/" + (string)pc["file"] + " (open the project once so Unity imports it)"); continue; }
+                    pieces.Add(new KindPiece
+                    {
+                        Kind = (int)kind,
+                        Dir = pc["dir"] != null ? (int)pc["dir"] : 0,
+                        WidthUnits = (float)pc["width"],
+                        Sprite = sp,
+                        Metric = new PlatformMetric
+                        {
+                            W = (float)pc["w"], H = (float)pc["h"], BodyLeft = (float)pc["bodyLeft"], BodyRight = (float)pc["bodyRight"],
+                            SurfaceY = (float)pc["surfaceY"], BodyBottom = (float)pc["bodyBottom"]
+                        }
+                    });
+                    if ((int)kind > maxKind) maxKind = (int)kind;
+                }
+                JToken knob = root["knob"];
+                if (knob != null && kind == BoingUpSkyTower.Simulation.PlatformKind.Seesaw)
+                {
+                    ra.SeesawKnob = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)knob["file"]);
+                    ra.SeesawKnobTopDropPx = (float)knob["topDropPx"];
+                }
+            }
+            ra.KindPieces = pieces.ToArray();
+            ra.KindSprites = new Sprite[maxKind + 1];
+            for (int k = 0; k <= maxKind; k++)
+            {
+                KindPiece best = default(KindPiece);
+                float bestDist = float.MaxValue;
+                foreach (KindPiece p in pieces)
+                {
+                    if (p.Kind != k || p.Dir > 0) continue;
+                    float d = Mathf.Abs(p.WidthUnits - 3f);
+                    if (d < bestDist) { bestDist = d; best = p; }
+                }
+                if (best.Sprite != null) ra.KindSprites[k] = best.Sprite;
+            }
         }
 
         static Sprite OptionalSprite(string path)

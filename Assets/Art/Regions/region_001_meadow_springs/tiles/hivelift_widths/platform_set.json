@@ -1,0 +1,46 @@
+{
+  "asset": "hivelift_widths",
+  "kind": "hivelift",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 383,
+      "h": 159,
+      "bodyLeft": 24,
+      "bodyRight": 358,
+      "surfaceY": 44,
+      "bodyBottom": 128,
+      "width": 2.0,
+      "file": "reg001_hivelift_w2.png",
+      "ppu": 167.0,
+      "kind": "hivelift",
+      "dir": 0
+    },
+    {
+      "w": 550,
+      "h": 159,
+      "bodyLeft": 24,
+      "bodyRight": 525,
+      "surfaceY": 44,
+      "bodyBottom": 128,
+      "width": 3.0,
+      "file": "reg001_hivelift_w3.png",
+      "ppu": 167.0,
+      "kind": "hivelift",
+      "dir": 0
+    },
+    {
+      "w": 717,
+      "h": 159,
+      "bodyLeft": 24,
+      "bodyRight": 692,
+      "surfaceY": 44,
+      "bodyBottom": 128,
+      "width": 4.0,
+      "file": "reg001_hivelift_w4.png",
+      "ppu": 167.0,
+      "kind": "hivelift",
+      "dir": 0
+    }
+  ]
+}

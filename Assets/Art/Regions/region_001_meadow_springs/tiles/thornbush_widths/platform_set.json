@@ -1,0 +1,85 @@
+{
+  "asset": "thornbush_widths",
+  "kind": "thornbush",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 729,
+      "h": 196,
+      "bodyLeft": 32,
+      "bodyRight": 700,
+      "surfaceY": 85,
+      "bodyBottom": 169,
+      "width": 4.0,
+      "file": "reg001_thornbush_left_w4.png",
+      "ppu": 167.0,
+      "kind": "thornbush",
+      "dir": -1
+    },
+    {
+      "w": 729,
+      "h": 196,
+      "bodyLeft": 28,
+      "bodyRight": 696,
+      "surfaceY": 85,
+      "bodyBottom": 169,
+      "width": 4.0,
+      "file": "reg001_thornbush_right_w4.png",
+      "ppu": 167.0,
+      "kind": "thornbush",
+      "dir": 1
+    },
+    {
+      "w": 1063,
+      "h": 196,
+      "bodyLeft": 32,
+      "bodyRight": 1034,
+      "surfaceY": 85,
+      "bodyBottom": 169,
+      "width": 6.0,
+      "file": "reg001_thornbush_left_w6.png",
+      "ppu": 167.0,
+      "kind": "thornbush",
+      "dir": -1
+    },
+    {
+      "w": 1063,
+      "h": 196,
+      "bodyLeft": 28,
+      "bodyRight": 1030,
+      "surfaceY": 85,
+      "bodyBottom": 169,
+      "width": 6.0,
+      "file": "reg001_thornbush_right_w6.png",
+      "ppu": 167.0,
+      "kind": "thornbush",
+      "dir": 1
+    },
+    {
+      "w": 1397,
+      "h": 196,
+      "bodyLeft": 32,
+      "bodyRight": 1368,
+      "surfaceY": 85,
+      "bodyBottom": 169,
+      "width": 8.0,
+      "file": "reg001_thornbush_left_w8.png",
+      "ppu": 167.0,
+      "kind": "thornbush",
+      "dir": -1
+    },
+    {
+      "w": 1397,
+      "h": 196,
+      "bodyLeft": 28,
+      "bodyRight": 1364,
+      "surfaceY": 85,
+      "bodyBottom": 169,
+      "width": 8.0,
+      "file": "reg001_thornbush_right_w8.png",
+      "ppu": 167.0,
+      "kind": "thornbush",
+      "dir": 1
+    }
+  ]
+}

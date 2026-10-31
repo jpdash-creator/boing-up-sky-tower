@@ -1,0 +1,46 @@
+{
+  "asset": "ladybug_widths",
+  "kind": "ladybug",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 402,
+      "h": 197,
+      "bodyLeft": 34,
+      "bodyRight": 368,
+      "surfaceY": 77,
+      "bodyBottom": 161,
+      "width": 2.0,
+      "file": "reg001_ladybug_w2.png",
+      "ppu": 167.0,
+      "kind": "ladybug",
+      "dir": 0
+    },
+    {
+      "w": 569,
+      "h": 197,
+      "bodyLeft": 34,
+      "bodyRight": 535,
+      "surfaceY": 77,
+      "bodyBottom": 161,
+      "width": 3.0,
+      "file": "reg001_ladybug_w3.png",
+      "ppu": 167.0,
+      "kind": "ladybug",
+      "dir": 0
+    },
+    {
+      "w": 736,
+      "h": 197,
+      "bodyLeft": 34,
+      "bodyRight": 702,
+      "surfaceY": 77,
+      "bodyBottom": 161,
+      "width": 4.0,
+      "file": "reg001_ladybug_w4.png",
+      "ppu": 167.0,
+      "kind": "ladybug",
+      "dir": 0
+    }
+  ]
+}

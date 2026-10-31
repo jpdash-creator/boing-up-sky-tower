@@ -16,9 +16,6 @@ namespace BoingUpSkyTower.Economy
         public string Trigger;
         public int DurationSec;
         public int Uses;
-        /// <summary>Most units of this type that go into one run (the stock is kept at home, only this many are carried).</summary>
-        public int CarryCap;
-        public int MaxStack;
         public int CoinPrice;
         public int GemPrice;
         public int UnlockRegion;
@@ -38,8 +35,6 @@ namespace BoingUpSkyTower.Economy
         Ok,
         NotEnoughCoins,
         NotEnoughGems,
-        /// <summary>The purchase would take the stock above the stack cap (99).</summary>
-        StackFull,
         /// <summary>The region that unlocks this power-up has not been reached.</summary>
         Locked,
         Invalid
@@ -51,9 +46,6 @@ namespace BoingUpSkyTower.Economy
     /// </summary>
     public sealed class PowerUpCatalog
     {
-        public const int StackCap = 99;
-        public const int SlotCount = 3;
-
         readonly List<PowerUpDef> all = new List<PowerUpDef>();
         readonly Dictionary<string, PowerUpDef> byId = new Dictionary<string, PowerUpDef>();
         readonly List<PowerUpDef> implemented = new List<PowerUpDef>();
@@ -84,20 +76,21 @@ namespace BoingUpSkyTower.Economy
             return Get(PowerUps.IdOf(type));
         }
 
-        // id, display name, description, trigger, duration s, uses, carry cap, coins, gems (docs/22 4.3: 50 gems for the 1,000-coin types, 75 for the 1,500-coin types), implemented
+        // type, display name, description, trigger, duration s per tap, uses per tap, coins, gems (docs/22 4.3: 50 gems for the 1,000-coin types, 75 for the 1,500-coin types), implemented.
+        // Rework 2026-10-31: a tap while active adds the full duration onto the remaining time; no stock cap, no loadout, no carry cap.
         static readonly object[][] Rows =
         {
-            new object[] { PowerUp.Flight, "Flight", "Fly upward for 4 seconds and steer left and right. Gongs cannot hurt you.", "button", 4, 1, 1, 1500, 75, true },
-            new object[] { PowerUp.Rocket, "Rocket", "A strong boost straight up, about 8 floors in 2 seconds. Stops before the last floors of a level.", "button", 2, 1, 1, 1500, 75, true },
-            new object[] { PowerUp.DoubleJump, "Double Jump", "Jump again in mid-air, twice within 30 seconds.", "button", 30, 2, 3, 1000, 50, true },
-            new object[] { PowerUp.WallStick, "Wall Stick", "For 10 seconds you stick to the side walls for up to 1.5 seconds. Jump to leap off.", "button", 10, 1, 2, 1000, 50, true },
-            new object[] { PowerUp.Shield, "Shield", "Blocks the next gong hit, or saves you once if you fall off the bottom. Lasts up to 30 seconds.", "button", 30, 1, 2, 1000, 50, true },
-            new object[] { PowerUp.Magnet, "Magnet", "Gems and stars come to you from farther away for 10 seconds.", "button", 10, 1, 2, 1000, 50, true },
-            new object[] { PowerUp.SlowTime, "Slow Time", "The rising danger zone moves 40 percent slower for 6 seconds.", "button", 6, 1, 2, 1500, 75, true },
-            new object[] { PowerUp.SpringBoots, "Spring Boots", "The next 3 jumps are 20 percent higher.", "button", 0, 3, 2, 1000, 0, false },
-            new object[] { PowerUp.CoinDoubler, "Coin Doubler", "Doubles the coins paid at the end of this level.", "button", 0, 1, 1, 120, 0, false },
-            new object[] { PowerUp.StarSeeker, "Star Seeker", "Arrows at the screen edge point to stars you have not collected yet.", "button", 12, 1, 2, 800, 0, false },
-            new object[] { PowerUp.SafetyNet, "Safety Net", "Catches you the first time you would fall off the bottom.", "auto", 0, 1, 1, 1500, 0, false },
+            new object[] { PowerUp.Flight, "Flight", "Fly upward for 10 seconds and steer left and right. Gongs cannot hurt you. Tap again to add 10 more seconds.", "button", 10, 1, 1500, 75, true },
+            new object[] { PowerUp.Rocket, "Rocket", "Auto-climb 20 floors in about 4 seconds. Gongs cannot hurt you. Tap again to add 20 more floors. Stops before the last floors of a level.", "button", 4, 1, 1500, 75, true },
+            new object[] { PowerUp.DoubleJump, "Double Jump", "For 30 seconds you can jump once more in mid-air. Tap again to add 30 seconds.", "button", 30, 1, 1000, 50, true },
+            new object[] { PowerUp.WallStick, "Wall Stick", "For 30 seconds you stick to the side walls for up to 1.5 seconds. Jump to leap off. Tap again to add 30 seconds.", "button", 30, 1, 1000, 50, true },
+            new object[] { PowerUp.Shield, "Shield", "Gongs cannot hurt you for 60 seconds. Tap again to add 60 seconds.", "button", 60, 1, 1000, 50, true },
+            new object[] { PowerUp.Magnet, "Magnet", "Gems and stars come to you from farther away for 30 seconds. Tap again to add 30 seconds.", "button", 30, 1, 1000, 50, true },
+            new object[] { PowerUp.SlowTime, "Slow Time", "The rising danger zone moves 50 percent slower for 30 seconds. Tap again to add 30 seconds.", "button", 30, 1, 1500, 75, true },
+            new object[] { PowerUp.SpringBoots, "Spring Boots", "The next 3 jumps are 20 percent higher.", "button", 0, 3, 1000, 0, false },
+            new object[] { PowerUp.CoinDoubler, "Coin Doubler", "Doubles the coins paid at the end of this level.", "button", 0, 1, 120, 0, false },
+            new object[] { PowerUp.StarSeeker, "Star Seeker", "Arrows at the screen edge point to stars you have not collected yet.", "button", 12, 1, 800, 0, false },
+            new object[] { PowerUp.SafetyNet, "Safety Net", "Catches you the first time you would fall off the bottom.", "auto", 0, 1, 1500, 0, false },
         };
 
         public static PowerUpCatalog BuiltIn()
@@ -110,8 +103,8 @@ namespace BoingUpSkyTower.Economy
                 list.Add(new PowerUpDef
                 {
                     Id = PowerUps.IdOf(type), Type = type, Order = order++, Name = (string)r[1], Description = (string)r[2],
-                    Trigger = (string)r[3], DurationSec = (int)r[4], Uses = (int)r[5], CarryCap = (int)r[6], MaxStack = StackCap,
-                    CoinPrice = (int)r[7], GemPrice = (int)r[8], UnlockRegion = 1, Implemented = (bool)r[9], Icon = PowerUps.IdOf(type)
+                    Trigger = (string)r[3], DurationSec = (int)r[4], Uses = (int)r[5],
+                    CoinPrice = (int)r[6], GemPrice = (int)r[7], UnlockRegion = 1, Implemented = (bool)r[8], Icon = PowerUps.IdOf(type)
                 });
             }
             return new PowerUpCatalog(list);
@@ -132,7 +125,6 @@ namespace BoingUpSkyTower.Economy
                 {
                     Id = id, Type = type, Order = (int?)t["order"] ?? 0, Name = (string)t["name"], Description = (string)t["description"],
                     Trigger = (string)t["trigger"] ?? "button", DurationSec = (int?)t["durationSec"] ?? 0, Uses = (int?)t["uses"] ?? 1,
-                    CarryCap = (int?)t["carryCap"] ?? 1, MaxStack = (int?)t["maxStack"] ?? StackCap,
                     CoinPrice = price != null ? ((int?)price["coins"] ?? 0) : 0, GemPrice = price != null ? ((int?)price["gems"] ?? 0) : 0,
                     UnlockRegion = (int?)t["unlockRegion"] ?? 1, Implemented = (bool?)t["implemented"] ?? false, Icon = (string)t["icon"]
                 });
@@ -154,12 +146,5 @@ namespace BoingUpSkyTower.Economy
             long price = (total + 50) / 100;
             return price > int.MaxValue ? int.MaxValue : (int)price;
         }
-    }
-
-    /// <summary>One loadout slot as the simulation needs it.</summary>
-    public struct LoadoutSlot
-    {
-        public PowerUp Type;
-        public int Units;
     }
 }

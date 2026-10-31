@@ -1,0 +1,46 @@
+{
+  "asset": "dandelion_widths",
+  "kind": "dandelion",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 352,
+      "h": 108,
+      "bodyLeft": 9,
+      "bodyRight": 343,
+      "surfaceY": 18,
+      "bodyBottom": 100,
+      "width": 2.0,
+      "file": "reg001_dandelion_w2.png",
+      "ppu": 167.0,
+      "kind": "dandelion",
+      "dir": 0
+    },
+    {
+      "w": 519,
+      "h": 108,
+      "bodyLeft": 9,
+      "bodyRight": 510,
+      "surfaceY": 18,
+      "bodyBottom": 100,
+      "width": 3.0,
+      "file": "reg001_dandelion_w3.png",
+      "ppu": 167.0,
+      "kind": "dandelion",
+      "dir": 0
+    },
+    {
+      "w": 725,
+      "h": 150,
+      "bodyLeft": 28,
+      "bodyRight": 696,
+      "surfaceY": 38,
+      "bodyBottom": 124,
+      "width": 4.0,
+      "file": "reg001_dandelion_w4.png",
+      "ppu": 167.0,
+      "kind": "dandelion",
+      "dir": 0
+    }
+  ]
+}

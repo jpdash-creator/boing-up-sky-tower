@@ -357,7 +357,7 @@ namespace BoingUpSkyTower.Gameplay
             Image icon = PowerUpUi.AddIcon(card, "Icon", def.Type, new Vector2(0.5f, 1f), new Vector2(0f, -(UiKit.MinTouchPx + 6f)), 120f, false);
             icon.rectTransform.pivot = new Vector2(0.5f, 1f);
             icon.raycastTarget = false;
-            AddInfoButton(card, def.Name, def.Description + "\nTakes up to " + def.CarryCap + " into a run.");
+            AddInfoButton(card, def.Name, def.Description + "\nYou can own and use as many as you like.");
             Text name = UiKit.AddText(card, "Name", def.Name, 36, Theme.Ink, TextAnchor.MiddleCenter, true);
             name.GetComponent<Outline>().enabled = false;
             name.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -458,9 +458,6 @@ namespace BoingUpSkyTower.Gameplay
                     lastBoughtId = def.Id;
                     AudioManager.Play(Sfx.PowerUp);
                     RebuildBody();   // the card shows the new count and a "Bought!" mark; the wallet follows through the host
-                    break;
-                case PowerUpBuyResult.StackFull:
-                    Info("Stock is full", "You already own as many " + def.Name + " as the stock can hold (" + PowerUpCatalog.StackCap + ").");
                     break;
                 case PowerUpBuyResult.NotEnoughCoins:
                     Info("Not enough coins", "You do not have enough coins for " + def.Name + ".");

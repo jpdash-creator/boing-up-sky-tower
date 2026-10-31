@@ -258,7 +258,24 @@ namespace BoingUpSkyTower.Simulation.Tests
                 int index = ll.Spec.LevelIndex;
                 int special = 0;
                 for (int i = 0; i < d.Platforms.Length; i++) if (d.Platforms[i].Kind != PlatformKind.Normal && d.Platforms[i].Kind != PlatformKind.Crumble) special++;
-                if (index <= 2)
+                if (index == 2 && ll.Spec.Signature == SignatureKind.BounceFlowers)
+                {
+                    // Doc 24 (owner list 26): level 2 of region 1 gets a light touch of the new platforms: at most 2 safe ones and 1 hazard type,
+                    // no flower, no launcher, no gong hazards, no chunks.
+                    int hazardType = 0;
+                    for (int i = 0; i < d.Platforms.Length; i++)
+                    {
+                        PlatformKind k = d.Platforms[i].Kind;
+                        if (k == PlatformKind.Normal || k == PlatformKind.Crumble) continue;
+                        Assert.True(PlatformKinds.IsRegion1New(k) && !PlatformKinds.IsLaunch(k), ll.Id + " has " + k);
+                        if (PlatformKinds.IsHazardType(k)) hazardType++;
+                    }
+                    Assert.True(special <= 3 && hazardType <= 1, ll.Id + ": " + special + " specials, " + hazardType + " hazard types");
+                    Assert.Empty(d.Hazards);
+                    Assert.Empty(ll.Spec.FixedChunks);
+                    checkedLevels++;
+                }
+                else if (index <= 2)
                 {
                     Assert.Equal(0, special);
                     Assert.Empty(d.Hazards);

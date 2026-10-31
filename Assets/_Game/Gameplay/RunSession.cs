@@ -104,6 +104,7 @@ namespace BoingUpSkyTower.Gameplay
         public void Step(int input)
         {
             if (Over) return;
+            if ((input & SimInput.PowerMask) != 0) input = TakePowerUnits(input);
             Sim.Step(ref State, input);
             if (IsEndless)
             {
@@ -149,26 +150,68 @@ namespace BoingUpSkyTower.Gameplay
             return true;
         }
 
-        // ---- power-ups (docs/15): the loadout is put into the state; used units are taken from the stock when the run pauses or ends ----
+        // ---- power-ups (docs/15, reworked 2026-10-31): every owned type is available (no loadout, no carry cap, no stock cap).
+        // The owned units are counted here, outside the simulation state; a tap whose type has no unit left is dropped before it reaches the
+        // simulation, every accepted tap takes one unit. Used units are taken from the saved stock when the run pauses or ends. ----
 
-        readonly int[] settledUnits = new int[PowerUps.SlotCount];
+        readonly int[] stock = new int[PowerUps.MaxType + 1];
+        readonly int[] settledStock = new int[PowerUps.MaxType + 1];
+        readonly bool[] ownedAtStart = new bool[PowerUps.MaxType + 1];
 
-        /// <summary>Puts the player's loadout (units already limited by stock and carry cap) into the fresh run state.</summary>
-        public void ApplyLoadout(LoadoutSlot[] slots)
+        /// <summary>Puts the owned units into the fresh run (units[i] for PowerUp id i, from ProgressService.BuildRunStock).</summary>
+        public void ApplyStock(int[] units)
         {
-            if (slots == null || slots.Length < PowerUps.SlotCount) return;
-            Sim.SetLoadout(ref State, slots[0].Type, slots[0].Units, slots[1].Type, slots[1].Units, slots[2].Type, slots[2].Units);
-            for (int i = 0; i < settledUnits.Length; i++) settledUnits[i] = State.SlotUnits(i);
+            if (units == null) return;
+            for (int i = 1; i <= PowerUps.MaxType; i++)
+            {
+                int n = i < units.Length && PowerUps.IsImplemented((PowerUp)i) ? System.Math.Max(0, units[i]) : 0;
+                stock[i] = n;
+                settledStock[i] = n;
+                ownedAtStart[i] = n > 0;
+            }
         }
 
-        /// <summary>True when the loadout holds at least one power-up (the HUD then shows the buttons).</summary>
-        public bool HasLoadout
+        /// <summary>Units of the type still owned in this run.</summary>
+        public int PowerStock(PowerUp type)
+        {
+            int i = (int)type;
+            return i > 0 && i < stock.Length ? stock[i] : 0;
+        }
+
+        /// <summary>True when the player owned this type when the run started (the HUD shows one button per owned type and keeps it while the run lasts).</summary>
+        public bool OwnedAtStart(PowerUp type)
+        {
+            int i = (int)type;
+            return i > 0 && i < ownedAtStart.Length && ownedAtStart[i];
+        }
+
+        /// <summary>True when the player owned at least one power-up when the run started.</summary>
+        public bool HasPowerUps
         {
             get
             {
-                for (int i = 0; i < PowerUps.SlotCount; i++) if (State.SlotType(i) != PowerUp.None) return true;
+                for (int i = 1; i <= PowerUps.MaxType; i++) if (ownedAtStart[i]) return true;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Drops the activation bits of types with no unit left (or that cannot start now) and takes one unit for every accepted bit.
+        /// </summary>
+        int TakePowerUnits(int input)
+        {
+            int result = input & ~SimInput.PowerMask;
+            for (int i = (int)PowerUp.Flight; i <= (int)PowerUp.SlowTime; i++)
+            {
+                PowerUp p = (PowerUp)i;
+                int bit = PowerUps.InputBit(p);
+                if ((input & bit) == 0 || stock[i] <= 0 || !PowerUps.CanActivate(in State, p)) continue;
+                // Flight and Rocket exclude each other inside one tick as well (the lower id wins, like the simulation)
+                if (p == PowerUp.Rocket && (result & PowerUps.InputBit(PowerUp.Flight)) != 0) continue;
+                stock[i]--;
+                result |= bit;
+            }
+            return result;
         }
 
         /// <summary>
@@ -178,13 +221,12 @@ namespace BoingUpSkyTower.Gameplay
         public int SettlePowerUps(ProgressService progress)
         {
             int used = 0;
-            for (int i = 0; i < settledUnits.Length; i++)
+            for (int i = 1; i <= PowerUps.MaxType; i++)
             {
-                int now = State.SlotUnits(i);
-                if (now >= settledUnits[i]) continue;
-                int n = settledUnits[i] - now;
-                settledUnits[i] = now;
-                if (progress != null) progress.TryConsumePowerUp(PowerUps.IdOf(State.SlotType(i)), n);
+                if (stock[i] >= settledStock[i]) continue;
+                int n = settledStock[i] - stock[i];
+                settledStock[i] = stock[i];
+                if (progress != null) progress.TryConsumePowerUp(PowerUps.IdOf((PowerUp)i), n);
                 used += n;
             }
             return used;

@@ -175,8 +175,8 @@ namespace BoingUpSkyTower.Simulation.Tests
                 for (int k = 0; k < StepTable.Length; k++)
                 {
                     SimConfig c = GameConfig(StepTable[k]);
-                    md.Append("| ").Append(ll.Id).Append(" | ").Append(F(ll.Spec.Difficulty)).Append(" | ").Append(StepTable[k]);
-                    foreach (int t in new int[] { 0, 10, 20, 30, 40, 60 }) md.Append(" | ").Append(F(ScrollSpeedAt(c, ll.Spec.Difficulty, t)));
+                    md.Append("| ").Append(ll.Id).Append(" | ").Append(F(ll.Spec.EffectiveDifficulty(c))).Append(" | ").Append(StepTable[k]);
+                    foreach (int t in new int[] { 0, 10, 20, 30, 40, 60 }) md.Append(" | ").Append(F(ScrollSpeedAt(c, ll.Spec.EffectiveDifficulty(c), t)));
                     md.AppendLine(" |");
                 }
             }

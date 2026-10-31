@@ -91,7 +91,7 @@ namespace BoingUpSkyTower.Gameplay
         readonly TouchControlLogic touch = new TouchControlLogic();
         readonly List<TouchSample> samples = new List<TouchSample>(8);
         bool jumpLatched;
-        int powerLatched;   // SimInput.PowerSlotN edges, latched like the jump until the next tick
+        int powerLatched;   // SimInput power bits (PowerUps.InputBit), latched like the jump until the next tick
         int keyboardMove;
 
         /// <summary>Optional override for tests: when set, Update() uses it instead of the devices.</summary>
@@ -128,9 +128,14 @@ namespace BoingUpSkyTower.Gameplay
                 if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) keyboardMove |= SimInput.Left;
                 if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) keyboardMove |= SimInput.Right;
                 if (kb.spaceKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) jumpLatched = true;
-                if (kb.digit1Key.wasPressedThisFrame) LatchPower(0);
-                if (kb.digit2Key.wasPressedThisFrame) LatchPower(1);
-                if (kb.digit3Key.wasPressedThisFrame) LatchPower(2);
+                // editor keys 1..7: Flight, Rocket, Double Jump, Wall Stick, Shield, Magnet, Slow Time
+                if (kb.digit1Key.wasPressedThisFrame) LatchPower(PowerUp.Flight);
+                if (kb.digit2Key.wasPressedThisFrame) LatchPower(PowerUp.Rocket);
+                if (kb.digit3Key.wasPressedThisFrame) LatchPower(PowerUp.DoubleJump);
+                if (kb.digit4Key.wasPressedThisFrame) LatchPower(PowerUp.WallStick);
+                if (kb.digit5Key.wasPressedThisFrame) LatchPower(PowerUp.Shield);
+                if (kb.digit6Key.wasPressedThisFrame) LatchPower(PowerUp.Magnet);
+                if (kb.digit7Key.wasPressedThisFrame) LatchPower(PowerUp.SlowTime);
             }
         }
 
@@ -151,11 +156,10 @@ namespace BoingUpSkyTower.Gameplay
             return bits;
         }
 
-        /// <summary>A power-up button was pressed: the activation bit of the loadout slot goes into the next tick's input (never lost between ticks).</summary>
-        public void LatchPower(int slot)
+        /// <summary>A power-up button was pressed: the activation bit of the type goes into the next tick's input (never lost between ticks).</summary>
+        public void LatchPower(PowerUp type)
         {
-            if (slot < 0 || slot >= PowerUps.SlotCount) return;
-            powerLatched |= PowerUps.InputBitForSlot(slot);
+            powerLatched |= PowerUps.InputBit(type);
         }
 
         public void Clear()

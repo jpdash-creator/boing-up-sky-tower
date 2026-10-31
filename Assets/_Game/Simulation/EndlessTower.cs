@@ -34,6 +34,11 @@ namespace BoingUpSkyTower.Simulation
         private int pattern, patternLeft;
         private readonly SignatureKind signature;
         private readonly PlatformKind sigKind;
+        // Region special platforms (doc 24): own Rng stream, so the base geometry of the tower is independent of them; prefix stable like the rest.
+        private Rng specRng;
+        private readonly PlatformKind[] specialOptions;
+        private int lastHazardRow = -1000;
+        private int prevDir;
 
         /// <summary>Latest snapshot. Replaced (new arrays) after every growth; compare <see cref="Version"/> to detect it.</summary>
         public LevelData Data { get; private set; }
@@ -53,6 +58,8 @@ namespace BoingUpSkyTower.Simulation
             sigKind = SignatureKinds.PlatformFor(spec.Signature);
             rng = new Rng(spec.Seed);
             hazRng = new Rng(spec.Seed ^ 0x5A3C9E17);
+            specRng = new Rng(spec.Seed ^ 0x6A09E667);
+            specialOptions = spec.ActiveNewPlatforms().Length > 0 ? EndlessOptions(spec, sigKind) : new PlatformKind[0];
             plats = new List<Platform>(512);
 
             Platform start = new Platform();
@@ -87,6 +94,14 @@ namespace BoingUpSkyTower.Simulation
             spec.Signature = signature;
             spec.Goal = new GoalSpec { Type = GoalType.ReachFloor, Value = int.MaxValue };
             return spec;
+        }
+
+        /// <summary>The kinds an endless row may carry: the region's new set plus its signature platform (endless has no level 2 light touch, it ramps by floor).</summary>
+        private static PlatformKind[] EndlessOptions(LevelSpec spec, PlatformKind sig)
+        {
+            List<PlatformKind> list = new List<PlatformKind>(spec.ActiveNewPlatforms());
+            if (sig != PlatformKind.Normal && !list.Contains(sig)) list.Add(sig);
+            return list.ToArray();
         }
 
         /// <summary>Builds a tower with exactly <paramref name="rows"/> rows (tests and golden hashes).</summary>
@@ -185,7 +200,11 @@ namespace BoingUpSkyTower.Simulation
 
             // Signature platforms: the share grows with d like a campaign level 4+ (the first fixed rows stay plain).
             PlatformKind kind = PlatformKind.Normal;
-            if (sigKind != PlatformKind.Normal && r > LevelGenerator.FixedRows)
+            if (specialOptions.Length > 0)
+            {
+                if (r > LevelGenerator.FixedRows) kind = PickSpecial(r);
+            }
+            else if (sigKind != PlatformKind.Normal && r > LevelGenerator.FixedRows)
             {
                 int sigShare = PercentLerp(cfg.SignatureBasePercent, cfg.SignatureMaxPercent, d);
                 if (sigShare > cfg.SignatureMaxPercent) sigShare = cfg.SignatureMaxPercent;
@@ -199,9 +218,11 @@ namespace BoingUpSkyTower.Simulation
             else if (rowPattern == 2) w = rng.Range(Fx.FromRatio(28, 10), Fx.FromRatio(40, 10));
             w = Fx.Clamp(w, minWidth, maxWidth);
             if (kind == PlatformKind.Moving && w > cfg.DriftMaxWidth) w = cfg.DriftMaxWidth;
+            if (PlatformKinds.IsRegion1New(kind)) w = SpecialPlatforms.ConstrainWidth(cfg, kind, w);
             w = LevelBuilder.SnapWidth(w, kind);   // only painted widths exist (owner 2026-10-24: endless follows the campaign rules, no stretching)
             if (kind == PlatformKind.Moving && w > cfg.DriftMaxWidth) w = Fx.FromInt(2);
             gap = Fx.Min(gap, LevelBuilder.SmallPlatformGapCap(maxGap, Fx.Min(w, prevW)));
+            gap = SpecialPlatforms.ConstrainGap(cfg, kind, prevKind, gap);
             Fx y = prevY + gap;
 
             Fx jm = prevKind == PlatformKind.Sticky ? cfg.StickyJumpMultiplier : Fx.One;
@@ -222,10 +243,16 @@ namespace BoingUpSkyTower.Simulation
             Fx x = prevX + dx * dir;
             if (x < lo || x > hi) x = prevX - dx * dir;
             x = Fx.Clamp(x, lo, hi);
+            if (prevKind == PlatformKind.Dandelion && prevDir != 0) x = SpecialPlatforms.DandelionNextX(cfg, ref specRng, prevX, prevDir, w, screen);
 
             Fx amp = Fx.Zero;
-            int period = 0, phase = 0;
-            if (kind == PlatformKind.Moving)
+            int period = 0, phase = 0, pdir = 0;
+            if (PlatformKinds.IsRegion1New(kind))
+            {
+                SpecialPlatforms.Params(cfg, ref specRng, kind, x, Fx.Min(x - lo, hi - x), screen, out amp, out period, out phase, out pdir);
+                if (PlatformKinds.IsHazardType(kind)) lastHazardRow = r;
+            }
+            else if (kind == PlatformKind.Moving)
             {
                 Fx room = Fx.Min(x - lo, hi - x);
                 Fx want = signature == SignatureKind.DriftingPlatforms
@@ -235,7 +262,7 @@ namespace BoingUpSkyTower.Simulation
                 period = 2 * rng.Range(90, 150);
                 phase = rng.Next(period);
             }
-            Add(r, kind, x, y, w, amp, period, phase);
+            Add(r, kind, x, y, w, amp, period, phase, pdir);
 
             if (rowPattern == 1)
             {
@@ -271,13 +298,33 @@ namespace BoingUpSkyTower.Simulation
 
             if (signature == SignatureKind.SwingingGongs && r > LevelGenerator.FixedRows + 1) AddGong(r, d, x, y);
 
-            prevX = x; prevW = w; prevY = y; prevKind = kind;
+            prevX = x; prevW = w; prevY = y; prevKind = kind; prevDir = pdir;
             row = r;
         }
 
-        private void Add(int r, PlatformKind kind, Fx x, Fx y, Fx w, Fx amp, int period, int phase)
+        /// <summary>
+        /// Draws the special platform of endless row <paramref name="r"/> from the per-floor ramp (share 15 percent rising to 55 percent over
+        /// EndlessSpecialRampFloors) and the same placement rules as the campaign (SpecialPlatforms.Allowed). Normal when the row stays plain.
+        /// </summary>
+        private PlatformKind PickSpecial(int r)
+        {
+            int f = r - LevelGenerator.FixedRows;
+            int share = SpecialPlatforms.EndlessSharePercent(cfg, f);
+            if (specRng.Next(100) >= share) return PlatformKind.Normal;
+            int levelEq = 3 + 12 * (f > cfg.EndlessSpecialRampFloors ? cfg.EndlessSpecialRampFloors : f) / cfg.EndlessSpecialRampFloors;
+            int spacing = SpecialPlatforms.HazardSpacing(cfg, levelEq);
+            int n = 0;
+            int[] pool = new int[specialOptions.Length];
+            for (int i = 0; i < specialOptions.Length; i++)
+                if (SpecialPlatforms.Allowed(specialOptions[i], prevKind, r - lastHazardRow, spacing, false)) pool[n++] = i;
+            if (n == 0) return PlatformKind.Normal;
+            return specialOptions[pool[specRng.Next(n)]];
+        }
+
+        private void Add(int r, PlatformKind kind, Fx x, Fx y, Fx w, Fx amp, int period, int phase, int dir = 0)
         {
             Platform p = new Platform();
+            p.Dir = dir;
             p.Id = plats.Count;
             p.Row = r;
             p.Kind = kind;

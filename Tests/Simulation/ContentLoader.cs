@@ -23,6 +23,9 @@ namespace BoingUpSkyTower.Simulation.Tests
     {
         public static string FindRoot()
         {
+            // BOING_ROOT: lets a helper build into its own output folder outside the repo (dotnet test -o ...) and still find Content/.
+            string env = Environment.GetEnvironmentVariable("BOING_ROOT");
+            if (!string.IsNullOrEmpty(env) && Directory.Exists(Path.Combine(env, "Content", "levels"))) return env;
             string dir = AppContext.BaseDirectory;
             while (dir != null && !Directory.Exists(Path.Combine(dir, "Content", "levels"))) dir = Path.GetDirectoryName(dir);
             return dir;

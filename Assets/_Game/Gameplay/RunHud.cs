@@ -14,7 +14,7 @@ namespace BoingUpSkyTower.Gameplay
     public sealed class RunHud : MonoBehaviour
     {
         public Action OnPause, OnResume, OnRetry, OnNext, OnMenu, OnRevive, OnReviveAd;
-        /// <summary>A power-up button was pressed (loadout slot 0..2). The run controller latches it into the next tick's input.</summary>
+        /// <summary>A power-up button was pressed (the PowerUp type id). The run controller latches it into the next tick's input.</summary>
         public Action<int> OnPower;
         /// <summary>The close mark of the current overlay (pause: resume, end screens: back to the level select).</summary>
         Action OnClose;
@@ -37,7 +37,7 @@ namespace BoingUpSkyTower.Gameplay
         bool endless;         // endless mode: Floor N / Best N, no goal text and no stars
         int bestBefore;       // best floor of the region when the run started
         public ControlPad Pad { get; private set; }
-        /// <summary>The power-up buttons above the jump pad (docs/15 FR-PWR-3); empty when the run has no loadout.</summary>
+        /// <summary>The power-up buttons above the jump pad (docs/15 FR-PWR-3); empty when the player owns no power-up.</summary>
         public PowerUpBar Powers { get; private set; }
 
         /// <summary>Places an element, mirrored horizontally for the left-handed layout.</summary>
@@ -268,13 +268,14 @@ namespace BoingUpSkyTower.Gameplay
             if (!GameSettings.ReducedMotion) comboRoot.localScale = Vector3.one * (1f + comboPulse * 0.25f);
 
             // "Speed up" cue each time the screen speeds up (every ScrollStepSeconds): icon plus percent, a static cue with reduced motion.
-            if (st.StartTick >= 0 && !s.Sim.CampaignRamp)
+            if (st.StartTick >= 0)
             {
-                int step = (st.Tick - st.StartTick) / (s.Cfg.ScrollStepSeconds * SimConfig.TicksPerSecond);
+                // The percent comes from the simulation itself: (current danger-line speed / starting speed - 1), so screen and game always match.
+                int step = s.Sim.ScrollSpeedUpPercent(in st);
                 if (step > lastSpeedStep)
                 {
                     lastSpeedStep = step;
-                    UiKit.SetText(speedText, "+" + (step * s.Cfg.ScrollStepPercent) + "%");
+                    UiKit.SetText(speedText, "+" + step + "%");
                     speedRoot.gameObject.SetActive(true);
                     speedCueTimer = 1.6f;
                     AudioManager.Play(Sfx.SpeedUp);

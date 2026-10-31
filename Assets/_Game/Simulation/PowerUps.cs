@@ -23,8 +23,16 @@ namespace BoingUpSkyTower.Simulation
     /// <summary>Static helpers for power-up ids, the data key mapping (Content/economy/powerups.json) and active-effect queries for UI.</summary>
     public static class PowerUps
     {
-        public const int SlotCount = 3;
+        /// <summary>Implemented types are ids 1..7; every owned type is usable in a run (no loadout slots, no carry cap, no stock cap).</summary>
+        public const int TypeCount = 7;
         public const int MaxType = 11;
+
+        /// <summary>Saturating add for counts and timers (stock is unlimited, so nothing may overflow).</summary>
+        public static int SatAdd(int a, int b)
+        {
+            long r = (long)a + b;
+            return r > int.MaxValue ? int.MaxValue : (r < 0 ? 0 : (int)r);
+        }
 
         public static bool IsImplemented(PowerUp p)
         {
@@ -61,10 +69,11 @@ namespace BoingUpSkyTower.Simulation
             return PowerUp.None;
         }
 
-        /// <summary>Input bit that activates the loadout slot (0..2).</summary>
-        public static int InputBitForSlot(int slot)
+        /// <summary>Input bit that activates the type (Flight 8 ... Slow Time 512); 0 for None and unimplemented types.</summary>
+        public static int InputBit(PowerUp p)
         {
-            return SimInput.PowerSlot0 << slot;
+            int i = (int)p;
+            return i >= (int)PowerUp.Flight && i <= (int)PowerUp.SlowTime ? SimInput.PowerFirst << (i - 1) : 0;
         }
 
         /// <summary>Full length in ticks of the timed effect (0 for effects that are not timed).</summary>
@@ -90,7 +99,7 @@ namespace BoingUpSkyTower.Simulation
             {
                 case PowerUp.Flight: return s.FlightTicks;
                 case PowerUp.Rocket: return s.RocketTicks;
-                case PowerUp.DoubleJump: return s.DoubleJumps > 0 ? s.DoubleJumpTicks : 0;
+                case PowerUp.DoubleJump: return s.DoubleJumpTicks;
                 case PowerUp.WallStick: return s.WallStickTicks;
                 case PowerUp.Shield: return s.ShieldTicks;
                 case PowerUp.Magnet: return s.MagnetTicks;
@@ -104,13 +113,15 @@ namespace BoingUpSkyTower.Simulation
             return ActiveTicks(in s, p) > 0;
         }
 
-        /// <summary>True when pressing the slot now would start the power-up (stock left, not already active, implemented).</summary>
-        public static bool CanActivate(in SimState s, int slot)
+        /// <summary>
+        /// True when an activation bit of the type takes effect now: implemented and alive. The owned stock is NOT part of the state: the
+        /// caller (RunSession) only sets the bit while units are left and takes one unit per accepted tap. Tapping while the effect is
+        /// active is allowed and stacks (adds the base time onto the remaining time). Flight and Rocket cannot run together.
+        /// </summary>
+        public static bool CanActivate(in SimState s, PowerUp p)
         {
             if (s.Dead) return false;
-            PowerUp p = s.SlotType(slot);
-            if (!IsImplemented(p) || s.SlotUnits(slot) <= 0) return false;
-            if (IsActive(in s, p)) return false;
+            if (!IsImplemented(p)) return false;
             if (p == PowerUp.Flight && s.RocketTicks > 0) return false;
             if (p == PowerUp.Rocket && s.FlightTicks > 0) return false;
             return true;

@@ -199,6 +199,7 @@ namespace BoingUpSkyTower.Gameplay
     {
         static readonly int[] Waits = { 0, 20, 45 };
         static readonly int[] CrumbleWaits = { 0 };
+        static readonly int[] SnapWaits = { 0, 12, 30 };   // a snap daisy closes 90 ticks after the landing
         static readonly int[] Backs = { 0, 6, 14 };
         static readonly int[] Runs = { 0, 6, 14, 28, 40 };
         const int FailScore = int.MinValue;
@@ -311,7 +312,7 @@ namespace BoingUpSkyTower.Gameplay
             if (sims >= MaxSims) return 0;
             int nodeStart = sims;
             Platform here = sim.Platforms[from.GroundId];
-            int[] waits = here.Kind == PlatformKind.Crumble ? CrumbleWaits : Waits;
+            int[] waits = here.Kind == PlatformKind.Crumble ? CrumbleWaits : (here.Kind == PlatformKind.SnapDaisy ? SnapWaits : Waits);
             int[] targets = targetBufs[depth];
             int tc = Targets(from, tier, targets);
             for (int ti = 0; ti < tc; ti++)
@@ -319,7 +320,7 @@ namespace BoingUpSkyTower.Gameplay
                 int tgt = targets[ti];
                 int tdir = sim.PlatformX(tgt, from.Tick + 20) >= from.X ? 1 : -1;
                 PlatformKind tk = sim.Platforms[tgt].Kind;
-                bool bounce = tk == PlatformKind.Bounce || tk == PlatformKind.BounceCap;
+                bool bounce = PlatformKinds.IsLaunch(tk);
                 int nc = bounce ? NextTargets(tgt, nexts) : 0;
                 int variants = bounce && nc > 0 ? nc * 2 : 1;
                 for (int v = 0; v < variants; v++)

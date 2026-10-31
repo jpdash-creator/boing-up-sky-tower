@@ -167,7 +167,7 @@ namespace BoingUpSkyTower.Economy
                 foreach (string pid in c.PowerUps)
                 {
                     int have = PowerUpCount(pid);
-                    if (have < PowerUpDefs.Get(pid).MaxStack) Data.Inventory.Powerups[pid] = have + 1;   // a full stack takes no more
+                    Data.Inventory.Powerups[pid] = SaturatingAdd(have, 1);   // no stock cap: a chest always gives its power-ups
                 }
                 Data.Coins = SaturatingAdd(Data.Coins, c.Coins);
                 if (c.Gems > 0) Data.Gems = SaturatingAdd(Data.Gems, c.Gems);

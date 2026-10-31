@@ -229,6 +229,13 @@ namespace BoingUpSkyTower.Gameplay
                 case PlatformKind.Sticky: return "S";
                 case PlatformKind.Slippery: return "L";
                 case PlatformKind.BounceCap: return "P";
+                case PlatformKind.WindPetal: return "W";
+                case PlatformKind.HiveLift: return "H";
+                case PlatformKind.SnapDaisy: return "D";
+                case PlatformKind.Dandelion: return "U";
+                case PlatformKind.ThornBush: return "T";
+                case PlatformKind.Ladybug: return "G";
+                case PlatformKind.Seesaw: return "E";
                 default: return "?";
             }
         }

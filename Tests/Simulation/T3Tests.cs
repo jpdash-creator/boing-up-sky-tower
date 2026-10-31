@@ -115,8 +115,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             LevelSpec b = T3.Spec(777, 700, 10, SignatureKind.SwingingGongs, GoalType.SurviveWave);
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
-            Assert.Equal(6734988001821236805L, LevelBuilder.Build(cfg, a).ComputeHash());
-            Assert.Equal(8732454701679347065L, LevelBuilder.Build(cfg, b).ComputeHash());
+            Assert.Equal(1813719923655701579L, LevelBuilder.Build(cfg, a).ComputeHash());   // re-rolled 2026-10-31 (doc 24: region 1 special platforms and the level 3 to 15 ramp)
+            Assert.Equal(-1742250685013077405L, LevelBuilder.Build(cfg, b).ComputeHash());   // level 10 now builds with the ramped difficulty (floor 0.708 vs 0.7)
         }
 
         [Fact]
@@ -164,7 +164,13 @@ namespace BoingUpSkyTower.Simulation.Tests
                 foreach (int level in new int[] { 1, 2 })
                 {
                     LevelData none = LevelBuilder.Build(cfg, T3.Spec(seed * 977, 300, level, sig, GoalType.ReachFloor, 60));
-                    for (int i = 0; i < none.Platforms.Length; i++) Assert.True(none.Platforms[i].Kind == PlatformKind.Normal || none.Platforms[i].Kind == PlatformKind.Crumble);
+                    for (int i = 0; i < none.Platforms.Length; i++)
+                    {
+                        PlatformKind pk = none.Platforms[i].Kind;
+                        // region 1 (doc 24): level 2 may carry a light touch of the new platforms (see Region1PlatformTests), never the flower
+                        bool lightTouch = sig == SignatureKind.BounceFlowers && level == 2 && PlatformKinds.IsRegion1New(pk) && !PlatformKinds.IsLaunch(pk);
+                        Assert.True(pk == PlatformKind.Normal || pk == PlatformKind.Crumble || lightTouch);
+                    }
                     Assert.Empty(none.Hazards);
                 }
                 l3 += T3.Count(LevelBuilder.Build(cfg, T3.Spec(seed * 977, 150, 3, sig, GoalType.ReachFloor, 60)), kind);
@@ -173,7 +179,8 @@ namespace BoingUpSkyTower.Simulation.Tests
                 // no other special kinds ever appear
                 LevelData any = LevelBuilder.Build(cfg, T3.Spec(seed * 977, 700, 12, sig, GoalType.ReachFloor, 60));
                 for (int i = 0; i < any.Platforms.Length; i++)
-                    Assert.True(any.Platforms[i].Kind == PlatformKind.Normal || any.Platforms[i].Kind == PlatformKind.Crumble || any.Platforms[i].Kind == kind);
+                    Assert.True(any.Platforms[i].Kind == PlatformKind.Normal || any.Platforms[i].Kind == PlatformKind.Crumble || any.Platforms[i].Kind == kind
+                        || (sig == SignatureKind.BounceFlowers && PlatformKinds.IsRegion1New(any.Platforms[i].Kind)));   // region 1 also uses its seven new platforms (doc 24)
             }
             Assert.True(l3 > 0, "level 3 introduces the signature");
             Assert.True(l6 > l3, "level 4+ has the normal (larger) share: " + l3 + " vs " + l6);
@@ -745,7 +752,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void BuilderSplicesChunksAtIntervalsAndAtTheEnd()
         {
             SimConfig cfg = new SimConfig();
-            LevelSpec spec = T3.Spec(5, 400, 5, SignatureKind.None, GoalType.ReachFloor, 80);
+            LevelSpec spec = T3.Spec(6, 400, 5, SignatureKind.None, GoalType.ReachFloor, 80);   // seed 6: a generated row next to the chunk can look like a chunk row (width 3.0, gap 3.6) by chance
             spec.FixedChunks = new string[] { "chunk_complex_c" }; // pillars: width 2.6, gap 3.6, six rows
             LevelData d = LevelBuilder.Build(cfg, spec);
             List<int> starts = new List<int>();

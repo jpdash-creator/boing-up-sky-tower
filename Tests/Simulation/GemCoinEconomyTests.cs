@@ -15,7 +15,8 @@ namespace BoingUpSkyTower.Simulation.Tests
     public class GemCoinEconomyTests
     {
         const int Regions = 5;
-        const int TargetMin = 70, TargetMax = 110, HardCap = 130;
+        // Owner issue list 26 (2026-10-31): 30 percent fewer gems in game, so the bands are the old ones x0.7 (70..110 became about 55..75, hard cap 130 became 91).
+        const int TargetMin = 55, TargetMax = 75, HardCap = 91;
         static readonly double[] RegionFactor = { 1.0, 1.03, 1.06, 1.09, 1.12 };
 
         readonly ITestOutputHelper output;
@@ -91,7 +92,7 @@ namespace BoingUpSkyTower.Simulation.Tests
 
         [Fact]
         [Trait("Category", "Economy")]
-        public void PlacedGemsPerRegionAreWithin70To110OnAllFiveDifficulties()
+        public void PlacedGemsPerRegionAreWithin55To75OnAllFiveDifficulties()
         {
             for (int d = 0; d < SimConfig.DifficultyGemPermille.Length; d++)
             {
@@ -112,15 +113,17 @@ namespace BoingUpSkyTower.Simulation.Tests
 
         [Fact]
         [Trait("Category", "Economy")]
-        public void TheOwnerSharesWereMeasuredBelowAndAboveTheTarget()
+        public void TheNewSharesPlaceAboutThirtyPercentFewerGemsThanTheOldOnes()
         {
-            // Documents why SimConfig.DifficultyGemPermille differs from the owner's 2.5/2.5/3.5/4.5/5: with one spot per row,
-            // 2.5 percent is under the 70 target and 5 percent is far over it.
-            double low = 0, high = 0;
-            for (int g = 1; g <= Regions; g++) { low += PlacedPerRegion(25)[g][1]; high += PlacedPerRegion(50)[g][1]; }
-            output.WriteLine("owner 2.5% -> " + (low / Regions).ToString("F1") + " gems per region, owner 5% -> " + (high / Regions).ToString("F1"));
-            Assert.True(low / Regions < TargetMin);
-            Assert.True(high / Regions > TargetMax);
+            // Issue list 26: the per mille shares are the old 32 / 32 / 35 / 38 / 41 x 0.7 rounded (22 / 22 / 25 / 27 / 29).
+            int[] old = { 32, 32, 35, 38, 41 };
+            Assert.Equal(new[] { 22, 22, 25, 27, 29 }, SimConfig.DifficultyGemPermille);
+            for (int i = 0; i < old.Length; i++) Assert.Equal((int)Math.Round(old[i] * 0.7, MidpointRounding.AwayFromZero), SimConfig.DifficultyGemPermille[i]);
+            double before = 0, after = 0;
+            for (int d = 0; d < old.Length; d++)
+                for (int g = 1; g <= Regions; g++) { before += PlacedPerRegion(old[d])[g][1]; after += PlacedPerRegion(SimConfig.DifficultyGemPermille[d])[g][1]; }
+            output.WriteLine("placed gem value over 5 difficulties x 5 regions: old shares " + before + ", new shares " + after + " = " + (after / before * 100).ToString("F1") + " percent");
+            Assert.InRange(after / before, 0.64, 0.76);
         }
 
         [Fact]
@@ -153,7 +156,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 foreach (Pickup p in LevelBuilder.Build(cfg, ll.Spec).Pickups)
                     if (p.Kind == PickupKind.Gem) { tier[p.Tag]++; n++; }
             output.WriteLine("placed gems " + n + ": " + tier[0] + "/" + tier[1] + "/" + tier[2] + "/" + tier[3]);
-            Assert.True(n > 300, "enough gems placed to judge: " + n);
+            Assert.True(n > 200, "enough gems placed to judge: " + n);
             Assert.InRange(tier[0] * 100.0 / n, 62, 78);
             Assert.InRange(tier[1] * 100.0 / n, 14, 30);
             Assert.InRange(tier[2] * 100.0 / n, 3, 12);

@@ -118,6 +118,33 @@ namespace BoingUpSkyTower.Simulation
             comboValue = spec.Goal.Value;
         }
 
+        /// <summary>
+        /// Difficulty probe (tests / reports only): from the grounded state <paramref name="s"/> tries every homing jump option
+        /// (targets of the next rows, back-off and run-up variants) and counts how many land alive on a higher row.
+        /// A lower share means a more demanding layout.
+        /// </summary>
+        public void MeasureOptions(SimState s, out int tried, out int progressed)
+        {
+            tried = 0;
+            progressed = 0;
+            int[] targets = new int[24];
+            int tc = Targets(s, targets);
+            for (int ti = 0; ti < tc; ti++)
+            {
+                if (sim.Platforms[targets[ti]].Row <= s.Row) continue;
+                Fx tx = sim.PlatformX(targets[ti], s.Tick + 20);
+                int tdir = tx >= s.X ? 1 : -1;
+                for (int bi = 0; bi < HomeBacks.Length; bi++)
+                    for (int ri = 0; ri < HomeRuns.Length; ri++)
+                    {
+                        if (HomeBacks[bi] > 0 && ri == 0) continue;
+                        SimState c;
+                        tried++;
+                        if (TryJump(s, 0, HomeBacks[bi], tdir, HomeRuns[ri], 0, 0, targets[ti], -1, 0, out c) && c.Row > s.Row) progressed++;
+                    }
+            }
+        }
+
         private bool Done(SimState s)
         {
             if (spec == null) return s.Row >= targetRow;
@@ -144,13 +171,31 @@ namespace BoingUpSkyTower.Simulation
             }
         }
 
+        /// <summary>
+        /// The depth-first search recurses once per landing (up to a few hundred deep on 150-row levels) and every frame holds several SimState copies,
+        /// which overflowed the 1.5 MB stack of a thread pool thread once SimState grew (power-up stacks, region 1 platforms). The search therefore
+        /// runs on its own thread with a large stack. Dev tooling only.
+        /// </summary>
         public BotResult Solve()
         {
             if (spec != null && spec.Goal.Type == GoalType.Speedrun) return SolveFast();
-            SimState start = sim.NewState();
-            best = start;
-            bool solved = Search(start, 0);
-            return Result(solved);
+            BotResult result = default(BotResult);
+            System.Exception error = null;
+            System.Threading.Thread worker = new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    SimState start = sim.NewState();
+                    best = start;
+                    bool solved = Search(start, 0);
+                    result = Result(solved);
+                }
+                catch (System.Exception e) { error = e; }
+            }, 128 * 1024 * 1024);
+            worker.Start();
+            worker.Join();
+            if (error != null) throw new System.InvalidOperationException("LevelBot search failed: " + error.Message, error);
+            return result;
         }
 
         private BotResult Result(bool solved)
@@ -185,11 +230,21 @@ namespace BoingUpSkyTower.Simulation
             return nodes > maxNodes ? -1 : 0;
         }
 
+        /// <summary>Launch platforms (flower, cap, dandelion): the flight after them is steered toward the next target.</summary>
         private bool IsBounce(int id)
         {
-            PlatformKind k = sim.Platforms[id].Kind;
-            return k == PlatformKind.Bounce || k == PlatformKind.BounceCap;
+            return PlatformKinds.IsLaunch(sim.Platforms[id].Kind);
         }
+
+        /// <summary>Waits before a jump: a crumbling platform and a snap daisy (closes 90 ticks after the landing) allow only short ones.</summary>
+        private static int[] WaitsFor(PlatformKind here, int[] normal)
+        {
+            if (here == PlatformKind.Crumble) return CrumbleWaits;
+            if (here == PlatformKind.SnapDaisy) return SnapWaits;
+            return normal;
+        }
+
+        private static readonly int[] SnapWaits = { 0, 12, 30 };
 
         /// <summary>Platforms on the one or two rows above a bounce platform (where the bounce flight should go next).</summary>
         private int NextTargets(int bounceId, int[] buf)
@@ -214,7 +269,7 @@ namespace BoingUpSkyTower.Simulation
             Platform here = sim.Platforms[s.GroundId];
             int preferred = PreferredDirection(s);
             int[] dirs = { preferred, 0, -preferred };
-            int[] waits = here.Kind == PlatformKind.Crumble ? CrumbleWaits : Full.Waits;
+            int[] waits = WaitsFor(here.Kind, Full.Waits);
 
             int[] targets = new int[24];
             int tc = UseHoming ? Targets(s, targets) : 0;
@@ -258,7 +313,7 @@ namespace BoingUpSkyTower.Simulation
             }
 
             ActionSet scripted = UseHoming ? Mid : Full;
-            int[] swaits = here.Kind == PlatformKind.Crumble ? CrumbleWaits : scripted.Waits;
+            int[] swaits = WaitsFor(here.Kind, scripted.Waits);
             for (int wi = 0; wi < swaits.Length; wi++)
             {
                 for (int di = 0; di < dirs.Length; di++)
@@ -306,7 +361,7 @@ namespace BoingUpSkyTower.Simulation
             Platform p = sim.Platforms[c.GroundId];
             long vb = (c.Vx.Raw * 20L / Fx.OneRaw) + 16;
             long tb = 0;
-            if (p.Kind == PlatformKind.Moving || p.Kind == PlatformKind.Vanishing) tb = (c.Tick / 20) % 24;
+            if (PlatformKinds.IsTimeDependent(p.Kind)) tb = (c.Tick / 20) % 24;
             if (sim.Hazards.Length > 0) tb = (c.Tick / 24) % 32;
             long xb = c.X.Raw * 4L / Fx.OneRaw;
             long extra = 0;
@@ -425,7 +480,7 @@ namespace BoingUpSkyTower.Simulation
             Platform here = sim.Platforms[s.GroundId];
             int preferred = PreferredDirection(s);
             int[] dirs = { preferred, 0, -preferred };
-            int[] waits = here.Kind == PlatformKind.Crumble ? CrumbleWaits : set.Waits;
+            int[] waits = WaitsFor(here.Kind, set.Waits);
             int[] targets = new int[24];
             int tc = Targets(s, targets);
             for (int ti = 0; ti < tc; ti++)

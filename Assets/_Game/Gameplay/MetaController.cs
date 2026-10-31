@@ -20,7 +20,7 @@ namespace BoingUpSkyTower.Gameplay
         [System.Serializable] class MapChunkMeta { public string file; public int height; }
         [System.Serializable] class MapSpanMeta { public int bottom; public int height; }
         // The painted world-map pages (owner, 2026-10-24): one tall image per 5 regions, with the 5 marker positions (x across, y up from the bottom, 0..1).
-        [System.Serializable] class PaintedMarker { public float x, y; }
+        [System.Serializable] class PaintedMarker { public float x, y; public string tagSide; }   // tagSide "below": the name tag is tried below the icon first
         [System.Serializable] class PaintedPage { public string file; public PaintedMarker[] markers = new PaintedMarker[0]; }
         [System.Serializable] class PaintedPages { public int width = 1080, height = 1922; public PaintedPage[] pages = new PaintedPage[0]; }
         [System.Serializable] class WorldMapMeta
@@ -62,8 +62,6 @@ namespace BoingUpSkyTower.Gameplay
         string currentRegionId;
 
         public string CurrentScreen { get; private set; }
-        /// <summary>The loadout picker of the open level or endless popup (tests open its chooser).</summary>
-        public LoadoutPicker CurrentPicker { get; private set; }
 
         void Start()
         {
@@ -849,7 +847,7 @@ namespace BoingUpSkyTower.Gameplay
                     if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;   // that page is not painted yet
                     PaintedMarker m = painted.pages[pg].markers[mk];
                     float prise = (pg * painted.height + m.y * painted.height) / total;
-                    AddRegionPin(region, new Vector2(m.x, prise), 1);
+                    AddRegionPin(region, new Vector2(m.x, prise), 1, 0f, 0f, TagKit.MapTextMaxWidth, m.tagSide == "below" ? 1 : 0);
                     if (i == current) currentRise = prise;
                     continue;
                 }
@@ -974,12 +972,14 @@ namespace BoingUpSkyTower.Gameplay
             var keys = new List<int>();
             var centres = new List<Vector2>();   // map pixels of the painted art (y grows upward)
             var labels = new List<string>();
+            var prefers = new List<bool>();      // the map data asks for the tag below the icon
             float pw = mapSize.x, ph = mapSize.y / Mathf.Max(1, painted.pages.Length);   // one painted page is ph high; seams sit at multiples of it
             foreach (PinTag pt in pinList)
             {
                 keys.Add(pt.Region.Index);
                 centres.Add(new Vector2(pt.Anchor.x * mapSize.x, pt.Anchor.y * mapSize.y));   // real pin centres (y grows upward)
                 labels.Add(pt.Label);
+                prefers.Add(pt.Prefer == 1);
             }
             int n = keys.Count;
             var placedRel = new Rect[n];   // each placed tag, relative to its own pin centre
@@ -989,6 +989,9 @@ namespace BoingUpSkyTower.Gameplay
                 var best = new TagSpot { Mode = 1, MaxW = maxWs[0] };
                 Rect bestRel = new Rect(0f, 0f, 0f, 0f);
                 float widestWord = TagKit.WidestWord(labels[k], 36, false, true);   // a wrap width below this would split a word
+                for (int pass = prefers[k] ? 0 : 1; pass < 2; pass++)
+                {
+                if (pass == 1 && prefers[k] && bestScore < 1000f) break;   // the preferred side was free (clouds only soften): keep it, else fall back to every side
                 float prevW = -1f;
                 for (int wi = 0; wi < maxWs.Length && bestScore > 0f; wi++)
                 {
@@ -1002,6 +1005,7 @@ namespace BoingUpSkyTower.Gameplay
                         for (int oo = 0; oo < order.Length && bestScore > 0f; oo++)
                         {
                             int mode = order[oo];
+                            if (pass == 0 && mode != 1) continue;   // the map data asked for "below": only that side in the first pass
                             bool vertical = mode == 1 || mode == 2;   // below / above slide sideways, right / left slide up and down
                             float off = offs[oi], ext = exts[ei];
                             if (!vertical && Mathf.Abs(off) > 220f) continue;
@@ -1045,6 +1049,7 @@ namespace BoingUpSkyTower.Gameplay
                         }
                     }
                 }
+                }   // pass
                 plan[keys[k]] = best;
                 placedRel[k] = bestRel;
             }
@@ -1052,7 +1057,7 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>A round pin on the map with a slim dark name tag beside it. Locked and not-yet-built regions show a padlock.</summary>
-        void AddRegionPin(RegionDef region, Vector2 anchor, int tagMode = 0, float tagDx = 0f, float tagDy = 0f, float tagMaxW = TagKit.MapTextMaxWidth)   // mode: 0 beside the pin, 1 below, 2 above, 3 left, 4 right
+        void AddRegionPin(RegionDef region, Vector2 anchor, int tagMode = 0, float tagDx = 0f, float tagDy = 0f, float tagMaxW = TagKit.MapTextMaxWidth, int preferMode = 0)   // preferMode 1 = the map data asks for the tag below the icon (tried first by PlanTags). mode: 0 beside the pin, 1 below, 2 above, 3 left, 4 right
         {
             bool playable = progress.IsRegionPlayable(region);
             bool unlocked = progress.IsRegionUnlocked(region);
@@ -1099,13 +1104,13 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // The name tag is built from the real map size (see ReplanTags): first a default one below the pin, replaced once the map has its size.
-            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = playable ? region.Name : (region.Index >= 26 ? region.Name + "\nComing soon" : "Coming soon"), Open = playable && unlocked };
+            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = region.Name, Open = playable && unlocked, Prefer = preferMode };   // only the real name; locked regions keep the padlock on the pin
             pinTags.Add(pt);
             BuildPinTag(pt, tagMode, tagDx, tagDy, tagMaxW);
         }
 
         /// <summary>One pin and its name tag (rebuilt when the planner moves it).</summary>
-        sealed class PinTag { public RegionDef Region; public RectTransform Pin; public Vector2 Anchor; public string Label; public bool Open; public GameObject Tag; }
+        sealed class PinTag { public RegionDef Region; public RectTransform Pin; public Vector2 Anchor; public string Label; public bool Open; public int Prefer; public GameObject Tag; }
 
         readonly List<PinTag> pinTags = new List<PinTag>();
         PaintedPages tagLayout;
@@ -1430,11 +1435,11 @@ namespace BoingUpSkyTower.Gameplay
             if (cg != null) cg.alpha = 1f;
         }
 
-        /// <summary>Endless start popup (docs/15 FR-PWR-2): best floor, the power-up loadout picker and START. The loadout is optional.</summary>
+        /// <summary>Endless start popup: best floor and START. There is no loadout any more: every owned power-up is available in the run.</summary>
         public void OnEndlessTapped(RegionDef region)
         {
             int best = progress.EndlessBestFloor(region.Id);
-            OpenPopup("Endless", "", 1300f);
+            OpenPopup("Endless", "", 900f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
             Transform endTitle = panel.Find("Title");
@@ -1451,17 +1456,8 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)rname.transform, new Vector2(0.5f, 1f), new Vector2(0f, -352f), new Vector2(760f, 80f));
             RectTransform bestRow = ToyKit.PillRow(panel, "BestFloor", 425f, 96f);
             ToyKit.InfoPill(bestRow, ToyKit.Get("icon_crown"), best > 0 ? best.ToString() : "-", new Color(1f, 0.9f, 0.4f), 300f, 96f);
-            var picker = CurrentPicker = new LoadoutPicker(progress, art, OpenShopPowerUps);
-            picker.Build(popup, panel, 570f);
             ToyKit.PopupAction(popup.Find("Panel"), "START", Btn(1), Color.white, 60f, () => StartEndless(region), -90f);
             ToyKit.PopupAction(popup.Find("Panel"), "Close", Btn(0), Color.white, 70f, ClosePopup, 100f);
-        }
-
-        /// <summary>Leaves the current popup for the shop's Power-ups tab (the loadout picker's way to buy more).</summary>
-        void OpenShopPowerUps()
-        {
-            ClosePopup();
-            ShowShop(ShopScreen.TabPowerups);
         }
 
         /// <summary>Height reserved at the bottom of the level screen for the Endless button (button 130 + 24 margin + 16 gap).</summary>
@@ -1525,7 +1521,7 @@ namespace BoingUpSkyTower.Gameplay
             LevelSpec spec = LevelSpecFactory.Build(level, repo.GetRegion(level.Region));
             LevelProgress p = progress.GetProgress(level.Id);
             int starsHave = p != null ? p.Stars : 0;
-            OpenPopup("Level " + level.Index, "", 1500f);   // taller than the default: the loadout picker (docs/15 9.4) sits above PLAY
+            OpenPopup("Level " + level.Index, "", 1020f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
 
@@ -1567,8 +1563,6 @@ namespace BoingUpSkyTower.Gameplay
                 RectTransform best = ToyKit.PillRow(panel, "Best", 550f, 96f);
                 ToyKit.InfoPill(best, ToyKit.Get("icon_crown"), p.BestScore.ToString(), new Color(1f, 0.9f, 0.4f), 300f, 96f);
             }
-            CurrentPicker = new LoadoutPicker(progress, art, OpenShopPowerUps);
-            CurrentPicker.Build(popup, panel, 790f);
             ToyKit.PopupAction(popup.Find("Panel"), "PLAY", Btn(1), Color.white, 60f, () =>
             {
                 GameSession.CurrentLevelId = level.Id;

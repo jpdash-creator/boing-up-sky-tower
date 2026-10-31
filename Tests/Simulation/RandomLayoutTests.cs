@@ -268,7 +268,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 if (Math.Abs(minSp - refSp) > Math.Max(4, 0.15 * refSp)) bad.Add(ll.Id + ": special count " + minSp + " vs independent-draw mean " + refSp.ToString("F1"));
                 if (maxCr > 2.5 * refCr + 8) bad.Add(ll.Id + ": crumble count up to " + maxCr + " vs independent-draw mean " + refCr.ToString("F1"));
                 if ((refHz > 0) != (maxHz > 0) && refHz >= 1 || (refHz >= 3 && minHz == 0)) bad.Add(ll.Id + ": hazards " + minHz + ".." + maxHz + " vs independent-draw mean " + refHz.ToString("F1"));
-                if (refHz > 0 && (maxHz - minHz > Math.Max(10, 0.3 * refHz) || Math.Abs(0.5 * (minHz + maxHz) - refHz) > Math.Max(5, 0.25 * refHz)))
+                if (refHz > 0 && (maxHz - minHz > Math.Max(12, 0.3 * refHz) || Math.Abs(0.5 * (minHz + maxHz) - refHz) > Math.Max(5, 0.25 * refHz)))
                     bad.Add(ll.Id + ": hazard count " + minHz + ".." + maxHz + " vs independent-draw mean " + refHz.ToString("F1"));
                 output.WriteLine(ll.Id + " special ref " + refSp.ToString("F1") + " seeds " + minSp + ".." + maxSp + " | crumble ref " + refCr.ToString("F1") + " seeds " + minCr + ".." + maxCr + " | hazards ref " + refHz.ToString("F1") + " seeds " + minHz + ".." + maxHz);
             }

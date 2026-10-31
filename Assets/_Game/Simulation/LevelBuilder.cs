@@ -16,7 +16,7 @@ namespace BoingUpSkyTower.Simulation
             public Fx[] X, Y, W;
             public PlatformKind[] K;
 
-            public void Add(int row, PlatformKind kind, Fx x, Fx y, Fx w, Fx amp, int period, int phase)
+            public void Add(int row, PlatformKind kind, Fx x, Fx y, Fx w, Fx amp, int period, int phase, int dir = 0)
             {
                 Platform p = new Platform();
                 p.Id = Plats.Count;
@@ -28,6 +28,7 @@ namespace BoingUpSkyTower.Simulation
                 p.Amplitude = amp;
                 p.Period = period;
                 p.Phase = phase;
+                p.Dir = dir;
                 Plats.Add(p);
                 X[row] = x; Y[row] = y; W[row] = w; K[row] = kind;
             }
@@ -116,7 +117,7 @@ namespace BoingUpSkyTower.Simulation
         public static LevelData Build(SimConfig cfg, LevelSpec spec)
         {
             int rows = spec.RowsFor();
-            Fx d = spec.Difficulty;
+            Fx d = spec.EffectiveDifficulty(cfg);   // levels 3 to 15 ramp up in every region (doc 24)
             Fx screen = cfg.ScreenWidth;
             Fx half = cfg.PlayerHalfWidth;
             Fx maxGap = cfg.LayoutMaxJumpHeight() * 9 / 10;
@@ -209,7 +210,12 @@ namespace BoingUpSkyTower.Simulation
             // the same mix of special platforms and the same share of dense and zigzag stretches; only the places and sizes change.
             // Base layouts (AttemptSeed 0, golden hashes) keep the original independent draws, bit for bit.
             bool balanced = spec.AttemptSeed != 0;
-            bool[] sigRow = balanced && sigShare > 0 ? PlanSignatureRows(spec, sigKind, sigShare, rows, locked, gemRow) : null;
+            // Region special platforms (doc 24): when the region has a set of new platforms the level plans its special rows (the signature flower is
+            // one of the options) with exact counts for the level, for the base layout and for every attempt seed.
+            bool specials = idx >= 2 && spec.ActiveNewPlatforms().Length > 0;
+            PlatformKind[] specialPlan = specials ? SpecialPlatforms.Plan(cfg, spec, sigKind, rows, locked, gemRow) : null;
+            bool[] sigRow = !specials && balanced && sigShare > 0 ? PlanSignatureRows(spec, sigKind, sigShare, rows, locked, gemRow) : null;
+            int prevDir = 0;
             int[] patternBag = new int[3];
             int patternBagPos = 3;
 
@@ -366,8 +372,12 @@ namespace BoingUpSkyTower.Simulation
                 if (afterBounce) gap = Fx.Min(gap, cfg.BounceNextGapMax);
 
                 PlatformKind kind = PlatformKind.Normal;
-                if (balanced) { if (sigRow != null && sigRow[row]) kind = sigKind; }
+                if (specials) kind = specialPlan[row];
+                else if (balanced) { if (sigRow != null && sigRow[row]) kind = sigKind; }
                 else if (sigShare > 0 && row != gemRow && rng.Next(100) < sigShare) kind = sigKind;
+                // Base layouts too (the balanced plan already has this rule): no bounce flight in the last three rows or around the hidden gem
+                // (a bounce right below the goal row overshoots it; found by the bot proof when the level 3 to 15 ramp re-rolled lvl_002_06).
+                if (!specials && !balanced && (kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap) && SpecialPlatforms.Restricted(row, rows, gemRow)) kind = PlatformKind.Normal;
                 // Bounce platforms are never chained: the landing speed on a bounce pad is set by the previous flight,
                 // so two pads in a row would make the second one pure luck.
                 if (afterBounce && (kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap)) kind = PlatformKind.Normal;
@@ -378,9 +388,11 @@ namespace BoingUpSkyTower.Simulation
                 else if (rowPattern == 2) w = rng.Range(Fx.FromRatio(28, 10), Fx.FromRatio(40, 10));
                 w = Fx.Clamp(w, minWidth, maxWidth);
                 if (kind == PlatformKind.Moving && w > cfg.DriftMaxWidth) w = cfg.DriftMaxWidth;
+                if (PlatformKinds.IsRegion1New(kind)) w = SpecialPlatforms.ConstrainWidth(cfg, kind, w);
                 if (row == gemRow && w > Fx.FromRatio(35, 10)) w = Fx.FromRatio(35, 10);
                 // Narrow platforms get smaller gaps so one jump always works (owner, 2026-10-20).
                 gap = Fx.Min(gap, SmallPlatformGapCap(maxGap, Fx.Min(w, prevW)));
+                gap = SpecialPlatforms.ConstrainGap(cfg, kind, prevKind, gap);   // hive neighbours: room for the bob
                 y = y + gap;
 
                 Fx jm = prevKind == PlatformKind.Sticky ? cfg.StickyJumpMultiplier : Fx.One;
@@ -402,10 +414,16 @@ namespace BoingUpSkyTower.Simulation
                 Fx x = prevX + dx * dir;
                 if (x < lo || x > hi) x = prevX - dx * dir;
                 x = Fx.Clamp(x, lo, hi);
+                // After a dandelion the next platform sits where the arrow points (the launch carries the player sideways).
+                if (prevKind == PlatformKind.Dandelion && prevDir != 0) x = SpecialPlatforms.DandelionNextX(cfg, ref rng, prevX, prevDir, w, screen);
 
                 Fx amp = Fx.Zero;
-                int period = 0, phase = 0;
-                if (kind == PlatformKind.Moving)
+                int period = 0, phase = 0, pdir = 0;
+                if (PlatformKinds.IsRegion1New(kind))
+                {
+                    SpecialPlatforms.Params(cfg, ref rng, kind, x, Fx.Min(x - lo, hi - x), screen, out amp, out period, out phase, out pdir);
+                }
+                else if (kind == PlatformKind.Moving)
                 {
                     Fx room = Fx.Min(x - lo, hi - x);
                     Fx want = spec.Signature == SignatureKind.DriftingPlatforms
@@ -415,7 +433,7 @@ namespace BoingUpSkyTower.Simulation
                     period = 2 * rng.Range(90, 150);
                     phase = rng.Next(period);
                 }
-                ctx.Add(row, kind, x, y, w, amp, period, phase);
+                ctx.Add(row, kind, x, y, w, amp, period, phase, pdir);
 
                 if (row == gemRow)
                 {
@@ -500,7 +518,7 @@ namespace BoingUpSkyTower.Simulation
                     }
                 }
 
-                prevX = x; prevW = w; prevKind = kind;
+                prevX = x; prevW = w; prevKind = kind; prevDir = pdir;
                 rowNo++;
             }
 
@@ -550,7 +568,7 @@ namespace BoingUpSkyTower.Simulation
             {
                 Fx w = SnapWidth(plats[i].Width, plats[i].Kind);
                 plats[i].Width = w;
-                Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving ? plats[i].Amplitude : Fx.Zero);
+                Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving || plats[i].Kind == PlatformKind.Ladybug ? plats[i].Amplitude : Fx.Zero);
                 plats[i].X = Fx.Clamp(plats[i].X, edge, screen - edge);   // a wider piece (and its swing) must stay inside the walls
             }
             SeparateSameRowPlatforms(screen, plats);
@@ -558,7 +576,7 @@ namespace BoingUpSkyTower.Simulation
         }
 
         /// <summary>Platforms of one row that still have less than this much air between them after the separation pass (walls stopped the slide).</summary>
-        private static readonly Fx TouchLimit = Fx.FromRatio(5, 100);
+        private static readonly Fx TouchLimit = Fx.FromRatio(299, 1000);   // just under MinRowGap (0.3): an extra the walls left closer than the visible-air rule allows is dropped (Region2AuditTests)
 
         /// <summary>
         /// Safety net for random layouts: an optional extra platform that the walls pinned against its row mate (so the separation could not open
@@ -726,6 +744,7 @@ namespace BoingUpSkyTower.Simulation
 
         /// <summary>Half height of the drawn pickup sprite used for the clear-air test, u (the largest gem is 0.65 wide).</summary>
         private static readonly Fx PickupClearHalf = Fx.FromRatio(7, 10);
+        private static readonly Fx HiveBobMargin = Fx.FromRatio(12, 10);
 
         /// <summary>
         /// True when a pickup centre lies in the slab zone of a platform (from 0.7 + half sprite below its surface to 0.45 + half sprite above it,
@@ -738,9 +757,11 @@ namespace BoingUpSkyTower.Simulation
             {
                 Platform pl = platforms[i];
                 if (Fx.Abs(pk.X - pl.X) > pl.Width / 2 + margin) continue;
-                if (pk.Y > pl.Y - Fx.FromRatio(7, 10) - PickupClearHalf && pk.Y < pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf)
+                // a Bee Hive Lift bobs: keep pickups out of its whole travel (HiveBobAmplitude default 1.2 u)
+                Fx bob = pl.Kind == PlatformKind.HiveLift ? HiveBobMargin : Fx.Zero;
+                if (pk.Y > pl.Y - Fx.FromRatio(7, 10) - PickupClearHalf - bob && pk.Y < pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf + bob)
                 {
-                    liftY = pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf + Fx.FromRatio(1, 100);
+                    liftY = pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf + bob + Fx.FromRatio(1, 100);
                     return true;
                 }
             }

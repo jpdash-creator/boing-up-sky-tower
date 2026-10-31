@@ -68,7 +68,7 @@ namespace BoingUpSkyTower.Gameplay
             if (Hud != null) Destroy(Hud.gameObject);
 
             Session = session;
-            if (GameSession.Progress != null) Session.ApplyLoadout(GameSession.Progress.BuildRunLoadout());   // before the HUD is built: it makes one button per slot
+            if (GameSession.Progress != null) Session.ApplyStock(GameSession.Progress.BuildRunStock());   // before the HUD is built: it makes one button per owned type
             acc = 0f;
             endHandled = false;
             Paused = false;
@@ -98,7 +98,7 @@ namespace BoingUpSkyTower.Gameplay
             Hud.OnRevive = Revive;
             Hud.OnReviveAd = ReviveByAd;
             AdService.Preload();
-            Hud.OnPower = slot => Input.LatchPower(slot);
+            Hud.OnPower = type => Input.LatchPower((PowerUp)type);
         }
 
         /// <summary>Script time per frame (milliseconds), for the CUX-1 budget tests and on-device profiling.</summary>

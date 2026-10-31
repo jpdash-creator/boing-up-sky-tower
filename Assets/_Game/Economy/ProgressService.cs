@@ -139,7 +139,7 @@ namespace BoingUpSkyTower.Economy
             return ShopResult.Ok;
         }
 
-        // ---- power-ups (docs/15 FR-PWR): owned stock, loadout, shop purchases ----
+        // ---- power-ups (docs/15 FR-PWR): owned stock (unlimited, no loadout), shop purchases ----
 
         PowerUpCatalog powerUpDefs;
 
@@ -150,25 +150,23 @@ namespace BoingUpSkyTower.Economy
             set { powerUpDefs = value; }
         }
 
-        /// <summary>Saves written before power-ups get an empty inventory and loadout; stored loadout is kept at exactly 3 entries.</summary>
+        /// <summary>
+        /// Saves written before power-ups get an empty inventory. There is no stock cap and no loadout any more (2026-10-31): the old
+        /// Data.Loadout list stays in the save for compatibility and is ignored; stored counts above the former cap of 99 are kept.
+        /// </summary>
         void EnsurePowerUpFields()
         {
             if (Data.Inventory == null) Data.Inventory = new InventoryData();
             if (Data.Inventory.Powerups == null) Data.Inventory.Powerups = new System.Collections.Generic.Dictionary<string, int>();
             if (Data.Loadout == null) Data.Loadout = new System.Collections.Generic.List<string>();
-            while (Data.Loadout.Count < PowerUpCatalog.SlotCount) Data.Loadout.Add("");
-            if (Data.Loadout.Count > PowerUpCatalog.SlotCount) Data.Loadout.RemoveRange(PowerUpCatalog.SlotCount, Data.Loadout.Count - PowerUpCatalog.SlotCount);
-            // counts are never negative or above the stack cap; unknown ids are dropped
+            // counts are never negative or zero; unknown ids are dropped
             var bad = new System.Collections.Generic.List<string>();
-            var fix = new System.Collections.Generic.List<string>();
             foreach (var kv in Data.Inventory.Powerups)
             {
                 PowerUpDef d = PowerUpDefs.Get(kv.Key);
                 if (d == null || kv.Value <= 0) bad.Add(kv.Key);
-                else if (kv.Value > d.MaxStack) fix.Add(kv.Key);
             }
             foreach (string id in bad) Data.Inventory.Powerups.Remove(id);
-            foreach (string id in fix) Data.Inventory.Powerups[id] = PowerUpDefs.Get(id).MaxStack;
         }
 
         /// <summary>Owned units of a power-up (0 for an unknown id).</summary>
@@ -178,13 +176,13 @@ namespace BoingUpSkyTower.Economy
             return id != null && Data.Inventory.Powerups.TryGetValue(id, out n) ? n : 0;
         }
 
-        /// <summary>Adds units to the stock (shop, chests, rewards), capped at the stack limit. Returns how many were added (0 when unknown, invalid or full).</summary>
+        /// <summary>Adds units to the stock (shop, chests, rewards); there is no cap, the count saturates at int.MaxValue. Returns how many were added (0 when unknown or invalid).</summary>
         public int GrantPowerUp(string id, int count)
         {
             PowerUpDef def = PowerUpDefs.Get(id);
             if (def == null || count <= 0) return 0;
             int have = PowerUpCount(id);
-            int add = Math.Min(Math.Max(0, def.MaxStack - have), count);
+            int add = (int)Math.Min((long)count, (long)int.MaxValue - have);   // saturating add
             if (add <= 0) return 0;
             Data.Inventory.Powerups[id] = have + add;
             Commit();
@@ -193,7 +191,7 @@ namespace BoingUpSkyTower.Economy
 
         /// <summary>
         /// Uses up units from the stock (a power-up was activated in a run) and saves at once. Fails without changing anything when fewer
-        /// are owned. A loadout slot whose stock reaches zero is emptied.
+        /// are owned.
         /// </summary>
         public bool TryConsumePowerUp(string id, int count = 1)
         {
@@ -203,7 +201,6 @@ namespace BoingUpSkyTower.Economy
             if (have == count)
             {
                 Data.Inventory.Powerups.Remove(id);
-                for (int i = 0; i < Data.Loadout.Count; i++) if (Data.Loadout[i] == id) Data.Loadout[i] = "";
             }
             else
             {
@@ -226,12 +223,11 @@ namespace BoingUpSkyTower.Economy
         public PowerUpBuyResult TryBuyPowerUp(string id, PowerUpCurrency currency, int quantity = 1)
         {
             PowerUpDef def = PowerUpDefs.Get(id);
-            if (def == null || !def.Implemented || quantity <= 0 || quantity > def.MaxStack) return PowerUpBuyResult.Invalid;
+            if (def == null || !def.Implemented || quantity <= 0) return PowerUpBuyResult.Invalid;
             if (!IsPowerUpUnlocked(def)) return PowerUpBuyResult.Locked;
             int price = PowerUpCatalog.PriceFor(def, currency, quantity);
             if (price <= 0) return PowerUpBuyResult.Invalid;
             int have = PowerUpCount(id);
-            if (have + quantity > def.MaxStack) return PowerUpBuyResult.StackFull;
             if (currency == PowerUpCurrency.Coins)
             {
                 if (Data.Coins < price) return PowerUpBuyResult.NotEnoughCoins;
@@ -242,94 +238,24 @@ namespace BoingUpSkyTower.Economy
                 if (Data.Gems < price) return PowerUpBuyResult.NotEnoughGems;
                 Data.Gems -= price;
             }
-            Data.Inventory.Powerups[id] = have + quantity;
+            Data.Inventory.Powerups[id] = (int)Math.Min((long)have + quantity, int.MaxValue);   // saturating: no stock cap
             Commit();
             return PowerUpBuyResult.Ok;
         }
 
-        /// <summary>A power-up may sit in a loadout slot when it exists in the simulation, is unlocked and at least one unit is owned.</summary>
-        public bool IsLoadoutCandidate(string id)
-        {
-            PowerUpDef def = PowerUpDefs.Get(id);
-            return def != null && def.Implemented && IsPowerUpUnlocked(def) && PowerUpCount(id) > 0;
-        }
-
-        /// <summary>The validated loadout: always 3 entries, an id or null for an empty slot. Unowned or unknown entries read as empty and no id appears twice.</summary>
-        public string[] GetLoadout()
-        {
-            var result = new string[PowerUpCatalog.SlotCount];
-            for (int i = 0; i < result.Length; i++)
-            {
-                string id = i < Data.Loadout.Count ? Data.Loadout[i] : "";
-                if (string.IsNullOrEmpty(id) || !IsLoadoutCandidate(id)) continue;
-                bool duplicate = false;
-                for (int j = 0; j < i; j++) if (result[j] == id) duplicate = true;
-                if (!duplicate) result[i] = id;
-            }
-            return result;
-        }
-
         /// <summary>
-        /// Puts a power-up into a slot (or empties the slot with null or ""). Rejects a bad slot number or an id that is not a loadout
-        /// candidate. An id already in another slot moves (one type per slot, docs/15 section 3.1). Saves at once.
+        /// The units a run starts with: the owned count of every implemented, unlocked power-up type (index = PowerUp id, 0 for the rest).
+        /// Every owned type is available in a run; there is no loadout and no carry cap.
         /// </summary>
-        public bool SetLoadoutSlot(int slot, string id)
+        public int[] BuildRunStock()
         {
-            if (slot < 0 || slot >= PowerUpCatalog.SlotCount) return false;
-            string[] now = GetLoadout();
-            if (string.IsNullOrEmpty(id))
+            var stock = new int[BoingUpSkyTower.Simulation.PowerUps.MaxType + 1];
+            foreach (PowerUpDef def in PowerUpDefs.Implemented)
             {
-                now[slot] = null;
+                if (!IsPowerUpUnlocked(def)) continue;
+                stock[(int)def.Type] = PowerUpCount(def.Id);
             }
-            else
-            {
-                if (!IsLoadoutCandidate(id)) return false;
-                for (int i = 0; i < now.Length; i++) if (now[i] == id) now[i] = null;
-                now[slot] = id;
-            }
-            for (int i = 0; i < now.Length; i++) Data.Loadout[i] = now[i] ?? "";
-            Commit();
-            return true;
-        }
-
-        /// <summary>Replaces the whole loadout. Fails (and changes nothing) when more than 3 ids are given or any id is invalid or repeated.</summary>
-        public bool SetLoadout(System.Collections.Generic.IList<string> ids)
-        {
-            if (ids == null || ids.Count > PowerUpCatalog.SlotCount) return false;
-            var seen = new System.Collections.Generic.List<string>();
-            foreach (string id in ids)
-            {
-                if (string.IsNullOrEmpty(id)) continue;
-                if (!IsLoadoutCandidate(id) || seen.Contains(id)) return false;
-                seen.Add(id);
-            }
-            for (int i = 0; i < PowerUpCatalog.SlotCount; i++)
-                Data.Loadout[i] = i < ids.Count && ids[i] != null ? ids[i] : "";
-            Commit();
-            return true;
-        }
-
-        /// <summary>Units of this power-up one run carries: the owned count, at most the type's carry cap.</summary>
-        public int CarryUnits(string id)
-        {
-            PowerUpDef def = PowerUpDefs.Get(id);
-            if (def == null) return 0;
-            return Math.Min(PowerUpCount(id), def.CarryCap);
-        }
-
-        /// <summary>The three slots a run starts with (type and units carried); empty slots have PowerUp.None and 0 units.</summary>
-        public LoadoutSlot[] BuildRunLoadout()
-        {
-            string[] ids = GetLoadout();
-            var slots = new LoadoutSlot[PowerUpCatalog.SlotCount];
-            for (int i = 0; i < slots.Length; i++)
-            {
-                PowerUpDef def = PowerUpDefs.Get(ids[i]);
-                if (def == null) continue;
-                slots[i].Type = def.Type;
-                slots[i].Units = CarryUnits(ids[i]);
-            }
-            return slots;
+            return stock;
         }
 
         // ---- regions ----

@@ -41,7 +41,7 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("endlessRunsToday")] public int EndlessRunsToday;
         /// <summary>Owned stock. Added with power-ups (docs/15); old saves load with an empty inventory (no version bump needed).</summary>
         [JsonProperty("inventory")] public InventoryData Inventory = new InventoryData();
-        /// <summary>Last power-up loadout: up to 3 power-up ids (empty string = empty slot), remembered between runs.</summary>
+        /// <summary>Obsolete since 2026-10-31 (no loadout any more): kept in the save for compatibility and ignored.</summary>
         [JsonProperty("loadout")] public List<string> Loadout = new List<string>();
         /// <summary>Characters owned through chests or the shop. Common characters of an unlocked region are owned without an entry.</summary>
         [JsonProperty("characters")] public List<string> Characters = new List<string>();
