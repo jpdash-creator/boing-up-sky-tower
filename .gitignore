@@ -47,3 +47,6 @@ Art/_pick/
 
 # Android build scratch
 .utmp/
+
+Tests/Simulation/dotnet_home/
+Tests/Simulation/nuget/
