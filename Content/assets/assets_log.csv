@@ -209,3 +209,4 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-01,T68,hero_r2_forest_girl_v3_test,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,2qB5xnwcgtdaQTS5ldhE,done,15,approvals/T66-region-heroes.md,owner approved 30 credits test; T67 R2/R4 rejected (arms)
 2026-11-01,T68,hero_r4_candy_shop_girl_v3_test,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,6vu3bmCxzV1DPdekRUEu,done,15,approvals/T66-region-heroes.md,
 2026-11-01,T69,hero_r4_golden_candy_girl_v4,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,Q8gvDy3KnNUFOo0eu6Wz,done,15,chat prompt shown to owner,owner approved 15 credits; T68 R4 rejected
+2026-11-01,T70,flight_wings,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=monk style+Momo size,none,xCFaYtia4dm3QsBZPEXI,done,30,approvals/T70-flight-wings.md,owner approved 30 credits

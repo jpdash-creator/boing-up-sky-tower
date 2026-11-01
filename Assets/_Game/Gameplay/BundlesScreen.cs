@@ -32,6 +32,8 @@ namespace BoingUpSkyTower.Gameplay
         static float textAreaW = 380f;
         const float CompactChipH = 72f, CompactGap = 8f, NameGap = 6f, NameFont = 42f;
         const float HeaderRibbonW = 700f, HeaderRibbonH = 120f, RefreshRowH = 134f, RefreshBtnW = 190f, HeaderGap = 10f;
+        /// <summary>Header fonts: the caption is 48 (was 42), the title 52.</summary>
+        const float CaptionFont = 48f, TitleFont = 52f;
 
         static readonly Color ChipFrame = new Color(0.42f, 0.24f, 0.10f, 1f);
         static readonly Color ChipFill = new Color(0.99f, 0.95f, 0.84f, 1f);
@@ -202,7 +204,9 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Height of a bundle row: the name and chip block, but never less than the price button (130 px) plus padding.</summary>
         public static float CardHeight(BundleDef def)
         {
-            return Mathf.Max(RowPad * 2f + TextBlockHeight(def), RowPad * 2f + PriceH);
+            // every row has at least the height of a one-line name over two chip rows (1 and 2 chip rows look the same); 3 chip rows or a long name still grow
+            float uniform = RowPad * 2f + NameLineH() + NameGap + 2f * CompactChipH + CompactGap;
+            return Mathf.Max(Mathf.Max(RowPad * 2f + TextBlockHeight(def), RowPad * 2f + PriceH), uniform);
         }
 
         static void AddCompactChip(RectTransform parent, Chip c, float x, float y)
@@ -326,7 +330,15 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // fixed header: ribbon, then caption + the two refresh buttons
-            float headH = HeaderRibbonH + HeaderGap + RefreshRowH + HeaderGap;
+            // The header grows with the text scale: title (right aligned, wraps) and caption (wraps beside the two buttons) are estimated with a
+            // generous glyph width so nothing is clipped or overlaps at 130 percent text or on the narrowest canvas.
+            float btnBlockW = 2f * RefreshBtnW + 16f + 8f + 16f;
+            float capFont = CaptionFont * UiKit.TextScale, titleFont = TitleFont * UiKit.TextScale;
+            int titleLines = Mathf.Max(1, Mathf.CeilToInt("Refresh Bundles".Length * titleFont * 0.6f / Mathf.Max(100f, bodyW - 16f)));
+            int capLines = Mathf.Max(1, Mathf.CeilToInt("Draw 6 new bundles".Length * capFont * 0.6f / Mathf.Max(100f, bodyW - btnBlockW)));
+            float titleH = Mathf.Max(HeaderRibbonH * 0.6f, Mathf.Ceil(titleLines * titleFont * 1.25f) + 8f);
+            float refreshRowH = Mathf.Max(RefreshRowH, Mathf.Ceil(capLines * capFont * 1.25f) + 12f);
+            float headH = titleH + HeaderGap + refreshRowH + HeaderGap;
             RectTransform head = UiKit.Rect(body, "RefreshHeader");
             head.anchorMin = new Vector2(0f, 1f);
             head.anchorMax = new Vector2(1f, 1f);
@@ -335,24 +347,26 @@ namespace BoingUpSkyTower.Gameplay
             head.sizeDelta = new Vector2(0f, headH);
             // The kit ribbon is too small for this title at this size (the text ended up half on the wood), so the header is the yellow italic
             // text straight on the wood, with a dark outline: about 11:1 against the wood.
-            Text title = UiKit.AddText(head, "HeaderTitle", "Refresh Bundles", 52, new Color(1f, 0.85f, 0.25f, 1f), TextAnchor.MiddleCenter, true);
+            Text title = UiKit.AddText(head, "HeaderTitle", "Refresh Bundles", (int)TitleFont, new Color(1f, 0.85f, 0.25f, 1f), TextAnchor.MiddleRight, true);   // right aligned, above the refresh buttons
             title.fontStyle = FontStyle.Italic;
             title.horizontalOverflow = HorizontalWrapMode.Wrap;
             var trt = (RectTransform)title.transform;
             trt.anchorMin = new Vector2(0f, 1f);
             trt.anchorMax = new Vector2(1f, 1f);
             trt.pivot = new Vector2(0.5f, 1f);
-            trt.offsetMin = new Vector2(8f, -HeaderRibbonH);
+            trt.offsetMin = new Vector2(8f, -titleH);
             trt.offsetMax = new Vector2(-8f, 0f);
 
-            float rowTop = HeaderRibbonH + HeaderGap;
-            Text cap = UiKit.AddText(head, "Caption", "Draw 6 new bundles", 42, Color.white, TextAnchor.MiddleLeft, true);
+            float rowTop = titleH + HeaderGap;
+            Text cap = UiKit.AddText(head, "Caption", "Draw 6 new bundles", (int)CaptionFont, Color.white, TextAnchor.MiddleLeft, true);
+            cap.horizontalOverflow = HorizontalWrapMode.Wrap;
+            cap.verticalOverflow = VerticalWrapMode.Overflow;
             var crt = (RectTransform)cap.transform;
             crt.anchorMin = new Vector2(0f, 1f);
             crt.anchorMax = new Vector2(1f, 1f);
             crt.pivot = new Vector2(0f, 1f);
-            crt.offsetMin = new Vector2(8f, -(rowTop + RefreshRowH));
-            crt.offsetMax = new Vector2(-(2f * RefreshBtnW + 16f + 8f + 16f), -rowTop);
+            crt.offsetMin = new Vector2(8f, -(rowTop + refreshRowH));
+            crt.offsetMax = new Vector2(-btnBlockW, -rowTop);
             for (int k = 0; k < 2; k++)
             {
                 bool withCoins = k == 1;
@@ -363,7 +377,7 @@ namespace BoingUpSkyTower.Gameplay
                 Button rb = ShopChrome.PriceButton(head, withCoins ? "RefreshCoins" : "RefreshGems", withCoins ? 0 : 1, withCoins ? coin : gem,
                     cost.ToString(), "Show 6 other bundles for " + cost + " " + unit, () => TapRefresh(body, progress, art, host, refreshWallet, withCoins, cap), 44);
                 if (!can) rb.GetComponent<Image>().color = new Color(0.55f, 0.55f, 0.55f, 1f);   // dimmed: cannot pay now (the tap explains why)
-                UiKit.Place((RectTransform)rb.transform, new Vector2(1f, 1f), new Vector2(-8f - (withCoins ? 0f : RefreshBtnW + 16f), -(rowTop + (RefreshRowH - PriceH) * 0.5f)),
+                UiKit.Place((RectTransform)rb.transform, new Vector2(1f, 1f), new Vector2(-8f - (withCoins ? 0f : RefreshBtnW + 16f), -(rowTop + (refreshRowH - PriceH) * 0.5f)),
                     new Vector2(RefreshBtnW, PriceH));
             }
 

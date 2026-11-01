@@ -381,6 +381,9 @@ namespace BoingUpSkyTower.Economy
 
             LevelProgress before = GetProgress(levelId);
             RewardResult reward = RewardCalculator.Compute(level, region, run, before);
+            BoingUpSkyTower.Simulation.CharacterStats finds = CharacterDefs.ActiveStats();   // docs/29: flat per cleared level, 0 for every current hero
+            if (finds.CoinFind > 0) reward.PayoutCoins += finds.CoinFind;
+            if (finds.GemFind > 0) reward.RewardGems += finds.GemFind;
 
             LevelProgress p = before ?? new LevelProgress();
             p.Clears++;

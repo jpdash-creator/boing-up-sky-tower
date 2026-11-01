@@ -891,7 +891,9 @@ namespace BoingUpSkyTower.Gameplay
         // no trail and no pops. Allocation free: three pooled renderers and the existing pop pool.
 
         SpriteRenderer fxShield, fxMagnet, fxBoost;
-        SpriteRenderer wingL, wingR, rocketPack, rocketFlame;   // Flight puts wings on Momo, Rocket a rocket pack (owner 2026-10-24)
+        SpriteRenderer wingPair, wingL, wingR, rocketPack, rocketFlame;   // Flight puts wings on Momo, Rocket a rocket pack (owner 2026-10-24)
+        /// <summary>Painted wing pair height relative to the player height (the picture is about 2:1, so its width is twice this).</summary>
+        const float WingsHeightFactor = 0.8f;
         int prevPwMask, prevPwUsed, prevShieldSaves;
 
         static Sprite MakeRing()
@@ -923,12 +925,22 @@ namespace BoingUpSkyTower.Gameplay
             fxMagnet = NewSprite("FxMagnet", ring, 9);
             fxBoost = NewSprite("FxBoost", ring, 9);
             fxShield.enabled = fxMagnet.enabled = fxBoost.enabled = false;
-            wingL = NewSprite("WingL", PowerGearArt.Wing, 8);
-            wingR = NewSprite("WingR", PowerGearArt.Wing, 8);
-            wingR.flipX = true;
+            Sprite wingsPic = PowerGearArt.WingsPicture;
+            if (wingsPic != null)
+            {
+                wingPair = NewSprite("Wings", wingsPic, 8);   // one centred, symmetric picture behind the character
+                wingPair.enabled = false;
+            }
+            else
+            {
+                wingL = NewSprite("WingL", PowerGearArt.Wing, 8);   // fallback: the code-drawn wing, mirrored (CUX-10)
+                wingR = NewSprite("WingR", PowerGearArt.Wing, 8);
+                wingR.flipX = true;
+                wingL.enabled = wingR.enabled = false;
+            }
             rocketPack = NewSprite("RocketPack", PowerGearArt.Pack, 8);
             rocketFlame = NewSprite("RocketFlame", PowerGearArt.Flame, 7);
-            wingL.enabled = wingR.enabled = rocketPack.enabled = rocketFlame.enabled = false;
+            rocketPack.enabled = rocketFlame.enabled = false;
         }
 
         static int PowerMask(in SimState st)
@@ -1001,23 +1013,36 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Wings (Flight) or a rocket pack with a flame (Rocket) on the player while the power-up runs. Reduced motion: no flapping, no flicker.</summary>
         void UpdateGearFx(float cx, float cy, float h)
         {
-            if (wingL == null) return;
+            if (rocketPack == null) return;
             SimState st = session.State;
             bool wings = st.FlightTicks > 0, rocket = st.RocketTicks > 0;
-            if (wingL.enabled != wings) wingL.enabled = wingR.enabled = wings;
+            if (wingPair != null) { if (wingPair.enabled != wings) wingPair.enabled = wings; }
+            else if (wingL.enabled != wings) wingL.enabled = wingR.enabled = wings;
             if (rocketPack.enabled != rocket) rocketPack.enabled = rocketFlame.enabled = rocket;
             float t = st.Tick / 60f;
             if (wings)
             {
                 float flap = reduced ? 0f : Mathf.Sin(t * 14f);
-                float s = playerHeight * 0.95f / 2f;
-                float lift = 0.12f * playerHeight * flap;
-                wingL.transform.position = new Vector3(cx - playerHeight * 0.22f, cy + playerHeight * 0.05f + lift, 0f);
-                wingR.transform.position = new Vector3(cx + playerHeight * 0.22f, cy + playerHeight * 0.05f + lift, 0f);
-                wingL.transform.localScale = new Vector3(s, s * (1f + 0.12f * flap), 1f);
-                wingR.transform.localScale = new Vector3(s, s * (1f + 0.12f * flap), 1f);
-                wingL.transform.rotation = Quaternion.Euler(0f, 0f, 14f * flap);
-                wingR.transform.rotation = Quaternion.Euler(0f, 0f, -14f * flap);
+                if (wingPair != null)
+                {
+                    // one symmetric picture, as tall as the character, centred on the shoulders; the flap is a gentle scale pulse only
+                    float ph = wingPair.sprite.bounds.size.y;
+                    float sp = ph > 0.0001f ? playerHeight * WingsHeightFactor / ph : 1f;
+                    wingPair.transform.position = new Vector3(cx, cy - playerHeight * 0.04f, 0f);   // the shoulders sit a little below the body centre
+                    wingPair.transform.localScale = new Vector3(sp * (1f + 0.04f * flap), sp * (1f + 0.08f * flap), 1f);
+                    wingPair.transform.rotation = Quaternion.identity;
+                }
+                else
+                {
+                    float s = playerHeight * 0.95f / 2f;
+                    float lift = 0.12f * playerHeight * flap;
+                    wingL.transform.position = new Vector3(cx - playerHeight * 0.22f, cy + playerHeight * 0.05f + lift, 0f);
+                    wingR.transform.position = new Vector3(cx + playerHeight * 0.22f, cy + playerHeight * 0.05f + lift, 0f);
+                    wingL.transform.localScale = new Vector3(s, s * (1f + 0.12f * flap), 1f);
+                    wingR.transform.localScale = new Vector3(s, s * (1f + 0.12f * flap), 1f);
+                    wingL.transform.rotation = Quaternion.Euler(0f, 0f, 14f * flap);
+                    wingR.transform.rotation = Quaternion.Euler(0f, 0f, -14f * flap);
+                }
             }
             if (rocket)
             {

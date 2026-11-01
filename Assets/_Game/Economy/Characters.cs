@@ -36,6 +36,8 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Price in gems in the shop (0 while unpriced). A duplicate from a chest refunds 25 percent of it as gems.</summary>
         public int GemPrice;
         public PowerUp[] Powers = new PowerUp[0];
+        /// <summary>The six stored stats (docs/29). The default is Momo's baseline, so every current hero plays alike.</summary>
+        public CharacterStats Stats = CharacterStats.Default;
     }
 
     public static class CharacterDefs
@@ -56,6 +58,12 @@ namespace BoingUpSkyTower.Economy
 
         /// <summary>Every character that exists (has art). More are added here as they are made.</summary>
         public static readonly CharacterSpec[] All = { Momo, ForestGirl, BeachOtter, CandyGirl, Monk };
+
+        /// <summary>
+        /// The stats of the chosen character, read when a level result is saved (flat coin and gem finds). Set once at start-up by the Gameplay layer
+        /// (CharacterCatalog); until then, and in tests, it is Momo's baseline.
+        /// </summary>
+        public static System.Func<CharacterStats> ActiveStats = () => CharacterStats.Default;
 
         public static CharacterSpec Get(string id)
         {

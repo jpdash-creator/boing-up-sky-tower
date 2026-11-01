@@ -492,7 +492,7 @@ namespace BoingUpSkyTower.Simulation
             // --- horizontal acceleration ---
             PlatformKind surface = Platforms[s.GroundId].Kind;
             Fx accel = Cfg.Accel;
-            Fx friction = Cfg.Friction;
+            Fx friction = Cfg.Accel * Cfg.BrakeFactor;
             if (!s.Grounded)
             {
                 accel = accel * Cfg.AirControl;

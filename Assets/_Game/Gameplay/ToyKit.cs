@@ -15,9 +15,18 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Space a screen leaves at the bottom of the safe area for the tab bar.</summary>
         public const float TabBarReserve = TabBarHeight + TabBarBottom + 24f;
 
-        public static readonly string[] TabLabels = { "Shop", "Chests", "PLAY", "Heroes", "Daily" };
-        public static readonly string[] TabA11y = { "Shop", "Treasure chests", "Play", "Characters", "Daily rewards" };
-        public const int TabShop = 0, TabChests = 1, TabPlay = 2, TabHeroes = 3, TabDaily = 4;
+        public static readonly string[] TabLabels = { "Shop", "Chests", "PLAY", "Heroes", "Daily", "Subscription" };
+        public static readonly string[] TabA11y = { "Shop", "Treasure chests", "Play", "Characters", "Daily rewards", "Subscription" };
+        public const int TabShop = 0, TabChests = 1, TabPlay = 2, TabHeroes = 3, TabDaily = 4, TabSubscription = 5;
+
+        /// <summary>Owner issue 29: the Rewards (gift) button sits above the Heroes button, bottom right, on home AND the world map. One shared gap and size so both screens match.</summary>
+        public const float RewardsButtonSize = 140f, RewardsButtonGap = 16f;
+        /// <summary>Height of the tab bar's buttons above the screen bottom (bar bottom 16 + button offset 14 + button height 158).</summary>
+        public const float TabBarButtonTop = TabBarBottom + 14f + 158f;
+        /// <summary>Distance from the screen bottom to the underside of the Rewards button.</summary>
+        public const float RewardsButtonBottom = TabBarButtonTop + RewardsButtonGap;
+        /// <summary>Extra height the world map gives up above the tab bar so the Rewards button never covers a region pin or tag.</summary>
+        public const float RewardsStrip = RewardsButtonBottom - TabBarReserve + RewardsButtonSize + RewardsButtonGap;
 
         static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
 

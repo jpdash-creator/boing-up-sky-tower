@@ -28,12 +28,13 @@ namespace BoingUpSkyTower.Simulation
         public Fx Gravity = Fx.FromRatio(40, 3600);          // 40 u/s^2
         public Fx Accel = Fx.FromRatio(30, 3600);            // 30 u/s^2
         public Fx AirControl = Fx.FromRatio(3, 5);           // air acceleration share
-        public Fx Friction = Fx.FromRatio(45, 3600);         // ground deceleration with no input
+        /// <summary>Ground braking with no input = Accel x BrakeFactor (45 u/s2 for Momo; docs/29). Replaced the fixed Friction value.</summary>
+        public Fx BrakeFactor = Fx.FromRatio(3, 2);
         public Fx MaxSpeed = Fx.FromRatio(9, 60);            // 9 u/s
         /// <summary>
         /// Standing jump launch speed. 19 u/s peaks at 4.51 u = 1.3 median row gaps (3.48 u); with NormalGapMax 4.2 a single standing
-        /// jump always reaches the next platform. Full speed (19 + 0.58 x 9 = 24.2 u/s) peaks at 7.33 u = 2.1 median gaps.
-        /// History: 14 u/s until 2026-10-20 (2.45 u), 21 u/s with factor 0.85 the same day (too high), 19 u/s with factor 0.58 (owner list 7).
+        /// jump always reaches the next platform. Full speed (19 + 0.41 x 9 = 22.69 u/s) peaks at 6.44 u = 1.85 median gaps.
+        /// History: 14 u/s until 2026-10-20 (2.45 u), 21 u/s with factor 0.85 the same day (too high), 19 u/s with factor 0.58 (owner list 7), then factor 0.41.
         /// </summary>
         public Fx JumpBase = Fx.FromRatio(19, 60);           // 19 u/s
         /// <summary>
@@ -43,7 +44,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Largest vertical gap the generator makes between neighbouring rows (every kind). Below the standing peak (4.51 u) by 0.3 u.</summary>
         public Fx NormalGapMax = Fx.FromRatio(42, 10);
         public Fx LayoutJumpBase = Fx.FromRatio(14, 60);
-        /// <summary>Speed factor of the layout reference jump (the pre-2026-10-20 0.85). Layout full-speed launch is 21.65 u/s, below the real 24.2 u/s, so every generated dx is covered.</summary>
+        /// <summary>Speed factor of the layout reference jump (the pre-2026-10-20 0.85). Layout full-speed launch is 21.65 u/s, below the real 22.69 u/s, so every generated dx is covered.</summary>
         public Fx LayoutJumpSpeedFactor = Fx.FromRatio(85, 100);
         public Fx JumpSpeedFactor = Fx.FromRatio(41, 100);   // extra jump speed per unit of horizontal speed
         public Fx WallBoost = Fx.FromRatio(77, 100);         // speed multiplier on wall bounce

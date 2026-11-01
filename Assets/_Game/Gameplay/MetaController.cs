@@ -361,7 +361,7 @@ namespace BoingUpSkyTower.Gameplay
                 momo = doll;
                 momoBase = momo.anchoredPosition;
             }
-            AddComingSoonColumn();
+            AddRewardsButton();
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
             UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(300f, 44f));   // bottom centre, clear of the bundle timer button at the left
             AddTabBar(ToyKit.TabPlay);
@@ -395,34 +395,19 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// Home right-side column (docs/22 points 2, 7, 8; docs/23): Subscription (live, opens ShowSubscription), Bundles and Daily Rewards (Coming Soon). Each is a 140 px button (at least 48 dp)
-        /// with a dim look and a small lock icon on top as the only marker (the accessibility labels say "coming soon"). 22 px (more than 8 dp) between buttons.
-        /// The column sits right of the logo's bottom edge, below the wallet row and above the tab bar. A tap shows the Coming soon message and nothing else.
-        /// The Bundles icon is Resources/Art/Ui/icon_bundle (a brown bag tied with a string) when that file exists, the gem icon until then.
+        /// Rewards (daily gift) button, owner issue 29: bottom right, directly ABOVE the Heroes tab with ToyKit.RewardsButtonGap between them (same on home and the world map).
+        /// 140 px (at least 48 dp), red dot when something is claimable. Subscription moved into the bottom bar; Bundles live in the Shop's Bundles tab.
         /// </summary>
-        void AddComingSoonColumn()
+        void AddRewardsButton()
         {
-            const float size = 140f, gap = 22f, top = 680f, width = 140f;
-            string[] names = { "Subscription", "Bundles", "Rewards" };
-            string[] labels = { "Subscription", "Bundles, coming soon", progress != null && progress.HasClaimable() ? "Rewards, something to claim" : "Rewards" };
-            Sprite[] icons = { ToyKit.Get("icon_crown"), ToyKit.Get("icon_bundle") ?? ToyKit.Get("icon_gem"), ToyKit.Get("icon_daily") };
-            for (int i = 0; i < names.Length; i++)
-            {
-                string what = names[i];
-                Button b = ToyKit.IconButton(screen, what, labels[i], 2, icons[i], new Vector2(size, size), what == "Subscription" ? (Action)ShowSubscription : what == "Rewards" ? (Action)ShowRewards : () => ShowMessage("Coming soon", what + " is coming soon."), 0.5f);
-                UiKit.Place((RectTransform)b.transform, new Vector2(1f, 1f), new Vector2(-24f, -(top + i * (size + gap))), new Vector2(size, size));
-                if (what == "Rewards" && progress != null && progress.HasClaimable()) ToyKit.AddBadge(b.transform);   // red dot: something to claim
-                if (what == "Subscription" || what == "Rewards") continue;   // a live button (docs/26): full colour, no lock
-                b.GetComponent<Image>().color = new Color(0.78f, 0.8f, 0.86f, 1f);   // dim look
-                Transform glyph = b.transform.Find("Glyph");
-                if (glyph != null)
-                {
-                    ((RectTransform)glyph).anchoredPosition = new Vector2(0f, -8f);
-                    glyph.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.85f);
-                }
-                Image lockIcon = UiKit.AddImage(b.transform, "Lock", ToyKit.Get("icon_lock"), Color.white);
-                UiKit.Place(lockIcon.rectTransform, new Vector2(1f, 1f), new Vector2(-4f, -4f), new Vector2(36f, 36f));
-            }
+            bool claim = progress != null && progress.HasClaimable();
+            Button b = ToyKit.IconButton(screen, "Rewards", claim ? "Rewards, something to claim" : "Rewards", 2, ToyKit.Get("icon_daily"), new Vector2(ToyKit.RewardsButtonSize, ToyKit.RewardsButtonSize), ShowRewards, 0.5f);
+            var rt = (RectTransform)b.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.sizeDelta = new Vector2(ToyKit.RewardsButtonSize, ToyKit.RewardsButtonSize);
+            rt.anchoredPosition = new Vector2(-18f, ToyKit.RewardsButtonBottom);   // 18 = bar side margin 12 + half the bar gap 6: right edge lines up with the Heroes button
+            if (claim) ToyKit.AddBadge(b.transform);   // red dot: something to claim
         }
 
         /// <summary>Currency pills (coins, gems, total stars) with the round settings gear at the right (owner issue 14, SS2).</summary>
@@ -451,18 +436,18 @@ namespace BoingUpSkyTower.Gameplay
 
         /// <summary>
         /// The persistent bottom tab bar (docs/16 section C). With <paramref name="withPlay"/> false (World Map and Level screen, owner issue 16.3) the
-        /// middle PLAY button is left out. The bar holds Shop, Chests, PLAY, Heroes (Daily moved to the home column, docs/22 point 8).
+        /// middle PLAY button is left out. The bar holds Shop, Subscription, PLAY, Heroes (owner issue 29; Chests and Bundles are tabs of the Shop; Rewards is the gift button above Heroes).
         /// </summary>
         void AddTabBar(int selected, bool withPlay = true)
         {
             var items = new System.Collections.Generic.List<ToyKit.BarItem>
             {
                 new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" },
-                new ToyKit.BarItem { Icon = "icon_chest", Caption = "Chests", A11y = "Treasure chests" },
+                new ToyKit.BarItem { Icon = "icon_crown", Caption = "Subscription", A11y = "Subscription" },
             };
             if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true });
             items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
-            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabPlay, ToyKit.TabHeroes } : new[] { ToyKit.TabShop, ToyKit.TabChests, ToyKit.TabHeroes };
+            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabPlay, ToyKit.TabHeroes } : new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabHeroes };
             ToyKit.BuildIconBar(screen, items.ToArray(), selected < 0 ? -1 : System.Array.IndexOf(tabOf, selected), i => OnTab(tabOf[i]));
         }
 
@@ -472,6 +457,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
                 case ToyKit.TabPlay: ShowMap(); break;
+                case ToyKit.TabSubscription: if (CurrentScreen != "Subscription") ShowSubscription(); break;
                 case ToyKit.TabChests: if (CurrentScreen != "Shop" || shop == null || shop.Tab != ShopScreen.TabChests) ShowTreasureChests(); break;
                 case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
             }
@@ -554,7 +540,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Subscription page: opened from the home button and from the shop header; Back returns to the caller.</summary>
         public void ShowSubscription()
         {
-            if (CurrentScreen != "Subscription") subscriptionReturn = CurrentScreen == "Shop" ? (Action)(() => ShowShop()) : ShowMenu;
+            if (CurrentScreen != "Subscription") subscriptionReturn = CurrentScreen == "Shop" ? (Action)(() => ShowShop()) : CurrentScreen == "Map" ? (Action)ShowMap : ShowMenu;
             NewScreen("Subscription");
             Background(null, new Color(0.30f, 0.18f, 0.10f, 1f));   // brown wood look of the shop pages
             var host = new ShopScreen.Host
@@ -874,7 +860,7 @@ namespace BoingUpSkyTower.Gameplay
             mapViewport.SetSiblingIndex(screen.GetSiblingIndex());
             UiKit.Stretch(mapViewport);
             mapViewport.offsetMax = Vector2.zero;   // the map fills the width; the top bar floats over it
-            mapViewport.offsetMin = new Vector2(0f, ToyKit.TabBarReserve);   // the icon tab bar sits under the map
+            mapViewport.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + ToyKit.RewardsStrip);   // the icon tab bar and the Rewards button above Heroes sit under the map
             mapViewport.gameObject.AddComponent<RectMask2D>();
             Image hit = mapViewport.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
@@ -978,6 +964,7 @@ namespace BoingUpSkyTower.Gameplay
             AddPillRow();
             AddBack("Menu", ShowMenu);
             AddTabBar(-1, false);
+            AddRewardsButton();   // above Heroes, same gap as home; the map viewport leaves a strip for it (no pin or tag can sit under it)
             BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
 
             CenterMap(currentRise);

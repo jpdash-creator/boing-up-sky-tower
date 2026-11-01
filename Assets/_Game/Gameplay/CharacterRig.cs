@@ -118,6 +118,17 @@ namespace BoingUpSkyTower.Gameplay
     {
         const string SelectedKey = "settings.character";
 
+        /// <summary>Lets the Economy layer read the chosen character's stats (flat coin and gem finds, docs/29) without knowing about PlayerPrefs.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void HookActiveStats()
+        {
+            CharacterDefs.ActiveStats = () =>
+            {
+                CharacterSpec info = Selected.Info;
+                return info != null && info.Stats != null ? info.Stats : BoingUpSkyTower.Simulation.CharacterStats.Default;
+            };
+        }
+
         /// <summary>Every character with art, in list order (Common first). Built from <see cref="CharacterDefs.All"/>: adding a hero needs only its CharacterSpec row (with its RegionIndex) and the art in Resources/Characters/id.</summary>
         public static readonly CharacterDef[] All = BuildAll();
 

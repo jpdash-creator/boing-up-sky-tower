@@ -8,11 +8,27 @@ namespace BoingUpSkyTower.Gameplay
     /// </summary>
     public static class PowerGearArt
     {
-        static Sprite wing, pack, flame;
+        static Sprite wing, pack, flame, wingsPicture;
+        static bool wingsPictureTried;
+        /// <summary>Resources path of the painted wing pair (one symmetric picture, owner pick A 2026-11-01).</summary>
+        public const string WingsPath = "Art/Power/flight_wings";
         static readonly Color Navy = new Color(0.07f, 0.12f, 0.30f, 1f);
 
         /// <summary>Left wing, attached at its right edge (mirror it for the right side). 2 world units wide at scale 1.</summary>
         public static Sprite Wing { get { return wing != null ? wing : (wing = BuildWing()); } }
+        /// <summary>The painted wing pair (both wings, centred, about 2:1), or null when the PNG is missing: callers then use the code-drawn <see cref="Wing"/> as a mirrored pair (CUX-10).</summary>
+        public static Sprite WingsPicture
+        {
+            get
+            {
+                if (!wingsPictureTried) { wingsPictureTried = true; wingsPicture = LoadWings(WingsPath); }
+                return wingsPicture;
+            }
+        }
+
+        /// <summary>Loads a wing picture from Resources; null when it does not exist.</summary>
+        public static Sprite LoadWings(string path) { return Resources.Load<Sprite>(path); }
+
         /// <summary>A small rocket standing upright, worn on the back.</summary>
         public static Sprite Pack { get { return pack != null ? pack : (pack = BuildPack()); } }
         /// <summary>A flame pointing down, hangs under the pack.</summary>

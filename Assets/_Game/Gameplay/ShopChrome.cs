@@ -400,7 +400,7 @@ namespace BoingUpSkyTower.Gameplay
                 rt.pivot = new Vector2(0.5f, 0.5f);
                 rt.offsetMin = new Vector2(i == 0 ? 0f : gap * 0.5f, 0f);
                 rt.offsetMax = new Vector2(i == TabCount - 1 ? 0f : -gap * 0.5f, 0f);
-                Image ic = UiKit.AddImage(b.transform, "Icon", ToyKit.Get(TabIcons[i]), Color.white);
+                Image ic = UiKit.AddImage(b.transform, "Icon", i == TabBundles ? BundlesScreen.BagIcon(null) ?? ToyKit.Get(TabIcons[i]) : ToyKit.Get(TabIcons[i]), Color.white);   // Bundles tab = the same bag as the bundle rows
                 var irt = ic.rectTransform;
                 irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 0.5f);
                 irt.pivot = new Vector2(0.5f, 0.5f);
