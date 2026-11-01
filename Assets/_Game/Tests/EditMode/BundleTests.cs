@@ -39,9 +39,9 @@ namespace BoingUpSkyTower.Tests
             return svc;
         }
 
-        static BundleDef Def(string id, int price, int coins, int gems, params BundlePowerUp[] pw)
+        static BundleDef Def(string id, int price, int coins, params BundlePowerUp[] pw)
         {
-            var d = new BundleDef { Id = id, Name = id, Tier = 1, PriceGems = price, Coins = coins, Gems = gems };
+            var d = new BundleDef { Id = id, Name = id, Tier = 1, PriceGems = price, Coins = coins };
             d.PowerUps.AddRange(pw);
             return d;
         }
@@ -74,7 +74,7 @@ namespace BoingUpSkyTower.Tests
         {
             Assert.AreEqual(1000, catalog.All.Select(b => b.Id).Distinct().Count());
             Assert.AreEqual(1000, catalog.All.Select(b => b.Name).Distinct().Count());
-            int sigs = catalog.All.Select(b => b.Coins + "|" + b.Gems + "|" + string.Join(",", b.PowerUps.OrderBy(p => p.Id).Select(p => p.Id + "x" + p.Count)) + "|" + b.CharacterId).Distinct().Count();
+            int sigs = catalog.All.Select(b => b.Coins + "|" + string.Join(",", b.PowerUps.OrderBy(p => p.Id).Select(p => p.Id + "x" + p.Count)) + "|" + b.CharacterId).Distinct().Count();
             Assert.AreEqual(1000, sigs, "no two bundles share their contents");
         }
 
@@ -91,8 +91,8 @@ namespace BoingUpSkyTower.Tests
         public void BrokenJsonGivesAnEmptyCatalogAndSkipsBadEntries()
         {
             Assert.AreEqual(0, BundleCatalog.FromJson("not json").Count);
-            BundleCatalog c = BundleCatalog.FromJson("[{\"id\":\"a\",\"name\":\"A\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"gems\":0,\"powerups\":[{\"id\":\"pw_nope\",\"count\":1}],\"characterId\":null}," +
-                                                      "{\"id\":\"b\",\"name\":\"B\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"gems\":0,\"powerups\":[{\"id\":\"pw_magnet\",\"count\":2}],\"characterId\":null}]");
+            BundleCatalog c = BundleCatalog.FromJson("[{\"id\":\"a\",\"name\":\"A\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"powerups\":[{\"id\":\"pw_nope\",\"count\":1}],\"characterId\":null}," +
+                                                      "{\"id\":\"b\",\"name\":\"B\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"powerups\":[{\"id\":\"pw_magnet\",\"count\":2}],\"characterId\":null}]");
             Assert.AreEqual(1, c.Count);
             Assert.AreEqual("b", c.All[0].Id);
         }
@@ -106,12 +106,12 @@ namespace BoingUpSkyTower.Tests
             svc.AddGems(500);
             svc.AddCoins(100);
             svc.GrantPowerUp("pw_magnet", 2);
-            BundleDef d = Def("t1", 300, 12000, 40, Pw("pw_magnet", 3), Pw("pw_rocket", 1));
+            BundleDef d = Def("t1", 300, 12000, Pw("pw_magnet", 3), Pw("pw_rocket", 1));
             int changed = 0;
             svc.Changed += () => changed++;
             Assert.AreEqual(BundleResult.Ok, svc.TryBuyBundle(d));
             Assert.AreEqual(1, changed, "one save");
-            Assert.AreEqual(500 - 300 + 40, svc.Gems);
+            Assert.AreEqual(500 - 300, svc.Gems);
             Assert.AreEqual(12100, svc.Coins);
             Assert.AreEqual(5, svc.PowerUpCount("pw_magnet"));
             Assert.AreEqual(1, svc.PowerUpCount("pw_rocket"));
@@ -123,7 +123,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService svc = NewService();
             svc.AddGems(299);
             string before = Snapshot(svc);
-            Assert.AreEqual(BundleResult.NotEnoughGems, svc.TryBuyBundle(Def("t1", 300, 12000, 40, Pw("pw_magnet", 3))));
+            Assert.AreEqual(BundleResult.NotEnoughGems, svc.TryBuyBundle(Def("t1", 300, 12000, Pw("pw_magnet", 3))));
             Assert.AreEqual(before, Snapshot(svc));
         }
 
@@ -133,7 +133,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService svc = NewService();
             svc.AddGems(1000);
             string before = Snapshot(svc);
-            Assert.AreEqual(BundleResult.Invalid, svc.TryBuyBundle(Def("bad", 300, 12000, 40, Pw("pw_magnet", 3), Pw("pw_unknown", 1))));
+            Assert.AreEqual(BundleResult.Invalid, svc.TryBuyBundle(Def("bad", 300, 12000, Pw("pw_magnet", 3), Pw("pw_unknown", 1))));
             Assert.AreEqual(before, Snapshot(svc), "nothing was granted and no gems were taken");
             Assert.AreEqual(BundleResult.Invalid, svc.TryBuyBundle((BundleDef)null));
             Assert.AreEqual(BundleResult.Invalid, svc.TryBuyBundle("no_such_bundle"));
@@ -146,7 +146,7 @@ namespace BoingUpSkyTower.Tests
             svc.AddGems(1000);
             svc.AddCoins(int.MaxValue - 5);
             svc.GrantPowerUp("pw_shield", 500);
-            Assert.AreEqual(BundleResult.Ok, svc.TryBuyBundle(Def("t1", 200, 10000, 0, Pw("pw_shield", 10))));
+            Assert.AreEqual(BundleResult.Ok, svc.TryBuyBundle(Def("t1", 200, 10000, Pw("pw_shield", 10))));
             Assert.AreEqual(int.MaxValue, svc.Coins);
             Assert.AreEqual(510, svc.PowerUpCount("pw_shield"), "no stock cap");
         }
@@ -158,7 +158,7 @@ namespace BoingUpSkyTower.Tests
             BundleDef d = catalog.All[0];
             svc.AddGems(d.PriceGems);
             Assert.AreEqual(BundleResult.Ok, svc.TryBuyBundle(d.Id));
-            Assert.AreEqual(d.Gems, svc.Gems);
+            Assert.AreEqual(0, svc.Gems, "no gems back");
         }
 
         // ---- the six offers and the refresh ----
@@ -229,7 +229,7 @@ namespace BoingUpSkyTower.Tests
         public void ASmallCatalogStillGivesDistinctOffers()
         {
             var defs = new List<BundleDef>();
-            for (int i = 0; i < 8; i++) defs.Add(Def("s" + i, 200, 1000 + i, 0, Pw("pw_magnet", 1)));
+            for (int i = 0; i < 8; i++) defs.Add(Def("s" + i, 200, 1000 + i, Pw("pw_magnet", 1)));
             ProgressService svc = NewService(BundleCatalog.FromDefs(defs));
             svc.AddCoins(300);
             Assert.AreEqual(6, svc.CurrentBundleOffers().Select(b => b.Id).Distinct().Count());
@@ -271,9 +271,9 @@ namespace BoingUpSkyTower.Tests
             BundleDef d = svc.CurrentTimerOffer(now);
             Assert.IsNotNull(d);
             Assert.AreEqual((d.PriceGems * 70 + 99) / 100, svc.TimerOfferPrice(d));
-            Assert.AreEqual(140, svc.TimerOfferPrice(Def("p", 200, 1, 0)));
-            Assert.AreEqual(161, svc.TimerOfferPrice(Def("p", 230, 1, 0)), "230 x 0.7 is exactly 161");
-            Assert.AreEqual(137, svc.TimerOfferPrice(Def("p", 195, 1, 0)), "136.5 rounds up");
+            Assert.AreEqual(140, svc.TimerOfferPrice(Def("p", 200, 1)));
+            Assert.AreEqual(161, svc.TimerOfferPrice(Def("p", 230, 1)), "230 x 0.7 is exactly 161");
+            Assert.AreEqual(137, svc.TimerOfferPrice(Def("p", 195, 1)), "136.5 rounds up");
             Assert.AreEqual(300, svc.TimerOfferSecondsLeft(now));
             Assert.IsNotNull(svc.CurrentTimerOffer(now.AddSeconds(299)));
             Assert.AreEqual(1, svc.TimerOfferSecondsLeft(now.AddSeconds(299)));
@@ -295,7 +295,7 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(before, Snapshot(svc));
             svc.AddGems(1);
             Assert.AreEqual(BundleResult.Ok, svc.TryBuyTimerOffer(now));
-            Assert.AreEqual(d.Gems, svc.Gems);
+            Assert.AreEqual(0, svc.Gems, "no gems back");
             Assert.AreEqual(d.Coins, svc.Coins);
             Assert.IsNull(svc.CurrentTimerOffer(now), "one purchase per offer");
         }
@@ -325,7 +325,7 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void NeverTwiceInARowEvenWithTwoBundles()
         {
-            var defs = new List<BundleDef> { Def("x", 200, 5000, 0, Pw("pw_magnet", 1)), Def("y", 210, 5000, 0, Pw("pw_shield", 1)) };
+            var defs = new List<BundleDef> { Def("x", 200, 5000, Pw("pw_magnet", 1)), Def("y", 210, 5000, Pw("pw_shield", 1)) };
             ProgressService svc = NewService(BundleCatalog.FromDefs(defs));
             string last = null;
             for (int round = 0; round < 12; round++)

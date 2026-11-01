@@ -322,11 +322,18 @@ namespace BoingUpSkyTower.Tests
 
             // Characters: the chosen character on the land stage and the roster
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
-            ProgressService.TestAllCharacters = true;   // SYSTEM_TEST: the Sporeling is owned, so the roster has two tiles
-            CharacterCatalog.Selected = CharacterCatalog.Sporeling;
-            yield return CheckScreen("characters-sporeling", () => meta.ShowCharacters(), problems);
+            ProgressService.TestAllCharacters = true;   // SYSTEM_TEST: every hero is owned, so the roster has five tiles (Momo, Capi, Otto, Bonbon, Bao)
+            foreach (CharacterDef hero in new[] { CharacterCatalog.ForestGirl, CharacterCatalog.BeachOtter, CharacterCatalog.CandyGirl, CharacterCatalog.Monk })
+            {
+                CharacterCatalog.Selected = hero;
+                yield return CheckScreen("characters-" + hero.Id, () => meta.ShowCharacters(), problems);
+                yield return CheckScreen("hero-reveal-" + hero.Id, () => { meta.ShowMenu(); meta.ShowHeroReveal(hero); }, problems);
+            }
             CharacterCatalog.Selected = CharacterCatalog.Momo;
             ProgressService.TestAllCharacters = false;
+
+            // The one-time "New hero joins you!" pop-up (docs/21): card, hero picture, name, rarity and the single OK button on every aspect (and at 130 percent text in the second run).
+            yield return CheckScreen("hero-reveal", () => { meta.ShowMenu(); meta.ShowHeroReveal(CharacterCatalog.ForestGirl); }, problems);
             Report(problems);
         }
 

@@ -114,6 +114,8 @@ namespace BoingUpSkyTower.Economy
         {
             if (Data.Characters == null) Data.Characters = new List<string>();
             Data.Characters.RemoveAll(id => CharacterDefs.Get(id) == null);
+            if (Data.HeroesRevealed == null) Data.HeroesRevealed = new List<string>();
+            Data.HeroesRevealed.RemoveAll(id => CharacterDefs.Get(id) == null);
             if (Data.ChestOpens < 0) Data.ChestOpens = 0;
             if (Data.Version < SaveData.CurrentVersion) Data.Version = SaveData.CurrentVersion;
         }
@@ -129,6 +131,40 @@ namespace BoingUpSkyTower.Economy
             if (c.Region == 1) return true;
             RegionDef r = repo.TryGetRegionByIndex(c.Region);
             return r != null && IsRegionUnlocked(r);
+        }
+
+        /// <summary>True when the hero's reveal is done (or it never needs one: Momo and every non-hero character).</summary>
+        public bool IsHeroRevealed(string id)
+        {
+            CharacterSpec c = CharacterDefs.Get(id);
+            return c != null && (!c.NeedsReveal || Data.HeroesRevealed.Contains(id));
+        }
+
+        /// <summary>True when the character may be shown and chosen: owned, and for a region hero also revealed. SYSTEM_TEST shows everything.</summary>
+        public bool IsCharacterVisible(string id)
+        {
+            if (!OwnsCharacter(id)) return false;
+            return TestAllCharacters || IsHeroRevealed(id);
+        }
+
+        /// <summary>Heroes whose region is unlocked but whose reveal pop-up was not confirmed yet, in list order (shown one after the other on the next home or map screen).</summary>
+        public List<string> PendingHeroReveals()
+        {
+            var list = new List<string>(2);
+            if (TestAllCharacters) return list;
+            foreach (CharacterSpec c in CharacterDefs.All)
+                if (c.NeedsReveal && !Data.HeroesRevealed.Contains(c.Id) && OwnsCharacter(c.Id)) list.Add(c.Id);
+            return list;
+        }
+
+        /// <summary>Records a confirmed reveal and saves at once, so the pop-up shows once. False for an unknown, not needing or already revealed hero.</summary>
+        public bool MarkHeroRevealed(string id)
+        {
+            CharacterSpec c = CharacterDefs.Get(id);
+            if (c == null || !c.NeedsReveal || Data.HeroesRevealed.Contains(id) || !OwnsCharacter(id)) return false;
+            Data.HeroesRevealed.Add(id);
+            Commit();
+            return true;
         }
 
         /// <summary>Gives a character (shop, tests). Returns false for an unknown or already owned one.</summary>

@@ -21,8 +21,18 @@ namespace BoingUpSkyTower.Economy
         public string Id;
         public string Name;
         public CharacterRarity Rarity;
-        /// <summary>Region index whose unlock gives this Common character; 0 for the others.</summary>
+        /// <summary>
+        /// RegionIndex: the region whose unlock gives this Common hero (every region has one designated Common hero); 0 for the others.
+        /// To add a hero (R3 beach, R4 candy, R5 monk ...): one CharacterSpec row in <see cref="CharacterDefs.All"/> with this index plus the art in Resources/Characters/id.
+        /// </summary>
         public int Region;
+        /// <summary>True for the Common hero of a region.</summary>
+        public bool IsRegionHero { get { return Rarity == CharacterRarity.Common && Region > 0; } }
+        /// <summary>
+        /// True when the hero stays hidden (Heroes screen, selection, lists) until its region is unlocked AND the one-time "New hero joins you!" reveal was confirmed.
+        /// Region 1 (Momo) is never hidden.
+        /// </summary>
+        public bool NeedsReveal { get { return IsRegionHero && Region > 1; } }
         /// <summary>Price in gems in the shop (0 while unpriced). A duplicate from a chest refunds 25 percent of it as gems.</summary>
         public int GemPrice;
         public PowerUp[] Powers = new PowerUp[0];
@@ -37,10 +47,15 @@ namespace BoingUpSkyTower.Economy
         public static readonly int[] PowerCount = { 0, 1, 1, 2, 3 };
 
         public static readonly CharacterSpec Momo = new CharacterSpec { Id = "momo", Name = "Momo", Rarity = CharacterRarity.Common, Region = 1 };
-        public static readonly CharacterSpec Sporeling = new CharacterSpec { Id = "sporeling", Name = "Sporeling", Rarity = CharacterRarity.Common, Region = 2 };
+
+        // region heroes (T66, owner-approved paintings): R2 forest girl Capi, R3 beach sea otter Otto, R4 candy girl Bonbon, R5 Shaolin monk Bao. (The old Sporeling was deleted 2026-11-01; Capi replaced it. Old saves that name "sporeling" are cleaned in ProgressService.EnsureChestFields and fall back to Momo.)
+        public static readonly CharacterSpec ForestGirl = new CharacterSpec { Id = "forestgirl", Name = "Capi", Rarity = CharacterRarity.Common, Region = 2 };
+        public static readonly CharacterSpec BeachOtter = new CharacterSpec { Id = "beachotter", Name = "Otto", Rarity = CharacterRarity.Common, Region = 3 };
+        public static readonly CharacterSpec CandyGirl = new CharacterSpec { Id = "candygirl", Name = "Bonbon", Rarity = CharacterRarity.Common, Region = 4 };
+        public static readonly CharacterSpec Monk = new CharacterSpec { Id = "monk", Name = "Bao", Rarity = CharacterRarity.Common, Region = 5 };
 
         /// <summary>Every character that exists (has art). More are added here as they are made.</summary>
-        public static readonly CharacterSpec[] All = { Momo, Sporeling };
+        public static readonly CharacterSpec[] All = { Momo, ForestGirl, BeachOtter, CandyGirl, Monk };
 
         public static CharacterSpec Get(string id)
         {
@@ -52,7 +67,8 @@ namespace BoingUpSkyTower.Economy
         public static List<CharacterSpec> OfRarity(CharacterRarity r)
         {
             var list = new List<CharacterSpec>(4);
-            foreach (CharacterSpec c in All) if (c.Rarity == r) list.Add(c);
+            // region heroes come only with their region (never from a chest), so they are not in any draw pool
+            foreach (CharacterSpec c in All) if (c.Rarity == r && !c.IsRegionHero) list.Add(c);
             return list;
         }
     }

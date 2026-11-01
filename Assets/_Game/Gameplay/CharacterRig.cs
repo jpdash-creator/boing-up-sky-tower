@@ -113,16 +113,32 @@ namespace BoingUpSkyTower.Gameplay
         }
     }
 
-    /// <summary>The characters that exist (Momo and the Sporeling for now). Which ones the player has comes from <see cref="ProgressService.OwnsCharacter"/>.</summary>
+    /// <summary>The characters that exist (Momo, Capi, Otto and Bao for now). Which ones the player has comes from <see cref="ProgressService.OwnsCharacter"/>.</summary>
     public static class CharacterCatalog
     {
         const string SelectedKey = "settings.character";
 
-        public static readonly CharacterDef Momo = new CharacterDef { Id = "momo", Name = "Momo" };
-        public static readonly CharacterDef Sporeling = new CharacterDef { Id = "sporeling", Name = "Sporeling" };
+        /// <summary>Every character with art, in list order (Common first). Built from <see cref="CharacterDefs.All"/>: adding a hero needs only its CharacterSpec row (with its RegionIndex) and the art in Resources/Characters/id.</summary>
+        public static readonly CharacterDef[] All = BuildAll();
 
-        /// <summary>Every character with art, in list order (Common first).</summary>
-        public static readonly CharacterDef[] All = { Momo, Sporeling };
+        public static readonly CharacterDef Momo = Find("momo");
+        public static readonly CharacterDef ForestGirl = Find("forestgirl");
+        public static readonly CharacterDef BeachOtter = Find("beachotter");
+        public static readonly CharacterDef CandyGirl = Find("candygirl");
+        public static readonly CharacterDef Monk = Find("monk");
+
+        static CharacterDef[] BuildAll()
+        {
+            var list = new List<CharacterDef>(CharacterDefs.All.Length);
+            foreach (CharacterSpec s in CharacterDefs.All) list.Add(new CharacterDef { Id = s.Id, Name = s.Name });
+            return list.ToArray();
+        }
+
+        static CharacterDef Find(string id)
+        {
+            foreach (CharacterDef c in All) if (c.Id == id) return c;
+            return null;
+        }
 
         public static CharacterDef Get(string id)
         {
@@ -130,9 +146,10 @@ namespace BoingUpSkyTower.Gameplay
             return Momo;
         }
 
-        public static bool Owns(ProgressService p, CharacterDef c) { return c == Momo || (p != null && p.OwnsCharacter(c.Id)); }
+        /// <summary>True when the player has the character AND it is visible: a region hero stays hidden until its region is unlocked and its "New hero joins you!" reveal was confirmed. Momo always.</summary>
+        public static bool Owns(ProgressService p, CharacterDef c) { return c == Momo || (p != null && p.IsCharacterVisible(c.Id)); }
 
-        /// <summary>The characters the player has (bought, received or unlocked with a region).</summary>
+        /// <summary>The characters the player has and may see (bought, received, or the revealed heroes of unlocked regions).</summary>
         public static CharacterDef[] Available(ProgressService p)
         {
             var list = new List<CharacterDef>(All.Length);

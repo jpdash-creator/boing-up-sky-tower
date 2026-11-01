@@ -171,7 +171,7 @@ time, gems and coins (taken/placed), stars, fail reason, verdict, checks.
 | Combo levels show no gem icon | no `GemBadge` child on the level circle, no `GemPill` in the run HUD, 0 gem pickups placed |
 | Levels 8 and 15 have gems | gem pickups placed > 0 |
 | Run goal equals popup goal | goal text and target row |
-| Run uses the selected character | `RunView.Character.Id` equals `CharacterCatalog.Selected.Id` (`--character momo` or `sporeling` selects one first) |
+| Run uses the selected character | `RunView.Character.Id` equals `CharacterCatalog.Selected.Id` (`--character momo` or `forestgirl` selects one first) |
 | Power-up button count | owned types at start = `PowerUpBar.ButtonCount` = number of `Power<Type>` objects on screen |
 | Random layout differs between two attempts | `layoutHash` (FNV over all platforms) and `attemptSeed` of attempt 1 and 2 (`RunSession.LayoutInfo` is in the table too) |
 
@@ -196,7 +196,7 @@ python Tools/android_test/alttester/run_all.py --levels 1-15 --region 1 --instal
 #    identical: python Tools/android_test/alttester/level_sweep.py --levels 1-15 --region 1 --install
 ```
 
-Useful options: `--skill 0` (perfect player: a fall then points at an unfair level), `--speed 2` (game at double speed), `--time-limit 300`, `--character sporeling`,
+Useful options: `--skill 0` (perfect player: a fall then points at an unfair level), `--speed 2` (game at double speed), `--time-limit 300`, `--character forestgirl`,
 `--no-relayout` (do not restart each level once), `--stop-on-fail`, `--no-launch` (use the running game; it must be in the main menu), `--keep-data`, `--fresh`.
 The phone is picked with `ANDROID_SERIAL` (default `96355505`, the owner's phone, so an attached emulator does not break adb).
 

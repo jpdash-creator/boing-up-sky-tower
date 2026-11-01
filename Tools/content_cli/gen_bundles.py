@@ -6,10 +6,11 @@ at run time through Resources, see BundleCatalog in Assets/_Game/Economy). Run `
 
 Rules (owner brief, docs/26 and docs/22):
   - 1,000 bundles, price 200 to 500 gems in steps of 10.
-  - contents: coins + 1 to 4 distinct power-up types (counts 1 to 10 each) + gems back; characterId is in the format but none is generated yet.
-  - value at list rates = coins / 20 + gems back + power-ups (50 gems for Magnet, Shield, Wall Stick, Double Jump; 75 for Slow Time, Rocket, Flight)
+  - contents: coins + 1 to 4 distinct power-up types (counts 1 to 10 each). NO gems (owner decision, issue list 28); characterId is in the
+    format but none is generated yet.
+  - value at list rates = coins / 20 + power-ups (50 gems for Magnet, Shield, Wall Stick, Double Jump; 75 for Slow Time, Rocket, Flight)
     must be 1.4 to 1.8 times the price.
-  - no two bundles share a content signature (coins, gems back, power-up counts, character); no two share a name.
+  - no two bundles share a content signature (coins, power-up counts, character); no two share a name.
 """
 import json
 import os
@@ -72,14 +73,14 @@ class Rng:
         return len(weights) - 1
 
 
-def value_x20(coins, gems_back, powerups):
+def value_x20(coins, powerups):
     """Value at list rates, in units of 1/20 gem (all integers: no rounding in the checks)."""
     pw = sum(POWERUP_VALUE[pid] * n for pid, n in powerups)
-    return coins + COINS_PER_GEM * (gems_back + pw)
+    return coins + COINS_PER_GEM * pw
 
 
-def in_band(price, coins, gems_back, powerups):
-    v = value_x20(coins, gems_back, powerups)
+def in_band(price, coins, powerups):
+    v = value_x20(coins, powerups)
     return round(VALUE_MIN * 10) * COINS_PER_GEM * price <= v * 10 and v * 10 <= round(VALUE_MAX * 10) * COINS_PER_GEM * price
 
 
@@ -109,21 +110,20 @@ def build_one(index, attempt):
         if counts[i] < MAX_COUNT and spent + POWERUPS[i][1] <= budget:
             counts[i] += 1
             spent += POWERUPS[i][1]
-    gems_back = 5 * r.below(int(price * 0.18) // 5 + 1)
-    if r.below(5) == 0:
-        gems_back = 0
-    coins_gems = target_gems - spent - gems_back
+    r.below(int(price * 0.18) // 5 + 1)                                        # draws kept (formerly gems back) so prices, types and counts stay as before
+    r.below(5)
+    coins_gems = target_gems - spent
     coins = int(round(coins_gems * COINS_PER_GEM / 100.0)) * 100
     if coins < MIN_COINS:
         return None
     powerups = [(POWERUPS[i][0], counts[i]) for i in chosen]
-    if not in_band(price, coins, gems_back, powerups):
+    if not in_band(price, coins, powerups):
         return None
-    return price, coins, gems_back, powerups
+    return price, coins, powerups
 
 
-def signature(coins, gems_back, powerups, character):
-    return (coins, gems_back, tuple(powerups), character or "")
+def signature(coins, powerups, character):
+    return (coins, tuple(powerups), character or "")
 
 
 def generate():
@@ -142,8 +142,8 @@ def generate():
             cand = build_one(index, attempt)
             if cand is None:
                 continue
-            price, coins, gems_back, powerups = cand
-            sig = signature(coins, gems_back, powerups, "")
+            price, coins, powerups = cand
+            sig = signature(coins, powerups, "")
             if sig in seen:
                 continue
             built = cand
@@ -151,14 +151,13 @@ def generate():
             break
         if built is None:
             raise RuntimeError("could not build bundle %d" % index)
-        price, coins, gems_back, powerups = built
+        price, coins, powerups = built
         bundles.append({
             "id": "bundle_%04d" % (index + 1),
             "name": names[index],
             "tier": tier_of(price),
             "priceGems": price,
             "coins": coins,
-            "gems": gems_back,
             "powerups": [{"id": pid, "count": n} for pid, n in powerups],
             "characterId": None,
         })
@@ -174,7 +173,7 @@ def statistics(bundles):
     ratios = []
     for b in bundles:
         pw = [(p["id"], p["count"]) for p in b["powerups"]]
-        ratios.append(value_x20(b["coins"], b["gems"], pw) / float(COINS_PER_GEM * b["priceGems"]))
+        ratios.append(value_x20(b["coins"], pw) / float(COINS_PER_GEM * b["priceGems"]))
     prices = [b["priceGems"] for b in bundles]
     ntypes = {}
     for b in bundles:
@@ -187,7 +186,6 @@ def statistics(bundles):
         "price_min_max": (min(prices), max(prices)),
         "value_ratio_min_avg_max": (round(min(ratios), 3), round(sum(ratios) / len(ratios), 3), round(max(ratios), 3)),
         "coins_min_max": (min(b["coins"] for b in bundles), max(b["coins"] for b in bundles)),
-        "gems_back_min_max": (min(b["gems"] for b in bundles), max(b["gems"] for b in bundles)),
         "distinct_powerup_types_histogram": dict(sorted(ntypes.items())),
         "tier_histogram": dict(sorted(tiers.items())),
         "distinct_names": len(set(b["name"] for b in bundles)),

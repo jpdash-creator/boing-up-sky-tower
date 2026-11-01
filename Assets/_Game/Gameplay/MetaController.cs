@@ -366,6 +366,32 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(300f, 44f));   // bottom centre, clear of the bundle timer button at the left
             AddTabBar(ToyKit.TabPlay);
             BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
+            MaybeShowHeroReveal();
+        }
+
+        // ---------------- new hero reveal (docs/21) ----------------
+
+        /// <summary>Shows the one-time "New hero joins you!" pop-up for the first unlocked hero not revealed yet (home and map). The next one follows after OK.</summary>
+        void MaybeShowHeroReveal()
+        {
+            if (progress == null) return;
+            System.Collections.Generic.List<string> pending = progress.PendingHeroReveals();
+            if (pending.Count == 0) return;
+            ShowHeroReveal(CharacterCatalog.Get(pending[0]));
+        }
+
+        /// <summary>The reveal card for one hero with its single OK button. OK saves the reveal (so it shows once) and moves on to the next pending hero.</summary>
+        public void ShowHeroReveal(CharacterDef who)
+        {
+            if (who == null) return;
+            RectTransform card = HeroRevealCard.Build(NewOverlay(), who, art);
+            string id = who.Id;
+            HeroRevealCard.AddOk(card, () =>
+            {
+                if (progress != null) progress.MarkHeroRevealed(id);
+                ClosePopup();
+                MaybeShowHeroReveal();
+            });
         }
 
         /// <summary>
@@ -810,6 +836,12 @@ namespace BoingUpSkyTower.Gameplay
 
         /// <summary>The painted world map (the 10 stitched region paintings with a pin for every region): the main map (owner, 2026-10-24).</summary>
         public void ShowMap()
+        {
+            BuildMap();
+            MaybeShowHeroReveal();
+        }
+
+        void BuildMap()
         {
             NewScreen("Map");
             currentRegionId = null;

@@ -21,8 +21,8 @@ def load_bundles():
 
 
 def value_in_twentieths(b):
-    """coins/20 + gems back + power-ups at list rates, scaled by 20 so the checks are exact integers."""
-    return b["coins"] + 20 * (b["gems"] + sum(GEM_VALUE[p["id"]] * p["count"] for p in b["powerups"]))
+    """coins/20 + power-ups at list rates, scaled by 20 so the checks are exact integers."""
+    return b["coins"] + 20 * (sum(GEM_VALUE[p["id"]] * p["count"] for p in b["powerups"]))
 
 
 class BundleData(unittest.TestCase):
@@ -64,7 +64,7 @@ class BundleData(unittest.TestCase):
             for p in b["powerups"]:
                 self.assertTrue(1 <= p["count"] <= 10, b["id"])
             self.assertGreater(b["coins"], 0, b["id"])
-            self.assertGreaterEqual(b["gems"], 0, b["id"])
+            self.assertNotIn("gems", b, "%s: bundles contain no gems" % b["id"])
             self.assertIsNone(b["characterId"], "no character bundles are generated yet")
 
     def test_tier_follows_price(self):
@@ -74,7 +74,7 @@ class BundleData(unittest.TestCase):
     def test_no_duplicate_content_signatures(self):
         sigs = set()
         for b in self.bundles:
-            sig = (b["coins"], b["gems"], tuple((p["id"], p["count"]) for p in sorted(b["powerups"], key=lambda p: p["id"])), b["characterId"])
+            sig = (b["coins"], tuple((p["id"], p["count"]) for p in sorted(b["powerups"], key=lambda p: p["id"])), b["characterId"])
             self.assertNotIn(sig, sigs, b["id"])
             sigs.add(sig)
 

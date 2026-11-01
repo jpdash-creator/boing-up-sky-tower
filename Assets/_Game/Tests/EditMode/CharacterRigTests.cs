@@ -26,12 +26,31 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void TheRosterHasMomoAndTheSporeling()
+        public void TheNewRegionHeroesHaveAllSixPartsAndTheirRig()
+        {
+            foreach (string id in new[] { "forestgirl", "beachotter", "candygirl", "monk" })
+            {
+                CharacterDef c = CharacterCatalog.Get(id);
+                Assert.AreEqual(id, c.Id);
+                // Bonbon also has a "back" piece (the candy cane painted behind her); the others have the six body parts only
+                string[] expected = id == "candygirl" ? new[] { "back", "legL", "legR", "body", "handL", "handR", "head" } : new[] { "legL", "legR", "body", "handL", "handR", "head" };
+                CollectionAssert.AreEqual(expected, c.Rig.Order, id);
+                foreach (string part in c.Rig.Order) Assert.IsNotNull(c.PartSprite(part), id + " is missing " + part);
+                Assert.AreEqual(1365f, c.Rig.CanvasW);
+                Assert.AreEqual(1649f, c.Rig.CanvasH);
+            }
+        }
+
+        [Test]
+        public void TheRosterHasMomoAndTheRegionHeroes()
         {
             var all = CharacterCatalog.All;
-            Assert.AreEqual(2, all.Length);
+            Assert.AreEqual(5, all.Length);
             Assert.AreEqual("momo", all[0].Id);
-            Assert.AreEqual("sporeling", all[1].Id);
+            Assert.AreEqual("forestgirl", all[1].Id);
+            Assert.AreEqual("beachotter", all[2].Id);
+            Assert.AreEqual("candygirl", all[3].Id);
+            Assert.AreEqual("monk", all[4].Id);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get("nobody"), "an unknown id falls back to Momo");
         }
 
@@ -76,12 +95,12 @@ namespace BoingUpSkyTower.Tests
         {
             var svc = new ProgressService(Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
             Assert.IsTrue(svc.OwnsCharacter("momo"));
-            Assert.IsFalse(svc.OwnsCharacter("sporeling"), "region 2 is still locked");
+            Assert.IsFalse(svc.OwnsCharacter("forestgirl"), "region 2 is still locked");
             svc.Data.Gems = 1000;
             System.Collections.Generic.List<ChestContents> opened;
             Assert.AreEqual(ChestOpenResult.Ok, svc.TryOpenChests(ChestKind.Iron, 1, out opened));
             Assert.AreEqual(0, opened[0].Characters.Count, "characters are switched off");
-            Assert.IsFalse(svc.OwnsCharacter("sporeling"));
+            Assert.IsFalse(svc.OwnsCharacter("forestgirl"));
             Assert.That(opened[0].Coins, Is.InRange(400, 600));
         }
 

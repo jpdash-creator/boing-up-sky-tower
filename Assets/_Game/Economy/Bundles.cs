@@ -14,7 +14,7 @@ namespace BoingUpSkyTower.Economy
 
     /// <summary>
     /// One gem bundle (docs/26 section 3, Content/economy/bundles.json made by Tools/content_cli/gen_bundles.py): a price in gems and
-    /// contents of coins, power-ups, gems back and optionally a character.
+    /// contents of coins and power-ups only (no gems back since the 2026-11 owner decision) and optionally a character (not generated yet).
     /// </summary>
     public sealed class BundleDef
     {
@@ -24,16 +24,17 @@ namespace BoingUpSkyTower.Economy
         public int Tier;
         public int PriceGems;
         public int Coins;
-        /// <summary>Gems given back on top of the contents.</summary>
-        public int Gems;
+        /// <summary>Obsolete shim: bundles no longer contain gems, always 0. Kept so older UI code still compiles; remove with the UI rebuild.</summary>
+        [System.Obsolete("Bundles contain no gems any more (always 0).")]
+        public int Gems { get { return 0; } }
         public List<BundlePowerUp> PowerUps = new List<BundlePowerUp>();
         /// <summary>Character id or null (the format supports it, none are generated yet).</summary>
         public string CharacterId;
 
-        /// <summary>Value at list rates in gems: coins / 20 + gems back + power-ups at their gem prices (50 or 75). Used by tests and the "worth" hint.</summary>
+        /// <summary>Value at list rates in gems: coins / 20 + power-ups at their gem prices (50 or 75). Used by tests and the "worth" hint.</summary>
         public double ValueGems(PowerUpCatalog powerUps)
         {
-            double v = Coins / 20.0 + Gems;
+            double v = Coins / 20.0;
             foreach (BundlePowerUp p in PowerUps)
             {
                 PowerUpDef d = powerUps != null ? powerUps.Get(p.Id) : null;
@@ -89,11 +90,11 @@ namespace BoingUpSkyTower.Economy
                     var d = new BundleDef
                     {
                         Id = (string)t["id"], Name = (string)t["name"], Tier = (int?)t["tier"] ?? 1, PriceGems = (int?)t["priceGems"] ?? 0,
-                        Coins = (int?)t["coins"] ?? 0, Gems = (int?)t["gems"] ?? 0
+                        Coins = (int?)t["coins"] ?? 0
                     };
                     JToken cid = t["characterId"];
                     d.CharacterId = cid != null && cid.Type == JTokenType.String ? (string)cid : null;
-                    bool ok = d.Coins >= 0 && d.Gems >= 0;
+                    bool ok = d.Coins >= 0;
                     JArray pw = t["powerups"] as JArray;
                     if (pw != null)
                     {

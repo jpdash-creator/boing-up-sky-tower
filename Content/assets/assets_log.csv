@@ -199,3 +199,13 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-01,T64,ticket_monthly_redo,byte-plus-seedream-5-lite,image2image,2K 1:1 x1 refs=style bible,none,rKblwFQIHXjRQXPQqGXK,done,15,approvals/T63-shop-art.md,
 2026-11-01,T65,rewards_icons,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,vyhNCAvgPGhvCNhRoVT5,done,30,approvals/T65-rewards-ui-art.md,owner approved 60 credits
 2026-11-01,T65,rewards_ui_panels,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=style bible,none,XC4FML1SiKA83vaMMbWk,done,30,approvals/T65-rewards-ui-art.md,
+2026-11-01,T66,hero_r2_mushroom_girl,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=style bible+polygon doll,none,WzrTw0UVijJnJunwOpW5,done,30,approvals/T66-region-heroes.md,owner approved 150 credits
+2026-11-01,T66,hero_r3_beach_otter,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=style bible+polygon doll,none,5kRTTIFGUOJczEPxFQ78,done,30,approvals/T66-region-heroes.md,
+2026-11-01,T66,hero_r4_candy_girl,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=style bible+polygon doll,none,hVlZbYDcujCLgT0zRmYQ,done,30,approvals/T66-region-heroes.md,
+2026-11-01,T66,hero_r5_monk,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=style bible+polygon doll,none,AqkebmC8ZPZQKl6y4HYM,done,30,approvals/T66-region-heroes.md,
+2026-11-01,T66,hero_reveal_popup_bg,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=style bible,none,LGaZZOE0aGHhkUIVorgB,done,30,approvals/T66-region-heroes.md,
+2026-11-01,T67,hero_r2_forest_girl_v2,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=polygon doll,none,lHYGXltLbE3PNkH2Z1vJ,done,30,approvals/T66-region-heroes.md,owner approved 60 credits (T67 inline); T66 R2/R4 v1 rejected
+2026-11-01,T67,hero_r4_candy_shop_girl_v2,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=polygon doll,none,cb2DxnFp8davUaq1dckw,done,30,approvals/T66-region-heroes.md,
+2026-11-01,T68,hero_r2_forest_girl_v3_test,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,2qB5xnwcgtdaQTS5ldhE,done,15,approvals/T66-region-heroes.md,owner approved 30 credits test; T67 R2/R4 rejected (arms)
+2026-11-01,T68,hero_r4_candy_shop_girl_v3_test,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,6vu3bmCxzV1DPdekRUEu,done,15,approvals/T66-region-heroes.md,
+2026-11-01,T69,hero_r4_golden_candy_girl_v4,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,Q8gvDy3KnNUFOo0eu6Wz,done,15,chat prompt shown to owner,owner approved 15 credits; T68 R4 rejected

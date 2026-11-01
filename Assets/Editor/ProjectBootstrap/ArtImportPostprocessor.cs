@@ -51,7 +51,7 @@ namespace ProjectBootstrap
             }
         }
 
-        public override uint GetVersion() { return 9; }   // bump to re-import the art when the import rules change
+        public override uint GetVersion() { return 10; }   // bump to re-import the art when the import rules change
 
         /// <summary>Small square icons (power-ups): a single sprite, no mipmaps, 256 px, compressed.</summary>
         static void ApplyIcon(TextureImporter ti)
@@ -129,6 +129,8 @@ namespace ProjectBootstrap
         void OnPreprocessTexture()
         {
             if (assetPath.StartsWith("Assets/Resources/Art/Pins/")) { ApplyIcon((TextureImporter)assetImporter); return; }
+            if (assetPath == "Assets/Resources/Art/Ui/hero_reveal_bg.png") { ApplyPicture((TextureImporter)assetImporter, 1024); return; }   // the hero pop-up picture: one transparent 1024 px sprite, no border
+            if (assetPath == "Assets/Resources/Art/Ui/hero_reveal_bg.png") { var hi = (TextureImporter)assetImporter; ApplyUiKit(hi, assetPath); hi.maxTextureSize = 1024; return; }   // the hero pop-up picture: one transparent FullRect sprite, no border, 1024 px
             if (assetPath.StartsWith("Assets/Resources/Art/Ui/")) { ApplyUiKit((TextureImporter)assetImporter, assetPath); return; }
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/Chests/")) { ApplyPicture((TextureImporter)assetImporter, 1024); return; }

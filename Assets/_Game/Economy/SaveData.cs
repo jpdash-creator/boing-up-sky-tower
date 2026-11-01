@@ -45,6 +45,8 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("loadout")] public List<string> Loadout = new List<string>();
         /// <summary>Characters owned through chests or the shop. Common characters of an unlocked region are owned without an entry.</summary>
         [JsonProperty("characters")] public List<string> Characters = new List<string>();
+        /// <summary>Ids of region heroes whose one-time "New hero joins you!" reveal was confirmed (Momo needs none). Additive field, no version bump; old saves load empty, so an already unlocked hero gets its reveal once.</summary>
+        [JsonProperty("heroesRevealed")] public List<string> HeroesRevealed = new List<string>();
         /// <summary>Chests opened so far: seeds the next chest roll so openings are repeatable.</summary>
         [JsonProperty("chestOpens")] public int ChestOpens;
         /// <summary>Gem pack ids (gempack_50 ...) that already received the once-only first-purchase double on this account. Additive field, no version bump.</summary>

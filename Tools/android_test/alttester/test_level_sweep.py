@@ -229,7 +229,7 @@ class PureHelperTests(unittest.TestCase):
         pre = {"goalText": "g", "target": 90, "goalType": "ComboChain"}
         run = {"character": "momo", "selected": "momo", "powerButtons": 2, "powerOwned": 2, "goalText": "g", "target": 90, "gemsPlaced": 0}
         self.assertTrue(all(c["status"] != "FAIL" for c in ls.evaluate_run(5, pre, run, 2, False)))
-        bad = ls.evaluate_run(5, pre, dict(run, character="sporeling"), 1, True)
+        bad = ls.evaluate_run(5, pre, dict(run, character="forestgirl"), 1, True)
         self.assertEqual(sorted(c["name"] for c in bad if c["status"] == "FAIL"),
                          ["combo level: no gem pill / gems", "power-up buttons count", "run uses selected character"])
 

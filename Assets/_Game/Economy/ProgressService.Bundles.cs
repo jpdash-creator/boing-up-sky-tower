@@ -170,13 +170,12 @@ namespace BoingUpSkyTower.Economy
         {
             if (def == null) return BundleResult.Invalid;
             if (listPrice) price = def.PriceGems;
-            if (price <= 0 || def.Coins < 0 || def.Gems < 0) return BundleResult.Invalid;
+            if (price <= 0 || def.Coins < 0) return BundleResult.Invalid;
             foreach (BundlePowerUp p in def.PowerUps)
                 if (p == null || p.Count <= 0 || PowerUpDefs.Get(p.Id) == null) return BundleResult.Invalid;   // checked first: nothing is touched on failure
             if (Data.Gems < price) return BundleResult.NotEnoughGems;
 
-            long gems = (long)Data.Gems - price + def.Gems;
-            Data.Gems = gems > int.MaxValue ? int.MaxValue : (int)gems;
+            Data.Gems -= price;   // bundles give no gems back
             Data.Coins = SaturatingAdd(Data.Coins, def.Coins);
             foreach (BundlePowerUp p in def.PowerUps)
             {

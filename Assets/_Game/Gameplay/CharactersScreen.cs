@@ -49,8 +49,138 @@ namespace BoingUpSkyTower.Gameplay
     }
 
     /// <summary>
+    /// The one-time "New hero joins you!" card (docs/21): hero picture, name, rarity and one OK button (added by the caller under the returned "Panel").
+    /// Background: ONE place to swap in art, <see cref="BackgroundResource"/> (Resources/Art/Ui/hero_reveal_bg); until the file exists the card_yellow
+    /// panel of the Rewards art is used (or a plain rounded shape). The only motion is a short pop-in, skipped with reduced motion; nothing flashes (CUX-6).
+    /// </summary>
+    public static class HeroRevealCard
+    {
+        public const string BackgroundResource = "Art/Ui/hero_reveal_bg";
+        public const string Title = "New hero joins you!";
+        public const float CardW = 860f, CardH = 1300f, DollHeight = 520f;
+        /// <summary>Card width when the picture is used, for every aspect: the narrowest supported screen (9:21 at the 1080 x 1920 reference, match 0.5) is about 942 px wide, so 860 keeps 40 px of margin. The height follows the picture's aspect.</summary>
+        public const float PictureCardW = CardW;
+        // Layout on the hero_reveal_bg picture (1024 x 1135, fractions of its size): the ribbon at 0.24 to 0.365 of the height, the purple panel (empty centre glow) at 0.35 to 0.80.
+        // The OK button (AddOk, 160 px: the card is shrunk up to about 13 percent on narrow aspects and the button must stay above the 48 dp minimum) sits just under the purple panel on the sparse bottom rays.
+        public const float OkSize = 148f;
+        const float RibbonCenterY = 0.305f, RibbonTextW = 420f, RibbonTextH = 112f;
+        const float PicDollTop = 362f, PicDollH = 220f, PicNameTop = 588f, PicGap = 24f;
+        static readonly Color PillInk = new Color(0.09f, 0.11f, 0.24f, 0.92f);
+
+        /// <summary>Pop-in: scale 0.88 to 1 in 0.25 s on unscaled time. One-shot, no flashing.</summary>
+        sealed class PopIn : MonoBehaviour
+        {
+            float t;
+            void Update()
+            {
+                t += Time.unscaledDeltaTime;
+                float k = Mathf.Clamp01(t / 0.25f);
+                transform.localScale = Vector3.one * (0.88f + 0.12f * (1f - (1f - k) * (1f - k)));
+                if (k >= 1f) { transform.localScale = Vector3.one; Destroy(this); }
+            }
+        }
+
+        /// <summary>Builds the card on the (dim) overlay and returns its "Panel"; the caller adds the OK button.</summary>
+        public static RectTransform Build(RectTransform overlay, CharacterDef who, ArtCatalog art)
+        {
+            RectTransform panel = UiKit.Rect(overlay, "Panel");
+            UiKit.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(CardW, CardH));
+            panel.pivot = new Vector2(0.5f, 0.5f);
+
+            // the swap point for the OpenArt background
+            Image bg = UiKit.AddImage(panel, "Fill", null, Color.white);
+            Sprite custom = Resources.Load<Sprite>(BackgroundResource);
+            if (custom != null)
+            {
+                // the whole picture (transparent around the sunburst) is the card: aspect preserved, so the card takes the picture's shape
+                float aspect = custom.rect.height / Mathf.Max(1f, custom.rect.width);
+                UiKit.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(PictureCardW, Mathf.Round(PictureCardW * aspect)));
+                panel.pivot = new Vector2(0.5f, 0.5f);
+                bg.sprite = custom;
+                bg.color = Color.white;
+                bg.preserveAspect = true;
+                bg.type = Image.Type.Simple;
+            }
+            else RewardArt.Skin(bg, "card_yellow", new Color(1f, 0.93f, 0.62f, 1f), 56f);
+            UiKit.Stretch(bg.rectTransform);
+
+            CharacterSpec info = who.Info;
+            CharacterRarity rarity = info != null ? info.Rarity : CharacterRarity.Common;
+            string rarityName = CharacterDefs.RarityNames[(int)rarity];
+
+            if (custom != null) BuildOnPicture(panel, who, art, rarity, rarityName);
+            else BuildOnPanel(panel, who, art, rarity, rarityName);
+
+            panel.gameObject.AddComponent<A11yLabel>().Text = Title + " " + who.Name + ", " + rarityName;
+            if (!GameSettings.ReducedMotion) panel.gameObject.AddComponent<PopIn>();
+            return panel;
+        }
+
+        /// <summary>The single OK button of the card, a child of the "Panel" (name "OK"), centred at the bottom; with the picture it sits right under the purple panel.</summary>
+        public static Button AddOk(RectTransform panel, Action action)
+        {
+            bool pic = panel.sizeDelta.y < CardH - 1f;
+            Button b = ToyKit.IconButton(panel, "OK", "OK", 1, Glyphs.Check, new Vector2(OkSize, OkSize), action, 0.56f);
+            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(0f, pic ? 14f : 50f), new Vector2(OkSize, OkSize));
+            return b;
+        }
+
+        /// <summary>The plain card (no picture): the original stacked layout on the card_yellow panel.</summary>
+        static void BuildOnPanel(RectTransform panel, CharacterDef who, ArtCatalog art, CharacterRarity rarity, string rarityName)
+        {
+            Text title = UiKit.OnPanel(UiKit.AddText(panel, "Title", Title, 64, UiKit.PanelInk, TextAnchor.MiddleCenter, true));
+            UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(780f, 210f));
+
+            RectTransform doll = MomoDoll.Build(panel, "Hero", DollHeight, who, art);
+            UiKit.Place(doll, new Vector2(0.5f, 1f), new Vector2(0f, -270f), doll.sizeDelta);
+
+            Text name = UiKit.OnPanel(UiKit.AddText(panel, "HeroName", who.Name, 64, UiKit.PanelInk, TextAnchor.MiddleCenter, true));
+            UiKit.Place((RectTransform)name.transform, new Vector2(0.5f, 1f), new Vector2(0f, -810f), new Vector2(780f, 110f));
+
+            // rarity chip: the Common colour of the Heroes screen, with the word (never colour alone)
+            Image chip = UiKit.AddPanel(panel, "Fill", RarityUi.Fill(rarity));
+            UiKit.Place(chip.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -940f), new Vector2(400f, 90f));
+            Text r = UiKit.OnPanel(UiKit.AddText(chip.transform, "Rarity", rarityName, 44, UiKit.PanelInk));
+            UiKit.Stretch(r.rectTransform);
+        }
+
+        /// <summary>
+        /// The card on hero_reveal_bg: title on the gold ribbon (dark ink on gold), hero picture on the purple centre glow, name on a dark pill (white text, high contrast on any glow),
+        /// rarity chip below it. Base sizes are the 36 px body minimum or a little more; the text scale (up to 130 percent) is applied by AddText, and the boxes are sized for that worst case.
+        /// </summary>
+        static void BuildOnPicture(RectTransform panel, CharacterDef who, ArtCatalog art, CharacterRarity rarity, string rarityName)
+        {
+            float cardH = panel.sizeDelta.y;
+
+            Text title = UiKit.OnPanel(UiKit.AddText(panel, "Title", Title, 38, UiKit.PanelInk, TextAnchor.MiddleCenter, true));
+            UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -(RibbonCenterY * cardH - RibbonTextH * 0.5f)), new Vector2(RibbonTextW, RibbonTextH));
+
+            RectTransform doll = MomoDoll.Build(panel, "Hero", PicDollH, who, art);
+            UiKit.Place(doll, new Vector2(0.5f, 1f), new Vector2(0f, -PicDollTop), doll.sizeDelta);
+
+            // name on a dark pill: readable on the bright glow in the middle (CUX-5)
+            // box heights follow the REAL rendered text size (font size x text scale x 1.3 line height), so nothing overlaps at 130 percent
+            const int nameFont = 44, rarityFont = 36;
+            float nameH = Mathf.Ceil(Mathf.Max(nameFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.3f);
+            float chipH = Mathf.Ceil(Mathf.Max(rarityFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.3f);
+            Image pill = UiKit.AddPanel(panel, "NamePill", PillInk);
+            UiKit.Place(pill.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -PicNameTop), new Vector2(340f, nameH));
+            Text name = UiKit.AddText(pill.transform, "HeroName", who.Name, nameFont, Color.white, TextAnchor.MiddleCenter, true);
+            name.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiKit.Stretch(name.rectTransform);
+
+            // rarity chip: the Common colour of the Heroes screen, with the word (never colour alone)
+            Image chip = UiKit.AddPanel(panel, "Fill", RarityUi.Fill(rarity));
+            UiKit.Place(chip.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -(PicNameTop + nameH + PicGap)), new Vector2(300f, chipH));
+            Text r = UiKit.OnPanel(UiKit.AddText(chip.transform, "Rarity", rarityName, rarityFont, UiKit.PanelInk));
+            r.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiKit.Stretch(r.rectTransform);
+        }
+    }
+
+    /// <summary>
     /// The character screen (docs/21): the chosen character on the green land stage on top, and below it a scrolling list of characters in rarity boxes,
-    /// five to a row. Only owned characters are shown (tap to choose). The Sporeling appears once region 2 is unlocked. No words.
+    /// five to a row. Only owned characters are shown (tap to choose). Capi appears once region 2 is unlocked. No words.
     /// </summary>
     public sealed class CharactersScreen
     {

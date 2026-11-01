@@ -555,7 +555,7 @@ def parse_args(argv):
     p.add_argument("--stall", type=int, default=90, help="game seconds without a new best row before the level counts as timeout")
     p.add_argument("--poll", type=float, default=0.5)
     p.add_argument("--jump-test", choices=["on", "off"], default="on", dest="jump_test", help="GAME_JUMP_TEST (all levels open); on by default")
-    p.add_argument("--character", default="", help="select this character id first (momo, sporeling); default = whatever is selected")
+    p.add_argument("--character", default="", help="select this character id first (momo, forestgirl); default = whatever is selected")
     p.add_argument("--skip-goals", default=SKIP_GOALS_DEFAULT, dest="skip_goals")
     p.add_argument("--no-relayout", action="store_true", dest="no_relayout", help="do not restart each level once to compare the two layouts")
     p.add_argument("--stop-on-fail", action="store_true", dest="stop_on_fail")

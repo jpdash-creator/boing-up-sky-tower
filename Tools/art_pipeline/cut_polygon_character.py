@@ -1,6 +1,6 @@
 """Cuts a character painted on the assembled polygon doll into the standard parts (docs/19).
 
-    PYTHONPATH=E:/pylibs python Tools/art_pipeline/cut_polygon_character.py <painted.png> <out_dir> [--bg 128]
+    PYTHONPATH=E:/pylibs python Tools/art_pipeline/cut_polygon_character.py <painted.png> <out_dir> [--bg 128] [--zones momo|spore|doll|forest|otter|monk|candy] [--ref doll_slim.png] [--no-back]
 
 Input: the OpenArt image (character on a flat #808080 background, same pose as Tools/art_pipeline/make_generic_mannequin.py's doll).
 Steps: key the background, register the picture to the 1365 x 1649 doll canvas (affine ECC on the silhouettes), then give every character pixel to one
@@ -46,6 +46,34 @@ POLY_SPORE = {   # zones measured on the registered Sporeling painting: plain pa
     "legL":  ("rect", (395, 1320, 682, 1649)),
     "legR":  ("rect", (682, 1320, 975, 1649)),
 }
+def _zones(head_y, armL, armR, leg_y, split_x=683):
+    """Partition zones measured on a registered painting: head above head_y, two arm polygons (sleeve + hand), legs below leg_y split at split_x, the body is everything else."""
+    return {
+        "head":  ("rect", (0, 0, 1365, head_y)),
+        "handL": ("poly", armL),
+        "handR": ("poly", armR),
+        "footL": ("rect", (0, 0, 1, 1)),
+        "footR": ("rect", (0, 0, 1, 1)),
+        "legL":  ("rect", (0, leg_y, split_x, 1649)),
+        "legR":  ("rect", (split_x, leg_y, 1365, 1649)),
+        "body":  ("rect", (0, 0, 1365, 1649)),
+    }
+
+
+ZONE_SETS = {   # registered paintings of the region heroes (T66): hats, caps, puffed sleeves and fur overhang the doll polygons, so plain partition lines are used (like POLY_SPORE)
+    "forest": _zones(895, [(150, 880), (520, 880), (512, 1090), (395, 1290), (385, 1340), (150, 1340)],
+                     [(850, 880), (1365, 880), (1365, 1340), (985, 1340), (975, 1260), (860, 1095)], 1378),
+    "otter":  _zones(905, [(150, 880), (430, 880), (405, 1100), (405, 1360), (150, 1360)],
+                     [(905, 880), (1365, 880), (1365, 1360), (950, 1360), (945, 1100)], 1372),
+    "candy":  _zones(848, [(150, 848), (548, 848), (548, 1010), (470, 1060), (440, 1150), (432, 1290), (425, 1340), (150, 1340)],
+                     [(825, 848), (1365, 848), (1365, 1340), (935, 1340), (930, 1290), (935, 1150), (900, 1060), (825, 1010)], 1335),
+    "monk":   _zones(925, [(150, 900), (500, 900), (467, 1007), (433, 1153), (425, 1340), (150, 1340)],
+                     [(840, 900), (1365, 900), (1365, 1340), (930, 1340), (924, 1160), (887, 1007)], 1405),
+}
+# props painted behind the character that become the "back" piece: zone set -> polygon on the doll canvas; inside it every cane-coloured pixel (red, white, and the dark outline touching them) is "back"
+BACK_PROP = {
+    "candy": [(100, 480), (360, 480), (360, 745), (450, 745), (520, 830), (515, 880), (478, 892), (448, 925), (436, 950), (100, 950)],
+}
 PRIORITY = ["head", "handL", "handR", "footL", "footR", "legL", "legR", "body"]
 OUT_PARTS = {"head": "head", "handL": "handL", "handR": "handR", "footL": "legL", "legL": "legL", "footR": "legR", "legR": "legR", "body": "body"}
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
@@ -53,6 +81,9 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 
 def poly_mask(kind, box):
     m = np.zeros((H, W), np.uint8)
+    if kind == "poly":
+        cv2.fillPoly(m, [np.array(box, np.int32)], 255)
+        return m
     x0, y0, x1, y1 = [int(v) for v in box]
     if kind == "rect":
         cv2.rectangle(m, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), 255, -1)
@@ -74,6 +105,13 @@ def key_background(rgb, bg=None):
     bgc = np.median(corners, axis=0)
     d = np.abs(rgb.astype(np.int16) - bgc.astype(np.int16)).max(axis=2)
     alpha = (d > 38).astype(np.uint8)
+    # a darker flat-grey ground shadow under the feet is not part of the character: drop big grey (unsaturated, mid-value) blobs
+    mx, mn = rgb.max(axis=2).astype(np.int16), rgb.min(axis=2).astype(np.int16)
+    grey = ((mx - mn) < 16) & (mx > 70) & (mx < 200)
+    gn, glab, gst, _ = cv2.connectedComponentsWithStats(cv2.morphologyEx(grey.astype(np.uint8), cv2.MORPH_OPEN, np.ones((7, 7), np.uint8)), 8)
+    for i in range(1, gn):
+        if gst[i, cv2.CC_STAT_AREA] > 4000:
+            alpha[glab == i] = 0
     alpha = cv2.morphologyEx(alpha, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
     n, lab, st, _ = cv2.connectedComponentsWithStats(alpha, 8)
     keep = np.zeros_like(alpha)
@@ -99,11 +137,16 @@ def register(alpha):
     return 1.0, A
 
 
-def refine_to_doll(alpha, A):
+def refine_to_doll(alpha, A, ref_img=None):
     """ECC refinement of the canvas->picture map so the character's silhouette sits on the doll polygons (affine, small corrections)."""
     ref = np.zeros((H, W), np.uint8)
-    for n, (k, b) in POLY_DOLL.items():
-        ref = np.maximum(ref, poly_mask(k, b))
+    if ref_img is not None:   # a doll variant (e.g. doll_slim.png, magenta background): register onto its silhouette instead of the polygons
+        ri = cv2.imread(ref_img)
+        ref = ((np.abs(ri.astype(np.int16) - np.array([255, 0, 255], np.int16)).max(axis=2) > 60) * 255).astype(np.uint8)
+        ref = cv2.resize(ref, (W, H), interpolation=cv2.INTER_NEAREST)
+    else:
+        for n, (k, b) in POLY_DOLL.items():
+            ref = np.maximum(ref, poly_mask(k, b))
     sc = 0.25
     a = cv2.GaussianBlur(cv2.resize(ref.astype(np.float32) / 255.0, None, fx=sc, fy=sc), (0, 0), 4)
     pic = cv2.GaussianBlur(cv2.resize(alpha.astype(np.float32), None, fx=sc, fy=sc), (0, 0), 4)
@@ -130,9 +173,24 @@ def main():
     if zones == "spore":
         POLY = POLY_SPORE
         cc, Af = refine_to_doll(alpha, Af)
+    if zones in ZONE_SETS:
+        POLY = ZONE_SETS[zones]
+        refimg = sys.argv[sys.argv.index("--ref") + 1] if "--ref" in sys.argv else None
+        cc, Af = refine_to_doll(alpha, Af, refimg)
     if zones == "doll":
         POLY = POLY_DOLL
-        cc, Af = refine_to_doll(alpha, Af)
+        refimg = sys.argv[sys.argv.index("--ref") + 1] if "--ref" in sys.argv else None
+        cc, Af = refine_to_doll(alpha, Af, refimg)
+    # colour bleed: transparent pixels take the colour of the nearest character pixel, so the resampling never mixes the grey key colour into the edge (no grey halo)
+    _, near = cv2.distanceTransformWithLabels((alpha == 0).astype(np.uint8), cv2.DIST_L2, 3, labelType=cv2.DIST_LABEL_PIXEL)
+    ys0, xs0 = np.where(alpha > 0)
+    lab2xy = np.zeros((near.max() + 1, 2), np.int32)
+    # label ids of zero-distance (character) pixels map to their own coordinates
+    lab_at = near[ys0, xs0]
+    lab2xy[lab_at, 0] = ys0
+    lab2xy[lab_at, 1] = xs0
+    bleed = img[lab2xy[near, 0], lab2xy[near, 1]]
+    img = np.where(alpha[..., None] > 0, img, bleed)
     rgba = np.dstack([img, (alpha * 255).astype(np.uint8)])
     canvas = cv2.warpAffine(rgba, Af, (W, H), flags=cv2.INTER_LANCZOS4 | cv2.WARP_INVERSE_MAP, borderValue=(0, 0, 0, 0))
     chars = canvas[..., 3] > 8
@@ -150,8 +208,26 @@ def main():
         d = cv2.distanceTransform((~masks[n]).astype(np.uint8), cv2.DIST_L2, 3)
         dists.append(d)
     nearest = np.argmin(np.stack(dists), axis=0)
-    back = outside & (np.arange(W)[None, :] > 940) & (np.arange(H)[:, None] > 760)
+    nb = "--no-back" in sys.argv   # characters without a tail: nothing is a "back" piece (it would steal the right arm), back.png stays empty
+    back = outside & (np.arange(W)[None, :] > 940) & (np.arange(H)[:, None] > 760) & (not nb)
     label[outside] = nearest[outside]
+    if zones in BACK_PROP:
+        hsv = cv2.cvtColor(np.ascontiguousarray(canvas[..., :3]), cv2.COLOR_RGB2HSV)
+        hh, ss, vv = hsv[..., 0].astype(int), hsv[..., 1].astype(int), hsv[..., 2].astype(int)
+        red = ((hh < 7) | (hh > 168)) & (ss > 120) & (vv > 90)
+        white = (ss < 38) & (vv > 205)
+        dark = vv < 120
+        pm = poly_mask("poly", BACK_PROP[zones]) > 0
+        seed = (red | white) & pm & chars
+        seed = cv2.morphologyEx(seed.astype(np.uint8), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8)) > 0
+        near_seed = cv2.dilate(seed.astype(np.uint8), np.ones((9, 9), np.uint8)) > 0
+        back = pm & chars & near_seed & (seed | dark | red | white)
+        back = cv2.morphologyEx(back.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8)) > 0
+        back &= chars
+        # drop specks (hair-outline fragments next to the cane) and open the thin dark slivers
+        back = cv2.morphologyEx(back.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+        bn, blab, bst, _ = cv2.connectedComponentsWithStats(back, 8)
+        back = np.isin(blab, [i for i in range(1, bn) if bst[i, cv2.CC_STAT_AREA] > 3000])
     os.makedirs(out, exist_ok=True)
     parts = {k: np.zeros((H, W, 4), np.uint8) for k in ("back", "legL", "legR", "body", "handL", "handR", "head")}
     for i, n in enumerate(names):
@@ -161,7 +237,7 @@ def main():
     parts["back"][back] = canvas[back]
     for k, v in parts.items():
         cv2.imwrite(os.path.join(out, k + ".png"), cv2.cvtColor(v, cv2.COLOR_RGBA2BGRA))
-    json.dump({"canvas": [W, H], "order": ["back", "legL", "legR", "body", "handL", "handR", "head"], "ecc": float(cc)},
+    json.dump({"canvas": [W, H], "order": ["back", "legL", "legR", "body", "handL", "handR", "head"] if (back.any()) else ["legL", "legR", "body", "handL", "handR", "head"], "ecc": float(cc)},
               open(os.path.join(out, "rig.json"), "w"), indent=2)
     full = np.zeros((H, W, 4), np.uint8)
     for k in ("back", "legL", "legR", "body", "handL", "handR", "head"):
