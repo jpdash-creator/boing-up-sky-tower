@@ -20,6 +20,8 @@ namespace BoingUpSkyTower.Gameplay
         public string[,] Stats = new string[6, 2];
         /// <summary>Three derived numbers (label, value).</summary>
         public string[,] Derived = new string[3, 2];
+        /// <summary>The "Run bonus" paid at the end of every run (docs/29): coins and gems.</summary>
+        public int RunBonusCoins, RunBonusGems;
 
         static string F(double v) { return v.ToString("0.#", CultureInfo.InvariantCulture); }
 
@@ -33,7 +35,7 @@ namespace BoingUpSkyTower.Gameplay
                 RegionDef r = GameSession.Repo != null ? GameSession.Repo.TryGetRegionByIndex(spec.Region) : null;
                 region = r != null ? r.Name : "Region " + spec.Region;
             }
-            return From(who.Name, spec != null ? spec.Rarity : CharacterRarity.Common, region, spec != null ? spec.Stats : null, spec != null ? spec.Powers : null);
+            return From(who.Name, spec != null ? spec.Rarity : CharacterRarity.Common, region, spec != null ? spec.SheetStats : null, spec != null ? spec.Powers : null);
         }
 
         /// <summary>Any hero from raw values (the test fixture builds a fake Legendary this way).</summary>
@@ -50,6 +52,7 @@ namespace BoingUpSkyTower.Gameplay
             d.Derived[0, 0] = "Full-speed jump"; d.Derived[0, 1] = F(s.FullSpeedJump);
             d.Derived[1, 0] = "Stopping distance"; d.Derived[1, 1] = F(s.StopDistance);
             d.Derived[2, 0] = "Time to top speed"; d.Derived[2, 1] = F(s.TimeToTopSpeed) + " s";
+            d.RunBonusCoins = s.RunBonusCoins; d.RunBonusGems = s.RunBonusGems;
             d.PowerText = PowerLine(rarity, powers);
             return d;
         }
@@ -177,7 +180,7 @@ namespace BoingUpSkyTower.Gameplay
     }
 
     /// <summary>
-    /// The hero sheet (owner pick sheet_a_wood, Layout A): header with back (left socket) and close (right socket), the hero in the portrait frame, name, rarity banner
+    /// The hero sheet (owner pick sheet_a_wood, Layout A): title bar, a row under it with back (left) and close (right), the hero in the portrait frame, name, rarity banner
     /// (tinted by rarity, with the word), region, then two tabs: "Stats" (six stats in a 3 x 2 table and the "Use this hero" button) and "Details" (three derived numbers
     /// and the power panel). All text is code drawn on the plates, best fit between the largest size and the 16 sp floor. The header stays fixed; the content scrolls inside
     /// the screen only when it does not fit (small aspect or 130 percent text).
@@ -187,7 +190,11 @@ namespace BoingUpSkyTower.Gameplay
         public const string ScreenName = "Hero";
         const float Margin = 20f, HeaderH = 132f, BaseGap = 18f;
         /// <summary>Base sizes of the sleek layout; the spare height of tall screens is shared out over them (see <see cref="Plan"/>).</summary>
-        const float BaseStatCellH = 128f, StatIcon = 88f, BaseDerivedRowH = 84f, TabH = 128f, UseH = 128f, PowerH = 300f, PanelPad = 58f;
+        const float BaseStatCellH = 128f, StatIcon = 88f, BaseDerivedRowH = 84f, TabH = 128f, UseH = 128f, PowerH = 300f, PanelPad = 58f, RunBonusH = 112f, ArrowGap = 16f;
+        /// <summary>Space taken above the scrolling content: title bar, the back / close row under it, and the gaps.</summary>
+        static float TopChrome { get { return HeaderH + 8f + NavRowH + 12f; } }
+        /// <summary>The back / close row right under the title bar: the smallest legal touch target (48 dp) plus a gap.</summary>
+        static float NavRowH { get { return Mathf.Ceil(UiKit.MinTouchPx) + 6f; } }
         const float PortraitFrac = 0.46f, PortraitFracMax = 0.48f;
         static readonly int FloorPx = Mathf.CeilToInt(UiKit.MinBodyTextPx);
 
@@ -197,6 +204,9 @@ namespace BoingUpSkyTower.Gameplay
         readonly HeroSheetData data;
         readonly bool inUse;
         readonly Action onBack, onClose, onUse;
+        /// <summary>Called with the previous / next owned hero when an arrow is tapped (the menu rebuilds the sheet for that hero).</summary>
+        readonly Action<CharacterDef> onNavigate;
+        CharacterDef prevHero, nextHero;
         RectTransform content;
         float width, height;
         int tab;
@@ -208,10 +218,15 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>0 = Stats, 1 = Details.</summary>
         public int Tab { get { return tab; } }
 
-        public HeroSheetScreen(RectTransform parent, CharacterDef who, ArtCatalog art, HeroSheetData data, bool inUse, Action onBack, Action onClose, Action onUse)
+        public HeroSheetScreen(RectTransform parent, CharacterDef who, ArtCatalog art, HeroSheetData data, bool inUse, Action onBack, Action onClose, Action onUse, Action<CharacterDef> onNavigate = null)
         {
             this.who = who; this.art = art; this.data = data; this.inUse = inUse;
-            this.onBack = onBack; this.onClose = onClose; this.onUse = onUse;
+            this.onBack = onBack; this.onClose = onClose; this.onUse = onUse; this.onNavigate = onNavigate;
+            // neighbours among the heroes the player OWNS, in hero-list order (Momo, Capi, Otto, Bonbon, Bao)
+            CharacterDef[] owned = CharacterCatalog.Available(GameSession.Progress);
+            int at = Array.IndexOf(owned, who);
+            if (at > 0) prevHero = owned[at - 1];
+            if (at >= 0 && at < owned.Length - 1) nextHero = owned[at + 1];
             root = UiKit.Rect(parent, "HeroSheet");
             UiKit.Stretch(root);
             Rebuild(Mathf.Max(parent.rect.width, 1f) > 1f ? parent.rect.width : 940f, parent.rect.height > 1f ? parent.rect.height : 1920f);
@@ -255,17 +270,19 @@ namespace BoingUpSkyTower.Gameplay
             bg.color = new Color(0.86f, 0.86f, 0.86f, 1f);   // a little darker so the white title reads (4.5:1 on the wood)
             UiKit.Stretch(bg.rectTransform);
 
-            float btn = Mathf.Ceil(UiKit.MinTouchPx);   // the smallest legal touch target (48 dp): tidy visuals
-            float socketX = Mathf.Max(btn * 0.5f + 6f, 0.087f * w);   // the sockets sit about 8.7 percent in from each end of the art
-            Button back = ToyKit.GlyphButton(bar, "Back", "Back", 2, Glyphs.Left, new Vector2(btn, btn), onBack, false, 0.54f);
-            UiKit.Place((RectTransform)back.transform, new Vector2(0f, 0.5f), new Vector2(socketX - btn * 0.5f, 0f), new Vector2(btn, btn));
-            Button close = ToyKit.GlyphButton(bar, "Close", "Close", 3, Glyphs.Cross, new Vector2(btn, btn), onClose, false, 0.5f);
-            UiKit.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(-(socketX - btn * 0.5f), 0f), new Vector2(btn, btn));
-
-            float titleW = w - 2f * (socketX + btn * 0.5f) - 24f;
+            // the title bar carries only the title; back and close sit in a row just under it (owner 2026-11-02)
+            float titleW = w - 2f * 0.087f * w - 24f;
             Text t = UiKit.AddText(bar, "Title", "Hero", 48, new Color(1f, 0.97f, 0.88f, 1f), TextAnchor.MiddleCenter, true);
             UiKit.Place((RectTransform)t.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(titleW, HeaderH - 40f));
             Fit(t, "Hero", 48, FloorPx, titleW, HeaderH - 40f, false);
+
+            float btn = Mathf.Ceil(UiKit.MinTouchPx);   // the smallest legal touch target (48 dp): tidy visuals
+            RectTransform nav = UiKit.Rect(root, "NavRow");
+            UiKit.Place(nav, new Vector2(0.5f, 1f), new Vector2(0f, -(8f + HeaderH + 4f)), new Vector2(w, btn));
+            Button back = ToyKit.GlyphButton(nav, "Back", "Back", 2, Glyphs.Left, new Vector2(btn, btn), onBack, false, 0.54f);
+            UiKit.Place((RectTransform)back.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0f), new Vector2(btn, btn));
+            Button close = ToyKit.GlyphButton(nav, "Close", "Close", 3, Glyphs.Cross, new Vector2(btn, btn), onClose, false, 0.5f);
+            UiKit.Place((RectTransform)close.transform, new Vector2(1f, 0.5f), new Vector2(0f, 0f), new Vector2(btn, btn));
         }
 
         // ---------------- scrolling content ----------------
@@ -276,7 +293,7 @@ namespace BoingUpSkyTower.Gameplay
             vp.anchorMin = Vector2.zero;
             vp.anchorMax = Vector2.one;
             vp.offsetMin = new Vector2(0f, 8f);
-            vp.offsetMax = new Vector2(0f, -(HeaderH + 8f + 12f));
+            vp.offsetMax = new Vector2(0f, -TopChrome);
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
@@ -285,7 +302,7 @@ namespace BoingUpSkyTower.Gameplay
             content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
             content.anchoredPosition = Vector2.zero;
-            float vpH = Mathf.Max(0f, height - (HeaderH + 8f + 12f) - 8f);
+            float vpH = Mathf.Max(0f, height - TopChrome - 8f);
             Plan(w, vpH);
             float h = BuildContent(w);
             content.sizeDelta = new Vector2(w, h);
@@ -314,7 +331,7 @@ namespace BoingUpSkyTower.Gameplay
         float Measure(float w)
         {
             float y = PortraitH(w, pf) + gap + TabH + gap;
-            if (tab == 0) y += 3f * cellH + 2f * 14f + gap + UseH;
+            if (tab == 0) y += 3f * cellH + 2f * 14f + gap + RunBonusH + gap + UseH;
             else y += 3f * rowH + 2f * 10f + 2f * PanelPad + gap + PowerH;
             return y + 24f;
         }
@@ -488,16 +505,63 @@ namespace BoingUpSkyTower.Gameplay
             }
             y += 3f * cellH + 2f * rowGap + gap;
 
-            // use this hero
-            Vector2 bs = new Vector2(Mathf.Min(560f, w - 40f), UseH);
+            // run bonus: a full-width plate "Run bonus" + coin icon and amount + gem icon and amount (paid at the end of every run)
+            Image rb = UiKit.AddImage(content, "RunBonusPlate", null, Color.white);
+            HeroSheetArt.Skin(rb, "stat_value", HeroSheetArt.Cream, RunBonusH);
+            Put(rb.rectTransform, 0f, y, w, RunBonusH);
+            const float rbPad = 34f;
+            float iconS = 64f, numW = 140f;
+            float labW = w - 2f * rbPad - 2f * (iconS + 8f + numW) - 24f;
+            Text rl = UiKit.OnPanel(UiKit.AddText(rb.transform, "Label", "Run bonus", FloorPx, UiKit.PanelInk, TextAnchor.MiddleLeft));
+            Put(rl.rectTransform, rbPad, 10f, labW, RunBonusH - 20f);
+            Fit(rl, "Run bonus", 40, FloorPx, labW, RunBonusH - 20f, false);
+            Sprite coinSp = (art != null ? art.CoinIcon : null) ?? RewardArt.Icon("coinbag");
+            Sprite gemSp = (art != null ? art.GemIcon : null) ?? RewardArt.Icon("gem");
+            float gx = w - rbPad - (iconS + 8f + numW);          // gem group (right)
+            float cx = gx - 24f - (iconS + 8f + numW);           // coin group
+            AddBonusPair(rb.transform, "Coin", coinSp, "+" + data.RunBonusCoins, cx, iconS, numW, RunBonusH);
+            AddBonusPair(rb.transform, "Gem", gemSp, "+" + data.RunBonusGems, gx, iconS, numW, RunBonusH);
+            rb.gameObject.AddComponent<A11yLabel>().Text = "Run bonus, paid at the end of every run: " + data.RunBonusCoins + " coins and " + data.RunBonusGems + " gems";
+            y += RunBonusH + gap;
+
+            // previous hero (green arrow), use this hero in between, next hero (green arrow); the arrows step through the owned heroes only
+            Vector2 bs = new Vector2(Mathf.Min(560f, w - 2f * (UseH + ArrowGap)), UseH);
+            float rowW = bs.x + 2f * (UseH + ArrowGap);
+            float rx0 = (w - rowW) * 0.5f;
+            AddArrow("PrevHero", "Previous hero", false, prevHero, rx0, y);
+            AddArrow("NextHero", "Next hero", true, nextHero, rx0 + rowW - UseH, y);
             string label2 = inUse ? "In use" : "Use this hero";
             Button use = UiKit.AddButton(content, "UseHero", label2, ToyKit.Button(1), Color.white, bs, inUse ? null : onUse, 46);
-            Put((RectTransform)use.transform, (w - bs.x) * 0.5f, y, bs.x, bs.y);
+            Put((RectTransform)use.transform, rx0 + UseH + ArrowGap, y, bs.x, bs.y);
             if (inUse) use.interactable = false;
             use.GetComponent<A11yLabel>().Text = inUse ? data.Name + " is the chosen hero" : "Use " + data.Name;
             Text ut = use.GetComponentInChildren<Text>();
             if (ut != null) Fit(ut, label2, 46, FloorPx, bs.x - 60f, bs.y - 30f, false);
             return y + bs.y;
+        }
+
+        void AddBonusPair(Transform plate, string name, Sprite icon, string amount, float x, float iconS, float numW, float h)
+        {
+            Image ic = UiKit.AddImage(plate, name + "Icon", icon, Color.white);
+            Put(ic.rectTransform, x, (h - iconS) * 0.5f, iconS, iconS);
+            Text n = UiKit.OnPanel(UiKit.AddText(plate, name + "Amount", amount, 44, UiKit.PanelInk, TextAnchor.MiddleLeft, true));
+            Put(n.rectTransform, x + iconS + 8f, 10f, numW, h - 20f);
+            Fit(n, amount, 44, FloorPx, numW, h - 20f, false);
+        }
+
+        /// <summary>A green arrow button (left or right) that opens the neighbouring owned hero; greyed and not tappable when there is none.</summary>
+        void AddArrow(string name, string a11y, bool right, CharacterDef target, float x, float y)
+        {
+            Button b = ToyKit.GlyphButton(content, name, a11y, 1, Glyphs.Left, new Vector2(UseH, UseH), () => { if (onNavigate != null && target != null) onNavigate(target); }, right, 0.54f);
+            Put((RectTransform)b.transform, x, y, UseH, UseH);
+            bool on = target != null;
+            b.interactable = on;
+            if (!on)
+            {
+                foreach (Image im in b.GetComponentsInChildren<Image>(true))
+                    if (im.name == "Plate" || im.name == "Glyph") im.color = new Color(0.55f, 0.55f, 0.55f, 0.65f);
+            }
+            b.GetComponent<A11yLabel>().Text = on ? a11y + ", " + target.Name : a11y + ", not available";
         }
 
         // ---------------- Details tab ----------------

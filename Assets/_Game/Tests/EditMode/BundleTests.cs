@@ -70,6 +70,22 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
+        public void WorthDollarsUsesTheShopPriceList()
+        {
+            PowerUpCatalog pw = PowerUpCatalog.BuiltIn();
+            int gemPrice = pw.Get("pw_magnet").GemPrice;
+            BundleDef d = Def("w", 200, 2000, Pw("pw_magnet", 2));
+            double expectedGems = 2000 / 20.0 + 2.0 * gemPrice;
+            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem, BundleWorth.Dollars(d), 1e-9);
+            Assert.AreEqual(BundleWorth.Dollars(d), BundleWorth.Dollars(d, pw), 1e-9);
+            Assert.AreEqual(0.0, BundleWorth.Dollars(null), 1e-9);
+            d.CharacterId = "hero_x";
+            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem + BundleWorth.CharacterUsd, BundleWorth.Dollars(d), 1e-9, "a character adds its dollar value");
+            Assert.That(BundleWorth.Text(Def("t", 200, 0, Pw("pw_magnet", 1))), Does.StartWith("Worth $"));
+            foreach (BundleDef b in catalog.All) Assert.That(BundleWorth.Dollars(b), Is.GreaterThan(0.0).And.LessThan(20.0), b.Id);
+        }
+
+        [Test]
         public void BundlesAreUnique()
         {
             Assert.AreEqual(1000, catalog.All.Select(b => b.Id).Distinct().Count());

@@ -221,6 +221,9 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Returns 1 when the child led to the goal, -1 when the node budget is spent, 0 otherwise.</summary>
         private int Visit(SimState s, SimState c, int sameRow)
         {
+            // A goal met on the way (for example the hidden gem picked up while running along the take-off platform) ends the search even when the
+            // jump itself did not change the platform or the row.
+            if (c.Row >= s.Row && !Prune(c) && Done(c)) { best = c; return 1; }
             if (c.Row <= s.Row && c.GroundId == s.GroundId) return 0;
             if (c.Row < s.Row) return 0;
             if (c.Row == s.Row && sameRow >= MaxSameRowHops) return 0;

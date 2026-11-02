@@ -13,6 +13,10 @@
 
   <ItemGroup>
     <Compile Include="../../Assets/_Game/Simulation/**/*.cs" />
+    <!-- Economy tier data is pure C# (Simulation types only), so the tier rules and rows are tested here too -->
+    <Compile Include="../../Assets/_Game/Economy/TierRules.cs" />
+    <Compile Include="../../Assets/_Game/Economy/MergeTierDefs.cs" />
+    <Compile Include="../../Assets/_Game/Economy/Characters.cs" />
   </ItemGroup>
 
   <ItemGroup>

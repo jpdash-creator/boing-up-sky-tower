@@ -340,7 +340,7 @@ namespace BoingUpSkyTower.Tests
             {
                 CharacterRarity rr = rar;
                 int powers = CharacterDefs.PowerCount[(int)rr];
-                var list = new[] { PowerUp.Flight, PowerUp.DoubleJump, PowerUp.SlowTime };
+                var list = new[] { PowerUp.Flight, PowerUp.DoubleJump, PowerUp.SlowTime, PowerUp.Magnet };   // up to 4 powers (Legendary)
                 var pw = new PowerUp[powers];
                 for (int i = 0; i < powers; i++) pw[i] = list[i];
                 string label = "hero-sheet-" + rr.ToString().ToLowerInvariant();
@@ -882,6 +882,46 @@ namespace BoingUpSkyTower.Tests
                 sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_shield");
                 meta.CurrentRewards.ShowClaimed(sample);
             }, problems);
+            Report(problems);
+        }
+
+        // ---- Merge screen (docs/34): ready, not enough copies, top tier, a full grid, and the "New hero" result card ----
+
+        [UnityTest]
+        public IEnumerator MergeScreenHasNoOverlapAndFitsEveryAspect() { return MergeAudit(100); }
+
+        /// <summary>CUX-5: the Merge screen survives the 130 percent text size too.</summary>
+        [UnityTest]
+        public IEnumerator MergeScreenSurvives130PercentText() { return MergeAudit(130); }
+
+        /// <summary>A clean save: Momo with 3 copies (ready), and every other hero revealed with a few copies so the grid has two rows.</summary>
+        static void MergeState(bool full)
+        {
+            GameSession.Progress.ResetAll();
+            GameSession.Progress.AddCopies("momo", 2);
+            if (!full) return;
+            int n = 0;
+            foreach (CharacterSpec s in CharacterDefs.All)
+            {
+                if (s.Id == "momo") continue;
+                GameSession.Progress.AddCopies(s.Id, 1 + (n++ % 3));
+                GameSession.Progress.MarkHeroRevealed(s.Id);
+            }
+        }
+
+        IEnumerator MergeAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            yield return CheckScreen("merge-ready", () => { MergeState(false); meta.ShowMerge(); }, problems);
+            yield return CheckScreen("merge-full-grid", () => { MergeState(true); meta.ShowMerge(); }, problems);
+            yield return CheckScreen("merge-not-enough", () => { GameSession.Progress.ResetAll(); meta.ShowMerge(); }, problems);   // Momo with his one starting copy
+            yield return CheckScreen("merge-top-tier", () => { GameSession.Progress.ResetAll(); GameSession.Progress.AddCopies("momo_u", 2); meta.ShowMerge("momo_u"); }, problems);
+            yield return CheckScreen("merge-pick-other", () => { MergeState(true); meta.ShowMerge("candygirl"); }, problems);
+            yield return CheckScreen("merge-result-card", () => { MergeState(false); meta.ShowMerge(); meta.CurrentMerge.TapMerge(); }, problems);
+            Assert.AreEqual(1, GameSession.Progress.Copies("momo_u"), "the audit's merge produced the Uncommon hero");
             Report(problems);
         }
 

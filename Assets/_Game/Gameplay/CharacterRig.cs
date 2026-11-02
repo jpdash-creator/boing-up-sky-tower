@@ -84,7 +84,27 @@ namespace BoingUpSkyTower.Gameplay
     {
         public string Id;
         public string Name;
+        /// <summary>Merge tiers (docs/34) draw this character's art until their own Resources/Characters/{Id}/ folder exists. Null for characters with their own art.</summary>
+        public string FallbackArtId;
         CharacterRig rig;
+        bool artChecked, placeholderArt;
+
+        /// <summary>True while this tier has no art folder of its own and shows the Common hero's pictures (tinted by <see cref="MomoDoll"/>) so it is visibly a placeholder.</summary>
+        public bool UsesPlaceholderArt
+        {
+            get
+            {
+                if (!artChecked)
+                {
+                    artChecked = true;
+                    placeholderArt = !string.IsNullOrEmpty(FallbackArtId) && Resources.Load<TextAsset>("Characters/" + Id + "/rig") == null;
+                }
+                return placeholderArt;
+            }
+        }
+
+        /// <summary>The Resources folder id the pictures and rig come from right now.</summary>
+        string ArtFolder { get { return UsesPlaceholderArt ? FallbackArtId : Id; } }
         readonly Dictionary<string, Sprite> parts = new Dictionary<string, Sprite>();
 
         /// <summary>Rarity, region and powers of this character (Economy).</summary>
@@ -96,7 +116,7 @@ namespace BoingUpSkyTower.Gameplay
             get
             {
                 if (rig != null) return rig;
-                TextAsset ta = Resources.Load<TextAsset>("Characters/" + Id + "/rig");
+                TextAsset ta = Resources.Load<TextAsset>("Characters/" + ArtFolder + "/rig");
                 rig = CharacterRig.FromJson(ta != null ? ta.text : null);
                 return rig;
             }
@@ -107,7 +127,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             Sprite s;
             if (parts.TryGetValue(part, out s)) return s;
-            s = Resources.Load<Sprite>("Characters/" + Id + "/" + part);
+            s = Resources.Load<Sprite>("Characters/" + ArtFolder + "/" + part);
             parts[part] = s;
             return s;
         }
@@ -141,7 +161,7 @@ namespace BoingUpSkyTower.Gameplay
         static CharacterDef[] BuildAll()
         {
             var list = new List<CharacterDef>(CharacterDefs.All.Length);
-            foreach (CharacterSpec s in CharacterDefs.All) list.Add(new CharacterDef { Id = s.Id, Name = s.Name });
+            foreach (CharacterSpec s in CharacterDefs.All) list.Add(new CharacterDef { Id = s.Id, Name = s.Name, FallbackArtId = s.FallbackArtId });
             return list.ToArray();
         }
 
@@ -149,6 +169,18 @@ namespace BoingUpSkyTower.Gameplay
         {
             foreach (CharacterDef c in All) if (c.Id == id) return c;
             return null;
+        }
+
+        /// <summary>Copies of the character the player holds (docs/34): the merge stack, 1 for an owned character that was never counted.</summary>
+        public static int Copies(ProgressService p, CharacterDef who) { return p != null && who != null ? p.Copies(who.Id) : 0; }
+
+        /// <summary>Copies of the character in the running game's save.</summary>
+        public static int Copies(CharacterDef who) { return Copies(GameSession.Progress, who); }
+
+        /// <summary>Test and system-test helper: adds copies of a character to the running game's save (saved at once). Returns the new count.</summary>
+        public static int DebugAddCopies(CharacterDef who, int count)
+        {
+            return GameSession.Progress != null && who != null ? GameSession.Progress.AddCopies(who.Id, count) : 0;
         }
 
         public static CharacterDef Get(string id)
@@ -190,6 +222,9 @@ namespace BoingUpSkyTower.Gameplay
     /// </summary>
     public static class MomoDoll
     {
+        /// <summary>Tint of a merge tier that still wears its Common hero's art (docs/34): a soft green, so the placeholder is easy to spot and easy to replace.</summary>
+        public static readonly Color PlaceholderTint = new Color(0.78f, 1f, 0.82f, 1f);
+
         /// <summary>Builds the doll in a box of the given height (width follows the canvas). Returns the box. <paramref name="who"/> null = Momo.</summary>
         public static RectTransform Build(Transform parent, string name, float height, CharacterDef who = null, ArtCatalog art = null)
         {
@@ -199,7 +234,7 @@ namespace BoingUpSkyTower.Gameplay
             box.sizeDelta = new Vector2(height * rig.CanvasW / rig.CanvasH, height);
             foreach (PartDraw d in PartsAssembler.Build(who, art ?? GameSession.Art))
             {
-                Image img = UiKit.AddImage(box, "Part_" + d.Name, d.Sprite, Color.white);
+                Image img = UiKit.AddImage(box, "Part_" + d.Name, d.Sprite, who.UsesPlaceholderArt ? PlaceholderTint : Color.white);
                 img.preserveAspect = false;
                 img.raycastTarget = false;
                 RectTransform rt = img.rectTransform;

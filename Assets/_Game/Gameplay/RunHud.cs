@@ -299,7 +299,7 @@ namespace BoingUpSkyTower.Gameplay
         void BuildIntro(RectTransform root, RunSession session)
         {
             Image back = Theme.GlassPanel(root, "Intro", 40f);
-            UiKit.Place(back.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 130f), new Vector2(780f, 560f));
+            UiKit.Place(back.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 130f), new Vector2(780f, 410f));
             back.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             introRoot = back.rectTransform;
             string introTitle = endless ? "Endless" : "Level " + session.Level.Index;
@@ -322,23 +322,9 @@ namespace BoingUpSkyTower.Gameplay
                 Text ruleText = UiKit.AddText(introRoot, "Rule", rule, 40, new Color(1f, 0.95f, 0.6f), TextAnchor.MiddleCenter, true);
                 ruleText.fontStyle = FontStyle.Italic;
                 UiKit.Place((RectTransform)ruleText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -360f), new Vector2(720f, 70f));
-                back.rectTransform.sizeDelta = new Vector2(780f, 660f);   // room for the rule line above the control hints
+                back.rectTransform.sizeDelta = new Vector2(780f, 490f);   // room for the rule line under the goal
             }
-            // Controls hint: left, right, jump as small plates with the same glyphs as the real buttons.
-            Sprite[] glyphs = { Glyphs.Left, Glyphs.Left, Glyphs.Up };
-            for (int i = 0; i < 3; i++)
-            {
-                Image plate = UiKit.AddImage(introRoot, "Hint" + i, ToyKit.Button(i == 2 ? 1 : 2), Color.white);
-                plate.type = Image.Type.Sliced;
-                plate.preserveAspect = false;
-                plate.pixelsPerUnitMultiplier = 3f;
-                UiKit.Place(plate.rectTransform, new Vector2(0.5f, 0f), new Vector2((i - 1) * 150f, 50f), new Vector2(120f, 120f));
-                plate.rectTransform.pivot = new Vector2(0.5f, 0f);
-                Image g = UiKit.AddImage(plate.transform, "Glyph", glyphs[i], Color.white);
-                g.rectTransform.anchorMin = g.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-                g.rectTransform.sizeDelta = new Vector2(76f, 76f);
-                if (i == 1) g.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
-            }
+            // The small control-hint chips (left, right, jump) were removed on purpose (owner 2026-11-02): the intro shows the level number, the target and the rule only.
         }
 
         Image[] starIcons;
@@ -622,15 +608,20 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// Run failed. First revive: [Revive: Watch ad (free)] (only while an ad is ready) and [Revive: 5 gems]; second revive: [Revive: 10 gems] only.
-        /// Retry, Shop and Home stay one tap away. Every revive button carries a text label, an icon and the price.
+        /// Run failed. ONE line with [AD 30s] / [AD 1m] (only while the run has an ad left and an ad is ready) next to [gem icon + 5 or 10]; schedule in <see cref="RevivePolicy"/>.
+        /// Retry, Shop and Home stay one tap away (the revive never blocks the retry). Every revive button carries an icon and a text (ad length or price).
         /// </summary>
         public void ShowFailed(RunSession s, int gems, bool adReady)
         {
             bool offerAd = s.AdReviveOffered && (adReady || s.AdRewardPending);
             bool offerGems = s.CanRevive;
-            float lift = Mathf.Max(0f, ButtonY + ButtonSizeFor(150f) - 268f);   // the action row grows with big touch targets / 130 percent text: everything above it moves up by that
-            OpenOverlay(s.GoalLost ? "Wall touched!" : "You fell!", lift + (offerGems ? (offerAd ? 1060f : 940f) : (s.GoalLost ? 880f : 800f)));
+            // Compact popup (owner 2026-11-02): title, result pills, progress bar, then ONE line with the ad and gem buttons next to each other, then the action row.
+            // The height follows the real content: the action row grows with big touch targets / 130 percent text, the revive line with the touch size.
+            float contentBottom = s.GoalLost ? 505f : 395f;   // from the top of the panel: end of the progress bar (or of the reason line)
+            float reviveH = ReviveButtonH;
+            float actionTop = ButtonY + ButtonSizeFor(150f);   // from the bottom of the panel: top of the action buttons
+            float reviveY = actionTop + 24f;
+            OpenOverlay(s.GoalLost ? "Wall touched!" : "You fell!", contentBottom + 30f + (offerGems ? reviveH + 24f : 0f) + actionTop);
             AudioManager.Play(Sfx.Fail);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -649,15 +640,18 @@ namespace BoingUpSkyTower.Gameplay
             }
             if (offerGems)
             {
+                // ONE line, two equal buttons side by side (ad left, gems right; a lone gem button is centred and wider). Schedule: RevivePolicy.
+                float w = offerAd ? ReviveBtnW : ReviveBtnWSolo;
+                float step = ReviveBtnW + ReviveGap;
+                int cost = s.NextReviveCost;
                 if (offerAd)
                 {
-                    string adLabel = s.AdRewardPending ? "Revive: Free" : "Revive: Watch ad (free)";
-                    ReviveButton(panel, adLabel, ToyKit.Get("icon_play"), 1, 480f + lift, () => { if (OnReviveAd != null) OnReviveAd(); });
+                    string adLabel = s.AdRewardPending ? "FREE" : s.Revive.AdLabel;
+                    string adA11y = s.AdRewardPending ? "Revive for free, ad watched" : "Revive by watching a " + (s.Revive.NextAdSeconds >= 60 ? "1 minute" : s.Revive.NextAdSeconds + " second") + " ad";
+                    ReviveButton(panel, adLabel, adA11y, ToyKit.Get("icon_play"), 1, -step * 0.5f, reviveY, w, () => { if (OnReviveAd != null) OnReviveAd(); });
                 }
-                string gemLabel = "Revive: " + s.NextReviveCost + " gems";
-                int cost = s.NextReviveCost;
                 // Too few gems: the button stays enabled and opens the Gems tab of the shop; the revive is taken by tapping again.
-                ReviveButton(panel, gemLabel, ToyKit.Get("icon_gem"), 0, (offerAd ? 330f : 400f) + lift, () =>
+                ReviveButton(panel, cost.ToString(), "Revive for " + cost + " gems", ToyKit.Get("icon_gem"), 0, offerAd ? step * 0.5f : 0f, reviveY, w, () =>
                 {
                     if (GameSession.Progress != null && GameSession.Progress.Gems < cost) OpenShopTab(ShopScreen.TabGems);
                     else if (OnRevive != null) OnRevive();
@@ -669,17 +663,28 @@ namespace BoingUpSkyTower.Gameplay
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
         }
 
-        /// <summary>A wide revive button: icon at the left, text label with the price (CUX-4: 130 px tall, CUX-5: text, not colour only).</summary>
-        void ReviveButton(Transform panel, string label, Sprite icon, int role, float y, Action act)
+        // Revive line geometry (reference px, panel is 860 wide): two buttons of 380 and a 20 gap fill 780; both are far above the 48 dp / 8 dp rules.
+        const float ReviveBtnW = 380f, ReviveBtnWSolo = 520f, ReviveGap = 20f;
+        static float ReviveButtonH { get { return Mathf.Max(130f, UiKit.MinTouchRef); } }
+
+        /// <summary>A revive button: icon at the left, a short label (ad length or gem price) that shrinks to fit at 130 percent text (CUX-4, CUX-5; not colour only).</summary>
+        void ReviveButton(Transform panel, string label, string a11y, Sprite icon, int role, float x, float y, float width, Action act)
         {
-            Button b = UiKit.AddButton(panel, label, label, ToyKit.Button(role == 1 ? 1 : 0), Color.white, new Vector2(740f, 130f), act, 44);
-            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(740f, 130f));
+            float h = ReviveButtonH;
+            Button b = UiKit.AddButton(panel, a11y, label, ToyKit.Button(role == 1 ? 1 : 0), Color.white, new Vector2(width, h), act, 44);
+            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(x, y), new Vector2(width, h));
+            b.GetComponent<A11yLabel>().Text = a11y;
             Text t = b.GetComponentInChildren<Text>();
             if (t != null)
             {
                 var tr = (RectTransform)t.transform;
-                tr.offsetMin = new Vector2(120f, tr.offsetMin.y);
-                t.horizontalOverflow = HorizontalWrapMode.Overflow;
+                tr.offsetMin = new Vector2(h * 0.78f, tr.offsetMin.y);
+                tr.offsetMax = new Vector2(-16f, tr.offsetMax.y);
+                t.horizontalOverflow = HorizontalWrapMode.Wrap;
+                t.verticalOverflow = VerticalWrapMode.Truncate;
+                t.resizeTextForBestFit = true;
+                t.resizeTextMinSize = 30;
+                t.resizeTextMaxSize = 52;
             }
             if (icon != null)
             {
@@ -688,8 +693,8 @@ namespace BoingUpSkyTower.Gameplay
                 RectTransform r = ic.rectTransform;
                 r.anchorMin = r.anchorMax = new Vector2(0f, 0.5f);
                 r.pivot = new Vector2(0.5f, 0.5f);
-                r.anchoredPosition = new Vector2(80f, 0f);
-                r.sizeDelta = new Vector2(84f, 84f);
+                r.anchoredPosition = new Vector2(h * 0.42f, 0f);
+                r.sizeDelta = new Vector2(h * 0.56f, h * 0.56f);
             }
         }
 

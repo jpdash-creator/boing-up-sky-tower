@@ -55,6 +55,16 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>True while an ad is on screen (taps on the offer must be ignored).</summary>
         public static bool IsShowing { get { return showing; } }
 
+        /// <summary>The placement id of the last requested ad ("revive_30", "revive_60"); for analytics, logs and tests.</summary>
+        public static string LastPlacement { get; private set; }
+
+        /// <summary>Shows a rewarded ad for a named placement (revive_30 = 30 s ad, revive_60 = 60 s ad).</summary>
+        public static void ShowRewarded(string placement, Action<bool> onFinished)
+        {
+            LastPlacement = placement;
+            ShowRewarded(onFinished);
+        }
+
         /// <summary>Shows a rewarded ad; <paramref name="onFinished"/> gets true only for a completed, rewarded view.</summary>
         public static void ShowRewarded(Action<bool> onFinished)
         {

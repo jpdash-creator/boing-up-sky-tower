@@ -165,8 +165,9 @@ namespace BoingUpSkyTower.Tests
             s.State.Y = Fx.FromInt(-200);
             s.State.Invuln = 0;
             s.Step(0);
-            Assert.IsFalse(s.CanRevive, "at most two revives per run");
-            Assert.IsFalse(s.TryRevive(progress));
+            Assert.IsTrue(s.CanRevive, "gem revives are not capped (owner 2026-11-02); the price stays 10");
+            Assert.AreEqual(10, s.NextReviveCost);
+            Assert.IsFalse(s.TryRevive(progress), "5 gems left, 10 needed");
         }
 
         [Test]

@@ -1,0 +1,16 @@
+{
+  "canvas": [
+    1365,
+    1649
+  ],
+  "order": [
+    "legL",
+    "legR",
+    "body",
+    "handL",
+    "handR",
+    "head"
+  ],
+  "ecc": 0.8540544360698986,
+  "id": "monk_u"
+}

@@ -84,6 +84,12 @@ namespace BoingUpSkyTower.Simulation.Tests
             return m;
         }
 
+        /// <summary>Sideways reach of a platform's own motion: Platform.Amplitude, except for kinds that use it for something else (Fairy Ring hole, Sandcastle Step riser).</summary>
+        public static Fx Swing(Platform p)
+        {
+            return p.Kind == PlatformKind.FairyRing || p.Kind == PlatformKind.SandcastleStep ? Fx.Zero : p.Amplitude;
+        }
+
         /// <summary>Layout validity that does not need the bot: returns null when fine, else a description.</summary>
         public static string Validate(SimConfig cfg, LevelSpec spec, LevelData d, Metrics baseM)
         {
@@ -96,12 +102,12 @@ namespace BoingUpSkyTower.Simulation.Tests
             {
                 Platform p = d.Platforms[i];
                 if (p.Width.Raw >= 9 * 65536) continue;
-                Fx ext = p.Width / 2 + (p.Kind == PlatformKind.FairyRing ? Fx.Zero : p.Amplitude);   // a Fairy Ring's Amplitude is its hole half width, not a swing
+                Fx ext = p.Width / 2 + Swing(p);   // a Fairy Ring's Amplitude is its hole half width and a Sandcastle Step's its riser height, not a swing
                 if (p.X - ext < Fx.Zero || p.X + ext > screen) return "platform " + p.Id + " outside the walls";
                 if (i > 0 && d.Platforms[i - 1].Row == p.Row && d.Platforms[i - 1].Width.Raw < 9 * 65536)
                 {
                     Platform q = d.Platforms[i - 1];
-                    Fx gap = Fx.Abs(p.X - q.X) - p.Width / 2 - p.Amplitude - q.Width / 2 - q.Amplitude;
+                    Fx gap = Fx.Abs(p.X - q.X) - p.Width / 2 - Swing(p) - q.Width / 2 - Swing(q);
                     if (gap < Fx.FromRatio(5, 100)) return "platforms " + q.Id + "/" + p.Id + " touch on row " + p.Row + " [" + q.Kind + " x=" + q.X + " w=" + q.Width + " amp=" + q.Amplitude + "] [" + p.Kind + " x=" + p.X + " w=" + p.Width + " amp=" + p.Amplitude + "]";
                 }
             }

@@ -112,11 +112,13 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Saves with a bad chest counter or character list get safe defaults; the current save version is stamped.</summary>
         void EnsureChestFields()
         {
+            int loadedVersion = Data.Version;
             if (Data.Characters == null) Data.Characters = new List<string>();
             Data.Characters.RemoveAll(id => CharacterDefs.Get(id) == null);
             if (Data.HeroesRevealed == null) Data.HeroesRevealed = new List<string>();
             Data.HeroesRevealed.RemoveAll(id => CharacterDefs.Get(id) == null);
             if (Data.ChestOpens < 0) Data.ChestOpens = 0;
+            EnsureCopyFields(loadedVersion);   // ProgressService.Merge.cs
             if (Data.Version < SaveData.CurrentVersion) Data.Version = SaveData.CurrentVersion;
         }
 
@@ -126,11 +128,9 @@ namespace BoingUpSkyTower.Economy
             CharacterSpec c = CharacterDefs.Get(id);
             if (c == null) return false;
             if (TestAllCharacters) return true;
-            if (Data.Characters.Contains(id)) return true;
-            if (c.Rarity != CharacterRarity.Common || c.Region <= 0) return false;
-            if (c.Region == 1) return true;
-            RegionDef r = repo.TryGetRegionByIndex(c.Region);
-            return r != null && IsRegionUnlocked(r);
+            int counted;
+            if (Data.Copies != null && Data.Copies.TryGetValue(id, out counted)) return counted > 0;   // docs/34: once a character is counted, its copies decide
+            return OwnedWithoutCopyCount(c);
         }
 
         /// <summary>True when the hero's reveal is done (or it never needs one: Momo and every non-hero character).</summary>

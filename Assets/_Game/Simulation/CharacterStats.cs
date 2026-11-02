@@ -21,18 +21,46 @@ namespace BoingUpSkyTower.Simulation
         public int CoinFind;
         /// <summary>Flat extra gems added to the reward of every cleared level.</summary>
         public int GemFind;
+        /// <summary>Meta bonus paid at the END of every run (win or fail) on top of the level reward: coins, a multiple of 10 from 50 to 100 for a roster hero. 0 = none (the bare default). Never touches the simulation.</summary>
+        public int RunBonusCoins;
+        /// <summary>Meta bonus paid at the end of every run: gems, 1 to 5 for a roster hero. 0 = none (the bare default).</summary>
+        public int RunBonusGems;
 
         public static readonly CharacterStats Default = new CharacterStats();
 
-        // Limits (docs/29 section 7). Minimums are Momo's baseline: a character only adds, so no proven level becomes unreachable. Maximums are proposals pending owner sign-off.
-        public const int JumpLaunchMin = 19, JumpLaunchMax = 23;
-        public const int MaxSpeedMin = 9, MaxSpeedMax = 12;
-        public const int ControlMin = 30, ControlMax = 45;
-        public const int WallBoostMin = 77, WallBoostMax = 100;
+        // Limits (docs/29 section 7). The minimums are 10 percent under Momo's baseline (owner 2026-11-02: Capi, Otto, Bonbon and Bao vary by -10..+10 percent). Maximums are proposals pending owner sign-off.
+        public const int JumpLaunchMin = 17, JumpLaunchMax = 23;
+        public const int MaxSpeedMin = 8, MaxSpeedMax = 12;
+        public const int ControlMin = 27, ControlMax = 45;
+        public const int WallBoostMin = 69, WallBoostMax = 100;
         public const int CoinFindMax = 50, GemFindMax = 5;
+        public const int RunBonusCoinsMin = 50, RunBonusCoinsMax = 100, RunBonusCoinsStep = 10, RunBonusGemsMin = 1, RunBonusGemsMax = 5;
+
+        // Merge-tier run bonuses are ADDED to the Common hero's own bonus (docs/34 section 2b): the ceilings are the Common maximum plus the Legendary maximum (2000 coins, 10 gems).
+        public const int TierRunBonusCoinsMax = RunBonusCoinsMax + 2000, TierRunBonusGemsMax = RunBonusGemsMax + 10;
 
         /// <summary>Null when the stats are inside the limits, else a short reason.</summary>
         public string Validate()
+        {
+            string p = ValidatePhysics();
+            if (p != null) return p;
+            if (RunBonusCoins != 0 && (RunBonusCoins < RunBonusCoinsMin || RunBonusCoins > RunBonusCoinsMax || RunBonusCoins % RunBonusCoinsStep != 0)) return "RunBonusCoins " + RunBonusCoins + " must be 0 or a multiple of 10 in " + RunBonusCoinsMin + ".." + RunBonusCoinsMax;
+            if (RunBonusGems != 0 && (RunBonusGems < RunBonusGemsMin || RunBonusGems > RunBonusGemsMax)) return "RunBonusGems " + RunBonusGems + " must be 0 or in " + RunBonusGemsMin + ".." + RunBonusGemsMax;
+            return null;
+        }
+
+        /// <summary>Like <see cref="Validate"/> but for a merge-tier hero: the run bonus may reach the tier ceilings (Common bonus plus the tier's added bonus). The physics limits are the same.</summary>
+        public string ValidateTier()
+        {
+            string p = ValidatePhysics();
+            if (p != null) return p;
+            if (RunBonusCoins != 0 && (RunBonusCoins < RunBonusCoinsMin || RunBonusCoins > TierRunBonusCoinsMax || RunBonusCoins % RunBonusCoinsStep != 0)) return "RunBonusCoins " + RunBonusCoins + " must be 0 or a multiple of 10 in " + RunBonusCoinsMin + ".." + TierRunBonusCoinsMax;
+            if (RunBonusGems != 0 && (RunBonusGems < RunBonusGemsMin || RunBonusGems > TierRunBonusGemsMax)) return "RunBonusGems " + RunBonusGems + " must be 0 or in " + RunBonusGemsMin + ".." + TierRunBonusGemsMax;
+            return null;
+        }
+
+        /// <summary>Null when the four physics stats and the flat finds are inside the limits (the part that keeps every level solvable), else a short reason.</summary>
+        public string ValidatePhysics()
         {
             if (JumpLaunch < JumpLaunchMin || JumpLaunch > JumpLaunchMax) return "JumpLaunch " + JumpLaunch + " outside " + JumpLaunchMin + ".." + JumpLaunchMax;
             if (MaxSpeed < MaxSpeedMin || MaxSpeed > MaxSpeedMax) return "MaxSpeed " + MaxSpeed + " outside " + MaxSpeedMin + ".." + MaxSpeedMax;
@@ -67,6 +95,8 @@ namespace BoingUpSkyTower.Simulation
             s.WallBounce = speed * Ratio(cfg.WallBoost);
             s.CoinFind = CoinFind;
             s.GemFind = GemFind;
+            s.RunBonusCoins = RunBonusCoins;
+            s.RunBonusGems = RunBonusGems;
             s.AirSteering = accel * Ratio(cfg.AirControl);
             s.Braking = accel * Ratio(cfg.BrakeFactor);
             s.TurnAroundGround = accel * 2.0;
@@ -95,6 +125,7 @@ namespace BoingUpSkyTower.Simulation
     {
         public double Jump, Speed, Control, WallBounce;
         public int CoinFind, GemFind;
+        public int RunBonusCoins, RunBonusGems;
         public double AirSteering, Braking, TurnAroundGround, TurnAroundAir;
         public double TimeToStop, StopDistance, TimeToTopSpeed;
         public double FullSpeedLaunch, HalfSpeedJump, FullSpeedJump, StickyJump;

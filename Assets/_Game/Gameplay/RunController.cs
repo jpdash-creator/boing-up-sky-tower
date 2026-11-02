@@ -249,7 +249,7 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// Free revive through a rewarded ad (first revive only). Nothing is spent. If the ad was watched but the revive did not go through,
+        /// Free revive through a rewarded ad (2 per run: 30 s, then 60 s). Nothing is spent. If the ad was watched but the revive did not go through,
         /// the next tap revives for free without another ad. An early close or an error grants nothing.
         /// </summary>
         void ReviveByAd()
@@ -259,7 +259,7 @@ namespace BoingUpSkyTower.Gameplay
             if (!AdService.IsRewardedReady) { ShowFailedOffer(); return; }   // the ad vanished: redraw with the gem option only
             adBusy = true;
             RunSession sess = Session;
-            AdService.ShowRewarded(granted =>
+            AdService.ShowRewarded(sess.Revive.NextAdPlacement, granted =>
             {
                 adBusy = false;
                 if (this == null || sess != Session) return;               // left the run while the ad was up

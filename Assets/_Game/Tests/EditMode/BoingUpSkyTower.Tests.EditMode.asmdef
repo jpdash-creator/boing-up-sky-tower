@@ -6,6 +6,7 @@
     "BoingUpSkyTower.Content",
     "BoingUpSkyTower.Economy",
     "BoingUpSkyTower.Gameplay",
+    "BoingUpSkyTower.Services",
     "Unity.Nuget.Newtonsoft-Json",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

@@ -25,8 +25,8 @@ namespace BoingUpSkyTower.Economy
     /// </summary>
     public sealed class SaveData
     {
-        /// <summary>Version 2 added the chest counter. Gear fields of older saves are ignored on load (gear was removed 2026-10-24).</summary>
-        public const int CurrentVersion = 2;
+        /// <summary>Version 3 added the character copies (docs/34); older saves are migrated on load (each owned character starts with 1 copy). Version 2 added the chest counter. Gear fields of older saves are ignored on load (gear was removed 2026-10-24).</summary>
+        public const int CurrentVersion = 3;
 
         [JsonProperty("version")] public int Version = CurrentVersion;
         [JsonProperty("coins")] public int Coins;
@@ -57,5 +57,7 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("bundles")] public BundleSaveData Bundles = new BundleSaveData();
         /// <summary>Subscription state (docs/26 section 2). Additive field, no version bump; old saves load with no subscription.</summary>
         [JsonProperty("subscription")] public SubscriptionData Subscription = new SubscriptionData();
+        /// <summary>Copies per character id (docs/34): the tier hero has its own id, so this is a count per (hero, tier). A missing key means not counted yet: an owned character then counts as 1 copy. 0 means all copies were merged away.</summary>
+        [JsonProperty("copies")] public Dictionary<string, int> Copies = new Dictionary<string, int>();
     }
 }

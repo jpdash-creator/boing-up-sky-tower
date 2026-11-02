@@ -30,7 +30,8 @@ namespace BoingUpSkyTower.Gameplay
         const float PriceReserve = PriceW + RowPad + 12f;   // right edge of the text block: price button, its pad and a gap
         /// <summary>Width of the name and chip block. Set from the real body width at the start of Build (conservative fallback when not laid out yet).</summary>
         static float textAreaW = 380f;
-        const float CompactChipH = 72f, CompactGap = 8f, NameGap = 6f, NameFont = 42f;
+        const float CompactChipH = 72f, CompactGap = 8f, NameGap = 6f, NameFont = 42f, WorthFont = 38f;
+        static readonly Color WorthColor = new Color(0.02f, 0.36f, 0.19f, 1f);   // the dark green of the subscription "Worth" tag on gold
         const float HeaderRibbonW = 700f, HeaderRibbonH = 120f, RefreshRowH = 134f, RefreshBtnW = 190f, HeaderGap = 10f;
         /// <summary>Header fonts: the caption is 48 (was 42), the title 52.</summary>
         const float CaptionFont = 48f, TitleFont = 52f;
@@ -173,6 +174,8 @@ namespace BoingUpSkyTower.Gameplay
 
         static float NameLineH() { return Mathf.Ceil(Mathf.Max(NameFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.2f); }
 
+        static float WorthLineH() { return Mathf.Ceil(Mathf.Max(WorthFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.2f); }
+
         /// <summary>1 or 2 name lines, estimated from the text length with a generous glyph width (the layout stays deterministic).</summary>
         static int NameLines(BundleDef def)
         {
@@ -198,14 +201,14 @@ namespace BoingUpSkyTower.Gameplay
         static float TextBlockHeight(BundleDef def)
         {
             int rows = CompactRows(MakeChips(def, null));
-            return NameLines(def) * NameLineH() + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
+            return NameLines(def) * NameLineH() + WorthLineH() + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
         }
 
         /// <summary>Height of a bundle row: the name and chip block, but never less than the price button (130 px) plus padding.</summary>
         public static float CardHeight(BundleDef def)
         {
             // every row has at least the height of a one-line name over two chip rows (1 and 2 chip rows look the same); 3 chip rows or a long name still grow
-            float uniform = RowPad * 2f + NameLineH() + NameGap + 2f * CompactChipH + CompactGap;
+            float uniform = RowPad * 2f + NameLineH() + WorthLineH() + NameGap + 2f * CompactChipH + CompactGap;
             return Mathf.Max(Mathf.Max(RowPad * 2f + TextBlockHeight(def), RowPad * 2f + PriceH), uniform);
         }
 
@@ -283,8 +286,25 @@ namespace BoingUpSkyTower.Gameplay
             nrt.offsetMin = new Vector2(TextLeft, -(top + lines * NameLineH()));
             nrt.offsetMax = new Vector2(-PriceReserve, -top);
 
-            // compact chips under the name, wrapping inside the text area
-            float chipTop = top + lines * NameLineH() + NameGap;
+            // "Worth $X" under the name (the VIP style): dollar value of everything inside at the shop's own prices
+            string worthText = BundleWorth.Text(def);
+            Text worth = UiKit.AddText(card, "Worth", worthText, (int)WorthFont, WorthColor, TextAnchor.MiddleLeft, true);
+            UiKit.OnPanel(worth);
+            worth.fontStyle = FontStyle.Bold;
+            worth.horizontalOverflow = HorizontalWrapMode.Wrap;
+            worth.resizeTextForBestFit = true;
+            worth.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+            worth.resizeTextMaxSize = worth.fontSize;
+            worth.verticalOverflow = VerticalWrapMode.Truncate;
+            var wrt = (RectTransform)worth.transform;
+            wrt.anchorMin = new Vector2(0f, 1f);
+            wrt.anchorMax = new Vector2(1f, 1f);
+            wrt.pivot = new Vector2(0f, 1f);
+            wrt.offsetMin = new Vector2(TextLeft, -(top + lines * NameLineH() + WorthLineH()));
+            wrt.offsetMax = new Vector2(-PriceReserve, -(top + lines * NameLineH()));
+
+            // compact chips under the worth line, wrapping inside the text area
+            float chipTop = top + lines * NameLineH() + WorthLineH() + NameGap;
             float x = 0f;
             int row = 0;
             foreach (Chip c in MakeChips(def, art))
@@ -295,7 +315,7 @@ namespace BoingUpSkyTower.Gameplay
                 x += w + CompactGap;
             }
 
-            string a11y = "Buy " + def.Name + " for " + Num(price) + " gems: " + Describe(def, ", ");
+            string a11y = "Buy " + def.Name + " for " + Num(price) + " gems: " + Describe(def, ", ") + ". " + worthText;
             Button buy = ShopChrome.PriceButton(card, "Buy", 1, art != null ? art.GemIcon : null, Num(price), a11y, onBuy, 44);
             UiKit.Place((RectTransform)buy.transform, new Vector2(1f, 0.5f), new Vector2(-RowPad, 0f), new Vector2(PriceW, PriceH));
             return h;

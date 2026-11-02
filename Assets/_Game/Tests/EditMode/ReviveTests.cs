@@ -43,7 +43,7 @@ namespace BoingUpSkyTower.Tests
         {
             Assert.AreEqual(5, RunSession.ReviveCostFor(0));
             Assert.AreEqual(10, RunSession.ReviveCostFor(1));
-            Assert.AreEqual(2, RunSession.MaxRevives);
+            Assert.AreEqual(10, RunSession.ReviveCostFor(7), "stays 10");
         }
 
         [Test]
@@ -70,9 +70,13 @@ namespace BoingUpSkyTower.Tests
             Assert.IsTrue(s.TryRevive(progress));
             Assert.AreEqual(15, progress.Gems);
             Kill(s);
-            Assert.IsFalse(s.CanRevive, "at most two revives per run");
-            Assert.IsFalse(s.TryRevive(progress));
-            Assert.AreEqual(15, progress.Gems);
+            Assert.IsTrue(s.CanRevive, "gem revives are not capped");
+            Assert.AreEqual(10, s.NextReviveCost, "the price stays 10");
+            Assert.IsTrue(s.TryRevive(progress));
+            Assert.AreEqual(5, progress.Gems);
+            Kill(s);
+            Assert.IsFalse(s.TryRevive(progress), "5 gems left, 10 needed");
+            Assert.AreEqual(5, progress.Gems);
         }
 
         [Test]
@@ -130,29 +134,46 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void AfterAnAdReviveTheSecondReviveIsGemsOnlyAtTen()
+        public void AfterAnAdReviveTheNextAdIsSixtySecondsAndGemsStayFive()
         {
             progress.AddGems(12);
             RunSession s = NewDeadSession();
+            Assert.AreEqual("revive_30", s.Revive.NextAdPlacement);
             s.MarkAdWatched();
             Assert.IsTrue(s.TryReviveFree());
             Kill(s);
-            Assert.IsFalse(s.AdReviveOffered, "no ad for the second revive");
+            Assert.IsTrue(s.AdReviveOffered);
+            Assert.AreEqual("revive_60", s.Revive.NextAdPlacement);
+            Assert.AreEqual(5, s.NextReviveCost, "an ad does not make gems dearer");
             s.MarkAdWatched();
-            Assert.IsFalse(s.TryReviveFree(), "a second free revive is refused");
-            Assert.AreEqual(10, s.NextReviveCost);
+            Assert.IsTrue(s.TryReviveFree());
+            Kill(s);
+            Assert.IsFalse(s.AdReviveOffered, "no ads after two in a run");
+            s.MarkAdWatched();
+            Assert.IsFalse(s.TryReviveFree(), "a third free revive is refused");
             Assert.IsTrue(s.TryRevive(progress));
-            Assert.AreEqual(2, progress.Gems);
+            Assert.AreEqual(7, progress.Gems);
         }
 
         [Test]
-        public void AfterAGemReviveThereIsNoAdOption()
+        public void AfterAGemReviveTheAdIsStillOfferedAndGemsCostTen()
         {
             progress.AddGems(5);
             RunSession s = NewDeadSession();
             Assert.IsTrue(s.TryRevive(progress));
             Kill(s);
-            Assert.IsFalse(s.AdReviveOffered);
+            Assert.IsTrue(s.AdReviveOffered);
+            Assert.AreEqual("revive_30", s.Revive.NextAdPlacement, "no ad was watched yet");
+            Assert.AreEqual(10, s.NextReviveCost);
+        }
+
+        [Test]
+        public void AdPlacementIsPassedToTheService()
+        {
+            string got = null;
+            AdService.ShowRewarded("revive_60", g => got = "done");
+            Assert.AreEqual("revive_60", AdService.LastPlacement);
+            Assert.AreEqual("done", got);
         }
 
         [Test]

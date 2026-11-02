@@ -71,24 +71,39 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void ValidationHoldsTheBaselineAsTheFloor()
+        public void ValidationHoldsTenPercentUnderTheBaselineAsTheFloor()
         {
             Assert.Null(new CharacterStats().Validate());
-            Assert.NotNull(new CharacterStats { JumpLaunch = 18 }.Validate());
-            Assert.NotNull(new CharacterStats { MaxSpeed = 8 }.Validate());
-            Assert.NotNull(new CharacterStats { Control = 29 }.Validate());
-            Assert.NotNull(new CharacterStats { WallBoostHundredths = 76 }.Validate());
+            // floors are the baseline minus 10 percent (owner 2026-11-02), rounded to whole numbers
+            Assert.Null(new CharacterStats { JumpLaunch = 17, MaxSpeed = 8, Control = 27, WallBoostHundredths = 69 }.Validate());
+            Assert.NotNull(new CharacterStats { JumpLaunch = 16 }.Validate());
+            Assert.NotNull(new CharacterStats { MaxSpeed = 7 }.Validate());
+            Assert.NotNull(new CharacterStats { Control = 26 }.Validate());
+            Assert.NotNull(new CharacterStats { WallBoostHundredths = 68 }.Validate());
             Assert.NotNull(new CharacterStats { JumpLaunch = 24 }.Validate());
             Assert.NotNull(new CharacterStats { CoinFind = -1 }.Validate());
             Assert.NotNull(new CharacterStats { GemFind = 6 }.Validate());
         }
 
         [Fact]
-        public void AStandingJumpAtTheFloorStillClearsTheLargestNormalGap()
+        public void RunBonusIsZeroOrAMultipleOfTenInRangeAndGemsOneToFive()
         {
+            Assert.Null(new CharacterStats { RunBonusCoins = 50, RunBonusGems = 1 }.Validate());
+            Assert.Null(new CharacterStats { RunBonusCoins = 100, RunBonusGems = 5 }.Validate());
+            Assert.NotNull(new CharacterStats { RunBonusCoins = 40 }.Validate());
+            Assert.NotNull(new CharacterStats { RunBonusCoins = 110 }.Validate());
+            Assert.NotNull(new CharacterStats { RunBonusCoins = 75 }.Validate());
+            Assert.NotNull(new CharacterStats { RunBonusGems = 6 }.Validate());
+            Assert.Equal(80, new CharacterStats { RunBonusCoins = 80, RunBonusGems = 2 }.Sheet(new SimConfig()).RunBonusCoins);
+        }
+
+        [Fact]
+        public void AFullSpeedJumpAtTheFloorStillClearsTheLargestNormalGap()
+        {
+            // the floor is below Momo now, so a standing jump alone may fall short of the 4.2 u gap cap; moving at the floor speed must still clear it
+            var floor = new CharacterStats { JumpLaunch = CharacterStats.JumpLaunchMin, MaxSpeed = CharacterStats.MaxSpeedMin };
             SimConfig cfg = new SimConfig();
-            double standing = CharacterStats.Default.Sheet(cfg).Jump;
-            Assert.True(standing > cfg.NormalGapMax.Raw / 65536.0);
+            Assert.True(floor.Sheet(cfg).FullSpeedJump > cfg.NormalGapMax.Raw / 65536.0);
         }
     }
 }

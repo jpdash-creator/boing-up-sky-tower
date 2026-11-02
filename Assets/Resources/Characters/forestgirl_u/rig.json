@@ -1,0 +1,16 @@
+{
+  "canvas": [
+    1365,
+    1649
+  ],
+  "order": [
+    "legL",
+    "legR",
+    "body",
+    "handL",
+    "handR",
+    "head"
+  ],
+  "ecc": 0.9358090212561476,
+  "id": "forestgirl_u"
+}

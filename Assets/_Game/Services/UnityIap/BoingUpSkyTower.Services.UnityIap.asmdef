@@ -1,0 +1,19 @@
+{
+  "name": "BoingUpSkyTower.Services.UnityIap",
+  "rootNamespace": "BoingUpSkyTower.Monetization",
+  "references": [
+    "BoingUpSkyTower.Services",
+    "Unity.Purchasing"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "BOING_UNITY_IAP"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

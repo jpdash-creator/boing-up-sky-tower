@@ -22,10 +22,13 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The endless-mode symbol: a sideways figure eight.</summary>
         public static Sprite Infinity { get { return infinity != null ? infinity : (infinity = Build(InfinityShape(), "glyph_infinity")); } }
         public static Sprite Check { get { return check != null ? check : (check = Build(TickShape(), "glyph_check")); } }
+        static Sprite plus;
+        /// <summary>A chunky plus: placeholder for the Merge icon until the OpenArt icon replaces it.</summary>
+        public static Sprite Plus { get { return plus != null ? plus : (plus = Build((x, y) => Mathf.Min(Seg(x, y, 0.25f, 0.5f, 0.75f, 0.5f), Seg(x, y, 0.5f, 0.25f, 0.5f, 0.75f)) - 0.11f, "glyph_plus")); } }
 
         public static void Warmup() { WarmupBasic(); }
 
-        static void WarmupBasic() { Sprite a = Left, b = Up, c = Pause, d = Cross, e = Check, f = Restart, g = Ring, h = Infinity; }
+        static void WarmupBasic() { Sprite a = Left, b = Up, c = Pause, d = Cross, e = Check, f = Restart, g = Ring, h = Infinity, i = Plus; }
 
         /// <summary>A shape = distance to the nearest stroke segment, minus the stroke radius (negative inside).</summary>
         delegate float Sdf(float x, float y);

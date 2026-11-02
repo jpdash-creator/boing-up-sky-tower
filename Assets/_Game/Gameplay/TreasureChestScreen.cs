@@ -73,7 +73,7 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- the direct text of a chest ----------------
 
-        static readonly string[] RarityNames = { "Common", "Uncommon", "Rare", "Epic", "Legendary" };
+        static readonly string[] RarityNames = { "Common", "Uncommon", "Rare", "Elite", "Legendary" };
 
         /// <summary>Rarity colours (Common grey, Uncommon green, Rare blue, Epic purple, Legendary gold); darker shades on the gold card so the words stay readable.</summary>
         static Color RarityColor(int rarity, bool onGold)

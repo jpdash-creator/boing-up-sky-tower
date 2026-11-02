@@ -146,6 +146,133 @@ namespace BoingUpSkyTower.Tests
             finally { Object.DestroyImmediate(go); }
         }
 
+        // ---- docs/29 roster, run bonus ----
+
+        [Test]
+        public void EveryRosterHeroIsInRangeAndHasADistinctRunBonus()
+        {
+            var coins = new System.Collections.Generic.HashSet<int>();
+            var gems = new System.Collections.Generic.HashSet<int>();
+            foreach (CharacterSpec c in CharacterDefs.All)
+            {
+                if (c.IsMergeTier) continue;   // tiers add their bonus on top of the Common one (docs/34 2b); they are checked in MergeTests and TierRulesTests
+                Assert.IsNull(c.Stats.Validate(), c.Id);
+                Assert.That(c.Stats.RunBonusCoins, Is.InRange(50, 100), c.Id);
+                Assert.AreEqual(0, c.Stats.RunBonusCoins % 10, c.Id);
+                Assert.That(c.Stats.RunBonusGems, Is.InRange(1, 5), c.Id);
+                Assert.IsTrue(coins.Add(c.Stats.RunBonusCoins), c.Id + " coin bonus is not distinct");
+                Assert.IsTrue(gems.Add(c.Stats.RunBonusGems), c.Id + " gem bonus is not distinct");
+            }
+        }
+
+        [Test]
+        public void MomoKeepsTheBaselineMainStatsAndOthersStayWithinTenPercent()
+        {
+            CharacterStats m = CharacterDefs.Momo.Stats;
+            Assert.AreEqual(19, m.JumpLaunch); Assert.AreEqual(9, m.MaxSpeed); Assert.AreEqual(30, m.Control); Assert.AreEqual(77, m.WallBoostHundredths);
+            foreach (CharacterSpec c in CharacterDefs.All)
+            {
+                if (c.IsMergeTier) continue;   // tiers are boosted on purpose; their effective stats are checked in TierRulesTests
+                // whole-number storage: within 10 percent plus half a step of rounding
+                Assert.LessOrEqual(Mathf.Abs(c.Stats.JumpLaunch - 19), 19 * 0.1f + 0.5f, c.Id);
+                Assert.LessOrEqual(Mathf.Abs(c.Stats.MaxSpeed - 9), 9 * 0.1f + 0.5f + 0.5f, c.Id);   // 8, 9 or 10
+                Assert.LessOrEqual(Mathf.Abs(c.Stats.Control - 30), 30 * 0.1f + 0.5f, c.Id);
+                Assert.LessOrEqual(Mathf.Abs(c.Stats.WallBoostHundredths - 77), 77 * 0.1f + 0.5f, c.Id);
+            }
+        }
+
+        [Test]
+        public void TheSheetCarriesTheRunBonus()
+        {
+            HeroSheetData d = HeroSheetData.For(CharacterCatalog.Momo);
+            Assert.AreEqual(CharacterDefs.Momo.Stats.RunBonusCoins, d.RunBonusCoins);
+            Assert.AreEqual(CharacterDefs.Momo.Stats.RunBonusGems, d.RunBonusGems);
+            var go = new GameObject("Canvas", typeof(RectTransform));
+            try
+            {
+                var parent = (RectTransform)go.transform;
+                parent.sizeDelta = new Vector2(1080f, 1920f);
+                var screen = new HeroSheetScreen(parent, CharacterCatalog.Momo, null, d, false, null, null, null);
+                bool label = false, coin = false, gem = false;
+                foreach (Text t in screen.Root.GetComponentsInChildren<Text>(true))
+                {
+                    if (t.text == "Run bonus") label = true;
+                    if (t.name == "CoinAmount" && t.text == "+" + d.RunBonusCoins) coin = true;
+                    if (t.name == "GemAmount" && t.text == "+" + d.RunBonusGems) gem = true;
+                }
+                Assert.IsTrue(label && coin && gem, "Run bonus row (label, coin and gem amounts)");
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
+        public void TheRunBonusIsPaidWithTheLevelReward()
+        {
+            // the chosen hero's stats come from CharacterDefs.ActiveStats; use a fake with a known bonus
+            var old = CharacterDefs.ActiveStats;
+            try
+            {
+                const string level = "lvl_001_01";
+                CharacterDefs.ActiveStats = () => new CharacterStats();
+                int c0 = GameSession.Progress.Coins, g0 = GameSession.Progress.Gems;
+                GameSession.Progress.ApplyRun(level, new RunOutcome { Completed = true, StarMask = 1 });
+                int plainCoins = GameSession.Progress.Coins - c0, plainGems = GameSession.Progress.Gems - g0;
+
+                GameSession.Reset(); GameSession.InitForTests(new MemorySaveStore());
+                CharacterDefs.ActiveStats = () => new CharacterStats { RunBonusCoins = 70, RunBonusGems = 4 };
+                c0 = GameSession.Progress.Coins; g0 = GameSession.Progress.Gems;
+                GameSession.Progress.ApplyRun(level, new RunOutcome { Completed = true, StarMask = 1 });
+                Assert.AreEqual(plainCoins + 70, GameSession.Progress.Coins - c0);
+                Assert.AreEqual(plainGems + 4, GameSession.Progress.Gems - g0);
+            }
+            finally { CharacterDefs.ActiveStats = old; }
+        }
+
+        // ---- header rows and hero arrows ----
+
+        [Test]
+        public void BackAndCloseSitInARowBelowTheTitleBar()
+        {
+            var go = new GameObject("Canvas", typeof(RectTransform));
+            try
+            {
+                var parent = (RectTransform)go.transform;
+                parent.sizeDelta = new Vector2(1080f, 1920f);
+                var screen = new HeroSheetScreen(parent, CharacterCatalog.Momo, null, HeroSheetData.For(CharacterCatalog.Momo), false, null, null, null);
+                Assert.AreEqual("NavRow", Find(screen.Root, "Back").transform.parent.name);
+                Assert.AreEqual("NavRow", Find(screen.Root, "Close").transform.parent.name);
+                RectTransform header = null, nav = null;
+                foreach (RectTransform rt in screen.Root.GetComponentsInChildren<RectTransform>(true))
+                {
+                    if (rt.name == "Header") header = rt;
+                    if (rt.name == "NavRow") nav = rt;
+                }
+                Assert.Less(nav.anchoredPosition.y, header.anchoredPosition.y - header.sizeDelta.y + 0.5f, "the row starts below the title bar");
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
+        public void TheOnlyOwnedHeroHasBothArrowsDisabled()
+        {
+            bool oldAll = ProgressService.TestAllCharacters;
+            ProgressService.TestAllCharacters = false;
+            var go = new GameObject("Canvas", typeof(RectTransform));
+            try
+            {
+                var parent = (RectTransform)go.transform;
+                parent.sizeDelta = new Vector2(1080f, 1920f);
+                var screen = new HeroSheetScreen(parent, CharacterCatalog.Momo, null, HeroSheetData.For(CharacterCatalog.Momo), false, null, null, null, h => { });
+                Button p = Find(screen.Root, "PrevHero"), n = Find(screen.Root, "NextHero");
+                Assert.IsNotNull(p); Assert.IsNotNull(n);
+                Assert.IsFalse(p.interactable);
+                Assert.IsFalse(n.interactable);
+                Assert.GreaterOrEqual(((RectTransform)p.transform).sizeDelta.x, UiKit.MinTouchPx - 1f);
+                Assert.AreEqual("Previous hero, not available", p.GetComponent<A11yLabel>().Text);
+            }
+            finally { Object.DestroyImmediate(go); ProgressService.TestAllCharacters = oldAll; }
+        }
+
         static Button Find(Transform t, string name)
         {
             foreach (Button b in t.GetComponentsInChildren<Button>(true)) if (b.name == name && b.gameObject.activeInHierarchy) return b;

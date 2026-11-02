@@ -12,20 +12,21 @@ namespace BoingUpSkyTower.Gameplay
     public sealed class RunSession
     {
         /// <summary>Owner decision 2026-10-25 (doc 22, point 9): 5 gems for the first revive of a run, 10 for the second, never more than two. The first can be free through a rewarded ad.</summary>
-        public const int MaxRevives = 2;
-        public const int FirstReviveGems = 5, SecondReviveGems = 10;
-        public static int ReviveCostFor(int revivesUsed) { return revivesUsed <= 0 ? FirstReviveGems : SecondReviveGems; }
-        public int NextReviveCost { get { return ReviveCostFor(State.RevivesUsed); } }
-        /// <summary>True once the free ad revive was taken in this run (no second ad revive).</summary>
-        public bool AdReviveUsed { get; private set; }
+        public const int FirstReviveGems = RevivePolicy.FirstGemCost, SecondReviveGems = RevivePolicy.LaterGemCost;
+        /// <summary>Revive schedule of this run (owner 2026-11-02, new per run): ads 30 s then 60 s then none; gems 5 then 10 and stays 10. See <see cref="RevivePolicy"/>.</summary>
+        public readonly RevivePolicy Revive = new RevivePolicy();
+        public static int ReviveCostFor(int gemRevivesUsed) { return RevivePolicy.GemCostFor(gemRevivesUsed); }
+        public int NextReviveCost { get { return Revive.NextGemCost; } }
+        /// <summary>True once an ad revive was taken in this run.</summary>
+        public bool AdReviveUsed { get { return Revive.AdsUsed > 0; } }
         /// <summary>An ad was watched to the end but the revive did not happen yet; the next try revives for free without another ad.</summary>
         public bool AdRewardPending { get; private set; }
-        /// <summary>The ad option is offered only with the first revive and only once per run.</summary>
-        public bool AdReviveOffered { get { return CanRevive && State.RevivesUsed == 0 && !AdReviveUsed; } }
+        /// <summary>The ad option is offered while the run has an ad left (2 per run).</summary>
+        public bool AdReviveOffered { get { return CanRevive && Revive.AdAvailable; } }
         /// <summary>Gems still missing for the next gem revive (0 when affordable).</summary>
         public int ReviveShortfall(ProgressService progress) { return progress == null ? NextReviveCost : System.Math.Max(0, NextReviveCost - progress.Gems); }
         /// <summary>Endless runs have no revive: the result (best floor, coins) is saved the moment the player falls (CUX-8), so a revive would double pay.</summary>
-        public bool CanRevive { get { return !IsEndless && !GoalLost && State.RevivesUsed < MaxRevives; } }
+        public bool CanRevive { get { return !IsEndless && !GoalLost; } }
 
         public readonly SimConfig Cfg;
         /// <summary>The campaign level, or null in endless mode.</summary>
@@ -134,6 +135,7 @@ namespace BoingUpSkyTower.Gameplay
             Sim.Revive(ref State);
             // The wallet is charged only after the revive happened. The run's own gems stay in the state (a revive keeps them).
             if (!progress.TrySpendGems(cost)) { State.RevivesUsed--; return false; }
+            Revive.RecordGem();
             return true;
         }
 
@@ -149,7 +151,7 @@ namespace BoingUpSkyTower.Gameplay
             if (!AdRewardPending || !State.Dead || GoalReached || !AdReviveOffered) return false;
             Sim.Revive(ref State);
             AdRewardPending = false;
-            AdReviveUsed = true;
+            Revive.RecordAd();
             return true;
         }
 

@@ -194,9 +194,11 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Margin between the roster / the (i) button and the screen (safe area) edge; at least 16.</summary>
         public const float SideMargin = 28f;
         /// <summary>Character height on the stage.</summary>
-        public const float DollH = 420f;
+        public const float DollH = 336f;   // was 420: 20 percent smaller (owner 2026-11-02)
         /// <summary>The (i) button right of the hero on the stage (at least 48 dp).</summary>
         public const float InfoSize = 132f;
+        /// <summary>The Merge button above the (i) button: the same size.</summary>
+        public const float MergeSize = InfoSize;
 
         /// <summary>What the screen needs from the menu: the land stage it stands on.</summary>
         public sealed class Host
@@ -204,6 +206,8 @@ namespace BoingUpSkyTower.Gameplay
             public Stage Stage;
             /// <summary>The (i) button opens the shown hero's sheet (docs/21); the sheet has the "Use this hero" button. Tapping a tile only selects it.</summary>
             public Action<CharacterDef> OpenHero;
+            /// <summary>The Merge icon above the (i) button opens the Merge screen. No Merge button when null.</summary>
+            public Action OpenMerge;
         }
 
         readonly RectTransform screen;
@@ -267,15 +271,58 @@ namespace BoingUpSkyTower.Gameplay
             for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
             {
                 string n = host.Stage.Root.GetChild(i).name;
-                if (n == "Doll" || n == "ListPanel") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
+                if (n == "Doll" || n == "ListPanel" || n == "HeroNameLabel") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
             }
         }
 
         /// <summary>The chosen character on the dirt oval.</summary>
         void BuildStage()
         {
-            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", Mathf.Round(DollH * host.Stage.Scale), CharacterCatalog.Selected, art);
+            const int nameFont = 44;
+            float nameH = Mathf.Ceil(Mathf.Max(nameFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.3f);
+            // The name sits just above the head but never up under the wallet row (notch aspects and big text push the row down): the hero gets smaller instead.
+            float nameBottomMin = UiKit.TopInsetRef() + 126f + Mathf.Max(0f, UiKit.TextScale - 1f) * 220f + nameH;
+            float dollHeight = Mathf.Min(Mathf.Round(DollH * host.Stage.Scale), host.Stage.FeetY - nameBottomMin - 10f * host.Stage.Scale);
+            dollHeight = Mathf.Max(dollHeight, 200f);
+            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", dollHeight, CharacterCatalog.Selected, art);
             host.Stage.Stand(doll);
+
+            // The hero's name in black italics on the grass, just above the head (the grass is light green near the top: far above 4.5:1 for black, so no backing plate).
+            // Box height follows the real text size (font x text scale x 1.3) so it holds at 130 percent.
+            Text name = UiKit.AddText(host.Stage.Root, "HeroNameLabel", CharacterCatalog.Selected.Name, nameFont, Color.black, TextAnchor.MiddleCenter, true);
+            name.fontStyle = FontStyle.Italic;
+            name.horizontalOverflow = HorizontalWrapMode.Overflow;
+            Outline nameOutline = name.GetComponent<Outline>();
+            if (nameOutline != null) nameOutline.enabled = false;
+            RectTransform nrt = name.rectTransform;
+            nrt.anchorMin = nrt.anchorMax = new Vector2(0.5f, 1f);
+            nrt.pivot = new Vector2(0.5f, 0f);
+            nrt.sizeDelta = new Vector2(600f, nameH);
+            float nameBottomDist = host.Stage.FeetY - doll.sizeDelta.y - 10f * host.Stage.Scale;   // how far below the screen top the name's bottom edge sits
+            nameBottomDist = Mathf.Max(nameBottomDist, UiKit.TopInsetRef() + 126f + Mathf.Max(0f, UiKit.TextScale - 1f) * 220f + nameH);   // never up under the wallet row (notch aspects push the row down)
+            nrt.anchoredPosition = new Vector2(0f, -nameBottomDist);
+
+            // Merge icon above the (i) button (same size, same column). The picture is a placeholder plus glyph named "MergeIcon" so the OpenArt icon can be swapped in.
+            float infoY = -(host.Stage.GroundBottom - UiKit.TopInsetRef() - InfoSize - 28f);
+            if (host.OpenMerge != null)
+            {
+                Button merge = UiKit.AddButton(body, "MergeButton", "", MergeArt.Icon, Color.white, new Vector2(MergeSize, MergeSize), () => host.OpenMerge());   // the painted OpenArt icon is the whole button (it has its own plate)
+                merge.GetComponent<Image>().preserveAspect = true;
+                var mergeLabel = merge.GetComponent<A11yLabel>();
+                if (mergeLabel != null) mergeLabel.Text = "Merge";
+                merge.transform.name = "MergeButton";
+                UiKit.Place((RectTransform)merge.transform, new Vector2(1f, 1f), new Vector2(-SideMargin, infoY + InfoSize + 16f), new Vector2(MergeSize, MergeSize));
+            }
+
+            // system test builds only: add two test copies of the shown hero (feeds the merge screen)
+            if (GameSettings.SystemTest)
+            {
+                float bh = Mathf.Ceil(UiKit.MinTouchPx);   // 200 wide so it stays left of the dirt oval on the narrowest aspect; the label wraps to two lines
+                Button add = UiKit.AddButton(body, "DebugAddCopies", "Add 2 copies", ToyKit.Button(0), Color.white, new Vector2(200f, bh),
+                    () => { CharacterCatalog.DebugAddCopies(CharacterCatalog.Selected, 2); Build(); }, 36);
+                add.GetComponent<A11yLabel>().Text = "Add 2 test copies of the shown hero";
+                UiKit.Place((RectTransform)add.transform, new Vector2(0f, 1f), new Vector2(SideMargin, infoY - InfoSize + bh), new Vector2(200f, bh));
+            }
 
             // (i) opens the shown hero's sheet (docs/21). It sits in the bottom right corner of the stage, clear of the hero and the dirt oval
             // (the oval is 600 px wide centred, the button is in the outer 24 to 156 px of the screen edge), never in the middle of the stage.
@@ -284,8 +331,7 @@ namespace BoingUpSkyTower.Gameplay
                 Button info = UiKit.AddButton(body, "HeroInfo", "i", ToyKit.Button(2), Color.white, new Vector2(InfoSize, InfoSize), () => host.OpenHero(CharacterCatalog.Selected), 64);
                 info.GetComponent<A11yLabel>().Text = "Hero details";
                 // body top = screen top + safe inset, so the stage coordinates are shifted by the inset
-                float y = -(host.Stage.GroundBottom - UiKit.TopInsetRef() - InfoSize - 28f);
-                UiKit.Place((RectTransform)info.transform, new Vector2(1f, 1f), new Vector2(-SideMargin, y), new Vector2(InfoSize, InfoSize));
+                UiKit.Place((RectTransform)info.transform, new Vector2(1f, 1f), new Vector2(-SideMargin, infoY), new Vector2(InfoSize, InfoSize));
             }
         }
 

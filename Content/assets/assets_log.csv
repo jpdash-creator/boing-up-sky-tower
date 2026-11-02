@@ -227,3 +227,9 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-02,T74,region3_platforms_sheetB,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,fj4uPMEXdgdg9UZNRWWX,done,30,approvals/T74-region3-platforms.md,
 2026-11-02,T74,region3_platforms_sheetC,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,X9kzaa9UgThAgaSm91UU,done,30,approvals/T74-region3-platforms.md,
 2026-11-02,T74,region3_picks,,,,,,done,0,approvals/T74-region3-platforms.md,owner picked A2 (wave+sandcastle+clam) B1 raft B2 turtle C2 (kelp+puffer); 90 credits used balance 4268
+2026-11-02,T75,uncommon_momo,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=char_momo latest,none,9zdtOEH3bIBeoqVk5cX1,done,30,chat prompt shown to owner,owner approved 210 credits (revised armor wording approved for the 5 heroes)
+2026-11-02,T75,uncommon_capi,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=forestgirl latest,none,kewFDGMBlWYaAhVBUsHx,done,30,chat prompt shown to owner,
+2026-11-02,T75,uncommon_otto,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=beachotter latest,none,iV0KeD6yhMHiDVKE70qW,done,30,chat prompt shown to owner,
+2026-11-02,T75,uncommon_bonbon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=candygirl latest,none,OZQ73IZ7QQLhAEe6DZQg,done,30,chat prompt shown to owner,
+2026-11-02,T75,uncommon_bao,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 refs=monk latest,none,u7CKigv31CDMAZ1YRi1k,done,30,chat prompt shown to owner,
+2026-11-02,T75,uncommon_picks,,,,,,done,0,chat,owner picked Momo 2 / Capi 1 / Otto 1 / Bonbon 1 / Bao 1 (Uncommon), merge icon 1 (discs to be replaced by silhouettes in code), merge background 1; icon+bg calls 4DIL07tj8RME7JxrmnR1 and WZNflibFDVvxZtdnuhOe 30 credits each; T75 total 210 credits

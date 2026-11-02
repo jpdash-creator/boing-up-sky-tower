@@ -45,12 +45,14 @@ namespace BoingUpSkyTower.Tests
         public void TheRosterHasMomoAndTheRegionHeroes()
         {
             var all = CharacterCatalog.All;
-            Assert.AreEqual(5, all.Length);
+            Assert.AreEqual(10, all.Length, "5 Common heroes + their 5 Uncommon merge tiers (docs/34)");
             Assert.AreEqual("momo", all[0].Id);
             Assert.AreEqual("forestgirl", all[1].Id);
             Assert.AreEqual("beachotter", all[2].Id);
             Assert.AreEqual("candygirl", all[3].Id);
             Assert.AreEqual("monk", all[4].Id);
+            Assert.AreEqual("momo_u", all[5].Id);
+            Assert.AreEqual("monk_u", all[9].Id);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get("nobody"), "an unknown id falls back to Momo");
         }
 

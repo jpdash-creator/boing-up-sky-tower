@@ -44,7 +44,9 @@ namespace BoingUpSkyTower.Gameplay
             float h = UiKit.CanvasSizeRef().y;
             float gb = Mathf.Clamp(Mathf.Round(h * 0.44f), 700f, 1000f);
             float k = gb / 760f;
-            return new Stage { Scale = k, BackdropH = Mathf.Round(470f * k), GroundBottom = gb, OvalY = Mathf.Round(660f * k), OvalW = Mathf.Round(600f * k), OvalH = Mathf.Round(160f * k) };
+            // The hero is 20 percent smaller (owner 2026-11-02) and its name stands on the grass above it, so the hills end higher (210) and the oval shrinks;
+            // the roster starts 18 reference px higher, right under the oval.
+            return new Stage { Scale = k, BackdropH = Mathf.Round(210f * k), GroundBottom = Mathf.Round(742f * k), OvalY = Mathf.Round(660f * k), OvalW = Mathf.Round(480f * k), OvalH = Mathf.Round(128f * k) };
         }
 
         static Sprite grass, oval, edge;

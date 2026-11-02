@@ -45,6 +45,37 @@ namespace BoingUpSkyTower.Economy
     }
 
     /// <summary>
+    /// Dollar value of a bundle's contents at the shop's own price list (the same rates as the subscription "worth" text: one gem is
+    /// <see cref="SubscriptionCatalog.UsdPerGem"/> dollars, 1,000 coins are 50 gems, power-ups at their gem price). A character inside a bundle is
+    /// valued at <see cref="CharacterUsd"/>. Pure; the later bundle generator (pool of 1,000) uses it too.
+    /// </summary>
+    public static class BundleWorth
+    {
+        /// <summary>Dollar value of one character inside a bundle (none are generated yet).</summary>
+        public const double CharacterUsd = 4.99;
+
+        public static double Dollars(BundleDef bundle) { return Dollars(bundle, null); }
+
+        /// <param name="powerUps">Price list for the power-ups; the built-in catalog when null.</param>
+        public static double Dollars(BundleDef bundle, PowerUpCatalog powerUps)
+        {
+            if (bundle == null) return 0.0;
+            double v = bundle.ValueGems(powerUps ?? Defs()) * SubscriptionCatalog.UsdPerGem;
+            if (!string.IsNullOrEmpty(bundle.CharacterId)) v += CharacterUsd;
+            return v;
+        }
+
+        /// <summary>"Worth $3.30" (two decimals, invariant culture).</summary>
+        public static string Text(BundleDef bundle)
+        {
+            return "Worth $" + Dollars(bundle).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        static PowerUpCatalog builtIn;
+        static PowerUpCatalog Defs() { return builtIn ?? (builtIn = PowerUpCatalog.BuiltIn()); }
+    }
+
+    /// <summary>
     /// The 1,000 bundles. The game loads Resources/Content/bundles.json (an identical copy of Content/economy/bundles.json that
     /// gen_bundles.py writes next to the source file); a missing or broken file gives an EMPTY catalog and the Bundles page shows a
     /// notice instead of crashing (CUX-10). Entries with an unknown power-up, a bad price or a repeated id are skipped.

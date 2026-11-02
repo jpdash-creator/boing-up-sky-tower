@@ -1,0 +1,17 @@
+{
+  "canvas": [
+    1365,
+    1649
+  ],
+  "order": [
+    "back",
+    "legL",
+    "legR",
+    "body",
+    "handL",
+    "handR",
+    "head"
+  ],
+  "ecc": 0.9472905029571232,
+  "id": "momo_u"
+}

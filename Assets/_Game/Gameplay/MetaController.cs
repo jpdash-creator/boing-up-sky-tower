@@ -600,13 +600,29 @@ namespace BoingUpSkyTower.Gameplay
         {
             NewScreen("Characters");
             Stage stage = StageScene.Build(screenRoot, art, progress, StageScene.CharacterLayout());
-            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters) });
+            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters), OpenMerge = ShowMerge });
             characters.Build();
             AddBack("Back", ShowMenu);
             AddTabBar(ToyKit.TabHeroes);
             coinText = characters.CoinText;
             gemText = characters.GemText;
             RefreshWallet();
+        }
+
+        // ---------------- character merge (docs/34) ----------------
+
+        MergeScreen merge;
+
+        public MergeScreen CurrentMerge { get { return CurrentScreen == MergeScreen.ScreenName ? merge : null; } }
+
+        public void ShowMerge() { ShowMerge(null); }
+
+        /// <summary>Merge: 3 copies of a hero become 1 of its next tier. Opened from the Merge icon on the Heroes screen; Back returns to the Heroes screen.</summary>
+        public void ShowMerge(string preselectId)
+        {
+            NewScreen(MergeScreen.ScreenName);
+            merge = new MergeScreen(screen, screenRoot, progress, art, new MergeScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup, Back = ShowCharacters });
+            merge.Build(preselectId);
         }
 
         // ---------------- hero sheet ----------------
@@ -627,7 +643,8 @@ namespace BoingUpSkyTower.Gameplay
             SkyBackground();
             CharacterDef pick = who;
             heroSheet = new HeroSheetScreen(screen, who, art, dataOverride ?? HeroSheetData.For(who), CharacterCatalog.Selected == who, goBack, ShowMenu,
-                () => { CharacterCatalog.Selected = pick; ShowHeroSheet(pick, goBack, dataOverride); });
+                () => { CharacterCatalog.Selected = pick; ShowHeroSheet(pick, goBack, dataOverride); },
+                other => ShowHeroSheet(other, goBack));   // the green arrows step to the previous / next owned hero
         }
 
         // ---------------- world map ----------------
@@ -939,7 +956,7 @@ namespace BoingUpSkyTower.Gameplay
                     if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;   // that page is not painted yet
                     PaintedMarker m = painted.pages[pg].markers[mk];
                     float prise = (pg * painted.height + m.y * painted.height) / total;
-                    AddRegionPin(region, new Vector2(m.x, prise), 1, 0f, 0f, TagKit.MapTextMaxWidth, m.tagSide == "below" ? 1 : (m.tagSide == "left" ? 3 : 0));
+                    AddRegionPin(region, new Vector2(m.x, prise), 1, 0f, 0f, TagKit.MapTextMaxWidth, TagSideMode(m.tagSide));
                     if (i == current) currentRise = prise;
                     continue;
                 }
@@ -1081,6 +1098,19 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Where one region's name tag sits: Mode 1 below, 2 above, 4 right, 3 left of the pin, shifted by Dx/Dy map units, text wrapped at MaxW.</summary>
         struct TagSpot { public int Mode; public float Dx, Dy, MaxW, Score; }
 
+        /// <summary>painted_pages.json "tagSide" to a tag mode: below 1, above 2, left 3, right 4, anything else 0 (no preference).</summary>
+        public static int TagSideMode(string side)
+        {
+            switch (side)
+            {
+                case "below": return 1;
+                case "above": return 2;
+                case "left": return 3;
+                case "right": return 4;
+                default: return 0;
+            }
+        }
+
         static float TagOverlap(Rect a, Rect b, bool hard)
         {
             float ox = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin);
@@ -1176,6 +1206,11 @@ namespace BoingUpSkyTower.Gameplay
                                         score += TagOverlap(tag, new Rect(cj.x + t2.x - gap, cj.y + t2.y - gap, t2.width + 2f * gap, t2.height + 2f * gap), true);
                                     }
                                 }
+                                // keep-outs at the bottom of the lowest page (map scrolled to the bottom: map units = canvas units): tab bar strip, Rewards button, bundle timer button
+                                const float notchLift = 48f;   // the notch/gesture inset lifts the bottom controls by up to about this much
+                                score += TagOverlap(tag, new Rect(0f, 0f, pw * s, ToyKit.TabBarButtonTop + 8f + notchLift), true);
+                                score += TagOverlap(tag, new Rect(pw * s * 0.97f - 18f - ToyKit.RewardsButtonSize - 8f, ToyKit.RewardsButtonBottom - 8f + notchLift, ToyKit.RewardsButtonSize + 16f + 0.03f * pw * s, ToyKit.RewardsButtonSize + 16f), true);
+                                score += TagOverlap(tag, new Rect(8f, ToyKit.TabBarReserve + notchLift, 236f + 0.03f * pw * s, 236f), true);
                                 for (int pj = 1; pj < painted.pages.Length; pj++)
                                     score += TagOverlap(tag, new Rect(0f, pj * ph * s - cloudHalf, pw * s, cloudHalf * 2f), false);
                             }
