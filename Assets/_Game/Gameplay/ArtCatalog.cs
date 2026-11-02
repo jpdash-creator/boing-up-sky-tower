@@ -51,7 +51,7 @@ namespace BoingUpSkyTower.Gameplay
         public Sprite[] Signature = new Sprite[0];
         /// <summary>
         /// Painted sprite per special platform kind, index = (int)PlatformKind (doc 24: the region 1 width sheets from OpenArt fill it later).
-        /// Missing or null entries fall back to the tinted normal platform with the code-drawn overlays of SpecialPlatformFx.
+        /// Missing or null entries fall back to the tinted normal platform (no drawn cues, doc 24).
         /// </summary>
         public Sprite[] KindSprites = new Sprite[0];
         /// <summary>Every painted width of every special kind (Assets/Art/Regions/.../tiles/&lt;kind&gt;_widths, filled by ArtCatalogBuilder). Empty = no art yet.</summary>
@@ -59,6 +59,9 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Seesaw Leaf pivot knob (its own sprite: the leaf tilts, the knob stays) and the distance from the walking surface to its top, in baked pixels.</summary>
         public Sprite SeesawKnob;
         public float SeesawKnobTopDropPx;
+        /// <summary>Sprout Lift stem (own painted sprite, centred under the platform) and the distance from the walking surface to its top, in baked pixels.</summary>
+        public Sprite SproutStem;
+        public float SproutStemTopDropPx;
 
         /// <summary>Index into KindPieces of the painted piece for this kind, thorny side and width (nearest width within 1 unit), or -1 when there is none.</summary>
         public int KindPieceIndex(BoingUpSkyTower.Simulation.PlatformKind kind, int dir, float width)

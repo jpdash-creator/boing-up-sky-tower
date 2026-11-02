@@ -204,6 +204,13 @@ class Device:
             tree = dict(self.ui_tree)
         w = tree.get("w", 1080) or 1080
         need = 48 * (w / 411.0) - 2     # a typical phone is about 411 dp wide
+        try:                            # real density: tablet AVDs are 320 dpi, so 48 dp is 96 px, not 48 * w / 411
+            out = self.adb("shell", "wm", "density", check=False)
+            m = re.findall(r"density: (\d+)", out)
+            if m:
+                need = 48 * int(m[-1]) / 160.0 - 2   # the last number is the override if present
+        except Exception:
+            pass
         small = [i for i in tree.get("items", []) if i["k"] == "button" and (i["w"] < need or i["h"] < need)]
         if small:
             raise TestFailure("touch targets below 48 dp: " + json.dumps(small[:3]))

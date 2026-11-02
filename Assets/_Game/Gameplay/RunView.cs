@@ -41,6 +41,7 @@ namespace BoingUpSkyTower.Gameplay
         SpriteRenderer[] platformSr;
         Transform[] platformTf;
         float[] platformBaseScaleX;
+        int[] platformPose;   // Spore Pop painted pose in use (-1 calm, 1 swollen, 2 flat; 0 = not a painted spore pop)
         float[] platformOffX, platformOffY;   // sprite offset that puts the island's walking surface on the platform line
         SpriteRenderer[] pickupSr;
         bool[] pickupSeen;
@@ -64,7 +65,6 @@ namespace BoingUpSkyTower.Gameplay
         int actLo, actHi;             // active platform views are [actLo, actHi)
         int hazLo, hazHi;             // active gong views are [hazLo, hazHi)
         readonly Stack<SpriteRenderer> platPool = new Stack<SpriteRenderer>();
-        readonly Stack<SpriteRenderer> cuePool = new Stack<SpriteRenderer>();
         readonly Stack<SpriteRenderer> gongPool = new Stack<SpriteRenderer>();
         Sprite gongSprite;
         static Sprite hazardSpikes;
@@ -73,6 +73,8 @@ namespace BoingUpSkyTower.Gameplay
         const float WindowBelow = 3f, WindowAbove = 8f;
 
         float camHalfH, camHalfW, camY, designHalfH;
+        /// <summary>World height of the HUD strips (RunLayout): bottomWorld is always 0 (the danger edge is the screen bottom); topWorld is the room reserved for the HUD rows.</summary>
+        float bottomWorld, topWorld;
         float prevX, prevY, curX, curY, prevKill, curKill;
         bool wasGrounded = true;
         float prevVy;           // audio cues are derived from state changes here; the simulation knows nothing about sound
@@ -80,10 +82,8 @@ namespace BoingUpSkyTower.Gameplay
         int prevHits;
         float squash;   // 0..1 landing squash timer
         bool reduced;   // reduced-motion setting, read once per run
-        Sprite[] patterns;
-        SpriteRenderer[] cueSr;
         SpriteRenderer dangerBand;
-        SpecialPlatformFx specialFx;   // placeholder overlays of the region 1 special platforms (doc 24)
+        SpecialPlatformFx specialFx;   // motion of the region 1 special platforms (squash, tilt, mirror; no drawn cues, doc 24)
 
         /// <summary>Tallest supported aspect (9:21 and a margin). Backgrounds and walls are sized for it so any phone is covered.</summary>
         public const float TallestAspect = 0.4f;
@@ -215,7 +215,7 @@ namespace BoingUpSkyTower.Gameplay
             cam = camera;
             region = art != null ? art.ForRegion(s.Region.Index) : null;
             white = MakeWhite();
-            specialFx = new SpecialPlatformFx((n, sp, o) => NewSprite(n, sp, o), white, reduced);
+            specialFx = new SpecialPlatformFx((n, sp, o) => NewSprite(n, sp, o), reduced);
 
             worldRoot = new GameObject("RunWorld").transform;
             worldRoot.SetParent(transform, false);
@@ -242,7 +242,7 @@ namespace BoingUpSkyTower.Gameplay
             curX = prevX = s.State.X.F();
             curY = prevY = s.State.Y.F();
             prevKill = curKill = s.State.KillY.F();
-            camY = curKill + camHalfH;
+            camY = curKill + camHalfH - bottomWorld;
             ApplyCamera();
             if (endless) UpdateEndlessWindow();
         }
@@ -437,11 +437,29 @@ namespace BoingUpSkyTower.Gameplay
             return best;
         }
 
-        /// <summary>Index into region.KindPieces of the painted piece of a region 1 special platform (kind, thorny side Platform.Dir, nearest baked width), or -1 (no art yet: tinted normal platform plus code overlays).</summary>
+        /// <summary>Index into region.KindPieces of the painted piece of a region 1 special platform (kind, thorny side Platform.Dir, nearest baked width), or -1 (no art yet: tinted normal platform, no drawn cues).</summary>
         int KindPieceIndexFor(Platform p, float width)
         {
             if (region == null || !SpecialPlatformFx.Handles(p.Kind)) return -1;
-            return region.KindPieceIndex(p.Kind, p.Dir < 0 ? -1 : 1, width);
+            return region.KindPieceIndex(p.Kind, PosedKind(p.Kind) ? -1 : (p.Dir < 0 ? -1 : 1), width);   // posed kinds start on pose -1; the pose is swapped per frame (see PoseOf)
+        }
+
+        /// <summary>Kinds whose painted pieces are poses chosen by the Sim state (piece Dir = pose): Spore Pop (calm -1, swollen 1, flat 2), Clam Shell Pad (open -1, shut 1), Pufferfish Pad (calm -1, swelling 1, puffed 2).</summary>
+        static bool PosedKind(PlatformKind k)
+        {
+            return k == PlatformKind.SporePop || k == PlatformKind.ClamShellPad || k == PlatformKind.PufferfishPad;
+        }
+
+        /// <summary>Pose number of a posed platform at a tick (the Sim clocks: Spore Pop landing clock, Clam (tick + Phase) % 144 &lt; 72 = open, Pufferfish (tick + Phase) % 180: 0..95 calm, 96..131 swelling, 132..179 puffed).</summary>
+        int PoseOf(Platform p, int tick, in SimState s)
+        {
+            switch (p.Kind)
+            {
+                case PlatformKind.SporePop: { int ph = session.Sim.SporePopPhase(p.Id, tick, s.CrumbleTick); return ph == 0 ? -1 : (ph == 1 ? 1 : 2); }
+                case PlatformKind.ClamShellPad: return session.Sim.ClamOpen(p.Id, tick) ? -1 : 1;
+                case PlatformKind.PufferfishPad: { int ph = session.Sim.PufferPhase(p.Id, tick); return ph == 0 ? -1 : (ph == 1 ? 1 : 2); }
+                default: return 0;
+            }
         }
 
         PlatformMetric PlatformMetricFor(Platform p)
@@ -474,35 +492,6 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>Procedural 32 x 8 tile used as a non-colour cue: dots (sticky), stripes (slippery), dashes (vanishing), hazard stripes (danger).</summary>
-        static Sprite MakePattern(int kind)
-        {
-            const int w = 32, h = 8;
-            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            tex.wrapMode = TextureWrapMode.Repeat;
-            tex.filterMode = FilterMode.Point;
-            var px = new Color32[w * h];
-            for (int y = 0; y < h; y++)
-            {
-                for (int x = 0; x < w; x++)
-                {
-                    bool on;
-                    switch (kind)
-                    {
-                        case 0: on = ((x % 16) - 8) * ((x % 16) - 8) + (y - 4) * (y - 4) <= 6; break;           // dots
-                        case 1: on = ((x + y) % 8) < 3; break;                                                    // diagonal stripes
-                        case 2: on = (x % 16) < 9 && y >= 2 && y <= 5; break;                                     // dashes
-                        case 4: on = Mathf.Abs((x % 16) - 8) == 7 - y || Mathf.Abs((x % 16) - 8) == 6 - y; break;   // up chevrons (bounce)
-                        default: on = ((x + y) % 16) < 8; break;                                                  // hazard stripes
-                    }
-                    px[y * w + x] = on ? new Color32(20, 16, 40, 230) : new Color32(0, 0, 0, 0);
-                }
-            }
-            tex.SetPixels32(px);
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 32f, 0, SpriteMeshType.FullRect);
-        }
-
         static Color PlatformTint(PlatformKind kind)
         {
             switch (kind)
@@ -532,17 +521,17 @@ namespace BoingUpSkyTower.Gameplay
                 platformSr = new SpriteRenderer[n];
                 platformTf = new Transform[n];
                 platformBaseScaleX = new float[n];
+                platformPose = new int[n];
                 platformOffX = new float[n];
                 platformOffY = new float[n];
-                cueSr = new SpriteRenderer[n];
                 return;
             }
             System.Array.Resize(ref platformSr, n);
             System.Array.Resize(ref platformTf, n);
             System.Array.Resize(ref platformBaseScaleX, n);
+            System.Array.Resize(ref platformPose, n);
             System.Array.Resize(ref platformOffX, n);
             System.Array.Resize(ref platformOffY, n);
-            System.Array.Resize(ref cueSr, n);
         }
 
         /// <summary>Creates (or, with a pooled renderer, re-configures) the view of platform i.</summary>
@@ -629,28 +618,31 @@ namespace BoingUpSkyTower.Gameplay
             sr.transform.rotation = Quaternion.identity;   // a pooled seesaw view may still be tilted
             platformSr[i] = sr;
             platformTf[i] = sr.transform;
+            platformPose[i] = kp >= 0 && PosedKind(p.Kind) ? -1 : 0;
             if (SpecialPlatformFx.Handles(p.Kind))
             {
-                if (region != null) specialFx.SetKnob(region.SeesawKnob, region.SeesawKnobTopDropPx);
+                if (region != null) { specialFx.SetKnob(region.SeesawKnob, region.SeesawKnobTopDropPx); specialFx.SetStem(region.SproutStem, region.SproutStemTopDropPx); }
                 specialFx.Attach(i, p, kp >= 0);
             }
             else specialFx.Release(i);
 
-            // Non-colour cue (CUX-6): a pattern strip on the walking surface.
-            int cue = p.Kind == PlatformKind.Sticky ? 0 : p.Kind == PlatformKind.Slippery ? 1 : p.Kind == PlatformKind.Vanishing ? 2 : ((p.Kind == PlatformKind.Bounce || p.Kind == PlatformKind.BounceCap) && piece < 0 && wp < 0) ? 4 : -1;
-            if (cue >= 0)
-            {
-                if (patterns == null) patterns = new Sprite[5];
-                if (patterns[cue] == null) patterns[cue] = MakePattern(cue);
-                SpriteRenderer c = cuePool.Count > 0 ? cuePool.Pop() : NewSprite("cue" + p.Id, patterns[cue], 1);
-                c.gameObject.SetActive(true);
-                c.sprite = patterns[cue];
-                c.drawMode = SpriteDrawMode.Tiled;
-                c.size = new Vector2(width * 0.8f, 0.25f);
-                c.color = Color.white;
-                cueSr[i] = c;
-            }
-            else cueSr[i] = null;
+        }
+
+        /// <summary>Swaps the painted piece of a posed platform to another pose (same width, same uniform scale rule as SetupPlatform); keeps the current one when the pose has no piece.</summary>
+        void SwapPosePiece(int i, Platform p, SpriteRenderer sr, int pose)
+        {
+            platformPose[i] = pose;
+            if (region == null) return;
+            float width = p.Width.F();
+            int kp = region.KindPieceIndex(p.Kind, pose, width);
+            if (kp < 0) return;
+            KindPiece kpc = region.KindPieces[kp];
+            float ppu = kpc.Sprite.pixelsPerUnit;
+            float sc = width / ((kpc.Metric.BodyRight - kpc.Metric.BodyLeft) / ppu);
+            sr.sprite = kpc.Sprite;
+            sr.transform.localScale = new Vector3(sc, sc, 1f);
+            platformBaseScaleX[i] = sc;
+            platformOffY[i] = -(kpc.Metric.H * 0.5f - kpc.Metric.SurfaceY) / ppu * sc;
         }
 
         void ReleasePlatform(int i)
@@ -661,12 +653,6 @@ namespace BoingUpSkyTower.Gameplay
             platformSr[i] = null;
             platformTf[i] = null;
             specialFx.Release(i);
-            if (cueSr[i] != null)
-            {
-                cueSr[i].gameObject.SetActive(false);
-                cuePool.Push(cueSr[i]);
-                cueSr[i] = null;
-            }
         }
 
         /// <summary>First index in a Y-sorted platform array whose Y is at least y.</summary>
@@ -1187,11 +1173,22 @@ namespace BoingUpSkyTower.Gameplay
                 float y = p.Y.F();
                 if (SpecialPlatformFx.Handles(p.Kind))
                 {
-                    // Ladybug path (with its boost) and Bee Hive bob come from the Sim; the overlay layer animates the rest (wind arrows, countdown, tilt ...).
+                    // Ladybug path (with its boost) and Bee Hive bob come from the Sim; the motion layer animates the rest (Snap Daisy squash, Seesaw tilt, Ladybug mirror).
                     if (p.Kind == PlatformKind.Ladybug) x = session.Sim.PlatformXAt(in s, p.Id).F();
                     else if (p.Kind == PlatformKind.HiveLift) y = session.Sim.PlatformY(p.Id, tick).F();
+                    else if (p.Kind == PlatformKind.OrbitCap) { x = session.Sim.PlatformX(p.Id, tick).F(); y = session.Sim.PlatformY(p.Id, tick).F(); }   // region 2: the lap comes from the Sim
+                    else if (p.Kind == PlatformKind.SproutLift) y = session.Sim.PlatformY(p.Id, tick, s.CrumbleTick).F();                                  // rises while stood on, sinks when empty
+                    else if (p.Kind == PlatformKind.SquishCap) y = p.Y.F() - session.Sim.SquishSink(in s, p.Id).F();                                       // sinks under the player
+                    else if (p.Kind == PlatformKind.TurtleShuttle) x = session.Sim.PlatformX(p.Id, tick).F();                                              // region 3: stop-and-go glide from the Sim
+                    else if (p.Kind == PlatformKind.SinkingRaft) y = session.Sim.PlatformY(p.Id, tick, s.CrumbleTick).F();                                 // sinks while stood on, springs back when empty
                 }
                 var sr = platformSr[i];
+                if (platformPose[i] != 0)
+                {
+                    // Painted poses chosen by the Sim state: Spore Pop calm / swollen / flat, Clam Shell Pad open / shut, Pufferfish Pad calm / swelling / puffed
+                    int pose = PoseOf(p, tick, in s);
+                    if (pose != platformPose[i]) SwapPosePiece(i, p, sr, pose);
+                }
                 platformTf[i].position = new Vector3(x + platformOffX[i], y + platformOffY[i], 0f);
                 if (SpecialPlatformFx.Handles(p.Kind)) specialFx.Update(i, p, session.Sim, in s, tick, x, y, sr);
                 if (p.Kind == PlatformKind.Vanishing || p.Kind == PlatformKind.Crumble)
@@ -1201,12 +1198,8 @@ namespace BoingUpSkyTower.Gameplay
                     // A crumbled platform is gone for good (no ghost to walk onto); a vanishing one comes back, so it stays a faint ghost.
                     c.a = solid ? 1f : (p.Kind == PlatformKind.Crumble ? 0f : 0.2f);
                     if (p.Kind == PlatformKind.Crumble && s.CrumbleTick[i] >= 0 && solid) c.a = reduced ? 0.7f : 0.6f + 0.4f * Mathf.Abs(Mathf.Sin(tick * 0.3f));
-                    // Warning before a vanishing platform disappears under the player: a slow pulse, about 2 per second (CUX-6), steady dim with reduced motion.
-                    else if (solid && p.Kind == PlatformKind.Vanishing && session.Sim.VanishWarning(p.Id, tick)) c.a = reduced ? 0.6f : 0.65f + 0.35f * Mathf.Sin(tick * 0.2f);
                     sr.color = c;
-                    if (cueSr[i] != null) cueSr[i].color = new Color(1f, 1f, 1f, c.a);
                 }
-                if (cueSr[i] != null) cueSr[i].transform.position = new Vector3(x, y - 0.14f, 0f);
             }
 
             // Pickups (taken ones hide; stars pulse gently, unless reduced motion is on).
@@ -1264,6 +1257,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 camHalfH = h;
                 cam.orthographicSize = h;
+                RunLayout.StripsWorld(aspect, camHalfW * 2f, out topWorld, out bottomWorld);   // only when the shape changes: no per-frame work
             }
         }
 
@@ -1274,7 +1268,7 @@ namespace BoingUpSkyTower.Gameplay
         void UpdateCamera(float killY)
         {
             FitCamera();
-            camY = killY + camHalfH;
+            camY = killY + camHalfH - bottomWorld;   // bottomWorld is 0 (owner 2026-11-02): the kill line is the physical screen bottom, the pads float over the field
             ApplyCamera();
         }
 

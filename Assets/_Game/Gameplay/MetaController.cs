@@ -30,7 +30,10 @@ namespace BoingUpSkyTower.Gameplay
             public MapSpanMeta[] segmentSpans = new MapSpanMeta[0];
         }
 
-        const float MapTopBar = 330f;                                              // fixed bar (home, title, wallet); the map scrolls below it
+        /// <summary>Height of the map's HUD strip below the safe-area top: back button (20 + 150) plus a gap. The map viewport starts under it.</summary>
+        /// <summary>Cloud pad under the lowest painted page: as tall as the tab bar plus the Rewards button strip, so the first pin is never covered when the map is scrolled to the bottom.</summary>
+        const float MapBottomPad = 0f;   // the painted art (its own clouds at the bottom corners) runs to the bottom edge of the screen: no pad, no blank band (owner 2026-11-02)
+        const float MapTopBar = 330f;                                             // fixed bar (home, title, wallet); the map scrolls below it
         static readonly float[] PinRise = { 0.24f, 0.50f, 0.78f };                 // height of a segment's three regions, bottom to top
         static readonly float[] PinSide = { 0.30f, 0.68f, 0.34f };                 // left / right / left, so the pins zig-zag up the map
         // Hand-placed pins (owner list 6, 2026-10-20): region index -> (x across the map, height inside the region's segment), both 0..1.
@@ -44,7 +47,7 @@ namespace BoingUpSkyTower.Gameplay
             { 10, new Vector2(0.88f, 0.14f) },   // on the blue toy block at the right
         };
         static float lastMapOffset = -1f; static int lastMapCurrent = -1;                                          // scroll position kept while visiting a region's levels
-        RectTransform mapContent, mapViewport;
+        RectTransform mapContent, mapViewport, mapRoot;   // mapRoot = the scroll content (art + bottom cloud pad); mapContent = the painted art only
         ScrollRect mapScroll;
         float mapAspect = 1f, mapWidthSeen = -1f, mapHeightSeen = -1f;
         int mapCurrent;
@@ -360,6 +363,7 @@ namespace BoingUpSkyTower.Gameplay
                 doll.pivot = new Vector2(0.5f, 0.5f);
                 momo = doll;
                 momoBase = momo.anchoredPosition;
+                // no hero sheet entry on the home screen (owner 2026-11-02): the (i) button lives on the Heroes screen
             }
             AddRewardsButton();
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
@@ -443,7 +447,7 @@ namespace BoingUpSkyTower.Gameplay
             var items = new System.Collections.Generic.List<ToyKit.BarItem>
             {
                 new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" },
-                new ToyKit.BarItem { Icon = "icon_crown", Caption = "Subscription", A11y = "Subscription" },
+                new ToyKit.BarItem { Icon = "icon_crown", Caption = "VIP", A11y = "VIP" },
             };
             if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true });
             items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
@@ -596,13 +600,34 @@ namespace BoingUpSkyTower.Gameplay
         {
             NewScreen("Characters");
             Stage stage = StageScene.Build(screenRoot, art, progress, StageScene.CharacterLayout());
-            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage });
+            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters) });
             characters.Build();
             AddBack("Back", ShowMenu);
             AddTabBar(ToyKit.TabHeroes);
             coinText = characters.CoinText;
             gemText = characters.GemText;
             RefreshWallet();
+        }
+
+        // ---------------- hero sheet ----------------
+
+        HeroSheetScreen heroSheet;
+
+        public HeroSheetScreen CurrentHeroSheet { get { return CurrentScreen == HeroSheetScreen.ScreenName ? heroSheet : null; } }
+
+        /// <summary>
+        /// The hero sheet of one hero (docs/21, 29): opened by tapping the hero or the (i) next to it on the home screen, and by a hero tile on the Heroes screen.
+        /// Back returns to <paramref name="back"/> (home when null), close always goes home. <paramref name="dataOverride"/> lets tests show a fake hero (for example a Legendary).
+        /// </summary>
+        public void ShowHeroSheet(CharacterDef who, Action back = null, HeroSheetData dataOverride = null)
+        {
+            who = who ?? CharacterCatalog.Selected;
+            Action goBack = back ?? ShowMenu;
+            NewScreen(HeroSheetScreen.ScreenName);
+            SkyBackground();
+            CharacterDef pick = who;
+            heroSheet = new HeroSheetScreen(screen, who, art, dataOverride ?? HeroSheetData.For(who), CharacterCatalog.Selected == who, goBack, ShowMenu,
+                () => { CharacterCatalog.Selected = pick; ShowHeroSheet(pick, goBack, dataOverride); });
         }
 
         // ---------------- world map ----------------
@@ -859,20 +884,25 @@ namespace BoingUpSkyTower.Gameplay
             mapViewport = UiKit.Rect(screenRoot, "MapViewport");   // full-bleed (under the notch and system bars); the HUD sits in the safe area above it
             mapViewport.SetSiblingIndex(screen.GetSiblingIndex());
             UiKit.Stretch(mapViewport);
-            mapViewport.offsetMax = Vector2.zero;   // the map fills the width; the top bar floats over it
-            mapViewport.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + ToyKit.RewardsStrip);   // the icon tab bar and the Rewards button above Heroes sit under the map
+            mapViewport.offsetMax = Vector2.zero;   // full screen again (owner 2026-11-02): the map fills the width and runs under the top bar, which only fades over it
+            mapViewport.offsetMin = Vector2.zero;   // the map runs to the very bottom of the screen (owner 2026-11-02): the tab bar and the Rewards button sit over it; a cloud pad (MapBottomPad) keeps pins clear of them
             mapViewport.gameObject.AddComponent<RectMask2D>();
             Image hit = mapViewport.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
-            mapContent = UiKit.Rect(mapViewport, "MapContent");
+            mapRoot = UiKit.Rect(mapViewport, "MapScrollContent");
+            mapRoot.anchorMin = new Vector2(0f, 1f);
+            mapRoot.anchorMax = new Vector2(1f, 1f);
+            mapRoot.pivot = new Vector2(0.5f, 1f);
+            mapRoot.offsetMin = mapRoot.offsetMax = Vector2.zero;
+            mapRoot.gameObject.AddComponent<CanvasGroup>().alpha = 0f;   // shown once the first layout pass has placed it
+            mapContent = UiKit.Rect(mapRoot, "MapContent");
             mapContent.anchorMin = new Vector2(0f, 1f);
             mapContent.anchorMax = new Vector2(1f, 1f);
             mapContent.pivot = new Vector2(0.5f, 1f);
             mapContent.offsetMin = mapContent.offsetMax = Vector2.zero;
-            mapContent.gameObject.AddComponent<CanvasGroup>().alpha = 0f;   // shown once the first layout pass has placed it
             mapAspect = (float)meta.width / total;   // content height follows the viewport width (SizeMap), so the art is never stretched
             var scroll = mapViewport.gameObject.AddComponent<ScrollRect>();
-            scroll.content = mapContent;
+            scroll.content = mapRoot;
             scroll.viewport = mapViewport;
             scroll.horizontal = false;
             scroll.vertical = true;
@@ -909,7 +939,7 @@ namespace BoingUpSkyTower.Gameplay
                     if (pg >= painted.pages.Length || mk >= painted.pages[pg].markers.Length) continue;   // that page is not painted yet
                     PaintedMarker m = painted.pages[pg].markers[mk];
                     float prise = (pg * painted.height + m.y * painted.height) / total;
-                    AddRegionPin(region, new Vector2(m.x, prise), 1, 0f, 0f, TagKit.MapTextMaxWidth, m.tagSide == "below" ? 1 : 0);
+                    AddRegionPin(region, new Vector2(m.x, prise), 1, 0f, 0f, TagKit.MapTextMaxWidth, m.tagSide == "below" ? 1 : (m.tagSide == "left" ? 3 : 0));
                     if (i == current) currentRise = prise;
                     continue;
                 }
@@ -929,6 +959,25 @@ namespace BoingUpSkyTower.Gameplay
                 var replanner = mapContent.gameObject.AddComponent<MapTagReplanner>();
                 replanner.Content = mapContent;
                 replanner.OnSize = ReplanTags;   // plans the tags against the real content size, again when it changes
+            }
+
+            // Clouds along the bottom edge of the lowest page: the art begins at a cloud (the path rises out of it). Drawn over the page, under the pins.
+            if (painted != null)
+            {
+                float[] bx = { 0.04f, 0.22f, 0.41f, 0.60f, 0.79f, 0.97f };
+                for (int c = 0; c < bx.Length; c++)
+                {
+                    Image puff = UiKit.AddImage(mapContent, "BottomCloud", Theme.RoundSprite, new Color(1f, 1f, 1f, 1f));
+                    puff.type = Image.Type.Sliced;
+                    puff.preserveAspect = false;
+                    puff.pixelsPerUnitMultiplier = 0.3f;
+                    puff.raycastTarget = false;
+                    puff.rectTransform.anchorMin = puff.rectTransform.anchorMax = new Vector2(bx[c], 0f);
+                    puff.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                    puff.rectTransform.sizeDelta = new Vector2(420f + (c % 2) * 100f, 190f + (c % 3) * 30f);
+                    puff.rectTransform.anchoredPosition = new Vector2(0f, (c % 2 == 0 ? 6f : -10f));
+                    puff.transform.SetSiblingIndex(painted.pages.Length);   // above the page pictures, below the pins
+                }
             }
 
             // Soft cloud bands over the joins between the painted pages (owner, 2026-10-24: clouds separate the six sets).
@@ -953,9 +1002,33 @@ namespace BoingUpSkyTower.Gameplay
                 }
             }
 
+            // The painted pages 2+ end in a flat white strip (about 130 to 200 px, with a stub of the path) where they meet the page below. On tall screens the first
+            // view reaches over that seam and showed a white band. A sky-blue fade (the sky colour of the page tops) over the bottom of each upper page turns it
+            // into sky behind the seam clouds; no pin sits there (markers are at 12 percent of a page or higher).
+            if (painted != null)
+            {
+                for (int pj = 1; pj < painted.pages.Length; pj++)
+                {
+                    float seam = pj * (float)painted.height / total;
+                    Image sky = UiKit.AddImage(mapContent, "SeamSky", Theme.GradientDownSprite, new Color(0.51f, 0.87f, 0.98f, 1f));
+                    sky.preserveAspect = false;
+                    sky.raycastTarget = false;
+                    RectTransform sr = sky.rectTransform;
+                    sr.anchorMin = new Vector2(0f, seam);
+                    sr.anchorMax = new Vector2(1f, seam);
+                    sr.pivot = new Vector2(0.5f, 1f);
+                    sr.sizeDelta = new Vector2(0f, 260f);
+                    sr.anchoredPosition = Vector2.zero;
+                    sr.localScale = new Vector3(1f, -1f, 1f);   // the sprite is opaque at the top: flipped, it is opaque at the seam and clear 260 px above it
+                    sky.transform.SetAsFirstSibling();
+                    sky.transform.SetSiblingIndex(painted.pages.Length);   // above the page pictures, below the pins and clouds
+                }
+            }
+
             // Fixed overlay: dark top bar with the home button, the title and the wallet.
             Image bar = UiKit.AddImage(screen, "TopBacking", Theme.GradientDownSprite, new Color(0.04f, 0.06f, 0.16f, 0.50f));   // a fade, not a band
             bar.preserveAspect = false;
+            bar.raycastTarget = false;
             bar.rectTransform.anchorMin = new Vector2(0f, 1f);
             bar.rectTransform.anchorMax = new Vector2(1f, 1f);
             bar.rectTransform.pivot = new Vector2(0.5f, 1f);
@@ -975,7 +1048,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             yield return null;     // again after the first real layout passes (the canvas size and safe area settle then)
             CenterMap(rise);
-            if (mapContent != null) mapContent.GetComponent<CanvasGroup>().alpha = 1f;
+            if (mapRoot != null) mapRoot.GetComponent<CanvasGroup>().alpha = 1f;
             yield return null;
             CenterMap(rise);
         }
@@ -986,7 +1059,9 @@ namespace BoingUpSkyTower.Gameplay
             float w = mapViewport.rect.width;
             mapWidthSeen = w;
             mapHeightSeen = mapViewport.rect.height;
-            mapContent.sizeDelta = new Vector2(0f, w / mapAspect);
+            float artH = w / mapAspect;
+            mapContent.sizeDelta = new Vector2(0f, artH);
+            mapRoot.sizeDelta = new Vector2(0f, artH + MapBottomPad);   // art plus the cloud pad under it
         }
 
         void CenterMap(float rise)
@@ -995,11 +1070,11 @@ namespace BoingUpSkyTower.Gameplay
             Canvas.ForceUpdateCanvases();
             if (mapViewport.rect.height < 2f) return;   // not laid out yet; the next pass does it
             SizeMap();
-            float contentH = mapContent.rect.height, viewH = mapViewport.rect.height;
-            float scrollable = Mathf.Max(1f, contentH - viewH);
+            float artH = mapContent.rect.height, viewH = mapViewport.rect.height;
+            float scrollable = Mathf.Max(1f, artH + MapBottomPad - viewH);
             float n = lastMapOffset >= 0f && lastMapCurrent == mapCurrent
                 ? lastMapOffset
-                : 1f - Mathf.Clamp01(((1f - rise) * contentH - viewH * 0.5f) / scrollable);
+                : 1f - Mathf.Clamp01(((1f - rise) * artH - viewH * 0.5f) / scrollable);
             mapScroll.verticalNormalizedPosition = n;     // 0 = bottom of the map, 1 = top (the ScrollRect keeps its own bounds right)
         }
 
@@ -1036,14 +1111,14 @@ namespace BoingUpSkyTower.Gameplay
             var keys = new List<int>();
             var centres = new List<Vector2>();   // map pixels of the painted art (y grows upward)
             var labels = new List<string>();
-            var prefers = new List<bool>();      // the map data asks for the tag below the icon
+            var prefers = new List<int>();       // the side the map data asks for first (1 below, 3 left), 0 = no preference
             float pw = mapSize.x, ph = mapSize.y / Mathf.Max(1, painted.pages.Length);   // one painted page is ph high; seams sit at multiples of it
             foreach (PinTag pt in pinList)
             {
                 keys.Add(pt.Region.Index);
                 centres.Add(new Vector2(pt.Anchor.x * mapSize.x, pt.Anchor.y * mapSize.y));   // real pin centres (y grows upward)
                 labels.Add(pt.Label);
-                prefers.Add(pt.Prefer == 1);
+                prefers.Add(pt.Prefer);
             }
             int n = keys.Count;
             var placedRel = new Rect[n];   // each placed tag, relative to its own pin centre
@@ -1053,9 +1128,9 @@ namespace BoingUpSkyTower.Gameplay
                 var best = new TagSpot { Mode = 1, MaxW = maxWs[0] };
                 Rect bestRel = new Rect(0f, 0f, 0f, 0f);
                 float widestWord = TagKit.WidestWord(labels[k], 36, false, true);   // a wrap width below this would split a word
-                for (int pass = prefers[k] ? 0 : 1; pass < 2; pass++)
+                for (int pass = prefers[k] != 0 ? 0 : 1; pass < 2; pass++)
                 {
-                if (pass == 1 && prefers[k] && bestScore < 1000f) break;   // the preferred side was free (clouds only soften): keep it, else fall back to every side
+                if (pass == 1 && prefers[k] != 0 && bestScore < 1000f) break;   // the preferred side was free (clouds only soften): keep it, else fall back to every side
                 float prevW = -1f;
                 for (int wi = 0; wi < maxWs.Length && bestScore > 0f; wi++)
                 {
@@ -1069,7 +1144,7 @@ namespace BoingUpSkyTower.Gameplay
                         for (int oo = 0; oo < order.Length && bestScore > 0f; oo++)
                         {
                             int mode = order[oo];
-                            if (pass == 0 && mode != 1) continue;   // the map data asked for "below": only that side in the first pass
+                            if (pass == 0 && mode != prefers[k]) continue;   // the map data asked for one side ("below" or "left"): only that side in the first pass
                             bool vertical = mode == 1 || mode == 2;   // below / above slide sideways, right / left slide up and down
                             float off = offs[oi], ext = exts[ei];
                             if (!vertical && Mathf.Abs(off) > 220f) continue;
@@ -1503,7 +1578,8 @@ namespace BoingUpSkyTower.Gameplay
         public void OnEndlessTapped(RegionDef region)
         {
             int best = progress.EndlessBestFloor(region.Id);
-            OpenPopup("Endless", "", 900f);
+            // Content-sized: content ends at 521 (best-floor pill), then a gap, START (at least 48 dp) and a margin. One close: the X in the frame.
+            OpenPopup("Endless", "", 521f + 44f + Mathf.Max(150f, UiKit.MinTouchRef) + 56f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
             Transform endTitle = panel.Find("Title");
@@ -1520,8 +1596,7 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)rname.transform, new Vector2(0.5f, 1f), new Vector2(0f, -352f), new Vector2(760f, 80f));
             RectTransform bestRow = ToyKit.PillRow(panel, "BestFloor", 425f, 96f);
             ToyKit.InfoPill(bestRow, ToyKit.Get("icon_crown"), best > 0 ? best.ToString() : "-", new Color(1f, 0.9f, 0.4f), 300f, 96f);
-            ToyKit.PopupAction(popup.Find("Panel"), "START", Btn(1), Color.white, 60f, () => StartEndless(region), -90f);
-            ToyKit.PopupAction(popup.Find("Panel"), "Close", Btn(0), Color.white, 70f, ClosePopup, 100f);
+            ToyKit.PopupAction(popup.Find("Panel"), "START", Btn(1), Color.white, 60f, () => StartEndless(region), 0f);
         }
 
         /// <summary>Height reserved at the bottom of the level screen for the Endless button (button 130 + 24 margin + 16 gap).</summary>
@@ -1587,7 +1662,10 @@ namespace BoingUpSkyTower.Gameplay
             LevelSpec spec = LevelSpecFactory.Build(level, repo.GetRegion(level.Region));
             LevelProgress p = progress.GetProgress(level.Id);
             int starsHave = p != null ? p.Stars : 0;
-            OpenPopup("Level " + level.Index, "", 1020f);
+            // Content-sized: the content ends at 536 (pills) or 646 (best score); then a gap, the PLAY button (at least 48 dp) and a bottom margin.
+            float playSize = Mathf.Max(150f, UiKit.MinTouchRef);
+            float contentEnd = p != null && p.BestScore > 0 ? 646f : 536f;
+            OpenPopup("Level " + level.Index, "", contentEnd + 44f + playSize + 56f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
 
@@ -1634,8 +1712,8 @@ namespace BoingUpSkyTower.Gameplay
                 GameSession.CurrentLevelId = level.Id;
                 GameSession.EndlessMode = false;
                 SceneManager.LoadScene("Run");
-            }, -90f);
-            ToyKit.PopupAction(popup.Find("Panel"), "Close", Btn(0), Color.white, 70f, ClosePopup, 100f);
+            }, 0f);
+            // One close only: the X in the popup frame (the second red X next to PLAY was removed, emulator report 2 item 7).
         }
 
         // ---------------- settings ----------------
@@ -1647,35 +1725,63 @@ namespace BoingUpSkyTower.Gameplay
             AddBack("Back", ShowMenu);
             ToyKit.Ribbon(screen, "Settings", new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(580f, 206f));
 
-            bool dev = GameSettings.DevBuild;
-            const float rowH = 148f;
+            bool dev = GameSettings.DevBuild || GameSettings.ShowDevRowsForTests;
+            // Rows grow with the real screen density so every switch and button is at least 48 dp (doc 26, emulator report 2).
+            settingsBtnH = Mathf.Max(126f, UiKit.MinTouchRef);
+            float rowH = settingsRowH = settingsBtnH + 22f;
+            const float padTop = 24f, gap = 28f, padBottom = 36f, resetH = 130f;
+            float resetBtnH = Mathf.Max(resetH, UiKit.MinTouchRef);
             int rows = 7 + (dev ? 2 : 0);
-            // One cream card holds the icon rows (icon, short label, switch or value button).
-            RectTransform card = UiKit.Rect(screen, "Card");
+            float cardH = padTop + rows * rowH + gap + resetBtnH + padBottom;
+
+            // Scrolling area under the fixed header (back button and ribbon): the card is the content, so on a short or wide-aspect screen
+            // the rows and the reset button scroll instead of running off the screen or colliding with each other.
+            RectTransform vp = UiKit.Rect(screen, "SettingsViewport");
+            vp.anchorMin = Vector2.zero;
+            vp.anchorMax = Vector2.one;
+            vp.offsetMin = new Vector2(20f, 24f);
+            vp.offsetMax = new Vector2(-20f, -250f);
+            vp.gameObject.AddComponent<RectMask2D>();
+            var vpHit = vp.gameObject.AddComponent<Image>();
+            vpHit.color = new Color(0f, 0f, 0f, 0.001f);   // drag target between the rows
+            // One cream card holds the icon rows (icon, short label, switch or value button) and the reset button.
+            RectTransform card = UiKit.Rect(vp, "Card");
             card.anchorMin = new Vector2(0f, 1f);
             card.anchorMax = new Vector2(1f, 1f);
             card.pivot = new Vector2(0.5f, 1f);
-            card.anchoredPosition = new Vector2(0f, -250f);
-            card.sizeDelta = new Vector2(-40f, rows * rowH + 40f);
+            card.anchoredPosition = Vector2.zero;
+            card.sizeDelta = new Vector2(0f, cardH);
             Theme.CardBacking(card);
+            var settingsScroll = vp.gameObject.AddComponent<ScrollRect>();
+            settingsScroll.viewport = vp;
+            settingsScroll.content = card;
+            settingsScroll.horizontal = false;
+            settingsScroll.vertical = true;
+            settingsScroll.movementType = ScrollRect.MovementType.Elastic;
+            settingsScroll.scrollSensitivity = 60f;
             int r = 0;
-            AddSwitchRow(card, r++ * rowH, "icon_sound", "Sound", () => GameSettings.Sound, v => GameSettings.Sound = v);
-            AddSwitchRow(card, r++ * rowH, "icon_music", "Music", () => GameSettings.Music, v => GameSettings.Music = v);
-            AddSwitchRow(card, r++ * rowH, "icon_vibrate", "Haptics", () => GameSettings.Haptics, v => GameSettings.Haptics = v);
-            AddSwitchRow(card, r++ * rowH, "icon_motion", "Reduced motion", () => GameSettings.ReducedMotion, v => GameSettings.ReducedMotion = v);
-            AddSwitchRow(card, r++ * rowH, "icon_hand", "Left-handed", () => GameSettings.LeftHanded, v => GameSettings.LeftHanded = v);
-            AddValueRow(card, r++ * rowH, "icon_size", "Text size", GameSettings.TextPercent + "%", () =>
+            float y0 = padTop;
+            AddSwitchRow(card, y0 + r++ * rowH, "icon_sound", "Sound", () => GameSettings.Sound, v => GameSettings.Sound = v);
+            AddSwitchRow(card, y0 + r++ * rowH, "icon_music", "Music", () => GameSettings.Music, v => GameSettings.Music = v);
+            AddSwitchRow(card, y0 + r++ * rowH, "icon_vibrate", "Haptics", () => GameSettings.Haptics, v => GameSettings.Haptics = v);
+            AddSwitchRow(card, y0 + r++ * rowH, "icon_motion", "Reduced motion", () => GameSettings.ReducedMotion, v => GameSettings.ReducedMotion = v);
+            AddSwitchRow(card, y0 + r++ * rowH, "icon_hand", "Left-handed", () => GameSettings.LeftHanded, v => GameSettings.LeftHanded = v);
+            AddValueRow(card, y0 + r++ * rowH, "icon_size", "Text size", GameSettings.TextPercent + "%", () =>
             {
                 GameSettings.NextTextPercent();
                 ShowSettings();   // rebuild so the new size applies to every label
             });
-            AddValueRow(card, r++ * rowH, "icon_dial", "Difficulty", GameSettings.DifficultyNames[GameSettings.Difficulty], ShowDifficultyList);
-            if (dev) AddSwitchRow(card, r++ * rowH, "icon_lock", "GAME_JUMP_TEST", () => GameSettings.GameJumpTest, v => GameSettings.GameJumpTest = v);
-            if (dev) AddSwitchRow(card, r++ * rowH, "icon_lock", "SYSTEM_TEST", () => GameSettings.SystemTest, v => GameSettings.SystemTest = v);
+            AddValueRow(card, y0 + r++ * rowH, "icon_dial", "Difficulty", GameSettings.DifficultyNames[GameSettings.Difficulty], ShowDifficultyList);
+            // Owner's test flags: shown only in development builds (GameSettings.DevBuild), kept visible there for the owner's testing.
+            if (dev) AddSwitchRow(card, y0 + r++ * rowH, "icon_lock", "GAME_JUMP_TEST", () => GameSettings.GameJumpTest, v => GameSettings.GameJumpTest = v);
+            if (dev) AddSwitchRow(card, y0 + r++ * rowH, "icon_lock", "SYSTEM_TEST", () => GameSettings.SystemTest, v => GameSettings.SystemTest = v);
 
-            Button reset = UiKit.AddButton(screen, "Reset", "Reset progress", ToyKit.Button(3), Color.white, new Vector2(560f, 130f), ConfirmReset, 46);
-            UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(560f, 130f));
+            // Reset progress sits INSIDE the card, under the last row with a clear gap, so it can never collide with a row or the panel edge.
+            Button reset = UiKit.AddButton(card, "Reset", "Reset progress", ToyKit.Button(3), Color.white, new Vector2(560f, resetBtnH), ConfirmReset, 46);
+            UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 1f), new Vector2(0f, -(y0 + rows * rowH + gap)), new Vector2(560f, resetBtnH));
         }
+
+        float settingsRowH = 148f, settingsBtnH = 126f;
 
         /// <summary>Left part of a settings row: the painted icon and a short label (ink on the cream card).</summary>
         void AddRowLead(RectTransform card, float y, string icon, string label)
@@ -1684,7 +1790,8 @@ namespace BoingUpSkyTower.Gameplay
             ic.preserveAspect = true;
             ic.rectTransform.anchorMin = ic.rectTransform.anchorMax = new Vector2(0f, 1f);
             ic.rectTransform.pivot = new Vector2(0f, 1f);
-            ic.rectTransform.anchoredPosition = new Vector2(28f, -(y + 28f));
+            float iy = (settingsRowH - 92f) * 0.5f;   // icon and label centred on the row
+            ic.rectTransform.anchoredPosition = new Vector2(28f, -(y + iy));
             ic.rectTransform.sizeDelta = new Vector2(92f, 92f);
             Text t = UiKit.AddText(card, label, label, 46, Theme.Ink, TextAnchor.MiddleLeft, true);
             DropOutline(t);
@@ -1692,20 +1799,20 @@ namespace BoingUpSkyTower.Gameplay
             rt.anchorMin = new Vector2(0f, 1f);
             rt.anchorMax = new Vector2(1f, 1f);
             rt.pivot = new Vector2(0f, 1f);
-            rt.offsetMin = new Vector2(140f, -(y + 28f + 92f));
-            rt.offsetMax = new Vector2(-270f, -(y + 28f));
+            rt.offsetMin = new Vector2(140f, -(y + iy + 92f));
+            rt.offsetMax = new Vector2(-270f, -(y + iy));
         }
 
         /// <summary>An on/off row: a kit switch (green with the knob right when on, blue with the knob left when off).</summary>
         void AddSwitchRow(RectTransform card, float y, string icon, string label, Func<bool> get, Action<bool> set)
         {
             AddRowLead(card, y, icon, label);
-            Button b = UiKit.AddButton(card, label + "Toggle", "", ToyKit.Button(get() ? 1 : 2), Color.white, new Vector2(200f, 126f), null);
+            Button b = UiKit.AddButton(card, label + "Toggle", "", ToyKit.Button(get() ? 1 : 2), Color.white, new Vector2(200f, settingsBtnH), null);
             var rt = (RectTransform)b.transform;
             rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
             rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-28f, -(y + 11f));
-            rt.sizeDelta = new Vector2(200f, 126f);
+            rt.anchoredPosition = new Vector2(-28f, -(y + (settingsRowH - settingsBtnH) * 0.5f));
+            rt.sizeDelta = new Vector2(200f, settingsBtnH);
             Image knob = UiKit.AddImage(b.transform, "Knob", Theme.RoundSprite, Color.white);
             knob.type = Image.Type.Sliced;
             knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(get() ? 0.74f : 0.26f, 0.5f);
@@ -1731,12 +1838,12 @@ namespace BoingUpSkyTower.Gameplay
         void AddValueRow(RectTransform card, float y, string icon, string label, string value, Action onClick)
         {
             AddRowLead(card, y, icon, label);
-            Button b = UiKit.AddButton(card, label + "Button", value, ToyKit.Button(0), Color.white, new Vector2(240f, 126f), onClick, 44);
+            Button b = UiKit.AddButton(card, label + "Button", value, ToyKit.Button(0), Color.white, new Vector2(240f, settingsBtnH), onClick, 44);
             var rt = (RectTransform)b.transform;
             rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
             rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-28f, -(y + 11f));
-            rt.sizeDelta = new Vector2(240f, 126f);
+            rt.anchoredPosition = new Vector2(-28f, -(y + (settingsRowH - settingsBtnH) * 0.5f));
+            rt.sizeDelta = new Vector2(240f, settingsBtnH);
             b.GetComponent<A11yLabel>().Text = label + ", " + value;
         }
 

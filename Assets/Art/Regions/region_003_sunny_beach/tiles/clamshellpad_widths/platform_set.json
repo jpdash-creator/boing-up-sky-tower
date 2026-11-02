@@ -1,0 +1,91 @@
+{
+  "asset": "clamshellpad_widths",
+  "kind": "clamshellpad",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 358,
+      "h": 213,
+      "bodyLeft": 12,
+      "bodyRight": 345,
+      "surfaceY": 98,
+      "bodyBottom": 207,
+      "width": 2.0,
+      "file": "reg003_clamshellpad_open_w2.png",
+      "ppu": 166.5,
+      "kind": "clamshellpad",
+      "dir": -1,
+      "pose": "open"
+    },
+    {
+      "w": 357,
+      "h": 137,
+      "bodyLeft": 11,
+      "bodyRight": 345,
+      "surfaceY": 21,
+      "bodyBottom": 130,
+      "width": 2.0,
+      "file": "reg003_clamshellpad_shut_w2.png",
+      "ppu": 167.0,
+      "kind": "clamshellpad",
+      "dir": 1,
+      "pose": "shut"
+    },
+    {
+      "w": 531,
+      "h": 314,
+      "bodyLeft": 15,
+      "bodyRight": 515,
+      "surfaceY": 143,
+      "bodyBottom": 307,
+      "width": 3.0,
+      "file": "reg003_clamshellpad_open_w3.png",
+      "ppu": 166.667,
+      "kind": "clamshellpad",
+      "dir": -1,
+      "pose": "open"
+    },
+    {
+      "w": 530,
+      "h": 199,
+      "bodyLeft": 13,
+      "bodyRight": 516,
+      "surfaceY": 29,
+      "bodyBottom": 193,
+      "width": 3.0,
+      "file": "reg003_clamshellpad_shut_w3.png",
+      "ppu": 167.667,
+      "kind": "clamshellpad",
+      "dir": 1,
+      "pose": "shut"
+    },
+    {
+      "w": 704,
+      "h": 414,
+      "bodyLeft": 18,
+      "bodyRight": 685,
+      "surfaceY": 188,
+      "bodyBottom": 407,
+      "width": 4.0,
+      "file": "reg003_clamshellpad_open_w4.png",
+      "ppu": 166.75,
+      "kind": "clamshellpad",
+      "dir": -1,
+      "pose": "open"
+    },
+    {
+      "w": 703,
+      "h": 262,
+      "bodyLeft": 16,
+      "bodyRight": 686,
+      "surfaceY": 36,
+      "bodyBottom": 255,
+      "width": 4.0,
+      "file": "reg003_clamshellpad_shut_w4.png",
+      "ppu": 167.5,
+      "kind": "clamshellpad",
+      "dir": 1,
+      "pose": "shut"
+    }
+  ]
+}

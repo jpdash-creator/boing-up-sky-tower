@@ -1,0 +1,85 @@
+{
+  "asset": "squishcap_widths",
+  "kind": "squishcap",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 275,
+      "h": 127,
+      "bodyLeft": 12,
+      "bodyRight": 262,
+      "surfaceY": 32,
+      "bodyBottom": 115,
+      "width": 1.5,
+      "file": "reg002_squishcap_w1_5.png",
+      "ppu": 166.667,
+      "kind": "squishcap",
+      "dir": 0
+    },
+    {
+      "w": 359,
+      "h": 127,
+      "bodyLeft": 12,
+      "bodyRight": 346,
+      "surfaceY": 32,
+      "bodyBottom": 115,
+      "width": 2.0,
+      "file": "reg002_squishcap_w2.png",
+      "ppu": 167.0,
+      "kind": "squishcap",
+      "dir": 0
+    },
+    {
+      "w": 526,
+      "h": 127,
+      "bodyLeft": 12,
+      "bodyRight": 513,
+      "surfaceY": 32,
+      "bodyBottom": 115,
+      "width": 3.0,
+      "file": "reg002_squishcap_w3.png",
+      "ppu": 167.0,
+      "kind": "squishcap",
+      "dir": 0
+    },
+    {
+      "w": 693,
+      "h": 127,
+      "bodyLeft": 12,
+      "bodyRight": 680,
+      "surfaceY": 32,
+      "bodyBottom": 115,
+      "width": 4.0,
+      "file": "reg002_squishcap_w4.png",
+      "ppu": 167.0,
+      "kind": "squishcap",
+      "dir": 0
+    },
+    {
+      "w": 1027,
+      "h": 127,
+      "bodyLeft": 12,
+      "bodyRight": 1014,
+      "surfaceY": 32,
+      "bodyBottom": 115,
+      "width": 6.0,
+      "file": "reg002_squishcap_w6.png",
+      "ppu": 167.0,
+      "kind": "squishcap",
+      "dir": 0
+    },
+    {
+      "w": 1361,
+      "h": 127,
+      "bodyLeft": 12,
+      "bodyRight": 1348,
+      "surfaceY": 32,
+      "bodyBottom": 115,
+      "width": 8.0,
+      "file": "reg002_squishcap_w8.png",
+      "ppu": 167.0,
+      "kind": "squishcap",
+      "dir": 0
+    }
+  ]
+}

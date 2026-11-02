@@ -37,12 +37,16 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Short captions of the selected tab.</summary>
         static readonly string[] TabIcons = { "icon_bundle", "icon_chest", "icon_bolt", "icon_coin", "icon_gem" };
 
+        /// <summary>Height of the box the shop scene art is cover-fitted in (the v0.36 header height; the art's face position depends on it).</summary>
+        public const float SceneArtBoxH = 520f;
         public const float SceneHeight = 440f, RibbonW = 620f, RibbonH = 170f, SideMargin = 28f;
         /// <summary>Pixels from the top of the safe area to the first content row (below the ribbon).</summary>
         public const float ContentTop = SceneHeight + 124f;
         /// <summary>Space kept free at the bottom for the tab bar.</summary>
         public const float ContentBottom = ToyKit.TabBarReserve;
         public const float PriceButtonH = 130f;
+        /// <summary>Extra scroll length after the last card of a shop list, so it can be pulled completely above the bottom bar.</summary>
+        public const float ScrollEndPad = 40f;
 
         // ---------------- helpers ----------------
 
@@ -138,7 +142,17 @@ namespace BoingUpSkyTower.Gameplay
             scene.sizeDelta = new Vector2(0f, SceneHeight + over);
             scene.gameObject.AddComponent<RectMask2D>();
             Sprite sc = ToyKit.Get("shop_scene");
-            Image si = UiKit.AddImage(scene, "SceneArt", sc, sc != null ? Color.white : new Color(0.45f, 0.28f, 0.16f, 1f));
+            // The art keeps its v0.36 frame: cover-fit in a box SceneArtBoxH high that starts at the TOP of the safe area (not at the top of the masked scene),
+            // so Momo's face sits below the wallet pills as before. The part of the scene above the safe area only gets the awning colour behind the art.
+            Image topFill = UiKit.AddImage(scene, "Fill", null, new Color(0.82f, 0.27f, 0.31f, 1f));
+            UiKit.Stretch(topFill.rectTransform);
+            RectTransform artBox = UiKit.Rect(scene, "SceneArtBox");
+            artBox.anchorMin = new Vector2(0f, 1f);
+            artBox.anchorMax = new Vector2(1f, 1f);
+            artBox.pivot = new Vector2(0.5f, 1f);
+            artBox.anchoredPosition = new Vector2(0f, -over);
+            artBox.sizeDelta = new Vector2(0f, SceneArtBoxH);
+            Image si = UiKit.AddImage(artBox, "SceneArt", sc, sc != null ? Color.white : new Color(0.45f, 0.28f, 0.16f, 1f));
             si.preserveAspect = false;
             UiKit.Stretch(si.rectTransform);
             if (sc != null)
@@ -292,7 +306,7 @@ namespace BoingUpSkyTower.Gameplay
             list.pivot = new Vector2(0.5f, 1f);
             list.offsetMin = Vector2.zero;
             list.offsetMax = Vector2.zero;
-            list.sizeDelta = new Vector2(0f, contentHeight);
+            list.sizeDelta = new Vector2(0f, contentHeight + ScrollEndPad);   // padding so the last card scrolls fully clear of the tab bar
             var scroll = vp.gameObject.AddComponent<ScrollRect>();
             scroll.content = list;
             scroll.viewport = vp;

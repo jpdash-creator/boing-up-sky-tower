@@ -1,0 +1,85 @@
+{
+  "asset": "dizzyspores_widths",
+  "kind": "dizzyspores",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 277,
+      "h": 135,
+      "bodyLeft": 13,
+      "bodyRight": 263,
+      "surfaceY": 42,
+      "bodyBottom": 125,
+      "width": 1.5,
+      "file": "reg002_dizzyspores_w1_5.png",
+      "ppu": 166.667,
+      "kind": "dizzyspores",
+      "dir": 0
+    },
+    {
+      "w": 367,
+      "h": 136,
+      "bodyLeft": 16,
+      "bodyRight": 350,
+      "surfaceY": 43,
+      "bodyBottom": 126,
+      "width": 2.0,
+      "file": "reg002_dizzyspores_w2.png",
+      "ppu": 167.0,
+      "kind": "dizzyspores",
+      "dir": 0
+    },
+    {
+      "w": 534,
+      "h": 136,
+      "bodyLeft": 16,
+      "bodyRight": 517,
+      "surfaceY": 43,
+      "bodyBottom": 126,
+      "width": 3.0,
+      "file": "reg002_dizzyspores_w3.png",
+      "ppu": 167.0,
+      "kind": "dizzyspores",
+      "dir": 0
+    },
+    {
+      "w": 701,
+      "h": 170,
+      "bodyLeft": 16,
+      "bodyRight": 684,
+      "surfaceY": 75,
+      "bodyBottom": 159,
+      "width": 4.0,
+      "file": "reg002_dizzyspores_w4.png",
+      "ppu": 167.0,
+      "kind": "dizzyspores",
+      "dir": 0
+    },
+    {
+      "w": 1035,
+      "h": 170,
+      "bodyLeft": 16,
+      "bodyRight": 1018,
+      "surfaceY": 75,
+      "bodyBottom": 159,
+      "width": 6.0,
+      "file": "reg002_dizzyspores_w6.png",
+      "ppu": 167.0,
+      "kind": "dizzyspores",
+      "dir": 0
+    },
+    {
+      "w": 1369,
+      "h": 170,
+      "bodyLeft": 16,
+      "bodyRight": 1352,
+      "surfaceY": 75,
+      "bodyBottom": 159,
+      "width": 8.0,
+      "file": "reg002_dizzyspores_w8.png",
+      "ppu": 167.0,
+      "kind": "dizzyspores",
+      "dir": 0
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "asset": "pufffloat_widths",
+  "kind": "pufffloat",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 279,
+      "h": 145,
+      "bodyLeft": 14,
+      "bodyRight": 264,
+      "surfaceY": 44,
+      "bodyBottom": 126,
+      "width": 1.5,
+      "file": "reg002_pufffloat_w1_5.png",
+      "ppu": 166.667,
+      "kind": "pufffloat",
+      "dir": 0
+    },
+    {
+      "w": 363,
+      "h": 145,
+      "bodyLeft": 14,
+      "bodyRight": 348,
+      "surfaceY": 44,
+      "bodyBottom": 126,
+      "width": 2.0,
+      "file": "reg002_pufffloat_w2.png",
+      "ppu": 167.0,
+      "kind": "pufffloat",
+      "dir": 0
+    },
+    {
+      "w": 528,
+      "h": 175,
+      "bodyLeft": 13,
+      "bodyRight": 514,
+      "surfaceY": 51,
+      "bodyBottom": 136,
+      "width": 3.0,
+      "file": "reg002_pufffloat_w3.png",
+      "ppu": 167.0,
+      "kind": "pufffloat",
+      "dir": 0
+    },
+    {
+      "w": 695,
+      "h": 175,
+      "bodyLeft": 13,
+      "bodyRight": 681,
+      "surfaceY": 51,
+      "bodyBottom": 136,
+      "width": 4.0,
+      "file": "reg002_pufffloat_w4.png",
+      "ppu": 167.0,
+      "kind": "pufffloat",
+      "dir": 0
+    },
+    {
+      "w": 1029,
+      "h": 175,
+      "bodyLeft": 13,
+      "bodyRight": 1015,
+      "surfaceY": 51,
+      "bodyBottom": 136,
+      "width": 6.0,
+      "file": "reg002_pufffloat_w6.png",
+      "ppu": 167.0,
+      "kind": "pufffloat",
+      "dir": 0
+    },
+    {
+      "w": 1363,
+      "h": 175,
+      "bodyLeft": 13,
+      "bodyRight": 1349,
+      "surfaceY": 51,
+      "bodyBottom": 136,
+      "width": 8.0,
+      "file": "reg002_pufffloat_w8.png",
+      "ppu": 167.0,
+      "kind": "pufffloat",
+      "dir": 0
+    }
+  ]
+}

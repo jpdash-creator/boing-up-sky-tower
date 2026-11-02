@@ -22,7 +22,7 @@ namespace BoingUpSkyTower.Gameplay
     {
         public const float ButtonSize = 150f;
         public const float Gap = 28f;
-        /// <summary>Distance of the lowest row above the bottom of the safe area: just above the jump button (60 + 280) plus a gap.</summary>
+        /// <summary>Distance of the lowest row above the bottom of the safe area: just above the jump pad (20 + 230 jump button + 20, RunLayout.BottomPadRef) plus a gap, so the buttons never overlap the pad. These buttons float over the play field on the jump side (owned power-ups only).</summary>
         public const float BottomOffset = 364f;
         /// <summary>Distance of the block from the side edge: the same as the jump button, so the right edges line up.</summary>
         public const float SideOffset = 24f;
@@ -83,6 +83,7 @@ namespace BoingUpSkyTower.Gameplay
                 PowerUp type = t;
                 Slot s = new Slot { Type = t };
                 s.Button = UiKit.AddButton(root, "Power" + t, "", Theme.RoundSprite, Color.white, new Vector2(ButtonSize, ButtonSize), () => { if (OnPress != null) OnPress((int)type); }, 38, false);
+                s.Button.gameObject.AddComponent<CanvasGroup>().alpha = ControlPad.ButtonAlpha;
                 s.Background = s.Button.GetComponent<Image>();
                 s.Background.type = Image.Type.Sliced;
                 s.Background.pixelsPerUnitMultiplier = Mathf.Max(0.2f, 44f / (ButtonSize * 0.5f));

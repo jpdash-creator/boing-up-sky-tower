@@ -96,7 +96,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             {
                 Platform p = d.Platforms[i];
                 if (p.Width.Raw >= 9 * 65536) continue;
-                Fx ext = p.Width / 2 + p.Amplitude;
+                Fx ext = p.Width / 2 + (p.Kind == PlatformKind.FairyRing ? Fx.Zero : p.Amplitude);   // a Fairy Ring's Amplitude is its hole half width, not a swing
                 if (p.X - ext < Fx.Zero || p.X + ext > screen) return "platform " + p.Id + " outside the walls";
                 if (i > 0 && d.Platforms[i - 1].Row == p.Row && d.Platforms[i - 1].Width.Raw < 9 * 65536)
                 {

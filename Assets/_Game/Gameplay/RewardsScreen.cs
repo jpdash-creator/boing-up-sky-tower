@@ -420,7 +420,7 @@ namespace BoingUpSkyTower.Gameplay
             content.sizeDelta = Vector2.zero;
             var vl = content.gameObject.AddComponent<VerticalLayoutGroup>();
             vl.spacing = RowGap;
-            vl.padding = new RectOffset(0, 0, 4, 40);
+            vl.padding = new RectOffset(0, 0, 4, 72);   // the last card scrolls fully clear of the tab row
             vl.childAlignment = TextAnchor.UpperCenter;
             vl.childControlWidth = vl.childControlHeight = true;
             vl.childForceExpandWidth = true;
@@ -723,6 +723,10 @@ namespace BoingUpSkyTower.Gameplay
             Text name = UiKit.AddText(slot, "Name", region.Name, Mathf.RoundToInt(Mathf.Max(36f, UiKit.MinBodyTextPx)), Color.white, TextAnchor.UpperCenter, true);
             Head(name);
             name.fontStyle = FontStyle.Italic;
+            // Never break inside a word (1080x2520 showed "Mushroo / m Grove"): break only at the spaces and let a word that is a little
+            // wider than its slot spill into the free space beside it. The size is already at the 16 sp floor, so it cannot shrink further.
+            name.text = region.Name.Replace(' ', '\n');
+            name.horizontalOverflow = HorizontalWrapMode.Overflow;
             RectTransform nrt = name.rectTransform;
             nrt.anchorMin = new Vector2(0f, 1f);
             nrt.anchorMax = new Vector2(1f, 1f);

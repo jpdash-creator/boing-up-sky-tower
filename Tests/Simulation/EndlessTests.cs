@@ -180,7 +180,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(GoldenR3S12345, d.ComputeHash());
         }
 
-        private const long GoldenR3S12345 = -7511674414380074137L;
+        private const long GoldenR3S12345 = -7790185848617333387L;
     }
 }
 

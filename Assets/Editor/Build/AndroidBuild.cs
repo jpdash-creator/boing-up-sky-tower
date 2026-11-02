@@ -42,10 +42,12 @@ namespace BoingUpSkyTower.Editor.Build
             PlayerSettings.Android.bundleVersionCode = ver.build;
             // Opt-in AltTester build (-altTester or BT_ALTTESTER=1, see AltTesterBuildHook): own file name, and it never replaces the clean boingupskytower.apk.
             bool altTester = AltTesterBuildHook.Requested();
-            string versionedPath = "E:/Unity/builds/boingupskytower_v" + versionName + (altTester ? "_alttester" : "") + ".apk";
-            Debug.Log("[BUILD] version v" + versionName);
+            // Opt-in emulator build (BT_X86=1): adds x86_64 so Android emulators run it natively; own file name, never the clean phone APK.
+            bool x86 = Environment.GetEnvironmentVariable("BT_X86") == "1";
+            string versionedPath = "E:/Unity/builds/boingupskytower_v" + versionName + (altTester ? "_alttester" : "") + (x86 ? "_x86" : "") + ".apk";
+            Debug.Log("[BUILD] version v" + versionName + (x86 ? " (emulator build, arm64 + x86_64)" : ""));
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
-            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.Android.targetArchitectures = x86 ? (AndroidArchitecture.ARM64 | AndroidArchitecture.X86_64) : AndroidArchitecture.ARM64;
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
             var options = new BuildPlayerOptions
             {
@@ -63,7 +65,7 @@ namespace BoingUpSkyTower.Editor.Build
             finally { AltTesterBuildHook.End(); }
             Debug.Log("[BUILD] result " + report.summary.result + ", size " + (report.summary.totalSize / (1024 * 1024)) + " MB, errors " + report.summary.totalErrors);
             bool ok = report.summary.result == BuildResult.Succeeded;
-            if (ok) File.Copy(versionedPath, altTester ? "E:/Unity/builds/boingupskytower_alttester.apk" : OutputPath, true);
+            if (ok && !x86) File.Copy(versionedPath, altTester ? "E:/Unity/builds/boingupskytower_alttester.apk" : OutputPath, true);
             string log = Path.Combine(ProjectRoot, "Content", "builds", "build_log.csv");
             Directory.CreateDirectory(Path.GetDirectoryName(log));
             if (!File.Exists(log)) File.WriteAllText(log, "date,version,result,sizeMB,apk\n");

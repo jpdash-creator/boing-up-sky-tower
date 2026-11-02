@@ -1,0 +1,46 @@
+{
+  "asset": "orbitcap_widths",
+  "kind": "orbitcap",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 359,
+      "h": 151,
+      "bodyLeft": 12,
+      "bodyRight": 346,
+      "surfaceY": 44,
+      "bodyBottom": 128,
+      "width": 2.0,
+      "file": "reg002_orbitcap_w2.png",
+      "ppu": 167.0,
+      "kind": "orbitcap",
+      "dir": 0
+    },
+    {
+      "w": 526,
+      "h": 151,
+      "bodyLeft": 12,
+      "bodyRight": 513,
+      "surfaceY": 44,
+      "bodyBottom": 128,
+      "width": 3.0,
+      "file": "reg002_orbitcap_w3.png",
+      "ppu": 167.0,
+      "kind": "orbitcap",
+      "dir": 0
+    },
+    {
+      "w": 693,
+      "h": 162,
+      "bodyLeft": 12,
+      "bodyRight": 680,
+      "surfaceY": 46,
+      "bodyBottom": 129,
+      "width": 4.0,
+      "file": "reg002_orbitcap_w4.png",
+      "ppu": 167.0,
+      "kind": "orbitcap",
+      "dir": 0
+    }
+  ]
+}

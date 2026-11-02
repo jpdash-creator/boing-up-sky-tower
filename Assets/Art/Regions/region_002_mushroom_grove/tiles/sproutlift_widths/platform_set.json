@@ -1,0 +1,79 @@
+{
+  "asset": "sproutlift_widths",
+  "kind": "sproutlift",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 267,
+      "h": 107,
+      "bodyLeft": 8,
+      "bodyRight": 258,
+      "surfaceY": 17,
+      "bodyBottom": 101,
+      "width": 1.5,
+      "file": "reg002_sproutlift_w1_5.png",
+      "ppu": 166.667,
+      "kind": "sproutlift",
+      "dir": 0
+    },
+    {
+      "w": 351,
+      "h": 107,
+      "bodyLeft": 8,
+      "bodyRight": 342,
+      "surfaceY": 17,
+      "bodyBottom": 101,
+      "width": 2.0,
+      "file": "reg002_sproutlift_w2.png",
+      "ppu": 167.0,
+      "kind": "sproutlift",
+      "dir": 0
+    },
+    {
+      "w": 518,
+      "h": 107,
+      "bodyLeft": 8,
+      "bodyRight": 509,
+      "surfaceY": 17,
+      "bodyBottom": 101,
+      "width": 3.0,
+      "file": "reg002_sproutlift_w3.png",
+      "ppu": 167.0,
+      "kind": "sproutlift",
+      "dir": 0
+    },
+    {
+      "w": 685,
+      "h": 107,
+      "bodyLeft": 8,
+      "bodyRight": 676,
+      "surfaceY": 17,
+      "bodyBottom": 101,
+      "width": 4.0,
+      "file": "reg002_sproutlift_w4.png",
+      "ppu": 167.0,
+      "kind": "sproutlift",
+      "dir": 0
+    },
+    {
+      "w": 1019,
+      "h": 107,
+      "bodyLeft": 8,
+      "bodyRight": 1010,
+      "surfaceY": 17,
+      "bodyBottom": 101,
+      "width": 6.0,
+      "file": "reg002_sproutlift_w6.png",
+      "ppu": 167.0,
+      "kind": "sproutlift",
+      "dir": 0
+    }
+  ],
+  "stem": {
+    "file": "reg002_sproutlift_stem.png",
+    "w": 103,
+    "h": 68,
+    "topDropPx": 79,
+    "ppu": 167.0
+  }
+}

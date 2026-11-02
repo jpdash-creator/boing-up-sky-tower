@@ -240,6 +240,68 @@ namespace BoingUpSkyTower.Simulation
         public Fx SeesawDeadZone = Fx.FromRatio(2, 10);
         public Fx SeesawMinWidth = Fx.FromInt(3);
 
+        // ---- Region 2 (Mushroom Grove) special platforms (doc 30 section 3) ----
+        /// <summary>Squish Cap: sinks SquishDepth over SquishTicks (0.8 s) while stood on; a jump from a fully squashed cap is x1.45 (SquishJumpBonusPercent 45), a jump at once is a normal jump.</summary>
+        public Fx SquishDepth = Fx.FromRatio(35, 100);
+        public int SquishTicks = 48;
+        public int SquishJumpBonusPercent = 45;
+        /// <summary>Sprout Lift: rises SproutRise over SproutRiseTicks (1.2 s) while stood on, sinks back at SproutSinkPercent of the rise speed once empty (1.6 u/s at 120).</summary>
+        public Fx SproutRise = Fx.FromRatio(16, 10);
+        public int SproutRiseTicks = 72;
+        public int SproutSinkPercent = 120;
+        /// <summary>Puff Float: after a jump from it gravity is PuffGravityPercent while falling and the fall speed is at most PuffMaxFall, for PuffFloatTicks (1.2 s) of falling.</summary>
+        public int PuffFloatTicks = 72;
+        public int PuffGravityPercent = 45;
+        public Fx PuffMaxFall = Fx.FromRatio(5, 60);
+        /// <summary>Fairy Ring: half width of the hole (Platform.Amplitude) is drawn in this range; the ring is always the widest painted piece (FairyRingWidth).</summary>
+        public Fx FairyHoleMin = Fx.FromRatio(7, 10);   // the painted hole is exactly 1.4 u wide (bake_region2_new_platforms.py)
+        public Fx FairyHoleMax = Fx.FromRatio(7, 10);
+        public Fx FairyRingWidth = Fx.FromInt(6);
+        /// <summary>Orbit Cap: sideways reach range (Platform.Amplitude), vertical reach and the period of one lap (4.2 s).</summary>
+        public Fx OrbitAmplitudeMin = Fx.FromRatio(7, 10);
+        public Fx OrbitAmplitudeMax = Fx.FromRatio(9, 10);
+        public Fx OrbitAmplitudeY = Fx.FromRatio(5, 10);
+        public int OrbitPeriodTicks = 252;
+        /// <summary>Rows next to an Orbit Cap keep their vertical gap in OrbitGapMin to NormalGapMax - OrbitAmplitudeY (u).</summary>
+        public Fx OrbitGapMin = Fx.FromRatio(20, 10);
+        /// <summary>Dizzy Spores: left/right input is ignored for this long after landing (1.0 s). Never inverted.</summary>
+        public int DizzyLockTicks = 60;
+        /// <summary>Spore Pop: swells for SporePopTicks (1.2 s) after the landing, then flings the player (2.0 u up, about 3 u toward Platform.Dir) if still on it; flat for SporePopFlatTicks (2.0 s).</summary>
+        public int SporePopTicks = 72;
+        public int SporePopFlatTicks = 120;
+        public Fx SporePopVy = Fx.FromRatio(21, 100);
+        public Fx SporePopVx = Fx.FromRatio(75, 1000);
+
+        // ---- Region 3 (Sunny Beach) special platforms (doc 30 section 4) ----
+        /// <summary>Surf Boost Wave: extra acceleration along Platform.Dir while stood on (45 u/s2; the player's own run is Accel = 30), capped at the normal top speed. At least SurfMinWidth wide.</summary>
+        public Fx SurfAccel = Fx.FromRatio(45, 3600);
+        public Fx SurfMinWidth = Fx.FromInt(4);
+        /// <summary>Sandcastle Step: the raised half is SandcastleRise higher (Platform.Amplitude; 0.16 u = the painted riser, owner picked 0.9 u but the art is a low step, doc 30 section 4); walking down a step is a slide of SandcastleDropSpeed per tick (the player stays grounded). At least SandcastleMinWidth wide (two halves of 2 u).</summary>
+        public Fx SandcastleRise = Fx.FromRatio(16, 100);
+        public Fx SandcastleDropSpeed = Fx.FromRatio(1, 10);
+        public Fx SandcastleMinWidth = Fx.FromInt(4);
+        /// <summary>Clam Shell Pad: global clock, open for ClamOpenTicks of every ClamCycleTicks (open 1.2 s, shut 1.2 s); a landing while open launches x1.4 (ClamLaunch).</summary>
+        public int ClamCycleTicks = 144;
+        public int ClamOpenTicks = 72;
+        public Fx ClamLaunch = Fx.FromRatio(14, 10);
+        /// <summary>Sinking Raft: sinks RaftSinkDepth over RaftSinkTicks (1.5 s) while stood on, springs back at RaftSpringPercent of the sink speed once empty (300 = 2 u/s).</summary>
+        public Fx RaftSinkDepth = Fx.One;
+        public int RaftSinkTicks = 90;
+        public int RaftSpringPercent = 300;
+        /// <summary>Turtle Shuttle: one stop-and-go period (pause, glide, pause, glide back); a glide is TurtleGlideTicks long and covers 2 x Platform.Amplitude (2.4 u at the full 1.2 u).</summary>
+        public int TurtlePeriodTicks = 264;
+        public int TurtleGlideTicks = 60;
+        public Fx TurtleAmplitude = Fx.FromRatio(12, 10);
+        /// <summary>Kelp Tangle: no jump for KelpLockTicks after the landing; the jump input is kept (buffer) and fires the moment the lock ends.</summary>
+        public int KelpLockTicks = 36;
+        /// <summary>Pufferfish Pad: global cycle of PufferCycleTicks (calm until PufferSwellStart, swelling until PufferPuffStart, puffed after); landing or standing while puffed hops the player away.</summary>
+        public int PufferCycleTicks = 180;
+        public int PufferSwellStart = 96;
+        public int PufferPuffStart = 132;
+        public Fx PufferHopVy = Fx.FromRatio(12, 100);
+        public Fx PufferHopVx = Fx.FromRatio(10, 100);
+        public Fx PufferMinWidth = Fx.FromInt(3);
+
         // ---- Generator: how many rows carry a new special platform (percent of free rows), by campaign level ----
         /// <summary>Share of rows with a new special platform: SpecialShareLevel3Percent at level 3 rising linearly to SpecialShareLevel15Percent at level 15.</summary>
         public int SpecialShareLevel3Percent = 15;
@@ -264,6 +326,8 @@ namespace BoingUpSkyTower.Simulation
         public int HazardEarlyLastLevel = 6;
         /// <summary>Endless: the special share rises from level-3 to level-15 values over this many floors.</summary>
         public int EndlessSpecialRampFloors = 150;
+        /// <summary>Endless: the region's new kinds phase in one by one, one more every this many floors (the signature platform and Crumble are there from the start).</summary>
+        public int EndlessKindStepFloors = 10;
 
         // ---- Difficulty ramp (all regions): from level 3 the layout difficulty never falls below a floor that rises from level 3 to 15 ----
         public int RampFloorLevel3Permille = 300;

@@ -1,0 +1,59 @@
+{
+  "asset": "kelptangle_widths",
+  "kind": "kelptangle",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 363,
+      "h": 127,
+      "bodyLeft": 14,
+      "bodyRight": 348,
+      "surfaceY": 32,
+      "bodyBottom": 114,
+      "width": 2.0,
+      "file": "reg003_kelptangle_w2.png",
+      "ppu": 167.0,
+      "kind": "kelptangle",
+      "dir": 0
+    },
+    {
+      "w": 528,
+      "h": 133,
+      "bodyLeft": 13,
+      "bodyRight": 514,
+      "surfaceY": 33,
+      "bodyBottom": 119,
+      "width": 3.0,
+      "file": "reg003_kelptangle_w3.png",
+      "ppu": 167.0,
+      "kind": "kelptangle",
+      "dir": 0
+    },
+    {
+      "w": 695,
+      "h": 133,
+      "bodyLeft": 13,
+      "bodyRight": 681,
+      "surfaceY": 33,
+      "bodyBottom": 119,
+      "width": 4.0,
+      "file": "reg003_kelptangle_w4.png",
+      "ppu": 167.0,
+      "kind": "kelptangle",
+      "dir": 0
+    },
+    {
+      "w": 1031,
+      "h": 143,
+      "bodyLeft": 14,
+      "bodyRight": 1016,
+      "surfaceY": 43,
+      "bodyBottom": 126,
+      "width": 6.0,
+      "file": "reg003_kelptangle_w6.png",
+      "ppu": 167.0,
+      "kind": "kelptangle",
+      "dir": 0
+    }
+  ]
+}

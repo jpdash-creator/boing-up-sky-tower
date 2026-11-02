@@ -51,7 +51,7 @@ namespace ProjectBootstrap
             }
         }
 
-        public override uint GetVersion() { return 11; }   // bump to re-import the art when the import rules change
+        public override uint GetVersion() { return 12; }   // bump to re-import the art when the import rules change
 
         /// <summary>Small square icons (power-ups): a single sprite, no mipmaps, 256 px, compressed.</summary>
         static void ApplyIcon(TextureImporter ti)
@@ -137,6 +137,7 @@ namespace ProjectBootstrap
             if (assetPath.StartsWith("Assets/Resources/Art/Chests/")) { ApplyPicture((TextureImporter)assetImporter, 1024); return; }
             if (assetPath.StartsWith("Assets/Resources/Characters/")) { ApplyPicture((TextureImporter)assetImporter, 2048); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
+            if (assetPath.StartsWith("Assets/Resources/Art/HeroSheet/")) { ApplyRewards((TextureImporter)assetImporter); return; }   // hero sheet plates (slices.json): plain FullRect sprites, the game sets the 9-slice borders by code
             if (assetPath.StartsWith("Assets/Resources/Art/Rewards/")) { ApplyRewards((TextureImporter)assetImporter); return; }
             if (!assetPath.StartsWith("Assets/Art/")) return;
             var ti = (TextureImporter)assetImporter;

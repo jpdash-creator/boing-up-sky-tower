@@ -120,7 +120,7 @@ namespace BoingUpSkyTower.Tests
                     if (img.sprite == null || img.color.a < 0.3f || !img.gameObject.activeInHierarchy || Theme.IsSurfaceSprite(img.sprite)) continue;
                     if (img.GetComponent<Button>() != null) continue;          // buttons are audited as buttons
                     string n = img.name;
-                    if (n == "Bg" || n == "Fill" || n == "Panel" || n == "Ribbon" || n == "WalletPanel" || n == "StarPill" || n == "RowsBacking" || n == "TopBacking" || n == "NameBacking" || n == "Ground" || n == "GroundEdge" || n == "DirtOval" || n == "Backdrop") continue;   // GearPic: number badges sit on their own backing over its corner by design; the others are scenery
+                    if (n == "Bg" || n == "Fill" || n == "Panel" || n == "Ribbon" || n == "WalletPanel" || n == "StarPill" || n == "RowsBacking" || n == "TopBacking" || n == "SeamSky" || n == "NameBacking" || n == "Ground" || n == "GroundEdge" || n == "DirtOval" || n == "Backdrop") continue;   // GearPic: number badges sit on their own backing over its corner by design; the others are scenery
                     Rect ib = ToCanvasUnits(img.rectTransform, cam, scale);
                     if (ib.width * ib.height > 0.35f * (a.W / scale) * (a.H / scale)) continue;   // full-screen art
                     items.Add(new Item { Rt = img.rectTransform, Box = ib, Name = Path(img.transform) + " [image]", IsImage = true });
@@ -332,9 +332,201 @@ namespace BoingUpSkyTower.Tests
             CharacterCatalog.Selected = CharacterCatalog.Momo;
             ProgressService.TestAllCharacters = false;
 
+            // Hero sheet (docs/21): Common Momo on both tabs, plus fake heroes of every higher rarity (long name, long region, maximum stats, powers) so the banner colours and the longest texts are audited.
+            yield return CheckScreen("hero-sheet-common", () => meta.ShowHeroSheet(CharacterCatalog.Momo), problems);
+            yield return CheckScreen("hero-sheet-common-details", () => { meta.ShowHeroSheet(CharacterCatalog.Momo); meta.CurrentHeroSheet.SelectTab(1); }, problems);
+            var maxStats = new CharacterStats { JumpLaunch = 23, MaxSpeed = 12, Control = 45, WallBoostHundredths = 100, CoinFind = 50, GemFind = 5 };
+            foreach (CharacterRarity rar in new[] { CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary })
+            {
+                CharacterRarity rr = rar;
+                int powers = CharacterDefs.PowerCount[(int)rr];
+                var list = new[] { PowerUp.Flight, PowerUp.DoubleJump, PowerUp.SlowTime };
+                var pw = new PowerUp[powers];
+                for (int i = 0; i < powers; i++) pw[i] = list[i];
+                string label = "hero-sheet-" + rr.ToString().ToLowerInvariant();
+                HeroSheetData fake = HeroSheetData.From("Starlight Dragon", rr, "Crystal Caverns of Dawn", maxStats, pw);
+                yield return CheckScreen(label, () => meta.ShowHeroSheet(CharacterCatalog.Momo, null, fake), problems);
+                yield return CheckScreen(label + "-details", () => { meta.ShowHeroSheet(CharacterCatalog.Momo, null, fake); meta.CurrentHeroSheet.SelectTab(1); }, problems);
+            }
+            // entry points (owner 2026-11-02): the HOME screen has no (i) button and no hero tap area; the HEROES screen has the (i) button right of the shown hero (at least 48 dp)
+            meta.ShowMenu();
+            yield return null;
+            foreach (Button bt in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
+                Assert.IsFalse(bt.name == "HeroInfo" || bt.name == "HeroTap", bt.name + " must not exist on the home screen");
+            meta.ShowCharacters();
+            yield return null;
+            Button found = null;
+            foreach (Button bt in Object.FindObjectsByType<Button>(FindObjectsSortMode.None)) if (bt.name == "HeroInfo") found = bt;
+            Assert.IsNotNull(found, "HeroInfo is missing on the Heroes screen");
+            Assert.GreaterOrEqual(((RectTransform)found.transform).rect.width, UiKit.MinTouchPx - 1f, "HeroInfo is smaller than 48 dp");
+            found.onClick.Invoke();
+            Assert.AreEqual("Hero", meta.CurrentScreen, "HeroInfo must open the hero sheet");
+
             // The one-time "New hero joins you!" pop-up (docs/21): card, hero picture, name, rarity and the single OK button on every aspect (and at 130 percent text in the second run).
             yield return CheckScreen("hero-reveal", () => { meta.ShowMenu(); meta.ShowHeroReveal(CharacterCatalog.ForestGirl); }, problems);
             Report(problems);
+        }
+
+        // ---- emulator report 2 regressions (2026-11-02): settings reset button, level popup, rewards region names, list ends ----
+
+        static Rect CanvasBox(RectTransform rt)
+        {
+            Canvas c = rt.GetComponentInParent<Canvas>().rootCanvas;
+            return ToCanvasUnits(rt, Camera.main, c.scaleFactor);
+        }
+
+        static RectTransform FindRt(string name, Transform under = null)
+        {
+            foreach (RectTransform rt in Object.FindObjectsByType<RectTransform>(FindObjectsSortMode.None))
+            {
+                if (rt.name != name || !rt.gameObject.activeInHierarchy) continue;
+                if (under != null && !IsDescendant(rt, under)) continue;
+                return rt;
+            }
+            return null;
+        }
+
+        /// <summary>The touch-target rule is in dp on the real density: 720 x 1280 at 320 dpi needs 144 reference px (the old fixed 126 was 42 dp).</summary>
+        [Test]
+        public void TouchMinimumFollowsRealDensity()
+        {
+            Assert.GreaterOrEqual(UiKit.MinTouchRefFor(320f, 720, 1280), 143.9f, "720x1280 @320 dpi");
+            Assert.GreaterOrEqual(UiKit.MinTouchRefFor(320f, 1080, 1920), UiKit.MinTouchPx - 0.1f, "1080x1920 @320 dpi never drops below the reference minimum");
+            Assert.AreEqual(UiKit.MinTouchPx, UiKit.MinTouchRefFor(420f, 1080, 1920), 0.5f, "1080x1920 @420 dpi stays at the 411 dp reference");
+            Assert.AreEqual(UiKit.MinTouchPx, UiKit.MinTouchRefFor(0f, 1080, 1920), 0.01f, "unknown dpi falls back");
+        }
+
+        /// <summary>Settings: every row, both dev flag rows and the reset button sit inside the card with clear gaps (also where the card scrolls); the header stays fixed.</summary>
+        [UnityTest]
+        public IEnumerator SettingsRowsAndResetButtonStayInsideThePanel()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            GameSettings.ShowDevRowsForTests = true;
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                UiKit.SafeAreaNormalized = () => FullSafe;
+                meta.ShowSettings();
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                RectTransform card = FindRt("Card");
+                RectTransform reset = FindRt("Reset");
+                if (card == null || reset == null) { problems.Add(a.Name + ": settings card or reset button missing"); continue; }
+                if (!IsDescendant(reset, card)) problems.Add(a.Name + ": Reset must be a child of the settings card");
+                Rect cb = CanvasBox(card), rb = CanvasBox(reset);
+                const float gap = 16f;
+                if (rb.xMin < cb.xMin + gap || rb.xMax > cb.xMax - gap || rb.yMin < cb.yMin + gap)
+                    problems.Add(a.Name + ": Reset " + rb + " is not inside the card " + cb + " with a gap");
+                int n = 0;
+                float lowestRowBottom = float.MaxValue;
+                bool sawJump = false, sawSystem = false;
+                foreach (Button b in card.GetComponentsInChildren<Button>(false))
+                {
+                    if (b.transform == reset) continue;
+                    n++;
+                    Rect bb = CanvasBox((RectTransform)b.transform);
+                    if (bb.xMin < cb.xMin || bb.xMax > cb.xMax || bb.yMin < cb.yMin || bb.yMax > cb.yMax) problems.Add(a.Name + ": " + b.name + " leaves the card");
+                    if (bb.height < UiKit.MinTouchPx - 1f) problems.Add(a.Name + ": " + b.name + " below 48 dp");
+                    lowestRowBottom = Mathf.Min(lowestRowBottom, bb.yMin);
+                    sawJump |= b.name == "GAME_JUMP_TESTToggle";
+                    sawSystem |= b.name == "SYSTEM_TESTToggle";
+                }
+                if (n < 9) problems.Add(a.Name + ": expected 9 rows, found " + n);
+                if (!sawJump || !sawSystem) problems.Add(a.Name + ": the GAME_JUMP_TEST / SYSTEM_TEST toggles must stay visible in dev builds");
+                if (rb.yMax > lowestRowBottom - gap + 0.5f) problems.Add(a.Name + ": Reset " + rb + " touches the last row (bottom " + lowestRowBottom + ")");
+                ScrollRect sr = card.GetComponentInParent<ScrollRect>();
+                if (sr == null || !sr.vertical || sr.content != card) problems.Add(a.Name + ": the settings card must scroll vertically");
+            }
+            GameSettings.ShowDevRowsForTests = false;
+            Restore(holder);
+            Report(problems);
+        }
+
+        /// <summary>Level popup: exactly one close control, PLAY and the close X at least 48 dp, and no big empty middle between the pills and PLAY.</summary>
+        [UnityTest]
+        public IEnumerator LevelPopupHasOneCloseAndNoEmptyMiddle()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            RegionDef r1 = GameSession.Repo.GetRegionByIndex(1);
+            var levels = GameSession.Repo.LevelsOf(r1.Id);
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                UiKit.SafeAreaNormalized = () => FullSafe;
+                meta.ShowLevels(r1);
+                meta.OnLevelTapped(levels[0]);
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                RectTransform popup = FindRt("Popup");
+                RectTransform panel = popup != null ? popup.Find("Panel") as RectTransform : null;
+                if (panel == null) { problems.Add(a.Name + ": level popup missing"); continue; }
+                int closes = 0;
+                Rect playBox = default(Rect);
+                foreach (Button b in panel.GetComponentsInChildren<Button>(false))
+                {
+                    Rect bb = CanvasBox((RectTransform)b.transform);
+                    if (b.name == "Close" || b.name == "CloseX") closes++;
+                    if (b.name == "PLAY") playBox = bb;
+                    if (bb.width < UiKit.MinTouchPx - 1f || bb.height < UiKit.MinTouchPx - 1f) problems.Add(a.Name + ": popup button " + b.name + " below 48 dp");
+                }
+                if (closes != 1) problems.Add(a.Name + ": level popup has " + closes + " close buttons, expected 1");
+                if (playBox.height <= 0f) { problems.Add(a.Name + ": PLAY missing"); continue; }
+                // the lowest content row (pills) to PLAY: a gap, not a void
+                float lowestContent = float.MaxValue;
+                foreach (Transform t in panel)
+                {
+                    if (t.name == "Pays" || t.name == "Best" || t.name.StartsWith("Star")) lowestContent = Mathf.Min(lowestContent, CanvasBox((RectTransform)t).yMin);
+                }
+                float gapToPlay = lowestContent - playBox.yMax;
+                if (gapToPlay > 160f) problems.Add(a.Name + ": empty middle of " + gapToPlay.ToString("F0") + " between the content and PLAY");
+                if (gapToPlay < 16f) problems.Add(a.Name + ": content touches PLAY (" + gapToPlay.ToString("F0") + ")");
+            }
+            Restore(holder);
+            Report(problems);
+        }
+
+        /// <summary>Rewards: a region name never breaks inside a word, and the list ends above the tab row with room to scroll the last card fully into view.</summary>
+        [UnityTest]
+        public IEnumerator RewardsRegionNamesAndListEndAreSafe()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                UiKit.SafeAreaNormalized = () => FullSafe;
+                meta.ShowRewards(RewardTab.Main);
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                foreach (Text t in Object.FindObjectsByType<Text>(FindObjectsSortMode.None))
+                {
+                    if (t.name != "Name" || t.transform.parent == null || !t.transform.parent.name.StartsWith("Slot") || !t.gameObject.activeInHierarchy || string.IsNullOrEmpty(t.text)) continue;
+                    if (t.horizontalOverflow != HorizontalWrapMode.Overflow || t.text.IndexOf(' ') >= 0)
+                        problems.Add(a.Name + ": region name \"" + t.text + "\" may wrap inside a word");
+                }
+                RectTransform tabs = FindRt("Tabs");
+                foreach (ScrollRect sr in Object.FindObjectsByType<ScrollRect>(FindObjectsSortMode.None))
+                {
+                    if (sr.viewport == null || tabs == null || !sr.gameObject.activeInHierarchy) continue;
+                    if (CanvasBox(sr.viewport).yMin < CanvasBox(tabs).yMax - 0.5f) problems.Add(a.Name + ": the rewards list runs under the tab row");
+                    var vl = sr.content.GetComponent<VerticalLayoutGroup>();
+                    if (vl != null && vl.padding.bottom < 48) problems.Add(a.Name + ": rewards list has no end padding for the last card");
+                }
+            }
+            Restore(holder);
+            Report(problems);
+        }
+
+        /// <summary>Shop lists: the scroll content is longer than the cards by the end padding, so the last card can be pulled fully above the tab bar.</summary>
+        [Test]
+        public void ShopListsHaveEndPadding()
+        {
+            Assert.GreaterOrEqual(ShopChrome.ScrollEndPad, 24f);
         }
 
         /// <summary>The run draws the character from its parts: every part picture sits on the same canvas bounds.</summary>
@@ -377,6 +569,104 @@ namespace BoingUpSkyTower.Tests
                 }
             }
             Assert.Greater(checkedPlatforms, 60, "platforms were inspected");
+            Report(problems);
+        }
+
+        // ---- emulator report 2 (2026-11-02), CUX-3 in the run: the HUD and the pads are in reserved strips, the camera shows the world between them ----
+
+        /// <summary>The strips leave a play field of at least MinPlayUnits (the player can be 10 units above the danger line) on every aspect, and are consistent between HUD (ref px) and camera (world).</summary>
+        [Test]
+        public void RunStripsLeavePlayFieldOnEveryAspect()
+        {
+            UiKit.SafeAreaNormalized = () => FullSafe;
+            foreach (float aspect in new[] { 9f / 16f, 9f / 19.5f, 9f / 21f, 3f / 4f })
+            {
+                float top, bottom;
+                RunLayout.StripsWorld(aspect, 10f, out top, out bottom);
+                Assert.Greater(top, 0f, "top strip at " + aspect);
+                Assert.AreEqual(0f, bottom, 0.0001f, "no bottom reserve: the screen bottom is the danger edge (owner 2026-11-02) at " + aspect);
+                Assert.GreaterOrEqual(10f / aspect - top - bottom, RunLayout.MinPlayUnits - 0.01f, "play height at " + aspect);
+                float tr, br;
+                RunLayout.StripsRef(aspect, 10f, out tr, out br);
+                Assert.AreEqual(0f, br, 0.0001f, "HUD ref bottom reserve is 0 at " + aspect);
+                Assert.AreEqual(top, tr * 10f / RunLayout.CanvasW(aspect), 0.001f, "HUD and camera top reserve agree at " + aspect);
+                if (aspect < 0.6f)
+                {
+                    Assert.GreaterOrEqual(tr, 16f + RunLayout.RowH + 12f + RunLayout.Row2H - 0.1f, "top strip holds both HUD rows at " + aspect);
+                }
+            }
+        }
+
+        /// <summary>Real run scene: every top HUD element lies inside the top strip, every pad inside the bottom strip, and the camera puts the danger line on the strip edge (no platform under a pill or a pad).</summary>
+        [UnityTest]
+        public IEnumerator RunHudAndPadsStayInTheirStripsAndCameraAgrees()
+        {
+            GameSession.CurrentLevelId = "lvl_001_01";
+            yield return Load("Run");
+            var rc = Object.FindFirstObjectByType<RunController>();
+            rc.Hud.SkipIntro();
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                if (a.Name == "3x4") continue;   // wide tablets: the strips shrink to keep a play field (see RunLayout.MinPlayUnits), documented in docs/11
+                UiKit.SafeAreaNormalized = () => FullSafe;
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                RectTransform topStrip = FindRt("TopStrip");
+                if (topStrip == null) { problems.Add(a.Name + ": top strip missing"); continue; }
+                if (FindRt("BottomStrip") != null) problems.Add(a.Name + ": a bottom strip exists (owner 2026-11-02: none)");
+                if (FindRt("DangerLine") != null) problems.Add(a.Name + ": a red danger line exists (owner 2026-11-02: hidden)");
+                Rect tb = CanvasBox(topStrip);
+                foreach (string n in new[] { "FloorPill", "GoalPill", "GemPill", "Gauge", "Pause", "Star0", "Star1", "Star2" })
+                {
+                    RectTransform rt = FindRt(n);
+                    if (rt == null) continue;
+                    Rect r = CanvasBox(rt);
+                    if (r.yMin < tb.yMin - 1.5f) problems.Add(a.Name + ": " + n + " reaches into the play field (" + r.yMin.ToString("F0") + " < " + tb.yMin.ToString("F0") + ")");
+                }
+                foreach (string n in new[] { "PadLeft", "PadRight", "PadJump" })
+                    if (FindRt(n) == null) problems.Add(a.Name + ": " + n + " missing");   // pads float over the field; their overlap rules are in the audits
+                // the kill line of the simulation is the physical bottom edge of the screen
+                Camera cam = Camera.main;
+                float lineY = cam.WorldToScreenPoint(new Vector3(0f, rc.Session.State.KillY.F(), 0f)).y;
+                if (Mathf.Abs(lineY) > 3f) problems.Add(a.Name + ": kill line at screen y " + lineY.ToString("F1") + ", expected the screen bottom (0)");
+            }
+            Restore(holder);
+            Report(problems);
+        }
+
+        /// <summary>CUX-3 (owner 2026-11-02): the combo and speed-up banners are in the CENTRE of the screen (horizontally centred, around the vertical middle), below the top HUD strip and above the pads, never at the bottom.</summary>
+        [UnityTest]
+        public IEnumerator CentreBannersStayInTheScreenCentre()
+        {
+            GameSession.CurrentLevelId = "lvl_001_01";
+            yield return Load("Run");
+            var rc = Object.FindFirstObjectByType<RunController>();
+            rc.Hud.SkipIntro();
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                UiKit.SafeAreaNormalized = () => FullSafe;
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                RectTransform top = FindRt("TopStrip");
+                foreach (RectTransform rt in Object.FindObjectsByType<RectTransform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    if (rt.name != "ComboBanner" && rt.name != "SpeedBanner") continue;
+                    bool was = rt.gameObject.activeSelf;
+                    rt.gameObject.SetActive(true);
+                    Canvas.ForceUpdateCanvases();
+                    Rect r = CanvasBox(rt);
+                    Rect screen = CanvasBox(rt.GetComponentInParent<Canvas>().rootCanvas.GetComponent<RectTransform>());
+                    if (Mathf.Abs(r.center.x - screen.center.x) > 2f) problems.Add(a.Name + ": " + rt.name + " not horizontally centred");
+                    if (r.center.y < screen.yMin + screen.height * 0.3f || r.center.y > screen.yMin + screen.height * 0.7f) problems.Add(a.Name + ": " + rt.name + " is not in the vertical centre (y " + r.center.y.ToString("F0") + ")");
+                    if (top != null && r.yMax > CanvasBox(top).yMin + 1.5f) problems.Add(a.Name + ": " + rt.name + " overlaps the top HUD strip");
+                    rt.gameObject.SetActive(was);
+                }
+            }
+            Restore(holder);
             Report(problems);
         }
 
@@ -595,14 +885,14 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
-        // ---- subscription page (docs/26 section 2): release and test layouts, an active plan with Claim, the claimed state with countdown, the popups ----
+        // ---- VIP page (docs/26 section 2, renamed from Subscription): release and test layouts, an active plan with Claim, the claimed state with countdown, the popups ----
 
         [UnityTest]
-        public IEnumerator SubscriptionScreenHasNoOverlapAndFitsEveryAspect() { return SubscriptionAudit(100); }
+        public IEnumerator VipScreenHasNoOverlapAndFitsEveryAspect() { return SubscriptionAudit(100); }
 
-        /// <summary>CUX-5: the subscription page survives the 130 percent text size too.</summary>
+        /// <summary>CUX-5: the VIP page survives the 130 percent text size too.</summary>
         [UnityTest]
-        public IEnumerator SubscriptionScreenSurvives130PercentText() { return SubscriptionAudit(130); }
+        public IEnumerator VipScreenSurvives130PercentText() { return SubscriptionAudit(130); }
 
         /// <summary>Clean wallet, optionally with a running plan; the show action may run once per aspect, so every state is rebuilt from scratch.</summary>
         static void SubscriptionState(string plan, bool claimedToday)
@@ -624,20 +914,20 @@ namespace BoingUpSkyTower.Tests
             var problems = new List<string>();
 
             // Release layout: price buttons only, the buy tap says "Not available yet".
-            yield return CheckScreen("subscription-release", () => { SubscriptionState(null, false); meta.ShowSubscription(); }, problems);
-            yield return CheckScreen("subscription-release-buy-popup", () => { SubscriptionState(null, false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("weekly"); }, problems);
-            yield return CheckScreen("subscription-opened-from-shop", () => { SubscriptionState(null, false); meta.ShowShop(); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("vip-release", () => { SubscriptionState(null, false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("vip-release-buy-popup", () => { SubscriptionState(null, false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("weekly"); }, problems);
+            yield return CheckScreen("vip-opened-from-shop", () => { SubscriptionState(null, false); meta.ShowShop(); meta.ShowSubscription(); }, problems);
 
             // Development layout: the test note, the confirm popup, then an active plan.
             ShopScreen.TestPurchasesOverride = true;
-            yield return CheckScreen("subscription-test", () => { SubscriptionState(null, false); meta.ShowSubscription(); }, problems);
-            yield return CheckScreen("subscription-test-confirm-popup", () => { SubscriptionState(null, false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("monthly"); }, problems);
-            yield return CheckScreen("subscription-weekly-active-claim", () => { SubscriptionState("weekly", false); meta.ShowSubscription(); }, problems);
-            yield return CheckScreen("subscription-weekly-claimed-popup", () => { SubscriptionState("weekly", false); meta.ShowSubscription(); meta.CurrentSubscription.TapClaim(); }, problems);
-            yield return CheckScreen("subscription-weekly-come-back-tomorrow", () => { SubscriptionState("weekly", true); meta.ShowSubscription(); }, problems);
-            yield return CheckScreen("subscription-monthly-active-claim", () => { SubscriptionState("monthly", false); meta.ShowSubscription(); }, problems);
-            yield return CheckScreen("subscription-monthly-come-back-tomorrow", () => { SubscriptionState("monthly", true); meta.ShowSubscription(); }, problems);
-            yield return CheckScreen("subscription-other-plan-popup", () => { SubscriptionState("monthly", false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("weekly"); }, problems);
+            yield return CheckScreen("vip-test", () => { SubscriptionState(null, false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("vip-test-confirm-popup", () => { SubscriptionState(null, false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("monthly"); }, problems);
+            yield return CheckScreen("vip-weekly-active-claim", () => { SubscriptionState("weekly", false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("vip-weekly-claimed-popup", () => { SubscriptionState("weekly", false); meta.ShowSubscription(); meta.CurrentSubscription.TapClaim(); }, problems);
+            yield return CheckScreen("vip-weekly-come-back-tomorrow", () => { SubscriptionState("weekly", true); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("vip-monthly-active-claim", () => { SubscriptionState("monthly", false); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("vip-monthly-come-back-tomorrow", () => { SubscriptionState("monthly", true); meta.ShowSubscription(); }, problems);
+            yield return CheckScreen("vip-other-plan-popup", () => { SubscriptionState("monthly", false); meta.ShowSubscription(); meta.CurrentSubscription.TapBuy("weekly"); }, problems);
             ShopScreen.TestPurchasesOverride = null;
             Report(problems);
         }

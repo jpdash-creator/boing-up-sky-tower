@@ -51,9 +51,12 @@ namespace BoingUpSkyTower.Simulation
         {
             bool hazard = PlatformKinds.IsHazardType(k);
             bool launch = PlatformKinds.IsLaunch(k);
-            if (restricted && (hazard || launch)) return false;
-            if (hazard && (rowsSinceHazard < spacing || PlatformKinds.IsLaunch(prev) || PlatformKinds.IsHazardType(prev))) return false;
+            bool demanding = PlatformKinds.IsDemanding(k);
+            if (restricted && (hazard || launch || demanding)) return false;
+            if (hazard && (rowsSinceHazard < spacing || PlatformKinds.IsLaunch(prev) || PlatformKinds.IsHazardType(prev) || PlatformKinds.IsDemanding(prev))) return false;
             if (launch && PlatformKinds.IsLaunch(prev)) return false;
+            // doc 30 section 8: a demanding kind (Fairy Ring, Orbit Cap) never touches another one, a hazard or a launch flight
+            if (demanding && (PlatformKinds.IsDemanding(prev) || PlatformKinds.IsHazardType(prev) || PlatformKinds.IsLaunch(prev))) return false;
             return true;
         }
 
@@ -84,6 +87,11 @@ namespace BoingUpSkyTower.Simulation
             {
                 list.AddRange(set);
                 if (sigKind != PlatformKind.Normal && !Contains(set, sigKind)) list.Add(sigKind);
+                // doc 30 section 7: a region may keep one or two generic kinds next to its new set (region 2: Crumble and Slippery)
+                PlatformKind[] generics = RegionPlatformSets.GenericsFor(spec.Signature);
+                for (int i = 0; i < generics.Length; i++) if (!list.Contains(generics[i])) list.Add(generics[i]);
+                // the signature platform of a region may stay its most common kind: listed once more (region 3: drifting platforms)
+                if (RegionPlatformSets.SignatureListedTwice(spec.Signature) && sigKind != PlatformKind.Normal) list.Add(sigKind);
             }
             else
             {
@@ -91,6 +99,8 @@ namespace BoingUpSkyTower.Simulation
                 for (int i = 0; i < GenericSet.Length; i++) if (GenericSet[i] != sigKind) list.Add(GenericSet[i]);
             }
             if (spec.LevelIndex <= 1) list.RemoveAll(k => PlatformKinds.IsHazardType(k));
+            // doc 30 section 4: the Surf Boost Wave can carry a landing player into a wall, so a no-wall-bounce level never has one
+            if (spec.Goal != null && spec.Goal.Type == GoalType.NoWallBounce) list.RemoveAll(k => k == PlatformKind.SurfBoostWave);
             return list.ToArray();
         }
 
@@ -164,7 +174,7 @@ namespace BoingUpSkyTower.Simulation
                 for (int o = 0; o < options.Length; o++)
                 {
                     PlatformKind k = options[o];
-                    if (beside && (k == PlatformKind.HiveLift || k == PlatformKind.Sticky || PlatformKinds.IsLaunch(k))) continue;
+                    if (beside && (k == PlatformKind.HiveLift || k == PlatformKind.Sticky || k == PlatformKind.SproutLift || k == PlatformKind.OrbitCap || k == PlatformKind.SinkingRaft || k == PlatformKind.SandcastleStep || PlatformKinds.IsLaunch(k))) continue;
                     if (restricted && k == PlatformKind.Vanishing) continue;   // the finish never blinks
                     if (PlatformKinds.IsHazardType(k) && hazardsPlaced >= hazardBudget) continue;
                     if (PlatformKinds.IsLaunch(k) && launchesPlaced >= launchBudget) continue;
@@ -177,7 +187,8 @@ namespace BoingUpSkyTower.Simulation
                     for (int o = 0; o < options.Length; o++)
                     {
                         PlatformKind k = options[o];
-                        if (PlatformKinds.IsHazardType(k) || PlatformKinds.IsLaunch(k) || k == PlatformKind.HiveLift || k == PlatformKind.Sticky || k == PlatformKind.Vanishing) continue;
+                        if (PlatformKinds.IsHazardType(k) || PlatformKinds.IsLaunch(k) || PlatformKinds.IsDemanding(k) || k == PlatformKind.HiveLift || k == PlatformKind.Sticky || k == PlatformKind.Vanishing
+                            || k == PlatformKind.SproutLift || k == PlatformKind.SinkingRaft || k == PlatformKind.SandcastleStep || k == PlatformKind.SurfBoostWave) continue;
                         pool.Add(o);
                         break;
                     }
@@ -221,6 +232,18 @@ namespace BoingUpSkyTower.Simulation
                 case PlatformKind.Dandelion: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
                 case PlatformKind.HiveLift: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
                 case PlatformKind.SnapDaisy: return Fx.Max(w, Fx.FromInt(2));
+                case PlatformKind.SproutLift: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
+                case PlatformKind.FairyRing: return cfg.FairyRingWidth;   // two halves of at least 1.4 u around the hole
+                case PlatformKind.OrbitCap: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
+                case PlatformKind.DizzySpores: return Fx.Max(w, Fx.FromInt(2));
+                case PlatformKind.SporePop: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(6));   // painted in 2, 3, 4 and 6 u
+                case PlatformKind.SurfBoostWave: return Fx.Clamp(w, cfg.SurfMinWidth, Fx.FromInt(6));            // room to build speed: 4 or 6 u
+                case PlatformKind.SandcastleStep: return Fx.Clamp(w, cfg.SandcastleMinWidth, Fx.FromInt(6));    // two halves of at least 2 u
+                case PlatformKind.ClamShellPad: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
+                case PlatformKind.SinkingRaft: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
+                case PlatformKind.TurtleShuttle: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
+                case PlatformKind.KelpTangle: return Fx.Max(w, Fx.FromInt(2));
+                case PlatformKind.PufferfishPad: return Fx.Clamp(w, cfg.PufferMinWidth, Fx.FromInt(6));         // room to stay clear of the centre while puffed
                 default: return w;
             }
         }
@@ -231,8 +254,16 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         public static Fx ConstrainGap(SimConfig cfg, PlatformKind kind, PlatformKind prevKind, Fx gap)
         {
-            if (kind != PlatformKind.HiveLift && prevKind != PlatformKind.HiveLift) return gap;
-            return Fx.Clamp(gap, cfg.HiveGapMin, cfg.NormalGapMax - cfg.HiveBobAmplitude);
+            if (kind == PlatformKind.HiveLift || prevKind == PlatformKind.HiveLift) gap = Fx.Clamp(gap, cfg.HiveGapMin, cfg.NormalGapMax - cfg.HiveBobAmplitude);
+            // Sprout Lift (doc 30): it rises SproutRise once stood on, so the row above stays at least HiveGapMin away (1.0 u of air when risen); the climb into it is a normal jump.
+            if (kind == PlatformKind.SproutLift || prevKind == PlatformKind.SproutLift) gap = Fx.Clamp(gap, cfg.HiveGapMin, cfg.NormalGapMax);
+            // Orbit Cap: its height moves by +-OrbitAmplitudeY, so both neighbours keep OrbitGapMin and every height stays within a jump.
+            if (kind == PlatformKind.OrbitCap || prevKind == PlatformKind.OrbitCap) gap = Fx.Clamp(gap, cfg.OrbitGapMin, cfg.NormalGapMax - cfg.OrbitAmplitudeY);
+            // Sinking Raft (doc 30): it sinks RaftSinkDepth once stood on, so both neighbours keep HiveGapMin and every sunk height stays within a jump.
+            if (kind == PlatformKind.SinkingRaft || prevKind == PlatformKind.SinkingRaft) gap = Fx.Clamp(gap, cfg.HiveGapMin, cfg.NormalGapMax - cfg.RaftSinkDepth);
+            // Sandcastle Step: the climb onto the raised half is a normal jump 0.9 u shorter, so the gap below it stays within NormalGapMax - SandcastleRise.
+            if (kind == PlatformKind.SandcastleStep) gap = Fx.Min(gap, cfg.NormalGapMax - cfg.SandcastleRise);
+            return gap;
         }
 
         /// <summary>The x of the platform after a dandelion: in the direction of its arrow, DandelionNextDxMin to Max away, kept inside the walls.</summary>
@@ -275,7 +306,73 @@ namespace BoingUpSkyTower.Simulation
                 case PlatformKind.SnapDaisy:
                     phase = rng.Next(cfg.SnapCloseTicks);   // only a visual offset of the idle animation
                     break;
+                case PlatformKind.FairyRing:
+                    amp = rng.Range(cfg.FairyHoleMin, cfg.FairyHoleMax);   // half width of the hole
+                    break;
+                case PlatformKind.OrbitCap:
+                    amp = Fx.Min(rng.Range(cfg.OrbitAmplitudeMin, cfg.OrbitAmplitudeMax), room);
+                    if (amp < Fx.Zero) amp = Fx.Zero;
+                    period = cfg.OrbitPeriodTicks;
+                    phase = rng.Next(period);
+                    break;
+                case PlatformKind.SporePop:
+                    dir = x < screen / 2 ? 1 : -1;   // the fling points toward the middle of the screen, never into a wall
+                    break;
+                case PlatformKind.SurfBoostWave:
+                    dir = x < screen / 2 ? 1 : -1;   // the wave carries toward the middle of the screen, never into a wall
+                    break;
+                case PlatformKind.SandcastleStep:
+                    dir = rng.Next(2) == 0 ? -1 : 1;   // side of the raised half
+                    amp = cfg.SandcastleRise;
+                    break;
+                case PlatformKind.ClamShellPad:
+                    phase = rng.Next(cfg.ClamCycleTicks);
+                    break;
+                case PlatformKind.TurtleShuttle:
+                    amp = Fx.Min(cfg.TurtleAmplitude, room);
+                    if (amp < Fx.Zero) amp = Fx.Zero;
+                    period = cfg.TurtlePeriodTicks;
+                    phase = rng.Next(period);
+                    break;
+                case PlatformKind.PufferfishPad:
+                    phase = rng.Next(cfg.PufferCycleTicks);
+                    break;
             }
         }
+
+        // ------------------------------------------------------------------------------------------------------------------
+        // Integer sine table (Orbit Cap): 64 steps per lap, linear interpolation, no System.Math, identical on every device
+        // ------------------------------------------------------------------------------------------------------------------
+
+        /// <summary>sin(k * pi / 32) in Q16.16 for k = 0 to 16 (one quarter of a lap in 16 steps).</summary>
+        private static readonly int[] QuarterSin = { 0, 6424, 12785, 19024, 25080, 30893, 36410, 41576, 46341, 50660, 54491, 57798, 60547, 62714, 64277, 65220, 65536 };
+
+        private static int LapSinRaw(int step)
+        {
+            int idx = step & 63;
+            int q = idx >> 4, r = idx & 15;
+            switch (q)
+            {
+                case 0: return QuarterSin[r];
+                case 1: return QuarterSin[16 - r];
+                case 2: return -QuarterSin[r];
+                default: return -QuarterSin[16 - r];
+            }
+        }
+
+        private static Fx LapSin(int phase, int period, int quarterOffsetSteps)
+        {
+            long pos = (long)phase * 64 * 256 / period;   // position in 1/256 steps
+            int step = (int)(pos >> 8) + quarterOffsetSteps;
+            int frac = (int)(pos & 255);
+            int a = LapSinRaw(step), b = LapSinRaw(step + 1);
+            return Fx.FromRaw(a + (((b - a) * frac) >> 8));
+        }
+
+        /// <summary>sin of the lap position phase / period (phase in 0 to period - 1), -1 to 1.</summary>
+        public static Fx Sin(int phase, int period) { return LapSin(phase, period, 0); }
+
+        /// <summary>cos of the lap position phase / period, -1 to 1.</summary>
+        public static Fx Cos(int phase, int period) { return LapSin(phase, period, 16); }
     }
 }

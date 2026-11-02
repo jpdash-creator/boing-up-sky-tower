@@ -210,3 +210,20 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-01,T68,hero_r4_candy_shop_girl_v3_test,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,6vu3bmCxzV1DPdekRUEu,done,15,approvals/T66-region-heroes.md,
 2026-11-01,T69,hero_r4_golden_candy_girl_v4,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 refs=slim doll+monk B,none,Q8gvDy3KnNUFOo0eu6Wz,done,15,chat prompt shown to owner,owner approved 15 credits; T68 R4 rejected
 2026-11-01,T70,flight_wings,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=monk style+Momo size,none,xCFaYtia4dm3QsBZPEXI,done,30,approvals/T70-flight-wings.md,owner approved 30 credits
+2026-11-01,T71,hero_sheet_layout_A,byte-plus-seedream-5-lite,image2image,2K 9:16 x1 refs=style bible (not attached),none,zHa4KRDakssh9fVSrAI4,done,15,approvals/T71-hero-stat-sheet.md,owner approved 60 credits
+2026-11-01,T71,hero_sheet_layout_B,byte-plus-seedream-5-lite,image2image,2K 9:16 x1 refs=style bible (not attached),none,JMNhwb5VIfN3wD8AMCNj,done,15,approvals/T71-hero-stat-sheet.md,
+2026-11-01,T71,hero_sheet_layout_C,byte-plus-seedream-5-lite,image2image,2K 9:16 x1 refs=style bible (not attached),none,BcPr6mMXRmzZ9Yq5jCcs,done,15,approvals/T71-hero-stat-sheet.md,
+2026-11-01,T71,hero_sheet_layout_D,byte-plus-seedream-5-lite,image2image,2K 9:16 x1 refs=style bible (not attached),none,pOqXu9sKMYcQuFld707D,done,15,approvals/T71-hero-stat-sheet.md,
+2026-11-01,T72,hero_sheet_A_sky,byte-plus-seedream-5-lite,image2image,2K 9:16 x1 refs=shop_chests_reference,none,YGSeVQHqqqCV7MHp49L9,done,15,chat prompt shown to owner,owner approved 45 credits; layout A picked from T71 but colours off-brand
+2026-11-01,T72,hero_sheet_A_wood,byte-plus-seedream-5-lite,image2image,2K 9:16 x1 refs=shop_chests_reference,none,f3t70uAcKK008fVXH2iJ,done,15,chat prompt shown to owner,
+2026-11-01,T72,hero_sheet_A_cream_green,byte-plus-seedream-5-lite,image2image,2K 9:16 x1 refs=shop_chests_reference,none,EZK9Fz1uRPztWr4XpfSs,done,15,chat prompt shown to owner,
+2026-11-01,T73,region2_platforms_sheetA,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=R1 sheet B2,none,Uogl2HgRL4Cf7qDhzfaS,done,30,approvals/T73-region2-platforms.md,owner approved 90 credits
+2026-11-01,T73,region2_platforms_sheetB,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=R1 sheet B2,none,oLK2ELGIceCyGf8Pk0Tk,done,30,approvals/T73-region2-platforms.md,
+2026-11-01,T73,region2_platforms_sheetC,byte-plus-seedream-5-lite,image2image,2K 4:3 x2 refs=R1 sheet B2,none,2zWjenGqRNjznITX3REA,done,30,approvals/T73-region2-platforms.md,
+2026-11-01,T73b,region2_platforms_sheetA_v2,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,a5oWn3PuXIvR2VCBhpdd,done,30,chat prompt shown to owner,owner approved 90 credits; T73 sheets had only 4 rows and thorns leak
+2026-11-01,T73b,region2_platforms_sheetB_v2,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,7MTqghPMOdrZp8kZYZoR,done,30,chat prompt shown to owner,
+2026-11-01,T73b,region2_platforms_sheetC_v2,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,baUDTnKhWbIAqZ3NExUZ,done,30,chat prompt shown to owner,
+2026-11-02,T74,region3_platforms_sheetA,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,cYcCyUZZSbjh2M1Hnn3I,done,30,approvals/T74-region3-platforms.md,owner approved 90 credits; owner picked A2
+2026-11-02,T74,region3_platforms_sheetB,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,fj4uPMEXdgdg9UZNRWWX,done,30,approvals/T74-region3-platforms.md,
+2026-11-02,T74,region3_platforms_sheetC,byte-plus-seedream-5-lite,text2image,2K 3:4 x2 no reference,none,X9kzaa9UgThAgaSm91UU,done,30,approvals/T74-region3-platforms.md,
+2026-11-02,T74,region3_picks,,,,,,done,0,approvals/T74-region3-platforms.md,owner picked A2 (wave+sandcastle+clam) B1 raft B2 turtle C2 (kelp+puffer); 90 credits used balance 4268

@@ -240,11 +240,17 @@ namespace BoingUpSkyTower.Simulation
         private static int[] WaitsFor(PlatformKind here, int[] normal)
         {
             if (here == PlatformKind.Crumble) return CrumbleWaits;
-            if (here == PlatformKind.SnapDaisy) return SnapWaits;
+            if (here == PlatformKind.SnapDaisy || here == PlatformKind.SporePop) return SnapWaits;   // a spore pop flings the player 72 ticks after the landing
+            if (here == PlatformKind.DizzySpores) return DizzyWaits;                                  // steering is locked for the first 60 ticks
+            if (here == PlatformKind.KelpTangle) return KelpWaits;                                    // no jump for the first 36 ticks
+            if (here == PlatformKind.SinkingRaft) return RaftWaits;                                   // the raft sinks 1 u in 90 ticks: leave within about 1.3 s
             return normal;
         }
 
         private static readonly int[] SnapWaits = { 0, 12, 30 };
+        private static readonly int[] DizzyWaits = { 0, 20, 62, 80 };
+        private static readonly int[] KelpWaits = { 0, 38, 50, 80 };
+        private static readonly int[] RaftWaits = { 0, 20, 45, 70 };
 
         /// <summary>Platforms on the one or two rows above a bounce platform (where the bounce flight should go next).</summary>
         private int NextTargets(int bounceId, int[] buf)
@@ -361,7 +367,7 @@ namespace BoingUpSkyTower.Simulation
             Platform p = sim.Platforms[c.GroundId];
             long vb = (c.Vx.Raw * 20L / Fx.OneRaw) + 16;
             long tb = 0;
-            if (PlatformKinds.IsTimeDependent(p.Kind)) tb = (c.Tick / 20) % 24;
+            if (PlatformKinds.IsTimeDependent(p.Kind)) tb = TimeBucket(p, c.Tick);
             if (sim.Hazards.Length > 0) tb = (c.Tick / 24) % 32;
             long xb = c.X.Raw * 4L / Fx.OneRaw;
             long extra = 0;
@@ -372,6 +378,21 @@ namespace BoingUpSkyTower.Simulation
                 else if (spec.Goal.Type == GoalType.Speedrun) extra = c.Tick / 90;
             }
             return c.GroundId + (vb << 20) + (tb << 28) + (xb << 36) + (extra << 44);
+        }
+
+        /// <summary>
+        /// Time bucket of a landing state on a time-dependent platform (20 ticks wide, at most 24 buckets): the global clocks of the Clam Shell Pad, the
+        /// Pufferfish Pad and the Turtle Shuttle are keyed modulo their own period (144, 180, 264), the other platforms modulo 480.
+        /// </summary>
+        private long TimeBucket(Platform p, int tick)
+        {
+            switch (p.Kind)
+            {
+                case PlatformKind.ClamShellPad: return ((tick + p.Phase) % sim.Cfg.ClamCycleTicks) / 12;
+                case PlatformKind.PufferfishPad: return ((tick + p.Phase) % sim.Cfg.PufferCycleTicks) / 12;
+                case PlatformKind.TurtleShuttle: return ((tick + p.Phase) % sim.Cfg.TurtlePeriodTicks) / 12;
+                default: return (tick / 20) % 24;
+            }
         }
 
         // Scratch state reused by every TryJump so that failed attempts do not allocate; only a landing is cloned.

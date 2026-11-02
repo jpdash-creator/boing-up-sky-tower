@@ -7,6 +7,67 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
+    /// Run screen layout (CUX-3: the HUD and the pads never cover the player, the next platforms or a hazard). The screen is split into a TOP strip (wallet row, gauge and stars)
+    /// reserved as room only (nothing is drawn). There is NO bottom strip and no red line (owner decision 2026-11-02): the play field runs to the real bottom edge of the screen,
+    /// which is the danger edge of the simulation, and the control pads float over it. RunView sizes its camera from the top reserve alone. All numbers are reference px
+    /// (1080 x 1920 canvas, match 0.5); derived from the aspect alone, so view and HUD agree. Pure functions, no allocation.
+    /// </summary>
+    public static class RunLayout
+    {
+        /// <summary>Row 1 (pills and pause) height: at least 96 and the real 48 dp touch size of this device.</summary>
+        public static float RowH { get { return Mathf.Max(96f, UiKit.MinTouchRef); } }
+        /// <summary>Row 2 (gauge and stars) height.</summary>
+        public const float Row2H = 76f;
+        public const float ChipH = 84f;
+        /// <summary>Space of the bottom strip above the safe-area bottom: 20 + jump pad (230) + 20.</summary>
+        public const float BottomPadRef = ControlPad.PadBottom + ControlPad.JumpSize;
+        /// <summary>The visible play height (world units, 10 wide) never drops below this: the player can be 10 above the danger line.</summary>
+        public const float MinPlayUnits = 11.5f;
+        public static readonly Color StripColor = new Color(0.07f, 0.09f, 0.17f, 0f);   // transparent: the strips only reserve room, no header or footer bar is drawn (owner 2026-11-02)
+
+        /// <summary>Test hook: forces the aspect (width / height); 0 = the main camera or the screen.</summary>
+        public static float AspectOverride;
+
+        public static float AspectNow()
+        {
+            if (AspectOverride > 0f) return AspectOverride;
+            if (RunView.AspectOverride > 0f) return RunView.AspectOverride;
+            Camera c = Camera.main;
+            if (c != null && c.aspect > 0.1f) return c.aspect;
+            return Mathf.Max(1f, Screen.width) / Mathf.Max(1f, Screen.height);
+        }
+
+        /// <summary>Canvas width in reference px for an aspect (CanvasScaler match 0.5: scale = sqrt(w/1080 * h/1920)).</summary>
+        public static float CanvasW(float aspect) { return 1440f * Mathf.Sqrt(Mathf.Max(0.3f, aspect)); }
+
+        /// <summary>The strips in reference px: safe-area inset (notch, gesture bar) plus the HUD rows; shrunk (both) when the play field would get lower than <see cref="MinPlayUnits"/> (wide 3:4 screens).</summary>
+        public static void StripsRef(float aspect, float worldWidth, out float top, out float bottom)
+        {
+            float cw = CanvasW(aspect), ch = cw / Mathf.Max(0.3f, aspect);
+            Rect sa = UiKit.SafeAreaNormalized();
+            top = Mathf.Max(0f, 1f - sa.yMax) * ch + 16f + RowH + 12f + Row2H + 12f;
+            bottom = 0f;   // owner decision 2026-11-02: no bottom strip and no red line; the play field runs to the real screen bottom, the pads float over it
+            float unitsPerRef = worldWidth / cw;
+            float room = ch * unitsPerRef - MinPlayUnits;
+            float sum = top * unitsPerRef;
+            if (sum > room && sum > 0f)
+            {
+                float f = Mathf.Max(0f, room) / sum;
+                top *= f;
+            }
+        }
+
+        /// <summary>The strips in world units (the camera uses these).</summary>
+        public static void StripsWorld(float aspect, float worldWidth, out float top, out float bottom)
+        {
+            StripsRef(aspect, worldWidth, out top, out bottom);
+            float k = worldWidth / CanvasW(aspect);
+            top *= k;
+            bottom *= k;
+        }
+    }
+
+    /// <summary>
     /// Code-built HUD and overlays (intro, pause, failed, results) for the Run scene. Icon-first (docs/16 sections G and I): dark pills with a
     /// painted icon and a number, a slim tower gauge instead of floor and goal sentences, icon banners for combo and speed-up, and round icon
     /// buttons with a one-word caption in the popups.
@@ -23,7 +84,11 @@ namespace BoingUpSkyTower.Gameplay
         Canvas canvas;
         Text floorText, goalText, gemText, comboText, timeText, introText, speedText;
         RectTransform comboRoot, speedRoot, introRoot, gaugeMarker;
-        float gaugeH;
+        float gaugeW;
+        RectTransform topStripRt;
+        Camera aspectCam;
+        float lastAspect, worldWidth;
+        RectTransform gaugeTrack;
         float speedCueTimer;
         int lastSpeedStep;
         RectTransform overlay;
@@ -61,10 +126,10 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>A dark pill with an icon at the left and a number after it, placed with <see cref="P"/>. Returns the number text.</summary>
-        Text Pill(RectTransform root, string name, Sprite icon, Vector2 anchor, Vector2 pos, Vector2 size, Color number)
+        Text Pill(RectTransform root, string name, Sprite icon, Vector2 anchor, Vector2 pos, Vector2 size, Color number, bool inLayoutRow = false)
         {
             Image pill = Theme.GlassPanel(root, name, size.y * 0.25f);
-            P(pill.rectTransform, anchor, pos, size);
+            if (!inLayoutRow) P(pill.rectTransform, anchor, pos, size);
             Image ic = UiKit.AddImage(pill.transform, "Icon", icon, Color.white);
             ic.rectTransform.anchorMin = ic.rectTransform.anchorMax = new Vector2(mirror ? 1f : 0f, 0.5f);
             ic.rectTransform.pivot = new Vector2(mirror ? 1f : 0f, 0.5f);
@@ -91,50 +156,104 @@ namespace BoingUpSkyTower.Gameplay
             endless = session.IsEndless;
             bestBefore = endless && GameSession.Progress != null ? GameSession.Progress.EndlessBestFloor(session.Region.Id) : 0;
 
-            // Top left: floor (tower icon + number) and goal (flag icon + target). The words live in the level intro only.
-            floorText = Pill(root, "FloorPill", ToyKit.Get("icon_tower"), new Vector2(0f, 1f), new Vector2(18f, -16f), new Vector2(300f, 104f), Color.white);
-            goalText = Pill(root, "GoalPill", ToyKit.Get("icon_flag"), new Vector2(0f, 1f), new Vector2(18f, -134f), new Vector2(300f, 104f), new Color(1f, 0.95f, 0.6f));
-            UiKit.SetText(goalText, endless ? bestBefore.ToString() : session.Spec.TargetRow().ToString());
+            // CUX-3 layout: the play field is the screen between two reserved strips (RunLayout). The camera (RunView) shows the world between them, so no platform
+            // is ever drawn under the top HUD or under the control pads; the top strip only reserves room. The physical screen bottom IS the danger edge (no bottom strip, no line).
+            float aspect = RunLayout.AspectNow();
+            float topRef, bottomRef;   // bottomRef is always 0 now
+            RunLayout.StripsRef(aspect, session.Cfg.ScreenWidth.F(), out topRef, out bottomRef);
+            lastAspect = aspect;
+            aspectCam = Camera.main;
+            Image topStrip = UiKit.AddImage(canvas.transform, "TopStrip", null, RunLayout.StripColor);
+            topStrip.raycastTarget = false;
+            topStrip.rectTransform.anchorMin = new Vector2(0f, 1f);
+            topStrip.rectTransform.anchorMax = new Vector2(1f, 1f);
+            topStrip.rectTransform.pivot = new Vector2(0.5f, 1f);
+            topStrip.rectTransform.anchoredPosition = Vector2.zero;
+            topStrip.rectTransform.sizeDelta = new Vector2(0f, topRef);
+            topStripRt = topStrip.rectTransform;
+            topStrip.transform.SetAsFirstSibling();
+            worldWidth = session.Cfg.ScreenWidth.F();
+            // no bottom strip and no danger line is drawn (owner 2026-11-02): the physical screen bottom is the danger edge
 
-            // Slim tower gauge under the pills: Momo's height as a marker between the ground and the finish flag.
-            gaugeH = 520f;
-            Image gauge = Theme.GlassPanel(root, "Gauge", 24f);
-            P(gauge.rectTransform, new Vector2(0f, 1f), new Vector2(18f, -256f), new Vector2(64f, gaugeH));
+            float rowH = RunLayout.RowH;
+            float pauseS = rowH;
+
+            // Row 1: floor, goal, gems share the width left of the round pause button (a layout row: they fit every aspect and 130 percent text).
+            RectTransform pillRow = UiKit.Rect(root, "HudPills");
+            pillRow.anchorMin = new Vector2(0f, 1f);
+            pillRow.anchorMax = new Vector2(1f, 1f);
+            pillRow.pivot = new Vector2(0.5f, 1f);
+            float padL = 18f, padR = 18f + pauseS + 14f;   // the pause button sits at the right edge (the left-handed layout mirrors it)
+            pillRow.offsetMin = new Vector2(mirror ? padR : padL, -(16f + rowH));
+            pillRow.offsetMax = new Vector2(mirror ? -padL : -padR, -16f);
+            var hl = pillRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.spacing = 14f;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+            hl.reverseArrangement = mirror;
+            floorText = Pill(pillRow, "FloorPill", ToyKit.Get("icon_tower"), Vector2.zero, Vector2.zero, new Vector2(0f, rowH), Color.white, true);
+            goalText = Pill(pillRow, "GoalPill", ToyKit.Get("icon_flag"), Vector2.zero, Vector2.zero, new Vector2(0f, rowH), new Color(1f, 0.95f, 0.6f), true);
+            UiKit.SetText(goalText, endless ? bestBefore.ToString() : session.Spec.TargetRow().ToString());
+            Text gems = Pill(pillRow, "GemPill", art != null ? art.GemIcon : null, Vector2.zero, Vector2.zero, new Vector2(0f, rowH), new Color(0.75f, 0.92f, 1f), true);
+            gemText = gems;
+            if (endless) { gems.transform.parent.gameObject.SetActive(false); }   // endless has no gems or stars to collect
+            Button pause = ToyKit.GlyphButton(root, "Pause", "Pause", 2, Glyphs.Pause, new Vector2(pauseS, pauseS), () => { if (OnPause != null) OnPause(); });
+            pause.gameObject.AddComponent<CanvasGroup>().alpha = ControlPad.ButtonAlpha;
+            P((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(-18f, -16f), new Vector2(pauseS, pauseS));
+
+            // Row 2: the tower gauge as a slim horizontal bar (the hero's height between the ground and the flag) and the 3 level stars at the right end.
+            float row2Y = -(16f + rowH + 12f);
+            const float starS = 64f, starGap = 6f, trackH = 52f;
+            float starsW = endless ? 0f : 3f * starS + 2f * starGap;
+            float gaugeRight = 18f + (endless ? 0f : starsW + 20f);
+            Image gauge = Theme.GlassPanel(root, "Gauge", trackH * 0.5f);
+            RectTransform grt = gauge.rectTransform;
+            grt.anchorMin = new Vector2(0f, 1f);
+            grt.anchorMax = new Vector2(1f, 1f);
+            grt.pivot = new Vector2(0.5f, 1f);
+            float gy = row2Y - (RunLayout.Row2H - trackH) * 0.5f;
+            grt.offsetMin = new Vector2(mirror ? gaugeRight : 18f, gy - trackH);
+            grt.offsetMax = new Vector2(mirror ? -18f : -gaugeRight, gy);
+            gaugeTrack = grt;
+            gaugeW = 400f;
             Image marker = UiKit.AddImage(gauge.transform, "Marker", Theme.RoundSprite, new Color(1f, 0.82f, 0.3f, 1f));
             marker.type = Image.Type.Sliced;
-            marker.rectTransform.anchorMin = marker.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            marker.rectTransform.anchorMin = marker.rectTransform.anchorMax = new Vector2(0f, 0.5f);
             marker.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            marker.rectTransform.sizeDelta = new Vector2(44f, 44f);
-            marker.rectTransform.anchoredPosition = new Vector2(0f, 40f);
+            marker.rectTransform.sizeDelta = new Vector2(40f, 40f);
+            marker.rectTransform.anchoredPosition = new Vector2(mirror ? 370f : 30f, 0f);
             Image mring = UiKit.AddImage(marker.transform, "Ring", Theme.RingSprite, Color.white);
             mring.type = Image.Type.Sliced;
             mring.preserveAspect = false;
             UiKit.Stretch(mring.rectTransform);
             gaugeMarker = marker.rectTransform;
             gauge.gameObject.SetActive(!endless);
-
-            // Top right: gems pill, the 3 stars of the level (lit when collected), then the round pause button.
             starIcons = new Image[3];
-            Text gems = Pill(root, "GemPill", art != null ? art.GemIcon : null, new Vector2(1f, 1f), new Vector2(-18f, -16f), new Vector2(300f, 104f), new Color(0.75f, 0.92f, 1f));
-            gemText = gems;
             for (int i = 0; i < 3 && !endless; i++)
             {
                 starIcons[i] = UiKit.AddImage(root, "Star" + i, art != null ? art.StarFilled : null, new Color(0.35f, 0.35f, 0.4f, 0.9f));
-                P(starIcons[i].rectTransform, new Vector2(1f, 1f), new Vector2(-30f - (2 - i) * 96f, -134f), new Vector2(88f, 88f));
+                P(starIcons[i].rectTransform, new Vector2(1f, 1f), new Vector2(-18f - (2 - i) * (starS + starGap), row2Y - (RunLayout.Row2H - starS) * 0.5f), new Vector2(starS, starS));
             }
-            if (endless) { gems.transform.parent.gameObject.SetActive(false); }   // endless has no gems or stars to collect
 
-            Button pause = ToyKit.GlyphButton(root, "Pause", "Pause", 2, Glyphs.Pause, new Vector2(130f, 130f), () => { if (OnPause != null) OnPause(); });
-            P((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(-30f, endless ? -140f : -240f), new Vector2(130f, 130f));
-
-            // Combo: flame icon and the multiplier; speed up: arrows icon and the percent. Both appear on demand.
-            comboRoot = BannerRoot(root, "ComboBanner", "icon_flame", new Color(1f, 0.85f, 0.2f), new Vector2(0f, -150f), out comboText);
-            speedRoot = BannerRoot(root, "SpeedBanner", "icon_speed", new Color(1f, 0.7f, 0.4f), new Vector2(0f, -280f), out speedText);
+            // Combo and speed-up are transient banners in the CENTRE of the screen (owner 2026-11-02): horizontally centred, combo just above and speed-up just below the vertical middle.
+            // The centre is clear of the top HUD rows, the pads and the power-up buttons (those sit at the sides / bottom); anchors are symmetric, so left-handed mirroring needs no change.
+            // The speedrun clock stays between the pads in the bottom strip.
+            float leftSpan = ControlPad.MoveSpan + 20f, rightSpan = ControlPad.JumpSpan + 20f;
+            if (mirror) { float t = leftSpan; leftSpan = rightSpan; rightSpan = t; }
+            comboRoot = BannerRoot(root, "ComboBanner", "icon_flame", new Color(1f, 0.85f, 0.2f), BannerComboY, out comboText);
+            speedRoot = BannerRoot(root, "SpeedBanner", "icon_speed", new Color(1f, 0.7f, 0.4f), BannerSpeedY, out speedText);
             comboRoot.gameObject.SetActive(false);
             speedRoot.gameObject.SetActive(false);
 
-            timeText = UiKit.AddText(root, "Time", "", 40, Color.white, Align(TextAnchor.UpperLeft));
-            P((RectTransform)timeText.transform, new Vector2(0f, 1f), new Vector2(100f, -262f), new Vector2(460f, 60f));
+            timeText = UiKit.AddText(root, "Time", "", 40, Color.white, TextAnchor.MiddleCenter);
+            RectTransform trt0 = (RectTransform)timeText.transform;
+            trt0.anchorMin = new Vector2(0f, 0f);
+            trt0.anchorMax = new Vector2(1f, 0f);
+            trt0.pivot = new Vector2(0.5f, 0f);
+            float ty = 20f + 2f * (RunLayout.ChipH + 10f);
+            trt0.offsetMin = new Vector2(leftSpan, ty);
+            trt0.offsetMax = new Vector2(-rightSpan, ty + 56f);
+            timeText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
             BuildIntro(root, session);
             Pad = ControlPad.Build(root, art, mirror);
@@ -145,12 +264,19 @@ namespace BoingUpSkyTower.Gameplay
             introTimer = 3.2f;
         }
 
-        /// <summary>A centred icon + text banner (combo, speed up) under the top pills. Returns its root; the text is the out parameter.</summary>
-        RectTransform BannerRoot(RectTransform root, string name, string icon, Color number, Vector2 pos, out Text text)
+        /// <summary>Banner size and centre offsets (reference px from the middle of the safe area). Public so tests can assert the centre placement.</summary>
+        public const float BannerW = 380f, BannerH = 112f, BannerComboY = 70f, BannerSpeedY = -70f;
+
+        /// <summary>An icon + text pill (combo, speed up) in the centre of the screen: anchored to the middle, offset vertically by <paramref name="y"/>. Returns its root; the text is the out parameter.</summary>
+        RectTransform BannerRoot(RectTransform root, string name, string icon, Color number, float y, out Text text)
         {
+            float h = BannerH;
             Image pill = Theme.GlassPanel(root, name, 24f);
-            UiKit.Place(pill.rectTransform, new Vector2(0.5f, 1f), pos, new Vector2(380f, 112f));
-            pill.rectTransform.pivot = new Vector2(0.5f, 1f);
+            RectTransform prt = pill.rectTransform;
+            prt.anchorMin = prt.anchorMax = new Vector2(0.5f, 0.5f);
+            prt.pivot = new Vector2(0.5f, 0.5f);
+            prt.anchoredPosition = new Vector2(0f, y);
+            prt.sizeDelta = new Vector2(BannerW, h);
             Image ic = UiKit.AddImage(pill.transform, "Icon", ToyKit.Get(icon), Color.white);
             ic.rectTransform.anchorMin = ic.rectTransform.anchorMax = new Vector2(0f, 0.5f);
             ic.rectTransform.pivot = new Vector2(0f, 0.5f);
@@ -158,6 +284,9 @@ namespace BoingUpSkyTower.Gameplay
             ic.rectTransform.sizeDelta = new Vector2(84f, 84f);
             text = UiKit.AddText(pill.transform, "Value", "", 64, number, TextAnchor.MiddleCenter, true);
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.resizeTextForBestFit = true;   // "+100%" must stay inside the pill at 130% text
+            text.resizeTextMinSize = 40;
+            text.resizeTextMaxSize = 64;
             var trt = (RectTransform)text.transform;
             trt.anchorMin = Vector2.zero;
             trt.anchorMax = Vector2.one;
@@ -218,6 +347,15 @@ namespace BoingUpSkyTower.Gameplay
         public void Refresh(RunSession s, float deltaTime)
         {
             SimState st = s.State;
+            // the screen shape changed (rotation, split screen, tests): size the strips again, exactly as RunView does for its camera (no work otherwise)
+            float asp = RunView.AspectOverride > 0f ? RunView.AspectOverride : (aspectCam != null ? aspectCam.aspect : lastAspect);
+            if (asp > 0.1f && Mathf.Abs(asp - lastAspect) > 0.0005f)
+            {
+                lastAspect = asp;
+                float tr, br;
+                RunLayout.StripsRef(asp, worldWidth, out tr, out br);
+                topStripRt.sizeDelta = new Vector2(0f, tr);
+            }
             if (Powers != null && Powers.ButtonCount > 0)
             {
                 if (introTimer <= 0f && !Powers.Visible) Powers.SetVisible(true);
@@ -236,7 +374,8 @@ namespace BoingUpSkyTower.Gameplay
                 else if (gaugeMarker != null)
                 {
                     float f = Mathf.Clamp01(st.Row / (float)Mathf.Max(1, s.Spec.TargetRow()));
-                    gaugeMarker.anchoredPosition = new Vector2(0f, 40f + f * (gaugeH - 80f));
+                    if (gaugeTrack != null && gaugeTrack.rect.width > 60f) gaugeW = gaugeTrack.rect.width;   // the real width once laid out
+                    gaugeMarker.anchoredPosition = new Vector2(30f + (mirror ? 1f - f : f) * (gaugeW - 60f), 0f);
                 }
             }
             if (st.StarMask != lastStarMask)
@@ -265,7 +404,7 @@ namespace BoingUpSkyTower.Gameplay
                 UiKit.SetText(comboText, st.Combo > 1 ? "x" + st.Combo : "");
                 comboRoot.gameObject.SetActive(st.Combo > 1);
             }
-            if (!GameSettings.ReducedMotion) comboRoot.localScale = Vector3.one * (1f + comboPulse * 0.25f);
+            if (!GameSettings.ReducedMotion) comboRoot.localScale = Vector3.one * (1f + comboPulse * 0.06f);
 
             // "Speed up" cue each time the screen speeds up (every ScrollStepSeconds): icon plus percent, a static cue with reduced motion.
             if (st.StartTick >= 0)
@@ -284,7 +423,7 @@ namespace BoingUpSkyTower.Gameplay
             if (speedCueTimer > 0f)
             {
                 speedCueTimer -= deltaTime;
-                if (!GameSettings.ReducedMotion) speedRoot.localScale = Vector3.one * (1f + Mathf.Clamp01(speedCueTimer - 1.2f) * 0.4f);
+                if (!GameSettings.ReducedMotion) speedRoot.localScale = Vector3.one * (1f + Mathf.Clamp01(speedCueTimer - 1.2f) * 0.1f);
                 if (speedCueTimer <= 0f) speedRoot.gameObject.SetActive(false);
             }
 
@@ -306,15 +445,23 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- overlays ----------------
 
-        void OpenOverlay(string title, float height = 1000f)
+        void OpenOverlay(string title, float height = 1000f, bool closeX = true)
         {
             CloseOverlay();
             overlay = UiKit.Rect(canvas.transform, "Overlay");
             UiKit.Stretch(overlay);
             var dim = overlay.gameObject.AddComponent<Image>();
             dim.color = new Color(0f, 0f, 0f, 0.62f);
-            UiKit.BuildPopupFrame(overlay, title, art, new Vector2(860f, height), () => { if (OnClose != null) OnClose(); });
+            UiKit.BuildPopupFrame(overlay, title, art, new Vector2(860f, height), closeX ? (Action)(() => { if (OnClose != null) OnClose(); }) : null);
         }
+
+        // Bottom action row geometry (shared by every overlay): caption height follows the real text size (130 percent text), buttons are at least 48 dp on this device.
+        static float CaptionH { get { return Mathf.Ceil(UiKit.MinBodyTextPx * UiKit.TextScale * 1.3f) + 8f; } }
+        const float RowBottom = 24f, RowGap = 12f;
+        static float ButtonY { get { return RowBottom + CaptionH + RowGap; } }
+        static float ButtonSizeFor(float size) { return Mathf.Max(size, UiKit.MinTouchRef); }
+        /// <summary>Height of a popup whose content is only the title and one row of icon buttons: no empty middle.</summary>
+        static float TitleAndRowHeight(float buttonSize) { return 182f + 36f + ButtonY + ButtonSizeFor(buttonSize); }
 
         public void CloseOverlay()
         {
@@ -346,26 +493,35 @@ namespace BoingUpSkyTower.Gameplay
             Transform panel = PanelOf();
             float gap = acts.Length > 3 ? 28f : 44f;
             float total = gap * (acts.Length - 1);
-            for (int i = 0; i < acts.Length; i++) total += acts[i].Size;
+            for (int i = 0; i < acts.Length; i++) { acts[i].Size = ButtonSizeFor(acts[i].Size); total += acts[i].Size; }
+            if (total > 800f && acts.Length > 1)
+            {
+                float shrunk = Mathf.Max(8f, gap - (total - 800f) / (acts.Length - 1));   // big touch targets on a dense screen: tighten the gaps to stay inside the 860 px panel
+                total -= (gap - shrunk) * (acts.Length - 1);
+                gap = shrunk;
+            }
             float x = -total * 0.5f;
+            float capH = CaptionH;
             for (int i = 0; i < acts.Length; i++)
             {
                 Act a = acts[i];
                 Button b = ToyKit.IconButton(panel, a.A11y, a.A11y, a.Role, a.Icon, new Vector2(a.Size, a.Size), a.Do, 0.6f);
                 b.interactable = a.Enabled;
-                UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(x + a.Size * 0.5f, 118f), new Vector2(a.Size, a.Size));
+                UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 0f), new Vector2(x + a.Size * 0.5f, ButtonY), new Vector2(a.Size, a.Size));
                 Text cap = UiKit.AddText(panel, a.A11y + "Caption", a.Caption, 42, Theme.Ink, TextAnchor.MiddleCenter, true);
                 var o = cap.GetComponent<Outline>();
                 if (o != null) o.enabled = false;
                 cap.horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.Place((RectTransform)cap.transform, new Vector2(0.5f, 0f), new Vector2(x + a.Size * 0.5f, 46f), new Vector2(a.Size + gap, 60f));
+                UiKit.Place((RectTransform)cap.transform, new Vector2(0.5f, 0f), new Vector2(x + a.Size * 0.5f, RowBottom), new Vector2(a.Size + gap, capH));
                 x += a.Size + gap;
             }
         }
 
         public void ShowPause()
         {
-            OpenOverlay("Paused", 640f);
+            // Sized to its content (title + one row of icon buttons with captions, no empty middle) and with ONE way to resume: the Resume button
+            // (no extra X). Buttons are at least 48 dp on this device.
+            OpenOverlay("Paused", TitleAndRowHeight(150f), false);
             OnClose = () => { if (OnResume != null) OnResume(); };
             // Four equal round buttons (owner issue 15.3): resume, restart, shop (opens over the paused run) and home.
             OverlayRow(
@@ -473,7 +629,8 @@ namespace BoingUpSkyTower.Gameplay
         {
             bool offerAd = s.AdReviveOffered && (adReady || s.AdRewardPending);
             bool offerGems = s.CanRevive;
-            OpenOverlay(s.GoalLost ? "Wall touched!" : "You fell!", offerGems ? (offerAd ? 1060f : 940f) : (s.GoalLost ? 880f : 800f));
+            float lift = Mathf.Max(0f, ButtonY + ButtonSizeFor(150f) - 268f);   // the action row grows with big touch targets / 130 percent text: everything above it moves up by that
+            OpenOverlay(s.GoalLost ? "Wall touched!" : "You fell!", lift + (offerGems ? (offerAd ? 1060f : 940f) : (s.GoalLost ? 880f : 800f)));
             AudioManager.Play(Sfx.Fail);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -495,12 +652,12 @@ namespace BoingUpSkyTower.Gameplay
                 if (offerAd)
                 {
                     string adLabel = s.AdRewardPending ? "Revive: Free" : "Revive: Watch ad (free)";
-                    ReviveButton(panel, adLabel, ToyKit.Get("icon_play"), 1, 480f, () => { if (OnReviveAd != null) OnReviveAd(); });
+                    ReviveButton(panel, adLabel, ToyKit.Get("icon_play"), 1, 480f + lift, () => { if (OnReviveAd != null) OnReviveAd(); });
                 }
                 string gemLabel = "Revive: " + s.NextReviveCost + " gems";
                 int cost = s.NextReviveCost;
                 // Too few gems: the button stays enabled and opens the Gems tab of the shop; the revive is taken by tapping again.
-                ReviveButton(panel, gemLabel, ToyKit.Get("icon_gem"), 0, offerAd ? 330f : 400f, () =>
+                ReviveButton(panel, gemLabel, ToyKit.Get("icon_gem"), 0, (offerAd ? 330f : 400f) + lift, () =>
                 {
                     if (GameSession.Progress != null && GameSession.Progress.Gems < cost) OpenShopTab(ShopScreen.TabGems);
                     else if (OnRevive != null) OnRevive();

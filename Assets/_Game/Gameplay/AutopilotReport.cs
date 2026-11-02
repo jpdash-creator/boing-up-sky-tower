@@ -236,6 +236,20 @@ namespace BoingUpSkyTower.Gameplay
                 case PlatformKind.ThornBush: return "T";
                 case PlatformKind.Ladybug: return "G";
                 case PlatformKind.Seesaw: return "E";
+                case PlatformKind.SquishCap: return "Q";
+                case PlatformKind.SproutLift: return "X";
+                case PlatformKind.PuffFloat: return "Y";
+                case PlatformKind.FairyRing: return "Z";
+                case PlatformKind.OrbitCap: return "J";
+                case PlatformKind.DizzySpores: return "K";
+                case PlatformKind.SporePop: return "O";
+                case PlatformKind.SurfBoostWave: return "A";
+                case PlatformKind.SandcastleStep: return "F";
+                case PlatformKind.ClamShellPad: return "I";
+                case PlatformKind.SinkingRaft: return "N";
+                case PlatformKind.TurtleShuttle: return "R";
+                case PlatformKind.KelpTangle: return "a";
+                case PlatformKind.PufferfishPad: return "f";
                 default: return "?";
             }
         }

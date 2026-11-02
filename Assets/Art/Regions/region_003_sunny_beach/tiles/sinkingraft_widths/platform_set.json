@@ -1,0 +1,59 @@
+{
+  "asset": "sinkingraft_widths",
+  "kind": "sinkingraft",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 361,
+      "h": 141,
+      "bodyLeft": 13,
+      "bodyRight": 347,
+      "surfaceY": 32,
+      "bodyBottom": 116,
+      "width": 2.0,
+      "file": "reg003_sinkingraft_w2.png",
+      "ppu": 167.0,
+      "kind": "sinkingraft",
+      "dir": 0
+    },
+    {
+      "w": 528,
+      "h": 141,
+      "bodyLeft": 13,
+      "bodyRight": 514,
+      "surfaceY": 32,
+      "bodyBottom": 116,
+      "width": 3.0,
+      "file": "reg003_sinkingraft_w3.png",
+      "ppu": 167.0,
+      "kind": "sinkingraft",
+      "dir": 0
+    },
+    {
+      "w": 695,
+      "h": 136,
+      "bodyLeft": 13,
+      "bodyRight": 681,
+      "surfaceY": 24,
+      "bodyBottom": 107,
+      "width": 4.0,
+      "file": "reg003_sinkingraft_w4.png",
+      "ppu": 167.0,
+      "kind": "sinkingraft",
+      "dir": 0
+    },
+    {
+      "w": 1031,
+      "h": 133,
+      "bodyLeft": 14,
+      "bodyRight": 1016,
+      "surfaceY": 25,
+      "bodyBottom": 108,
+      "width": 6.0,
+      "file": "reg003_sinkingraft_w6.png",
+      "ppu": 167.0,
+      "kind": "sinkingraft",
+      "dir": 0
+    }
+  ]
+}

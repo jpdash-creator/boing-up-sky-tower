@@ -27,36 +27,36 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_001_13 | hard | 0.779 | reachFloor 150 | 150 | yes | 155 | 8279 | 0 | 0 | NO (25 / 380) | yes (solved without a revive) |
 | lvl_001_14 | hard | 0.859 | reachFloor 150 | 150 | yes | 157 | 8670 | 5 | 0 | NO (35 / 400) | yes (solved without a revive) |
 | lvl_001_15 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 148 | 8381 | 0 | 0 | NO (35 / 475) | yes (solved without a revive) |
-| lvl_002_01 | simple | 0.058 | reachFloor 60 | 60 | yes | 46 | 2488 | 5 | 0 | yes (145 / 120) | yes (solved without a revive) |
-| lvl_002_02 | simple | 0.107 | reachFloor 90 | 90 | yes | 62 | 3538 | 10 | 0 | yes (200 / 170) | yes (solved without a revive) |
-| lvl_002_03 | simple | 0.157 | reachFloor 90 | 90 | yes | 71 | 4100 | 0 | 0 | NO (90 / 225) | yes (solved without a revive) |
-| lvl_002_04 | simple | 0.226 | reachFloor 90 | 90 | yes | 68 | 3882 | 0 | 0 | yes (70 / 15) | yes (solved without a revive) |
-| lvl_002_05 | complex | 0.405 | comboChain 3x3 | 90 | yes | 31 | 1799 | 5 | 0 | NO (45 / 65) | yes (solved without a revive) |
-| lvl_002_06 | medium | 0.355 | reachFloor 120 | 120 | yes | 66 | 4455 | 20 | 0 | NO (45 / 315) | yes (solved without a revive) |
-| lvl_002_07 | medium | 0.424 | noWallBounce 120 | 120 | yes | 79 | 4959 | 15 | 0 | NO (45 / 235) | yes (solved without a revive) |
-| lvl_002_08 | medium | 0.504 | reachFloor 120 | 120 | yes | 98 | 5830 | 20 | 0 | yes (55 / 55) | yes (solved without a revive) |
-| lvl_002_09 | medium | 0.583 | reachFloor 120 | 120 | yes | 102 | 5731 | 0 | 0 | NO (25 / 345) | yes (solved without a revive) |
-| lvl_002_10 | complex | 0.702 | comboChain 4x3 | 150 | yes | 47 | 2740 | 0 | 0 | NO (5 / 165) | yes (solved without a revive) |
-| lvl_002_11 | hard | 0.623 | reachFloor 150 | 150 | yes | 106 | 6288 | 10 | 0 | NO (55 / 60) | yes (solved without a revive) |
-| lvl_002_12 | hard | 0.702 | reachFloor 150 | 150 | yes | 127 | 7547 | 0 | 0 | NO (45 / 300) | yes (solved without a revive) |
-| lvl_002_13 | hard | 0.781 | reachFloor 150 | 150 | yes | 108 | 6963 | 25 | 0 | NO (65 / 345) | yes (solved without a revive) |
-| lvl_002_14 | hard | 0.861 | reachFloor 150 | 150 | yes | 135 | 7612 | 0 | 0 | NO (50 / 390) | yes (solved without a revive) |
-| lvl_002_15 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 102 | 6573 | 15 | 0 | NO (75 / 485) | yes (solved without a revive) |
-| lvl_003_01 | simple | 0.066 | reachFloor 60 | 60 | yes | 65 | 3293 | 0 | 0 | yes (145 / 110) | yes (solved without a revive) |
-| lvl_003_02 | simple | 0.115 | reachFloor 90 | 90 | yes | 88 | 4571 | 10 | 0 | yes (210 / 175) | yes (solved without a revive) |
-| lvl_003_03 | simple | 0.164 | reachFloor 90 | 90 | yes | 90 | 4585 | 0 | 0 | NO (90 / 225) | yes (solved without a revive) |
-| lvl_003_04 | simple | 0.233 | reachFloor 90 | 90 | yes | 99 | 5118 | 0 | 0 | yes (50 / 15) | yes (solved without a revive) |
-| lvl_003_05 | complex | 0.410 | comboChain 3x3 | 90 | yes | 76 | 3907 | 0 | 0 | NO (40 / 65) | yes (solved without a revive) |
-| lvl_003_06 | medium | 0.361 | reachFloor 120 | 120 | yes | 116 | 5888 | 0 | 0 | NO (15 / 315) | yes (solved without a revive) |
-| lvl_003_07 | medium | 0.429 | noWallBounce 120 | 120 | yes | 124 | 6125 | 0 | 0 | NO (15 / 235) | yes (solved without a revive) |
-| lvl_003_08 | medium | 0.508 | reachFloor 120 | 120 | yes | 129 | 6358 | 5 | 0 | NO (10 / 55) | yes (solved without a revive) |
-| lvl_003_09 | medium | 0.587 | reachFloor 120 | 120 | yes | 134 | 6655 | 0 | 0 | NO (15 / 365) | yes (solved without a revive) |
-| lvl_003_10 | complex | 0.705 | comboChain 4x3 | 150 | yes | 2332 | 8122 | 10 | 0 | NO (30 / 165) | yes (solved without a revive) |
-| lvl_003_11 | hard | 0.626 | reachFloor 150 | 150 | yes | 174 | 8384 | 0 | 0 | NO (15 / 65) | yes (solved without a revive) |
-| lvl_003_12 | hard | 0.705 | reachFloor 150 | 150 | yes | 172 | 8393 | 0 | 0 | NO (20 / 425) | yes (solved without a revive) |
-| lvl_003_13 | hard | 0.783 | reachFloor 150 | 150 | yes | 164 | 8494 | 0 | 0 | NO (15 / 470) | yes (solved without a revive) |
-| lvl_003_14 | hard | 0.862 | reachFloor 150 | 150 | yes | 174 | 9023 | 0 | 0 | NO (25 / 500) | yes (solved without a revive) |
-| lvl_003_15 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 168 | 8735 | 0 | 0 | NO (65 / 490) | yes (solved without a revive) |
+| lvl_002_01 | simple | 0.058 | reachFloor 60 | 60 | yes | 56 | 2814 | 10 | 0 | yes (135 / 120) | yes (solved without a revive) |
+| lvl_002_02 | simple | 0.107 | reachFloor 90 | 90 | yes | 89 | 4895 | 5 | 0 | yes (200 / 170) | yes (solved without a revive) |
+| lvl_002_03 | simple | 0.157 | reachFloor 90 | 90 | yes | 99 | 5037 | 10 | 0 | NO (90 / 225) | yes (solved without a revive) |
+| lvl_002_04 | simple | 0.226 | reachFloor 90 | 90 | yes | 87 | 4660 | 5 | 0 | yes (75 / 15) | yes (solved without a revive) |
+| lvl_002_05 | complex | 0.405 | comboChain 3x3 | 90 | yes | 87 | 4571 | 0 | 0 | NO (15 / 65) | yes (solved without a revive) |
+| lvl_002_06 | medium | 0.355 | reachFloor 120 | 120 | yes | 116 | 5906 | 5 | 0 | NO (25 / 315) | yes (solved without a revive) |
+| lvl_002_07 | medium | 0.424 | noWallBounce 120 | 120 | yes | 126 | 6559 | 0 | 0 | NO (20 / 235) | yes (solved without a revive) |
+| lvl_002_08 | medium | 0.504 | reachFloor 120 | 120 | yes | 131 | 6762 | 0 | 0 | NO (10 / 55) | yes (solved without a revive) |
+| lvl_002_09 | medium | 0.583 | reachFloor 120 | 120 | yes | 116 | 5855 | 0 | 0 | NO (0 / 345) | yes (solved without a revive) |
+| lvl_002_10 | complex | 0.702 | comboChain 4x3 | 150 | yes | 90 | 4773 | 0 | 0 | NO (35 / 165) | yes (solved without a revive) |
+| lvl_002_11 | hard | 0.623 | reachFloor 150 | 150 | yes | 168 | 8125 | 0 | 0 | NO (10 / 60) | yes (solved without a revive) |
+| lvl_002_12 | hard | 0.702 | reachFloor 150 | 150 | yes | 162 | 8583 | 0 | 0 | NO (20 / 300) | yes (solved without a revive) |
+| lvl_002_13 | hard | 0.781 | reachFloor 150 | 150 | yes | 159 | 8484 | 0 | 0 | NO (5 / 345) | yes (solved without a revive) |
+| lvl_002_14 | hard | 0.861 | reachFloor 150 | 150 | yes | 161 | 8743 | 0 | 0 | NO (25 / 390) | yes (solved without a revive) |
+| lvl_002_15 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 149 | 8220 | 0 | 0 | NO (20 / 485) | yes (solved without a revive) |
+| lvl_003_01 | simple | 0.066 | reachFloor 60 | 60 | yes | 64 | 3137 | 0 | 0 | yes (145 / 110) | yes (solved without a revive) |
+| lvl_003_02 | simple | 0.115 | reachFloor 90 | 90 | yes | 95 | 4860 | 0 | 0 | yes (215 / 175) | yes (solved without a revive) |
+| lvl_003_03 | simple | 0.164 | reachFloor 90 | 90 | yes | 94 | 4740 | 0 | 0 | NO (60 / 225) | yes (solved without a revive) |
+| lvl_003_04 | simple | 0.233 | reachFloor 90 | 90 | yes | 113 | 5847 | 5 | 0 | yes (60 / 15) | yes (solved without a revive) |
+| lvl_003_05 | complex | 0.410 | comboChain 3x3 | 90 | yes | 136 | 4374 | 15 | 0 | NO (20 / 65) | yes (solved without a revive) |
+| lvl_003_06 | medium | 0.361 | reachFloor 120 | 120 | yes | 128 | 6468 | 0 | 0 | NO (0 / 315) | yes (solved without a revive) |
+| lvl_003_07 | medium | 0.429 | noWallBounce 120 | 120 | yes | 122 | 6178 | 0 | 0 | NO (5 / 235) | yes (solved without a revive) |
+| lvl_003_08 | medium | 0.508 | reachFloor 120 | 120 | yes | 144 | 7195 | 0 | 0 | NO (0 / 55) | yes (solved without a revive) |
+| lvl_003_09 | medium | 0.587 | reachFloor 120 | 120 | yes | 138 | 7002 | 0 | 0 | NO (0 / 365) | yes (solved without a revive) |
+| lvl_003_10 | complex | 0.705 | comboChain 4x3 | 150 | yes | 1259 | 8248 | 5 | 0 | NO (15 / 165) | yes (solved without a revive) |
+| lvl_003_11 | hard | 0.626 | reachFloor 150 | 150 | yes | 172 | 8460 | 0 | 0 | NO (0 / 65) | yes (solved without a revive) |
+| lvl_003_12 | hard | 0.705 | reachFloor 150 | 150 | yes | 183 | 9362 | 0 | 0 | NO (0 / 425) | yes (solved without a revive) |
+| lvl_003_13 | hard | 0.783 | reachFloor 150 | 150 | yes | 173 | 8706 | 0 | 0 | NO (0 / 470) | yes (solved without a revive) |
+| lvl_003_14 | hard | 0.862 | reachFloor 150 | 150 | yes | 177 | 8993 | 0 | 0 | NO (0 / 500) | yes (solved without a revive) |
+| lvl_003_15 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 180 | 8973 | 0 | 0 | NO (25 / 490) | yes (solved without a revive) |
 | lvl_004_01 | simple | 0.074 | reachFloor 60 | 60 | yes | 56 | 2768 | 5 | 0 | yes (120 / 120) | yes (solved without a revive) |
 | lvl_004_02 | simple | 0.123 | reachFloor 90 | 90 | yes | 80 | 3977 | 5 | 0 | yes (185 / 170) | yes (solved without a revive) |
 | lvl_004_03 | simple | 0.171 | reachFloor 90 | 90 | yes | 91 | 4561 | 0 | 0 | NO (85 / 225) | yes (solved without a revive) |
@@ -88,7 +88,7 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_005_14 | hard | 0.864 | reachFloor 150 | 150 | yes | 164 | 8632 | 5 | 11 | NO (25 / 500) | yes (solved without a revive) |
 | lvl_005_15 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 175 | 8833 | 5 | 11 | NO (65 / 500) | yes (solved without a revive) |
 
-Star 2 feasible: 16 yes, 59 no (of the solved levels). Star 3 (no revive) is feasible wherever star 1 is solved.
+Star 2 feasible: 15 yes, 60 no (of the solved levels). Star 3 (no revive) is feasible wherever star 1 is solved.
 
 ## Speedrun (level index 9)
 

@@ -20,6 +20,9 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
         public static bool DevBuild { get { return Debug.isDebugBuild && !Application.isEditor; } }
 
+        /// <summary>Tests set this to build the Settings screen with the two dev flag rows (GAME_JUMP_TEST, SYSTEM_TEST) in the editor, where DevBuild is false. It changes only the layout.</summary>
+        public static bool ShowDevRowsForTests;
+
         /// <summary>
         /// Dev flag GAME_JUMP_TEST (development builds only, default OFF): on = every level and region open; off = levels and regions follow real progress
         /// (home, shop, chests and characters stay as they are). Only counts while SYSTEM_TEST is on; with SYSTEM_TEST off it is ignored.

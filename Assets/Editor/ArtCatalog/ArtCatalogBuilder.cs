@@ -238,6 +238,12 @@ namespace BoingUpSkyTower.Editor
                     ra.SeesawKnob = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)knob["file"]);
                     ra.SeesawKnobTopDropPx = (float)knob["topDropPx"];
                 }
+                JToken stem = root["stem"];
+                if (stem != null && kind == BoingUpSkyTower.Simulation.PlatformKind.SproutLift)
+                {
+                    ra.SproutStem = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)stem["file"]);
+                    ra.SproutStemTopDropPx = (float)stem["topDropPx"];
+                }
             }
             ra.KindPieces = pieces.ToArray();
             ra.KindSprites = new Sprite[maxKind + 1];

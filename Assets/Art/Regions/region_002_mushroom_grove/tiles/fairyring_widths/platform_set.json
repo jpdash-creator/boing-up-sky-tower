@@ -1,0 +1,47 @@
+{
+  "asset": "fairyring_widths",
+  "kind": "fairyring",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 761,
+      "h": 129,
+      "bodyLeft": 12,
+      "bodyRight": 748,
+      "surfaceY": 28,
+      "bodyBottom": 112,
+      "width": 4.4,
+      "file": "reg002_fairyring_w4_4.png",
+      "ppu": 167.273,
+      "kind": "fairyring",
+      "dir": 0
+    },
+    {
+      "w": 1027,
+      "h": 129,
+      "bodyLeft": 12,
+      "bodyRight": 1014,
+      "surfaceY": 28,
+      "bodyBottom": 112,
+      "width": 6.0,
+      "file": "reg002_fairyring_w6.png",
+      "ppu": 167.0,
+      "kind": "fairyring",
+      "dir": 0
+    },
+    {
+      "w": 1361,
+      "h": 129,
+      "bodyLeft": 12,
+      "bodyRight": 1348,
+      "surfaceY": 28,
+      "bodyBottom": 112,
+      "width": 8.0,
+      "file": "reg002_fairyring_w8.png",
+      "ppu": 167.0,
+      "kind": "fairyring",
+      "dir": 0
+    }
+  ],
+  "holeWidth": 1.4
+}

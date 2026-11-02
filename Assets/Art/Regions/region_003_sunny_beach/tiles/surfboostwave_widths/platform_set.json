@@ -1,0 +1,85 @@
+{
+  "asset": "surfboostwave_widths",
+  "kind": "surfboostwave",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 697,
+      "h": 172,
+      "bodyLeft": 14,
+      "bodyRight": 682,
+      "surfaceY": 81,
+      "bodyBottom": 165,
+      "width": 4.0,
+      "file": "reg003_surfboostwave_right_w4.png",
+      "ppu": 167.0,
+      "kind": "surfboostwave",
+      "dir": 1
+    },
+    {
+      "w": 697,
+      "h": 172,
+      "bodyLeft": 14,
+      "bodyRight": 682,
+      "surfaceY": 81,
+      "bodyBottom": 165,
+      "width": 4.0,
+      "file": "reg003_surfboostwave_left_w4.png",
+      "ppu": 167.0,
+      "kind": "surfboostwave",
+      "dir": -1
+    },
+    {
+      "w": 860,
+      "h": 179,
+      "bodyLeft": 12,
+      "bodyRight": 847,
+      "surfaceY": 89,
+      "bodyBottom": 172,
+      "width": 5.0,
+      "file": "reg003_surfboostwave_right_w5.png",
+      "ppu": 167.0,
+      "kind": "surfboostwave",
+      "dir": 1
+    },
+    {
+      "w": 860,
+      "h": 179,
+      "bodyLeft": 12,
+      "bodyRight": 847,
+      "surfaceY": 89,
+      "bodyBottom": 172,
+      "width": 5.0,
+      "file": "reg003_surfboostwave_left_w5.png",
+      "ppu": 167.0,
+      "kind": "surfboostwave",
+      "dir": -1
+    },
+    {
+      "w": 1027,
+      "h": 179,
+      "bodyLeft": 12,
+      "bodyRight": 1014,
+      "surfaceY": 89,
+      "bodyBottom": 172,
+      "width": 6.0,
+      "file": "reg003_surfboostwave_right_w6.png",
+      "ppu": 167.0,
+      "kind": "surfboostwave",
+      "dir": 1
+    },
+    {
+      "w": 1027,
+      "h": 179,
+      "bodyLeft": 12,
+      "bodyRight": 1014,
+      "surfaceY": 89,
+      "bodyBottom": 172,
+      "width": 6.0,
+      "file": "reg003_surfboostwave_left_w6.png",
+      "ppu": 167.0,
+      "kind": "surfboostwave",
+      "dir": -1
+    }
+  ]
+}

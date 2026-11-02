@@ -370,7 +370,7 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(2, PowerUpBar.ColumnsFor(7));
             Assert.GreaterOrEqual(PowerUpBar.ButtonSize, UiKit.MinTouchPx, "at least 48 dp");
             Assert.GreaterOrEqual(PowerUpBar.Gap, UiKit.MinSpacingPx, "at least 8 dp between neighbours");
-            Assert.GreaterOrEqual(PowerUpBar.BottomOffset, 40f + 20f + 280f + UiKit.MinSpacingPx, "above the 280 px jump button with a gap");
+            Assert.GreaterOrEqual(PowerUpBar.BottomOffset, RunLayout.BottomPadRef + UiKit.MinSpacingPx, "above the jump pad (floating over the field, no bottom strip) with a gap");
             for (int i = 0; i < 7; i++)
             {
                 Vector2 a = PowerUpBar.PositionFor(i, 7);

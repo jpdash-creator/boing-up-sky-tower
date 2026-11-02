@@ -278,7 +278,7 @@ namespace BoingUpSkyTower.Simulation
                     gap0 = Fx.Max(gap0, WindowHeight + Fx.FromRatio(5, 100));
                     gap0 = Fx.Min(gap0, cfg.NormalGapMax);
                     if (prevKind == PlatformKind.Sticky) gap0 = Fx.Min(gap0, cfg.StickyNextGapMax);
-                    bool lAfterBounce = prevKind == PlatformKind.Bounce || prevKind == PlatformKind.BounceCap;
+                    bool lAfterBounce = PlatformKinds.IsBouncePad(prevKind);
                     if (lAfterBounce) gap0 = Fx.Min(gap0, cfg.BounceNextGapMax);
                     Fx jm0 = prevKind == PlatformKind.Sticky ? cfg.StickyJumpMultiplier : Fx.One;
                     // Rungs closer than LadderMinStackGap would stack 5+ platforms in a window: such ladders (comboChain value 4+) use
@@ -321,7 +321,7 @@ namespace BoingUpSkyTower.Simulation
                         ChunkRow cr = ch.Rows[i];
                         Fx cgap = Fx.Min(Fx.FromRatio(cr.GapHundredths, 100), cfg.NormalGapMax);
                         if (i == 0 && prevKind == PlatformKind.Sticky) cgap = Fx.Min(cgap, cfg.StickyNextGapMax);
-                        bool cAfterBounce = i == 0 && (prevKind == PlatformKind.Bounce || prevKind == PlatformKind.BounceCap);
+                        bool cAfterBounce = i == 0 && PlatformKinds.IsBouncePad(prevKind);
                         if (cAfterBounce) cgap = Fx.Min(cgap, cfg.BounceNextGapMax);
                         Fx cw = Fx.FromRatio(cr.WidthTenths, 10);
                         Fx ax = Fx.FromRatio(cr.XPermille, 1000) * screen;
@@ -385,7 +385,7 @@ namespace BoingUpSkyTower.Simulation
                 Fx gap = rng.Range(Fx.Lerp(gapEasyLo, gapHardLo, d), Fx.Lerp(gapEasyHi, gapHardHi, d));
                 gap = Fx.Min(gap, cfg.NormalGapMax);
                 if (prevKind == PlatformKind.Sticky) gap = Fx.Min(gap, cfg.StickyNextGapMax);
-                bool afterBounce = prevKind == PlatformKind.Bounce || prevKind == PlatformKind.BounceCap;
+                bool afterBounce = PlatformKinds.IsBouncePad(prevKind);
                 if (afterBounce) gap = Fx.Min(gap, cfg.BounceNextGapMax);
 
                 PlatformKind kind = PlatformKind.Normal;
@@ -397,7 +397,7 @@ namespace BoingUpSkyTower.Simulation
                 if (!specials && !balanced && (kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap) && SpecialPlatforms.Restricted(row, rows, gemRow)) kind = PlatformKind.Normal;
                 // Bounce platforms are never chained: the landing speed on a bounce pad is set by the previous flight,
                 // so two pads in a row would make the second one pure luck.
-                if (afterBounce && (kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap)) kind = PlatformKind.Normal;
+                if (afterBounce && PlatformKinds.IsBouncePad(kind)) kind = PlatformKind.Normal;
 
                 Fx w = rng.Range(Fx.Lerp(widthEasyLo, widthHardLo, d), Fx.Lerp(widthEasyHi, widthHardHi, d));
                 w = w * rng.Range(jitterLo, jitterHi);
@@ -405,9 +405,9 @@ namespace BoingUpSkyTower.Simulation
                 else if (rowPattern == 2) w = rng.Range(Fx.FromRatio(28, 10), Fx.FromRatio(40, 10));
                 w = Fx.Clamp(w, minWidth, maxWidth);
                 if (kind == PlatformKind.Moving && w > cfg.DriftMaxWidth) w = cfg.DriftMaxWidth;
-                if (PlatformKinds.IsRegion1New(kind)) w = SpecialPlatforms.ConstrainWidth(cfg, kind, w);
+                if (PlatformKinds.IsRegionNew(kind)) w = SpecialPlatforms.ConstrainWidth(cfg, kind, w);
                 if (row == gemRow && w > Fx.FromRatio(35, 10)) w = Fx.FromRatio(35, 10);
-                if (extraRow[row] && w > Fx.FromInt(4)) w = Fx.FromInt(4);   // a row with a mate keeps room for it
+                if (extraRow[row] && w > Fx.FromInt(4) && kind != PlatformKind.FairyRing) w = Fx.FromInt(4);   // a row with a mate keeps room for it (a Fairy Ring keeps its two usable halves; a mate that finds no spot moves on)
                 w = SnapWidth(w, kind);                                       // painted widths only; the final snap pass finds nothing left to change
                 // Narrow platforms get smaller gaps so one jump always works (owner, 2026-10-20).
                 gap = Fx.Min(gap, SmallPlatformGapCap(maxGap, Fx.Min(w, prevW)));
@@ -438,7 +438,7 @@ namespace BoingUpSkyTower.Simulation
 
                 Fx amp = Fx.Zero;
                 int period = 0, phase = 0, pdir = 0;
-                if (PlatformKinds.IsRegion1New(kind))
+                if (PlatformKinds.IsRegionNew(kind))
                 {
                     SpecialPlatforms.Params(cfg, ref rng, kind, x, Fx.Min(x - lo, hi - x), screen, out amp, out period, out phase, out pdir);
                 }
@@ -553,7 +553,7 @@ namespace BoingUpSkyTower.Simulation
         public static Fx SnapWidth(Fx w, PlatformKind kind)
         {
             if (w >= Fx.FromInt(9)) return w;
-            bool special = kind == PlatformKind.Crumble || kind == PlatformKind.Moving || kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap;
+            bool special = kind == PlatformKind.Crumble || kind == PlatformKind.Moving || kind == PlatformKind.TurtleShuttle || kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap;
             int[] set = special ? SpecialWidthsTenths : NormalWidthsTenths;
             Fx best = Fx.FromRatio(set[0], 10);
             Fx bestDist = Fx.Abs(w - best);
@@ -573,7 +573,7 @@ namespace BoingUpSkyTower.Simulation
             {
                 Fx w = SnapWidth(plats[i].Width, plats[i].Kind);
                 plats[i].Width = w;
-                Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving || plats[i].Kind == PlatformKind.Ladybug ? plats[i].Amplitude : Fx.Zero);
+                Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving || plats[i].Kind == PlatformKind.Ladybug || plats[i].Kind == PlatformKind.OrbitCap || plats[i].Kind == PlatformKind.TurtleShuttle ? plats[i].Amplitude : Fx.Zero);
                 plats[i].X = Fx.Clamp(plats[i].X, edge, screen - edge);   // a wider piece (and its swing) must stay inside the walls
             }
             SeparateSameRowPlatforms(screen, plats);
@@ -762,6 +762,10 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Half height of the drawn pickup sprite used for the clear-air test, u (the largest gem is 0.65 wide).</summary>
         private static readonly Fx PickupClearHalf = Fx.FromRatio(7, 10);
         private static readonly Fx HiveBobMargin = Fx.FromRatio(12, 10);
+        private static readonly Fx SproutRiseMargin = Fx.FromRatio(16, 10);   // a Sprout Lift rises SproutRise above its base
+        private static readonly Fx OrbitRiseMargin = Fx.FromRatio(5, 10);     // an Orbit Cap laps +-OrbitAmplitudeY
+        private static readonly Fx RaftSinkMargin = Fx.FromRatio(10, 10);     // a Sinking Raft sinks RaftSinkDepth below its base
+        private static readonly Fx StepRiseMargin = Fx.FromRatio(16, 100);      // the raised half of a Sandcastle Step is SandcastleRise above its base
 
         /// <summary>
         /// True when a pickup centre lies in the slab zone of a platform (from 0.7 + half sprite below its surface to 0.45 + half sprite above it,
@@ -775,7 +779,7 @@ namespace BoingUpSkyTower.Simulation
                 Platform pl = platforms[i];
                 if (Fx.Abs(pk.X - pl.X) > pl.Width / 2 + margin) continue;
                 // a Bee Hive Lift bobs: keep pickups out of its whole travel (HiveBobAmplitude default 1.2 u)
-                Fx bob = pl.Kind == PlatformKind.HiveLift ? HiveBobMargin : Fx.Zero;
+                Fx bob = pl.Kind == PlatformKind.HiveLift ? HiveBobMargin : (pl.Kind == PlatformKind.SproutLift ? SproutRiseMargin : (pl.Kind == PlatformKind.OrbitCap ? OrbitRiseMargin : (pl.Kind == PlatformKind.SinkingRaft ? RaftSinkMargin : (pl.Kind == PlatformKind.SandcastleStep ? StepRiseMargin : Fx.Zero))));
                 if (pk.Y > pl.Y - Fx.FromRatio(7, 10) - PickupClearHalf - bob && pk.Y < pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf + bob)
                 {
                     liftY = pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf + bob + Fx.FromRatio(1, 100);

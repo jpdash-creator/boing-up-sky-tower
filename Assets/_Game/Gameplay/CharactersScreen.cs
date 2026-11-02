@@ -180,20 +180,30 @@ namespace BoingUpSkyTower.Gameplay
 
     /// <summary>
     /// The character screen (docs/21): the chosen character on the green land stage on top, and below it a scrolling list of characters in rarity boxes,
-    /// five to a row. Only owned characters are shown (tap to choose). Capi appears once region 2 is unlocked. No words.
+    /// five to a row, four rows in the first view. Only owned characters are shown (a tap only selects; the (i) button opens the stat sheet). Capi appears once region 2 is unlocked. No words.
     /// </summary>
     public sealed class CharactersScreen
     {
-        const int Columns = 5;
-        /// <summary>Tile 176 and gap 12 make the row 928 wide: side margins of 76 px on the 1080 reference (at least 24); the content has 24 px of padding on top.</summary>
-        const float Tile = 176f, Gap = 12f, TopPad = 24f;
+        const int Columns = 5, VisibleRows = 4;
+        /// <summary>
+        /// Roster: 5 cells per row and 4 rows fill the list area end to end (owner 2026-11-02, 20 slots); more heroes scroll. The cell is as wide as the safe width
+        /// allows (<see cref="EdgeMargin"/> at both edges) and as high as lets 4 rows fit; the hero picture is 90 percent of the smaller side.
+        /// </summary>
+        const float Gap = 10f, TopPad = 16f, EdgeMargin = 16f;
+        static float MinTile { get { return UiKit.MinTouchRef; } }   // 48 dp: a tile is a touch target (CUX-4); when 4 rows do not fit, the list scrolls
+        /// <summary>Margin between the roster / the (i) button and the screen (safe area) edge; at least 16.</summary>
+        public const float SideMargin = 28f;
         /// <summary>Character height on the stage.</summary>
         public const float DollH = 420f;
+        /// <summary>The (i) button right of the hero on the stage (at least 48 dp).</summary>
+        public const float InfoSize = 132f;
 
         /// <summary>What the screen needs from the menu: the land stage it stands on.</summary>
         public sealed class Host
         {
             public Stage Stage;
+            /// <summary>The (i) button opens the shown hero's sheet (docs/21); the sheet has the "Use this hero" button. Tapping a tile only selects it.</summary>
+            public Action<CharacterDef> OpenHero;
         }
 
         readonly RectTransform screen;
@@ -221,7 +231,9 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Stretch(body);
 
             // the dark panel under the stage holds the list
-            Image panel = UiKit.AddImage(body, "ListPanel", null, new Color(0.17f, 0.23f, 0.42f, 1f));
+            // It is a child of the full-screen stage root (not of the safe-area body), so it starts exactly where the grass ends, whatever the notch:
+            // no dark band between the stage and the roster, and it reaches the bottom edge.
+            Image panel = UiKit.AddImage(host.Stage.Root, "ListPanel", null, new Color(0.17f, 0.23f, 0.42f, 1f));
             panel.preserveAspect = false;
             panel.raycastTarget = false;
             panel.rectTransform.anchorMin = Vector2.zero;
@@ -254,15 +266,27 @@ namespace BoingUpSkyTower.Gameplay
             if (host.Stage == null || host.Stage.Root == null) return;
             for (int i = host.Stage.Root.childCount - 1; i >= 0; i--)
             {
-                if (host.Stage.Root.GetChild(i).name == "Doll") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
+                string n = host.Stage.Root.GetChild(i).name;
+                if (n == "Doll" || n == "ListPanel") UnityEngine.Object.Destroy(host.Stage.Root.GetChild(i).gameObject);
             }
         }
 
         /// <summary>The chosen character on the dirt oval.</summary>
         void BuildStage()
         {
-            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", DollH, CharacterCatalog.Selected, art);
+            RectTransform doll = MomoDoll.Build(host.Stage.Root, "Doll", Mathf.Round(DollH * host.Stage.Scale), CharacterCatalog.Selected, art);
             host.Stage.Stand(doll);
+
+            // (i) opens the shown hero's sheet (docs/21). It sits in the bottom right corner of the stage, clear of the hero and the dirt oval
+            // (the oval is 600 px wide centred, the button is in the outer 24 to 156 px of the screen edge), never in the middle of the stage.
+            if (host.OpenHero != null)
+            {
+                Button info = UiKit.AddButton(body, "HeroInfo", "i", ToyKit.Button(2), Color.white, new Vector2(InfoSize, InfoSize), () => host.OpenHero(CharacterCatalog.Selected), 64);
+                info.GetComponent<A11yLabel>().Text = "Hero details";
+                // body top = screen top + safe inset, so the stage coordinates are shifted by the inset
+                float y = -(host.Stage.GroundBottom - UiKit.TopInsetRef() - InfoSize - 28f);
+                UiKit.Place((RectTransform)info.transform, new Vector2(1f, 1f), new Vector2(-SideMargin, y), new Vector2(InfoSize, InfoSize));
+            }
         }
 
         void BuildList()
@@ -271,18 +295,21 @@ namespace BoingUpSkyTower.Gameplay
             vp.anchorMin = Vector2.zero;
             vp.anchorMax = Vector2.one;
             vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);
-            vp.offsetMax = new Vector2(0f, -(host.Stage.GroundBottom + 18f));
+            vp.offsetMax = new Vector2(0f, -(host.Stage.GroundBottom - UiKit.TopInsetRef() + 18f));   // body top is the safe-area top; the stage counts from the screen top
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
             CharacterDef[] owned = CharacterCatalog.Available(progress);
             int rows = Mathf.Max(1, (owned.Length + Columns - 1) / Columns);
-            float width = Columns * Tile + (Columns - 1) * Gap;
+            // End to end: 5 cells fill the whole width and 4 rows fill the list height (owner 2026-11-02); more heroes scroll. Everything is anchored by
+            // fractions of the list viewport (no pixel maths), so it fits every aspect and safe area by construction.
+            int layoutRows = Mathf.Max(VisibleRows, rows);
             RectTransform content = UiKit.Rect(vp, "ListContent");
-            content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
+            content.anchorMin = new Vector2(0f, 1f - layoutRows / (float)VisibleRows);
+            content.anchorMax = new Vector2(1f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
-            content.anchoredPosition = Vector2.zero;
-            content.sizeDelta = new Vector2(width, TopPad + rows * (Tile + Gap) + 16f);
+            content.offsetMin = new Vector2(EdgeMargin, 0f);
+            content.offsetMax = new Vector2(-EdgeMargin, 0f);
             var sr = vp.gameObject.AddComponent<ScrollRect>();
             sr.content = content;
             sr.viewport = vp;
@@ -297,22 +324,28 @@ namespace BoingUpSkyTower.Gameplay
             {
                 CharacterDef who = owned[i];
                 CharacterRarity rarity = who.Rarity;
-                RectTransform inner = RarityUi.Box(content, "Char_" + who.Id, rarity, false, new Vector2(Tile, Tile));
+                RectTransform inner = RarityUi.Box(content, "Char_" + who.Id, rarity, false, new Vector2(100f, 100f));
                 RectTransform outer = (RectTransform)inner.parent;
-                outer.anchorMin = outer.anchorMax = new Vector2(0f, 1f);
-                outer.pivot = new Vector2(0f, 1f);
-                outer.anchoredPosition = new Vector2((i % Columns) * (Tile + Gap), -(TopPad + (i / Columns) * (Tile + Gap)));
+                int col = i % Columns, row = i / Columns;
+                outer.anchorMin = new Vector2(col / (float)Columns, 1f - (row + 1) / (float)layoutRows);
+                outer.anchorMax = new Vector2((col + 1) / (float)Columns, 1f - row / (float)layoutRows);
+                outer.pivot = new Vector2(0.5f, 0.5f);
+                outer.offsetMin = new Vector2(Gap * 0.5f, Gap * 0.5f);
+                outer.offsetMax = new Vector2(-Gap * 0.5f, -Gap * 0.5f);
 
-                RectTransform face = MomoDoll.Build(inner, "Face", Tile * 0.78f, who, art);
-                face.anchorMin = face.anchorMax = new Vector2(0.5f, 0.5f);
-                face.pivot = new Vector2(0.5f, 0.5f);
-                face.anchoredPosition = Vector2.zero;
+                RectTransform face = MomoDoll.Build(inner, "Face", 100f, who, art);
+                face.anchorMin = new Vector2(0.04f, 0.04f);
+                face.anchorMax = new Vector2(0.96f, 0.96f);
+                face.offsetMin = face.offsetMax = Vector2.zero;
+                var fit = face.gameObject.AddComponent<AspectRatioFitter>();   // the hero keeps its proportions inside the cell
+                fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+                fit.aspectRatio = who.Rig.CanvasW / (float)who.Rig.CanvasH;
                 if (who == chosen)
                 {
                     Image tick = UiKit.AddImage(outer, "Chosen", Glyphs.Check, Color.white);
                     tick.rectTransform.anchorMin = tick.rectTransform.anchorMax = new Vector2(1f, 1f);
                     tick.rectTransform.pivot = new Vector2(1f, 1f);
-                    tick.rectTransform.anchoredPosition = new Vector2(-4f, -4f);
+                    tick.rectTransform.anchoredPosition = new Vector2(-2f, -2f);
                     tick.rectTransform.sizeDelta = new Vector2(48f, 48f);
                 }
 
@@ -320,6 +353,7 @@ namespace BoingUpSkyTower.Gameplay
                 b.transition = Selectable.Transition.None;
                 outer.GetComponent<Image>().raycastTarget = true;
                 CharacterDef pick = who;
+                // a tap only selects the hero (the (i) button on the stage opens its stat sheet)
                 b.onClick.AddListener(() => { CharacterCatalog.Selected = pick; Build(); });
                 outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + (who == chosen ? ", chosen" : "");
             }

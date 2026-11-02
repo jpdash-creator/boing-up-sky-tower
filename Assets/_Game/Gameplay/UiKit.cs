@@ -45,6 +45,27 @@ namespace BoingUpSkyTower.Gameplay
         public const float PxPerDp = 1080f / 411f;
         public const float MinTouchPx = 48f * PxPerDp;      // about 126
         public const float MinSpacingPx = 8f * PxPerDp;     // about 21
+
+        /// <summary>
+        /// 48 dp in canvas reference units on THIS device: 48 * dpi / 160 physical px divided by the canvas scale (match 0.5 of 1080 x 1920).
+        /// A 720 x 1280 screen at 320 dpi needs 144 (the fixed 126 is only 42 dp there). Never below <see cref="MinTouchPx"/>; falls back to it when the dpi is unknown.
+        /// </summary>
+        public static float MinTouchRef
+        {
+            get
+            {
+                return MinTouchRefFor(Screen.dpi, Screen.width, Screen.height);
+            }
+        }
+
+        /// <summary>Pure form of <see cref="MinTouchRef"/> (unit-testable): dpi and screen size in physical px.</summary>
+        public static float MinTouchRefFor(float dpi, int width, int height)
+        {
+            if (dpi < 40f || width <= 0 || height <= 0) return MinTouchPx;
+            float scale = Mathf.Sqrt(width / Reference.x * (height / Reference.y));
+            if (scale < 0.01f) return MinTouchPx;
+            return Mathf.Max(MinTouchPx, Mathf.Min(48f * dpi / 160f / scale, 220f));
+        }
         public const float MinBodyTextPx = 16f * PxPerDp;   // about 42
         public const float LargeTextPx = 24f * PxPerDp;     // about 63 (3:1 contrast is enough above this)
 
@@ -120,6 +141,35 @@ namespace BoingUpSkyTower.Gameplay
             Stretch(rt);
             rt.gameObject.AddComponent<SafeAreaFitter>().Apply();
             return rt;
+        }
+
+        /// <summary>CanvasScaler scale (match 0.5) computed from the screen size, valid before the canvas is laid out.</summary>
+        public static float CanvasScaleNow()
+        {
+            float sw = Mathf.Max(1f, Screen.width), sh = Mathf.Max(1f, Screen.height);
+            return Mathf.Sqrt(sw / Reference.x * sh / Reference.y);
+        }
+
+        /// <summary>Full canvas size in reference px (about 942 x 2200 on 9:21, 1080 x 1920 on 9:16, 1247 x 1663 on 3:4).</summary>
+        public static Vector2 CanvasSizeRef()
+        {
+            float s = CanvasScaleNow();
+            return new Vector2(Mathf.Max(1f, Screen.width) / s, Mathf.Max(1f, Screen.height) / s);
+        }
+
+        /// <summary>Size of the safe area in reference px (what a "Safe" rect measures).</summary>
+        public static Vector2 SafeSizeRef()
+        {
+            Rect sa = SafeAreaNormalized();
+            Vector2 c = CanvasSizeRef();
+            return new Vector2(c.x * Mathf.Clamp01(sa.width), c.y * Mathf.Clamp01(sa.height));
+        }
+
+        /// <summary>Reference px between the top of the screen and the top of the safe area (a notch); 0 on a plain screen.</summary>
+        public static float TopInsetRef()
+        {
+            Rect sa = SafeAreaNormalized();
+            return Mathf.Max(0f, (1f - sa.yMax) * CanvasSizeRef().y);
         }
 
         /// <summary>Anchors an element to a corner/edge/centre point (pivot = anchor) and positions it by pixel offset and size.</summary>
@@ -248,8 +298,9 @@ namespace BoingUpSkyTower.Gameplay
 
             if (onClose != null)
             {
-                Button x = ToyKit.GlyphButton(panel, "CloseX", "Close", 3, Glyphs.Cross, new Vector2(132f, 132f), onClose, false, 0.58f);
-                Place((RectTransform)x.transform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(132f, 132f));
+                float xs = Mathf.Max(132f, MinTouchRef);   // at least 48 dp on the real screen density
+                Button x = ToyKit.GlyphButton(panel, "CloseX", "Close", 3, Glyphs.Cross, new Vector2(xs, xs), onClose, false, 0.58f);
+                Place((RectTransform)x.transform, new Vector2(1f, 1f), new Vector2(-20f, -20f), new Vector2(xs, xs));
             }
             return panel;
         }
@@ -275,6 +326,22 @@ namespace BoingUpSkyTower.Gameplay
             return b;
         }
 
+        /// <summary>
+        /// 9-sliced art (the glossy buttons): the corners are drawn at about 38 percent of the button height, so a wide button is
+        /// never a stretched square (owner list 11). Plain sprites stay simple.
+        /// </summary>
+        public static void StylePlate(Image img, Sprite sprite, Vector2 size)
+        {
+            img.type = Image.Type.Simple;
+            if (sprite != null && sprite.border.sqrMagnitude > 0.5f)
+            {
+                img.type = Image.Type.Sliced;
+                float corner = 0.38f * Mathf.Min(size.x, size.y);
+                float borderUnits = Mathf.Max(sprite.border.x, sprite.border.y) / (sprite.pixelsPerUnit / 100f);
+                img.pixelsPerUnitMultiplier = Mathf.Max(1f, borderUnits / corner);
+            }
+        }
+
         /// <summary>Touch target. Size is raised to the 48 dp minimum so no button can be built too small.</summary>
         public static Button AddButton(Transform parent, string name, string label, Sprite sprite, Color tint, Vector2 size, Action onClick, int fontSize = 44, bool tapSound = true)
         {
@@ -284,16 +351,7 @@ namespace BoingUpSkyTower.Gameplay
             var img = rt.gameObject.AddComponent<Image>();
             img.sprite = sprite;
             img.color = sprite != null ? tint : new Color(tint.r, tint.g, tint.b, 0.9f);
-            img.type = Image.Type.Simple;
-            if (sprite != null && sprite.border.sqrMagnitude > 0.5f)
-            {
-                // 9-sliced art (the glossy buttons): the corners are drawn at about 38 percent of the button height, so a wide button is
-                // never a stretched square (owner list 11).
-                img.type = Image.Type.Sliced;
-                float corner = 0.38f * Mathf.Min(size.x, size.y);
-                float borderUnits = Mathf.Max(sprite.border.x, sprite.border.y) / (sprite.pixelsPerUnit / 100f);
-                img.pixelsPerUnitMultiplier = Mathf.Max(1f, borderUnits / corner);
-            }
+            StylePlate(img, sprite, size);
             var btn = rt.gameObject.AddComponent<Button>();
             var colors = btn.colors;
             colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);

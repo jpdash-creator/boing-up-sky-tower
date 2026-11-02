@@ -1,0 +1,59 @@
+{
+  "asset": "turtleshuttle_widths",
+  "kind": "turtleshuttle",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 373,
+      "h": 105,
+      "bodyLeft": 19,
+      "bodyRight": 353,
+      "surfaceY": 17,
+      "bodyBottom": 94,
+      "width": 2.0,
+      "file": "reg003_turtleshuttle_w2.png",
+      "ppu": 167.0,
+      "kind": "turtleshuttle",
+      "dir": 0
+    },
+    {
+      "w": 534,
+      "h": 113,
+      "bodyLeft": 16,
+      "bodyRight": 517,
+      "surfaceY": 19,
+      "bodyBottom": 106,
+      "width": 3.0,
+      "file": "reg003_turtleshuttle_w3.png",
+      "ppu": 167.0,
+      "kind": "turtleshuttle",
+      "dir": 0
+    },
+    {
+      "w": 717,
+      "h": 113,
+      "bodyLeft": 24,
+      "bodyRight": 692,
+      "surfaceY": 19,
+      "bodyBottom": 106,
+      "width": 4.0,
+      "file": "reg003_turtleshuttle_w4.png",
+      "ppu": 167.0,
+      "kind": "turtleshuttle",
+      "dir": 0
+    },
+    {
+      "w": 1051,
+      "h": 113,
+      "bodyLeft": 24,
+      "bodyRight": 1026,
+      "surfaceY": 19,
+      "bodyBottom": 106,
+      "width": 6.0,
+      "file": "reg003_turtleshuttle_w6.png",
+      "ppu": 167.0,
+      "kind": "turtleshuttle",
+      "dir": 0
+    }
+  ]
+}

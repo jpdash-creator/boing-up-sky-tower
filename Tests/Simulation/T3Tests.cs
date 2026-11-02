@@ -158,7 +158,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void SignatureAppearsPerTheInLevelRamp(SignatureKind sig, PlatformKind kind)
         {
             // Doc 25: every level ramps its special rows from the low to the high share of the level table; the signature platform is one of the kinds.
-            // The generic specials of regions without their own new kinds (Moving, Crumble, Vanishing, Slippery, Sticky, Bounce) and the region 1 set are allowed too.
+            // The generic specials of regions without their own new kinds (Moving, Crumble, Vanishing, Slippery, Sticky, Bounce) and the region's own new set (RegionPlatformSets.For: regions 1 to 3) are allowed too.
             SimConfig cfg = new SimConfig();
             int[] levels = { 1, 3, 6, 12, 15 };
             int[] sigCount = new int[levels.Length];
@@ -178,7 +178,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                         if (p.Kind == PlatformKind.Normal) continue;
                         special++;
                         bool allowed = p.Kind == kind || p.Kind == PlatformKind.Moving || p.Kind == PlatformKind.Crumble || p.Kind == PlatformKind.Vanishing || p.Kind == PlatformKind.Slippery
-                            || p.Kind == PlatformKind.Sticky || p.Kind == PlatformKind.Bounce || (sig == SignatureKind.BounceFlowers && PlatformKinds.IsRegion1New(p.Kind));
+                            || p.Kind == PlatformKind.Sticky || p.Kind == PlatformKind.Bounce || System.Array.IndexOf(RegionPlatformSets.For(sig), p.Kind) >= 0;
                         Assert.True(allowed, "unexpected " + p.Kind);
                     }
                     int mean = (cfg.RampLowPercent[levels[li]] + cfg.RampHighPercent[levels[li]]) / 2;

@@ -15,8 +15,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Space a screen leaves at the bottom of the safe area for the tab bar.</summary>
         public const float TabBarReserve = TabBarHeight + TabBarBottom + 24f;
 
-        public static readonly string[] TabLabels = { "Shop", "Chests", "PLAY", "Heroes", "Daily", "Subscription" };
-        public static readonly string[] TabA11y = { "Shop", "Treasure chests", "Play", "Characters", "Daily rewards", "Subscription" };
+        public static readonly string[] TabLabels = { "Shop", "Chests", "PLAY", "Heroes", "Daily", "VIP" };
+        public static readonly string[] TabA11y = { "Shop", "Treasure chests", "Play", "Characters", "Daily rewards", "VIP" };
         public const int TabShop = 0, TabChests = 1, TabPlay = 2, TabHeroes = 3, TabDaily = 4, TabSubscription = 5;
 
         /// <summary>Owner issue 29: the Rewards (gift) button sits above the Heroes button, bottom right, on home AND the world map. One shared gap and size so both screens match.</summary>
@@ -132,12 +132,40 @@ namespace BoingUpSkyTower.Gameplay
             return g;
         }
 
+        /// <summary>
+        /// THE one size of every drawn back arrow (blue) and close X (red): this share of the size the caller asks for (owner 2026-11-02: they were too big,
+        /// draw them at about 70 percent). The invisible hit area stays the full requested size (never below 48 dp, see <see cref="UiKit.MinTouchPx"/>).
+        /// </summary>
+        public const float ChromeButtonScale = 0.7f;
+
+        /// <summary>
+        /// A back or close button: the Button root is an invisible hit target of the requested size (at least 48 dp), the painted plate and glyph are drawn
+        /// at <see cref="ChromeButtonScale"/> of it, centred. Callers place and size the root as before; the plate follows it by anchors.
+        /// </summary>
         public static Button GlyphButton(Transform parent, string name, string a11y, int role, Sprite glyph, Vector2 size, Action onClick, bool flipX = false, float fraction = 0.62f)
         {
-            Button b = UiKit.AddButton(parent, name, "", Button(role), Color.white, size, onClick);
+            Button b = UiKit.AddButton(parent, name, "", null, Color.white, size, onClick);
             b.GetComponent<A11yLabel>().Text = a11y;
-            b.GetComponent<Image>().raycastTarget = true;
-            AddGlyph(b.transform, glyph, fraction, flipX);
+            Image hit = b.GetComponent<Image>();
+            hit.color = new Color(1f, 1f, 1f, 0.001f);   // invisible but it takes the touch
+            hit.raycastTarget = true;
+            Sprite plateSprite = Button(role);
+            Image plate = UiKit.AddImage(b.transform, "Plate", plateSprite, Color.white);
+            plate.raycastTarget = false;
+            float m = (1f - ChromeButtonScale) * 0.5f;
+            plate.rectTransform.anchorMin = new Vector2(m, m);
+            plate.rectTransform.anchorMax = new Vector2(1f - m, 1f - m);
+            plate.rectTransform.offsetMin = plate.rectTransform.offsetMax = Vector2.zero;
+            UiKit.StylePlate(plate, plateSprite, size * ChromeButtonScale);
+            b.targetGraphic = plate;   // the press tint shows on the drawn plate
+            Image g = UiKit.AddImage(plate.transform, "Glyph", glyph, Color.white);
+            g.raycastTarget = false;
+            g.preserveAspect = true;
+            float gm = (1f - fraction) * 0.5f;
+            g.rectTransform.anchorMin = new Vector2(gm, gm);
+            g.rectTransform.anchorMax = new Vector2(1f - gm, 1f - gm);
+            g.rectTransform.offsetMin = g.rectTransform.offsetMax = Vector2.zero;
+            if (flipX) g.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
             return b;
         }
 
@@ -224,6 +252,13 @@ namespace BoingUpSkyTower.Gameplay
             }
             if (icon != null)
             {
+                size = Mathf.Max(size, UiKit.MinTouchRef);   // at least 48 dp on the real screen density
+                if (role == 3)
+                {
+                    Button cb = GlyphButton(panel, label, label, 3, icon, new Vector2(size, size), action, false, 0.56f);   // red close cross: drawn at the shared back/close scale
+                    UiKit.Place((RectTransform)cb.transform, new Vector2(0.5f, 0f), new Vector2(x, y), new Vector2(size, size));
+                    return cb;
+                }
                 Button ib = IconButton(panel, label, label, role, icon, new Vector2(size, size), action, label == "PLAY" || label == "START" ? 0.6f : 0.56f);
                 UiKit.Place((RectTransform)ib.transform, new Vector2(0.5f, 0f), new Vector2(x, y), new Vector2(size, size));
                 return ib;

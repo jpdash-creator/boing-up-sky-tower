@@ -16,6 +16,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The dirt oval.</summary>
         public RectTransform Oval;
         public float BackdropH, GroundBottom, OvalY, OvalW, OvalH;
+        /// <summary>Size factor of this layout against the 760 px reference stage.</summary>
+        public float Scale = 1f;
 
         /// <summary>Puts the doll (any rect) on the oval: bottom centre of the doll a little below the oval's centre, so the feet are on the dirt.</summary>
         public void Stand(RectTransform doll)
@@ -33,7 +35,17 @@ namespace BoingUpSkyTower.Gameplay
     public static class StageScene
     {
         /// <summary>Character screen: the stage is the top 760 px; the list of characters sits on a dark panel below it.</summary>
-        public static Stage CharacterLayout() { return new Stage { BackdropH = 470f, GroundBottom = 760f, OvalY = 660f, OvalW = 600f, OvalH = 160f }; }
+        /// <summary>
+        /// The stage takes 44 percent of the canvas height (700 to 1000 px; 760 px was the fixed value on 9:16), so a tall phone gets a bigger hero
+        /// instead of an empty lower half; every measure scales with it (Scale 1 = the original 760 px layout).
+        /// </summary>
+        public static Stage CharacterLayout()
+        {
+            float h = UiKit.CanvasSizeRef().y;
+            float gb = Mathf.Clamp(Mathf.Round(h * 0.44f), 700f, 1000f);
+            float k = gb / 760f;
+            return new Stage { Scale = k, BackdropH = Mathf.Round(470f * k), GroundBottom = gb, OvalY = Mathf.Round(660f * k), OvalW = Mathf.Round(600f * k), OvalH = Mathf.Round(160f * k) };
+        }
 
         static Sprite grass, oval, edge;
 

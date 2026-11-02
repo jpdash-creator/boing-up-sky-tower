@@ -77,9 +77,41 @@ namespace BoingUpSkyTower.Simulation
             PlatformKind.ThornBush, PlatformKind.Ladybug, PlatformKind.Seesaw
         };
 
+        private static readonly PlatformKind[] Region2Set =
+        {
+            PlatformKind.SquishCap, PlatformKind.SproutLift, PlatformKind.PuffFloat, PlatformKind.FairyRing,
+            PlatformKind.OrbitCap, PlatformKind.DizzySpores, PlatformKind.SporePop
+        };
+        /// <summary>Generic kinds a region keeps next to its new set (doc 30 section 7; region 2: rotting log Crumble and dew moss Slippery).</summary>
+        private static readonly PlatformKind[] Region2Generics = { PlatformKind.Crumble, PlatformKind.Slippery };
+
+        private static readonly PlatformKind[] Region3Set =
+        {
+            PlatformKind.SurfBoostWave, PlatformKind.SandcastleStep, PlatformKind.ClamShellPad, PlatformKind.SinkingRaft,
+            PlatformKind.TurtleShuttle, PlatformKind.KelpTangle, PlatformKind.PufferfishPad
+        };
+        /// <summary>Region 3 keeps the sand slab Crumble and the sea foam Vanishing, each once; the drifting platform (signature) is listed twice so it stays the most common kind.</summary>
+        private static readonly PlatformKind[] Region3Generics = { PlatformKind.Crumble, PlatformKind.Vanishing };
+
+        /// <summary>True when the signature platform of the region is listed twice among the special options (it stays the most common kind).</summary>
+        public static bool SignatureListedTwice(SignatureKind signature)
+        {
+            return signature == SignatureKind.DriftingPlatforms;
+        }
+
         public static PlatformKind[] For(SignatureKind signature)
         {
-            return signature == SignatureKind.BounceFlowers ? Region1Set : NoneSet;
+            if (signature == SignatureKind.BounceFlowers) return Region1Set;
+            if (signature == SignatureKind.BounceCaps) return Region2Set;
+            if (signature == SignatureKind.DriftingPlatforms) return Region3Set;
+            return NoneSet;
+        }
+
+        /// <summary>The generic kinds that join the new set of a region (empty for regions without a new set and for region 1).</summary>
+        public static PlatformKind[] GenericsFor(SignatureKind signature)
+        {
+            if (signature == SignatureKind.DriftingPlatforms) return Region3Generics;
+            return signature == SignatureKind.BounceCaps ? Region2Generics : NoneSet;
         }
     }
 

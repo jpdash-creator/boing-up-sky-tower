@@ -9,26 +9,28 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The Subscription page (docs/26 section 2): a full page in the shop look (Momo shopkeeper scene, brown background, ribbon title) with two
-    /// big cards, WEEKLY (blue) and MONTHLY (gold/red). Each card shows the ticket icon, the purchase reward, the privileges, the daily rewards,
-    /// the "worth about N x" text and the price button; an active plan also shows the days left and today's Claim button (or "Come back tomorrow"
-    /// with a countdown to local midnight). Purchases are TEST purchases in development builds (ShopScreen.TestPurchasesEnabled), "Not available
-    /// yet" in release builds. Menu screen only. The card content sits in layout groups, so a larger text size pushes the next row down instead of
-    /// overlapping it (CUX-3, CUX-5).
-    /// Ticket art: Resources/Art/Ui/icon_ticket_weekly.png and icon_ticket_monthly.png (new OpenArt art, arrives later); until then the crown icon.
+    /// The VIP page (docs/26 section 2; the owner renamed the Subscription screen to VIP, issue list 30 item 4). A full page in the shop look
+    /// (ShopChrome: Momo scene, wood background, yellow italic ribbon "VIP") whose body is a LIST OF SECTIONS, each a header plus content (add a section by
+    /// calling BuildSection in BuildSections). The first section is "Subscription": ONE compact card per plan (WEEKLY blue, MONTHLY gold) built like the
+    /// Iron and Gold chest cards: ticket icon on the left, plan name, two or three colour-coded benefit lines, and on the right the price button (an active
+    /// plan shows the days left and a Claim button, or the countdown to local midnight, instead). The page never scrolls: the cards shrink between a minimum
+    /// and a preferred height, and the text inside best-fits down to the 16 sp floor. Purchases are TEST purchases in development builds
+    /// (ShopScreen.TestPurchasesEnabled), "Not available yet" in release builds. Menu screen only.
+    /// Ticket art: Resources/Art/Ui/icon_ticket_weekly.png and icon_ticket_monthly.png; the crown icon until they exist.
     /// </summary>
     public sealed class SubscriptionScreen
     {
-        const float HeaderH = 520f;                     // painted shop scene, same as the shop
-        const float ListTop = HeaderH + 130f;           // below the ribbon title
-        const float BottomMargin = ToyKit.TabBarReserve + 4f;
-        const float ButtonH = 130f;
+        /// <summary>The page title (ribbon, tab caption, accessibility labels).</summary>
+        public const string PageTitle = "VIP";
+        /// <summary>The first section header, under the title.</summary>
+        public const string SubscriptionSectionTitle = "Subscription";
 
-        static readonly Color WeeklyPlate = new Color(0.15f, 0.36f, 0.78f, 1f);       // white title on it: about 6:1
-        static readonly Color MonthlyPlate = new Color(0.66f, 0.14f, 0.18f, 1f);      // white title on it: about 8:1
-        static readonly Color WeeklyBody = new Color(0.84f, 0.92f, 1f, 1f);
-        static readonly Color MonthlyBody = new Color(1f, 0.93f, 0.72f, 1f);
-        static readonly Color WorthColor = new Color(0.02f, 0.36f, 0.19f, 1f);        // deep green on the pale card, above 6:1
+        const float CardMinH = 232f, CardPad = 12f, LineGap = 6f, SectionGap = 12f, CardGap = 10f;
+        /// <summary>The 16 sp floor in pixels; every card text uses it (the card height is fixed from it, so 130% text cannot overlap).</summary>
+        static readonly int Fs = Mathf.CeilToInt(UiKit.MinBodyTextPx);
+        static readonly int NameFs = Fs + 6;
+        static readonly float LineH = Mathf.Ceil(Fs * 1.3f), NameRowH = Mathf.Ceil((Fs + 6) * 1.3f);
+        static readonly Color HeaderColor = new Color(1f, 0.86f, 0.30f, 1f);          // yellow on the wood: above 8:1
         static readonly Color DisabledTint = new Color(0.66f, 0.66f, 0.70f, 1f);
 
         readonly RectTransform screen;
@@ -55,68 +57,18 @@ namespace BoingUpSkyTower.Gameplay
 
         static string Num(int n) { return n.ToString("N0", CultureInfo.InvariantCulture); }
 
-        static void DropOutline(Text t)
-        {
-            var o = t.GetComponent<Outline>();
-            if (o != null) o.enabled = false;
-        }
+        static string Colored(string text, Color c) { return "<color=#" + ColorUtility.ToHtmlStringRGB(c) + ">" + text + "</color>"; }
 
         // ---------------- build ----------------
 
         public void Build()
         {
-            BuildChrome();
+            Text coin, gem, star;
+            ShopChrome.BuildScene(screen, art, null, out coin, out gem, out star);
+            CoinText = coin;
+            GemText = gem;
+            StarText = star;
             RebuildBody();
-        }
-
-        /// <summary>
-        /// SWAP POINT for the shared shop chrome (ShopChrome by helper B1): the Momo scene across the top and the wallet pills over it.
-        /// Built here with the same pieces as ShopScreen.BuildHeader until that file exists; replace the body of this method by a ShopChrome call.
-        /// </summary>
-        void BuildChrome()
-        {
-            RectTransform scene = UiKit.Rect(screen, "Scene");
-            scene.anchorMin = new Vector2(0f, 1f);
-            scene.anchorMax = new Vector2(1f, 1f);
-            scene.pivot = new Vector2(0.5f, 1f);
-            scene.anchoredPosition = Vector2.zero;
-            scene.sizeDelta = new Vector2(0f, HeaderH);
-            scene.gameObject.AddComponent<RectMask2D>();
-            Sprite sc = ToyKit.Get("shop_scene");
-            Image si = UiKit.AddImage(scene, "SceneArt", sc, sc != null ? Color.white : Theme.Sky);
-            si.preserveAspect = false;
-            UiKit.Stretch(si.rectTransform);
-            if (sc != null)
-            {
-                var fit = si.gameObject.AddComponent<AspectRatioFitter>();
-                fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
-                fit.aspectRatio = sc.rect.width / sc.rect.height;
-            }
-
-            RectTransform row = UiKit.Rect(screen, "Wallet");
-            row.anchorMin = new Vector2(0f, 1f);
-            row.anchorMax = new Vector2(1f, 1f);
-            row.pivot = new Vector2(0.5f, 1f);
-            row.offsetMin = new Vector2(190f, -118f);
-            row.offsetMax = new Vector2(-16f, -18f);
-            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            hl.spacing = 10f;
-            hl.childControlWidth = hl.childControlHeight = true;
-            hl.childForceExpandWidth = hl.childForceExpandHeight = true;
-            CoinText = ToyKit.WalletPillFlex(row, "CoinsPill", art != null ? art.CoinIcon : null, Color.white, 100f);
-            GemText = ToyKit.WalletPillFlex(row, "GemsPill", art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 100f);
-            StarText = ToyKit.WalletPillFlex(row, "StarsPill", art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 100f);
-        }
-
-        int TotalStars()
-        {
-            int stars = 0;
-            for (int i = 1; i <= GameSession.PlayableRegions; i++)
-            {
-                RegionDef r = GameSession.Repo != null ? GameSession.Repo.TryGetRegionByIndex(i) : null;
-                if (r != null) stars += progress.StarsInRegion(r);
-            }
-            return stars;
         }
 
         void RebuildBody()
@@ -127,17 +79,16 @@ namespace BoingUpSkyTower.Gameplay
                 UnityEngine.Object.Destroy(body.gameObject);
             }
             countdowns.Clear();
-            body = UiKit.Rect(screen, "SubscriptionBody");
-            UiKit.Stretch(body);
-            ToyKit.Ribbon(body, "Subscription", new Vector2(0.5f, 1f), new Vector2(0f, -(HeaderH - 70f)), new Vector2(700f, 206f));
+            RectTransform content = ShopChrome.BuildBody(screen, PageTitle, ShopChrome.RibbonColor.Yellow);
+            body = (RectTransform)content.parent;
             shownActive = progress.IsActive();
             shownCanClaim = progress.CanClaimToday();
-            BuildCards();
+            BuildSections(content);
             var ticker = body.gameObject.AddComponent<Ticker>();
             ticker.Tick = OnSecond;
             if (CoinText != null) UiKit.SetText(CoinText, progress.Coins.ToString());
             if (GemText != null) UiKit.SetText(GemText, progress.Gems.ToString());
-            if (StarText != null) UiKit.SetText(StarText, TotalStars().ToString());
+            if (StarText != null) UiKit.SetText(StarText, ShopChrome.TotalStars(progress).ToString());
         }
 
         /// <summary>Once per second (menu only): refreshes the countdown, and rebuilds the page when the state changed (midnight passed, the plan ended).</summary>
@@ -145,7 +96,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (progress.IsActive() != shownActive || progress.CanClaimToday() != shownCanClaim) { RebuildBody(); return; }
             if (countdowns.Count == 0) return;
-            string text = "Next reward in " + Countdown(progress.TimeToNextClaim(progress.SubscriptionClock()));
+            string text = Countdown(progress.TimeToNextClaim(progress.SubscriptionClock()));
             for (int i = 0; i < countdowns.Count; i++) if (countdowns[i] != null) UiKit.SetText(countdowns[i], text);
         }
 
@@ -170,209 +121,209 @@ namespace BoingUpSkyTower.Gameplay
             return h.ToString("00", CultureInfo.InvariantCulture) + ":" + span.Minutes.ToString("00", CultureInfo.InvariantCulture) + ":" + span.Seconds.ToString("00", CultureInfo.InvariantCulture);
         }
 
-        // ---------------- cards ----------------
+        // ---------------- sections ----------------
 
-        void BuildCards()
+        /// <summary>
+        /// The page is a vertical list of sections under the ribbon. ADD A NEW VIP SECTION HERE: one more BuildSection(content, "Title", fill) call,
+        /// where fill adds the section's rows to the rect it is given (rows are layout children: give them a LayoutElement min/preferred height).
+        /// </summary>
+        void BuildSections(RectTransform content)
         {
-            RectTransform vp = UiKit.Rect(body, "SubViewport");
-            vp.anchorMin = Vector2.zero;
-            vp.anchorMax = Vector2.one;
-            vp.offsetMin = new Vector2(0f, BottomMargin);
-            vp.offsetMax = new Vector2(0f, -ListTop);
-            vp.gameObject.AddComponent<RectMask2D>();
-            var hit = vp.gameObject.AddComponent<Image>();
-            hit.color = new Color(0f, 0f, 0f, 0f);   // gives the ScrollRect something to drag on between the cards
-            RectTransform list = UiKit.Rect(vp, "SubList");
-            list.anchorMin = new Vector2(0f, 1f);
-            list.anchorMax = new Vector2(1f, 1f);
-            list.pivot = new Vector2(0.5f, 1f);
-            list.offsetMin = Vector2.zero;
-            list.offsetMax = Vector2.zero;
-            var v = list.gameObject.AddComponent<VerticalLayoutGroup>();
-            v.padding = new RectOffset(28, 28, 10, 40);
-            v.spacing = 48f;
+            var list = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            list.spacing = SectionGap;
+            list.padding = new RectOffset(0, 0, 4, 4);
+            list.childControlWidth = list.childControlHeight = true;
+            list.childForceExpandWidth = true;
+            list.childForceExpandHeight = false;
+            list.childAlignment = TextAnchor.UpperCenter;
+            BuildSection(content, SubscriptionSectionTitle, BuildPlanCards);
+        }
+
+        void BuildSection(RectTransform parent, string title, Action<RectTransform> fill)
+        {
+            RectTransform sec = UiKit.Rect(parent, "Section_" + title);
+            var v = sec.gameObject.AddComponent<VerticalLayoutGroup>();
+            v.spacing = CardGap;
             v.childControlWidth = v.childControlHeight = true;
             v.childForceExpandWidth = true;
             v.childForceExpandHeight = false;
-            var fit = list.gameObject.AddComponent<ContentSizeFitter>();
-            fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            var scroll = vp.gameObject.AddComponent<ScrollRect>();
-            scroll.content = list;
-            scroll.viewport = vp;
-            scroll.horizontal = false;
-            scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Elastic;
-            scroll.scrollSensitivity = 60f;
-
-            for (int i = 0; i < catalog.All.Count; i++) BuildCard(list, catalog.All[i]);
+            Text head = UiKit.AddText(sec, "Header", title, 48, HeaderColor, TextAnchor.MiddleLeft, true);
+            head.fontStyle = FontStyle.Italic;
+            head.horizontalOverflow = HorizontalWrapMode.Overflow;
+            head.gameObject.AddComponent<A11yLabel>().Text = title + " section";
+            var hle = head.gameObject.AddComponent<LayoutElement>();
+            hle.minHeight = 60f;
+            hle.preferredHeight = 60f + Mathf.Max(0f, UiKit.TextScale - 1f) * 40f;
+            fill(sec);
         }
 
-        static void IgnoreLayout(RectTransform host)
+        void BuildPlanCards(RectTransform section)
         {
-            for (int i = 0; i < host.childCount; i++) host.GetChild(i).gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            for (int i = 0; i < catalog.All.Count; i++) BuildCard(section, catalog.All[i]);
         }
 
-        static VerticalLayoutGroup Stack(GameObject go, int padX, int padTop, int padBottom, float spacing)
+        /// <summary>A single-line text at a fixed pixel size (no best fit, no wrap): its box is its line height.</summary>
+        static Text Plain(Text t, TextAnchor align, int px)
         {
-            var v = go.AddComponent<VerticalLayoutGroup>();
-            v.padding = new RectOffset(padX, padX, padTop, padBottom);
-            v.spacing = spacing;
-            v.childControlWidth = v.childControlHeight = true;
-            v.childForceExpandWidth = true;
-            v.childForceExpandHeight = false;
-            v.childAlignment = TextAnchor.UpperCenter;
-            return v;
-        }
-
-        static void Size(GameObject go, float minW, float minH, float prefW = -1f, float prefH = -1f)
-        {
-            var le = go.GetComponent<LayoutElement>() ?? go.AddComponent<LayoutElement>();
-            le.minWidth = minW;
-            le.minHeight = minH;
-            if (prefW >= 0f) le.preferredWidth = prefW;
-            if (prefH >= 0f) le.preferredHeight = prefH;
-        }
-
-        Text Line(Transform parent, string name, string text, int size, Color color, TextAnchor align = TextAnchor.MiddleLeft, bool display = false)
-        {
-            Text t = UiKit.AddText(parent, name, text, size, color, align, display);
-            DropOutline(t);
+            var o = t.GetComponent<Outline>();
+            if (o != null) o.enabled = false;
+            t.alignment = align;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
+            t.resizeTextForBestFit = false;
+            t.fontSize = px;
             return t;
         }
 
-        void BuildCard(RectTransform list, SubscriptionDef def)
+        /// <summary>Button labels use the same floor size, so a 130% text size cannot push them out of the button.</summary>
+        static void FixLabel(Button b)
+        {
+            Text l = b.transform.Find("Label").GetComponent<Text>();
+            l.resizeTextForBestFit = false;
+            l.fontSize = Fs;
+        }
+
+        static void Row(GameObject go, float h)
+        {
+            var le = go.GetComponent<LayoutElement>() ?? go.AddComponent<LayoutElement>();
+            le.minHeight = h;
+            le.preferredHeight = h;
+        }
+
+        static void Rows(Text t, float x0, float x1, float y0, float y1)
+        {
+            RectTransform r = t.rectTransform;
+            r.anchorMin = new Vector2(x0, y0);
+            r.anchorMax = new Vector2(x1, y1);
+            r.offsetMin = r.offsetMax = Vector2.zero;
+        }
+
+        /// <summary>One plan: a card like the chest cards. Ticket left, name and benefit lines in the middle, price (or days left + Claim) right.</summary>
+        void BuildCard(RectTransform section, SubscriptionDef def)
         {
             bool weekly = def.Id == SubscriptionCatalog.Weekly;
-            string word = weekly ? "WEEKLY" : "MONTHLY";
+            bool gold = !weekly;
             DateTime now = progress.SubscriptionClock();
             bool active = progress.IsActive(def.Id, now);
+            string word = weekly ? "Weekly" : "Monthly";
 
-            RectTransform card = UiKit.Rect(list, "Card_" + def.Id);
-            Image surface = Theme.CardBacking(card);
-            surface.color = weekly ? WeeklyBody : MonthlyBody;
-            IgnoreLayout(card);   // the shadow and the surface are backdrops, not rows
-            Stack(card.gameObject, 24, 24, 28, 16f);
+            RectTransform card = ShopChrome.Card(section, "Card_" + def.Id, gold ? ShopChrome.FrameColor.Gold : ShopChrome.FrameColor.Blue);
+            bool power5 = def.PowerUpEveryClaims > 0;
+            int lineCount = power5 ? 3 : 2;
+            float cardH = Mathf.Max(CardMinH, CardPad * 2f + NameRowH + lineCount * (LineH + LineGap));
+            var le = card.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = cardH;
+            le.preferredHeight = cardH;
 
-            // Title plate: name on the left, ticket icon on the right.
-            Image plate = UiKit.AddPanel(card, "Header", weekly ? WeeklyPlate : MonthlyPlate);
-            Size(plate.gameObject, 0f, 220f);
-            var ph = plate.gameObject.AddComponent<HorizontalLayoutGroup>();
-            ph.padding = new RectOffset(32, 16, 10, 10);
-            ph.spacing = 12f;
-            ph.childAlignment = TextAnchor.MiddleLeft;
-            ph.childControlWidth = ph.childControlHeight = true;
-            ph.childForceExpandWidth = false;
-            ph.childForceExpandHeight = false;
-            RectTransform titles = UiKit.Rect(plate.transform, "Titles");
-            Stack(titles.gameObject, 0, 0, 0, 2f).childAlignment = TextAnchor.MiddleLeft;
-            Size(titles.gameObject, 200f, 0f);
-            titles.gameObject.GetComponent<LayoutElement>().flexibleWidth = 1f;
-            Text big = UiKit.AddText(titles, "Name", word, 72, Color.white, TextAnchor.MiddleLeft, true);
-            big.horizontalOverflow = HorizontalWrapMode.Overflow;
-            Text sub = UiKit.AddText(titles, "Kind", "Subscription", 42, Color.white, TextAnchor.MiddleLeft, true);
-            sub.horizontalOverflow = HorizontalWrapMode.Overflow;
+            Color nameCol = gold ? new Color(0.33f, 0.14f, 0.02f) : new Color(0.82f, 0.93f, 1f);
+            Color baseCol = gold ? new Color(0.20f, 0.08f, 0.02f) : Color.white;
+            Color gems = gold ? new Color(0.05f, 0.25f, 0.75f) : new Color(0.62f, 0.88f, 1f);
+            Color coins = gold ? new Color(0.45f, 0.24f, 0.0f) : new Color(1f, 0.86f, 0.30f);
+            Color power = gold ? new Color(0.02f, 0.36f, 0.12f) : new Color(0.45f, 0.98f, 0.50f);
+
+            // ticket icon (left)
             Sprite ticket = ToyKit.Get(weekly ? "icon_ticket_weekly" : "icon_ticket_monthly");
             bool fallback = ticket == null;
             if (fallback) ticket = ToyKit.Get("icon_crown");
-            Image ti = UiKit.AddImage(plate.transform, "Ticket", ticket, fallback && weekly ? new Color(0.78f, 0.9f, 1f, 1f) : Color.white);
+            Image ti = UiKit.AddImage(card, "Ticket", ticket, fallback && weekly ? new Color(0.78f, 0.9f, 1f, 1f) : Color.white);
             ti.preserveAspect = true;
-            Size(ti.gameObject, 190f, 190f, 190f, 190f);
+            ti.raycastTarget = false;
+            ti.rectTransform.anchorMin = new Vector2(0.015f, 0.12f);
+            ti.rectTransform.anchorMax = new Vector2(0.185f, 0.88f);
+            ti.rectTransform.offsetMin = ti.rectTransform.offsetMax = Vector2.zero;
 
-            // Purchase reward.
-            Line(card, "PurchaseLabel", "Purchase reward", 40, Theme.InkSoft);
-            RectTransform buyRow = ChipRow(card, "PurchaseChips");
-            Chip(buyRow, GemIcon, Num(def.InstantGems), "gems");
+            // middle: ONE vertical stack (name + value row, then the benefit lines), single-line texts at the 16 sp floor: no overlap by construction
+            const float cx0 = 0.19f, cx1 = 0.735f;
+            RectTransform stack = UiKit.Rect(card, "Lines");
+            stack.anchorMin = new Vector2(cx0, 0f);
+            stack.anchorMax = new Vector2(cx1, 1f);
+            stack.offsetMin = new Vector2(0f, CardPad);
+            stack.offsetMax = new Vector2(0f, -CardPad);
+            var vg = stack.gameObject.AddComponent<VerticalLayoutGroup>();
+            vg.spacing = LineGap;
+            vg.childAlignment = TextAnchor.MiddleLeft;
+            vg.childControlWidth = vg.childControlHeight = true;
+            vg.childForceExpandWidth = true;
+            vg.childForceExpandHeight = false;
+            RectTransform head = UiKit.Rect(stack, "NameRow");
+            var hg = head.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hg.spacing = 8f;
+            hg.childAlignment = TextAnchor.MiddleLeft;
+            hg.childControlWidth = hg.childControlHeight = true;
+            hg.childForceExpandWidth = hg.childForceExpandHeight = false;
+            Row(head.gameObject, NameRowH);
+            Text name = Plain(UiKit.AddText(head, "Name", word.ToUpperInvariant(), 48, nameCol, TextAnchor.MiddleLeft, true), TextAnchor.MiddleLeft, NameFs);
+            name.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            Plain(UiKit.AddText(head, "Worth", SubscriptionCatalog.WorthText(def).Replace("about ", ""), 42, gold ? new Color(0.02f, 0.36f, 0.19f) : power, TextAnchor.MiddleRight, true), TextAnchor.MiddleRight, Fs);
 
-            // Privileges.
-            Line(card, "PrivilegeLabel", "Privileges", 40, Theme.InkSoft);
-            Text p1 = Line(card, "Privilege1", "Daily gems and coins every day", 42, Theme.Ink);
-            p1.horizontalOverflow = HorizontalWrapMode.Wrap;
-            if (def.PowerUpEveryClaims > 0)
+            string l1 = "+" + Colored(Num(def.InstantGems) + " gems", gems) + " now";
+            string l2 = "Daily " + Colored(Num(def.DailyGems) + " gems", gems) + " + " + Colored(Num(def.DailyCoins) + " coins", coins);
+            string l3 = power5 ? Colored("Power-up", power) + " every " + def.PowerUpEveryClaims + "th claim" : null;
+            for (int r = 0; r < lineCount; r++)
             {
-                Text p2 = Line(card, "Privilege2", "Free power-up every " + def.PowerUpEveryClaims + " days", 42, Theme.Ink);
-                p2.horizontalOverflow = HorizontalWrapMode.Wrap;
+                string txt = r == 0 ? l1 : r == 1 ? l2 : l3;
+                Text line = Plain(UiKit.AddText(stack, "Benefit" + (r + 1), txt, 42, baseCol, TextAnchor.MiddleLeft), TextAnchor.MiddleLeft, Fs);
+                line.supportRichText = true;
+                Row(line.gameObject, LineH);
             }
 
-            // Daily rewards.
-            Line(card, "DailyLabel", "Daily Rewards", 40, Theme.InkSoft);
-            RectTransform dailyRow = ChipRow(card, "DailyChips");
-            Chip(dailyRow, GemIcon, Num(def.DailyGems), "gems");
-            Chip(dailyRow, CoinIcon, Num(def.DailyCoins), "coins");
-            if (def.PowerUpEveryClaims > 0) Chip(dailyRow, ToyKit.Get("icon_bolt"), "x" + def.PowerUpCount, "free power-up every " + def.PowerUpEveryClaims + " days");
+            string benefits = Num(def.InstantGems) + " gems now. Daily " + Num(def.DailyGems) + " gems and " + Num(def.DailyCoins) + " coins." + (power5 ? " A free power-up every " + def.PowerUpEveryClaims + "th claim." : "");
+            card.gameObject.AddComponent<A11yLabel>().Text = def.Name + ", " + def.Days + " days. " + benefits + " " + SubscriptionCatalog.WorthText(def) + ".";
 
-            Text worth = Line(card, "Worth", SubscriptionCatalog.WorthText(def), 50, WorthColor, TextAnchor.MiddleCenter, true);
-            worth.horizontalOverflow = HorizontalWrapMode.Wrap;
-
+            // right: price button, or days left + Claim
+            const float bx0 = 0.755f, bx1 = 0.985f;
             if (active)
             {
                 int days = progress.DaysLeft(now);
-                Line(card, "DaysLeft", days + (days == 1 ? " day left" : " days left"), 44, Theme.Ink, TextAnchor.MiddleCenter, true);
-                BuildClaim(card);
-            }
-
-            string price = SubscriptionCatalog.PriceText(def);
-            string planName = def.Name;
-            bool otherActive = progress.IsActive(now) && !active;
-            string a11y = "Buy " + planName + " for " + SubscriptionCatalog.AmountText(def) + ", " + def.Days + " days" + (ShopScreen.TestPurchasesEnabled ? ", test purchase" : ", not available yet") + (active ? ", adds time" : "");
-            string planId = def.Id;
-            Button buy = UiKit.AddButton(card, "Buy", price, ToyKit.Button(1), otherActive ? DisabledTint : Color.white, new Vector2(400f, ButtonH), () => TapBuy(planId), 46);
-            buy.GetComponent<A11yLabel>().Text = a11y;
-            buy.transform.Find("Label").GetComponent<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
-            Size(buy.gameObject, 0f, ButtonH, -1f, ButtonH);
-            if (ShopScreen.TestPurchasesEnabled)
-            {
-                Text note = Line(card, "TestNote", "Test purchase: no money is charged.", 32, Theme.InkSoft, TextAnchor.MiddleCenter);
-                note.horizontalOverflow = HorizontalWrapMode.Wrap;
-            }
-        }
-
-        /// <summary>Today's reward: a green Claim button, or the disabled "Come back tomorrow" with the countdown to local midnight.</summary>
-        void BuildClaim(RectTransform card)
-        {
-            if (progress.CanClaimToday())
-            {
-                Button claim = UiKit.AddButton(card, "Claim", "Claim", ToyKit.Button(1), Color.white, new Vector2(400f, ButtonH), TapClaim, 48);
-                claim.GetComponent<A11yLabel>().Text = "Claim today's subscription reward";
-                Size(claim.gameObject, 0f, ButtonH, -1f, ButtonH);
+                Text left = Plain(UiKit.AddText(card, "DaysLeft", days + (days == 1 ? " day left" : " days left"), 44, baseCol, TextAnchor.MiddleCenter, true), TextAnchor.MiddleCenter, Fs);
+                Rows(left, bx0 - 0.03f, 1f, 0.62f, 0.97f);
+                BuildClaim(card, bx0, bx1);
                 return;
             }
-            Button wait = UiKit.AddButton(card, "ComeBack", "Come back tomorrow", ToyKit.Button(0), DisabledTint, new Vector2(400f, ButtonH), null, 44, false);
-            wait.interactable = false;
-            wait.GetComponent<A11yLabel>().Text = "Today's reward is claimed. Come back tomorrow.";
-            wait.transform.Find("Label").GetComponent<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
-            Size(wait.gameObject, 0f, ButtonH, -1f, ButtonH);
-            Text count = Line(card, "Countdown", "Next reward in " + Countdown(progress.TimeToNextClaim(progress.SubscriptionClock())), 38, Theme.InkSoft, TextAnchor.MiddleCenter);
-            countdowns.Add(count);
+            string planId = def.Id;
+            bool otherActive = progress.IsActive(now);
+            string a11y = "Buy " + def.Name + " for " + SubscriptionCatalog.AmountText(def) + ", " + def.Days + " days" + (ShopScreen.TestPurchasesEnabled ? ", test purchase" : ", not available yet");
+            string price = SubscriptionCatalog.AmountText(def) + "\n/ " + def.Days + " Days";
+            Button buy = ShopChrome.PriceButton(card, "Buy", 1, null, price, a11y, () => TapBuy(planId), 40);
+            FixLabel(buy);
+            if (otherActive) buy.GetComponent<Image>().color = DisabledTint;
+            Anchor(buy, bx0, bx1);
         }
 
-        Sprite GemIcon { get { return art != null && art.GemIcon != null ? art.GemIcon : ToyKit.Get("icon_gem"); } }
-        Sprite CoinIcon { get { return art != null && art.CoinIcon != null ? art.CoinIcon : ToyKit.Get("icon_coin"); } }
-
-        static RectTransform ChipRow(Transform parent, string name)
+        /// <summary>The button column: vertically centred, as tall as the shared price buttons (at least the 48 dp target).</summary>
+        static void Anchor(Button b, float x0, float x1)
         {
-            RectTransform row = UiKit.Rect(parent, name);
-            var h = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            h.spacing = 16f;
-            h.childAlignment = TextAnchor.MiddleLeft;
-            h.childControlWidth = h.childControlHeight = true;
-            h.childForceExpandWidth = false;
-            h.childForceExpandHeight = false;
-            return row;
+            var rt = (RectTransform)b.transform;
+            rt.anchorMin = new Vector2(x0, 0.5f);
+            rt.anchorMax = new Vector2(x1, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(0f, -ShopChrome.PriceButtonH * 0.5f);
+            rt.offsetMax = new Vector2(0f, ShopChrome.PriceButtonH * 0.5f);
         }
 
-        /// <summary>A framed square with the item icon above its count (as the reward chips of the bundle cards).</summary>
-        void Chip(RectTransform row, Sprite icon, string count, string what)
+        /// <summary>Today's reward: a green Claim button, or a disabled button showing the countdown to local midnight.</summary>
+        void BuildClaim(RectTransform card, float x0, float x1)
         {
-            Image frame = UiKit.AddPanel(row, "Chip", new Color(1f, 1f, 1f, 0.9f));
-            Stack(frame.gameObject, 14, 12, 10, 4f);
-            Size(frame.gameObject, 170f, 0f);
-            Image ic = UiKit.AddImage(frame.transform, "Icon", icon, Color.white);
-            ic.preserveAspect = true;
-            Size(ic.gameObject, 0f, 92f, -1f, 92f);
-            Text t = UiKit.AddText(frame.transform, "Count", count, 46, Theme.Ink, TextAnchor.MiddleCenter, true);
-            DropOutline(t);
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
-            frame.gameObject.AddComponent<A11yLabel>().Text = count + " " + what;
+            Button b;
+            if (progress.CanClaimToday())
+            {
+                b = ShopChrome.PriceButton(card, "Claim", 1, null, "Claim", "Claim today's VIP subscription reward", TapClaim, 44);
+            }
+            else
+            {
+                string time = Countdown(progress.TimeToNextClaim(progress.SubscriptionClock()));
+                b = ShopChrome.PriceButton(card, "ComeBack", 0, null, time, "Today's reward is claimed. Come back tomorrow.", null, 40);
+                b.interactable = false;
+                b.GetComponent<Image>().color = DisabledTint;
+                countdowns.Add(b.transform.Find("Label").GetComponent<Text>());
+            }
+            FixLabel(b);
+            var rt = (RectTransform)b.transform;
+            rt.anchorMin = new Vector2(x0, 0.05f);
+            rt.anchorMax = new Vector2(x1, 0.05f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.offsetMin = new Vector2(0f, 0f);
+            rt.offsetMax = new Vector2(0f, ShopChrome.PriceButtonH);
         }
 
         // ---------------- actions ----------------

@@ -37,7 +37,7 @@ If a change cannot meet a rule, stop and tell the owner instead of shipping it. 
 - Buttons carry accessibility labels where the platform supports them.
 
 ## CUX-7 Fair and predictable gameplay
-- Hazards telegraph before they hurt (a warning state with a shape/motion cue). No unavoidable damage. Every level is bot-proven solvable (already enforced by the Simulation tests).
+- Owner decision 2026-11-01: platform behaviour is discovered by the player; no code-drawn cues; hazards still never kill, never unavoidable, bot-proven solvable. This overrides the earlier telegraph rule (and the shape-cue part of CUX-6 for platform kinds): NO arrows, bees, pips, warning icons, speed lines or pattern strips are drawn in code on special, hazard or unique platforms; only the painted sprites and the platform motion that is the mechanic remain. Test: `NoPlatformCueTests` (category CriticalUX). No unavoidable damage. Every level is bot-proven solvable (already enforced by the Simulation tests).
 - The danger zone is always visible. Failing and retrying takes one tap. Revive offer never blocks the retry.
 
 ## CUX-8 Clear feedback and state

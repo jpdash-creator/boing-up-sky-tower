@@ -199,7 +199,10 @@ namespace BoingUpSkyTower.Gameplay
     {
         static readonly int[] Waits = { 0, 20, 45 };
         static readonly int[] CrumbleWaits = { 0 };
-        static readonly int[] SnapWaits = { 0, 12, 30 };   // a snap daisy closes 90 ticks after the landing
+        static readonly int[] SnapWaits = { 0, 12, 30 };   // a snap daisy closes 90 ticks after the landing (a spore pop flings 72 ticks after it)
+        static readonly int[] DizzyWaits = { 0, 20, 62 };  // dizzy spores lock the steering for the first 60 ticks
+        static readonly int[] KelpWaits = { 0, 38, 50 };   // kelp tangle: no jump for the first 36 ticks
+        static readonly int[] RaftWaits = { 0, 20, 45 };   // sinking raft: 1 u in 90 ticks
         static readonly int[] Backs = { 0, 6, 14 };
         static readonly int[] Runs = { 0, 6, 14, 28, 40 };
         const int FailScore = int.MinValue;
@@ -312,7 +315,7 @@ namespace BoingUpSkyTower.Gameplay
             if (sims >= MaxSims) return 0;
             int nodeStart = sims;
             Platform here = sim.Platforms[from.GroundId];
-            int[] waits = here.Kind == PlatformKind.Crumble ? CrumbleWaits : (here.Kind == PlatformKind.SnapDaisy ? SnapWaits : Waits);
+            int[] waits = here.Kind == PlatformKind.Crumble ? CrumbleWaits : (here.Kind == PlatformKind.SnapDaisy || here.Kind == PlatformKind.SporePop ? SnapWaits : (here.Kind == PlatformKind.DizzySpores ? DizzyWaits : (here.Kind == PlatformKind.KelpTangle ? KelpWaits : (here.Kind == PlatformKind.SinkingRaft ? RaftWaits : Waits))));
             int[] targets = targetBufs[depth];
             int tc = Targets(from, tier, targets);
             for (int ti = 0; ti < tc; ti++)
