@@ -58,6 +58,15 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual("Coins", ShopScreen.CoinsSectionTitle);
         }
 
+        /// <summary>Bug List 2 C2.a: the scroll viewport starts below the Momo art, so the (scrolling) first banner never covers it.</summary>
+        [Test]
+        public void CUX_ShopViewportStartsBelowTheMomoArt()
+        {
+            Assert.GreaterOrEqual(ShopChrome.ListTop, ShopChrome.SceneHeight);
+            Assert.Less(ShopChrome.ListTop, ShopChrome.ContentTop, "no fixed banner room is reserved any more");
+            Assert.GreaterOrEqual(ShopChrome.BannerBlockH, ShopChrome.RibbonH);
+        }
+
         [Test]
         public void CUX_GlobalBarHasNoChestsTab()
         {

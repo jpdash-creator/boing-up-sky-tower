@@ -23,7 +23,7 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- shared scrolling page ----------------
 
-        /// <summary>One scrolling list that stacks the page's sections (banners, cards) with a 28 px gap; the page banner above it stays fixed.</summary>
+        /// <summary>One scrolling list that stacks the page's sections (banners, cards) with a 28 px gap; the page's first banner is its first item, so it scrolls away with the list.</summary>
         RectTransform NewSectionedList()
         {
             RectTransform list = ShopChrome.ScrollArea(body, 600f);
@@ -37,6 +37,7 @@ namespace BoingUpSkyTower.Gameplay
             var fit = list.gameObject.AddComponent<ContentSizeFitter>();
             fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            ShopChrome.SectionBanner(list, ShopChrome.TabTitles[Tab]);   // the page's first banner (Subscription, Heroes, Gems) scrolls with the list at position 0
             return list;
         }
 

@@ -1197,6 +1197,83 @@ namespace BoingUpSkyTower.Tests
         [UnityTest]
         public IEnumerator ShopScreenSurvives130PercentText() { return ShopAudit(130); }
 
+        /// <summary>Bug List 2 C2.a: the first yellow banner scrolls with the list. Every tab, every aspect: at the top the banner is the first item under the Momo art;
+        /// scrolled down it has left the viewport, the Momo art is still fully visible (the viewport starts below it) and nothing overlaps.</summary>
+        [UnityTest]
+        public IEnumerator ShopFirstBannerScrollsAwayAndMomoArtStaysVisible() { return ShopScrollAudit(100); }
+
+        [UnityTest]
+        public IEnumerator ShopFirstBannerScrollsAwayAt130PercentText() { return ShopScrollAudit(130); }
+
+        IEnumerator ShopScrollAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            ShopScreen.TestPurchasesOverride = null;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            GameSession.Progress.AddGems(300);
+            GameSession.Progress.AddCoins(12345);
+            int[] tabs = { ShopScreen.TabBundles, ShopScreen.TabVip, ShopScreen.TabCharacter, ShopScreen.TabGems };
+            string[] firstBanner = { "Bundles", "Subscription", "Heroes", "Gems" };
+            for (int t = 0; t < tabs.Length; t++)
+            {
+                int tab = tabs[t];
+                string banner = "Banner_" + firstBanner[t];
+                yield return CheckShopScroll("shop-scroll-top-" + firstBanner[t], () => meta.ShowShop(tab), banner, 0f, problems);
+                yield return CheckShopScroll("shop-scroll-down-" + firstBanner[t], () => meta.ShowShop(tab), banner, 100000f, problems);   // clamped to the end of the list
+                yield return CheckShopScroll("shop-scroll-mid-" + firstBanner[t], () => meta.ShowShop(tab), banner, ShopChrome.BannerBlockH + 300f, problems);
+            }
+            Report(problems);
+        }
+
+        /// <summary>Shows a shop tab at every aspect, scrolls its list by <paramref name="scrollPx"/> (reference px, clamped) and audits the result.</summary>
+        static IEnumerator CheckShopScroll(string screen, System.Action show, string bannerName, float scrollPx, List<string> all)
+        {
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                foreach (Rect safe in new[] { FullSafe, NotchSafe })
+                {
+                    Rect s = safe;
+                    UiKit.SafeAreaNormalized = () => s;
+                    show();
+                    yield return ApplyAspect(a, holder);
+                    yield return null;
+                    string tag = screen + "@" + a.Name + (safe == NotchSafe ? "+notch" : "");
+                    RectTransform list = FindRt("ShopList");
+                    RectTransform vp = list != null ? list.parent as RectTransform : null;
+                    if (list == null || vp == null) { all.Add(tag + ": no ShopList/ShopViewport"); continue; }
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(list);
+                    float maxY = Mathf.Max(0f, list.rect.height - vp.rect.height);
+                    list.anchoredPosition = new Vector2(0f, Mathf.Clamp(scrollPx, 0f, maxY));
+                    Canvas.ForceUpdateCanvases();
+                    yield return null;
+                    Rect vpBox = CanvasBox(vp);
+                    RectTransform scene = FindRt("Scene");
+                    RectTransform bannerRt = FindRt(bannerName, list);
+                    if (scene == null) all.Add(tag + ": Momo scene missing");
+                    else if (CanvasBox(scene).yMin < vpBox.yMax - 1.5f) all.Add(tag + ": the list viewport covers the Momo art (art bottom " + CanvasBox(scene).yMin + ", viewport top " + vpBox.yMax + ")");
+                    RectTransform shopBody = FindRt("ShopBody");
+                    if (shopBody != null && shopBody.Find("Ribbon") != null) all.Add(tag + ": a fixed banner is still in the page header");
+                    if (bannerRt == null) all.Add(tag + ": first banner " + bannerName + " is not inside the scrolling list");
+                    else
+                    {
+                        Rect bb = CanvasBox(bannerRt);
+                        float pos = list.anchoredPosition.y;
+                        if (pos <= 0.5f)
+                        {
+                            if (bb.yMax > vpBox.yMax + 1.5f || bb.yMin < vpBox.yMin) all.Add(tag + ": at the top the first banner is not the first visible item (" + bb + " viewport " + vpBox + ")");
+                        }
+                        else if (pos >= ShopChrome.BannerBlockH + 8f && bb.yMin < vpBox.yMax - 1.5f)
+                            all.Add(tag + ": scrolled down by " + Mathf.RoundToInt(pos) + " but the first banner is still in view (" + bb + " viewport " + vpBox + ")");
+                    }
+                    all.AddRange(Audit(tag, a, safe));
+                }
+            }
+            Restore(holder);
+        }
+
         IEnumerator ShopAudit(int textPercent)
         {
             GameSettings.TextPercent = textPercent;
@@ -1460,7 +1537,8 @@ namespace BoingUpSkyTower.Tests
             RectTransform screen = UiKit.SafeArea(canvas.transform);
             Text c, g, s;
             ShopChrome.BuildScene(screen, GameSession.Art, GameSession.Progress, out c, out g, out s);
-            RectTransform body = ShopChrome.BuildBody(screen, "Bundles", ShopChrome.RibbonColor.Yellow);
+            RectTransform body = ShopChrome.BuildBody(screen, "Bundles", ShopChrome.RibbonColor.Yellow, false);   // no fixed banner: it is the first scroll item (C2.a)
+            ShopChrome.SetScrollBanner(body, "Bundles");
             ShopScreen.Host host = BundlesTestHost(canvas, GameSession.Art);
             BundlesScreen.Build(body, GameSession.Progress, GameSession.Art, host, null);
             ShopChrome.BuildTabBar(screen, ShopChrome.TabBundles, null, null);

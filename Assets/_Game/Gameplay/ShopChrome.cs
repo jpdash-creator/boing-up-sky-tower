@@ -18,6 +18,8 @@ namespace BoingUpSkyTower.Gameplay
     ///   ShopChrome.BuildScene(screen, art, progress, out coinText, out gemText, out starText)   once per screen: wood background, scene, wallet pills.
     ///   ShopChrome.BuildBody(screen, ribbonTitle, RibbonColor)   returns the CONTENT RECT (between ribbon and tab bar, side margins applied).
     ///                                                            To remove a page: Object.Destroy(content.parent.gameObject).
+    ///   ShopChrome.BuildBody(screen, title, color, false)   the shop tabs: no fixed banner, the viewport starts under the Momo art (ListTop).
+    ///   ShopChrome.SetScrollBanner(content, title)   the next ScrollArea in that content starts with a scrolling yellow banner (cards go under it).
     ///   ShopChrome.ScrollArea(content, contentHeight)   a vertical scroll view filling the content rect; returns the top-anchored list rect.
     ///   ShopChrome.Card(parent, name, FrameColor)   a framed rounded card (Blue, Gold, Green); the caller anchors the returned rect and adds children.
     ///   ShopChrome.Ribbon(parent, title, RibbonColor, anchor, pos, size)   yellow, red or blue ribbon with a title.
@@ -73,6 +75,8 @@ namespace BoingUpSkyTower.Gameplay
         public const float SceneHeight = 440f, RibbonW = 620f, RibbonH = 170f, SideMargin = 28f;
         /// <summary>Pixels from the top of the safe area to the first content row (below the ribbon).</summary>
         public const float ContentTop = SceneHeight + 124f;
+        /// <summary>Pixels from the top of the safe area to the scroll viewport of a shop tab: just under the Momo scene art (its 10 px wood edge), so nothing covers the art.</summary>
+        public const float ListTop = SceneHeight + 10f;
         /// <summary>Space kept free at the bottom for the tab bar.</summary>
         public const float ContentBottom = ToyKit.TabBarReserve;
         public const float PriceButtonH = 130f;
@@ -228,16 +232,39 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         public static RectTransform BuildBody(RectTransform screen, string ribbonTitle, RibbonColor color)
         {
+            return BuildBody(screen, ribbonTitle, color, true);
+        }
+
+        /// <summary>
+        /// The page body. With <paramref name="fixedRibbon"/> false (the shop tabs, Bug List 2 C2.a) there is NO fixed banner: the content rect starts right
+        /// under the Momo scene art (<see cref="ListTop"/>) and the page's yellow banner is the first item of the scrolling list (see
+        /// <see cref="SectionBanner"/> and <see cref="SetScrollBanner"/>), so it scrolls away with the cards and the art is never covered.
+        /// </summary>
+        public static RectTransform BuildBody(RectTransform screen, string ribbonTitle, RibbonColor color, bool fixedRibbon)
+        {
             RectTransform root = UiKit.Rect(screen, "ShopBody");
             UiKit.Stretch(root);
-            Ribbon(root, ribbonTitle, color, new Vector2(0.5f, 1f), new Vector2(0f, -(SceneHeight - 60f)), new Vector2(RibbonW, RibbonH));
+            if (fixedRibbon) Ribbon(root, ribbonTitle, color, new Vector2(0.5f, 1f), new Vector2(0f, -(SceneHeight - 60f)), new Vector2(RibbonW, RibbonH));
             RectTransform content = UiKit.Rect(root, "Content");
             content.anchorMin = Vector2.zero;
             content.anchorMax = Vector2.one;
             content.offsetMin = new Vector2(SideMargin, ContentBottom);
-            content.offsetMax = new Vector2(-SideMargin, -ContentTop);
+            content.offsetMax = new Vector2(-SideMargin, -(fixedRibbon ? ContentTop : ListTop));
             return content;
         }
+
+        /// <summary>Marks a content rect so the next <see cref="ScrollArea"/> built into it starts with a scrolling yellow banner (for pages built by code that owns its own ScrollArea call, like Bundles).</summary>
+        public static void SetScrollBanner(RectTransform content, string title)
+        {
+            var m = content.GetComponent<ScrollBannerMarker>();
+            if (m == null) m = content.gameObject.AddComponent<ScrollBannerMarker>();
+            m.Title = title;
+        }
+
+        sealed class ScrollBannerMarker : MonoBehaviour { public string Title; }
+
+        /// <summary>Height of the banner block at the top of a scroll list: the ribbon plus the 28 px gap under it (the first-row offset).</summary>
+        public const float BannerBlockH = RibbonH + 28f;
 
         /// <summary>A ribbon with a title. Yellow uses the painted kit ribbon (ink text); red and blue are drawn in code (white text).</summary>
         public static Text Ribbon(Transform parent, string title, RibbonColor color, Vector2 anchor, Vector2 pos, Vector2 size)
@@ -337,7 +364,27 @@ namespace BoingUpSkyTower.Gameplay
             list.pivot = new Vector2(0.5f, 1f);
             list.offsetMin = Vector2.zero;
             list.offsetMax = Vector2.zero;
-            list.sizeDelta = new Vector2(0f, contentHeight + ScrollEndPad);   // padding so the last card scrolls fully clear of the tab bar
+            var marker = content.GetComponentInParent<ScrollBannerMarker>();   // also finds the marker on an ancestor (Bundles builds its ScrollArea into a child of the marked body)
+            bool banner = marker != null && !string.IsNullOrEmpty(marker.Title);
+            float top = banner ? 4f + BannerBlockH : 0f;   // the scrolling banner is the first item, the caller's cards start under it
+            list.sizeDelta = new Vector2(0f, contentHeight + top + ScrollEndPad);   // padding so the last card scrolls fully clear of the tab bar
+            RectTransform result = list;
+            if (banner)
+            {
+                RectTransform b = SectionBanner(list, marker.Title);
+                b.anchorMin = new Vector2(0f, 1f);
+                b.anchorMax = new Vector2(1f, 1f);
+                b.pivot = new Vector2(0.5f, 1f);
+                b.anchoredPosition = new Vector2(0f, -4f);
+                b.sizeDelta = new Vector2(0f, RibbonH);
+                RectTransform inner = UiKit.Rect(list, "ShopListCards");
+                inner.anchorMin = new Vector2(0f, 1f);
+                inner.anchorMax = new Vector2(1f, 1f);
+                inner.pivot = new Vector2(0.5f, 1f);
+                inner.anchoredPosition = new Vector2(0f, -top);
+                inner.sizeDelta = new Vector2(0f, contentHeight);
+                result = inner;
+            }
             var scroll = vp.gameObject.AddComponent<ScrollRect>();
             scroll.content = list;
             scroll.viewport = vp;
@@ -345,7 +392,7 @@ namespace BoingUpSkyTower.Gameplay
             scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.scrollSensitivity = 60f;
-            return list;
+            return result;
         }
 
         /// <summary>A kit button with an optional currency icon at the left and the text after it. The caller sets its anchors and size (at least 48 dp).</summary>

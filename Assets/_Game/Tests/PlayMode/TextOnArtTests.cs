@@ -56,6 +56,7 @@ namespace BoingUpSkyTower.Tests
             renamed.Clear();
             measured = 0;
             measuredPills = 0;
+            TagKit.ShowRegionNames = false;   // C1.a: the default; the name-tag tests switch it on where they need the names
         }
 
         [TearDown]
@@ -64,6 +65,7 @@ namespace BoingUpSkyTower.Tests
             Time.captureFramerate = 0;
             foreach (var kv in renamed) kv.Key.Name = kv.Value;
             renamed.Clear();
+            TagKit.ShowRegionNames = false;
             foreach (var rc in Object.FindObjectsByType<RunController>(FindObjectsSortMode.None)) rc.enabled = false;
             foreach (var mc in Object.FindObjectsByType<MetaController>(FindObjectsSortMode.None)) mc.enabled = false;
             UiKit.SafeAreaNormalized = () => new Rect(0f, 0f, 1f, 1f);
@@ -75,10 +77,11 @@ namespace BoingUpSkyTower.Tests
 
         // ---------------- tests ----------------
 
-        /// <summary>The world map at 130 percent text with the default region names.</summary>
+        /// <summary>The world map at 130 percent text with the default region names (flag on).</summary>
         [UnityTest]
         public IEnumerator MapNameTagsFitTheirBackingAt130Percent()
         {
+            TagKit.ShowRegionNames = true;
             GameSettings.TextPercent = 130;
             yield return Load("Meta");
             var meta = Object.FindFirstObjectByType<MetaController>();
@@ -88,10 +91,25 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
-        /// <summary>The longest region name, and every playable name made 30 percent longer, at 130 percent text.</summary>
+        /// <summary>C1.a default (names hidden): the map at 130 percent text carries only the Coming Soon tags and they all fit.</summary>
+        [UnityTest]
+        public IEnumerator MapComingSoonTagsFitAt130PercentWithNamesHidden()
+        {
+            TagKit.ShowRegionNames = false;
+            GameSettings.TextPercent = 130;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            yield return CheckScreen("map-130-names-hidden", () => meta.ShowMap(), problems);
+            Assert.Greater(measured, 10, "the Coming Soon pins keep their tags");
+            Report(problems);
+        }
+
+        /// <summary>The longest region name, and every playable name made 30 percent longer, at 130 percent text (flag on).</summary>
         [UnityTest]
         public IEnumerator MapNameTagsFitWithTheLongestAndThirtyPercentLongerNames()
         {
+            TagKit.ShowRegionNames = true;
             GameSettings.TextPercent = 130;
             yield return Load("Meta");
             var meta = Object.FindFirstObjectByType<MetaController>();
@@ -116,6 +134,7 @@ namespace BoingUpSkyTower.Tests
         [UnityTest]
         public IEnumerator MapTagsOfRegions6To30ReadComingSoon()
         {
+            TagKit.ShowRegionNames = true;
             yield return Load("Meta");
             var meta = Object.FindFirstObjectByType<MetaController>();
             meta.ShowMap();
@@ -135,6 +154,62 @@ namespace BoingUpSkyTower.Tests
             }
         }
 
+        /// <summary>C1.a: flag false (default) hides the name tags of regions 1 to 5, the Coming Soon tags (6 to 30) stay; the pins carry no text and keep the region name as a11y label.</summary>
+        [UnityTest]
+        public IEnumerator MapNamesHiddenWhenFlagIsFalseKeepsComingSoon()
+        {
+            TagKit.ShowRegionNames = false;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            meta.ShowMap();
+            yield return null;
+            yield return null;
+            int soon = 0;
+            for (int i = 1; i <= 30; i++)
+            {
+                RegionDef r = GameSession.Repo.TryGetRegionByIndex(i);
+                if (r == null) continue;
+                Transform pin = FindDeep(meta.transform, "Region" + i);
+                if (pin == null) continue;   // that page is not painted
+                Text[] texts = pin.GetComponentsInChildren<Text>(true);
+                if (i < MetaController.ComingSoonFromRegion)
+                {
+                    Assert.AreEqual(0, texts.Length, "region " + i + " shows only its icon (no name tag, no number)");
+                    Assert.IsNull(FindDeep(pin, "NameBacking"), "region " + i + " has no name tag");
+                    StringAssert.Contains(r.Name, pin.GetComponent<A11yLabel>().Text, "the a11y label keeps the region name");
+                }
+                else
+                {
+                    Assert.AreEqual(1, texts.Length, "region " + i + " keeps its Coming Soon tag");
+                    Assert.AreEqual("Coming Soon", texts[0].text);
+                    soon++;
+                }
+            }
+            Assert.AreEqual(25, soon, "regions 6 to 30 all show Coming Soon");
+        }
+
+        /// <summary>C1.a: flag true shows the names of regions 1 to 5 as a tag; the pin itself carries no number text (icon only).</summary>
+        [UnityTest]
+        public IEnumerator MapNamesShownWhenFlagIsTrue()
+        {
+            TagKit.ShowRegionNames = true;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            meta.ShowMap();
+            yield return null;
+            yield return null;
+            for (int i = 1; i <= GameSession.PlayableRegions; i++)
+            {
+                RegionDef r = GameSession.Repo.TryGetRegionByIndex(i);
+                Transform pin = FindDeep(meta.transform, "Region" + i);
+                Assert.IsNotNull(pin, "pin " + i);
+                Text[] texts = pin.GetComponentsInChildren<Text>(true);
+                Assert.AreEqual(1, texts.Length, "region " + i + ": only the name tag text, no number on the pin");
+                Assert.AreEqual(r.Name, texts[0].text);
+                Assert.AreEqual("Name", texts[0].name);
+            }
+        }
+
         static Transform FindDeep(Transform root, string name)
         {
             foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
@@ -145,6 +220,7 @@ namespace BoingUpSkyTower.Tests
         [UnityTest]
         public IEnumerator MapNameTagsFitTheirBackingAt100Percent()
         {
+            TagKit.ShowRegionNames = true;
             GameSettings.TextPercent = 100;
             yield return Load("Meta");
             var meta = Object.FindFirstObjectByType<MetaController>();

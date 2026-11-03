@@ -163,8 +163,10 @@ namespace BoingUpSkyTower.Gameplay
             }
             treasure = null;
             vipSubscription = null;
-            body = ShopChrome.BuildBody(screen, ShopChrome.TabTitles[Tab], ShopChrome.RibbonColor.Yellow);   // the yellow banner = the page's first section (no VIP header)
+            // No fixed banner (Bug List 2 C2.a): the yellow banner = the page's first section title is the FIRST item of the scrolling list, under the Momo art.
+            body = ShopChrome.BuildBody(screen, ShopChrome.TabTitles[Tab], ShopChrome.RibbonColor.Yellow, false);
             page = (RectTransform)body.parent;
+            if (Tab == TabBundles) ShopChrome.SetScrollBanner(body, ShopChrome.TabTitles[Tab]);   // BundlesScreen owns its ScrollArea call: the banner is added there
             switch (Tab)
             {
                 case TabBundles: BuildBundles(); break;

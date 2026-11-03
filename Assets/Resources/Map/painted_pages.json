@@ -6,27 +6,28 @@
    "file": "map_page_1",
    "markers": [
     {
-     "x": 0.2,
-     "y": 0.197,
-     "tagSide": "right"
-    },
-    {
-     "x": 0.604,
-     "y": 0.34
-    },
-    {
-     "x": 0.6,
-     "y": 0.56,
-     "tagSide": "right"
-    },
-    {
-     "x": 0.516,
-     "y": 0.667,
+     "x": 0.595,
+     "y": 0.2,
      "tagSide": "left"
     },
     {
-     "x": 0.59,
-     "y": 0.794,
+     "x": 0.62,
+     "y": 0.31,
+     "tagSide": "left"
+    },
+    {
+     "x": 0.41,
+     "y": 0.48,
+     "tagSide": "right"
+    },
+    {
+     "x": 0.535,
+     "y": 0.64,
+     "tagSide": "right"
+    },
+    {
+     "x": 0.61,
+     "y": 0.76,
      "tagSide": "left"
     }
    ]
@@ -35,25 +36,29 @@
    "file": "map_page_2",
    "markers": [
     {
-     "x": 0.8,
-     "y": 0.3,
-     "tagSide": "below"
+     "x": 0.39,
+     "y": 0.18,
+     "tagSide": "right"
     },
     {
-     "x": 0.23,
-     "y": 0.46
+     "x": 0.75,
+     "y": 0.34,
+     "tagSide": "left"
     },
     {
-     "x": 0.5,
-     "y": 0.62
+     "x": 0.24,
+     "y": 0.5,
+     "tagSide": "right"
     },
     {
-     "x": 0.55,
-     "y": 0.77
+     "x": 0.56,
+     "y": 0.66,
+     "tagSide": "left"
     },
     {
      "x": 0.57,
-     "y": 0.88
+     "y": 0.81,
+     "tagSide": "left"
     }
    ]
   },
@@ -61,24 +66,29 @@
    "file": "map_page_3",
    "markers": [
     {
-     "x": 0.3,
-     "y": 0.27
+     "x": 0.67,
+     "y": 0.21,
+     "tagSide": "left"
     },
     {
-     "x": 0.72,
-     "y": 0.45
+     "x": 0.64,
+     "y": 0.38,
+     "tagSide": "left"
     },
     {
-     "x": 0.18,
-     "y": 0.55
+     "x": 0.41,
+     "y": 0.56,
+     "tagSide": "right"
     },
     {
-     "x": 0.37,
-     "y": 0.72
+     "x": 0.565,
+     "y": 0.67,
+     "tagSide": "left"
     },
     {
-     "x": 0.76,
-     "y": 0.88
+     "x": 0.58,
+     "y": 0.78,
+     "tagSide": "left"
     }
    ]
   },
@@ -86,25 +96,29 @@
    "file": "map_page_4",
    "markers": [
     {
-     "x": 0.18,
-     "y": 0.16
+     "x": 0.6,
+     "y": 0.21,
+     "tagSide": "left"
     },
     {
-     "x": 0.78,
-     "y": 0.42
+     "x": 0.59,
+     "y": 0.36,
+     "tagSide": "left"
     },
     {
-     "x": 0.2,
-     "y": 0.6,
-     "tagSide": "below"
+     "x": 0.43,
+     "y": 0.51,
+     "tagSide": "right"
     },
     {
-     "x": 0.46,
-     "y": 0.73
+     "x": 0.62,
+     "y": 0.65,
+     "tagSide": "left"
     },
     {
-     "x": 0.55,
-     "y": 0.89
+     "x": 0.585,
+     "y": 0.79,
+     "tagSide": "left"
     }
    ]
   },
@@ -112,24 +126,29 @@
    "file": "map_page_5",
    "markers": [
     {
-     "x": 0.28,
-     "y": 0.34
+     "x": 0.59,
+     "y": 0.2,
+     "tagSide": "left"
     },
     {
      "x": 0.62,
-     "y": 0.45
+     "y": 0.35,
+     "tagSide": "left"
     },
     {
-     "x": 0.76,
-     "y": 0.68
+     "x": 0.4,
+     "y": 0.5,
+     "tagSide": "right"
     },
     {
-     "x": 0.42,
-     "y": 0.78
+     "x": 0.545,
+     "y": 0.66,
+     "tagSide": "left"
     },
     {
-     "x": 0.84,
-     "y": 0.88
+     "x": 0.58,
+     "y": 0.79,
+     "tagSide": "left"
     }
    ]
   },
@@ -137,29 +156,29 @@
    "file": "map_page_6",
    "markers": [
     {
-     "x": 0.26,
-     "y": 0.27,
-     "tagSide": "below"
-    },
-    {
-     "x": 0.18,
-     "y": 0.45,
-     "tagSide": "below"
+     "x": 0.565,
+     "y": 0.2,
+     "tagSide": "left"
     },
     {
      "x": 0.64,
-     "y": 0.55,
-     "tagSide": "below"
+     "y": 0.35,
+     "tagSide": "left"
     },
     {
-     "x": 0.4,
-     "y": 0.67,
-     "tagSide": "below"
+     "x": 0.43,
+     "y": 0.5,
+     "tagSide": "right"
     },
     {
-     "x": 0.55,
-     "y": 0.83,
-     "tagSide": "below"
+     "x": 0.53,
+     "y": 0.625,
+     "tagSide": "left"
+    },
+    {
+     "x": 0.61,
+     "y": 0.77,
+     "tagSide": "left"
     }
    ]
   }

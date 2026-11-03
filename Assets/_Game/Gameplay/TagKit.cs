@@ -71,6 +71,13 @@ namespace BoingUpSkyTower.Gameplay
         public const float MapTextMaxWidth = 480f;         // longer map names wrap to two lines
         const float Slack = 2f;
 
+        /// <summary>
+        /// Owner Bug List 2 C1.a: static code flag for the region NAME text on the world map tags of the actively available regions (1 to 5).
+        /// true shows the names, false (default) hides those name tags and leaves only the pin icon (the a11y label with the name stays).
+        /// The "Coming Soon" tags (regions 6 to 30) always show, whatever the flag says. Set it before MetaController.ShowMap.
+        /// </summary>
+        public static bool ShowRegionNames = false;
+
         static TextGenerator gen;
 
         /// <summary>The pixel size UiKit.AddText gives a label of this base size (or the 16 sp floor when it is not scaled).</summary>

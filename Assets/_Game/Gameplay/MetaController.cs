@@ -1130,6 +1130,7 @@ namespace BoingUpSkyTower.Gameplay
             var centres = new List<Vector2>();   // map pixels of the painted art (y grows upward)
             var labels = new List<string>();
             var prefers = new List<int>();       // the side the map data asks for first (1 below, 3 left), 0 = no preference
+            var hasTags = new List<bool>();      // false: the pin shows no name tag (C1.a, names hidden): it only stays an obstacle for the other tags
             float pw = mapSize.x, ph = mapSize.y / Mathf.Max(1, painted.pages.Length);   // one painted page is ph high; seams sit at multiples of it
             foreach (PinTag pt in pinList)
             {
@@ -1137,11 +1138,13 @@ namespace BoingUpSkyTower.Gameplay
                 centres.Add(new Vector2(pt.Anchor.x * mapSize.x, pt.Anchor.y * mapSize.y));   // real pin centres (y grows upward)
                 labels.Add(pt.Label);
                 prefers.Add(pt.Prefer);
+                hasTags.Add(pt.HasTag);
             }
             int n = keys.Count;
             var placedRel = new Rect[n];   // each placed tag, relative to its own pin centre
             for (int k = 0; k < n; k++)
             {
+                if (!hasTags[k]) { plan[keys[k]] = new TagSpot { Mode = 1, MaxW = maxWs[0] }; placedRel[k] = new Rect(0f, 0f, 0f, 0f); continue; }
                 float bestScore = float.MaxValue;
                 var best = new TagSpot { Mode = 1, MaxW = maxWs[0] };
                 Rect bestRel = new Rect(0f, 0f, 0f, 0f);
@@ -1188,7 +1191,7 @@ namespace BoingUpSkyTower.Gameplay
                                     Vector2 cj = centres[j] * s;
                                     Rect pr = j == k ? ownPin : otherPin;
                                     score += TagOverlap(tag, new Rect(cj.x + pr.x, cj.y + pr.y, pr.width, pr.height), true);
-                                    if (j < k)
+                                    if (j < k && placedRel[j].width > 0f)
                                     {
                                         Rect t2 = placedRel[j];
                                         score += TagOverlap(tag, new Rect(cj.x + t2.x - gap, cj.y + t2.y - gap, t2.width + 2f * gap, t2.height + 2f * gap), true);
@@ -1197,7 +1200,7 @@ namespace BoingUpSkyTower.Gameplay
                                 // keep-outs at the bottom of the lowest page (map scrolled to the bottom: map units = canvas units): tab bar strip (Shop | Character | Rewards, no floating Rewards button), bundle timer button
                                 const float notchLift = 48f;   // the notch/gesture inset lifts the bottom controls by up to about this much
                                 score += TagOverlap(tag, new Rect(0f, 0f, pw * s, ToyKit.TabBarButtonTop + 8f + notchLift), true);
-                                score += TagOverlap(tag, new Rect(8f, ToyKit.TabBarReserve + BundleTimerButton.MapLift + notchLift, 236f + 0.03f * pw * s, 236f), true);
+                                score += TagOverlap(tag, new Rect(8f, ToyKit.TabBarReserve + BundleTimerButton.MapLift, 236f + 0.03f * pw * s, 236f + notchLift), true);   // spans the timer button with and without the notch lift
                                 for (int pj = 1; pj < painted.pages.Length; pj++)
                                     score += TagOverlap(tag, new Rect(0f, pj * ph * s - cloudHalf, pw * s, cloudHalf * 2f), false);
                             }
@@ -1265,7 +1268,7 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // The name tag is built from the real map size (see ReplanTags): first a default one below the pin, replaced once the map has its size.
-            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = MapLabel(region), Open = playable && unlocked, Prefer = preferMode };   // only the real name; locked regions keep the padlock on the pin
+            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = MapLabel(region), Open = playable && unlocked, Prefer = preferMode, HasTag = region.Index >= ComingSoonFromRegion || TagKit.ShowRegionNames };   // only the real name; locked regions keep the padlock on the pin
             pinTags.Add(pt);
             BuildPinTag(pt, tagMode, tagDx, tagDy, tagMaxW);
         }
@@ -1281,7 +1284,7 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>One pin and its name tag (rebuilt when the planner moves it).</summary>
-        sealed class PinTag { public RegionDef Region; public RectTransform Pin; public Vector2 Anchor; public string Label; public bool Open; public int Prefer; public GameObject Tag; }
+        sealed class PinTag { public RegionDef Region; public RectTransform Pin; public Vector2 Anchor; public string Label; public bool Open; public int Prefer; public bool HasTag; public GameObject Tag; }
 
         readonly List<PinTag> pinTags = new List<PinTag>();
         PaintedPages tagLayout;
@@ -1318,6 +1321,7 @@ namespace BoingUpSkyTower.Gameplay
         void BuildPinTag(PinTag pt, int tagMode, float tagDx, float tagDy, float tagMaxW)
         {
             if (pt.Tag != null) { pt.Tag.SetActive(false); Destroy(pt.Tag); pt.Tag = null; }
+            if (!pt.HasTag) return;   // C1.a: names hidden (TagKit.ShowRegionNames false) for the available regions: the pin shows only its icon
             RectTransform rt = pt.Pin;
             bool open = pt.Open;
             // The backing is measured from the text (TagKit): padding >= 12 dp sides / 6 dp top and bottom, solid, long names wrap between words.

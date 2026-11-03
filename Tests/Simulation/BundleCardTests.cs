@@ -207,29 +207,33 @@ namespace BoingUpSkyTower.Simulation.Tests
         };
 
         [Fact]
-        public void TwoThousandBundlesAllCost200To600AndAreWorth2To3_5TimesWithNoDollars()
+        public void TwoThousandBundlesAllCost200To500AndAreWorth1_5To2_5TimesWithNoDollars()
         {
             string path = Path.Combine(ContentLoader.FindRoot(), "Content", "economy", "bundles.json");
             Assert.DoesNotContain("$", File.ReadAllText(path));
             List<JsonElement> list = LoadBundles();
             Assert.Equal(2000, list.Count);
             Assert.Equal(2000, list.Select(b => b.GetProperty("id").GetString()).Distinct().Count());
+            Assert.Equal(2000, list.Select(b => b.GetProperty("joke").GetString()).Distinct().Count());   // 2,000 different one-liners
             Assert.All(list, b => Assert.StartsWith("bnd_", b.GetProperty("id").GetString()));   // no old bundle_NNNN left
             var ratios = new List<double>();
             foreach (JsonElement b in list)
             {
                 Assert.True(b.GetProperty("hiddenCard").GetBoolean());
                 Assert.False(b.TryGetProperty("characterId", out _));
+                string joke = b.GetProperty("joke").GetString();
+                Assert.InRange(joke.Length, 10, 140);
+                Assert.DoesNotContain("$", joke);
                 int price = b.GetProperty("priceGems").GetInt32();
-                Assert.InRange(price, 200, 600);
+                Assert.InRange(price, 200, 500);
                 double worth = b.GetProperty("coins").GetInt32() / 20.0 + BundleCards.ExpectedGems;
                 foreach (JsonElement p in b.GetProperty("powerups").EnumerateArray()) worth += PowerGems[p.GetProperty("id").GetString()] * p.GetProperty("count").GetInt32();
                 double ratio = worth / price;
-                Assert.InRange(ratio, 2.0, 3.5);
+                Assert.InRange(ratio, 1.5, 2.5);
                 ratios.Add(ratio);
             }
-            Assert.True(ratios.Max() - ratios.Min() > 1.2, "the multiplier is varied, not constant: " + ratios.Min() + ".." + ratios.Max());
-            Assert.True(ratios.Select(r => Math.Round(r, 1)).Distinct().Count() > 12);
+            Assert.True(ratios.Max() - ratios.Min() > 0.8, "the multiplier is varied, not constant: " + ratios.Min() + ".." + ratios.Max());
+            Assert.True(ratios.Select(r => Math.Round(r, 1)).Distinct().Count() > 8);
         }
     }
 }

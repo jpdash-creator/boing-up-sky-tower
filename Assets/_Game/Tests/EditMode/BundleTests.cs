@@ -53,7 +53,7 @@ namespace BoingUpSkyTower.Tests
         // ---- the data ----
 
         [Test]
-        public void TwoThousandBundlesCost200To600GemsAndAreWorth2To3_5Times()
+        public void TwoThousandBundlesCost200To500GemsAndAreWorth1_5To2_5Times()
         {
             Assert.AreEqual(2000, catalog.Count);
             PowerUpCatalog pw = PowerUpCatalog.BuiltIn();
@@ -61,20 +61,22 @@ namespace BoingUpSkyTower.Tests
             foreach (BundleDef b in catalog.All)
             {
                 Assert.That(b.Id, Does.StartWith("bnd_"), "no old bundle_NNNN left");
-                Assert.That(b.PriceGems, Is.InRange(200, 600), b.Id);
+                Assert.That(b.PriceGems, Is.InRange(200, 500), b.Id);
                 Assert.AreEqual(0, b.PriceGems % 10, b.Id);
                 Assert.That(b.PowerUps.Count, Is.InRange(1, 4), b.Id);
                 Assert.AreEqual(b.PowerUps.Count, b.PowerUps.Select(p => p.Id).Distinct().Count(), b.Id);
                 foreach (BundlePowerUp p in b.PowerUps) Assert.That(p.Count, Is.InRange(1, 10), b.Id);
                 Assert.IsTrue(b.HiddenCard, b.Id + " holds exactly one hidden card");
-                // Worth (coins at coins / 20 + power-ups at their gem prices + the EXPECTED card gems) over the price is 2.0 to 3.5, and the UI shows the same number
+                // Worth (coins at coins / 20 + power-ups at their gem prices + the EXPECTED card gems) over the price is 1.5 to 2.5 (Bug List 2 C2.b.ii), and the UI shows the same number
                 double m = BundleWorth.Multiplier(b, pw, 0);
-                Assert.That(m, Is.InRange(2.0, 3.5), b.Id);
+                Assert.That(m, Is.InRange(1.5, 2.5), b.Id);
                 Assert.AreEqual(b.TotalValueGems(pw) / b.PriceGems, m, 1e-9);
-                Assert.That(BundleWorth.Text(b), Does.Match("^x[23]\\.[0-9]$"), b.Id);
+                Assert.That(BundleWorth.Text(b), Does.Match("^Worth x[12]\\.[0-9]$"), b.Id);
+                Assert.That(b.Joke, Is.Not.Empty, b.Id + " has a joke");
+                Assert.That(b.Joke.Length, Is.InRange(10, 140), b.Id);
                 ratios.Add(m);
             }
-            Assert.Greater(ratios.Max() - ratios.Min(), 1.2, "the multiplier is varied, not constant");
+            Assert.Greater(ratios.Max() - ratios.Min(), 0.8, "the multiplier is varied, not constant");
         }
 
         [Test]
@@ -97,8 +99,10 @@ namespace BoingUpSkyTower.Tests
             d.HiddenCard = true;
             Assert.AreEqual((visible + BundleCards.ExpectedGems) / 200.0, BundleWorth.Multiplier(d, pw, 0), 1e-9, "the card adds its EXPECTED gem value");
             Assert.AreEqual((visible + BundleCards.ExpectedGems) / 140.0, BundleWorth.Multiplier(d, pw, 140), 1e-9, "the timer offer divides by the gems really paid");
-            Assert.That(BundleWorth.Text(d), Does.StartWith("x"));
-            Assert.That(BundleWorth.Line(d, 0), Does.Match("^x[0-9]\\.[0-9] worth for 200 gems$"));
+            Assert.That(BundleWorth.Text(d), Does.StartWith("Worth x"));
+            Assert.AreEqual(BundleWorth.Text(d), BundleWorth.Text(d, 140), "the timer offer shows the worth at the LIST price (same as the card)");
+            Assert.That(BundleWorth.Line(d, 0), Does.Match("^Worth x[0-9]\\.[0-9] for 200 gems$"));
+            Assert.That(BundleWorth.Line(d, 140), Does.Match("^Worth x[0-9]\\.[0-9] for 140 gems$"));
         }
 
         [Test]
@@ -116,6 +120,13 @@ namespace BoingUpSkyTower.Tests
                 Assert.That(text.Contains("Usd") || text.Contains("USD"), Is.False, f + " mentions USD");
                 Assert.That(text.Contains("Dollar"), Is.False, f + " mentions dollars");
             }
+        }
+
+        [Test]
+        public void EveryBundleHasItsOwnJokeAndThePoolVersionIs3()
+        {
+            Assert.AreEqual(3, BundleCatalog.PoolVersion, "old saved offers redraw");
+            Assert.AreEqual(2000, catalog.All.Select(b => b.Joke).Distinct().Count(), "2,000 different one-liners");
         }
 
         [Test]

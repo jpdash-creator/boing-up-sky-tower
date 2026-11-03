@@ -59,25 +59,26 @@ class BundleData(unittest.TestCase):
         self.assertTrue(all(len(b["name"]) <= 24 for b in self.bundles), "names must fit a card")
         self.assertEqual([b["id"] for b in self.bundles], ["bnd_%04d" % (i + 1) for i in range(2000)], "ids are stable and sequential")
 
-    def test_every_price_is_200_to_600_gems(self):
+    def test_every_price_is_200_to_500_gems(self):
         prices = [b["priceGems"] for b in self.bundles]
         for b in self.bundles:
-            self.assertTrue(200 <= b["priceGems"] <= 600, b["id"])
+            self.assertTrue(200 <= b["priceGems"] <= 500, b["id"])
             self.assertEqual(b["priceGems"] % 10, 0, b["id"])
-        self.assertLess(min(prices), 230, "small bundles exist")
-        self.assertGreater(max(prices), 570, "large bundles exist")
-        self.assertGreater(len(set(prices)), 35, "many price points")
+        self.assertLess(min(prices), 220, "small bundles exist")
+        self.assertGreater(max(prices), 480, "large bundles exist")
+        self.assertGreater(len(set(prices)), 25, "many price points")
 
-    def test_every_worth_multiplier_is_2_to_3_5_and_they_vary(self):
-        """Owner rule (B4.a.ii): worth (coins at coins/20, power-ups at gem prices, card at its expected gem value) is 2.0x to 3.5x the gems paid."""
+    def test_every_worth_multiplier_is_1_5_to_2_5_and_they_vary(self):
+        """Bug List 2 C2.b.ii: worth (coins at coins/20, power-ups at gem prices, card at its expected gem value) is 1.5x to 2.5x the gems paid."""
         ratios = [worth_gems(b) / b["priceGems"] for b in self.bundles]
         for b, r in zip(self.bundles, ratios):
-            self.assertTrue(2.0 <= r <= 3.5, "%s ratio %.4f" % (b["id"], r))
-        self.assertGreater(len(set(round(r, 1) for r in ratios)), 12, "the multiplier is varied, not constant")
-        self.assertLess(min(ratios), 2.1)
-        self.assertGreater(max(ratios), 3.4)
-        low = sum(1 for r in ratios if r < 2.5)
-        high = sum(1 for r in ratios if r >= 3.0)
+            self.assertTrue(1.5 <= r <= 2.5, "%s ratio %.4f" % (b["id"], r))
+            self.assertTrue(1.5 <= round(r, 1) <= 2.5, "%s shown as %.1f" % (b["id"], r))
+        self.assertGreater(len(set(round(r, 1) for r in ratios)), 8, "the multiplier is varied, not constant")
+        self.assertLess(min(ratios), 1.6)
+        self.assertGreater(max(ratios), 2.4)
+        low = sum(1 for r in ratios if r < 1.9)
+        high = sum(1 for r in ratios if r >= 2.1)
         self.assertGreater(low, 300)
         self.assertGreater(high, 300)
 
@@ -117,19 +118,28 @@ class BundleData(unittest.TestCase):
         self.assertEqual(used, set(GEM_VALUE))
 
     def test_variety(self):
-        self.assertGreater(len(set(b["coins"] for b in self.bundles)), 300)
+        self.assertGreater(len(set(b["coins"] for b in self.bundles)), 200)
         self.assertEqual(set(len(b["powerups"]) for b in self.bundles), {1, 2, 3, 4})
         self.assertEqual(set(b["tier"] for b in self.bundles), {1, 2, 3})
 
-    def test_names_are_new(self):
-        """None of the previous pool's adjectives is used, so no old name comes back."""
-        old_adjectives = ["Bouncy", "Springy", "Sunny", "Jolly", "Cheery", "Zippy", "Giddy", "Plucky", "Snazzy", "Fluffy", "Peppy", "Perky", "Merry", "Breezy",
-                          "Dandy", "Spiffy", "Lucky", "Mighty", "Mellow", "Wobbly", "Jazzy", "Bubbly", "Sparkly", "Frosty", "Toasty", "Cosmic", "Tiny", "Grand",
-                          "Royal", "Wild", "Happy", "Snappy", "Sleepy", "Nifty", "Quirky", "Rowdy", "Silly", "Speedy", "Golden", "Zesty", "Dapper", "Frisky",
-                          "Glowy", "Hearty", "Jaunty", "Kooky", "Lofty", "Nimble", "Peachy", "Plump", "Rosy", "Savvy", "Swift", "Twinkly", "Velvet", "Whimsy",
-                          "Woolly", "Zany", "Brave", "Candied"]
-        self.assertEqual(set(gen_bundles.ADJECTIVES) & set(old_adjectives), set())
-        self.assertTrue(all(b["name"].split(" ")[0] not in old_adjectives for b in self.bundles))
+    def test_names_are_short_and_fun(self):
+        """Adjective + noun, at most 24 characters, 2,000 distinct (reusing the v0.46 words is allowed)."""
+        for b in self.bundles:
+            adj, noun = b["name"].split(" ", 1)
+            self.assertIn(adj, gen_bundles.ADJECTIVES, b["id"])
+            self.assertIn(noun, gen_bundles.NOUNS, b["id"])
+
+    def test_every_bundle_has_its_own_joke(self):
+        """Bug List 2 C2.b.vi: 2,000 different one-liners built from a noun joke and an adjective joke (about 100 jokes in all)."""
+        self.assertEqual(len(set(b["joke"] for b in self.bundles)), 2000)
+        self.assertGreaterEqual(len(gen_bundles.ADJ_JOKES) + len(gen_bundles.NOUN_JOKES), 96)
+        for b in self.bundles:
+            self.assertTrue(10 <= len(b["joke"]) <= 140, b["id"])
+            self.assertEqual(b["joke"], gen_bundles.joke_for(b["name"]), b["id"])
+            self.assertNotIn("$", b["joke"])
+            low = b["joke"].lower()
+            for word in ("dollar", "usd", "gem"):
+                self.assertNotIn(word, low, b["id"])
 
     def test_no_dollar_anywhere(self):
         """B4.a.ii: no dollars in the bundle data, the generator or the schema."""

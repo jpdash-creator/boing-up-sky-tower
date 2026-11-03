@@ -30,6 +30,8 @@ namespace BoingUpSkyTower.Economy
         public List<BundlePowerUp> PowerUps = new List<BundlePowerUp>();
         /// <summary>True when the bundle holds one hidden hero card (every generated bundle does). Which hero is decided at purchase (<see cref="BundleCards"/>).</summary>
         public bool HiddenCard;
+        /// <summary>One funny line about the bundle's name (Bug List 2 C2.b.vi), shown only in the info popup. "" when the file has none.</summary>
+        public string Joke = "";
 
         /// <summary>Value of the visible contents at list rates in gems: coins / 20 + power-ups at their gem prices (50 or 75). The hidden card is NOT in it (see <see cref="TotalValueGems"/>).</summary>
         public double ValueGems(PowerUpCatalog powerUps)
@@ -52,7 +54,7 @@ namespace BoingUpSkyTower.Economy
 
     /// <summary>
     /// How many times its price a bundle is worth (owner Bug List 1 B4.a.ii): total value in GEMS (coins at the shop rate coins / 20, power-ups at their gem prices,
-    /// the hidden card at its expected gem value from <see cref="BundleCards.TierGems"/>) divided by the gems paid. Shown as "x2.7". No currency amounts anywhere. Pure.
+    /// the hidden card at its expected gem value from <see cref="BundleCards.TierGems"/>) divided by the gems paid. Shown as "Worth x2.1" (Bug List 2 C2.b.ii: 1.5 to 2.5). No currency amounts anywhere. Pure.
     /// </summary>
     public static class BundleWorth
     {
@@ -68,19 +70,23 @@ namespace BoingUpSkyTower.Economy
             return bundle.TotalValueGems(powerUps ?? Defs()) / paid;
         }
 
-        /// <summary>"x2.7" (one decimal, invariant culture).</summary>
+        /// <summary>"Worth x2.1" (one decimal, invariant culture), always at the LIST price (so 1.5 to 2.5).</summary>
         public static string Text(BundleDef bundle) { return Text(bundle, 0); }
 
+        /// <summary>
+        /// Same. <paramref name="gemsPaid"/> is accepted for older callers but IGNORED: the timer offer (30 percent off) shows the same worth as the normal card;
+        /// the discount shows only in the cheaper gem price.
+        /// </summary>
         public static string Text(BundleDef bundle, int gemsPaid)
         {
-            return "x" + Multiplier(bundle, null, gemsPaid).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+            return "Worth x" + Multiplier(bundle, null, 0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
         }
 
-        /// <summary>"x2.7 worth for 340 gems" (the info popup line).</summary>
+        /// <summary>"Worth x2.1 for 340 gems" (the info popup line): worth at the list price, then the gems really paid (the discounted price for a timer offer).</summary>
         public static string Line(BundleDef bundle, int gemsPaid)
         {
             int paid = gemsPaid > 0 ? gemsPaid : (bundle != null ? bundle.PriceGems : 0);
-            return Text(bundle, gemsPaid) + " worth for " + paid.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " gems";
+            return Text(bundle, 0) + " for " + paid.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " gems";
         }
 
         static PowerUpCatalog builtIn;
@@ -98,10 +104,10 @@ namespace BoingUpSkyTower.Economy
         public const string ResourcePath = "Content/bundles";
 
         /// <summary>
-        /// Version of the bundle pool (bug list 1 B4.a.iv: 2 = the 200 to 600 gem pool). A save that holds offers or a timer offer from an older pool
+        /// Version of the bundle pool (3 = the Bug List 2 C2.b pool: 200 to 500 gems, worth 1.5 to 2.5, with jokes; 2 = the 200 to 600 gem pool). A save that holds offers or a timer offer from an older pool
         /// is reset once (the offers are drawn again), because ids bnd_0001 to bnd_2000 now mean different bundles.
         /// </summary>
-        public const int PoolVersion = 2;
+        public const int PoolVersion = 3;
 
         readonly List<BundleDef> all = new List<BundleDef>();
         readonly Dictionary<string, BundleDef> byId = new Dictionary<string, BundleDef>();
@@ -139,7 +145,7 @@ namespace BoingUpSkyTower.Economy
                     var d = new BundleDef
                     {
                         Id = (string)t["id"], Name = (string)t["name"], Tier = (int?)t["tier"] ?? 1, PriceGems = (int?)t["priceGems"] ?? 0,
-                        Coins = (int?)t["coins"] ?? 0
+                        Coins = (int?)t["coins"] ?? 0, Joke = (string)t["joke"] ?? ""
                     };
                     JToken hc = t["hiddenCard"];
                     d.HiddenCard = hc != null && hc.Type == JTokenType.Boolean && (bool)hc;
