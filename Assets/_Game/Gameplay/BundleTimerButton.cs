@@ -20,6 +20,9 @@ namespace BoingUpSkyTower.Gameplay
     {
         const float W = 220f, H = 220f;
 
+        /// <summary>Extra height of the timer button on the World Map screen only (canvas px): keeps it clear of the Meadow Springs pin and tag at the bottom of the map. PlanTags uses the same value.</summary>
+        public const float MapLift = 300f;
+
         static readonly string[] Mmss = new string[ProgressService.BundleTimerWindowSec + 1];
 
         ProgressService progress;
@@ -34,13 +37,13 @@ namespace BoingUpSkyTower.Gameplay
         float acc;
 
         /// <summary>Adds the button (hidden until an offer runs) to a menu screen. Safe to call on every screen build; the old screen's copy is destroyed with it.</summary>
-        public static BundleTimerButton Attach(RectTransform screen, ProgressService progress, ArtCatalog art, ShopScreen.Host host, Action refreshWallet, bool visible = true)
+        public static BundleTimerButton Attach(RectTransform screen, ProgressService progress, ArtCatalog art, ShopScreen.Host host, Action refreshWallet, bool visible = true, float bottomLift = 0f)
         {
             if (screen == null || progress == null) return null;
             RectTransform root = UiKit.Rect(screen, "BundleTimer");
             root.anchorMin = root.anchorMax = new Vector2(0f, 0f);
             root.pivot = new Vector2(0f, 0f);
-            root.anchoredPosition = new Vector2(16f, ToyKit.TabBarReserve + 8f);
+            root.anchoredPosition = new Vector2(16f, ToyKit.TabBarReserve + 8f + bottomLift);   // bottomLift: the world map raises it (MapLift) so it clears the Meadow Springs pin and tag
             root.sizeDelta = new Vector2(W, H);
             var t = root.gameObject.AddComponent<BundleTimerButton>();
             t.progress = progress;
@@ -153,25 +156,62 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             RectTransform overlay = host.NewOverlay();
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, ProgressService.BundleTimerPercentOff + "% OFF!", art, new Vector2(860f, 1400f), host.CloseOverlay);
+            // every row is placed from its real (text-scale aware) height, top to bottom, with 12 px gaps; the panel grows when the rows need it
+            const float W = 780f, gap = 12f, bagTop = 190f;
+            float bagSize = 150f;
+            float canvasH = Mathf.Max(1f, Screen.height) / Mathf.Sqrt(Mathf.Max(1f, Screen.width) / UiKit.Reference.x * Mathf.Max(1f, Screen.height) / UiKit.Reference.y) * Mathf.Clamp01(UiKit.SafeAreaNormalized().height);
+            string wasText = "Was " + BundlesScreen.Num(def.PriceGems) + " gems. Ends in:";
+            float nameY = bagTop + bagSize + gap, nameH = BundlesScreen.TextHeight(def.Name, 50f, W);
+            float hintY = nameY + nameH + gap, hintH = def.HiddenCard ? BundlesScreen.TextHeight(BundlesScreen.HiddenCardHint, 36f, W) : 0f;
+            float chipY = hintY + hintH + (def.HiddenCard ? gap : 0f), chipH = BundlesScreen.ChipBlockHeight(BundlesScreen.ChipRows(def));
+            float wasY = chipY + chipH + gap, wasH = BundlesScreen.TextHeight(wasText, 44f, W);
+            float leftY = wasY + wasH + 4f, leftH = BundlesScreen.TextHeight("00:00", 64f, W);
+            float panelH = Mathf.Max(1400f, leftY + leftH + 412f);
+            if (panelH > canvasH * 0.96f)
+            {
+                // a short canvas (3:4) at large text: the decorative bag goes, everything below moves up so the panel still fits
+                float up = bagSize + gap;
+                bagSize = 0f; nameY -= up; hintY -= up; chipY -= up; wasY -= up; leftY -= up; panelH -= up;
+            }
+            // 412 = the two buttons below (Buy up from 230, Hide offer up from 60) and a gap
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, ProgressService.BundleTimerPercentOff + "% OFF!", art, new Vector2(860f, panelH), host.CloseOverlay);
 
-            Image bag = UiKit.AddImage(panel, "Bag", BundlesScreen.BagIcon(art), Color.white);
-            bag.preserveAspect = true;
-            UiKit.Place(bag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(190f, 190f));
+            if (bagSize > 0f)
+            {
+                Image bag = UiKit.AddImage(panel, "Bag", BundlesScreen.BagIcon(art), Color.white);
+                bag.preserveAspect = true;
+                BundlesScreen.PlaceTop(bag.rectTransform, bagTop, bagSize, bagSize);
+            }
 
             Text name = UiKit.AddText(panel, "Name", def.Name, 50, UiKit.PanelInk, TextAnchor.MiddleCenter, true);
             UiKit.OnPanel(name);
-            UiKit.Place((RectTransform)name.transform, new Vector2(0.5f, 1f), new Vector2(0f, -390f), new Vector2(780f, 120f));
+            name.horizontalOverflow = HorizontalWrapMode.Wrap;
+            name.resizeTextForBestFit = true;
+            name.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+            name.resizeTextMaxSize = name.fontSize;
+            BundlesScreen.PlaceTop((RectTransform)name.transform, nameY, W, nameH);
 
-            BundlesScreen.AddChips(panel, def, art, 40f, 520f);   // up to two rows: ends at 842 px from the top
+            if (def.HiddenCard)
+            {
+                Text hint = UiKit.AddText(panel, "CardHint", BundlesScreen.HiddenCardHint, 36, UiKit.PanelInk, TextAnchor.MiddleCenter);
+                UiKit.OnPanel(hint);
+                hint.horizontalOverflow = HorizontalWrapMode.Wrap;
+                hint.resizeTextForBestFit = true;
+                hint.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+                hint.resizeTextMaxSize = hint.fontSize;
+                BundlesScreen.PlaceTop((RectTransform)hint.transform, hintY, W, hintH);
+            }
 
-            Text was = UiKit.AddText(panel, "Was", "Was " + BundlesScreen.Num(def.PriceGems) + " gems. Ends in:", 44, UiKit.PanelInk, TextAnchor.MiddleCenter);
+            BundlesScreen.AddChips(panel, def, art, 40f, chipY);
+
+            Text was = UiKit.AddText(panel, "Was", wasText, 44, UiKit.PanelInk, TextAnchor.MiddleCenter);
             UiKit.OnPanel(was);
-            UiKit.Place((RectTransform)was.transform, new Vector2(0.5f, 1f), new Vector2(0f, -850f), new Vector2(780f, 80f));
+            was.horizontalOverflow = HorizontalWrapMode.Wrap;
+            BundlesScreen.PlaceTop((RectTransform)was.transform, wasY, W, wasH);
 
             popupTime = UiKit.AddText(panel, "Left", FormatTime(progress.TimerOfferSecondsLeft(now)), 64, UiKit.PanelInk, TextAnchor.MiddleCenter, true);
             UiKit.OnPanel(popupTime);
-            UiKit.Place((RectTransform)popupTime.transform, new Vector2(0.5f, 1f), new Vector2(0f, -936f), new Vector2(780f, 74f));
+            BundlesScreen.PlaceTop((RectTransform)popupTime.transform, leftY, W, leftH);
 
             ToyKit.PopupAction(panel, "Buy for " + BundlesScreen.Num(price) + " gems", ToyKit.Button(1), Color.white, 230f, Buy);
             ToyKit.PopupAction(panel, "Hide offer", ToyKit.Button(0), Color.white, 60f, HideOffer);
@@ -196,9 +236,10 @@ namespace BoingUpSkyTower.Gameplay
                 Info("Not enough gems", "You need " + BundlesScreen.Num(price) + " gems and have " + BundlesScreen.Num(progress.Gems) + ".\nOpen the Gems tab in the shop to get more.");
                 return;
             }
-            BundleResult r = progress.TryBuyTimerOffer(now);
+            CharacterSpec card;
+            BundleResult r = progress.TryBuyTimerOffer(now, out card);
             host.CloseOverlay();
-            BundlesScreen.ShowResult(host, refreshWallet, def, r);
+            BundlesScreen.ShowResult(host, refreshWallet, def, r, card);
             shown = -1;
             Refresh();
         }

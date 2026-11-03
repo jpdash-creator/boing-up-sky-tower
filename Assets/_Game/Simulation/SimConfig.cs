@@ -395,6 +395,21 @@ namespace BoingUpSkyTower.Simulation
         public int SlowTimeTicks = 1800;
         public int SlowTimePercent = 50;
 
+        /// <summary>HERO POWERS (owner 2026-11-02): a hero power is the same effect as the bought power-up of its type for this percent of the duration (HeroPowerDurationFactor = 0.6). Integer percent, so the simulation stays deterministic.</summary>
+        public int HeroPowerDurationPercent = 60;
+        /// <summary>The same factor as a float, for docs, UI text and tests (equal to HeroPowerDurationPercent / 100).</summary>
+        public const float HeroPowerDurationFactor = 0.6f;
+
+        /// <summary>Ticks of a hero power for a bought duration: the percent of it, rounded half up, at least 1.</summary>
+        public int HeroTicks(int baseTicks)
+        {
+            long t = ((long)baseTicks * HeroPowerDurationPercent + 50) / 100;
+            return t < 1 ? 1 : (t > int.MaxValue ? int.MaxValue : (int)t);
+        }
+
+        /// <summary>Floors of a hero Rocket (same climb speed as the bought one): the percent of RocketFloors, at least 1.</summary>
+        public int HeroRocketFloors { get { int f = (RocketFloors * HeroPowerDurationPercent + 50) / 100; return f < 1 ? 1 : f; } }
+
         /// <summary>Jump launch speed (per tick) for a given horizontal speed magnitude.</summary>
         public Fx JumpSpeed(Fx absVx)
         {

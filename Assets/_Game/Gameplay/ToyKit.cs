@@ -15,9 +15,10 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Space a screen leaves at the bottom of the safe area for the tab bar.</summary>
         public const float TabBarReserve = TabBarHeight + TabBarBottom + 24f;
 
-        public static readonly string[] TabLabels = { "Shop", "Chests", "PLAY", "Heroes", "Daily", "VIP" };
-        public static readonly string[] TabA11y = { "Shop", "Treasure chests", "Play", "Characters", "Daily rewards", "VIP" };
-        public const int TabShop = 0, TabChests = 1, TabPlay = 2, TabHeroes = 3, TabDaily = 4, TabSubscription = 5;
+        // The global bar has no Chests tab any more: chests live inside the VIP page of the shop (owner issue 35, item 2).
+        public static readonly string[] TabLabels = { "Shop", "PLAY", "Heroes", "Daily", "VIP" };
+        public static readonly string[] TabA11y = { "Shop", "Play", "Characters", "Daily rewards", "VIP" };
+        public const int TabShop = 0, TabPlay = 1, TabHeroes = 2, TabDaily = 3, TabSubscription = 4;
 
         /// <summary>Owner issue 29: the Rewards (gift) button sits above the Heroes button, bottom right, on home AND the world map. One shared gap and size so both screens match.</summary>
         public const float RewardsButtonSize = 140f, RewardsButtonGap = 16f;
@@ -177,6 +178,15 @@ namespace BoingUpSkyTower.Gameplay
             public string A11y;
             public bool Raised;          // PLAY: bigger, green, lifted above the row
             public bool Badge;           // red notification badge
+            /// <summary>Slots this item spans (default 1). Home: PLAY spans 2 and is exactly two icon buttons wide (gap included) and as tall as the others.</summary>
+            public int Span = 1;
+        }
+
+        /// <summary>Width of a button spanning <paramref name="span"/> slots of a bar <paramref name="barWidth"/> wide with <paramref name="slots"/> slots and a gap of <paramref name="gap"/>: span * slot - gap, i.e. span icon widths plus (span - 1) gaps.</summary>
+        public static float BarItemWidth(float barWidth, int slots, int span, float gap)
+        {
+            float slot = barWidth / Mathf.Max(1, slots);
+            return Mathf.Max(1, span) * slot - gap;
         }
 
         /// <summary>
@@ -192,24 +202,30 @@ namespace BoingUpSkyTower.Gameplay
             bar.pivot = new Vector2(0.5f, 0f);
             bar.anchoredPosition = new Vector2(0f, TabBarBottom);
             bar.sizeDelta = new Vector2(-24f, TabBarHeight);
-            int n = items.Length;
+            int slots = 0;
+            for (int i = 0; i < items.Length; i++) slots += Mathf.Max(1, items[i].Span);
+            int at = 0;
             const float gap = 12f;
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < items.Length; i++)
             {
                 int idx = i;
                 BarItem it = items[i];
+                int span = Mathf.Max(1, it.Span);
+                bool wide = span > 1;   // a wide item keeps the common height and edges: no lift, no growth
                 bool on = i == selected;
                 int role = it.Raised ? 1 : (on ? 0 : 2);
                 Button b = UiKit.AddButton(bar, "Tab" + it.A11y.Replace(" ", ""), "", ToyKit.Button(role), Color.white, new Vector2(160f, 150f), () => onSelect(idx));
                 b.GetComponent<A11yLabel>().Text = it.A11y + " tab" + (on ? ", selected" : "");
                 b.GetComponent<Image>().raycastTarget = true;
                 var rt = (RectTransform)b.transform;
-                rt.anchorMin = new Vector2(i / (float)n, 0f);
-                rt.anchorMax = new Vector2((i + 1) / (float)n, 0f);
+                rt.anchorMin = new Vector2(at / (float)slots, 0f);
+                rt.anchorMax = new Vector2((at + span) / (float)slots, 0f);
+                at += span;
                 rt.pivot = new Vector2(0.5f, 0f);
-                float lift = it.Raised ? 26f : 0f;
-                rt.offsetMin = new Vector2(gap * 0.5f - (it.Raised ? 8f : 0f), 14f);
-                rt.offsetMax = new Vector2(-gap * 0.5f + (it.Raised ? 8f : 0f), 14f + 158f + lift);
+                bool lifted = it.Raised && !wide;
+                float lift = lifted ? 26f : 0f;
+                rt.offsetMin = new Vector2(gap * 0.5f - (lifted ? 8f : 0f), 14f);
+                rt.offsetMax = new Vector2(-gap * 0.5f + (lifted ? 8f : 0f), 14f + 158f + lift);
                 bool caption = on || it.Raised;
                 Image ic = UiKit.AddImage(b.transform, "Icon", Get(it.Icon), Color.white);
                 var irt = ic.rectTransform;

@@ -162,6 +162,12 @@ namespace BoingUpSkyTower.Gameplay
             powerLatched |= PowerUps.InputBit(type);
         }
 
+        /// <summary>A HERO power button was pressed: its hero activation bit goes into the next tick's input (free; the run session checks the cooldown).</summary>
+        public void LatchHeroPower(PowerUp type)
+        {
+            powerLatched |= PowerUps.HeroInputBit(type);
+        }
+
         public void Clear()
         {
             touch.Clear();

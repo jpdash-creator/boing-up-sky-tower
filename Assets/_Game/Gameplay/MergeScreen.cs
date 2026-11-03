@@ -336,7 +336,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 nameText = next.Name;
                 rarityText = CharacterDefs.RarityNames[(int)spec.Rarity] + " > " + CharacterDefs.RarityNames[(int)next.Rarity];
-                gains = string.Join("\n", MergeRules.StatGainLines(spec.SheetStats, next.SheetStats).ToArray());
+                gains = string.Join("\n", MergeRules.ShownGainLines(spec.ShownValues(), next.ShownValues()).ToArray());
             }
             float cy = Pad;
             Text nm = UiKit.AddText(TopRow(info, "NameRow", cy, 2f * lName, 0f), "ResultName", nameText, NameFont, Color.white, TextAnchor.MiddleLeft, true);
@@ -551,7 +551,7 @@ namespace BoingUpSkyTower.Gameplay
 
             float lTitle = Line(64), lName = Line(52), lBody = Line(BodyFont);
             const float dollH = 330f, okS = 148f;
-            List<string> gain = MergeRules.StatGainLines(from != null ? from.SheetStats : null, to.SheetStats);
+            List<string> gain = MergeRules.ShownGainLines(from != null ? from.ShownValues() : null, to.ShownValues());
             float h = 36f + lTitle + 10f + dollH + 12f + 2f * lName + 8f + lBody + 8f + GainLines * lBody + 14f + okS + 28f;
             RectTransform panel = UiKit.Rect(overlay, "Panel");
             UiKit.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(860f, h));

@@ -59,5 +59,16 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("subscription")] public SubscriptionData Subscription = new SubscriptionData();
         /// <summary>Copies per character id (docs/34): the tier hero has its own id, so this is a count per (hero, tier). A missing key means not counted yet: an owned character then counts as 1 copy. 0 means all copies were merged away.</summary>
         [JsonProperty("copies")] public Dictionary<string, int> Copies = new Dictionary<string, int>();
+        /// <summary>Account (docs/35). Additive fields, no version bump. accountMode: "" (not chosen yet), "guest" or "google". accountId is the Play Games player id of the linked account.</summary>
+        [JsonProperty("accountMode")] public string AccountMode = "";
+        [JsonProperty("accountId")] public string AccountId = "";
+        /// <summary>UTC time (ISO 8601 round trip) of the last successful upload or download of the cloud save.</summary>
+        [JsonProperty("lastCloudSyncUtc")] public string LastCloudSyncUtc = "";
+        /// <summary>True once the player passed the login screen (Google or guest): it is shown only on the first launch.</summary>
+        [JsonProperty("loginChosen")] public bool LoginChosen;
+        /// <summary>UTC time (ISO 8601 round trip) of the last change, stamped by ProgressService on every save. Used to compare saves.</summary>
+        [JsonProperty("lastPlayedUtc")] public string LastPlayedUtc = "";
+        /// <summary>Every real-money purchase (docs/38): product id, kind, transaction id, time. Kept when progress is reset; restore and cloud sync read it. Additive field, no version bump.</summary>
+        [JsonProperty("purchases")] public List<PurchaseRecord> Purchases = new List<PurchaseRecord>();
     }
 }

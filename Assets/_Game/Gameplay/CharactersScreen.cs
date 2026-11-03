@@ -379,11 +379,19 @@ namespace BoingUpSkyTower.Gameplay
                 outer.offsetMin = new Vector2(Gap * 0.5f, Gap * 0.5f);
                 outer.offsetMax = new Vector2(-Gap * 0.5f, -Gap * 0.5f);
 
-                RectTransform face = MomoDoll.Build(inner, "Face", 100f, who, art);
-                face.anchorMin = new Vector2(0.04f, 0.04f);
-                face.anchorMax = new Vector2(0.96f, 0.96f);
+                // the bottom strip of the card is reserved for the copy badge (docs/36): the hero holder ends above it, so the number never sits on hero art (CUX-3).
+                // The AspectRatioFitter takes over its own rect, so the reserved strip lives on a plain holder around the hero.
+                float badgeStrip = BadgeHeight() + 8f;
+                RectTransform holder = UiKit.Rect(inner, "FaceHolder");
+                holder.anchorMin = new Vector2(0.04f, 0f);
+                holder.anchorMax = new Vector2(0.96f, 0.96f);
+                holder.offsetMin = new Vector2(0f, badgeStrip);
+                holder.offsetMax = Vector2.zero;
+                RectTransform face = MomoDoll.Build(holder, "Face", 100f, who, art);
+                face.anchorMin = Vector2.zero;
+                face.anchorMax = Vector2.one;
                 face.offsetMin = face.offsetMax = Vector2.zero;
-                var fit = face.gameObject.AddComponent<AspectRatioFitter>();   // the hero keeps its proportions inside the cell
+                var fit = face.gameObject.AddComponent<AspectRatioFitter>();   // the hero keeps its proportions inside the holder
                 fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
                 fit.aspectRatio = who.Rig.CanvasW / (float)who.Rig.CanvasH;
                 if (who == chosen)
@@ -395,14 +403,44 @@ namespace BoingUpSkyTower.Gameplay
                     tick.rectTransform.sizeDelta = new Vector2(48f, 48f);
                 }
 
+                int copies = CharacterCatalog.BadgeCount(progress, who);
+                AddCopyBadge(inner, copies);
+
                 var b = outer.gameObject.AddComponent<Button>();
                 b.transition = Selectable.Transition.None;
                 outer.GetComponent<Image>().raycastTarget = true;
                 CharacterDef pick = who;
                 // a tap only selects the hero (the (i) button on the stage opens its stat sheet)
                 b.onClick.AddListener(() => { CharacterCatalog.Selected = pick; Build(); });
-                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + (who == chosen ? ", chosen" : "");
+                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + ", " + copies + (copies == 1 ? " copy" : " copies") + (who == chosen ? ", chosen" : "");
             }
+        }
+
+        /// <summary>Name of the copy-count badge on a hero card (docs/36); its text child is "Count".</summary>
+        public const string BadgeName = "CopyBadge";
+
+        /// <summary>
+        /// The copy count in the bottom right corner of a card: a small dark rounded pill with a white bold number (at least 16 sp = 36 px, scaled with the text size),
+        /// inside the card, never a touch target. The pill grows with the digits so the number is never clipped.
+        /// </summary>
+        static float BadgeHeight() { return Mathf.Ceil(UiKit.MinBodyTextPx * UiKit.TextScale * 1.3f); }
+
+        static void AddCopyBadge(RectTransform card, int copies)
+        {
+            string s = copies.ToString();
+            float h = BadgeHeight();
+            float w = Mathf.Max(h, Mathf.Ceil(UiKit.MinBodyTextPx * UiKit.TextScale * 0.62f * s.Length + 24f));
+            Image pill = UiKit.AddPanel(card, BadgeName, new Color(0.09f, 0.11f, 0.24f, 0.94f));
+            pill.raycastTarget = false;
+            RectTransform prt = pill.rectTransform;
+            prt.anchorMin = prt.anchorMax = new Vector2(1f, 0f);
+            prt.pivot = new Vector2(1f, 0f);
+            prt.anchoredPosition = new Vector2(-4f, 4f);
+            prt.sizeDelta = new Vector2(w, h);
+            Text t = UiKit.AddText(pill.transform, "Count", s, Mathf.RoundToInt(UiKit.MinBodyTextPx), Color.white, TextAnchor.MiddleCenter, true);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
+            UiKit.Stretch(t.rectTransform);
         }
 
         /// <summary>Picks a character as the tests do (the same as a tap on its tile).</summary>

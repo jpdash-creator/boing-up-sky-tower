@@ -46,13 +46,9 @@ namespace BoingUpSkyTower.Tests
         {
             var all = CharacterCatalog.All;
             Assert.AreEqual(10, all.Length, "5 Common heroes + their 5 Uncommon merge tiers (docs/34)");
-            Assert.AreEqual("momo", all[0].Id);
-            Assert.AreEqual("forestgirl", all[1].Id);
-            Assert.AreEqual("beachotter", all[2].Id);
-            Assert.AreEqual("candygirl", all[3].Id);
-            Assert.AreEqual("monk", all[4].Id);
-            Assert.AreEqual("momo_u", all[5].Id);
-            Assert.AreEqual("monk_u", all[9].Id);
+            // order is hero then tier (docs/36): each Common hero is followed by its Uncommon tier
+            string[] expected = { "momo", "momo_u", "forestgirl", "forestgirl_u", "beachotter", "beachotter_u", "candygirl", "candygirl_u", "monk", "monk_u" };
+            for (int i = 0; i < expected.Length; i++) Assert.AreEqual(expected[i], all[i].Id);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get("nobody"), "an unknown id falls back to Momo");
         }
 

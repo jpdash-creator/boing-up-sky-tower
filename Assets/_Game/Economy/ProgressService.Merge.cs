@@ -7,7 +7,15 @@ namespace BoingUpSkyTower.Economy
     public sealed partial class ProgressService
     {
         /// <summary>The ownership rules that existed before copies: bought or received characters, and the Common hero of an unlocked region.</summary>
-        bool OwnedWithoutCopyCount(CharacterSpec c)
+        HeroInventory heroInventory;
+
+        /// <summary>The player's hero inventory (docs/36): the heroes this account or guest owns, with copy counts. The Heroes screen lists it.</summary>
+        public HeroInventory HeroInventory { get { return heroInventory ?? (heroInventory = new HeroInventory(this)); } }
+
+        /// <summary>Saves once (used by <see cref="HeroInventory"/>).</summary>
+        internal void SaveNow() { Commit(); }
+
+        internal bool OwnedWithoutCopyCount(CharacterSpec c)
         {
             if (c == null) return false;
             if (Data.Characters.Contains(c.Id)) return true;
@@ -34,24 +42,10 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>How many copies of the character the player holds (0 for an unknown or not owned one). An owned character that was never counted is 1 copy.</summary>
-        public int Copies(string id)
-        {
-            CharacterSpec c = CharacterDefs.Get(id);
-            if (c == null) return 0;
-            int n;
-            if (Data.Copies.TryGetValue(id, out n)) return n > 0 ? n : 0;
-            return OwnedWithoutCopyCount(c) ? 1 : 0;
-        }
+        public int Copies(string id) { return HeroInventory.Copies(id); }
 
         /// <summary>Adds copies (rewards later, debug now). Returns the new count; an unknown id or a count below 1 changes nothing.</summary>
-        public int AddCopies(string id, int count)
-        {
-            if (CharacterDefs.Get(id) == null || count < 1) return Copies(id);
-            int now = Math.Min(MergeRules.MaxCopies, Copies(id) + count);
-            Data.Copies[id] = now;
-            Commit();
-            return now;
-        }
+        public int AddCopies(string id, int count) { return HeroInventory.AddCopies(id, count); }
 
         /// <summary>The next tier of the character, or null when it has none yet.</summary>
         public CharacterSpec NextTierOf(string id) { return MergeRules.NextTier(CharacterDefs.Get(id)); }

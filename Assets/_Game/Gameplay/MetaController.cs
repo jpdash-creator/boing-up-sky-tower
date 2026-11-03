@@ -14,7 +14,7 @@ namespace BoingUpSkyTower.Gameplay
     /// Meta scene: main menu, world map, level select (15 levels per region, stars, locks), level info popup,
     /// region gem-skip popup and settings. Built in code from the sliced art (no prefabs yet).
     /// </summary>
-    public sealed class MetaController : MonoBehaviour
+    public sealed partial class MetaController : MonoBehaviour
     {
         // World map (Tools/art_pipeline/build_world_map.py): 10 stitched segments of 3 regions each, bottom to top, in the Resources/Map chunks.
         [System.Serializable] class MapChunkMeta { public string file; public int height; }
@@ -86,6 +86,7 @@ namespace BoingUpSkyTower.Gameplay
                 ShowLevels(repo.GetRegion(id));
             }
             else ShowMenu();
+            LoginFlow.Begin(canvas.transform, ShowMenu);   // first launch: Google Play or guest; later launches sync a Google player in the background
         }
 
         void OnDestroy()
@@ -347,7 +348,7 @@ namespace BoingUpSkyTower.Gameplay
             int latest = progress != null ? Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, Mathf.Max(1, GameSession.PlayableRegions)) : 1;   // the latest UNLOCKED region (docs/23)
             RegionArt meadow = art != null ? (art.ForRegion(latest) ?? art.ForRegion(1)) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
-            AddCurrencyBar();
+            AddCurrencyBar(true);   // home only: the round account button sits at the left end of the top row (owner issue 35.3)
             Sprite logo = ToyKit.Get("logo");
             if (logo != null)
             {
@@ -368,7 +369,7 @@ namespace BoingUpSkyTower.Gameplay
             AddRewardsButton();
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
             UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(300f, 44f));   // bottom centre, clear of the bundle timer button at the left
-            AddTabBar(ToyKit.TabPlay);
+            AddTabBar(ToyKit.TabPlay, true, true);   // home bar: Shop | PLAY (two icons wide) | Heroes, no VIP crown (owner issue 35.3)
             BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
             MaybeShowHeroReveal();
         }
@@ -415,7 +416,7 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>Currency pills (coins, gems, total stars) with the round settings gear at the right (owner issue 14, SS2).</summary>
-        void AddCurrencyBar()
+        void AddCurrencyBar(bool withAccount = false)
         {
             RectTransform row = UiKit.Rect(screen, "CurrencyBar");
             row.anchorMin = new Vector2(0f, 1f);
@@ -427,6 +428,7 @@ namespace BoingUpSkyTower.Gameplay
             hl.spacing = 10f;
             hl.childControlWidth = hl.childControlHeight = true;
             hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+            if (withAccount) AddAccountButton(row);
             coinText = ToyKit.WalletPillFlex(row, "CoinsPill", art != null ? art.CoinIcon : null, Color.white, 104f);
             gemText = ToyKit.WalletPillFlex(row, "GemsPill", art != null ? art.GemIcon : null, new Color(0.75f, 0.92f, 1f), 104f);
             starText = ToyKit.WalletPillFlex(row, "StarsPill", art != null ? art.StarFilled : null, new Color(1f, 0.92f, 0.5f), 104f);
@@ -442,16 +444,19 @@ namespace BoingUpSkyTower.Gameplay
         /// The persistent bottom tab bar (docs/16 section C). With <paramref name="withPlay"/> false (World Map and Level screen, owner issue 16.3) the
         /// middle PLAY button is left out. The bar holds Shop, Subscription, PLAY, Heroes (owner issue 29; Chests and Bundles are tabs of the Shop; Rewards is the gift button above Heroes).
         /// </summary>
-        void AddTabBar(int selected, bool withPlay = true)
+        void AddTabBar(int selected, bool withPlay = true, bool home = false)
         {
+            // Home (owner issue 35.3): no VIP crown, PLAY spans two slots = exactly two icon buttons wide, same height, row Shop | PLAY | Heroes centred.
             var items = new System.Collections.Generic.List<ToyKit.BarItem>
             {
                 new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" },
-                new ToyKit.BarItem { Icon = "icon_crown", Caption = "VIP", A11y = "VIP" },
             };
-            if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true });
+            if (!(home && withPlay)) items.Add(new ToyKit.BarItem { Icon = "icon_crown", Caption = "VIP", A11y = "VIP" });
+            if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true, Span = home ? 2 : 1 });
             items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
-            int[] tabOf = withPlay ? new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabPlay, ToyKit.TabHeroes } : new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabHeroes };
+            int[] tabOf = !withPlay ? new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabHeroes }
+                : home ? new[] { ToyKit.TabShop, ToyKit.TabPlay, ToyKit.TabHeroes }
+                : new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabPlay, ToyKit.TabHeroes };
             ToyKit.BuildIconBar(screen, items.ToArray(), selected < 0 ? -1 : System.Array.IndexOf(tabOf, selected), i => OnTab(tabOf[i]));
         }
 
@@ -461,8 +466,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case ToyKit.TabShop: if (CurrentScreen != "Shop") ShowShop(); break;
                 case ToyKit.TabPlay: ShowMap(); break;
-                case ToyKit.TabSubscription: if (CurrentScreen != "Subscription") ShowSubscription(); break;
-                case ToyKit.TabChests: if (CurrentScreen != "Shop" || shop == null || shop.Tab != ShopScreen.TabChests) ShowTreasureChests(); break;
+                case ToyKit.TabSubscription: if (CurrentScreen != "Shop" || shop == null || shop.Tab != ShopScreen.TabVip) ShowSubscription(); break;   // VIP = the shop's crown tab
                 case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
             }
         }
@@ -497,7 +501,7 @@ namespace BoingUpSkyTower.Gameplay
         public void ShowTreasureChests()
         {
             // docs/26: the Treasure Shop is the Chests tab of the shop (ShopChrome look); Back goes home like every shop page.
-            ShowShop(ShopScreen.TabChests);
+            ShowShop(ShopScreen.TabVip, ShopScreen.VipChestsSection);   // owner issue 35: chests are the second section of the VIP tab
         }
 
         // ---------------- shop ----------------
@@ -510,7 +514,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Shop (docs/14): four tabs, only Gems and Coins is live. Opens on that tab by default.</summary>
         public void ShowShop(int tab = ShopScreen.TabPowerups, int section = ShopScreen.GemsSection)
         {
-            if (CurrentScreen != "Shop" && CurrentScreen != "Subscription") treasureReturn = TreasureReturnFor(CurrentScreen);   // Back returns to the caller (home, map, levels)
+            if (CurrentScreen != "Shop") treasureReturn = TreasureReturnFor(CurrentScreen);   // Back returns to the caller (home, map, levels)
             NewScreen("Shop");
             SkyBackground();
             progress.LaunchPromoActive = GameSettings.LaunchPromo;
@@ -522,7 +526,6 @@ namespace BoingUpSkyTower.Gameplay
                 NewOverlay = NewOverlay,
                 CloseOverlay = ClosePopup,
                 OpenTreasureChests = ShowTreasureChests,
-                OpenSubscription = ShowSubscription,
             };
             shop = new ShopScreen(screen, progress, ShopCatalog.FromRepository(repo), art, host);
             shop.Build(tab, section);
@@ -535,35 +538,16 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- subscription (docs/26 section 2) ----------------
 
-        SubscriptionScreen subscription;
-        Action subscriptionReturn;
+        /// <summary>The Subscription section of the shop's VIP tab while it is showing (null on every other screen). Tests drive purchases through it.</summary>
+        public SubscriptionScreen CurrentSubscription { get { return CurrentScreen == "Shop" && shop != null ? shop.Subscription : null; } }
 
-        /// <summary>The Subscription page while it is showing (null on every other screen). Tests drive purchases through it.</summary>
-        public SubscriptionScreen CurrentSubscription { get { return CurrentScreen == "Subscription" ? subscription : null; } }
-
-        /// <summary>Subscription page: opened from the home button and from the shop header; Back returns to the caller.</summary>
+        /// <summary>
+        /// VIP (owner issue 35): the Subscription section is the first part of the shop's VIP tab (crown), above the Chests section. Opened from the bottom bar's
+        /// crown and the old callers; Back returns to the screen that opened it (home, map, levels), like the rest of the shop.
+        /// </summary>
         public void ShowSubscription()
         {
-            if (CurrentScreen != "Subscription") subscriptionReturn = CurrentScreen == "Shop" ? (Action)(() => ShowShop()) : CurrentScreen == "Map" ? (Action)ShowMap : ShowMenu;
-            NewScreen("Subscription");
-            Background(null, new Color(0.30f, 0.18f, 0.10f, 1f));   // brown wood look of the shop pages
-            var host = new ShopScreen.Host
-            {
-                OpenPopup = (title, body, height) => OpenPopup(title, body, height),
-                PopupButton = (label, primary, y, action) => PopupButton(label, Btn(primary ? 1 : 0), Color.white, y, action),
-                ClosePopup = ClosePopup,
-                NewOverlay = NewOverlay,
-                CloseOverlay = ClosePopup,
-            };
-            subscription = new SubscriptionScreen(screen, progress, progress.SubscriptionDefs, art, host);
-            subscription.Build();
-            Action back = subscriptionReturn;
-            AddBack("Back", () => { if (back != null) back(); else ShowMenu(); });
-            AddTabBar(-1);
-            coinText = subscription.CoinText;
-            gemText = subscription.GemText;
-            starText = subscription.StarText;
-            RefreshWallet();
+            ShowShop(ShopScreen.TabVip, ShopScreen.VipSubscriptionSection);
         }
 
         // ---------------- rewards (docs/26 section 4) ----------------
@@ -1055,7 +1039,7 @@ namespace BoingUpSkyTower.Gameplay
             AddBack("Menu", ShowMenu);
             AddTabBar(-1, false);
             AddRewardsButton();   // above Heroes, same gap as home; the map viewport leaves a strip for it (no pin or tag can sit under it)
-            BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
+            BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet, true, BundleTimerButton.MapLift);   // timer bundle offer, bottom left, raised on the map (docs/26)
 
             CenterMap(currentRise);
             StartCoroutine(CenterMapAgain(currentRise));
@@ -1210,7 +1194,7 @@ namespace BoingUpSkyTower.Gameplay
                                 const float notchLift = 48f;   // the notch/gesture inset lifts the bottom controls by up to about this much
                                 score += TagOverlap(tag, new Rect(0f, 0f, pw * s, ToyKit.TabBarButtonTop + 8f + notchLift), true);
                                 score += TagOverlap(tag, new Rect(pw * s * 0.97f - 18f - ToyKit.RewardsButtonSize - 8f, ToyKit.RewardsButtonBottom - 8f + notchLift, ToyKit.RewardsButtonSize + 16f + 0.03f * pw * s, ToyKit.RewardsButtonSize + 16f), true);
-                                score += TagOverlap(tag, new Rect(8f, ToyKit.TabBarReserve + notchLift, 236f + 0.03f * pw * s, 236f), true);
+                                score += TagOverlap(tag, new Rect(8f, ToyKit.TabBarReserve + BundleTimerButton.MapLift + notchLift, 236f + 0.03f * pw * s, 236f), true);
                                 for (int pj = 1; pj < painted.pages.Length; pj++)
                                     score += TagOverlap(tag, new Rect(0f, pj * ph * s - cloudHalf, pw * s, cloudHalf * 2f), false);
                             }
@@ -1760,14 +1744,16 @@ namespace BoingUpSkyTower.Gameplay
             AddBack("Back", ShowMenu);
             ToyKit.Ribbon(screen, "Settings", new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(580f, 206f));
 
-            bool dev = GameSettings.DevBuild || GameSettings.ShowDevRowsForTests;
+            bool admin = AdminAccess.Available || GameSettings.ShowDevRowsForTests;   // the Admin button (docs/38): development builds, or after the hidden code
             // Rows grow with the real screen density so every switch and button is at least 48 dp (doc 26, emulator report 2).
             settingsBtnH = Mathf.Max(126f, UiKit.MinTouchRef);
             float rowH = settingsRowH = settingsBtnH + 22f;
             const float padTop = 24f, gap = 28f, padBottom = 36f, resetH = 130f;
             float resetBtnH = Mathf.Max(resetH, UiKit.MinTouchRef);
-            int rows = 7 + (dev ? 2 : 0);
-            float cardH = padTop + rows * rowH + gap + resetBtnH + padBottom;
+            float footerH = Mathf.Max(110f, UiKit.MinTouchRef);   // version label (7 taps = hidden code box) and the small Admin button
+            int rows = 7;
+            float accountH = SettingsAccountBlock(null, 0f, resetBtnH);   // account status line + sign in/out at the top of the card (owner issue 35.3)
+            float cardH = padTop + accountH + rows * rowH + gap + resetBtnH + gap + resetBtnH + gap + footerH + padBottom;
 
             // Scrolling area under the fixed header (back button and ribbon): the card is the content, so on a short or wide-aspect screen
             // the rows and the reset button scroll instead of running off the screen or colliding with each other.
@@ -1795,7 +1781,8 @@ namespace BoingUpSkyTower.Gameplay
             settingsScroll.movementType = ScrollRect.MovementType.Elastic;
             settingsScroll.scrollSensitivity = 60f;
             int r = 0;
-            float y0 = padTop;
+            SettingsAccountBlock(card, padTop, resetBtnH);
+            float y0 = padTop + accountH;
             AddSwitchRow(card, y0 + r++ * rowH, "icon_sound", "Sound", () => GameSettings.Sound, v => GameSettings.Sound = v);
             AddSwitchRow(card, y0 + r++ * rowH, "icon_music", "Music", () => GameSettings.Music, v => GameSettings.Music = v);
             AddSwitchRow(card, y0 + r++ * rowH, "icon_vibrate", "Haptics", () => GameSettings.Haptics, v => GameSettings.Haptics = v);
@@ -1807,13 +1794,17 @@ namespace BoingUpSkyTower.Gameplay
                 ShowSettings();   // rebuild so the new size applies to every label
             });
             AddValueRow(card, y0 + r++ * rowH, "icon_dial", "Difficulty", GameSettings.DifficultyNames[GameSettings.Difficulty], ShowDifficultyList);
-            // Owner's test flags: shown only in development builds (GameSettings.DevBuild), kept visible there for the owner's testing.
-            if (dev) AddSwitchRow(card, y0 + r++ * rowH, "icon_lock", "GAME_JUMP_TEST", () => GameSettings.GameJumpTest, v => GameSettings.GameJumpTest = v);
-            if (dev) AddSwitchRow(card, y0 + r++ * rowH, "icon_lock", "SYSTEM_TEST", () => GameSettings.SystemTest, v => GameSettings.SystemTest = v);
+            // GAME_JUMP_TEST / SYSTEM_TEST moved into the Admin popup (docs/38).
 
-            // Reset progress sits INSIDE the card, under the last row with a clear gap, so it can never collide with a row or the panel edge.
-            Button reset = UiKit.AddButton(card, "Reset", "Reset progress", ToyKit.Button(3), Color.white, new Vector2(560f, resetBtnH), ConfirmReset, 46);
-            UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 1f), new Vector2(0f, -(y0 + rows * rowH + gap)), new Vector2(560f, resetBtnH));
+            // Restore Purchases and Reset Progress sit INSIDE the card, under the last row with clear gaps, so they can never collide with a row or the panel edge.
+            float yb = y0 + rows * rowH + gap;
+            Button restore = UiKit.AddButton(card, "RestorePurchases", "Restore Purchases", ToyKit.Button(0), Color.white, new Vector2(560f, resetBtnH), RestorePurchases, 46);
+            UiKit.Place((RectTransform)restore.transform, new Vector2(0.5f, 1f), new Vector2(0f, -yb), new Vector2(560f, resetBtnH));
+            yb += resetBtnH + gap;
+            Button reset = UiKit.AddButton(card, "Reset", "Reset Progress", ToyKit.Button(3), Color.white, new Vector2(560f, resetBtnH), ConfirmReset, 46);
+            UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 1f), new Vector2(0f, -yb), new Vector2(560f, resetBtnH));
+            yb += resetBtnH + gap;
+            AddSettingsFooter(card, yb, footerH, admin);
         }
 
         float settingsRowH = 148f, settingsBtnH = 126f;
@@ -1900,18 +1891,6 @@ namespace BoingUpSkyTower.Gameplay
                 }, 40);
                 UiKit.Place((RectTransform)opt.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f + (GameSettings.DifficultyNames.Length - 1 - i) * 145f), new Vector2(700f, 132f));
             }
-        }
-
-        public void ConfirmReset()
-        {
-            OpenPopup("Reset progress?", "All stars, coins, gems and unlocked regions will be erased on this device.");
-            PopupButton("Erase everything", Btn(1), new Color(1f, 0.6f, 0.6f), 230f, () =>
-            {
-                progress.ResetAll();
-                ClosePopup();
-                ShowMenu();
-            });
-            PopupButton("Cancel", Btn(0), Color.white, 60f, ClosePopup);
         }
 
         // ---------------- popups ----------------

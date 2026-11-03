@@ -10,6 +10,7 @@ namespace BoingUpSkyTower.Monetization
     {
         static IAdService ads;
         static IPaymentService payments;
+        static IAccountService account;
         static bool consent;
 
         /// <summary>
@@ -48,8 +49,29 @@ namespace BoingUpSkyTower.Monetization
             set { payments = value; }
         }
 
-        /// <summary>Tests: forget both services and the consent flag.</summary>
-        public static void Reset() { ads = null; payments = null; consent = false; }
+        /// <summary>The player's Google account and cloud save (docs/35): Play Games with BOING_GPGS on Android, else the stub in the editor and development builds (signs in as "Test Player"), else an unavailable service (guest only).</summary>
+        public static IAccountService Account
+        {
+            get { if (account == null) account = CreateAccount(); return account; }
+            set { account = value; }
+        }
+
+        /// <summary>Tests: forget all services and the consent flag.</summary>
+        public static void Reset() { ads = null; payments = null; account = null; consent = false; }
+
+        static IAccountService CreateAccount()
+        {
+#if BOING_GPGS
+            if (!Application.isEditor && ServiceFactories.GooglePlay != null)
+            {
+                try { return ServiceFactories.GooglePlay(); }
+                catch (System.Exception e) { Debug.LogWarning("[Services] Play Games unavailable, using stub: " + e.Message); }
+            }
+#endif
+            // The fake "Test Player" account is for the editor and development builds only; a release build without the SDK offers guest play only.
+            if (Application.isEditor || Debug.isDebugBuild) return new StubAccountService();
+            return new UnavailableAccountService();
+        }
 
         static IAdService CreateAds()
         {
@@ -81,5 +103,6 @@ namespace BoingUpSkyTower.Monetization
     {
         public static System.Func<IAdService> LevelPlay;
         public static System.Func<IPaymentService> UnityIap;
+        public static System.Func<IAccountService> GooglePlay;
     }
 }

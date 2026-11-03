@@ -5,6 +5,7 @@
     "BoingUpSkyTower.Simulation",
     "BoingUpSkyTower.Content",
     "BoingUpSkyTower.Economy",
+    "BoingUpSkyTower.Services",
     "Unity.InputSystem",
     "UnityEngine.UI"
   ],

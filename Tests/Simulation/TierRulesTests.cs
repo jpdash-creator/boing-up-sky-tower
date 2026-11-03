@@ -18,9 +18,9 @@ namespace BoingUpSkyTower.Simulation.Tests
             int[][] want =
             {
                 new[] { 2, 10, 25, 50, 100, 1, 5, 1 },
-                new[] { 3, 25, 50, 200, 500, 5, 10, 2 },
-                new[] { 3, 50, 75, 500, 1000, 5, 10, 3 },
-                new[] { 4, 75, 100, 1000, 2000, 5, 10, 4 },
+                new[] { 3, 10, 25, 200, 500, 5, 10, 2 },
+                new[] { 3, 10, 25, 500, 1000, 5, 10, 3 },
+                new[] { 4, 10, 25, 1000, 2000, 5, 10, 4 },
             };
             for (int i = 0; i < Tiers.Length; i++)
             {
@@ -30,6 +30,8 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Assert.Equal(CharacterDefs.PowerCount[(int)Tiers[i]], r.PowerCount);
                 Assert.Equal(CharacterDefs.CooldownSeconds[(int)Tiers[i]], r.CooldownSeconds);
             }
+            foreach (CharacterRarity t in Tiers) Assert.True(TierRules.RuleFor(t).OverPreviousTier, "chain over the previous tier");
+            Assert.Equal(new[] { 2, 3, 3, 4 }, new[] { TierRules.RuleFor(CharacterRarity.Uncommon).BoostedStats, TierRules.RuleFor(CharacterRarity.Rare).BoostedStats, TierRules.RuleFor(CharacterRarity.Epic).BoostedStats, TierRules.RuleFor(CharacterRarity.Legendary).BoostedStats });
             Assert.Null(TierRules.RuleFor(CharacterRarity.Common));
             Assert.Equal(new[] { 0, 1, 2, 3, 4 }, CharacterDefs.PowerCount);
             Assert.Equal("Elite", CharacterDefs.RarityNames[(int)CharacterRarity.Epic]);
@@ -90,22 +92,56 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.NotNull(TierRules.Validate(new TierRow { Id = "t", Rarity = CharacterRarity.Uncommon, JumpPct = 10, WallPct = 25, RunCoinsAdd = 50, RunGemsAdd = 6 }));
             Assert.NotNull(TierRules.Validate(new TierRow { Id = "t", Rarity = CharacterRarity.Common, JumpPct = 10, WallPct = 25, RunCoinsAdd = 50, RunGemsAdd = 1 }));
             Assert.NotNull(TierRules.Validate(null));
-            Assert.Null(TierRules.Validate(new TierRow { Id = "l", Rarity = CharacterRarity.Legendary, JumpPct = 75, SpeedPct = 80, ControlPct = 90, WallPct = 100, RunCoinsAdd = 2000, RunGemsAdd = 10 }));
-            Assert.NotNull(TierRules.Validate(new TierRow { Id = "l", Rarity = CharacterRarity.Legendary, JumpPct = 75, SpeedPct = 80, ControlPct = 90, RunCoinsAdd = 2000, RunGemsAdd = 10 }));   // Legendary needs all 4
+            Assert.Null(TierRules.Validate(new TierRow { Id = "l", Rarity = CharacterRarity.Legendary, JumpPct = 10, SpeedPct = 15, ControlPct = 20, WallPct = 25, RunCoinsAdd = 2000, RunGemsAdd = 10 }));
+            Assert.NotNull(TierRules.Validate(new TierRow { Id = "l", Rarity = CharacterRarity.Legendary, JumpPct = 10, SpeedPct = 15, ControlPct = 20, RunCoinsAdd = 2000, RunGemsAdd = 10 }));   // Legendary needs all 4
+        }
+
+        static ShownStats CommonShown(string line) { return ShownStats.From(CharacterDefs.Get(line).Stats, new SimConfig()); }
+
+        static int[] Pcts(TierRow r) { return new[] { r.JumpPct, r.SpeedPct, r.ControlPct, r.WallPct }; }
+        static double[] Vals(ShownStats s) { return new[] { s.Jump, s.Speed, s.Control, s.WallBounce }; }
+
+        /// <summary>Generates the whole chain Uncommon, Rare, Elite, Legendary for one line from one base seed.</summary>
+        static TierRow[] Chain(string line, int seed, out ShownStats[] shown)
+        {
+            ShownStats common = CommonShown(line);
+            var rows = new TierRow[4];
+            shown = new ShownStats[4];
+            ShownStats prev = common;
+            for (int i = 0; i < 4; i++)
+            {
+                rows[i] = TierRules.Generate(line, line + "_" + i, "T" + i, line + "_" + i, Tiers[i], seed + i * 101, prev);
+                shown[i] = TierRules.Apply(prev, common, rows[i]);
+                prev = shown[i];
+            }
+            return rows;
         }
 
         [Fact]
-        public void TheGeneratorIsDeterministicAndAlwaysProducesValidRows()
+        public void TheGeneratorIsDeterministicAndEveryTierRowObeysCountBandAndChainExactness()
         {
-            foreach (CharacterRarity r in Tiers)
-                for (int seed = 0; seed < 500; seed++)
+            int[] counts = { 2, 3, 3, 4 };
+            foreach (string line in TierRules.Lines)
+                for (int seed = 0; seed < 150; seed++)
                 {
-                    TierRow a = TierRules.Generate("momo", "x", "X", "x", r, seed);
-                    TierRow b = TierRules.Generate("momo", "x", "X", "x", r, seed);
-                    Assert.Null(TierRules.Validate(a));
-                    Assert.Equal(Nums(a), Nums(b));
+                    ShownStats[] shown, shown2;
+                    TierRow[] a = Chain(line, seed, out shown);
+                    TierRow[] b = Chain(line, seed, out shown2);
+                    ShownStats prev = CommonShown(line);
+                    for (int t = 0; t < 4; t++)
+                    {
+                        Assert.Null(TierRules.Validate(a[t]));
+                        Assert.Null(TierRules.ValidateChain(prev, a[t]));
+                        Assert.Equal(Nums(a[t]), Nums(b[t]));
+                        Assert.Equal(counts[t], TierRules.BoostedCount(a[t]));
+                        // the printed numbers: exactly the stored percent on the boosted stats, exactly 0 on the others
+                        double[] p = Vals(prev), n = Vals(shown[t]);
+                        int[] pc = Pcts(a[t]);
+                        for (int s = 0; s < 4; s++) Assert.Equal(pc[s], ShownStats.Percent(p[s], n[s]));
+                        prev = shown[t];
+                    }
                 }
-            Assert.Null(TierRules.Generate("momo", "x", "X", "x", CharacterRarity.Common, 1));
+            Assert.Null(TierRules.Generate("momo", "x", "X", "x", CharacterRarity.Common, 1, CommonShown("momo")));
         }
 
         [Fact]
@@ -114,7 +150,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             var seen = new HashSet<string>();
             for (int seed = 0; seed < 300; seed++)
             {
-                TierRow r = TierRules.Generate("momo", "x", "X", "x", CharacterRarity.Rare, seed);
+                TierRow r = TierRules.Generate("momo", "x", "X", "x", CharacterRarity.Rare, seed, CommonShown("momo"));
                 seen.Add((r.JumpPct > 0 ? "J" : "") + (r.SpeedPct > 0 ? "S" : "") + (r.ControlPct > 0 ? "C" : "") + (r.WallPct > 0 ? "W" : ""));
             }
             Assert.Equal(4, seen.Count);   // any 3 of 4 stats can come up
@@ -123,64 +159,114 @@ namespace BoingUpSkyTower.Simulation.Tests
         [Fact]
         public void TheFiveUncommonRowsAreTheFixedSeedDrawAndNeverChange()
         {
-            // The constants in MergeTierDefs.Rows are what Generate gave for BaseSeed + line index. Changing the generator or the rule changes this test on purpose.
+            // The constants in MergeTierDefs.Rows are what Generate gave for BaseSeed (20261104) + line index over the Common hero. Changing the generator or the rule changes this test on purpose.
             for (int i = 0; i < MergeTierDefs.Rows.Length; i++)
             {
                 TierRow row = MergeTierDefs.Rows[i];
                 Assert.Equal(TierRules.Lines[i], row.LineId);
-                TierRow g = TierRules.Generate(row.LineId, row.Id, row.Name, row.ArtId, row.Rarity, TierRules.BaseSeed + i);
+                TierRow g = TierRules.Generate(row.LineId, row.Id, row.Name, row.ArtId, row.Rarity, TierRules.BaseSeed + i, CommonShown(row.LineId));
                 Assert.Equal(Nums(g), Nums(row));
             }
         }
 
         [Fact]
-        public void EffectiveStatsOfEveryTierRowAreInsideTheLimitsAndNeverWorseThanTheCommonHero()
+        public void UncommonDisplayedPercentOverCommonIsInside10To25ForExactlyTwoStatsAndZeroForTheOthers()
+        {
+            foreach (TierRow row in MergeTierDefs.Rows)
+            {
+                CharacterSpec spec = CharacterDefs.Get(row.Id);
+                ShownStats common = CharacterDefs.Get(row.LineId).ShownValues();
+                ShownStats shown = spec.ShownValues();
+                double[] c = Vals(common), u = Vals(shown);
+                int boosted = 0;
+                for (int s = 0; s < 4; s++)
+                {
+                    int pct = ShownStats.Percent(c[s], u[s]);
+                    if (pct == 0) { Assert.Equal(c[s], u[s]); continue; }
+                    boosted++;
+                    Assert.InRange(pct, 10, 25);
+                    Assert.Equal(Pcts(row)[s], pct);
+                }
+                Assert.Equal(2, boosted);
+                // the merge text prints those exact numbers
+                List<string> lines = TierRules.GainLines(common, shown);
+                var expect = new List<string>();
+                string[] names = { "Jump", "Speed", "Control", "Wall Bounce" };
+                for (int s = 0; s < 4; s++) if (Pcts(row)[s] > 0) expect.Add(names[s] + " +" + Pcts(row)[s] + "%");
+                expect.Add("Run coins +" + row.RunCoinsAdd);
+                expect.Add("Run gems +" + row.RunGemsAdd);
+                Assert.Equal(expect, lines);
+            }
+        }
+
+        [Fact]
+        public void TheChainStacksOnThePreviousTierNotOnCommonAndRunBonusIsNotCumulative()
+        {
+            ShownStats common = CommonShown("momo");
+            var unc = new TierRow { Id = "u", Rarity = CharacterRarity.Uncommon, JumpPct = 20, SpeedPct = 10, RunCoinsAdd = 100, RunGemsAdd = 5 };
+            ShownStats u = TierRules.Apply(common, common, unc);
+            var rare = new TierRow { Id = "r", Rarity = CharacterRarity.Rare, JumpPct = 20, SpeedPct = 10, ControlPct = 10, RunCoinsAdd = 200, RunGemsAdd = 5 };
+            ShownStats r = TierRules.Apply(u, common, rare);
+            Assert.Equal(ShownStats.Boosted(u.Jump, 20), r.Jump);
+            Assert.True(r.Jump > ShownStats.Boosted(common.Jump, 20), "compounds over the Uncommon value");
+            Assert.Equal(common.RunBonusCoins + 200, r.RunBonusCoins);   // its OWN total on top of the Common bonus, not on top of Uncommon's
+            Assert.Equal(common.RunBonusGems + 5, r.RunBonusGems);
+            Assert.Equal(u.WallBounce, r.WallBounce);
+        }
+
+        [Fact]
+        public void ChainedShownStatsMayPassTheLimitsButEffectiveStatsNeverDo()
+        {
+            // worst case: +25 percent on every stat at every tier (1.25^4 = 2.4x)
+            foreach (string line in TierRules.Lines)
+            {
+                ShownStats common = CommonShown(line), prev = common;
+                bool passedLimit = false;
+                foreach (CharacterRarity r in Tiers)
+                {
+                    TierRule rule = TierRules.RuleFor(r);
+                    var row = new TierRow { Id = "w", Rarity = r, JumpPct = 25, SpeedPct = 25, ControlPct = 25, WallPct = 25, RunCoinsAdd = rule.RunCoinsMax, RunGemsAdd = rule.RunGemsMax };
+                    prev = TierRules.Apply(prev, common, row);
+                    CharacterStats raw = prev.ToPhysics(new SimConfig());
+                    if (raw.ValidatePhysics() != null) passedLimit = true;
+                    CharacterStats eff = MergeTierDefs.Cap(raw);
+                    Assert.Null(eff.ValidateTier());
+                    Assert.True(eff.RunBonusCoins <= CharacterStats.TierRunBonusCoinsMax && eff.RunBonusGems <= CharacterStats.TierRunBonusGemsMax, line + " " + r);
+                }
+                Assert.True(passedLimit, line + ": the chain is expected to hit the caps by Legendary");
+            }
+        }
+
+        [Fact]
+        public void EffectiveStatsOfEveryUncommonRowAreInsideTheLimitsAndNotWorseThanCommon()
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
                 CharacterSpec spec = CharacterDefs.Get(row.Id);
                 CharacterSpec common = CharacterDefs.Get(row.LineId);
-                Assert.Null(spec.Stats.ValidateTier());            // physics inside the limits, run bonus inside the tier ceilings
+                Assert.Null(spec.Stats.ValidateTier());
                 Assert.Null(spec.Stats.ValidatePhysics());
-                CharacterStats e = spec.Stats, d = spec.SheetStats, c = common.Stats;
-                Assert.True(e.JumpLaunch >= c.JumpLaunch && e.MaxSpeed >= c.MaxSpeed && e.Control >= c.Control && e.WallBoostHundredths >= c.WallBoostHundredths, row.Id);
-                Assert.True(d.JumpLaunch >= e.JumpLaunch && d.MaxSpeed >= e.MaxSpeed && d.Control >= e.Control && d.WallBoostHundredths >= e.WallBoostHundredths, "the sheet shows at least what plays: " + row.Id);
-                Assert.Equal(c.RunBonusCoins + row.RunCoinsAdd, e.RunBonusCoins);
-                Assert.Equal(c.RunBonusGems + row.RunGemsAdd, e.RunBonusGems);
-                Assert.Equal(d.RunBonusCoins, e.RunBonusCoins);
-                // a moving jump still clears the largest normal gap
+                CharacterStats e = spec.Stats, c = common.Stats;
+                Assert.True(e.JumpLaunch >= c.JumpLaunch && e.MaxSpeed >= c.MaxSpeed && e.Control >= c.Control, row.Id);
+                Assert.Equal(common.ShownValues().RunBonusCoins + row.RunCoinsAdd, e.RunBonusCoins);
+                Assert.Equal(common.ShownValues().RunBonusGems + row.RunGemsAdd, e.RunBonusGems);
                 SimConfig cfg = new SimConfig();
                 Assert.True(e.Sheet(cfg).FullSpeedJump > cfg.NormalGapMax.Raw / 65536.0, row.Id);
             }
         }
 
         [Fact]
-        public void EveryRuleAtItsMaximumStillPlaysInsideTheLimits()
+        public void ShownBaseOfACommonHeroRoundTripsToItsOwnPhysics()
         {
-            // worst case for every line and tier: the top of the percent band on all four stats; the effective (capped) stats must still validate
-            foreach (CharacterSpec common in new[] { CharacterDefs.Momo, CharacterDefs.ForestGirl, CharacterDefs.BeachOtter, CharacterDefs.CandyGirl, CharacterDefs.Monk })
-                foreach (CharacterRarity r in Tiers)
-                {
-                    TierRule rule = TierRules.RuleFor(r);
-                    var row = new TierRow { Id = "w", Rarity = r, JumpPct = rule.PctMax, SpeedPct = rule.PctMax, ControlPct = rule.PctMax, WallPct = rule.PctMax, RunCoinsAdd = rule.RunCoinsMax, RunGemsAdd = rule.RunGemsMax };
-                    CharacterStats eff = MergeTierDefs.Cap(MergeTierDefs.Boost(common.Stats, row));
-                    Assert.Null(eff.ValidateTier());
-                    Assert.True(eff.RunBonusCoins <= CharacterStats.TierRunBonusCoinsMax && eff.RunBonusGems <= CharacterStats.TierRunBonusGemsMax, common.Id + " " + r);
-                }
-        }
-
-        [Fact]
-        public void CapKeepsTheShownValueAboveTheLimitButPlaysAtTheLimit()
-        {
-            // Momo 19 + 25 percent = 24 shown, plays at 23 (the maximum)
-            var row = new TierRow { Id = "m", Rarity = CharacterRarity.Uncommon, JumpPct = 25, SpeedPct = 25, RunCoinsAdd = 50, RunGemsAdd = 1 };
-            CharacterStats shown = MergeTierDefs.Boost(CharacterDefs.Momo.Stats, row);
-            CharacterStats plays = MergeTierDefs.Cap(shown);
-            Assert.Equal(24, shown.JumpLaunch);
-            Assert.Equal(CharacterStats.JumpLaunchMax, plays.JumpLaunch);
-            Assert.Equal(11, shown.MaxSpeed);
-            Assert.Equal(11, plays.MaxSpeed);
-            Assert.Equal(130, plays.RunBonusCoins);   // 80 + 50, meta only: never capped by the physics limits
+            foreach (string line in TierRules.Lines)
+            {
+                CharacterStats s = CharacterDefs.Get(line).Stats;
+                CharacterStats back = CommonShown(line).ToPhysics(new SimConfig());
+                Assert.Equal(s.JumpLaunch, back.JumpLaunch);
+                Assert.Equal(s.MaxSpeed, back.MaxSpeed);
+                Assert.Equal(s.Control, back.Control);
+                Assert.InRange(back.WallBoostHundredths, s.WallBoostHundredths - 1, s.WallBoostHundredths + 1);   // 1-decimal Wall Bounce over Speed: Otto 5.8 / 8 = 72.5
+            }
         }
 
         [Fact]

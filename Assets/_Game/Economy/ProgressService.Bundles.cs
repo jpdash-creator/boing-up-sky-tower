@@ -158,18 +158,41 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Buys a bundle at its list price. Atomic: either the gems are paid and everything is granted, or nothing changes. One save.</summary>
         public BundleResult TryBuyBundle(BundleDef def)
         {
-            return BuyBundleCore(def, BundlePrice(def), false);
+            CharacterSpec card;
+            return BuyBundleCore(def, BundlePrice(def), false, out card);
+        }
+
+        /// <summary>Same, and tells which hidden hero card was drawn and added (1 copy through <c>AddCopies</c>). Null when the bundle has no card or no card hero exists.</summary>
+        public BundleResult TryBuyBundle(BundleDef def, out CharacterSpec card)
+        {
+            return BuyBundleCore(def, BundlePrice(def), false, out card);
         }
 
         public BundleResult TryBuyBundle(string bundleId)
         {
-            return BuyBundleCore(Bundles.Get(bundleId), 0, false, true);
+            CharacterSpec card;
+            BundleDef def = Bundles.Get(bundleId);
+            return BuyBundleCore(def, def != null ? def.PriceGems : 0, false, out card);
         }
 
-        BundleResult BuyBundleCore(BundleDef def, int price, bool clearTimerOffer, bool listPrice = false)
+        /// <summary>
+        /// Draws the hidden card of the next purchase: repeatable from the per-account seed and the draw counter (like every bundle draw), never from UnityEngine.Random.
+        /// Only the counter moves. Tier odds and the empty-tier fallback live in <see cref="BundleCards"/>.
+        /// </summary>
+        CharacterSpec DrawBundleCard(BundleSaveData b)
         {
+            EnsureBundleSeed(b);
+            ulong state = BundleMix(((ulong)(uint)b.Seed << 32) ^ (ulong)(uint)b.CardDraws ^ 0xCA4D0CA4DUL);
+            ulong tierRoll = BundleMix(state);
+            ulong charRoll = BundleMix(tierRoll);
+            b.CardDraws++;
+            return BundleCards.Draw(tierRoll, charRoll, CharacterDefs.All);
+        }
+
+        BundleResult BuyBundleCore(BundleDef def, int price, bool clearTimerOffer, out CharacterSpec card)
+        {
+            card = null;
             if (def == null) return BundleResult.Invalid;
-            if (listPrice) price = def.PriceGems;
             if (price <= 0 || def.Coins < 0) return BundleResult.Invalid;
             foreach (BundlePowerUp p in def.PowerUps)
                 if (p == null || p.Count <= 0 || PowerUpDefs.Get(p.Id) == null) return BundleResult.Invalid;   // checked first: nothing is touched on failure
@@ -182,10 +205,10 @@ namespace BoingUpSkyTower.Economy
                 int have = PowerUpCount(p.Id);
                 Data.Inventory.Powerups[p.Id] = (int)Math.Min((long)have + p.Count, int.MaxValue);   // saturating: no stock cap
             }
-            if (!string.IsNullOrEmpty(def.CharacterId) && CharacterDefs.Get(def.CharacterId) != null && !OwnsCharacter(def.CharacterId))
-                Data.Characters.Add(def.CharacterId);
+            if (def.HiddenCard) card = DrawBundleCard(BundleState);
             if (clearTimerOffer) ClearTimerOffer(BundleState);
-            Commit();
+            if (card != null) AddCopies(card.Id, 1);   // the existing API; it saves, and that one save also holds everything above
+            else Commit();
             return BundleResult.Ok;
         }
 
@@ -219,9 +242,17 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Buys the running timer offer at the discounted price. Atomic like <see cref="TryBuyBundle(BundleDef)"/>; the offer ends with the purchase.</summary>
         public BundleResult TryBuyTimerOffer(DateTime nowUtc)
         {
+            CharacterSpec card;
+            return TryBuyTimerOffer(nowUtc, out card);
+        }
+
+        /// <summary>Same, and tells which hidden hero card was drawn and added.</summary>
+        public BundleResult TryBuyTimerOffer(DateTime nowUtc, out CharacterSpec card)
+        {
+            card = null;
             BundleDef def = CurrentTimerOffer(nowUtc);
             if (def == null) return BundleResult.Invalid;
-            return BuyBundleCore(def, TimerOfferPrice(def), true);
+            return BuyBundleCore(def, TimerOfferPrice(def), true, out card);
         }
 
         /// <summary>The player closed the timer offer (X). It ends; the next one comes after the normal gap and is a different bundle.</summary>

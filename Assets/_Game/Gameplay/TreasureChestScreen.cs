@@ -120,19 +120,39 @@ namespace BoingUpSkyTower.Gameplay
         {
             cardH = CardBaseH + TextK * 700f;
             RectTransform list = ShopChrome.ScrollArea(content, 2f * cardH + RowGap);
-            BuildChestCard(list, ChestKind.Iron, 0f);
-            BuildChestCard(list, ChestKind.Golden, cardH + RowGap);
+            BuildChestCard(list, ChestKind.Iron, 0f, false);
+            BuildChestCard(list, ChestKind.Golden, cardH + RowGap, false);
         }
 
-        void BuildChestCard(RectTransform list, ChestKind kind, float y)
+        /// <summary>
+        /// The two chest cards as LAYOUT children of <paramref name="section"/> (the "Chests" section of the VIP page: a vertical layout group under the
+        /// section header). No scroll area of its own: the VIP page scrolls.
+        /// </summary>
+        public void BuildCards(RectTransform section)
+        {
+            cardH = CardBaseH + TextK * 700f;
+            BuildChestCard(section, ChestKind.Iron, 0f, true);
+            BuildChestCard(section, ChestKind.Golden, 0f, true);
+        }
+
+        void BuildChestCard(RectTransform list, ChestKind kind, float y, bool inLayout)
         {
             bool gold = kind == ChestKind.Golden;
             RectTransform card = ShopChrome.Card(list, kind + "Card", gold ? ShopChrome.FrameColor.Gold : ShopChrome.FrameColor.Blue);
-            card.anchorMin = new Vector2(0f, 1f);
-            card.anchorMax = new Vector2(1f, 1f);
-            card.pivot = new Vector2(0.5f, 1f);
-            card.anchoredPosition = new Vector2(0f, -y);
-            card.sizeDelta = new Vector2(0f, cardH);
+            if (inLayout)
+            {
+                var le = card.gameObject.AddComponent<LayoutElement>();
+                le.minHeight = cardH;
+                le.preferredHeight = cardH;
+            }
+            else
+            {
+                card.anchorMin = new Vector2(0f, 1f);
+                card.anchorMax = new Vector2(1f, 1f);
+                card.pivot = new Vector2(0.5f, 1f);
+                card.anchoredPosition = new Vector2(0f, -y);
+                card.sizeDelta = new Vector2(0f, cardH);
+            }
 
             // left column: the title on top (wraps to two lines at large text), the chest picture under it
             Color titleCol = gold ? new Color(0.33f, 0.14f, 0.02f) : new Color(0.82f, 0.93f, 1f);

@@ -9,7 +9,7 @@ namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The shared look of every shop page (docs/26 section 1, reference screenshots SS11 to SS15): the Momo shopkeeper scene across the top on a
-    /// brownish wood background, a ribbon title, framed cards, and the bottom tab bar Bundles | Chests | Power-ups | Coins | Gems (the selected tab is
+    /// brownish wood background, a ribbon title, framed cards, and the bottom tab bar Bundles | VIP | Heroes | Power-ups | Coins | Gems (the selected tab is
     /// yellow, the others are blue icon-only, a tab can carry a red dot). Menu screens only: everything is built once in code,
     /// nothing runs per frame. All touch targets are at least 48 dp; every position is an anchor or a fraction of the width, so it fits 9:16, 9:19.5,
     /// 9:21 and 3:4, the safe area and 130 percent text.
@@ -31,11 +31,12 @@ namespace BoingUpSkyTower.Gameplay
         public enum RibbonColor { Yellow, Red, Blue }
         public enum FrameColor { Blue, Gold, Green }
 
-        public const int TabBundles = 0, TabChests = 1, TabPowerups = 2, TabCoins = 3, TabGems = 4, TabCount = 5;
-        /// <summary>Page titles by tab (ribbon text).</summary>
-        public static readonly string[] TabNames = { "Bundles", "Chests", "Power Ups", "Coins", "Gems" };
-        /// <summary>Short captions of the selected tab.</summary>
-        static readonly string[] TabIcons = { "icon_bundle", "icon_chest", "icon_bolt", "icon_coin", "icon_gem" };
+        /// <summary>Bottom bar order (owner issue 35): Bundles | VIP (crown; Subscription section then Chests section) | Heroes (coming soon) | Power-ups | Coins | Gems.</summary>
+        public const int TabBundles = 0, TabVip = 1, TabHeroes = 2, TabPowerups = 3, TabCoins = 4, TabGems = 5, TabCount = 6;
+        /// <summary>Page titles by tab (ribbon text and accessibility names).</summary>
+        public static readonly string[] TabNames = { "Bundles", "VIP", "Heroes", "Power Ups", "Coins", "Gems" };
+        /// <summary>Icon of each tab (Resources/Art/Ui); the Heroes tab uses the same art as the global bar's Heroes button.</summary>
+        static readonly string[] TabIcons = { "icon_bundle", "icon_crown", "icon_heroes", "icon_bolt", "icon_coin", "icon_gem" };
 
         /// <summary>Height of the box the shop scene art is cover-fitted in (the v0.36 header height; the art's face position depends on it).</summary>
         public const float SceneArtBoxH = 520f;
@@ -373,8 +374,8 @@ namespace BoingUpSkyTower.Gameplay
         // ---------------- tab bar ----------------
 
         /// <summary>
-        /// The bottom tab bar on a blue backing. Five tabs, each a real button of at least 48 dp: the selected one is yellow, wider and shows its caption,
-        /// the others are blue with an icon only. <paramref name="dots"/> (may be null) puts a red dot on a tab. Returns the bar root.
+        /// The bottom tab bar on a blue backing. Six equal tabs, each a real button of at least 48 dp: the selected one is yellow, the others are blue; all
+        /// show an icon only. <paramref name="dots"/> (may be null) puts a red dot on a tab. Returns the bar root.
         /// </summary>
         public static RectTransform BuildTabBar(RectTransform screen, int selected, Action<int> onSelect, bool[] dots)
         {
@@ -391,35 +392,31 @@ namespace BoingUpSkyTower.Gameplay
             tabs.anchorMin = new Vector2(0f, 0f);
             tabs.anchorMax = new Vector2(1f, 0f);
             tabs.pivot = new Vector2(0.5f, 0f);
-            tabs.offsetMin = new Vector2(112f, 300f + 18f);
-            tabs.offsetMax = new Vector2(-112f, 300f + 18f + 158f);
+            tabs.offsetMin = new Vector2(102f, 300f + 18f);
+            tabs.offsetMax = new Vector2(-102f, 300f + 18f + 158f);
 
-            const float selWeight = 1.55f;
-            float total = (TabCount - 1) + selWeight;
-            float gap = UiKit.MinSpacingPx + 2f;   // 8 dp between neighbours
-            float cum = 0f;
+            // Six equal plates (the selected one is marked by its yellow colour, not by width): plate width = (W - 5 gaps) / 6, so the narrowest
+            // aspect (9:21 + notch, about 870 ref px) still gives >= 126 px (48 dp) per plate with the 8 dp gap.
+            float gap = UiKit.MinSpacingPx + 0.05f;
             for (int i = 0; i < TabCount; i++)
             {
                 int idx = i;
                 bool on = i == selected;
-                float w = on ? selWeight : 1f;
-                float x0 = cum / total, x1 = (cum + w) / total;
-                cum += w;
                 Button b = UiKit.AddButton(tabs, "Tab" + TabNames[i].Replace("-", ""), "", ToyKit.Button(on ? 0 : 2), Color.white, new Vector2(160f, 150f), () => { if (onSelect != null) onSelect(idx); });
                 b.GetComponent<A11yLabel>().Text = TabNames[i] + " tab" + (on ? ", selected" : "");
                 b.GetComponent<Image>().raycastTarget = true;
                 var rt = (RectTransform)b.transform;
-                rt.anchorMin = new Vector2(x0, 0f);
-                rt.anchorMax = new Vector2(x1, 1f);
+                rt.anchorMin = new Vector2(i / (float)TabCount, 0f);
+                rt.anchorMax = new Vector2((i + 1) / (float)TabCount, 1f);
                 rt.pivot = new Vector2(0.5f, 0.5f);
-                rt.offsetMin = new Vector2(i == 0 ? 0f : gap * 0.5f, 0f);
-                rt.offsetMax = new Vector2(i == TabCount - 1 ? 0f : -gap * 0.5f, 0f);
+                rt.offsetMin = new Vector2(i * gap / TabCount, 0f);
+                rt.offsetMax = new Vector2(-(TabCount - 1 - i) * gap / TabCount, 0f);
                 Image ic = UiKit.AddImage(b.transform, "Icon", i == TabBundles ? BundlesScreen.BagIcon(null) ?? ToyKit.Get(TabIcons[i]) : ToyKit.Get(TabIcons[i]), Color.white);   // Bundles tab = the same bag as the bundle rows
                 var irt = ic.rectTransform;
                 irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 0.5f);
                 irt.pivot = new Vector2(0.5f, 0.5f);
                 irt.anchoredPosition = Vector2.zero;
-                irt.sizeDelta = new Vector2(86f, 86f);   // icons only: no caption text (the accessibility label names the tab)
+                irt.sizeDelta = new Vector2(80f, 80f);   // icons only: no caption text (the accessibility label names the tab)
                 if (dots != null && i < dots.Length && dots[i]) ToyKit.AddBadge(b.transform);
             }
             return root;

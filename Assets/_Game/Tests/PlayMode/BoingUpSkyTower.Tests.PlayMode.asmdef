@@ -6,6 +6,7 @@
     "BoingUpSkyTower.Content",
     "BoingUpSkyTower.Economy",
     "BoingUpSkyTower.Gameplay",
+    "BoingUpSkyTower.Services",
     "Unity.InputSystem",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

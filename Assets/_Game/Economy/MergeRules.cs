@@ -103,6 +103,12 @@ namespace BoingUpSkyTower.Economy
             return lines;
         }
 
+        /// <summary>
+        /// Gain lines from the SHOWN stats (hero sheet numbers, tier chain): one line per stat that rose, as the exact whole percent between the two printed numbers
+        /// ("Jump +17%"), then the two run bonuses as flat numbers. A boost of +17 percent reads +17 percent here and on the sheet.
+        /// </summary>
+        public static List<string> ShownGainLines(ShownStats from, ShownStats to) { return TierRules.GainLines(from, to); }
+
         static void AddPercent(List<string> lines, string label, double now, double before)
         {
             if (before <= 0.0 || now <= before) return;

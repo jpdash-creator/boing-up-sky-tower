@@ -66,7 +66,7 @@ namespace BoingUpSkyTower.Gameplay
             public float Width;
         }
 
-        static List<Chip> MakeChips(BundleDef def, ArtCatalog art)
+        static List<Chip> MakeChips(BundleDef def, ArtCatalog art, bool compact = true)
         {
             var chips = new List<Chip>(7);
             if (def.Coins > 0) chips.Add(new Chip { Icon = art != null ? art.CoinIcon : null, Text = Compact(def.Coins), Width = CoinChipW });
@@ -77,7 +77,8 @@ namespace BoingUpSkyTower.Gameplay
                 if (type == PowerUp.None) continue;
                 chips.Add(new Chip { IsPower = true, Power = type, Text = "x" + p.Count, Width = ChipW });
             }
-            if (!string.IsNullOrEmpty(def.CharacterId)) chips.Add(new Chip { Icon = ToyKit.Get("icon_heroes"), Text = "1", Width = ChipW });
+            // the hidden hero card: a mystery chip, never the hero (drawn at purchase, docs/37)
+            if (def.HiddenCard) chips.Add(new Chip { Icon = ToyKit.Get("icon_heroes"), Text = compact ? "? Hero card" : "?", Width = ChipW });
             return chips;
         }
 
@@ -87,7 +88,7 @@ namespace BoingUpSkyTower.Gameplay
             int n = 0;
             if (def.Coins > 0) n++;
             n += def.PowerUps.Count;
-            if (!string.IsNullOrEmpty(def.CharacterId)) n++;
+            if (def.HiddenCard) n++;
             return Mathf.Max(1, (n + ChipsPerRow - 1) / ChipsPerRow);
         }
 
@@ -99,7 +100,7 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         public static float AddChips(RectTransform parent, BundleDef def, ArtCatalog art, float left, float top)
         {
-            List<Chip> chips = MakeChips(def, art);
+            List<Chip> chips = MakeChips(def, art, false);
             float x = 0f;
             int row = 0, inRow = 0;
             foreach (Chip c in chips)
@@ -148,8 +149,48 @@ namespace BoingUpSkyTower.Gameplay
             crt.offsetMax = new Vector2(-2f, 76f);
         }
 
-        /// <summary>Contents in words, one item per line: "12,000 coins", "40 gems", "Magnet x3". Used by the popups and the screen reader label.</summary>
+        /// <summary>The line that tells about the hidden card before purchase (confirm popup, timer offer, screen reader label). Never names a hero.</summary>
+        public const string HiddenCardHint = "Contains 1 hero card: Uncommon or better";
+
+        /// <summary>Anchors a popup child to the top centre with a top pivot at y px from the panel top, so stacked rows can be computed from real heights.</summary>
+        public static void PlaceTop(RectTransform rt, float y, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, -y);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        /// <summary>Height a wrapping text needs: lines estimated with a generous glyph width (0.6 of the font size), each newline starts a line; grows with the text scale.</summary>
+        public static float TextHeight(string text, float fontPx, float width)
+        {
+            float fs = Mathf.Max(fontPx, UiKit.MinBodyTextPx) * UiKit.TextScale;
+            int lines = 0;
+            foreach (string part in text.Split('\n')) lines += Mathf.Max(1, Mathf.CeilToInt(part.Length * fs * 0.6f / Mathf.Max(100f, width)));
+            return Mathf.Ceil(lines * fs * 1.2f) + 8f;
+        }
+
+        /// <summary>Rarity colours on the cream popup panel (dark shades): Uncommon green, Rare blue, Elite purple, Legendary gold-brown.</summary>
+        public static Color RarityInk(CharacterRarity r)
+        {
+            switch (r)
+            {
+                case CharacterRarity.Uncommon: return new Color(0.02f, 0.36f, 0.12f);
+                case CharacterRarity.Rare: return new Color(0.05f, 0.25f, 0.75f);
+                case CharacterRarity.Epic: return new Color(0.45f, 0.10f, 0.60f);
+                case CharacterRarity.Legendary: return new Color(0.50f, 0.26f, 0.0f);
+                default: return new Color(0.30f, 0.30f, 0.34f);
+            }
+        }
+
+        /// <summary>Contents in words, one item per line: "12,000 coins", "Magnet x3", then the hidden-card hint. Used by the popups and the screen reader label.</summary>
         public static string Describe(BundleDef def, string separator)
+        {
+            return Describe(def, separator, true);
+        }
+
+        /// <summary>Visible contents only (coins and power-ups), plus the hidden-card hint when <paramref name="withCardHint"/>.</summary>
+        public static string Describe(BundleDef def, string separator, bool withCardHint)
         {
             var sb = new StringBuilder(96);
             if (def.Coins > 0) sb.Append(Num(def.Coins)).Append(" coins");
@@ -158,11 +199,10 @@ namespace BoingUpSkyTower.Gameplay
                 if (sb.Length > 0) sb.Append(separator);
                 sb.Append(PowerUpUi.Name(PowerUps.FromId(p.Id))).Append(" x").Append(p.Count);
             }
-            if (!string.IsNullOrEmpty(def.CharacterId))
+            if (withCardHint && def.HiddenCard)
             {
-                CharacterSpec cs = CharacterDefs.Get(def.CharacterId);
                 if (sb.Length > 0) sb.Append(separator);
-                sb.Append(cs != null ? cs.Name : "A new character");
+                sb.Append("1 hero card (Uncommon or better)");
             }
             return sb.ToString();
         }
@@ -461,7 +501,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             if (price > ProgressService.BundleConfirmAboveGems)
             {
-                host.OpenPopup("Confirm purchase", "Buy " + def.Name + " for " + Num(price) + " gems?\nYou have " + Num(progress.Gems) + " gems.", 1180f);
+                host.OpenPopup("Confirm purchase", "Buy " + def.Name + " for " + Num(price) + " gems?\nYou have " + Num(progress.Gems) + " gems." + (def.HiddenCard ? "\n" + HiddenCardHint + "." : ""), 1180f);
                 host.PopupButton("Buy for " + Num(price) + " gems", true, 230f, () => CompleteBuy(body, progress, art, host, refreshWallet, def));
                 host.PopupButton("Cancel", false, 60f, host.ClosePopup);
                 return;
@@ -472,18 +512,20 @@ namespace BoingUpSkyTower.Gameplay
         static void CompleteBuy(RectTransform body, ProgressService progress, ArtCatalog art, ShopScreen.Host host, Action refreshWallet, BundleDef def)
         {
             host.ClosePopup();
-            ShowResult(host, refreshWallet, def, progress.TryBuyBundle(def));
+            CharacterSpec card;
+            BundleResult r = progress.TryBuyBundle(def, out card);
+            ShowResult(host, refreshWallet, def, r, card);
         }
 
         /// <summary>Feedback after a purchase attempt: a summary of everything received, or the reason it failed. Shared with the timer offer.</summary>
-        public static void ShowResult(ShopScreen.Host host, Action refreshWallet, BundleDef def, BundleResult result)
+        public static void ShowResult(ShopScreen.Host host, Action refreshWallet, BundleDef def, BundleResult result, CharacterSpec card = null)
         {
             switch (result)
             {
                 case BundleResult.Ok:
                     AudioManager.Play(Sfx.PowerUp);
                     if (refreshWallet != null) refreshWallet();
-                    Info(host, "Bundle bought!", def.Name + "\n" + Describe(def, ", "), 1180f);
+                    ShowReveal(host, def, card);
                     break;
                 case BundleResult.NotEnoughGems:
                     Info(host, "Not enough gems", "You do not have enough gems for " + def.Name + ".");
@@ -492,6 +534,54 @@ namespace BoingUpSkyTower.Gameplay
                     Info(host, "Not available", "This bundle cannot be bought right now.");
                     break;
             }
+        }
+
+        /// <summary>
+        /// After a purchase: "You got: name (rarity)" with the hero portrait and the rarity colour, then what else came in the bundle. Falls back to a plain popup
+        /// when the host has no overlay or no card was drawn (no card hero exists yet, CUX-10). The card is already saved (ProgressService.AddCopies).
+        /// </summary>
+        public static void ShowReveal(ShopScreen.Host host, BundleDef def, CharacterSpec card)
+        {
+            string also = Describe(def, ", ", false);
+            if (card == null || host.NewOverlay == null)
+            {
+                string head = card != null ? "You got: " + card.Name + " (" + BundleCards.RarityName(card.Rarity) + ")\n" : "";
+                Info(host, "Bundle bought!", head + def.Name + "\n" + also, 1180f);
+                return;
+            }
+            ArtCatalog art = GameSession.Art;
+            RectTransform overlay = host.NewOverlay();
+            string rarity = BundleCards.RarityName(card.Rarity);
+            string richPlain = "You got: " + card.Name + " (" + rarity + ")";
+            string alsoText = "Also in " + def.Name + ":\n" + also;
+            const float dollH = 480f, dollTop = 190f, gap = 12f;
+            float nameY = dollTop + dollH + gap, nameH = TextHeight(richPlain, 50f, 780f);
+            float alsoY = nameY + nameH + gap, alsoH = TextHeight(alsoText, 40f, 780f);
+            float buttonReserve = 50f + Mathf.Max(170f, UiKit.MinTouchRef) + gap;   // the OK button: 50 px up from the bottom, at most 170 px tall (or the 48 dp minimum)
+            float panelH = Mathf.Max(1400f, alsoY + alsoH + buttonReserve);
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, "You got!", art, new Vector2(860f, panelH), host.CloseOverlay);
+            panel.name = "CardReveal";
+
+            CharacterDef who = CharacterCatalog.Get(card.Id);
+            if (who != null)
+            {
+                RectTransform doll = MomoDoll.Build(panel, "Hero", dollH, who, art);
+                PlaceTop(doll, dollTop, doll.sizeDelta.x, dollH);
+            }
+
+            string rich = "You got: " + card.Name + " (<color=#" + ColorUtility.ToHtmlStringRGB(RarityInk(card.Rarity)) + ">" + rarity + "</color>)";
+            Text nm = UiKit.AddText(panel, "CardName", rich, 50, UiKit.PanelInk, TextAnchor.MiddleCenter, true);
+            UiKit.OnPanel(nm);
+            nm.fontStyle = FontStyle.Bold;
+            nm.horizontalOverflow = HorizontalWrapMode.Wrap;
+            PlaceTop((RectTransform)nm.transform, nameY, 780f, nameH);
+
+            Text rest = UiKit.AddText(panel, "AlsoGot", alsoText, 40, UiKit.PanelInk, TextAnchor.MiddleCenter);
+            UiKit.OnPanel(rest);
+            rest.horizontalOverflow = HorizontalWrapMode.Wrap;
+            PlaceTop((RectTransform)rest.transform, alsoY, 780f, alsoH);
+
+            ToyKit.PopupAction(panel, "OK", ToyKit.Button(1), Color.white, 50f, host.CloseOverlay);
         }
 
         // ---------------- refresh ----------------

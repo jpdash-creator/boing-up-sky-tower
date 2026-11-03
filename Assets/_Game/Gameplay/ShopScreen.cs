@@ -9,12 +9,13 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The in-game shop (docs/14, docs/22, docs/23; restyled by docs/26 section 1 to the reference screenshots). Five tabs in the bottom bar:
-    /// Bundles | Chests | Power-ups | Coins | Gems, all built inside <see cref="ShopChrome"/> (Momo shopkeeper scene on a wood background, ribbon title, framed cards).
-    /// Bundles is built by BundlesScreen; Chests hosts the Treasure Shop page (<see cref="TreasureChestScreen"/>); Power-ups sells the power-ups (a coins and a gems
+    /// The in-game shop (docs/14, docs/22, docs/23; restyled by docs/26 section 1 to the reference screenshots). Six tabs in the bottom bar (owner issue 35):
+    /// Bundles | VIP | Heroes | Power-ups | Coins | Gems, all built inside <see cref="ShopChrome"/> (Momo shopkeeper scene on a wood background, ribbon title, framed cards).
+    /// Bundles is built by BundlesScreen; VIP (crown) is ONE scrollable page with two sections, Subscription first (<see cref="SubscriptionScreen"/>) then Chests
+    /// (<see cref="TreasureChestScreen"/>); Heroes is a "coming soon" placeholder (nothing to buy); Power-ups sells the power-ups (a coins and a gems
     /// Buy button each); Coins sells coin packs for gems (real); Gems sells gem packs (TEST purchases in development builds, nothing in release builds because
     /// there is no billing yet). Characters stay on the Heroes screen. Built in code under the safe area. Menu screen only: it has no per-frame code.
-    /// The Subscription button of the header lives in ShopScreen.Subscription.cs (AddSubscriptionButton).
+    /// The VIP and Heroes pages live in ShopScreen.Subscription.cs. There is no ticket / Rewards / Subscription button in the header any more.
     /// </summary>
     public sealed partial class ShopScreen
     {
@@ -29,11 +30,11 @@ namespace BoingUpSkyTower.Gameplay
             public Action CloseOverlay;
             /// <summary>Unused (the Chests tab is part of the shop); kept so hosts that still set it compile.</summary>
             public Action OpenTreasureChests;
-            /// <summary>Opens the Subscription page (docs/26); the header shows a Subscription button only when the host sets this.</summary>
-            public Action OpenSubscription;
         }
 
-        public const int TabBundles = ShopChrome.TabBundles, TabChests = ShopChrome.TabChests, TabPowerups = ShopChrome.TabPowerups, TabCoins = ShopChrome.TabCoins, TabGems = ShopChrome.TabGems;
+        public const int TabBundles = ShopChrome.TabBundles, TabVip = ShopChrome.TabVip, TabHeroes = ShopChrome.TabHeroes, TabPowerups = ShopChrome.TabPowerups, TabCoins = ShopChrome.TabCoins, TabGems = ShopChrome.TabGems;
+        /// <summary>The sections of the VIP tab (the "section" argument of ShowShop(TabVip, section)): Subscription first, Chests under it.</summary>
+        public const int VipSubscriptionSection = 0, VipChestsSection = 1;
         /// <summary>Kept for callers that still pass a section: ShowShop(TabGems, CoinsSection) opens the Coins tab.</summary>
         public const int GemsSection = 0, CoinsSection = 1;
         /// <summary>Spending more gems than this asks for a confirmation first (docs/14 FR-SHOP-20).</summary>
@@ -72,8 +73,10 @@ namespace BoingUpSkyTower.Gameplay
         public Text CoinText { get; private set; }
         public Text GemText { get; private set; }
         public Text StarText { get; private set; }
-        /// <summary>The Treasure Shop page while the Chests tab shows (null otherwise). Tests drive purchases through it.</summary>
-        public TreasureChestScreen Treasure { get { return Tab == TabChests ? treasure : null; } }
+        /// <summary>The Chests section of the VIP tab while it shows (null otherwise). Tests drive purchases through it.</summary>
+        public TreasureChestScreen Treasure { get { return Tab == TabVip ? treasure : null; } }
+        /// <summary>The Subscription section of the VIP tab while it shows (null otherwise). Tests drive purchases through it.</summary>
+        public SubscriptionScreen Subscription { get { return Tab == TabVip ? vipSubscription : null; } }
 
         public ShopScreen(RectTransform screen, ProgressService progress, ShopCatalog catalog, ArtCatalog art, Host host)
         {
@@ -101,18 +104,29 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (tab == TabGems && section == CoinsSection) tab = TabCoins;
             Tab = Mathf.Clamp(tab, 0, ShopChrome.TabCount - 1);
+            vipSection = tab == TabVip && section == VipChestsSection ? VipChestsSection : VipSubscriptionSection;
             Text coin, gem, star;
             ShopChrome.BuildScene(screen, art, progress, out coin, out gem, out star);
             CoinText = coin;
             GemText = gem;
             StarText = star;
-            AddSubscriptionButton();   // ShopScreen.Subscription.cs
             RebuildBody();
         }
 
         public void SelectTab(int tab)
         {
             Tab = Mathf.Clamp(tab, 0, ShopChrome.TabCount - 1);
+            vipSection = VipSubscriptionSection;
+            vipKeepY = -1f;
+            RebuildBody();
+        }
+
+        /// <summary>Opens the VIP tab scrolled to its Subscription or Chests section.</summary>
+        public void OpenVip(int section)
+        {
+            Tab = TabVip;
+            vipSection = section == VipChestsSection ? VipChestsSection : VipSubscriptionSection;
+            vipKeepY = -1f;
             RebuildBody();
         }
 
@@ -143,12 +157,14 @@ namespace BoingUpSkyTower.Gameplay
                 UnityEngine.Object.Destroy(bar.gameObject);
             }
             treasure = null;
+            vipSubscription = null;
             body = ShopChrome.BuildBody(screen, ShopChrome.TabNames[Tab], ShopChrome.RibbonColor.Yellow);   // same yellow italic header on every page
             page = (RectTransform)body.parent;
             switch (Tab)
             {
                 case TabBundles: BuildBundles(); break;
-                case TabChests: BuildChests(); break;
+                case TabVip: BuildVip(); break;          // ShopScreen.Subscription.cs
+                case TabHeroes: BuildHeroes(); break;    // ShopScreen.Subscription.cs
                 case TabPowerups: BuildPowerUps(); break;
                 case TabCoins: BuildPackList(false); break;
                 default: BuildPackList(true); break;
@@ -162,25 +178,6 @@ namespace BoingUpSkyTower.Gameplay
         void BuildBundles()
         {
             BundlesScreen.Build(body, progress, art, host, RefreshWallet);   // docs/26 section 3 (written by stream B2)
-        }
-
-        // ---------------- tab 1: chests (the Treasure Shop page) ----------------
-
-        void BuildChests()
-        {
-            var h = new TreasureChestScreen.Host
-            {
-                NewOverlay = host.NewOverlay,
-                CloseOverlay = host.CloseOverlay,
-                BuyGemPack = index =>
-                {
-                    if (host.CloseOverlay != null) host.CloseOverlay();
-                    SelectTab(TabGems);
-                    TapGemPack(index);
-                },
-            };
-            treasure = new TreasureChestScreen(screen, progress, catalog, art, h);
-            treasure.BuildPage(body);
         }
 
         // ---------------- grid helpers ----------------

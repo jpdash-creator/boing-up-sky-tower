@@ -160,7 +160,8 @@ namespace BoingUpSkyTower.Economy
         public SubscriptionBuyResult GrantTestSubscriptionPurchase(string planId, bool testPurchasesEnabled, DateTime nowUtc)
         {
             if (!testPurchasesEnabled) return SubscriptionBuyResult.NotAvailableYet;
-            return CreditSubscription(planId, nowUtc);
+            SubscriptionDef pd = SubscriptionDefs.Get(planId);   // docs/38: the record is saved in the same single save as the grant
+            return GrantWithRecord(ProductIdPrefix + "sub." + planId, PurchaseRecord.KindSubscription, "test-" + nowUtc.Ticks, nowUtc, pd != null ? pd.Days : 0, () => CreditSubscription(planId, nowUtc), r => r == SubscriptionBuyResult.Ok);
         }
 
         /// <summary>

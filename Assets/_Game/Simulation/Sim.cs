@@ -14,6 +14,13 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         public const int PowerFirst = 8;
         public const int PowerMask = 8 | 16 | 32 | 64 | 128 | 256 | 512;
+        /// <summary>
+        /// HERO power activation edges (owner 2026-11-02): the same seven types, one bit each, 1024 shifted left by (type id - 1) (use PowerUps.HeroInputBit).
+        /// A hero power is a normal activation of the type that costs no inventory unit and lasts SimConfig.HeroPowerDurationPercent (60) percent of the bought one.
+        /// Runs without a hero power never set these bits, so bot proofs, replays and golden files are unaffected.
+        /// </summary>
+        public const int HeroFirst = 1024;
+        public const int HeroMask = 1024 | 2048 | 4096 | 8192 | 16384 | 32768 | 65536;
     }
 
     /// <summary>All mutable simulation state. Copy with Clone() (the CrumbleTick and PickupTaken arrays are the only reference members).</summary>
@@ -672,7 +679,7 @@ namespace BoingUpSkyTower.Simulation
             Fx maxSpeed = CurrentMaxSpeed(s.Row);
 
             // --- power-ups: activation edges, then the effect flags of this tick ---
-            if ((input & SimInput.PowerMask) != 0) ActivatePowerUps(ref s, input, tick);
+            if ((input & (SimInput.PowerMask | SimInput.HeroMask)) != 0) ActivatePowerUps(ref s, input, tick);
             bool rocket = s.RocketTicks > 0;
             bool flying = rocket || s.FlightTicks > 0;
             if (s.Grounded) s.AirJumpUsed = false;
@@ -949,46 +956,53 @@ namespace BoingUpSkyTower.Simulation
         private void ActivatePowerUps(ref SimState s, int input, int tick)
         {
             // One bit per type (SimInput.PowerFirst << (id - 1)); every tap uses one owned unit and ADDS the full base time onto the remaining time.
+            // A hero bit (SimInput.HeroFirst << (id - 1)) activates the same effect for free with HeroPowerDurationPercent of the time (no stacking onto itself).
             for (int i = (int)PowerUp.Flight; i <= (int)PowerUp.SlowTime; i++)
             {
                 PowerUp p = (PowerUp)i;
-                if ((input & PowerUps.InputBit(p)) == 0) continue;
-                if (!PowerUps.CanActivate(in s, p)) continue;
-                s.PwUsed = PowerUps.SatAdd(s.PwUsed, 1);
-                s.PwUsedMask |= 1 << i;
-                switch (p)
-                {
-                    case PowerUp.Flight:
-                    case PowerUp.Rocket:
-                        bool already = p == PowerUp.Flight ? s.FlightTicks > 0 : s.RocketTicks > 0;
-                        if (p == PowerUp.Flight)
-                        {
-                            s.FlightTicks = PowerUps.SatAdd(s.FlightTicks, Cfg.FlightTicks);
-                        }
-                        else
-                        {
-                            // Rocket: each tap adds RocketFloors rows and RocketTicks ticks; the climb is measured from the platform stood on last
-                            s.RocketTicks = PowerUps.SatAdd(s.RocketTicks, Cfg.RocketTicks);
-                            int baseRow = already ? s.RocketTargetRow : Platforms[s.GroundId].Row;
-                            s.RocketTargetRow = baseRow + Cfg.RocketFloors;
-                            s.RocketTargetY = RowHeight(s.RocketTargetRow);
-                        }
-                        if (already) break;   // stacking onto a running burn: nothing else changes
-                        s.SlowFall = 0;
-                        s.Grounded = false;
-                        s.Coyote = 0;
-                        s.WallHold = 0;
-                        s.Assisted = true;
-                        s.JumpStartRow = Platforms[s.GroundId].Row;
-                        if (p == PowerUp.Rocket) s.Vx = Fx.Zero;
-                        if (s.StartTick < 0) s.StartTick = tick;
-                        break;
-                    case PowerUp.DoubleJump: s.DoubleJumpTicks = PowerUps.SatAdd(s.DoubleJumpTicks, Cfg.DoubleJumpWindowTicks); break;
-                    case PowerUp.WallStick: s.WallStickTicks = PowerUps.SatAdd(s.WallStickTicks, Cfg.WallStickWindowTicks); break;
-                    case PowerUp.Shield: s.ShieldTicks = PowerUps.SatAdd(s.ShieldTicks, Cfg.ShieldTicks); break;
-                    case PowerUp.Magnet: s.MagnetTicks = PowerUps.SatAdd(s.MagnetTicks, Cfg.MagnetTicks); break;
-                    case PowerUp.SlowTime: s.SlowTicks = PowerUps.SatAdd(s.SlowTicks, Cfg.SlowTimeTicks); break;
-                }
+                if ((input & PowerUps.InputBit(p)) != 0 && PowerUps.CanActivate(in s, p)) ApplyPowerUp(ref s, p, tick, false);
+                if ((input & PowerUps.HeroInputBit(p)) != 0 && PowerUps.CanActivateHero(in s, p)) ApplyPowerUp(ref s, p, tick, true);
+            }
+        }
+
+        private void ApplyPowerUp(ref SimState s, PowerUp p, int tick, bool hero)
+        {
+            int i = (int)p;
+            s.PwUsed = PowerUps.SatAdd(s.PwUsed, 1);
+            s.PwUsedMask |= 1 << i;
+            switch (p)
+            {
+                case PowerUp.Flight:
+                case PowerUp.Rocket:
+                    bool already = p == PowerUp.Flight ? s.FlightTicks > 0 : s.RocketTicks > 0;
+                    if (p == PowerUp.Flight)
+                    {
+                        s.FlightTicks = PowerUps.SatAdd(s.FlightTicks, hero ? Cfg.HeroTicks(Cfg.FlightTicks) : Cfg.FlightTicks);
+                    }
+                    else
+                    {
+                        // Rocket: each tap adds RocketFloors rows and RocketTicks ticks; the climb is measured from the platform stood on last.
+                        // A hero Rocket scales both (same climb speed): 12 floors in 2.4 s.
+                        s.RocketTicks = PowerUps.SatAdd(s.RocketTicks, hero ? Cfg.HeroTicks(Cfg.RocketTicks) : Cfg.RocketTicks);
+                        int baseRow = already ? s.RocketTargetRow : Platforms[s.GroundId].Row;
+                        s.RocketTargetRow = baseRow + (hero ? Cfg.HeroRocketFloors : Cfg.RocketFloors);
+                        s.RocketTargetY = RowHeight(s.RocketTargetRow);
+                    }
+                    if (already) break;   // stacking onto a running burn: nothing else changes
+                    s.SlowFall = 0;
+                    s.Grounded = false;
+                    s.Coyote = 0;
+                    s.WallHold = 0;
+                    s.Assisted = true;
+                    s.JumpStartRow = Platforms[s.GroundId].Row;
+                    if (p == PowerUp.Rocket) s.Vx = Fx.Zero;
+                    if (s.StartTick < 0) s.StartTick = tick;
+                    break;
+                case PowerUp.DoubleJump: s.DoubleJumpTicks = PowerUps.SatAdd(s.DoubleJumpTicks, hero ? Cfg.HeroTicks(Cfg.DoubleJumpWindowTicks) : Cfg.DoubleJumpWindowTicks); break;
+                case PowerUp.WallStick: s.WallStickTicks = PowerUps.SatAdd(s.WallStickTicks, hero ? Cfg.HeroTicks(Cfg.WallStickWindowTicks) : Cfg.WallStickWindowTicks); break;
+                case PowerUp.Shield: s.ShieldTicks = PowerUps.SatAdd(s.ShieldTicks, hero ? Cfg.HeroTicks(Cfg.ShieldTicks) : Cfg.ShieldTicks); break;
+                case PowerUp.Magnet: s.MagnetTicks = PowerUps.SatAdd(s.MagnetTicks, hero ? Cfg.HeroTicks(Cfg.MagnetTicks) : Cfg.MagnetTicks); break;
+                case PowerUp.SlowTime: s.SlowTicks = PowerUps.SatAdd(s.SlowTicks, hero ? Cfg.HeroTicks(Cfg.SlowTimeTicks) : Cfg.SlowTimeTicks); break;
             }
         }
 

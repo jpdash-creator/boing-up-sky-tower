@@ -161,7 +161,7 @@ namespace BoingUpSkyTower.Gameplay
         static CharacterDef[] BuildAll()
         {
             var list = new List<CharacterDef>(CharacterDefs.All.Length);
-            foreach (CharacterSpec s in CharacterDefs.All) list.Add(new CharacterDef { Id = s.Id, Name = s.Name, FallbackArtId = s.FallbackArtId });
+            foreach (CharacterSpec s in CharacterInventory.All) list.Add(new CharacterDef { Id = s.Id, Name = s.Name, FallbackArtId = s.FallbackArtId });
             return list.ToArray();
         }
 
@@ -196,9 +196,15 @@ namespace BoingUpSkyTower.Gameplay
         public static CharacterDef[] Available(ProgressService p)
         {
             var list = new List<CharacterDef>(All.Length);
-            foreach (CharacterDef c in All) if (Owns(p, c)) list.Add(c);
+            foreach (CharacterDef c in All) if (Owns(p, c)) list.Add(c);   // All is in hero-then-tier order (CharacterInventory)
             return list.ToArray();
         }
+
+        /// <summary>The player's hero inventory as the Heroes screen lists it (docs/36): hero then tier, Momo always first line. The hidden CharacterInventory is never listed.</summary>
+        public static CharacterDef[] HeroList(ProgressService p) { return Available(p); }
+
+        /// <summary>The number on a hero card (docs/36): copies, never below 1.</summary>
+        public static int BadgeCount(ProgressService p, CharacterDef who) { return p == null || who == null ? 1 : p.HeroInventory.BadgeCount(who.Id); }
 
         /// <summary>The chosen character (Momo until another is picked, and when the chosen one is not owned).</summary>
         public static CharacterDef Selected

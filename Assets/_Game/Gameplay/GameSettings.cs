@@ -18,7 +18,7 @@ namespace BoingUpSkyTower.Gameplay
         const string FirstPurchaseKey = "settings.firstpurchasedouble";
 
         /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
-        public static bool DevBuild { get { return Debug.isDebugBuild && !Application.isEditor; } }
+        public static bool DevBuild { get { return (Debug.isDebugBuild && !Application.isEditor) || AdminAccess.Unlocked; } }
 
         /// <summary>Tests set this to build the Settings screen with the two dev flag rows (GAME_JUMP_TEST, SYSTEM_TEST) in the editor, where DevBuild is false. It changes only the layout.</summary>
         public static bool ShowDevRowsForTests;
@@ -39,7 +39,7 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         public static bool SystemTest
         {
-            get { return DevBuild && PlayerPrefs.GetInt(SystemTestKey, 1) == 1; }
+            get { return DevBuild && PlayerPrefs.GetInt(SystemTestKey, Debug.isDebugBuild ? 1 : 0) == 1; }   // a release build opened with the admin code starts with it OFF
             set { PlayerPrefs.SetInt(SystemTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
         }
 

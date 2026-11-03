@@ -4,6 +4,7 @@ using System.Text;
 using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
 using BoingUpSkyTower.Gameplay;
+using BoingUpSkyTower.Monetization;
 using BoingUpSkyTower.Simulation;
 using NUnit.Framework;
 using UnityEngine;
@@ -53,8 +54,11 @@ namespace BoingUpSkyTower.Tests
             foreach (var mc in Object.FindObjectsByType<MetaController>(FindObjectsSortMode.None)) mc.enabled = false;
             UiKit.SafeAreaNormalized = () => new Rect(0f, 0f, 1f, 1f);
             RunView.AspectOverride = 0f;
+            RunController.HeroOverride = null;
             PlayerPrefs.DeleteAll();
             GameSettings.ApplyTextScale();
+            Services.Account = null;      // account scenarios use stub services: back to the default
+            AccountSync.ResetForTests();
             GameSession.Reset();
         }
 
@@ -305,6 +309,14 @@ namespace BoingUpSkyTower.Tests
                 GameSession.Progress.ApplyRun("lvl_001_" + i.ToString("D2"), new RunOutcome { Completed = true, StarMask = i % 2 == 0 ? 7 : 3, Score = 100 * i, CoinsCollected = 30 });
 
             yield return CheckScreen("menu", () => meta.ShowMenu(), problems);
+            // Account (owner issue 35.3): the Home button and pop-up in the three states, plus the Settings account block signed in and in a build without sign-in.
+            yield return CheckScreen("menu-signed-in", () => { AccountScenario("signed-in"); meta.ShowMenu(); }, problems);
+            yield return CheckScreen("account-popup-guest", () => { AccountScenario("guest"); meta.ShowMenu(); meta.ShowAccount(); }, problems);
+            yield return CheckScreen("account-popup-signed-in", () => { AccountScenario("signed-in"); meta.ShowMenu(); meta.ShowAccount(); }, problems);
+            yield return CheckScreen("account-popup-unavailable", () => { AccountScenario("unavailable"); meta.ShowMenu(); meta.ShowAccount(); }, problems);
+            yield return CheckScreen("settings-account-signed-in", () => { AccountScenario("signed-in"); meta.ShowSettings(); }, problems);
+            yield return CheckScreen("settings-account-unavailable", () => { AccountScenario("unavailable"); meta.ShowSettings(); }, problems);
+            AccountScenario("guest");
             yield return CheckScreen("map", () => meta.ShowMap(), problems);
             yield return CheckScreen("levels", () => meta.ShowLevels(r1), problems);
             yield return CheckScreen("settings", () => meta.ShowSettings(), problems);
@@ -319,6 +331,14 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("region-locked-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(2)); }, problems);
             yield return CheckScreen("coming-soon-popup", () => { meta.ShowMap(); meta.OnRegionTapped(GameSession.Repo.GetRegionByIndex(6)); }, problems);
             yield return CheckScreen("reset-popup", () => { meta.ShowSettings(); meta.ConfirmReset(); }, problems);
+            // Settings extras (docs/38): the Admin popup (both pages), the reset confirm (signed-in text is the longest), the restore result and the hidden code box.
+            yield return CheckScreen("settings-admin", () => { meta.ShowSettings(); meta.ShowAdmin(); }, problems);
+            yield return CheckScreen("settings-admin-heroes", () => { meta.ShowSettings(); meta.ShowAdmin(1); }, problems);
+            yield return CheckScreen("settings-reset-confirm", () => { meta.ShowSettings(); GameSession.Progress.SetAccount("google", "test"); meta.ConfirmReset(); }, problems);
+            yield return CheckScreen("settings-restored", () => { meta.ShowSettings(); meta.ShowPurchasesRestored(2); }, problems);
+            yield return CheckScreen("settings-nothing-to-restore", () => { meta.ShowSettings(); meta.ShowPurchasesRestored(0); }, problems);
+            yield return CheckScreen("settings-code-box", () => { meta.ShowSettings(); meta.ShowAdminCodeBox(); }, problems);
+            GameSession.Progress.SetAccount("guest", "");
 
             // Characters: the chosen character on the land stage and the roster
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
@@ -331,6 +351,25 @@ namespace BoingUpSkyTower.Tests
             }
             CharacterCatalog.Selected = CharacterCatalog.Momo;
             ProgressService.TestAllCharacters = false;
+
+            // Hero inventory badges (docs/36): copies of several heroes (a one-digit, a two-digit count and a brand new card), no overlap and the number fits at this text size
+            var savedCopies = new Dictionary<string, int>(GameSession.Progress.Data.Copies);
+            GameSession.Progress.HeroInventory.AddCopies("momo", 11);      // 12 copies
+            GameSession.Progress.HeroInventory.AddCopies("momo_u", 2);     // a new card with 2 copies
+            yield return CheckScreen("characters-copies", () => meta.ShowCharacters(), problems);
+            meta.ShowCharacters();
+            yield return null;
+            var badges = new Dictionary<string, string>();
+            foreach (Image im in Object.FindObjectsByType<Image>(FindObjectsSortMode.None))
+                if (im.name == CharactersScreen.BadgeName && im.transform.parent != null && im.transform.parent.parent != null)
+                {
+                    Assert.IsFalse(im.raycastTarget, "the badge is not a touch target");
+                    badges[im.transform.parent.parent.name] = im.GetComponentInChildren<Text>().text;
+                }
+            Assert.AreEqual("12", badges["Char_momo"], "badge shows the copies");
+            Assert.AreEqual("2", badges["Char_momo_u"], "a new card appears with its copies");
+            GameSession.Progress.Data.Copies.Clear();
+            foreach (KeyValuePair<string, int> kv in savedCopies) GameSession.Progress.Data.Copies[kv.Key] = kv.Value;
 
             // Hero sheet (docs/21): Common Momo on both tabs, plus fake heroes of every higher rarity (long name, long region, maximum stats, powers) so the banner colours and the longest texts are audited.
             yield return CheckScreen("hero-sheet-common", () => meta.ShowHeroSheet(CharacterCatalog.Momo), problems);
@@ -364,6 +403,7 @@ namespace BoingUpSkyTower.Tests
 
             // The one-time "New hero joins you!" pop-up (docs/21): card, hero picture, name, rarity and the single OK button on every aspect (and at 130 percent text in the second run).
             yield return CheckScreen("hero-reveal", () => { meta.ShowMenu(); meta.ShowHeroReveal(CharacterCatalog.ForestGirl); }, problems);
+            AccountCleanup();
             Report(problems);
         }
 
@@ -413,7 +453,8 @@ namespace BoingUpSkyTower.Tests
                 yield return null;
                 RectTransform card = FindRt("Card");
                 RectTransform reset = FindRt("Reset");
-                if (card == null || reset == null) { problems.Add(a.Name + ": settings card or reset button missing"); continue; }
+                RectTransform restore = FindRt("RestorePurchases");
+                if (card == null || reset == null || restore == null) { problems.Add(a.Name + ": settings card, Reset Progress or Restore Purchases button missing"); continue; }
                 if (!IsDescendant(reset, card)) problems.Add(a.Name + ": Reset must be a child of the settings card");
                 Rect cb = CanvasBox(card), rb = CanvasBox(reset);
                 const float gap = 16f;
@@ -421,27 +462,141 @@ namespace BoingUpSkyTower.Tests
                     problems.Add(a.Name + ": Reset " + rb + " is not inside the card " + cb + " with a gap");
                 int n = 0;
                 float lowestRowBottom = float.MaxValue;
-                bool sawJump = false, sawSystem = false;
+                bool sawAdmin = false;
                 foreach (Button b in card.GetComponentsInChildren<Button>(false))
                 {
                     if (b.transform == reset) continue;
+                    if (b.name == "RestorePurchases" || b.name == "Admin" || b.name == "VersionTap")
+                    {
+                        // the buttons under the rows: inside the card, 48 dp, and never touching the rows or each other
+                        Rect fb = CanvasBox((RectTransform)b.transform);
+                        if (fb.xMin < cb.xMin || fb.xMax > cb.xMax || fb.yMin < cb.yMin || fb.yMax > cb.yMax) problems.Add(a.Name + ": " + b.name + " leaves the card");
+                        if (fb.height < UiKit.MinTouchPx - 1f) problems.Add(a.Name + ": " + b.name + " below 48 dp");
+                        sawAdmin |= b.name == "Admin";
+                        continue;
+                    }
                     n++;
                     Rect bb = CanvasBox((RectTransform)b.transform);
                     if (bb.xMin < cb.xMin || bb.xMax > cb.xMax || bb.yMin < cb.yMin || bb.yMax > cb.yMax) problems.Add(a.Name + ": " + b.name + " leaves the card");
                     if (bb.height < UiKit.MinTouchPx - 1f) problems.Add(a.Name + ": " + b.name + " below 48 dp");
                     lowestRowBottom = Mathf.Min(lowestRowBottom, bb.yMin);
-                    sawJump |= b.name == "GAME_JUMP_TESTToggle";
-                    sawSystem |= b.name == "SYSTEM_TESTToggle";
                 }
-                if (n < 9) problems.Add(a.Name + ": expected 9 rows, found " + n);
-                if (!sawJump || !sawSystem) problems.Add(a.Name + ": the GAME_JUMP_TEST / SYSTEM_TEST toggles must stay visible in dev builds");
-                if (rb.yMax > lowestRowBottom - gap + 0.5f) problems.Add(a.Name + ": Reset " + rb + " touches the last row (bottom " + lowestRowBottom + ")");
+                if (n < 7) problems.Add(a.Name + ": expected 7 rows, found " + n);
+                if (!sawAdmin) problems.Add(a.Name + ": the small Admin button must be visible in dev builds");
+                Rect restoreBox = CanvasBox(restore);
+                if (restoreBox.yMax > lowestRowBottom - gap + 0.5f) problems.Add(a.Name + ": Restore Purchases " + restoreBox + " touches the last row (bottom " + lowestRowBottom + ")");
+                if (rb.yMax > restoreBox.yMin - gap + 0.5f) problems.Add(a.Name + ": Reset Progress " + rb + " touches Restore Purchases " + restoreBox);
                 ScrollRect sr = card.GetComponentInParent<ScrollRect>();
                 if (sr == null || !sr.vertical || sr.content != card) problems.Add(a.Name + ": the settings card must scroll vertically");
             }
             GameSettings.ShowDevRowsForTests = false;
             Restore(holder);
             Report(problems);
+        }
+
+        /// <summary>Puts the account layer in one of three states: "guest" (stub available), "signed-in" (stub signed in as Test Player, save linked) or "unavailable" (release build without the plugin).</summary>
+        static void AccountScenario(string which)
+        {
+            ProgressService p = GameSession.Progress;
+            AccountSync.Hook(p);
+            if (which == "unavailable") { Services.Account = new UnavailableAccountService(); p.SetAccount("guest", ""); return; }
+            var stub = new StubAccountService { UseMemoryOnly = true };
+            Services.Account = stub;
+            if (which == "signed-in") { stub.SignIn(null); p.SetAccount("google", stub.PlayerId); }
+            else p.SetAccount("guest", "");
+        }
+
+        static void AccountCleanup()
+        {
+            GameSession.Progress.SetAccount("guest", "");
+            Services.Account = null;   // back to the default (stub in the editor)
+            AccountSync.ResetForTests();
+        }
+
+        /// <summary>
+        /// Owner issue 35.3: Home bar is Shop | PLAY | Heroes (no VIP crown), PLAY exactly two icon buttons wide (gap included) and as tall as the others, the row
+        /// centred, and a round Account button (at least 48 dp) at the left of the top row that does not touch the wallet pills; the crown stays on the map and the heroes screen.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator HomeBarHasPlayTwoIconsWideAndAnAccountButton()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                UiKit.SafeAreaNormalized = () => FullSafe;
+                meta.ShowMenu();
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                RectTransform bar = FindRt("TabBar"), shop = FindRt("TabShop"), play = FindRt("TabPlay"), heroes = FindRt("TabCharacters");
+                if (bar == null || shop == null || play == null || heroes == null) { problems.Add(a.Name + ": the home bar needs Shop, Play and Heroes"); continue; }
+                if (FindRt("TabVIP") != null) problems.Add(a.Name + ": the VIP crown must not be on the home bar");
+                Rect bb = CanvasBox(bar), sb = CanvasBox(shop), pb = CanvasBox(play), hb = CanvasBox(heroes);
+                const float gap = 12f;
+                if (Mathf.Abs(pb.width - (sb.width + gap + hb.width)) > 2f || Mathf.Abs(sb.width - hb.width) > 1f) problems.Add(a.Name + ": PLAY " + pb.width + " is not two icon widths (" + sb.width + " + " + hb.width + " + gap)");
+                if (Mathf.Abs(pb.height - sb.height) > 1f || Mathf.Abs(pb.height - hb.height) > 1f || Mathf.Abs(pb.yMin - sb.yMin) > 1f) problems.Add(a.Name + ": PLAY must have the same height and base line as the other buttons");
+                if (Mathf.Abs((pb.xMin - sb.xMax) - (hb.xMin - pb.xMax)) > 2f) problems.Add(a.Name + ": uneven gaps around PLAY");
+                if (Mathf.Abs((sb.xMin - bb.xMin) - (bb.xMax - hb.xMax)) > 2f) problems.Add(a.Name + ": the home bar is not centred");
+
+                RectTransform acc = FindRt("Account");
+                if (acc == null) { problems.Add(a.Name + ": the Account button is missing on Home"); continue; }
+                Rect ab = CanvasBox(acc);
+                if (ab.width < UiKit.MinTouchPx - 1f || ab.height < UiKit.MinTouchPx - 1f) problems.Add(a.Name + ": the Account button is below 48 dp");
+                foreach (string other in new[] { "CoinsPill", "GemsPill", "StarsPill", "Settings" })
+                {
+                    RectTransform o = FindRt(other);
+                    if (o != null && ab.Overlaps(CanvasBox(o))) problems.Add(a.Name + ": the Account button overlaps " + other);
+                    if (o != null && CanvasBox(o).xMin < ab.xMin) problems.Add(a.Name + ": the Account button must be the leftmost item of the top row");
+                }
+                if (acc.GetComponent<A11yLabel>() == null || !acc.GetComponent<A11yLabel>().Text.StartsWith("Account")) problems.Add(a.Name + ": the Account button needs an accessibility label");
+
+                // the crown stays on the other screens that have a bar
+                meta.ShowMap();
+                yield return null;
+                if (FindRt("TabVIP") == null) problems.Add(a.Name + ": the VIP crown must stay on the world map bar");
+                meta.ShowCharacters();
+                yield return null;
+                if (FindRt("TabVIP") == null) problems.Add(a.Name + ": the VIP crown must stay on the heroes bar");
+            }
+            Restore(holder);
+            Report(problems);
+        }
+
+        /// <summary>The Account pop-up in each state: the right buttons, the right texts, taps do what they say and the pop-up rebuilds into the new state.</summary>
+        [UnityTest]
+        public IEnumerator AccountPopupStatesAndActions()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            AccountScenario("guest");
+            meta.ShowMenu();
+            meta.ShowAccount();
+            yield return null;
+            Assert.IsNotNull(FindRt("Google"), "guest: Sign in with Google Play");
+            Assert.IsNull(FindRt("SyncNow"), "guest: no Sync now");
+            Assert.IsNotNull(FindRt("CloseX"), "a Close X");
+            FindRt("Google").GetComponent<Button>().onClick.Invoke();   // the stub signs in at once
+            yield return null;
+            yield return null;
+            Assert.IsTrue(AccountSync.IsSignedIn, "signed in after the tap");
+            Assert.IsNotNull(FindRt("SyncNow"), "signed in: Sync now");
+            Assert.IsNotNull(FindRt("SignOut"), "signed in: Sign out");
+            Assert.IsNull(FindRt("Google"), "signed in: no sign-in button");
+            FindRt("SignOut").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            yield return null;
+            Assert.IsFalse(AccountSync.IsGoogleMode, "guest again after Sign out");
+            Assert.IsNotNull(FindRt("Google"), "guest again: Sign in with Google Play");
+            AccountScenario("unavailable");
+            meta.ShowMenu();
+            meta.ShowAccount();
+            yield return null;
+            Assert.IsNull(FindRt("Google"), "unavailable: no sign-in button");
+            Assert.IsNull(FindRt("SyncNow"), "unavailable: no Sync now");
+            Assert.IsNotNull(FindRt("CloseX"), "unavailable: only close");
+            AccountCleanup();
         }
 
         /// <summary>Level popup: exactly one close control, PLAY and the close X at least 48 dp, and no big empty middle between the pills and PLAY.</summary>
@@ -790,6 +945,76 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
+        // ---- hero powers (owner 2026-11-02, docs/34): up to 4 round buttons in a second column next to the bought power-up block ----
+
+        [UnityTest]
+        public IEnumerator HeroPowerButtonsFitEveryAspectNextToSevenBoughtPowerUps() { return HeroPowerRunAudit(100, false); }
+
+        [UnityTest]
+        public IEnumerator HeroPowerButtonsSurvive130PercentTextAndLeftHandedLayout() { return HeroPowerRunAudit(130, true); }
+
+        IEnumerator HeroPowerRunAudit(int textPercent, bool leftHanded)
+        {
+            GameSettings.TextPercent = textPercent;
+            GameSettings.LeftHanded = leftHanded;
+            GameSettings.ReducedMotion = leftHanded;
+            for (int i = 1; i <= 2; i++)
+                GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
+            GrantAllPowerUps(3);
+            // a Legendary hero with the 4 powers its tier rule gives (no Legendary row exists yet, so it is built from the rule)
+            RunController.HeroOverride = new CharacterSpec { Id = "test_legendary", Name = "Test Legendary", Rarity = CharacterRarity.Legendary, Powers = TierRules.PowersFor("momo", CharacterRarity.Legendary) };
+            GameSession.CurrentLevelId = "lvl_001_03";
+            yield return Load("Run");
+            var rc = Object.FindFirstObjectByType<RunController>();
+            var problems = new List<string>();
+            Assert.AreEqual(7, rc.Hud.Powers.ButtonCount, "seven bought power-up buttons stacked");
+            Assert.AreEqual(4, rc.Hud.HeroPowers.ButtonCount, "a Legendary hero has four hero power buttons");
+            Assert.IsFalse(rc.Hud.HeroPowers.Visible, "hidden during the intro, like the bought buttons");
+            rc.Hud.SkipIntro();
+            int frame = 0;
+            rc.Input.ScriptedMove = () => SimInput.Right;
+            rc.Input.ScriptedJump = () => frame % 45 == 0;
+            for (frame = 1; frame <= 60; frame++) yield return null;
+            Assert.IsTrue(rc.Hud.HeroPowers.Visible);
+
+            // every hero button: at least 48 dp, labelled, at least 8 dp from every other button (bought, hero and the pad), same alpha as the other run buttons
+            var heroRects = new List<Rect>();
+            var otherRects = new List<Rect>();
+            for (int i = 0; i < 4; i++)
+            {
+                RectTransform b = rc.Hud.HeroPowers.ButtonRect(i);
+                Assert.IsNotNull(b, "hero button " + i);
+                Assert.GreaterOrEqual(b.rect.width, UiKit.MinTouchPx - 1f);
+                Assert.GreaterOrEqual(b.rect.height, UiKit.MinTouchPx - 1f);
+                Assert.IsNotNull(b.GetComponent<A11yLabel>());
+                StringAssert.Contains("hero power", b.GetComponent<A11yLabel>().Text);
+                Assert.AreEqual(ControlPad.ButtonAlpha, b.GetComponent<CanvasGroup>().alpha, 0.001f);
+                heroRects.Add(LayoutRect(b));
+            }
+            for (int i = 0; i < 7; i++) otherRects.Add(LayoutRect(rc.Hud.Powers.ButtonRect(i)));
+            foreach (HoldButton pad in new[] { rc.Hud.Pad.Left, rc.Hud.Pad.Right, rc.Hud.Pad.Jump }) otherRects.Add(LayoutRect((RectTransform)pad.transform));
+            for (int i = 0; i < heroRects.Count; i++)
+            {
+                for (int j = i + 1; j < heroRects.Count; j++)
+                    Assert.GreaterOrEqual(RectDistance(heroRects[i], heroRects[j]), UiKit.MinSpacingPx, "hero buttons " + i + " and " + j + " are closer than 8 dp");
+                for (int j = 0; j < otherRects.Count; j++)
+                    Assert.GreaterOrEqual(RectDistance(heroRects[i], otherRects[j]), UiKit.MinSpacingPx, "hero button " + i + " is too close to bought button or pad " + j);
+            }
+            yield return CheckScreen("run-heropowers", () => { }, problems);   // every aspect (9:16, 9:19.5, 9:21, 3:4), full and notched safe area
+
+            // a hero power through the input path: free (no unit taken), cooldown starts, the button turns to "cooling down"
+            PowerUp first = rc.Hud.HeroPowers.ButtonType(0);
+            int stockBefore = rc.Session.PowerStock(first);
+            rc.Input.LatchHeroPower(first);
+            for (frame = 61; frame <= 75; frame++) yield return null;
+            Assert.IsTrue(PowerUps.IsActive(in rc.Session.State, first));
+            Assert.AreEqual(stockBefore, rc.Session.PowerStock(first), "a hero power takes no inventory unit");
+            Assert.IsFalse(rc.Session.Hero.IsReady(0));
+            Assert.IsTrue(rc.Session.Hero.IsReady(1), "each hero button has its own cooldown");
+            yield return CheckScreen("run-heropowers-cooldown", () => { }, problems);
+            Report(problems);
+        }
+
         /// <summary>
         /// Layout rectangle in canvas reference pixels from anchor, anchored position, pivot and size of a child of the HUD root, so it does not
         /// depend on the canvas scale or on the aspect (power-up buttons and pad buttons are siblings).
@@ -837,7 +1062,10 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("shop-tab2-powerups-bought", () => { meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins); }, problems);
             // Treasure Chest screen (docs/22 point 3): rows, the (i) texts, the confirmation, the single and the ten reveal
             yield return CheckScreen("treasure-chests", () => meta.ShowTreasureChests(), problems);
-            yield return CheckScreen("shop-tab-chests", () => meta.ShowShop(ShopScreen.TabChests), problems);   // the (i) popups are gone: the text sits on the cards (docs/26)
+            // VIP tab (owner issue 35): one scrollable page, Subscription section first, Chests under it; the old 'Chests' tab is gone
+            yield return CheckScreen("shop-tab-vip", () => meta.ShowShop(ShopScreen.TabVip), problems);
+            yield return CheckScreen("shop-tab-vip-chests-section", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.VipChestsSection), problems);
+            yield return CheckScreen("shop-tab-heroes", () => meta.ShowShop(ShopScreen.TabHeroes), problems);   // placeholder: Heroes coming soon, nothing to buy
             yield return CheckScreen("treasure-confirm", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Golden, 10); }, problems);
             yield return CheckScreen("treasure-reveal-single", () => { GameSession.Progress.AddGems(100); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Iron, 1); meta.CurrentTreasure.Reveal.Skip(); }, problems);
             yield return CheckScreen("treasure-reveal-ten", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Golden, 10); meta.CurrentTreasure.Reveal.Skip(); }, problems);
@@ -972,6 +1200,52 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
+        // ---- login screen and the choose-your-save popup (docs/35) ----
+
+        [UnityTest]
+        public IEnumerator LoginScreensHaveNoOverlapAndFitEveryAspect() { return LoginAudit(100); }
+
+        /// <summary>CUX-5: the login screen and the conflict popup survive the 130 percent text size too.</summary>
+        [UnityTest]
+        public IEnumerator LoginScreensSurvive130PercentText() { return LoginAudit(130); }
+
+        static GameObject loginTestCanvas;
+
+        static void DropLoginCanvas()
+        {
+            if (loginTestCanvas != null) Object.DestroyImmediate(loginTestCanvas);
+            loginTestCanvas = null;
+        }
+
+        static void ShowLoginTest(bool conflict, bool googleAvailable)
+        {
+            DropLoginCanvas();
+            MetaUiActive(false);
+            Canvas canvas = UiKit.CreateCanvas("LoginTestUi", 20);
+            loginTestCanvas = canvas.gameObject;
+            if (conflict)
+            {
+                // the biggest numbers the cards must hold
+                var device = new SaveSummary { LevelsCleared = 75, Gems = 1234567, Coins = 12345678, HeroCopies = 120, LastPlayedUtc = "2026-11-03T10:00:00Z" };
+                var google = new SaveSummary { LevelsCleared = 1, Gems = 0, Coins = 0, HeroCopies = 1, LastPlayedUtc = "2026-10-01T10:00:00Z" };
+                LoginScreen.BuildConflict(canvas.transform, device, google, "A Very Long Player Display Name", () => { }, () => { });
+            }
+            else LoginScreen.BuildLogin(canvas.transform, GameSession.Art, googleAvailable, () => { }, () => { });
+        }
+
+        IEnumerator LoginAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            yield return Load("Meta");
+            var problems = new List<string>();
+            yield return CheckScreen("login", () => ShowLoginTest(false, true), problems);
+            yield return CheckScreen("login-guest-only", () => ShowLoginTest(false, false), problems);
+            yield return CheckScreen("login-conflict", () => ShowLoginTest(true, true), problems);
+            DropLoginCanvas();
+            MetaUiActive(true);
+            Report(problems);
+        }
+
         // ---- bundles page and timer offer (docs/26 section 3) ----
 
         [UnityTest]
@@ -1067,7 +1341,15 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("bundles-page-rich", () => ShowBundlesPage(5000, 500), problems);
             yield return CheckScreen("bundles-not-enough-gems-popup", () => { ShowBundlesPage(0, 0); ClickByName("Buy"); }, problems);
             yield return CheckScreen("bundles-confirm-popup", () => { ShowBundlesPage(5000, 0); ClickByName("Buy"); }, problems);
-            yield return CheckScreen("bundles-bought-popup", () => { ShowBundlesPage(5000, 0); ClickByName("Buy"); ClickByName("Buy for"); }, problems);
+            yield return CheckScreen("bundles-card-reveal", () => { ShowBundlesPage(5000, 0); ClickByName("Buy"); ClickByName("Buy for"); }, problems);   // "You got: name (rarity)" with the hero portrait
+            yield return CheckScreen("bundles-card-reveal-long-name", () =>
+            {
+                ShopScreen.Host h = ShowBundlesPage(5000, 0);
+                BundleDef four = null;
+                foreach (BundleDef d in GameSession.Progress.Bundles.All) if (d.PowerUps.Count == 4) { four = d; break; }   // the longest "also in" line
+                BundlesScreen.ShowReveal(h, four ?? GameSession.Progress.Bundles.All[0], CharacterDefs.Get("candygirl_u"));
+            }, problems);
+            yield return CheckScreen("bundles-card-reveal-no-hero-fallback", () => { ShopScreen.Host h = ShowBundlesPage(5000, 0); BundlesScreen.ShowReveal(h, GameSession.Progress.Bundles.All[0], null); }, problems);
             yield return CheckScreen("bundles-refreshed-with-coins", () => { ShowBundlesPage(5000, 500); ClickByName("RefreshCoins"); }, problems);
             yield return CheckScreen("bundles-refresh-toast-broke", () => { ShowBundlesPage(0, 0); ClickByName("RefreshGems"); }, problems);
             DropBundlesCanvas();

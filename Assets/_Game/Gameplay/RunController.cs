@@ -21,6 +21,8 @@ namespace BoingUpSkyTower.Gameplay
         public RunView View { get; private set; }
         public bool Paused { get; private set; }
         public RewardResult LastReward { get; private set; }
+        /// <summary>Test hook: when set, this hero's powers are used in the next run instead of the chosen character's (null = the chosen character).</summary>
+        public static CharacterSpec HeroOverride;
 
         float acc;
         bool endHandled;
@@ -71,6 +73,7 @@ namespace BoingUpSkyTower.Gameplay
 
             Session = session;
             if (GameSession.Progress != null) Session.ApplyStock(GameSession.Progress.BuildRunStock());   // before the HUD is built: it makes one button per owned type
+            Session.ApplyHeroPowers(HeroOverride ?? CharacterCatalog.Selected.Info);   // the chosen hero's free powers (none for Common heroes); before the HUD is built too
             acc = 0f;
             endHandled = false;
             Paused = false;
@@ -101,6 +104,7 @@ namespace BoingUpSkyTower.Gameplay
             Hud.OnReviveAd = ReviveByAd;
             AdService.Preload();
             Hud.OnPower = type => Input.LatchPower((PowerUp)type);
+            Hud.OnHeroPower = type => Input.LatchHeroPower((PowerUp)type);
         }
 
         /// <summary>Script time per frame (milliseconds), for the CUX-1 budget tests and on-device profiling.</summary>

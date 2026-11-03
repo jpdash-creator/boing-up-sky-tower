@@ -94,7 +94,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Once per second (menu only): refreshes the countdown, and rebuilds the page when the state changed (midnight passed, the plan ended).</summary>
         void OnSecond()
         {
-            if (progress.IsActive() != shownActive || progress.CanClaimToday() != shownCanClaim) { RebuildBody(); return; }
+            if (progress.IsActive() != shownActive || progress.CanClaimToday() != shownCanClaim) { Refresh(); return; }
             if (countdowns.Count == 0) return;
             string text = Countdown(progress.TimeToNextClaim(progress.SubscriptionClock()));
             for (int i = 0; i < countdowns.Count; i++) if (countdowns[i] != null) UiKit.SetText(countdowns[i], text);
@@ -139,7 +139,41 @@ namespace BoingUpSkyTower.Gameplay
             BuildSection(content, SubscriptionSectionTitle, BuildPlanCards);
         }
 
+        // ---------------- embedded in the shop's VIP tab (owner issue 35, item 2) ----------------
+
+        Action embeddedRebuild;
+
+        /// <summary>
+        /// Builds the "Subscription" section (header + the plan cards) into <paramref name="sectionsParent"/>, a vertical layout of the shop's VIP page,
+        /// instead of a page of its own. <paramref name="rebuild"/> is called when the content has to be rebuilt (a purchase, a claim, midnight passed): the
+        /// shop then rebuilds the whole VIP page. Returns the section rect (the page scrolls to it).
+        /// </summary>
+        public RectTransform BuildEmbedded(RectTransform sectionsParent, Action rebuild)
+        {
+            embeddedRebuild = rebuild;
+            countdowns.Clear();
+            shownActive = progress.IsActive();
+            shownCanClaim = progress.CanClaimToday();
+            RectTransform sec = NewSection(sectionsParent, SubscriptionSectionTitle);
+            BuildPlanCards(sec);
+            var ticker = sec.gameObject.AddComponent<Ticker>();
+            ticker.Tick = OnSecond;
+            return sec;
+        }
+
+        void Refresh()
+        {
+            if (embeddedRebuild != null) embeddedRebuild();
+            else RebuildBody();
+        }
+
         void BuildSection(RectTransform parent, string title, Action<RectTransform> fill)
+        {
+            fill(NewSection(parent, title));
+        }
+
+        /// <summary>A section of the VIP page: a vertical layout holding a yellow italic header (children after it are the rows). Shared with the Chests section.</summary>
+        public static RectTransform NewSection(RectTransform parent, string title)
         {
             RectTransform sec = UiKit.Rect(parent, "Section_" + title);
             var v = sec.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -154,7 +188,7 @@ namespace BoingUpSkyTower.Gameplay
             var hle = head.gameObject.AddComponent<LayoutElement>();
             hle.minHeight = 60f;
             hle.preferredHeight = 60f + Mathf.Max(0f, UiKit.TextScale - 1f) * 40f;
-            fill(sec);
+            return sec;
         }
 
         void BuildPlanCards(RectTransform section)
@@ -364,7 +398,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case SubscriptionBuyResult.Ok:
                     AudioManager.Play(Sfx.PowerUp);
-                    RebuildBody();   // days left, Claim button and the wallet follow
+                    Refresh();   // days left, Claim button and the wallet follow
                     Info("Subscription active", "+" + Num(def.InstantGems) + " gems added.\n" + def.Name + ": " + progress.DaysLeft() + " days left.\nClaim your reward every day.\nThis was a test purchase.");
                     break;
                 case SubscriptionBuyResult.NotAvailableYet:
@@ -387,7 +421,7 @@ namespace BoingUpSkyTower.Gameplay
             {
                 case SubscriptionClaimResult.Ok:
                     AudioManager.Play(Sfx.PowerUp);
-                    RebuildBody();
+                    Refresh();
                     string text = "+" + Num(claim.Gems) + " gems\n+" + Num(claim.Coins) + " coins";
                     if (claim.PowerUpId != null)
                     {
@@ -397,11 +431,11 @@ namespace BoingUpSkyTower.Gameplay
                     Info("Reward claimed", text + "\nCome back tomorrow for the next one.");
                     break;
                 case SubscriptionClaimResult.AlreadyClaimedToday:
-                    RebuildBody();
+                    Refresh();
                     Info("Already claimed", "Today's reward is already yours. Come back tomorrow.");
                     break;
                 default:
-                    RebuildBody();
+                    Refresh();
                     Info("Subscription ended", "Your subscription is not active. Buy it again to get daily rewards.");
                     break;
             }

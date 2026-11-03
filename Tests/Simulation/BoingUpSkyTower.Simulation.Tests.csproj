@@ -17,6 +17,9 @@
     <Compile Include="../../Assets/_Game/Economy/TierRules.cs" />
     <Compile Include="../../Assets/_Game/Economy/MergeTierDefs.cs" />
     <Compile Include="../../Assets/_Game/Economy/Characters.cs" />
+    <Compile Include="../../Assets/_Game/Economy/AdminGate.cs" />
+    <Compile Include="../../Assets/_Game/Economy/BundleCards.cs" />
+    <Compile Include="../../Assets/_Game/Economy/CharacterInventory.cs" />
   </ItemGroup>
 
   <ItemGroup>

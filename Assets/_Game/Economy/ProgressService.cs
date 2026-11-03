@@ -120,7 +120,7 @@ namespace BoingUpSkyTower.Economy
         /// </summary>
         public ShopResult GrantTestGemPurchase(GemPackDef pack)
         {
-            return CreditGemPack(pack);   // ProgressService.Shop.cs: doubles the first purchase of packs 50 to 1,000 while that switch is on
+            return GrantWithRecord(ProductIdPrefix + "gems.pack_" + (pack != null ? pack.Gems : 0), PurchaseRecord.KindConsumable, "test-" + DateTime.UtcNow.Ticks, DateTime.UtcNow, 0, () => CreditGemPack(pack), r => r == ShopResult.Ok);   // ProgressService.Shop.cs: doubles the first purchase of packs 50 to 1,000 while that switch is on; one save holds grant and record (docs/38)
         }
 
         /// <summary>
@@ -473,7 +473,10 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Erases all progress, coins and gems (Settings > Reset progress).</summary>
         public void ResetAll()
         {
+            SaveData old = Data;
             Data = new SaveData();
+            SaveSync.CarryAccount(old, Data);   // resetting progress keeps the login choice and the linked account (docs/35)
+            Data.Purchases = old.Purchases ?? new System.Collections.Generic.List<PurchaseRecord>();   // paid purchases are never lost by a reset (docs/38); Restore Purchases re-grants the entitlements
             EnsurePowerUpFields();
             EnsureChestFields();
             Commit();
@@ -481,6 +484,7 @@ namespace BoingUpSkyTower.Economy
 
         void Commit()
         {
+            Data.LastPlayedUtc = SaveSync.NowText();   // docs/35: when this save last changed
             store.Save(Data);
             Changed?.Invoke();
         }

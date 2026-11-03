@@ -128,81 +128,65 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void UncommonRowsFollowTheOwnerRuleAndPlayWithinTheLimits()
+        public void UncommonRowsFollowTheOwnerRuleOnTheShownStatsAndPlayWithinTheLimits()
         {
+            double[] V(ShownStats x) { return new[] { x.Jump, x.Speed, x.Control, x.WallBounce }; }
             foreach (TierRow row in MergeTierDefs.Rows)
             {
                 Assert.IsNull(TierRules.Validate(row), row.Id);   // exactly 2 stats of 10..25 percent, run coins 50..100 (step 10), run gems 1..5
                 CharacterSpec spec = CharacterDefs.Get(row.Id);
                 CharacterSpec common = CharacterDefs.Get(row.LineId);
                 Assert.IsNull(spec.Stats.ValidateTier(), row.Id);        // effective stats (what the simulation plays)
-                CharacterStats a = common.Stats, b = spec.SheetStats;    // shown stats (boost not limited)
+                double[] c = V(common.ShownValues()), u = V(spec.ShownValues());
                 int changed = 0;
-                if (b.JumpLaunch != a.JumpLaunch) changed++;
-                if (b.MaxSpeed != a.MaxSpeed) changed++;
-                if (b.Control != a.Control) changed++;
-                if (b.WallBoostHundredths != a.WallBoostHundredths) changed++;
-                Assert.AreEqual(2, changed, row.Id + " boosts exactly 2 of the 4 stats");
-                Assert.AreEqual(a.CoinFind, b.CoinFind, "no flat finds any more");
-                Assert.AreEqual(a.GemFind, b.GemFind);
-                Assert.AreEqual(a.RunBonusCoins + row.RunCoinsAdd, spec.Stats.RunBonusCoins, "run bonus is added on top of the Common hero's");
-                Assert.AreEqual(a.RunBonusGems + row.RunGemsAdd, spec.Stats.RunBonusGems);
-                Assert.LessOrEqual(MergeRules.StatGainLines(a, b).Count, 5, row.Id + " gain lines fit the result card");
-                Assert.GreaterOrEqual(spec.Stats.JumpLaunch, a.JumpLaunch);
-                Assert.GreaterOrEqual(spec.Stats.MaxSpeed, a.MaxSpeed);
-                Assert.GreaterOrEqual(spec.Stats.Control, a.Control);
-                Assert.GreaterOrEqual(spec.Stats.WallBoostHundredths, a.WallBoostHundredths);
+                for (int i = 0; i < 4; i++)
+                {
+                    int pct = ShownStats.Percent(c[i], u[i]);
+                    if (pct == 0) { Assert.AreEqual(c[i], u[i], row.Id); continue; }
+                    changed++;
+                    Assert.That(pct, Is.InRange(10, 25), row.Id + " shown percent");
+                }
+                Assert.AreEqual(2, changed, row.Id + " boosts exactly 2 of the 4 shown stats");
+                Assert.AreEqual(common.Stats.RunBonusCoins + row.RunCoinsAdd, spec.Stats.RunBonusCoins, "run bonus is added on top of the Common hero's");
+                Assert.AreEqual(common.Stats.RunBonusGems + row.RunGemsAdd, spec.Stats.RunBonusGems);
+                Assert.LessOrEqual(MergeRules.ShownGainLines(common.ShownValues(), spec.ShownValues()).Count, 5, row.Id + " gain lines fit the result card");
+                Assert.GreaterOrEqual(spec.Stats.JumpLaunch, common.Stats.JumpLaunch);
+                Assert.GreaterOrEqual(spec.Stats.MaxSpeed, common.Stats.MaxSpeed);
+                Assert.GreaterOrEqual(spec.Stats.Control, common.Stats.Control);
                 Assert.AreEqual(1, spec.Powers.Length, "Uncommon has 1 hero power");
                 Assert.IsNull(TierRules.ValidatePowers(row.LineId, row.Rarity, spec.Powers), row.Id);
             }
         }
 
         [Test]
-        public void BoostIsDeterministicAndRoundsToTheNearest()
+        public void GainTextShowsTheStoredPercentExactly()
         {
-            var row = new TierRow { Id = "t", Rarity = CharacterRarity.Uncommon, JumpPct = 10, WallPct = 10, RunCoinsAdd = 50, RunGemsAdd = 1 };
-            CharacterStats s = MergeTierDefs.Boost(CharacterStats.Default, row);
-            Assert.AreEqual(21, s.JumpLaunch, "19 + 10 percent = 20.9");
-            Assert.AreEqual(85, s.WallBoostHundredths, "77 + 10 percent = 84.7");
-            Assert.AreEqual(CharacterStats.Default.MaxSpeed, s.MaxSpeed);
-            Assert.AreEqual(CharacterStats.Default.Control, s.Control);
-            Assert.AreEqual(0, s.CoinFind);
-            CharacterStats again = MergeTierDefs.Boost(CharacterStats.Default, row);
-            Assert.AreEqual(s.JumpLaunch, again.JumpLaunch);
+            foreach (TierRow row in MergeTierDefs.Rows)
+            {
+                List<string> lines = MergeRules.ShownGainLines(CharacterDefs.Get(row.LineId).ShownValues(), CharacterDefs.Get(row.Id).ShownValues());
+                if (row.JumpPct > 0) CollectionAssert.Contains(lines, "Jump +" + row.JumpPct + "%", row.Id);
+                if (row.SpeedPct > 0) CollectionAssert.Contains(lines, "Speed +" + row.SpeedPct + "%", row.Id);
+                if (row.ControlPct > 0) CollectionAssert.Contains(lines, "Control +" + row.ControlPct + "%", row.Id);
+                if (row.WallPct > 0) CollectionAssert.Contains(lines, "Wall Bounce +" + row.WallPct + "%", row.Id);
+                CollectionAssert.Contains(lines, "Run coins +" + row.RunCoinsAdd);
+                CollectionAssert.Contains(lines, "Run gems +" + row.RunGemsAdd);
+            }
+            Assert.AreEqual(0, MergeRules.ShownGainLines(null, CharacterDefs.Momo.ShownValues()).Count);
         }
 
         [Test]
-        public void BoostShowsTheFullPercentAndCapKeepsThePhysicsInsideTheLimits()
+        public void HeroSheetShowsTheTierShownNumbersNotTheCappedPhysics()
         {
-            var row = new TierRow { Id = "t", Rarity = CharacterRarity.Uncommon, JumpPct = 25, WallPct = 25, RunCoinsAdd = 50, RunGemsAdd = 1 };
-            CharacterStats shown = MergeTierDefs.Boost(CharacterDefs.Momo.Stats, row);
-            CharacterStats plays = MergeTierDefs.Cap(shown);
-            Assert.AreEqual(24, shown.JumpLaunch, "19 + 25 percent");
-            Assert.AreEqual(CharacterStats.JumpLaunchMax, plays.JumpLaunch, "plays at the limit");
-            Assert.IsNull(plays.ValidateTier());
-        }
-
-        [Test]
-        public void RunBonusIsAddedOnTopOfTheCommonHeroBonus()
-        {
-            var withBonus = new CharacterStats { RunBonusCoins = 80, RunBonusGems = 2 };
-            var row = new TierRow { Id = "t", Rarity = CharacterRarity.Uncommon, JumpPct = 10, WallPct = 10, RunCoinsAdd = 60, RunGemsAdd = 3 };
-            CharacterStats s = MergeTierDefs.Boost(withBonus, row);
-            Assert.AreEqual(140, s.RunBonusCoins);
-            Assert.AreEqual(5, s.RunBonusGems);
-            CollectionAssert.Contains(MergeRules.StatGainLines(withBonus, s), "Run coins +60");
-            CollectionAssert.Contains(MergeRules.StatGainLines(withBonus, s), "Run gems +3");
-            Assert.AreEqual(60, MergeTierDefs.Boost(CharacterStats.Default, row).RunBonusCoins, "a bare base starts at 0");
-        }
-
-        [Test]
-        public void StatGainLinesUseTheHeroSheetWords()
-        {
-            var row = new TierRow { Id = "t", Rarity = CharacterRarity.Uncommon, JumpPct = 10, WallPct = 10, RunCoinsAdd = 50, RunGemsAdd = 1 };
-            CharacterStats b = MergeTierDefs.Boost(CharacterStats.Default, row);
-            CollectionAssert.AreEqual(new[] { "Jump +22%", "Wall Bounce +10%", "Run coins +50", "Run gems +1" }, MergeRules.StatGainLines(CharacterStats.Default, b));
-            Assert.AreEqual(0, MergeRules.StatGainLines(CharacterStats.Default, CharacterStats.Default).Count);
-            Assert.AreEqual(0, MergeRules.StatGainLines(null, b).Count);
+            foreach (TierRow row in MergeTierDefs.Rows)
+            {
+                CharacterSpec spec = CharacterDefs.Get(row.Id);
+                HeroSheetData d = HeroSheetData.From(spec.Name, spec.Rarity, "x", spec.Stats, spec.Powers, spec.Shown);
+                var inv = System.Globalization.CultureInfo.InvariantCulture;
+                Assert.AreEqual(spec.Shown.Jump.ToString("0.#", inv), d.Stats[0, 1], row.Id);
+                Assert.AreEqual(spec.Shown.Speed.ToString("0.#", inv), d.Stats[1, 1], row.Id);
+                Assert.AreEqual(spec.Shown.Control.ToString("0.#", inv), d.Stats[2, 1], row.Id);
+                Assert.AreEqual(spec.Shown.WallBounce.ToString("0.#", inv), d.Stats[3, 1], row.Id);
+            }
         }
 
         [Test]

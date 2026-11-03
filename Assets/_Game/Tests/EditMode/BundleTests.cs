@@ -53,45 +53,54 @@ namespace BoingUpSkyTower.Tests
         // ---- the data ----
 
         [Test]
-        public void ThousandBundlesWithPriceRangeAndValueBand()
+        public void TwoThousandBundlesWithPriceRangeAndOneEqualWorthRatio()
         {
-            Assert.AreEqual(1000, catalog.Count);
+            Assert.AreEqual(2000, catalog.Count);
             PowerUpCatalog pw = PowerUpCatalog.BuiltIn();
             foreach (BundleDef b in catalog.All)
             {
-                Assert.That(b.PriceGems, Is.InRange(200, 500), b.Id);
+                Assert.That(b.Id, Does.StartWith("bnd_"), "no old bundle_NNNN left");
+                Assert.That(b.PriceGems, Is.InRange(540, 3000), b.Id);
                 Assert.AreEqual(0, b.PriceGems % 10, b.Id);
                 Assert.That(b.PowerUps.Count, Is.InRange(1, 4), b.Id);
                 Assert.AreEqual(b.PowerUps.Count, b.PowerUps.Select(p => p.Id).Distinct().Count(), b.Id);
                 foreach (BundlePowerUp p in b.PowerUps) Assert.That(p.Count, Is.InRange(1, 10), b.Id);
-                double ratio = b.ValueGems(pw) / b.PriceGems;
-                Assert.That(ratio, Is.InRange(1.4, 1.8), b.Id);
+                Assert.IsTrue(b.HiddenCard, b.Id + " holds exactly one hidden card");
+                // Worth (coins + power-ups + EXPECTED card) over price is 1.6 for every bundle, so no bundle is better value than another
+                Assert.That(b.TotalValueGems(pw) / b.PriceGems, Is.InRange(1.59, 1.61), b.Id);
             }
         }
 
         [Test]
-        public void WorthDollarsUsesTheShopPriceList()
+        public void TheCardTableAgreesWithTheShopRate()
+        {
+            Assert.AreEqual(SubscriptionCatalog.UsdPerGem, BundleCards.UsdPerGem, 1e-12, "BundleCards keeps a copy of the rate");
+            Assert.AreEqual(7.687, BundleCards.ExpectedUsd, 0.001);
+        }
+
+        [Test]
+        public void WorthDollarsUsesTheShopPriceListAndTheExpectedCard()
         {
             PowerUpCatalog pw = PowerUpCatalog.BuiltIn();
             int gemPrice = pw.Get("pw_magnet").GemPrice;
             BundleDef d = Def("w", 200, 2000, Pw("pw_magnet", 2));
             double expectedGems = 2000 / 20.0 + 2.0 * gemPrice;
-            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem, BundleWorth.Dollars(d), 1e-9);
+            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem, BundleWorth.Dollars(d), 1e-9, "no card: visible contents only");
             Assert.AreEqual(BundleWorth.Dollars(d), BundleWorth.Dollars(d, pw), 1e-9);
             Assert.AreEqual(0.0, BundleWorth.Dollars(null), 1e-9);
-            d.CharacterId = "hero_x";
-            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem + BundleWorth.CharacterUsd, BundleWorth.Dollars(d), 1e-9, "a character adds its dollar value");
-            Assert.That(BundleWorth.Text(Def("t", 200, 0, Pw("pw_magnet", 1))), Does.StartWith("Worth $"));
-            foreach (BundleDef b in catalog.All) Assert.That(BundleWorth.Dollars(b), Is.GreaterThan(0.0).And.LessThan(20.0), b.Id);
+            d.HiddenCard = true;
+            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem + BundleCards.ExpectedUsd, BundleWorth.Dollars(d), 1e-9, "the card adds its EXPECTED dollar value");
+            Assert.That(BundleWorth.Text(d), Does.StartWith("Worth $"));
+            foreach (BundleDef b in catalog.All) Assert.That(BundleWorth.Dollars(b), Is.InRange(9.0, 55.0), b.Id);
         }
 
         [Test]
         public void BundlesAreUnique()
         {
-            Assert.AreEqual(1000, catalog.All.Select(b => b.Id).Distinct().Count());
-            Assert.AreEqual(1000, catalog.All.Select(b => b.Name).Distinct().Count());
-            int sigs = catalog.All.Select(b => b.Coins + "|" + string.Join(",", b.PowerUps.OrderBy(p => p.Id).Select(p => p.Id + "x" + p.Count)) + "|" + b.CharacterId).Distinct().Count();
-            Assert.AreEqual(1000, sigs, "no two bundles share their contents");
+            Assert.AreEqual(2000, catalog.All.Select(b => b.Id).Distinct().Count());
+            Assert.AreEqual(2000, catalog.All.Select(b => b.Name).Distinct().Count());
+            int sigs = catalog.All.Select(b => b.Coins + "|" + string.Join(",", b.PowerUps.OrderBy(p => p.Id).Select(p => p.Id + "x" + p.Count))).Distinct().Count();
+            Assert.AreEqual(2000, sigs, "no two bundles share their contents");
         }
 
         [Test]
@@ -100,17 +109,130 @@ namespace BoingUpSkyTower.Tests
             BundleCatalog fromResources = BundleCatalog.LoadFromResources();
             Assert.AreEqual(catalog.Count, fromResources.Count, "Assets/Resources/Content/bundles.json must be the copy written by gen_bundles.py");
             Assert.AreEqual(catalog.All[0].Id, fromResources.All[0].Id);
-            Assert.AreEqual(catalog.All[999].Coins, fromResources.All[999].Coins);
+            Assert.AreEqual(catalog.All[1999].Coins, fromResources.All[1999].Coins);
         }
 
         [Test]
         public void BrokenJsonGivesAnEmptyCatalogAndSkipsBadEntries()
         {
             Assert.AreEqual(0, BundleCatalog.FromJson("not json").Count);
-            BundleCatalog c = BundleCatalog.FromJson("[{\"id\":\"a\",\"name\":\"A\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"powerups\":[{\"id\":\"pw_nope\",\"count\":1}],\"characterId\":null}," +
-                                                      "{\"id\":\"b\",\"name\":\"B\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"powerups\":[{\"id\":\"pw_magnet\",\"count\":2}],\"characterId\":null}]");
+            BundleCatalog c = BundleCatalog.FromJson("[{\"id\":\"a\",\"name\":\"A\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"powerups\":[{\"id\":\"pw_nope\",\"count\":1}],\"hiddenCard\":true}," +
+                                                      "{\"id\":\"b\",\"name\":\"B\",\"tier\":1,\"priceGems\":200,\"coins\":1000,\"powerups\":[{\"id\":\"pw_magnet\",\"count\":2}],\"hiddenCard\":true}]");
             Assert.AreEqual(1, c.Count);
             Assert.AreEqual("b", c.All[0].Id);
+        }
+
+        // ---- the hidden hero card ----
+
+        static BundleDef CardBundle(string id, int price)
+        {
+            BundleDef d = Def(id, price, 12000, Pw("pw_magnet", 1));
+            d.HiddenCard = true;
+            return d;
+        }
+
+        static int TotalCopies(ProgressService svc)
+        {
+            int n = 0;
+            foreach (CharacterSpec c in CharacterDefs.All) n += svc.Copies(c.Id);
+            return n;
+        }
+
+        [Test]
+        public void BuyingAddsExactlyOneUncommonOrBetterCardInTheSameSave()
+        {
+            ProgressService svc = NewService();
+            svc.AddGems(5000);
+            BundleDef d = CardBundle("c1", 600);
+            int before = TotalCopies(svc);
+            int saves = 0;
+            svc.Changed += () => saves++;
+            CharacterSpec card;
+            Assert.AreEqual(BundleResult.Ok, svc.TryBuyBundle(d, out card));
+            Assert.NotNull(card);
+            Assert.GreaterOrEqual((int)card.Rarity, (int)CharacterRarity.Uncommon, "Common is never a bundle card");
+            Assert.AreEqual(before + 1, TotalCopies(svc), "exactly one copy added");
+            Assert.AreEqual(1, svc.Copies(card.Id));
+            Assert.AreEqual(1, saves, "wallet, contents and the card in one save");
+            Assert.AreEqual(4400, svc.Gems);
+        }
+
+        [Test]
+        public void ABundleWithoutACardAddsNoCopy()
+        {
+            ProgressService svc = NewService();
+            svc.AddGems(500);
+            int before = TotalCopies(svc);
+            CharacterSpec card;
+            Assert.AreEqual(BundleResult.Ok, svc.TryBuyBundle(Def("n", 300, 1000, Pw("pw_magnet", 1)), out card));
+            Assert.IsNull(card);
+            Assert.AreEqual(before, TotalCopies(svc));
+        }
+
+        [Test]
+        public void TodaysCardsAreTheFiveUncommonHeroesAndAFailedBuyDrawsNothing()
+        {
+            ProgressService svc = NewService();
+            svc.AddGems(600 * 40);
+            var seen = new HashSet<string>();
+            for (int i = 0; i < 40; i++)
+            {
+                CharacterSpec card;
+                svc.TryBuyBundle(CardBundle("c" + i, 600), out card);
+                seen.Add(card.Id);
+            }
+            Assert.IsTrue(seen.IsSubsetOf(new[] { "momo_u", "forestgirl_u", "beachotter_u", "candygirl_u", "monk_u" }), string.Join(",", seen));
+            Assert.Greater(seen.Count, 1, "the pick varies");
+
+            ProgressService poor = NewService();
+            poor.AddGems(10);
+            string snap = Snapshot(poor);
+            CharacterSpec none;
+            Assert.AreEqual(BundleResult.NotEnoughGems, poor.TryBuyBundle(CardBundle("c", 600), out none));
+            Assert.IsNull(none);
+            Assert.AreEqual(snap, Snapshot(poor), "nothing changed, no draw consumed");
+        }
+
+        [Test]
+        public void CardDrawsAreRepeatableFromTheSeedAndCounter()
+        {
+            string Run()
+            {
+                store = new MemorySaveStore();   // each run starts from an empty save (the shared store would carry the seed and counter over)
+                var svc = NewService();
+                svc.AddGems(60000);
+                var ids = new List<string>();
+                for (int i = 0; i < 30; i++) { CharacterSpec c; svc.TryBuyBundle(CardBundle("c", 600), out c); ids.Add(c.Id); }
+                return string.Join(",", ids);
+            }
+            Assert.AreEqual(Run(), Run());
+        }
+
+        [Test]
+        public void TheTimerOfferAlsoGivesTheHiddenCard()
+        {
+            var svc = NewService(BundleCatalog.FromDefs(new[] { CardBundle("only", 600) }));
+            svc.AddGems(2000);
+            svc.TickPlayTime(60 * 60);
+            Assert.NotNull(svc.CurrentTimerOffer(now));
+            int before = TotalCopies(svc);
+            CharacterSpec card;
+            Assert.AreEqual(BundleResult.Ok, svc.TryBuyTimerOffer(now, out card));
+            Assert.NotNull(card);
+            Assert.AreEqual(before + 1, TotalCopies(svc));
+            Assert.AreEqual(2000 - svc.TimerOfferPrice(CardBundle("only", 600)), svc.Gems);
+        }
+
+        [Test]
+        public void TheCardCountSurvivesASaveRoundTrip()
+        {
+            ProgressService a = NewService();
+            a.AddGems(2000);
+            CharacterSpec c;
+            a.TryBuyBundle(CardBundle("c", 600), out c);
+            var b = NewService();
+            Assert.AreEqual(a.Copies(c.Id), b.Copies(c.Id));
+            Assert.AreEqual(1, store.Load().Bundles.CardDraws);
         }
 
         // ---- buying ----

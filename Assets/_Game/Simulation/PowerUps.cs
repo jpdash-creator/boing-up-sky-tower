@@ -76,6 +76,22 @@ namespace BoingUpSkyTower.Simulation
             return i >= (int)PowerUp.Flight && i <= (int)PowerUp.SlowTime ? SimInput.PowerFirst << (i - 1) : 0;
         }
 
+        /// <summary>Input bit that activates the type as a HERO power (Flight 1024 ... Slow Time 65536); 0 for None and unimplemented types.</summary>
+        public static int HeroInputBit(PowerUp p)
+        {
+            int i = (int)p;
+            return i >= (int)PowerUp.Flight && i <= (int)PowerUp.SlowTime ? SimInput.HeroFirst << (i - 1) : 0;
+        }
+
+        /// <summary>
+        /// True when a hero activation of the type takes effect now: the same rules as <see cref="CanActivate"/>, and the effect must not already be running
+        /// (a hero power never stacks onto itself; cooldowns are 10 to 30 s, so a long Shield could otherwise be kept up for ever).
+        /// </summary>
+        public static bool CanActivateHero(in SimState s, PowerUp p)
+        {
+            return CanActivate(in s, p) && !IsActive(in s, p);
+        }
+
         /// <summary>Full length in ticks of the timed effect (0 for effects that are not timed).</summary>
         public static int TotalTicks(SimConfig cfg, PowerUp p)
         {

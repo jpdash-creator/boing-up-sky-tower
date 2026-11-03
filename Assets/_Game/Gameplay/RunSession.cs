@@ -106,7 +106,9 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (Over) return;
             if ((input & SimInput.PowerMask) != 0) input = TakePowerUnits(input);
+            if ((input & SimInput.HeroMask) != 0) input = TakeHeroPowers(input);
             Sim.Step(ref State, input);
+            if (Hero != null) Hero.Tick();   // hero cooldowns run in simulation ticks
             if (State.Combo >= 3 && lastCombo < 3) comboChains++;   // reward statistics: a chain reached 3 landings
             lastCombo = State.Combo;
             if (State.BestCombo > bestComboSeen) bestComboSeen = State.BestCombo;
@@ -215,6 +217,45 @@ namespace BoingUpSkyTower.Gameplay
                 if (p == PowerUp.Rocket && (result & PowerUps.InputBit(PowerUp.Flight)) != 0) continue;
                 stock[i]--;
                 powerUpsUsed++;
+                result |= bit;
+            }
+            return result;
+        }
+
+        // ---- hero powers (owner 2026-11-02, docs/34): the chosen hero's Powers are free buttons, READY at the start of a run, each with its own cooldown.
+        // A use is a normal power-up activation (same effect, SimConfig.HeroPowerDurationFactor = 0.6 of the duration) that takes NO inventory unit. ----
+
+        /// <summary>The hero's powers and their cooldowns, or null when the hero has none (Common heroes).</summary>
+        public HeroPowerCooldown Hero { get; private set; }
+
+        /// <summary>Gives the run the powers of the chosen hero. Null or a hero without powers = no hero buttons. Call before the HUD is built.</summary>
+        public void ApplyHeroPowers(CharacterSpec hero)
+        {
+            Hero = null;
+            if (hero == null || hero.Powers == null || hero.Powers.Length == 0) return;
+            int r = (int)hero.Rarity;
+            var h = new HeroPowerCooldown(hero.Powers, r >= 0 && r < CharacterDefs.CooldownSeconds.Length ? CharacterDefs.CooldownSeconds[r] : 0);
+            if (h.Count > 0) Hero = h;
+        }
+
+        /// <summary>
+        /// Keeps the hero activation bits that may start now (the hero has the power, its cooldown is over, the effect is not running and can start) and starts
+        /// the cooldown of each accepted one. Every other hero bit is dropped, so nothing outside the hero's own powers ever reaches the simulation for free.
+        /// </summary>
+        int TakeHeroPowers(int input)
+        {
+            int result = input & ~SimInput.HeroMask;
+            if (Hero == null) return result;
+            for (int k = 0; k < Hero.Count; k++)
+            {
+                PowerUp p = Hero.Type(k);
+                int bit = PowerUps.HeroInputBit(p);
+                if ((input & bit) == 0 || !Hero.IsReady(k) || !PowerUps.CanActivateHero(in State, p)) continue;
+                if ((result & PowerUps.InputBit(p)) != 0) continue;   // a bought tap of the same type in this tick runs first (it would make this one a no-op)
+                // Flight and Rocket exclude each other inside one tick as well (the lower id wins, like the simulation)
+                if (p == PowerUp.Rocket && ((result & (PowerUps.InputBit(PowerUp.Flight) | PowerUps.HeroInputBit(PowerUp.Flight))) != 0)) continue;
+                if (p == PowerUp.Flight && (result & PowerUps.InputBit(PowerUp.Rocket)) != 0) continue;
+                Hero.TryUse(k);
                 result |= bit;
             }
             return result;

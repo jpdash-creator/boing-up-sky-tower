@@ -40,11 +40,12 @@ namespace BoingUpSkyTower.Economy
         /// <summary>The six stored stats (docs/29). The default is Momo's baseline, so every current hero plays alike.</summary>
         public CharacterStats Stats = CharacterStats.Default;
         /// <summary>
-        /// Merge tiers only: the stats as the owner's rule gives them (Common value plus the full percent boost, NOT limited). The hero sheet and the merge result show these.
-        /// <see cref="Stats"/> holds the effective copy that the simulation uses, with the four physics stats capped at the documented safe maximums. Null = same as Stats.
+        /// Merge tiers only: the main stats as the player sees them (Jump height, Speed, Control, Wall Bounce, one decimal) after the tier chain, NOT limited. The hero sheet and
+        /// the merge text show these. <see cref="Stats"/> holds the effective copy the simulation uses: derived from these and capped at the docs/29 section 7 limits. Null = a Common hero.
         /// </summary>
-        public CharacterStats DisplayStats;
-        public CharacterStats SheetStats { get { return DisplayStats ?? Stats; } }
+        public ShownStats Shown;
+        /// <summary>The shown stats of any hero: the tier chain result, or the Common hero's own numbers.</summary>
+        public ShownStats ShownValues() { return Shown ?? ShownStats.From(Stats ?? CharacterStats.Default, new SimConfig()); }
         /// <summary>Merge line (docs/34): every tier of one hero shares it. Null = the character's own id (the Common hero of the line).</summary>
         public string Line;
         public string LineId { get { return Line ?? Id; } }

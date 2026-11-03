@@ -13,8 +13,8 @@ namespace BoingUpSkyTower.Economy
     }
 
     /// <summary>
-    /// One gem bundle (docs/26 section 3, Content/economy/bundles.json made by Tools/content_cli/gen_bundles.py): a price in gems and
-    /// contents of coins and power-ups only (no gems back since the 2026-11 owner decision) and optionally a character (not generated yet).
+    /// One gem bundle (docs/26 section 3 and docs/37, Content/economy/bundles.json made by Tools/content_cli/gen_bundles.py): a price in gems and
+    /// contents of coins and power-ups (no gems back) plus one HIDDEN hero card (Uncommon or better) that is drawn when the bundle is bought.
     /// </summary>
     public sealed class BundleDef
     {
@@ -28,10 +28,10 @@ namespace BoingUpSkyTower.Economy
         [System.Obsolete("Bundles contain no gems any more (always 0).")]
         public int Gems { get { return 0; } }
         public List<BundlePowerUp> PowerUps = new List<BundlePowerUp>();
-        /// <summary>Character id or null (the format supports it, none are generated yet).</summary>
-        public string CharacterId;
+        /// <summary>True when the bundle holds one hidden hero card (every generated bundle does). Which hero is decided at purchase (<see cref="BundleCards"/>).</summary>
+        public bool HiddenCard;
 
-        /// <summary>Value at list rates in gems: coins / 20 + power-ups at their gem prices (50 or 75). Used by tests and the "worth" hint.</summary>
+        /// <summary>Value of the visible contents at list rates in gems: coins / 20 + power-ups at their gem prices (50 or 75). The hidden card is NOT in it (see <see cref="TotalValueGems"/>).</summary>
         public double ValueGems(PowerUpCatalog powerUps)
         {
             double v = Coins / 20.0;
@@ -42,18 +42,21 @@ namespace BoingUpSkyTower.Economy
             }
             return v;
         }
+
+        /// <summary>Visible contents plus the expected value of the hidden card (<see cref="BundleCards.ExpectedGems"/>). The price rule works on this number.</summary>
+        public double TotalValueGems(PowerUpCatalog powerUps)
+        {
+            return ValueGems(powerUps) + (HiddenCard ? BundleCards.ExpectedGems : 0.0);
+        }
     }
 
     /// <summary>
     /// Dollar value of a bundle's contents at the shop's own price list (the same rates as the subscription "worth" text: one gem is
-    /// <see cref="SubscriptionCatalog.UsdPerGem"/> dollars, 1,000 coins are 50 gems, power-ups at their gem price). A character inside a bundle is
-    /// valued at <see cref="CharacterUsd"/>. Pure; the later bundle generator (pool of 1,000) uses it too.
+    /// <see cref="SubscriptionCatalog.UsdPerGem"/> dollars, 1,000 coins are 50 gems, power-ups at their gem price). The hidden card is valued at its
+    /// EXPECTED dollar value (<see cref="BundleCards.ExpectedUsd"/>, the same for every bundle). Pure.
     /// </summary>
     public static class BundleWorth
     {
-        /// <summary>Dollar value of one character inside a bundle (none are generated yet).</summary>
-        public const double CharacterUsd = 4.99;
-
         public static double Dollars(BundleDef bundle) { return Dollars(bundle, null); }
 
         /// <param name="powerUps">Price list for the power-ups; the built-in catalog when null.</param>
@@ -61,7 +64,7 @@ namespace BoingUpSkyTower.Economy
         {
             if (bundle == null) return 0.0;
             double v = bundle.ValueGems(powerUps ?? Defs()) * SubscriptionCatalog.UsdPerGem;
-            if (!string.IsNullOrEmpty(bundle.CharacterId)) v += CharacterUsd;
+            if (bundle.HiddenCard) v += BundleCards.ExpectedUsd;
             return v;
         }
 
@@ -76,7 +79,7 @@ namespace BoingUpSkyTower.Economy
     }
 
     /// <summary>
-    /// The 1,000 bundles. The game loads Resources/Content/bundles.json (an identical copy of Content/economy/bundles.json that
+    /// The 2,000 bundles. The game loads Resources/Content/bundles.json (an identical copy of Content/economy/bundles.json that
     /// gen_bundles.py writes next to the source file); a missing or broken file gives an EMPTY catalog and the Bundles page shows a
     /// notice instead of crashing (CUX-10). Entries with an unknown power-up, a bad price or a repeated id are skipped.
     /// </summary>
@@ -123,8 +126,8 @@ namespace BoingUpSkyTower.Economy
                         Id = (string)t["id"], Name = (string)t["name"], Tier = (int?)t["tier"] ?? 1, PriceGems = (int?)t["priceGems"] ?? 0,
                         Coins = (int?)t["coins"] ?? 0
                     };
-                    JToken cid = t["characterId"];
-                    d.CharacterId = cid != null && cid.Type == JTokenType.String ? (string)cid : null;
+                    JToken hc = t["hiddenCard"];
+                    d.HiddenCard = hc != null && hc.Type == JTokenType.Boolean && (bool)hc;
                     bool ok = d.Coins >= 0;
                     JArray pw = t["powerups"] as JArray;
                     if (pw != null)
@@ -146,7 +149,7 @@ namespace BoingUpSkyTower.Economy
 
         static BundleCatalog shared;
 
-        /// <summary>Reads Resources/Content/bundles once and keeps it (the file is about 200 KB). Empty when the file is missing.</summary>
+        /// <summary>Reads Resources/Content/bundles once and keeps it (the file is about 450 KB). Empty when the file is missing.</summary>
         public static BundleCatalog LoadFromResources()
         {
             if (shared != null) return shared;
@@ -184,5 +187,7 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("timerLast")] public string TimerLastId = "";
         /// <summary>Timer offers made so far (seeds the next ones).</summary>
         [JsonProperty("timerCount")] public int TimerOffers;
+        /// <summary>Hidden hero cards drawn so far (with Seed it makes every card draw repeatable and different).</summary>
+        [JsonProperty("cardDraws")] public int CardDraws;
     }
 }

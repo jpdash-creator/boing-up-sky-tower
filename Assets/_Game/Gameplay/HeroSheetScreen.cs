@@ -35,11 +35,11 @@ namespace BoingUpSkyTower.Gameplay
                 RegionDef r = GameSession.Repo != null ? GameSession.Repo.TryGetRegionByIndex(spec.Region) : null;
                 region = r != null ? r.Name : "Region " + spec.Region;
             }
-            return From(who.Name, spec != null ? spec.Rarity : CharacterRarity.Common, region, spec != null ? spec.SheetStats : null, spec != null ? spec.Powers : null);
+            return From(who.Name, spec != null ? spec.Rarity : CharacterRarity.Common, region, spec != null ? spec.Stats : null, spec != null ? spec.Powers : null, spec != null ? spec.Shown : null);
         }
 
         /// <summary>Any hero from raw values (the test fixture builds a fake Legendary this way).</summary>
-        public static HeroSheetData From(string name, CharacterRarity rarity, string region, CharacterStats stats, PowerUp[] powers)
+        public static HeroSheetData From(string name, CharacterRarity rarity, string region, CharacterStats stats, PowerUp[] powers, ShownStats shown = null)
         {
             StatSheet s = (stats ?? CharacterStats.Default).Sheet(GameSession.Cfg);
             var d = new HeroSheetData { Name = name, Rarity = rarity, RarityName = CharacterDefs.RarityNames[(int)rarity], Region = region };
@@ -47,6 +47,10 @@ namespace BoingUpSkyTower.Gameplay
             d.Stats[1, 0] = "Speed"; d.Stats[1, 1] = F(s.Speed);
             d.Stats[2, 0] = "Control"; d.Stats[2, 1] = F(s.Control);
             d.Stats[3, 0] = "Wall Bounce"; d.Stats[3, 1] = F(s.WallBounce);
+            if (shown != null)   // merge tiers: the owner's percentages are defined on these numbers (docs/34 section 2b); the physics (effective) copy may be capped
+            {
+                d.Stats[0, 1] = F(shown.Jump); d.Stats[1, 1] = F(shown.Speed); d.Stats[2, 1] = F(shown.Control); d.Stats[3, 1] = F(shown.WallBounce);
+            }
             d.Stats[4, 0] = "Coins"; d.Stats[4, 1] = "+" + s.CoinFind;
             d.Stats[5, 0] = "Gems"; d.Stats[5, 1] = "+" + s.GemFind;
             d.Derived[0, 0] = "Full-speed jump"; d.Derived[0, 1] = F(s.FullSpeedJump);
