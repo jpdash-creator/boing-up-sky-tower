@@ -149,7 +149,7 @@ namespace BoingUpSkyTower.Gameplay
             int price = progress.TimerOfferPrice(def);
             if (host.NewOverlay == null)
             {
-                host.OpenPopup("30% OFF!", def.Name + "\n" + BundlesScreen.Describe(def, ", ") + "\nNow " + BundlesScreen.Num(price) + " gems, was " + BundlesScreen.Num(def.PriceGems) + ".", 1180f);
+                host.OpenPopup("30% OFF!", def.Name + "\n" + BundlesScreen.Describe(def, ", ") + "\n" + BundleWorth.Text(def, price) + " worth\nNow " + BundlesScreen.Num(price) + " gems, was " + BundlesScreen.Num(def.PriceGems) + ".", 1180f);
                 host.PopupButton("Buy for " + BundlesScreen.Num(price) + " gems", true, 230f, Buy);
                 host.PopupButton("Close", false, 60f, host.ClosePopup);
                 return;
@@ -157,21 +157,24 @@ namespace BoingUpSkyTower.Gameplay
 
             RectTransform overlay = host.NewOverlay();
             // every row is placed from its real (text-scale aware) height, top to bottom, with 12 px gaps; the panel grows when the rows need it
+            // The top band holds the "i" (left, 48 dp), the bag (middle, dropped on a short canvas) and the worth pill (right): they never overlap the name below.
             const float W = 780f, gap = 12f, bagTop = 190f;
             float bagSize = 150f;
             float canvasH = Mathf.Max(1f, Screen.height) / Mathf.Sqrt(Mathf.Max(1f, Screen.width) / UiKit.Reference.x * Mathf.Max(1f, Screen.height) / UiKit.Reference.y) * Mathf.Clamp01(UiKit.SafeAreaNormalized().height);
+            string worthText = BundleWorth.Text(def, price);   // vs the gems really paid (the discounted price)
             string wasText = "Was " + BundlesScreen.Num(def.PriceGems) + " gems. Ends in:";
-            float nameY = bagTop + bagSize + gap, nameH = BundlesScreen.TextHeight(def.Name, 50f, W);
-            float hintY = nameY + nameH + gap, hintH = def.HiddenCard ? BundlesScreen.TextHeight(BundlesScreen.HiddenCardHint, 36f, W) : 0f;
-            float chipY = hintY + hintH + (def.HiddenCard ? gap : 0f), chipH = BundlesScreen.ChipBlockHeight(BundlesScreen.ChipRows(def));
+            float bandH = Mathf.Max(bagSize, UiKit.MinTouchPx, BundlesScreen.WorthPillH());
+            float nameY = bagTop + bandH + gap, nameH = BundlesScreen.TextHeight(def.Name, 50f, W);
+            float chipY = nameY + nameH + gap, chipH = BundlesScreen.ChipBlockHeight(BundlesScreen.ChipRows(def));   // the chips include the hero card icon with its "?"
             float wasY = chipY + chipH + gap, wasH = BundlesScreen.TextHeight(wasText, 44f, W);
             float leftY = wasY + wasH + 4f, leftH = BundlesScreen.TextHeight("00:00", 64f, W);
             float panelH = Mathf.Max(1400f, leftY + leftH + 412f);
             if (panelH > canvasH * 0.96f)
             {
-                // a short canvas (3:4) at large text: the decorative bag goes, everything below moves up so the panel still fits
-                float up = bagSize + gap;
-                bagSize = 0f; nameY -= up; hintY -= up; chipY -= up; wasY -= up; leftY -= up; panelH -= up;
+                // a short canvas (3:4) at large text: the decorative bag goes and the band shrinks to the 48 dp "i" row, everything below moves up so the panel still fits
+                float shortBand = Mathf.Max(UiKit.MinTouchPx, BundlesScreen.WorthPillH());
+                float up = bandH - shortBand;
+                bagSize = 0f; nameY -= up; chipY -= up; wasY -= up; leftY -= up; panelH -= up;
             }
             // 412 = the two buttons below (Buy up from 230, Hide offer up from 60) and a gap
             RectTransform panel = UiKit.BuildPopupFrame(overlay, ProgressService.BundleTimerPercentOff + "% OFF!", art, new Vector2(860f, panelH), host.CloseOverlay);
@@ -183,6 +186,11 @@ namespace BoingUpSkyTower.Gameplay
                 BundlesScreen.PlaceTop(bag.rectTransform, bagTop, bagSize, bagSize);
             }
 
+            // the same "i" as on the Bundles page (top left) and the worth pill (top right)
+            BundlesScreen.AddInfoButton(panel, "BundleInfo", new Vector2(0f, 1f), new Vector2(40f, -bagTop),
+                "About " + def.Name + ": what is inside, the hero chance and the worth", () => BundlesScreen.ShowInfo(host, progress, art, def, price, OpenOffer));
+            BundlesScreen.AddWorthPill(panel, worthText, new Vector2(1f, 1f), new Vector2(-40f, -bagTop), 260f);
+
             Text name = UiKit.AddText(panel, "Name", def.Name, 50, UiKit.PanelInk, TextAnchor.MiddleCenter, true);
             UiKit.OnPanel(name);
             name.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -190,17 +198,6 @@ namespace BoingUpSkyTower.Gameplay
             name.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
             name.resizeTextMaxSize = name.fontSize;
             BundlesScreen.PlaceTop((RectTransform)name.transform, nameY, W, nameH);
-
-            if (def.HiddenCard)
-            {
-                Text hint = UiKit.AddText(panel, "CardHint", BundlesScreen.HiddenCardHint, 36, UiKit.PanelInk, TextAnchor.MiddleCenter);
-                UiKit.OnPanel(hint);
-                hint.horizontalOverflow = HorizontalWrapMode.Wrap;
-                hint.resizeTextForBestFit = true;
-                hint.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
-                hint.resizeTextMaxSize = hint.fontSize;
-                BundlesScreen.PlaceTop((RectTransform)hint.transform, hintY, W, hintH);
-            }
 
             BundlesScreen.AddChips(panel, def, art, 40f, chipY);
 
@@ -239,7 +236,7 @@ namespace BoingUpSkyTower.Gameplay
             CharacterSpec card;
             BundleResult r = progress.TryBuyTimerOffer(now, out card);
             host.CloseOverlay();
-            BundlesScreen.ShowResult(host, refreshWallet, def, r, card);
+            BundlesScreen.ShowResult(host, refreshWallet, def, r, card, price);
             shown = -1;
             Refresh();
         }

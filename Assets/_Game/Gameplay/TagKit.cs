@@ -55,7 +55,7 @@ namespace BoingUpSkyTower.Gameplay
 
     /// <summary>
     /// Text on a dark or light backing ("name tags"). The backing is always computed from the measured text, never a fixed number:
-    /// width = text width + padding (at least 12 dp each side, at least 6 dp top and bottom) + outline and italic overhang; solid (alpha at least 0.92),
+    /// width = text width + padding (at least 12 dp each side, at least 6 dp top and bottom) + outline and italic overhang; solid (alpha at least 0.92; the world map tags use MapTagMinAlpha, see MapBackingAlpha),
     /// small rounded corners; a long label wraps to two lines instead of shrinking. Text is never below 16 sp.
     /// </summary>
     public static class TagKit
@@ -63,6 +63,10 @@ namespace BoingUpSkyTower.Gameplay
         public const float PadX = 12f * UiKit.PxPerDp;     // about 32
         public const float PadY = 6f * UiKit.PxPerDp;      // about 16
         public const float MinFillAlpha = 0.92f;
+        /// <summary>Backing alpha of the world map's region name tags: 30 percent more transparent than the old 0.95 (owner Bug List 1 B5.b): 0.95 * 0.70 = 0.665.
+        /// Text stays at least 4.5:1 even over pure white art (the map tag colours are dark enough, checked by TextOnArtTests).</summary>
+        public const float MapBackingAlpha = 0.665f;
+        public const float MapTagMinAlpha = 0.6f;
         public const float EdgeMargin = 44f;               // tags keep this far from the left and right edge of their container
         public const float MapTextMaxWidth = 480f;         // longer map names wrap to two lines
         const float Slack = 2f;
@@ -156,14 +160,14 @@ namespace BoingUpSkyTower.Gameplay
         /// place it with UiKit.Place using that size). The label child is named "Name". <paramref name="scaled"/> false keeps the text at the 16 sp floor.
         /// </summary>
         public static Image Build(Transform parent, string name, string label, int baseSize, Color textColor, Color fill, float maxTextWidth, out Text text,
-            bool display = false, bool scaled = true, float padX = PadX, float padY = PadY)
+            bool display = false, bool scaled = true, float padX = PadX, float padY = PadY, float minAlpha = MinFillAlpha)
         {
             float tw, th;
             bool wrapped;
             Measure(label, baseSize, display, scaled, maxTextWidth, out tw, out th, out wrapped);
             int fs = FontSizeFor(baseSize, scaled);
             float oh = Overhang(fs);
-            fill.a = Mathf.Max(fill.a, MinFillAlpha);
+            fill.a = Mathf.Max(fill.a, minAlpha);
             Image back = UiKit.AddPanel(parent, name, fill);
             back.raycastTarget = false;
             text = UiKit.AddText(back.transform, "Name", label, baseSize, textColor, TextAnchor.MiddleCenter, display);

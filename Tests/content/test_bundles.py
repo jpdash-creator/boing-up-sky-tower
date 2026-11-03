@@ -21,14 +21,13 @@ def load_bundles():
         return json.load(f)
 
 
-def card_expected_gems():
+def card_table_from_csharp():
     """Re-derived here from the C# source so the two tables cannot drift apart."""
     with open(os.path.join(ROOT, "Assets", "_Game", "Economy", "BundleCards.cs"), encoding="utf-8") as f:
         src = f.read()
     weights = [int(x) for x in re.search(r"Weights = \{([^}]*)\}", src).group(1).split(",")]
-    usd = [float(x) for x in re.search(r"TierUsd = \{([^}]*)\}", src).group(1).split(",")]
-    per_gem = float(re.search(r"UsdPerGem = ([0-9.]+);", src).group(1))
-    return weights, usd, per_gem
+    gems = [int(x) for x in re.search(r"TierGems = \{([^}]*)\}", src).group(1).split(",")]
+    return weights, gems
 
 
 def worth_gems(b):
@@ -60,26 +59,35 @@ class BundleData(unittest.TestCase):
         self.assertTrue(all(len(b["name"]) <= 24 for b in self.bundles), "names must fit a card")
         self.assertEqual([b["id"] for b in self.bundles], ["bnd_%04d" % (i + 1) for i in range(2000)], "ids are stable and sequential")
 
-    def test_price_range_and_steps(self):
+    def test_every_price_is_200_to_600_gems(self):
         prices = [b["priceGems"] for b in self.bundles]
         for b in self.bundles:
-            self.assertTrue(540 <= b["priceGems"] <= 3000, b["id"])
+            self.assertTrue(200 <= b["priceGems"] <= 600, b["id"])
             self.assertEqual(b["priceGems"] % 10, 0, b["id"])
-        self.assertLess(min(prices), 700, "small bundles exist")
-        self.assertGreater(max(prices), 2800, "large bundles exist")
-        self.assertGreater(len(set(prices)), 200, "many price points")
+        self.assertLess(min(prices), 230, "small bundles exist")
+        self.assertGreater(max(prices), 570, "large bundles exist")
+        self.assertGreater(len(set(prices)), 35, "many price points")
 
-    def test_worth_over_price_is_the_same_for_every_bundle(self):
-        """Owner rule: price follows worth (coins + power-ups + EXPECTED card) by one ratio, so no bundle is better value than another."""
-        for b in self.bundles:
-            ratio = worth_gems(b) / b["priceGems"]
-            self.assertAlmostEqual(ratio, gen_bundles.RATIO, delta=gen_bundles.RATIO_TOL + 1e-9, msg=b["id"])
+    def test_every_worth_multiplier_is_2_to_3_5_and_they_vary(self):
+        """Owner rule (B4.a.ii): worth (coins at coins/20, power-ups at gem prices, card at its expected gem value) is 2.0x to 3.5x the gems paid."""
+        ratios = [worth_gems(b) / b["priceGems"] for b in self.bundles]
+        for b, r in zip(self.bundles, ratios):
+            self.assertTrue(2.0 <= r <= 3.5, "%s ratio %.4f" % (b["id"], r))
+        self.assertGreater(len(set(round(r, 1) for r in ratios)), 12, "the multiplier is varied, not constant")
+        self.assertLess(min(ratios), 2.1)
+        self.assertGreater(max(ratios), 3.4)
+        low = sum(1 for r in ratios if r < 2.5)
+        high = sum(1 for r in ratios if r >= 3.0)
+        self.assertGreater(low, 300)
+        self.assertGreater(high, 300)
 
     def test_card_table_matches_the_csharp_source(self):
-        weights, usd, per_gem = card_expected_gems()
+        weights, gems = card_table_from_csharp()
+        self.assertEqual(weights, [70, 20, 10], "owner odds Uncommon 70, Rare 20, Epic 10")
         self.assertEqual(weights, [w for _, w, _ in gen_bundles.CARD_TIERS])
-        self.assertEqual(usd, [u for _, _, u in gen_bundles.CARD_TIERS])
-        self.assertEqual(per_gem, gen_bundles.USD_PER_GEM)
+        self.assertEqual(gems, [g for _, _, g in gen_bundles.CARD_TIERS])
+        expected = sum(w * g for w, g in zip(weights, gems)) / float(sum(weights))
+        self.assertAlmostEqual(expected, gen_bundles.CARD_EXPECTED_GEMS)
 
     def test_contents(self):
         for b in self.bundles:
@@ -109,9 +117,29 @@ class BundleData(unittest.TestCase):
         self.assertEqual(used, set(GEM_VALUE))
 
     def test_variety(self):
-        self.assertGreater(len(set(b["coins"] for b in self.bundles)), 800)
+        self.assertGreater(len(set(b["coins"] for b in self.bundles)), 300)
         self.assertEqual(set(len(b["powerups"]) for b in self.bundles), {1, 2, 3, 4})
         self.assertEqual(set(b["tier"] for b in self.bundles), {1, 2, 3})
+
+    def test_names_are_new(self):
+        """None of the previous pool's adjectives is used, so no old name comes back."""
+        old_adjectives = ["Bouncy", "Springy", "Sunny", "Jolly", "Cheery", "Zippy", "Giddy", "Plucky", "Snazzy", "Fluffy", "Peppy", "Perky", "Merry", "Breezy",
+                          "Dandy", "Spiffy", "Lucky", "Mighty", "Mellow", "Wobbly", "Jazzy", "Bubbly", "Sparkly", "Frosty", "Toasty", "Cosmic", "Tiny", "Grand",
+                          "Royal", "Wild", "Happy", "Snappy", "Sleepy", "Nifty", "Quirky", "Rowdy", "Silly", "Speedy", "Golden", "Zesty", "Dapper", "Frisky",
+                          "Glowy", "Hearty", "Jaunty", "Kooky", "Lofty", "Nimble", "Peachy", "Plump", "Rosy", "Savvy", "Swift", "Twinkly", "Velvet", "Whimsy",
+                          "Woolly", "Zany", "Brave", "Candied"]
+        self.assertEqual(set(gen_bundles.ADJECTIVES) & set(old_adjectives), set())
+        self.assertTrue(all(b["name"].split(" ")[0] not in old_adjectives for b in self.bundles))
+
+    def test_no_dollar_anywhere(self):
+        """B4.a.ii: no dollars in the bundle data, the generator or the schema."""
+        with open(os.path.join(ROOT, "Content", "economy", "bundles.json"), encoding="utf-8") as f:
+            self.assertNotIn("$", f.read())
+        for rel in (("Tools", "content_cli", "gen_bundles.py"), ("Content", "schemas", "bundle.schema.json")):
+            with open(os.path.join(ROOT, *rel), encoding="utf-8") as f:
+                text = f.read().lower()
+            self.assertNotIn("usd", text)
+            self.assertNotIn("dollar", text)
 
     def test_generator_is_deterministic_and_matches_the_files(self):
         first = gen_bundles.to_text(gen_bundles.generate())

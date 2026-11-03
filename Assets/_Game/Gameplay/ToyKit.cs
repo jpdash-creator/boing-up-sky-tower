@@ -178,6 +178,8 @@ namespace BoingUpSkyTower.Gameplay
             public string A11y;
             public bool Raised;          // PLAY: bigger, green, lifted above the row
             public bool Badge;           // red notification badge
+            /// <summary>Optional painted sprite used instead of the Resources/Art/Ui icon named by <see cref="Icon"/> (the Character button uses ShopIcons.CharacterPower).</summary>
+            public Sprite IconSprite;
             /// <summary>Slots this item spans (default 1). Home: PLAY spans 2 and is exactly two icon buttons wide (gap included) and as tall as the others.</summary>
             public int Span = 1;
         }
@@ -215,7 +217,7 @@ namespace BoingUpSkyTower.Gameplay
                 bool on = i == selected;
                 int role = it.Raised ? 1 : (on ? 0 : 2);
                 Button b = UiKit.AddButton(bar, "Tab" + it.A11y.Replace(" ", ""), "", ToyKit.Button(role), Color.white, new Vector2(160f, 150f), () => onSelect(idx));
-                b.GetComponent<A11yLabel>().Text = it.A11y + " tab" + (on ? ", selected" : "");
+                b.GetComponent<A11yLabel>().Text = it.A11y + " tab" + (on ? ", selected" : "") + (it.Badge ? ", something to claim" : "");
                 b.GetComponent<Image>().raycastTarget = true;
                 var rt = (RectTransform)b.transform;
                 rt.anchorMin = new Vector2(at / (float)slots, 0f);
@@ -227,7 +229,8 @@ namespace BoingUpSkyTower.Gameplay
                 rt.offsetMin = new Vector2(gap * 0.5f - (lifted ? 8f : 0f), 14f);
                 rt.offsetMax = new Vector2(-gap * 0.5f + (lifted ? 8f : 0f), 14f + 158f + lift);
                 bool caption = on || it.Raised;
-                Image ic = UiKit.AddImage(b.transform, "Icon", Get(it.Icon), Color.white);
+                Image ic = UiKit.AddImage(b.transform, "Icon", it.IconSprite != null ? it.IconSprite : Get(it.Icon), Color.white);
+                ic.preserveAspect = true;
                 var irt = ic.rectTransform;
                 irt.anchorMin = irt.anchorMax = new Vector2(0.5f, it.Raised ? 0.7f : (caption ? 0.66f : 0.5f));
                 irt.pivot = new Vector2(0.5f, 0.5f);

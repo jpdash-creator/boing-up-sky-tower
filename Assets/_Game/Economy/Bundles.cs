@@ -43,7 +43,7 @@ namespace BoingUpSkyTower.Economy
             return v;
         }
 
-        /// <summary>Visible contents plus the expected value of the hidden card (<see cref="BundleCards.ExpectedGems"/>). The price rule works on this number.</summary>
+        /// <summary>Visible contents plus the expected value of the hidden card (<see cref="BundleCards.ExpectedGems"/>). The worth multiplier works on this number.</summary>
         public double TotalValueGems(PowerUpCatalog powerUps)
         {
             return ValueGems(powerUps) + (HiddenCard ? BundleCards.ExpectedGems : 0.0);
@@ -51,27 +51,36 @@ namespace BoingUpSkyTower.Economy
     }
 
     /// <summary>
-    /// Dollar value of a bundle's contents at the shop's own price list (the same rates as the subscription "worth" text: one gem is
-    /// <see cref="SubscriptionCatalog.UsdPerGem"/> dollars, 1,000 coins are 50 gems, power-ups at their gem price). The hidden card is valued at its
-    /// EXPECTED dollar value (<see cref="BundleCards.ExpectedUsd"/>, the same for every bundle). Pure.
+    /// How many times its price a bundle is worth (owner Bug List 1 B4.a.ii): total value in GEMS (coins at the shop rate coins / 20, power-ups at their gem prices,
+    /// the hidden card at its expected gem value from <see cref="BundleCards.TierGems"/>) divided by the gems paid. Shown as "x2.7". No currency amounts anywhere. Pure.
     /// </summary>
     public static class BundleWorth
     {
-        public static double Dollars(BundleDef bundle) { return Dollars(bundle, null); }
+        public static double Multiplier(BundleDef bundle) { return Multiplier(bundle, null, 0); }
 
         /// <param name="powerUps">Price list for the power-ups; the built-in catalog when null.</param>
-        public static double Dollars(BundleDef bundle, PowerUpCatalog powerUps)
+        /// <param name="gemsPaid">Gems actually paid; 0 = the list price (the timer offer passes its discounted price).</param>
+        public static double Multiplier(BundleDef bundle, PowerUpCatalog powerUps, int gemsPaid)
         {
             if (bundle == null) return 0.0;
-            double v = bundle.ValueGems(powerUps ?? Defs()) * SubscriptionCatalog.UsdPerGem;
-            if (bundle.HiddenCard) v += BundleCards.ExpectedUsd;
-            return v;
+            int paid = gemsPaid > 0 ? gemsPaid : bundle.PriceGems;
+            if (paid <= 0) return 0.0;
+            return bundle.TotalValueGems(powerUps ?? Defs()) / paid;
         }
 
-        /// <summary>"Worth $3.30" (two decimals, invariant culture).</summary>
-        public static string Text(BundleDef bundle)
+        /// <summary>"x2.7" (one decimal, invariant culture).</summary>
+        public static string Text(BundleDef bundle) { return Text(bundle, 0); }
+
+        public static string Text(BundleDef bundle, int gemsPaid)
         {
-            return "Worth $" + Dollars(bundle).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+            return "x" + Multiplier(bundle, null, gemsPaid).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>"x2.7 worth for 340 gems" (the info popup line).</summary>
+        public static string Line(BundleDef bundle, int gemsPaid)
+        {
+            int paid = gemsPaid > 0 ? gemsPaid : (bundle != null ? bundle.PriceGems : 0);
+            return Text(bundle, gemsPaid) + " worth for " + paid.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " gems";
         }
 
         static PowerUpCatalog builtIn;
@@ -87,6 +96,12 @@ namespace BoingUpSkyTower.Economy
     {
         /// <summary>Path below Assets/Resources, without the extension.</summary>
         public const string ResourcePath = "Content/bundles";
+
+        /// <summary>
+        /// Version of the bundle pool (bug list 1 B4.a.iv: 2 = the 200 to 600 gem pool). A save that holds offers or a timer offer from an older pool
+        /// is reset once (the offers are drawn again), because ids bnd_0001 to bnd_2000 now mean different bundles.
+        /// </summary>
+        public const int PoolVersion = 2;
 
         readonly List<BundleDef> all = new List<BundleDef>();
         readonly Dictionary<string, BundleDef> byId = new Dictionary<string, BundleDef>();
@@ -187,6 +202,8 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("timerLast")] public string TimerLastId = "";
         /// <summary>Timer offers made so far (seeds the next ones).</summary>
         [JsonProperty("timerCount")] public int TimerOffers;
+        /// <summary>Pool version the saved offers belong to (see <see cref="BundleCatalog.PoolVersion"/>); 0 in older saves.</summary>
+        [JsonProperty("poolVer")] public int PoolVersion;
         /// <summary>Hidden hero cards drawn so far (with Seed it makes every card draw repeatable and different).</summary>
         [JsonProperty("cardDraws")] public int CardDraws;
     }

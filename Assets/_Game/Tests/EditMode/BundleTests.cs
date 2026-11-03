@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace BoingUpSkyTower.Tests
 {
-    /// <summary>Gem bundles (docs/26 section 3): the 1,000 bundle data, atomic buying, the paid refresh, the 6 saved offers, the timer offer and the save round trip.</summary>
+    /// <summary>Gem bundles (docs/26 section 3): the 2,000 bundle data, atomic buying, the paid refresh, the 6 saved offers, the timer offer and the save round trip.</summary>
     public class BundleTests
     {
         static string ProjectRoot { get { return Path.GetDirectoryName(Application.dataPath); } }
@@ -53,45 +53,69 @@ namespace BoingUpSkyTower.Tests
         // ---- the data ----
 
         [Test]
-        public void TwoThousandBundlesWithPriceRangeAndOneEqualWorthRatio()
+        public void TwoThousandBundlesCost200To600GemsAndAreWorth2To3_5Times()
         {
             Assert.AreEqual(2000, catalog.Count);
             PowerUpCatalog pw = PowerUpCatalog.BuiltIn();
+            var ratios = new List<double>();
             foreach (BundleDef b in catalog.All)
             {
                 Assert.That(b.Id, Does.StartWith("bnd_"), "no old bundle_NNNN left");
-                Assert.That(b.PriceGems, Is.InRange(540, 3000), b.Id);
+                Assert.That(b.PriceGems, Is.InRange(200, 600), b.Id);
                 Assert.AreEqual(0, b.PriceGems % 10, b.Id);
                 Assert.That(b.PowerUps.Count, Is.InRange(1, 4), b.Id);
                 Assert.AreEqual(b.PowerUps.Count, b.PowerUps.Select(p => p.Id).Distinct().Count(), b.Id);
                 foreach (BundlePowerUp p in b.PowerUps) Assert.That(p.Count, Is.InRange(1, 10), b.Id);
                 Assert.IsTrue(b.HiddenCard, b.Id + " holds exactly one hidden card");
-                // Worth (coins + power-ups + EXPECTED card) over price is 1.6 for every bundle, so no bundle is better value than another
-                Assert.That(b.TotalValueGems(pw) / b.PriceGems, Is.InRange(1.59, 1.61), b.Id);
+                // Worth (coins at coins / 20 + power-ups at their gem prices + the EXPECTED card gems) over the price is 2.0 to 3.5, and the UI shows the same number
+                double m = BundleWorth.Multiplier(b, pw, 0);
+                Assert.That(m, Is.InRange(2.0, 3.5), b.Id);
+                Assert.AreEqual(b.TotalValueGems(pw) / b.PriceGems, m, 1e-9);
+                Assert.That(BundleWorth.Text(b), Does.Match("^x[23]\\.[0-9]$"), b.Id);
+                ratios.Add(m);
             }
+            Assert.Greater(ratios.Max() - ratios.Min(), 1.2, "the multiplier is varied, not constant");
         }
 
         [Test]
-        public void TheCardTableAgreesWithTheShopRate()
+        public void TheCardTableIsTheOneTierGemsTable()
         {
-            Assert.AreEqual(SubscriptionCatalog.UsdPerGem, BundleCards.UsdPerGem, 1e-12, "BundleCards keeps a copy of the rate");
-            Assert.AreEqual(7.687, BundleCards.ExpectedUsd, 0.001);
+            Assert.AreEqual(new[] { 70, 20, 10 }, BundleCards.Weights);
+            Assert.AreEqual(new[] { 100, 250, 600 }, BundleCards.TierGems);
+            Assert.AreEqual(180.0, BundleCards.ExpectedGems, 1e-9);
         }
 
         [Test]
-        public void WorthDollarsUsesTheShopPriceListAndTheExpectedCard()
+        public void WorthIsAMultiplierInGemsWithNoDollars()
         {
             PowerUpCatalog pw = PowerUpCatalog.BuiltIn();
             int gemPrice = pw.Get("pw_magnet").GemPrice;
             BundleDef d = Def("w", 200, 2000, Pw("pw_magnet", 2));
-            double expectedGems = 2000 / 20.0 + 2.0 * gemPrice;
-            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem, BundleWorth.Dollars(d), 1e-9, "no card: visible contents only");
-            Assert.AreEqual(BundleWorth.Dollars(d), BundleWorth.Dollars(d, pw), 1e-9);
-            Assert.AreEqual(0.0, BundleWorth.Dollars(null), 1e-9);
+            double visible = 2000 / 20.0 + 2.0 * gemPrice;
+            Assert.AreEqual(visible / 200.0, BundleWorth.Multiplier(d, pw, 0), 1e-9, "no card: visible contents only");
+            Assert.AreEqual(0.0, BundleWorth.Multiplier(null), 1e-9);
             d.HiddenCard = true;
-            Assert.AreEqual(expectedGems * SubscriptionCatalog.UsdPerGem + BundleCards.ExpectedUsd, BundleWorth.Dollars(d), 1e-9, "the card adds its EXPECTED dollar value");
-            Assert.That(BundleWorth.Text(d), Does.StartWith("Worth $"));
-            foreach (BundleDef b in catalog.All) Assert.That(BundleWorth.Dollars(b), Is.InRange(9.0, 55.0), b.Id);
+            Assert.AreEqual((visible + BundleCards.ExpectedGems) / 200.0, BundleWorth.Multiplier(d, pw, 0), 1e-9, "the card adds its EXPECTED gem value");
+            Assert.AreEqual((visible + BundleCards.ExpectedGems) / 140.0, BundleWorth.Multiplier(d, pw, 140), 1e-9, "the timer offer divides by the gems really paid");
+            Assert.That(BundleWorth.Text(d), Does.StartWith("x"));
+            Assert.That(BundleWorth.Line(d, 0), Does.Match("^x[0-9]\\.[0-9] worth for 200 gems$"));
+        }
+
+        [Test]
+        public void NoDollarsInTheBundleUiOrDataSources()
+        {
+            string[] files =
+            {
+                "Assets/_Game/Economy/Bundles.cs", "Assets/_Game/Economy/BundleCards.cs", "Assets/_Game/Economy/ProgressService.Bundles.cs",
+                "Assets/_Game/Gameplay/BundlesScreen.cs", "Assets/_Game/Gameplay/BundleTimerButton.cs", "Content/economy/bundles.json",
+            };
+            foreach (string f in files)
+            {
+                string text = File.ReadAllText(Path.Combine(ProjectRoot, f));
+                Assert.That(text.Contains("$"), Is.False, f + " has a dollar sign");
+                Assert.That(text.Contains("Usd") || text.Contains("USD"), Is.False, f + " mentions USD");
+                Assert.That(text.Contains("Dollar"), Is.False, f + " mentions dollars");
+            }
         }
 
         [Test]
@@ -170,19 +194,17 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void TodaysCardsAreTheFiveUncommonHeroesAndAFailedBuyDrawsNothing()
+        public void AFreshAccountOnlyGetsMomosLineAndAFailedBuyDrawsNothing()
         {
             ProgressService svc = NewService();
             svc.AddGems(600 * 40);
-            var seen = new HashSet<string>();
             for (int i = 0; i < 40; i++)
             {
                 CharacterSpec card;
                 svc.TryBuyBundle(CardBundle("c" + i, 600), out card);
-                seen.Add(card.Id);
+                Assert.AreEqual("momo_u", card.Id, "only region 1 is open, so only the region 1 line can be the card");
             }
-            Assert.IsTrue(seen.IsSubsetOf(new[] { "momo_u", "forestgirl_u", "beachotter_u", "candygirl_u", "monk_u" }), string.Join(",", seen));
-            Assert.Greater(seen.Count, 1, "the pick varies");
+            Assert.AreEqual(Math.Min(40, MergeRules.MaxCopies), svc.Copies("momo_u"), "every purchase added one copy (capped at the merge maximum)");
 
             ProgressService poor = NewService();
             poor.AddGems(10);
@@ -191,6 +213,44 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(BundleResult.NotEnoughGems, poor.TryBuyBundle(CardBundle("c", 600), out none));
             Assert.IsNull(none);
             Assert.AreEqual(snap, Snapshot(poor), "nothing changed, no draw consumed");
+        }
+
+        [Test]
+        public void TheCardPoolGrowsWithTheOpenRegions()
+        {
+            ProgressService svc = NewService();
+            Assert.AreEqual(1, svc.BundleOpenRegionCount());
+            CollectionAssert.AreEquivalent(new[] { "momo_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
+            svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(2).Id);
+            svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(3).Id);
+            Assert.AreEqual(3, svc.BundleOpenRegionCount());
+            CollectionAssert.AreEquivalent(new[] { "momo_u", "forestgirl_u", "beachotter_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
+            svc.AddGems(600 * 60);
+            var seen = new HashSet<string>();
+            for (int i = 0; i < 60; i++)
+            {
+                CharacterSpec card;
+                svc.TryBuyBundle(CardBundle("c" + i, 600), out card);
+                seen.Add(card.Id);
+            }
+            Assert.IsTrue(seen.IsSubsetOf(new[] { "momo_u", "forestgirl_u", "beachotter_u" }), string.Join(",", seen));
+            Assert.Greater(seen.Count, 1, "the pick varies");
+        }
+
+        [Test]
+        public void AnOldPoolSaveRedrawsItsOffers()
+        {
+            ProgressService a = NewService();
+            List<BundleDef> first = a.CurrentBundleOffers();
+            Assert.AreEqual(BundleCatalog.PoolVersion, store.Load().Bundles.PoolVersion);
+            SaveData saved = store.Load();   // pretend the save came from the old 540 to 3,000 gem pool
+            saved.Bundles.PoolVersion = 0;
+            store.Save(saved);
+            ProgressService b = NewService();
+            List<BundleDef> second = b.CurrentBundleOffers();
+            Assert.AreEqual(6, second.Count);
+            Assert.AreEqual(BundleCatalog.PoolVersion, b.Data.Bundles.PoolVersion);
+            Assert.AreEqual(6, first.Count);
         }
 
         [Test]

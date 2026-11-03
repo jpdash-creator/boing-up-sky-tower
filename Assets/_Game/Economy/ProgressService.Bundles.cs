@@ -52,6 +52,14 @@ namespace BoingUpSkyTower.Economy
                 if (b.Offers == null) b.Offers = new List<string>();
                 if (b.TimerOfferId == null) b.TimerOfferId = "";
                 if (b.TimerLastId == null) b.TimerLastId = "";
+                if (b.PoolVersion != BundleCatalog.PoolVersion)
+                {
+                    // an older pool (before the 200 to 600 gem bundles): its offers and timer offer are dropped once, so they are drawn again from the new pool
+                    b.PoolVersion = BundleCatalog.PoolVersion;
+                    b.Offers.Clear();
+                    b.TimerOfferId = "";
+                    b.TimerExpiryTicks = 0;
+                }
                 return b;
             }
         }
@@ -186,7 +194,29 @@ namespace BoingUpSkyTower.Economy
             ulong tierRoll = BundleMix(state);
             ulong charRoll = BundleMix(tierRoll);
             b.CardDraws++;
-            return BundleCards.Draw(tierRoll, charRoll, CharacterDefs.All);
+            return BundleCards.Draw(tierRoll, charRoll, CharacterDefs.All, IsBundleRegionOpen);
+        }
+
+        /// <summary>True when heroes of this region index can be a bundle card now: region 1 (Momo and the Common line) is always open, others when unlocked (<see cref="IsRegionUnlocked"/>).</summary>
+        bool IsBundleRegionOpen(int regionIndex)
+        {
+            if (regionIndex <= 1) return true;
+            BoingUpSkyTower.Content.RegionDef r = repo.TryGetRegionByIndex(regionIndex);
+            return r != null && IsRegionUnlocked(r);
+        }
+
+        /// <summary>Number of regions the player has open (unlocked), at least 1. The bundle info popup says "heroes from your N open regions".</summary>
+        public int BundleOpenRegionCount()
+        {
+            int n = 0;
+            foreach (BoingUpSkyTower.Content.RegionDef r in repo.Regions) if (IsRegionUnlocked(r)) n++;
+            return Math.Max(1, n);
+        }
+
+        /// <summary>The characters that can be the hidden card right now at this rarity (open regions only). Used by tests and the info popup.</summary>
+        public List<CharacterSpec> BundleCardPool(CharacterRarity rarity)
+        {
+            return BundleCards.Pool(rarity, CharacterDefs.All, IsBundleRegionOpen);
         }
 
         BundleResult BuyBundleCore(BundleDef def, int price, bool clearTimerOffer, out CharacterSpec card)

@@ -4,23 +4,27 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The VIP and Heroes tabs of the shop (owner issue 35, item 2; docs/26 section 2). VIP (crown icon) is ONE scrollable page with two labelled sections:
-    /// "Subscription" first (the plan cards of <see cref="SubscriptionScreen"/>), then "Chests" (the Iron and Gold chest cards of <see cref="TreasureChestScreen"/>).
-    /// Heroes is a placeholder page ("Heroes coming soon"): nothing can be bought there. The old header Subscription (ticket) button is gone.
+    /// The multi-section pages of the shop (owner issue 35; Bug List 1 section 4; docs/26 section 8). Crown is ONE scrollable page: the fixed yellow banner
+    /// "Subscription" (no VIP header), the plan cards of <see cref="SubscriptionScreen"/>, a yellow "Chests" banner, then the chest cards of
+    /// <see cref="TreasureChestScreen"/>. Character / Power-ups is one scrollable page: "Heroes" banner, the "Heroes coming soon" card (nothing to buy),
+    /// the "Power-ups" banner and the power-up cards. The Gems / Coins page lives in ShopScreen.cs.
     /// </summary>
     public sealed partial class ShopScreen
     {
-        int vipSection;               // which section the VIP page opens scrolled to
-        float vipKeepY = -1f;         // scroll offset to restore after a rebuild of the VIP page (a purchase or a claim); negative = use vipSection
+        int pageSection;              // which section of the current page it opens scrolled to (0 = first, 1 = second: Chests, Power-ups, Coins)
+        float keepY = -1f;            // scroll offset to restore after a rebuild of the page (a purchase or a claim); negative = use pageSection
         SubscriptionScreen vipSubscription;
 
-        /// <summary>Page title and section titles of the VIP tab.</summary>
+        /// <summary>Banner titles of the later sections.</summary>
         public const string VipChestsSectionTitle = "Chests";
+        public const string PowerupsSectionTitle = "Power-ups";
+        public const string CoinsSectionTitle = "Coins";
         public const string HeroesComingSoonText = "Heroes coming soon";
 
-        // ---------------- VIP ----------------
+        // ---------------- shared scrolling page ----------------
 
-        void BuildVip()
+        /// <summary>One scrolling list that stacks the page's sections (banners, cards) with a 28 px gap; the page banner above it stays fixed.</summary>
+        RectTransform NewSectionedList()
         {
             RectTransform list = ShopChrome.ScrollArea(body, 600f);
             var vg = list.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -33,13 +37,32 @@ namespace BoingUpSkyTower.Gameplay
             var fit = list.gameObject.AddComponent<ContentSizeFitter>();
             fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            return list;
+        }
 
-            // 1. Subscription (the plan cards; a purchase or claim rebuilds the whole page and keeps the scroll position)
+        /// <summary>Scrolls the list to <paramref name="target"/> (null = the top) on the first frame, or restores the offset kept over a rebuild.</summary>
+        void AttachScroller(RectTransform list, RectTransform target)
+        {
+            var scroller = list.gameObject.AddComponent<SectionScroller>();
+            scroller.List = list;
+            scroller.Target = target;
+            scroller.Y = keepY;
+            keepY = -1f;
+        }
+
+        // ---------------- Crown: Subscription, then Chests ----------------
+
+        void BuildVip()
+        {
+            RectTransform list = NewSectionedList();
+
+            // 1. Subscription (the page banner above is its title; a purchase or claim rebuilds the page and keeps the scroll position)
             vipSubscription = new SubscriptionScreen(screen, progress, progress.SubscriptionDefs, art, host);
-            RectTransform subSection = vipSubscription.BuildEmbedded(list, RebuildVip);
+            vipSubscription.BuildEmbedded(list, RebuildKeepScroll);
 
-            // 2. Chests (the Treasure Shop cards)
-            RectTransform chestSection = SubscriptionScreen.NewSection(list, VipChestsSectionTitle);
+            // 2. Chests: a second yellow banner, then the Treasure Shop cards
+            RectTransform chestBanner = ShopChrome.SectionBanner(list, VipChestsSectionTitle);
+            RectTransform chestSection = SubscriptionScreen.NewSection(list, VipChestsSectionTitle, false);
             var h = new TreasureChestScreen.Host
             {
                 NewOverlay = host.NewOverlay,
@@ -54,15 +77,11 @@ namespace BoingUpSkyTower.Gameplay
             treasure = new TreasureChestScreen(screen, progress, catalog, art, h);
             treasure.BuildCards(chestSection);
 
-            var scroller = list.gameObject.AddComponent<VipScroller>();
-            scroller.List = list;
-            scroller.Target = vipSection == VipChestsSection ? chestSection : subSection;
-            scroller.Y = vipKeepY;
-            vipKeepY = -1f;
+            AttachScroller(list, pageSection == VipChestsSection ? chestBanner : null);
         }
 
-        /// <summary>Rebuilds the VIP page after a purchase or claim and keeps where the player had scrolled to.</summary>
-        void RebuildVip()
+        /// <summary>Rebuilds the current page after a purchase or claim and keeps where the player had scrolled to.</summary>
+        void RebuildKeepScroll()
         {
             float y = -1f;
             if (page != null)
@@ -70,13 +89,13 @@ namespace BoingUpSkyTower.Gameplay
                 RectTransform list = page.Find("Content/ShopViewport/ShopList") as RectTransform;
                 if (list != null) y = list.anchoredPosition.y;
             }
-            vipKeepY = y;
+            keepY = y;
             RebuildBody();
             RefreshWallet();
         }
 
-        /// <summary>Scrolls the VIP list to a section (or restores an offset) once, on the first frame after the layout has run.</summary>
-        sealed class VipScroller : MonoBehaviour
+        /// <summary>Scrolls a list to a section (or restores an offset) once, on the first frame after the layout has run.</summary>
+        sealed class SectionScroller : MonoBehaviour
         {
             public RectTransform List, Target;
             public float Y = -1f;
@@ -97,18 +116,29 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        // ---------------- Heroes (placeholder) ----------------
+        // ---------------- Character / Power-ups ----------------
 
-        /// <summary>The Heroes tab: a card with the heroes icon and "Heroes coming soon". No buttons: nothing can be bought here.</summary>
-        void BuildHeroes()
+        /// <summary>
+        /// The merged Character / Power-ups page, one scrolling list: the page banner "Heroes", the "Heroes coming soon" card, a gap, the "Power-ups" banner and
+        /// the power-up cards. ShowShop(TabPowerups) opens it scrolled to the Power-ups banner.
+        /// </summary>
+        void BuildCharacter()
         {
-            RectTransform card = ShopChrome.Card(body, "HeroesSoon", ShopChrome.FrameColor.Blue);
-            card.anchorMin = new Vector2(0.04f, 0.5f);
-            card.anchorMax = new Vector2(0.96f, 0.5f);
-            card.pivot = new Vector2(0.5f, 0.5f);
-            card.anchoredPosition = Vector2.zero;
+            RectTransform list = NewSectionedList();
+            BuildHeroesSoon(list);
+            RectTransform powerBanner = ShopChrome.SectionBanner(list, PowerupsSectionTitle);
+            BuildPowerUps(list);
+            AttachScroller(list, pageSection == PowerupsSection ? powerBanner : null);
+        }
+
+        /// <summary>The Heroes placeholder: a card with the heroes icon and "Heroes coming soon". No buttons: nothing can be bought here.</summary>
+        void BuildHeroesSoon(RectTransform list)
+        {
+            RectTransform card = ShopChrome.Card(list, "HeroesSoon", ShopChrome.FrameColor.Blue);
             float k = Mathf.Max(1f, UiKit.TextScale) - 1f;
-            card.sizeDelta = new Vector2(0f, 560f + k * 260f);
+            float titleH = 90f + k * 120f;
+            var le = card.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = le.preferredHeight = 36f + 170f + 16f + titleH + 36f;
             card.gameObject.AddComponent<A11yLabel>().Text = HeroesComingSoonText + ". Nothing to buy here yet.";
 
             Image icon = UiKit.AddImage(card, "HeroesIcon", ToyKit.Get("icon_heroes"), Color.white);
@@ -116,10 +146,9 @@ namespace BoingUpSkyTower.Gameplay
             icon.raycastTarget = false;
             icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0.5f, 1f);
             icon.rectTransform.pivot = new Vector2(0.5f, 1f);
-            icon.rectTransform.anchoredPosition = new Vector2(0f, -50f);
-            icon.rectTransform.sizeDelta = new Vector2(240f, 240f);
+            icon.rectTransform.anchoredPosition = new Vector2(0f, -36f);
+            icon.rectTransform.sizeDelta = new Vector2(170f, 170f);
 
-            float titleH = 90f + k * 120f;
             Text title = UiKit.AddText(card, "Title", HeroesComingSoonText, 56, Color.white, TextAnchor.MiddleCenter, true);
             title.fontStyle = FontStyle.Italic;
             title.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -127,17 +156,8 @@ namespace BoingUpSkyTower.Gameplay
             title.rectTransform.anchorMin = new Vector2(0.05f, 1f);
             title.rectTransform.anchorMax = new Vector2(0.95f, 1f);
             title.rectTransform.pivot = new Vector2(0.5f, 1f);
-            title.rectTransform.anchoredPosition = new Vector2(0f, -(50f + 240f + 30f));
+            title.rectTransform.anchoredPosition = new Vector2(0f, -(36f + 170f + 16f));
             title.rectTransform.sizeDelta = new Vector2(0f, titleH);
-
-            Text sub = UiKit.AddText(card, "Info", "New heroes are on their way. Nothing to buy here yet.", 38, new Color(0.82f, 0.93f, 1f), TextAnchor.UpperCenter);
-            sub.horizontalOverflow = HorizontalWrapMode.Wrap;
-            sub.verticalOverflow = VerticalWrapMode.Overflow;
-            sub.rectTransform.anchorMin = new Vector2(0.06f, 1f);
-            sub.rectTransform.anchorMax = new Vector2(0.94f, 1f);
-            sub.rectTransform.pivot = new Vector2(0.5f, 1f);
-            sub.rectTransform.anchoredPosition = new Vector2(0f, -(50f + 240f + 30f + titleH + 10f));
-            sub.rectTransform.sizeDelta = new Vector2(0f, 130f + k * 120f);
         }
     }
 }

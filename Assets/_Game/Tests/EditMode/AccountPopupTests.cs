@@ -63,8 +63,8 @@ namespace BoingUpSkyTower.Tests
         {
             Assert.AreEqual("Account", AccountPopup.ButtonA11y(AccountPopup.State.Guest));
             Assert.AreEqual("Account, signed in", AccountPopup.ButtonA11y(AccountPopup.State.SignedIn));
-            Assert.AreEqual("Sign in with Google Play", AccountPopup.SettingsButtonLabel(AccountPopup.State.Guest));
-            Assert.AreEqual("Sign out", AccountPopup.SettingsButtonLabel(AccountPopup.State.SignedIn));
+            Assert.AreEqual("Sign in with Google", AccountPopup.SettingsButtonLabel(AccountPopup.State.Guest));
+            Assert.AreEqual("Unlink Google Account", AccountPopup.SettingsButtonLabel(AccountPopup.State.SignedIn));
             Assert.AreEqual("", AccountPopup.SettingsButtonLabel(AccountPopup.State.Unavailable));
             Assert.AreEqual("Google sign-in is not available in this build.", AccountPopup.HintFor(AccountPopup.State.Unavailable));
             Assert.AreEqual("Sign-in cancelled.", AccountPopup.ResultText(false, "Sign-in cancelled."));
@@ -169,6 +169,91 @@ namespace BoingUpSkyTower.Tests
             Assert.IsNotNull(text, "the callback always runs");
             Assert.IsFalse(ok, "the memory stub cannot sign in quietly after a sign-out");
             StringAssert.Contains("connection", text);
+        }
+
+        // ---- Settings > Save Progress (Bug List 1 B2.a) ----
+
+        /// <summary>A save store that counts how often the save was written.</summary>
+        sealed class CountingStore : ISaveStore
+        {
+            public int Saves;
+            public SaveData Load() { return new SaveData(); }
+            public void Save(SaveData data) { Saves++; }
+        }
+
+        [Test]
+        public void GuestSaveProgressWritesTheSaveOnThePhoneAndNeverTouchesTheCloud()
+        {
+            var counting = new CountingStore();
+            var p = new ProgressService(repo, counting);
+            AccountSync.Hook(p);
+            p.AddCoins(5);
+            int before = counting.Saves;
+            bool ok = false; string text = null;
+            AccountPopup.SaveProgress(p, (o, t) => { ok = o; text = t; });
+            Assert.IsTrue(ok);
+            Assert.AreEqual("Saved on this phone", text);
+            Assert.AreEqual(AccountPopup.SavedLocalText, text);
+            Assert.AreEqual(before + 1, counting.Saves, "the save is written now");
+            SaveEnvelope cloud = null;
+            stub.LoadCloudSave(b => cloud = SaveSync.TryDeserialize(b));
+            Assert.IsNull(cloud, "a guest save never goes to the cloud");
+        }
+
+        [Test]
+        public void SignedInSaveProgressPushesTheSaveToGoogle()
+        {
+            var counting = new CountingStore();
+            var p = new ProgressService(repo, counting);
+            AccountSync.Hook(p);
+            AccountSync.SignInAndLink((o, m) => { });
+            AccountSync.TickForTests();
+            p.AddCoins(77);
+            int before = counting.Saves;
+            bool ok = false; string text = null;
+            AccountPopup.SaveProgress(p, (o, t) => { ok = o; text = t; });
+            Assert.IsTrue(ok);
+            Assert.AreEqual("Saved to Google", text);
+            Assert.Greater(counting.Saves, before, "the phone copy is written too");
+            SaveEnvelope cloud = null;
+            stub.LoadCloudSave(b => cloud = SaveSync.TryDeserialize(b));
+            Assert.IsNotNull(cloud, "the cloud stub received the save");
+            Assert.AreEqual(77, cloud.Data.Coins);
+        }
+
+        [Test]
+        public void SignedInSaveProgressFailureStillSavesOnThePhone()
+        {
+            var counting = new CountingStore();
+            var p = new ProgressService(repo, counting);
+            AccountSync.Hook(p);
+            AccountSync.SignInAndLink((o, m) => { });
+            AccountSync.TickForTests();
+            stub.FailCloud = true;
+            p.AddCoins(5);
+            int before = counting.Saves;
+            bool ok = true; string text = null;
+            AccountPopup.SaveProgress(p, (o, t) => { ok = o; text = t; });
+            Assert.IsFalse(ok);
+            Assert.AreEqual(AccountPopup.SavedLocalOnlyText, text);
+            Assert.Greater(counting.Saves, before);
+        }
+
+        [Test]
+        public void SaveProgressWithoutProgressSaysNothingToSave()
+        {
+            bool ok = true; string text = null;
+            AccountPopup.SaveProgress(null, (o, t) => { ok = o; text = t; });
+            Assert.IsFalse(ok);
+            Assert.AreEqual(AccountPopup.NothingToSaveText, text);
+        }
+
+        [Test]
+        public void SaveResultTextsAreShortSoTheyFitOneLineOnTheButton()
+        {
+            foreach (string s in new[] { AccountPopup.SavedLocalText, AccountPopup.SavedGoogleText, AccountPopup.SavedLocalOnlyText, AccountPopup.NothingToSaveText })
+                Assert.LessOrEqual(s.Length, 24, s);
+            Assert.AreEqual("Save Progress", AccountPopup.SaveLabel);
         }
 
         [Test]

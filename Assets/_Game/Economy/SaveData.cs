@@ -68,6 +68,8 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("loginChosen")] public bool LoginChosen;
         /// <summary>UTC time (ISO 8601 round trip) of the last change, stamped by ProgressService on every save. Used to compare saves.</summary>
         [JsonProperty("lastPlayedUtc")] public string LastPlayedUtc = "";
+        /// <summary>UTC time (ISO 8601 round trip) the "connect Google in Settings" pop-up was last shown on Home (Bug List 1 B1.c): at most once per 3 calendar days. Additive field, no version bump.</summary>
+        [JsonProperty("lastGooglePromptUtc")] public string LastGooglePromptUtc = "";
         /// <summary>Every real-money purchase (docs/38): product id, kind, transaction id, time. Kept when progress is reset; restore and cloud sync read it. Additive field, no version bump.</summary>
         [JsonProperty("purchases")] public List<PurchaseRecord> Purchases = new List<PurchaseRecord>();
     }

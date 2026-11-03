@@ -1,4 +1,5 @@
 using System;
+using BoingUpSkyTower.Economy;
 using BoingUpSkyTower.Monetization;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,7 +20,14 @@ namespace BoingUpSkyTower.Gameplay
         public const string GuestHint = "Sign in to keep your progress safe on any device.";
         public const string SignedInHint = "Your progress is saved to your Google account.";
         public const string SignedOutText = "Signed out. Your progress stays on this device.";
-        public const string SignInLabel = "Sign in with Google Play";
+        public const string SignInLabel = "Sign in with Google";
+        public const string UnlinkLabel = "Unlink Google Account";
+        public const string SaveLabel = "Save Progress";
+        /// <summary>Short results of Save Progress (they replace the button label for a moment, so each fits one line at 130 percent text).</summary>
+        public const string SavedLocalText = "Saved on this phone";
+        public const string SavedGoogleText = "Saved to Google";
+        public const string SavedLocalOnlyText = "Saved on phone only";
+        public const string NothingToSaveText = "Nothing to save";
 
         // ---------------- pure logic ----------------
 
@@ -68,12 +76,12 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>Label of the single account button in Settings ("" when there is none: unavailable build).</summary>
+        /// <summary>Label of the Google button in Settings: Sign in with Google (guest) or Unlink Google Account (signed in); "" when there is none (unavailable build).</summary>
         public static string SettingsButtonLabel(State state)
         {
             switch (state)
             {
-                case State.SignedIn: return "Sign out";
+                case State.SignedIn: return UnlinkLabel;
                 case State.Guest: return SignInLabel;
                 default: return "";
             }
@@ -102,6 +110,25 @@ namespace BoingUpSkyTower.Gameplay
                     if (done != null) done(false, UnavailableText);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Settings > Save Progress. The save is always written to this device first. A guest is done ("Saved on this phone"); a player linked to Google
+        /// also pushes it to Google Saved Games (AccountSync.SyncNow, the SaveSync upload): "Saved to Google", or "Saved on phone only" when the upload failed.
+        /// done(ok, text) runs once with a short text.
+        /// </summary>
+        public static void SaveProgress(ProgressService progress, Action<bool, string> done)
+        {
+            if (progress == null) { if (done != null) done(false, NothingToSaveText); return; }
+            try { progress.SaveLocalNow(); }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Settings] local save failed: " + e.Message);
+                if (done != null) done(false, NothingToSaveText);
+                return;
+            }
+            if (!AccountSync.IsGoogleMode) { if (done != null) done(true, SavedLocalText); return; }
+            AccountSync.SyncNow((ok, text) => { if (done != null) done(ok, ok ? SavedGoogleText : SavedLocalOnlyText); });
         }
 
         // ---------------- view ----------------

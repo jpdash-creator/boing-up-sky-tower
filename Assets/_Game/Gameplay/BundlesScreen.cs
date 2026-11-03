@@ -10,9 +10,9 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The Bundles page of the shop (docs/26 section 3, owner issue list 28): a fixed "Refresh Bundles" header (ribbon, caption, two refresh buttons:
-    /// 5 gems or 100 coins, direct) above six slim bundle rows for gems: bag icon, name and compact content chips (coin, power-up, later character;
-    /// never gems) on the left, the green gem-price button on the right. The list scrolls under the header when it does not fit. Built once into the content rect that ShopChrome.BuildBody returns; a refresh
+    /// The Bundles page of the shop (docs/26 section 3, docs/37; owner issue list 28 and Bug List 1 B4.a): a fixed "Refresh Bundles" header (ribbon, caption, two refresh buttons:
+    /// 5 gems or 100 coins, direct) above six slim bundle rows for gems: an "i" info button (top left) over the bag icon, the name and compact content chips (coin, power-ups,
+    /// the hidden hero card as an icon with a "?") on the left, the worth pill "x2.7" with a star (top right) over the green gem-price button on the right. No dollars anywhere. The list scrolls under the header when it does not fit. Built once into the content rect that ShopChrome.BuildBody returns; a refresh
     /// rebuilds the same rect. Menu screen only: no per-frame code, every position is an anchor, an edge offset or a fixed-size chip, so it fits
     /// 9:16, 9:19.5, 9:21 and 3:4, the safe area and 130 percent text. Touch targets are at least 48 dp (price and Refresh buttons are 130 px tall).
     /// The chip and card helpers are public because the timer-offer popup (BundleTimerButton) draws the same contents.
@@ -25,13 +25,16 @@ namespace BoingUpSkyTower.Gameplay
 
         // Slim row (owner issue list 28): bag + name + compact chips on the left, the green gem-price button on the right.
         const float RowPad = 18f, BagSize = 104f, PriceW = 260f, PriceH = ShopChrome.PriceButtonH, RowGap = 10f;
-        const float TextLeft = RowPad + BagSize + 12f;
+        /// <summary>Left column of a row: the "i" info target (48 dp) on top, the bag under it.</summary>
+        const float InfoPad = 6f, LeftColW = UiKit.MinTouchPx, BagMaxSize = BagSize + 8f, BagGap = 8f;
+        const float TextLeft = InfoPad + LeftColW + 14f;
         /// <summary>Width reserved for the name and the chips: the narrowest canvas (9:21, about 940 px) minus margins, pads, bag and price button.</summary>
         const float PriceReserve = PriceW + RowPad + 12f;   // right edge of the text block: price button, its pad and a gap
         /// <summary>Width of the name and chip block. Set from the real body width at the start of Build (conservative fallback when not laid out yet).</summary>
         static float textAreaW = 380f;
         const float CompactChipH = 72f, CompactGap = 8f, NameGap = 6f, NameFont = 42f, WorthFont = 38f;
-        static readonly Color WorthColor = new Color(0.02f, 0.36f, 0.19f, 1f);   // the dark green of the subscription "Worth" tag on gold
+        static readonly Color WorthColor = new Color(0.02f, 0.36f, 0.19f, 1f);   // dark green on the gold worth pill (about 6:1)
+        static readonly Color PillFill = new Color(1f, 0.88f, 0.36f, 1f);
         const float HeaderRibbonW = 700f, HeaderRibbonH = 120f, RefreshRowH = 134f, RefreshBtnW = 190f, HeaderGap = 10f;
         /// <summary>Header fonts: the caption is 48 (was 42), the title 52.</summary>
         const float CaptionFont = 48f, TitleFont = 52f;
@@ -62,33 +65,61 @@ namespace BoingUpSkyTower.Gameplay
             public Sprite Icon;
             public PowerUp Power;
             public bool IsPower;
+            public bool IsHero;   // the hidden hero card: the HeroCardIcon with a "?" on it, no words
             public string Text;
             public float Width;
         }
 
-        static List<Chip> MakeChips(BundleDef def, ArtCatalog art, bool compact = true)
+        /// <summary>
+        /// The hero card icon: Resources/Art/Ui/hero_card_icon.png when an artist's icon exists (drop it in, no code change), else the existing heroes icon.
+        /// The image object is always named "HeroCardIcon" (see <see cref="AddHeroCardIcon"/>).
+        /// </summary>
+        public static Sprite HeroCardSprite()
+        {
+            return ToyKit.Get("hero_card_icon") ?? ToyKit.Get("icon_heroes");
+        }
+
+        /// <summary>Draws the hidden hero card: a card icon (image named "HeroCardIcon") with a big white "?" on it. Icon and mark only, no words.</summary>
+        public static Image AddHeroCardIcon(Transform parent, Vector2 anchor, Vector2 pos, float size)
+        {
+            Image ic = UiKit.AddImage(parent, "HeroCardIcon", HeroCardSprite(), Color.white);
+            ic.preserveAspect = true;
+            UiKit.Place(ic.rectTransform, anchor, pos, new Vector2(size, size));
+            Text q = UiKit.AddText(ic.transform, "Mark", "?", 60, Color.white, TextAnchor.MiddleCenter, true);
+            q.fontStyle = FontStyle.Bold;
+            q.raycastTarget = false;
+            q.horizontalOverflow = HorizontalWrapMode.Overflow;
+            q.verticalOverflow = VerticalWrapMode.Overflow;
+            q.fontSize = Mathf.RoundToInt(Mathf.Max(UiKit.MinBodyTextPx, size * 0.8f));   // a mark on an icon: sized by the icon, never below 16 sp
+            UiKit.Stretch(q.rectTransform);
+            return ic;
+        }
+
+        static List<Chip> MakeChips(BundleDef def, ArtCatalog art, bool compact = true, bool withHero = true)
         {
             var chips = new List<Chip>(7);
             if (def.Coins > 0) chips.Add(new Chip { Icon = art != null ? art.CoinIcon : null, Text = Compact(def.Coins), Width = CoinChipW });
-            // no gem chip: bundles contain only coins and power-ups (and later a character)
+            // no gem chip: bundles contain only coins and power-ups and the hero card
             foreach (BundlePowerUp p in def.PowerUps)
             {
                 PowerUp type = PowerUps.FromId(p.Id);
                 if (type == PowerUp.None) continue;
                 chips.Add(new Chip { IsPower = true, Power = type, Text = "x" + p.Count, Width = ChipW });
             }
-            // the hidden hero card: a mystery chip, never the hero (drawn at purchase, docs/37)
-            if (def.HiddenCard) chips.Add(new Chip { Icon = ToyKit.Get("icon_heroes"), Text = compact ? "? Hero card" : "?", Width = ChipW });
+            // the hidden hero card: a card icon with a "?", never the hero (drawn at purchase, docs/37)
+            if (def.HiddenCard && withHero) chips.Add(new Chip { IsHero = true, Text = "", Width = ChipW });
             return chips;
         }
 
         /// <summary>Rows of chips a bundle needs (1 or 2).</summary>
-        public static int ChipRows(BundleDef def)
+        public static int ChipRows(BundleDef def) { return ChipRows(def, true); }
+
+        public static int ChipRows(BundleDef def, bool withHero)
         {
             int n = 0;
             if (def.Coins > 0) n++;
             n += def.PowerUps.Count;
-            if (def.HiddenCard) n++;
+            if (def.HiddenCard && withHero) n++;
             return Mathf.Max(1, (n + ChipsPerRow - 1) / ChipsPerRow);
         }
 
@@ -100,17 +131,32 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         public static float AddChips(RectTransform parent, BundleDef def, ArtCatalog art, float left, float top)
         {
-            List<Chip> chips = MakeChips(def, art, false);
-            float x = 0f;
-            int row = 0, inRow = 0;
-            foreach (Chip c in chips)
+            return LayoutChips(parent, def, art, left, top, true, 0f);
+        }
+
+        /// <summary>Same, every row centred in <paramref name="centerWidth"/> (the popup panel width); <paramref name="withHero"/> false leaves the "?" card out (the reveal shows the hero itself).</summary>
+        public static float AddChipsCentered(RectTransform parent, BundleDef def, ArtCatalog art, float centerWidth, float top, bool withHero)
+        {
+            return LayoutChips(parent, def, art, 0f, top, withHero, centerWidth);
+        }
+
+        static float LayoutChips(RectTransform parent, BundleDef def, ArtCatalog art, float left, float top, bool withHero, float centerWidth)
+        {
+            List<Chip> chips = MakeChips(def, art, false, withHero);
+            int row = 0;
+            for (int start = 0; start < chips.Count; start += ChipsPerRow, row++)
             {
-                if (inRow == ChipsPerRow) { row++; inRow = 0; x = 0f; }
-                AddChip(parent, c, left + x, top + row * (ChipH + ChipGap));
-                x += c.Width + ChipGap;
-                inRow++;
+                int end = Mathf.Min(chips.Count, start + ChipsPerRow);
+                float rowW = 0f;
+                for (int k = start; k < end; k++) rowW += chips[k].Width + (k > start ? ChipGap : 0f);
+                float x = centerWidth > 0f ? Mathf.Max(0f, (centerWidth - rowW) * 0.5f) : left;
+                for (int k = start; k < end; k++)
+                {
+                    AddChip(parent, chips[k], x, top + row * (ChipH + ChipGap));
+                    x += chips[k].Width + ChipGap;
+                }
             }
-            return ChipBlockHeight(Mathf.Max(1, row + 1));
+            return ChipBlockHeight(Mathf.Max(1, row));
         }
 
         static void AddChip(RectTransform parent, Chip c, float x, float y)
@@ -129,6 +175,11 @@ namespace BoingUpSkyTower.Gameplay
             fill.rectTransform.anchorMax = Vector2.one;
             fill.rectTransform.offsetMin = new Vector2(5f, 5f);
             fill.rectTransform.offsetMax = new Vector2(-5f, -5f);
+            if (c.IsHero)
+            {
+                AddHeroCardIcon(root, new Vector2(0.5f, 0.5f), Vector2.zero, 112f);   // icon and "?" only
+                return;
+            }
             if (c.IsPower)
             {
                 PowerUpUi.AddIcon(root, "Icon", c.Power, new Vector2(0.5f, 1f), new Vector2(0f, -10f), 64f, false);
@@ -149,8 +200,79 @@ namespace BoingUpSkyTower.Gameplay
             crt.offsetMax = new Vector2(-2f, 76f);
         }
 
-        /// <summary>The line that tells about the hidden card before purchase (confirm popup, timer offer, screen reader label). Never names a hero.</summary>
-        public const string HiddenCardHint = "Contains 1 hero card: Uncommon or better";
+        /// <summary>The line that tells about the hidden card before purchase (confirm popup, screen reader label). Never names a hero.</summary>
+        public const string HiddenCardHint = "Includes 1 hidden hero card (?)";
+
+        // ---------------- the worth pill and the info button (shared with the timer popup) ----------------
+
+        /// <summary>Height of the worth pill: one line of the pill font plus padding (grows with the text scale).</summary>
+        public static float WorthPillH() { return Mathf.Ceil(Mathf.Max(WorthFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.2f) + 14f; }
+
+        /// <summary>Width of the worth pill for a text such as "x2.7" (star + text), at most <paramref name="maxW"/>.</summary>
+        public static float WorthPillW(string text, float maxW)
+        {
+            return Mathf.Min(maxW, Mathf.Ceil(40f + 36f + text.Length * 28f * UiKit.TextScale));
+        }
+
+        /// <summary>
+        /// The worth pill: a gold plate with a small star and the multiplier ("x2.5"). Icon plus number, no word. <paramref name="anchor"/> is both anchor and pivot
+        /// (for example (1,1) puts the pill's top-right corner at <paramref name="pos"/> from the parent's top-right).
+        /// </summary>
+        public static RectTransform AddWorthPill(Transform parent, string text, Vector2 anchor, Vector2 pos, float maxW)
+        {
+            float w = WorthPillW(text, maxW), h = WorthPillH();
+            RectTransform root = UiKit.Rect(parent, "WorthPill");
+            UiKit.Place(root, anchor, pos, new Vector2(w, h));
+            Image frame = ToyKit.Sliced(root, "Frame", Theme.RoundSprite, 22f);
+            frame.color = ChipFrame;
+            UiKit.Stretch(frame.rectTransform);
+            Image fill = ToyKit.Sliced(root, "Fill", Theme.RoundSprite, 18f);
+            fill.color = PillFill;
+            fill.rectTransform.anchorMin = Vector2.zero;
+            fill.rectTransform.anchorMax = Vector2.one;
+            fill.rectTransform.offsetMin = new Vector2(4f, 4f);
+            fill.rectTransform.offsetMax = new Vector2(-4f, -4f);
+            Image star = UiKit.AddImage(root, "Star", ToyKit.Get("icon_star"), new Color(1f, 0.98f, 0.9f, 1f));
+            star.preserveAspect = true;
+            UiKit.Place(star.rectTransform, new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(40f, 40f));
+            Text t = UiKit.AddText(root, "Worth", text, (int)WorthFont, WorthColor, TextAnchor.MiddleLeft, true);
+            UiKit.OnPanel(t);
+            t.color = WorthColor;
+            t.fontStyle = FontStyle.Bold;
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
+            t.resizeTextForBestFit = true;   // shrinks (never below 16 sp) instead of leaving the pill
+            t.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+            t.resizeTextMaxSize = t.fontSize;
+            var trt = (RectTransform)t.transform;
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = new Vector2(56f, 2f);
+            trt.offsetMax = new Vector2(-10f, -2f);
+            return root;
+        }
+
+        /// <summary>
+        /// The "i" button: a 48 dp transparent touch target with a circled i drawn in its middle (same look as the power-up cards). <paramref name="anchor"/> is both anchor and pivot.
+        /// Named <paramref name="name"/> ("BundleInfo" on the cards).
+        /// </summary>
+        public static Button AddInfoButton(Transform parent, string name, Vector2 anchor, Vector2 pos, string a11y, Action onTap)
+        {
+            Image hit = UiKit.AddImage(parent, name, null, new Color(0f, 0f, 0f, 0f));
+            hit.raycastTarget = true;
+            UiKit.Place(hit.rectTransform, anchor, pos, new Vector2(UiKit.MinTouchPx, UiKit.MinTouchPx));
+            var b = hit.gameObject.AddComponent<Button>();
+            b.transition = Selectable.Transition.None;
+            b.onClick.AddListener(() => { AudioManager.Play(Sfx.Tap); if (onTap != null) onTap(); });
+            hit.gameObject.AddComponent<A11yLabel>().Text = a11y;
+            Image ring = UiKit.AddImage(hit.transform, "Ring", Glyphs.Ring, Theme.Ink);
+            ring.raycastTarget = false;
+            UiKit.Place(ring.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(64f, 64f));
+            Text i = UiKit.AddText(ring.transform, "I", "i", 32, Theme.Ink, TextAnchor.MiddleCenter, true);
+            i.raycastTarget = false;
+            i.GetComponent<Outline>().enabled = false;
+            UiKit.Stretch((RectTransform)i.transform);
+            return b;
+        }
 
         /// <summary>Anchors a popup child to the top centre with a top pivot at y px from the panel top, so stacked rows can be computed from real heights.</summary>
         public static void PlaceTop(RectTransform rt, float y, float w, float h)
@@ -202,19 +324,21 @@ namespace BoingUpSkyTower.Gameplay
             if (withCardHint && def.HiddenCard)
             {
                 if (sb.Length > 0) sb.Append(separator);
-                sb.Append("1 hero card (Uncommon or better)");
+                sb.Append("1 hidden hero card");
             }
             return sb.ToString();
         }
 
         // ---------------- the slim bundle row ----------------
 
-        /// <summary>Width of a compact chip: icon, then the count (grows with the text scale so "12.9K" never overflows the frame).</summary>
-        static float CompactChipW(Chip c) { return Mathf.Min(textAreaW, Mathf.Ceil(70f + c.Text.Length * 26f * UiKit.TextScale)); }
+        /// <summary>Width of a compact chip: icon, then the count (grows with the text scale so "12.9K" never overflows the frame). The hero card chip is icon-only.</summary>
+        static float CompactChipW(Chip c)
+        {
+            if (c.IsHero) return 92f;
+            return Mathf.Min(textAreaW, Mathf.Ceil(70f + c.Text.Length * 26f * UiKit.TextScale));
+        }
 
         static float NameLineH() { return Mathf.Ceil(Mathf.Max(NameFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.2f); }
-
-        static float WorthLineH() { return Mathf.Ceil(Mathf.Max(WorthFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.2f); }
 
         /// <summary>1 or 2 name lines, estimated from the text length with a generous glyph width (the layout stays deterministic).</summary>
         static int NameLines(BundleDef def)
@@ -241,15 +365,20 @@ namespace BoingUpSkyTower.Gameplay
         static float TextBlockHeight(BundleDef def)
         {
             int rows = CompactRows(MakeChips(def, null));
-            return NameLines(def) * NameLineH() + WorthLineH() + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
+            return NameLines(def) * NameLineH() + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
         }
 
-        /// <summary>Height of a bundle row: the name and chip block, but never less than the price button (130 px) plus padding.</summary>
+        /// <summary>
+        /// Height of a bundle row: the name and chip block, the left column (the 48 dp "i" over the bag) and the right column (the worth pill over the price button), whichever is tallest.
+        /// </summary>
         public static float CardHeight(BundleDef def)
         {
             // every row has at least the height of a one-line name over two chip rows (1 and 2 chip rows look the same); 3 chip rows or a long name still grow
-            float uniform = RowPad * 2f + NameLineH() + WorthLineH() + NameGap + 2f * CompactChipH + CompactGap;
-            return Mathf.Max(Mathf.Max(RowPad * 2f + TextBlockHeight(def), RowPad * 2f + PriceH), uniform);
+            float uniform = RowPad * 2f + NameLineH() + NameGap + 2f * CompactChipH + CompactGap;
+            float textBlock = RowPad * 2f + TextBlockHeight(def);
+            float leftCol = InfoPad + LeftColW + BagGap + BagMaxSize + RowPad;
+            float rightCol = 12f + WorthPillH() + 10f + PriceH + RowPad;
+            return Mathf.Max(Mathf.Max(textBlock, uniform), Mathf.Max(leftCol, rightCol));
         }
 
         static void AddCompactChip(RectTransform parent, Chip c, float x, float y)
@@ -269,6 +398,11 @@ namespace BoingUpSkyTower.Gameplay
             fill.rectTransform.anchorMax = Vector2.one;
             fill.rectTransform.offsetMin = new Vector2(4f, 4f);
             fill.rectTransform.offsetMax = new Vector2(-4f, -4f);
+            if (c.IsHero)
+            {
+                AddHeroCardIcon(root, new Vector2(0.5f, 0.5f), Vector2.zero, 60f);   // icon and "?" only
+                return;
+            }
             var left = new Vector2(0f, 0.5f);
             if (c.IsPower) PowerUpUi.AddIcon(root, "Icon", c.Power, left, new Vector2(10f, 0f), 52f, false);
             else
@@ -290,13 +424,14 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// One slim bundle row (gold card) placed at the top of <paramref name="parent"/> from y, full width: bag icon, name and compact chips on the left,
-        /// the green gem-price button on the right. Returns the row height. <paramref name="price"/> is the gem price shown.
+        /// One slim bundle row (gold card) placed at the top of <paramref name="parent"/> from y, full width. Left: the "i" info button (top) over the bag. Middle: the name and the
+        /// compact chips (coins, power-ups, the hero card as an icon with a "?"). Right: the worth pill "x2.7" (top) over the green gem-price button.
+        /// Returns the row height. <paramref name="price"/> is the gem price shown; <paramref name="onInfo"/> opens the bundle's info popup (null = no "i").
         /// </summary>
-        public static float AddCard(RectTransform parent, BundleDef def, ArtCatalog art, float y, int price, Action onBuy)
+        public static float AddCard(RectTransform parent, BundleDef def, ArtCatalog art, float y, int price, Action onBuy, Action onInfo = null)
         {
             float h = CardHeight(def);
-            float top = (h - TextBlockHeight(def)) * 0.5f;   // centre the text block when the price button makes the row taller
+            float top = (h - TextBlockHeight(def)) * 0.5f;   // centre the text block when a side column makes the row taller
 
             RectTransform card = ShopChrome.Card(parent, "Bundle_" + def.Id, ShopChrome.FrameColor.Gold);
             card.anchorMin = new Vector2(0f, 1f);
@@ -305,10 +440,14 @@ namespace BoingUpSkyTower.Gameplay
             card.anchoredPosition = new Vector2(0f, -y);
             card.sizeDelta = new Vector2(0f, h);
 
+            string worthText = BundleWorth.Text(def, price);
+            if (onInfo != null)
+                AddInfoButton(card, "BundleInfo", new Vector2(0f, 1f), new Vector2(InfoPad, -InfoPad), "About " + def.Name + ": what is inside, the hero chance and the worth", onInfo);
+
             float icon = BagSize + (Mathf.Clamp(def.Tier, 1, 3) - 2) * 8f;   // the bag grows a little with the tier
             Image bag = UiKit.AddImage(card, "Bag", BagIcon(art), Color.white);
             bag.preserveAspect = true;
-            UiKit.Place(bag.rectTransform, new Vector2(0f, 0.5f), new Vector2(RowPad + (BagSize - icon) * 0.5f, 0f), new Vector2(icon, icon));
+            UiKit.Place(bag.rectTransform, new Vector2(0f, 1f), new Vector2(InfoPad + (LeftColW - icon) * 0.5f, -(InfoPad + LeftColW + BagGap + (BagMaxSize - icon) * 0.5f)), new Vector2(icon, icon));
 
             int lines = NameLines(def);
             Text name = UiKit.AddText(card, "Name", def.Name, (int)NameFont, UiKit.PanelInk, TextAnchor.MiddleLeft, true);
@@ -318,7 +457,7 @@ namespace BoingUpSkyTower.Gameplay
             name.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
             name.resizeTextMaxSize = name.fontSize;
             name.verticalOverflow = VerticalWrapMode.Truncate;
-            // stretch between the bag and the price button: the right edge is tied to the row, so it can never run under the button
+            // stretch between the left column and the right column: the right edge is tied to the row, so it can never run under the pill or the button
             var nrt = (RectTransform)name.transform;
             nrt.anchorMin = new Vector2(0f, 1f);
             nrt.anchorMax = new Vector2(1f, 1f);
@@ -326,25 +465,8 @@ namespace BoingUpSkyTower.Gameplay
             nrt.offsetMin = new Vector2(TextLeft, -(top + lines * NameLineH()));
             nrt.offsetMax = new Vector2(-PriceReserve, -top);
 
-            // "Worth $X" under the name (the VIP style): dollar value of everything inside at the shop's own prices
-            string worthText = BundleWorth.Text(def);
-            Text worth = UiKit.AddText(card, "Worth", worthText, (int)WorthFont, WorthColor, TextAnchor.MiddleLeft, true);
-            UiKit.OnPanel(worth);
-            worth.fontStyle = FontStyle.Bold;
-            worth.horizontalOverflow = HorizontalWrapMode.Wrap;
-            worth.resizeTextForBestFit = true;
-            worth.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
-            worth.resizeTextMaxSize = worth.fontSize;
-            worth.verticalOverflow = VerticalWrapMode.Truncate;
-            var wrt = (RectTransform)worth.transform;
-            wrt.anchorMin = new Vector2(0f, 1f);
-            wrt.anchorMax = new Vector2(1f, 1f);
-            wrt.pivot = new Vector2(0f, 1f);
-            wrt.offsetMin = new Vector2(TextLeft, -(top + lines * NameLineH() + WorthLineH()));
-            wrt.offsetMax = new Vector2(-PriceReserve, -(top + lines * NameLineH()));
-
-            // compact chips under the worth line, wrapping inside the text area
-            float chipTop = top + lines * NameLineH() + WorthLineH() + NameGap;
+            // compact chips under the name, wrapping inside the text area
+            float chipTop = top + lines * NameLineH() + NameGap;
             float x = 0f;
             int row = 0;
             foreach (Chip c in MakeChips(def, art))
@@ -355,9 +477,12 @@ namespace BoingUpSkyTower.Gameplay
                 x += w + CompactGap;
             }
 
-            string a11y = "Buy " + def.Name + " for " + Num(price) + " gems: " + Describe(def, ", ") + ". " + worthText;
+            // top right: the worth multiplier as a small pill (star + "x2.5")
+            AddWorthPill(card, worthText, new Vector2(1f, 1f), new Vector2(-RowPad, -12f), PriceW);
+
+            string a11y = "Buy " + def.Name + " for " + Num(price) + " gems: " + Describe(def, ", ") + ". " + worthText + " worth";
             Button buy = ShopChrome.PriceButton(card, "Buy", 1, art != null ? art.GemIcon : null, Num(price), a11y, onBuy, 44);
-            UiKit.Place((RectTransform)buy.transform, new Vector2(1f, 0.5f), new Vector2(-RowPad, 0f), new Vector2(PriceW, PriceH));
+            UiKit.Place((RectTransform)buy.transform, new Vector2(1f, 0f), new Vector2(-RowPad, RowPad), new Vector2(PriceW, PriceH));
             return h;
         }
 
@@ -459,7 +584,7 @@ namespace BoingUpSkyTower.Gameplay
             for (int i = 0; i < offers.Count; i++)
             {
                 BundleDef def = offers[i];
-                AddCard(list, def, art, y, def.PriceGems, () => TapBuy(body, progress, art, host, refreshWallet, def));
+                AddCard(list, def, art, y, def.PriceGems, () => TapBuy(body, progress, art, host, refreshWallet, def), () => ShowInfo(host, progress, art, def, def.PriceGems, null));
                 y += heights[i] + RowGap;
             }
 
@@ -501,7 +626,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             if (price > ProgressService.BundleConfirmAboveGems)
             {
-                host.OpenPopup("Confirm purchase", "Buy " + def.Name + " for " + Num(price) + " gems?\nYou have " + Num(progress.Gems) + " gems." + (def.HiddenCard ? "\n" + HiddenCardHint + "." : ""), 1180f);
+                host.OpenPopup("Confirm purchase", "Buy " + def.Name + " for " + Num(price) + " gems?\nYou have " + Num(progress.Gems) + " gems.\n" + BundleWorth.Text(def, price) + " worth" + (def.HiddenCard ? "\n" + HiddenCardHint : ""), 1180f);
                 host.PopupButton("Buy for " + Num(price) + " gems", true, 230f, () => CompleteBuy(body, progress, art, host, refreshWallet, def));
                 host.PopupButton("Cancel", false, 60f, host.ClosePopup);
                 return;
@@ -514,18 +639,18 @@ namespace BoingUpSkyTower.Gameplay
             host.ClosePopup();
             CharacterSpec card;
             BundleResult r = progress.TryBuyBundle(def, out card);
-            ShowResult(host, refreshWallet, def, r, card);
+            ShowResult(host, refreshWallet, def, r, card, def.PriceGems);
         }
 
-        /// <summary>Feedback after a purchase attempt: a summary of everything received, or the reason it failed. Shared with the timer offer.</summary>
-        public static void ShowResult(ShopScreen.Host host, Action refreshWallet, BundleDef def, BundleResult result, CharacterSpec card = null)
+        /// <summary>Feedback after a purchase attempt: a summary of everything received, or the reason it failed. Shared with the timer offer. <paramref name="paid"/> = gems really paid (0 = list price), for the "x worth" tag.</summary>
+        public static void ShowResult(ShopScreen.Host host, Action refreshWallet, BundleDef def, BundleResult result, CharacterSpec card = null, int paid = 0)
         {
             switch (result)
             {
                 case BundleResult.Ok:
                     AudioManager.Play(Sfx.PowerUp);
                     if (refreshWallet != null) refreshWallet();
-                    ShowReveal(host, def, card);
+                    ShowReveal(host, def, card, paid);
                     break;
                 case BundleResult.NotEnoughGems:
                     Info(host, "Not enough gems", "You do not have enough gems for " + def.Name + ".");
@@ -537,29 +662,30 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// After a purchase: "You got: name (rarity)" with the hero portrait and the rarity colour, then what else came in the bundle. Falls back to a plain popup
-        /// when the host has no overlay or no card was drawn (no card hero exists yet, CUX-10). The card is already saved (ProgressService.AddCopies).
+        /// After a purchase: the revealed hero with its portrait, "You got: name (rarity)" in the rarity colour, the worth pill ("x2.7"), then what else came in the bundle as icons.
+        /// Falls back to a plain popup when the host has no overlay or no card was drawn (no card hero exists yet, CUX-10). The card is already saved (ProgressService.AddCopies).
         /// </summary>
-        public static void ShowReveal(ShopScreen.Host host, BundleDef def, CharacterSpec card)
+        public static void ShowReveal(ShopScreen.Host host, BundleDef def, CharacterSpec card, int paid = 0)
         {
             string also = Describe(def, ", ", false);
+            string worthWord = BundleWorth.Text(def, paid) + " worth";
             if (card == null || host.NewOverlay == null)
             {
                 string head = card != null ? "You got: " + card.Name + " (" + BundleCards.RarityName(card.Rarity) + ")\n" : "";
-                Info(host, "Bundle bought!", head + def.Name + "\n" + also, 1180f);
+                Info(host, "Bundle bought!", head + def.Name + "\n" + also + "\n" + worthWord, 1180f);
                 return;
             }
             ArtCatalog art = GameSession.Art;
             RectTransform overlay = host.NewOverlay();
             string rarity = BundleCards.RarityName(card.Rarity);
             string richPlain = "You got: " + card.Name + " (" + rarity + ")";
-            string alsoText = "Also in " + def.Name + ":\n" + also;
-            const float dollH = 480f, dollTop = 190f, gap = 12f;
+            const float dollH = 480f, dollTop = 190f, gap = 12f, panelW = 860f;
             float nameY = dollTop + dollH + gap, nameH = TextHeight(richPlain, 50f, 780f);
-            float alsoY = nameY + nameH + gap, alsoH = TextHeight(alsoText, 40f, 780f);
+            float pillY = nameY + nameH + gap, pillH = WorthPillH();
+            float chipsY = pillY + pillH + gap, chipsH = ChipBlockHeight(ChipRows(def, false));
             float buttonReserve = 50f + Mathf.Max(170f, UiKit.MinTouchRef) + gap;   // the OK button: 50 px up from the bottom, at most 170 px tall (or the 48 dp minimum)
-            float panelH = Mathf.Max(1400f, alsoY + alsoH + buttonReserve);
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, "You got!", art, new Vector2(860f, panelH), host.CloseOverlay);
+            float panelH = Mathf.Max(1400f, chipsY + chipsH + buttonReserve);
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, "You got!", art, new Vector2(panelW, panelH), host.CloseOverlay);
             panel.name = "CardReveal";
 
             CharacterDef who = CharacterCatalog.Get(card.Id);
@@ -576,12 +702,89 @@ namespace BoingUpSkyTower.Gameplay
             nm.horizontalOverflow = HorizontalWrapMode.Wrap;
             PlaceTop((RectTransform)nm.transform, nameY, 780f, nameH);
 
-            Text rest = UiKit.AddText(panel, "AlsoGot", alsoText, 40, UiKit.PanelInk, TextAnchor.MiddleCenter);
-            UiKit.OnPanel(rest);
-            rest.horizontalOverflow = HorizontalWrapMode.Wrap;
-            PlaceTop((RectTransform)rest.transform, alsoY, 780f, alsoH);
+            AddWorthPill(panel, BundleWorth.Text(def, paid), new Vector2(0.5f, 1f), new Vector2(0f, -pillY), PriceW);   // "x2.7" with the star
+            AddChipsCentered(panel, def, art, panelW, chipsY, false);   // what else came in the bundle, as icons with amounts
 
             ToyKit.PopupAction(panel, "OK", ToyKit.Button(1), Color.white, 50f, host.CloseOverlay);
+        }
+
+        // ---------------- the info popup ("i") ----------------
+
+        /// <summary>
+        /// The "i" popup of ONE bundle (owner Bug List 1 B4.a.vi): its contents as icons with amounts (coins, each power-up, the "?" hero card), the hero card line
+        /// (heroes from the player's open regions), the chance per rarity (Uncommon 70, Rare 20, Elite 10) and "x2.7 worth for 340 gems". Icons first, short text, all at least 16 sp.
+        /// <paramref name="price"/> = gems paid for this bundle (the list price, or the timer offer price). <paramref name="onDone"/> runs on OK and X (null = close the popup);
+        /// the timer offer passes a callback that opens its offer again.
+        /// </summary>
+        public static void ShowInfo(ShopScreen.Host host, ProgressService progress, ArtCatalog art, BundleDef def, int price, Action onDone)
+        {
+            if (host == null || def == null) return;
+            if (onDone == null) onDone = host.CloseOverlay ?? host.ClosePopup;
+            int regions = progress != null ? progress.BundleOpenRegionCount() : 1;
+            string heroText = "Heroes from your open regions (" + regions + ")";
+            string worthLine = BundleWorth.Line(def, price);
+            if (host.NewOverlay == null)
+            {
+                string chance = BundleCards.RarityName(BundleCards.Tiers[0]) + " " + BundleCards.ChancePercent(0) + "%, " + BundleCards.RarityName(BundleCards.Tiers[1]) + " " + BundleCards.ChancePercent(1)
+                                + "%, " + BundleCards.RarityName(BundleCards.Tiers[2]) + " " + BundleCards.ChancePercent(2) + "%";
+                host.OpenPopup(def.Name, Describe(def, "\n", false) + (def.HiddenCard ? "\n? " + heroText + "\n" + chance : "") + "\n" + worthLine, 1180f);
+                host.PopupButton("OK", false, 60f, onDone);
+                return;
+            }
+            RectTransform overlay = host.NewOverlay();
+            const float panelW = 860f, W = 780f, gap = 12f, chipsY = 215f, colW = 250f, colGap = 15f;
+            float chipsH = ChipBlockHeight(ChipRows(def));
+            float heroY = chipsY + chipsH + gap * 2f, heroH = def.HiddenCard ? Mathf.Max(80f, TextHeight(heroText, 40f, W - 100f)) : 0f;
+            float chanceY = heroY + heroH + (def.HiddenCard ? gap : 0f);
+            float chanceH = def.HiddenCard ? TextHeight("Uncommon\n70%", 40f, colW) : 0f;
+            float worthY = chanceY + chanceH + (def.HiddenCard ? gap : 0f), worthH = WorthPillH();
+            float buttonReserve = 50f + Mathf.Max(170f, UiKit.MinTouchRef) + gap;
+            float panelH = Mathf.Max(1100f, worthY + worthH + buttonReserve);
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, def.Name, art, new Vector2(panelW, panelH), onDone);
+            panel.name = "BundleInfoPopup";
+
+            AddChipsCentered(panel, def, art, panelW, chipsY, true);
+
+            if (def.HiddenCard)
+            {
+                RectTransform hero = UiKit.Rect(panel, "HeroLine");
+                PlaceTop(hero, heroY, W, heroH);
+                AddHeroCardIcon(hero, new Vector2(0f, 0.5f), new Vector2(4f, 0f), 72f);
+                Text ht = UiKit.AddText(hero, "HeroText", heroText, 40, UiKit.PanelInk, TextAnchor.MiddleLeft);
+                UiKit.OnPanel(ht);
+                ht.horizontalOverflow = HorizontalWrapMode.Wrap;
+                ht.resizeTextForBestFit = true;
+                ht.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+                ht.resizeTextMaxSize = ht.fontSize;
+                var hrt = (RectTransform)ht.transform;
+                hrt.anchorMin = Vector2.zero;
+                hrt.anchorMax = Vector2.one;
+                hrt.offsetMin = new Vector2(92f, 0f);
+                hrt.offsetMax = Vector2.zero;
+
+                float x0 = (panelW - (3f * colW + 2f * colGap)) * 0.5f;
+                for (int i = 0; i < BundleCards.Tiers.Length; i++)
+                {
+                    CharacterRarity tier = BundleCards.Tiers[i];
+                    string label = BundleCards.RarityName(tier) + "\n" + BundleCards.ChancePercent(i) + "%";
+                    Text ct = UiKit.AddText(panel, "Chance_" + BundleCards.RarityName(tier), label, 40, RarityInk(tier), TextAnchor.MiddleCenter, true);
+                    UiKit.OnPanel(ct);
+                    ct.color = RarityInk(tier);
+                    ct.fontStyle = FontStyle.Bold;
+                    ct.horizontalOverflow = HorizontalWrapMode.Wrap;
+                    ct.resizeTextForBestFit = true;
+                    ct.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+                    ct.resizeTextMaxSize = ct.fontSize;
+                    var crt = (RectTransform)ct.transform;
+                    crt.anchorMin = crt.anchorMax = new Vector2(0f, 1f);
+                    crt.pivot = new Vector2(0f, 1f);
+                    crt.anchoredPosition = new Vector2(x0 + i * (colW + colGap), -chanceY);
+                    crt.sizeDelta = new Vector2(colW, chanceH);
+                }
+            }
+
+            AddWorthPill(panel, worthLine, new Vector2(0.5f, 1f), new Vector2(0f, -worthY), W);   // star + "x2.7 worth for 340 gems"
+            ToyKit.PopupAction(panel, "OK", ToyKit.Button(1), Color.white, 50f, onDone);
         }
 
         // ---------------- refresh ----------------

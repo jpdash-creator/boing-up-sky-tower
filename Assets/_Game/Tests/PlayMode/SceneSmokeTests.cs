@@ -81,6 +81,8 @@ namespace BoingUpSkyTower.Tests
             Time.captureFramerate = 60;   // every frame advances exactly 1/60 s, so frame counts are deterministic in batch mode
             GameSession.Reset();
             GameSession.InitForTests(new MemorySaveStore());
+            GoogleConnectPrompt.ResetForTests();
+            GoogleConnectPrompt.AutoShow = false;   // Bug List 1 B1.c: the Google connect pop-up is tested on its own, not over every Home screen
         }
 
         [TearDown]

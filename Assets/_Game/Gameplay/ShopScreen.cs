@@ -9,13 +9,13 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The in-game shop (docs/14, docs/22, docs/23; restyled by docs/26 section 1 to the reference screenshots). Six tabs in the bottom bar (owner issue 35):
-    /// Bundles | VIP | Heroes | Power-ups | Coins | Gems, all built inside <see cref="ShopChrome"/> (Momo shopkeeper scene on a wood background, ribbon title, framed cards).
-    /// Bundles is built by BundlesScreen; VIP (crown) is ONE scrollable page with two sections, Subscription first (<see cref="SubscriptionScreen"/>) then Chests
-    /// (<see cref="TreasureChestScreen"/>); Heroes is a "coming soon" placeholder (nothing to buy); Power-ups sells the power-ups (a coins and a gems
-    /// Buy button each); Coins sells coin packs for gems (real); Gems sells gem packs (TEST purchases in development builds, nothing in release builds because
-    /// there is no billing yet). Characters stay on the Heroes screen. Built in code under the safe area. Menu screen only: it has no per-frame code.
-    /// The VIP and Heroes pages live in ShopScreen.Subscription.cs. There is no ticket / Rewards / Subscription button in the header any more.
+    /// The in-game shop (docs/14, docs/22, docs/23; restyled by docs/26 section 1 to the reference screenshots). Four tabs in the bottom bar (Bug List 1 section 4):
+    /// Bundles | Crown | Character / Power-ups | Gems / Coins, all built inside <see cref="ShopChrome"/> (Momo shopkeeper scene on a wood background, yellow banner, framed cards).
+    /// Bundles is built by BundlesScreen; Crown is ONE scrollable page, Subscription (<see cref="SubscriptionScreen"/>) then a Chests banner and
+    /// (<see cref="TreasureChestScreen"/>); Character / Power-ups is one page: a Heroes "coming soon" card (nothing to buy), then the Power-ups cards (a coins and a gems
+    /// Buy button each); Gems / Coins is one page: gem packs (TEST purchases in development builds, nothing in release builds because there is no billing yet), then
+    /// a Coins banner and the coin packs for gems (real). Characters stay on the Heroes screen. Built in code under the safe area. Menu screen only: it has no per-frame code.
+    /// The Crown and Character pages live in ShopScreen.Subscription.cs. There is no ticket / Rewards / Subscription button in the header any more.
     /// </summary>
     public sealed partial class ShopScreen
     {
@@ -32,11 +32,17 @@ namespace BoingUpSkyTower.Gameplay
             public Action OpenTreasureChests;
         }
 
-        public const int TabBundles = ShopChrome.TabBundles, TabVip = ShopChrome.TabVip, TabHeroes = ShopChrome.TabHeroes, TabPowerups = ShopChrome.TabPowerups, TabCoins = ShopChrome.TabCoins, TabGems = ShopChrome.TabGems;
+        public const int TabBundles = ShopChrome.TabBundles, TabVip = ShopChrome.TabVip, TabCharacter = ShopChrome.TabCharacter, TabGems = ShopChrome.TabGems;
+        /// <summary>Old ids: Heroes and Power-ups are sections of the Character tab, Coins is a section of the Gems tab.</summary>
+        public const int TabHeroes = ShopChrome.TabCharacter, TabPowerups = ShopChrome.TabCharacter, TabCoins = ShopChrome.TabGems;
         /// <summary>The sections of the VIP tab (the "section" argument of ShowShop(TabVip, section)): Subscription first, Chests under it.</summary>
         public const int VipSubscriptionSection = 0, VipChestsSection = 1;
-        /// <summary>Kept for callers that still pass a section: ShowShop(TabGems, CoinsSection) opens the Coins tab.</summary>
+        /// <summary>The sections of the Character tab: the Heroes banner and card on top, the Power-ups banner and cards under it.</summary>
+        public const int HeroesSection = 0, PowerupsSection = 1;
+        /// <summary>The sections of the Gems tab: ShowShop(TabGems, CoinsSection) opens the page scrolled to the Coins banner.</summary>
         public const int GemsSection = 0, CoinsSection = 1;
+        /// <summary>Default of the "section" argument: the Character page opens scrolled to Power-ups (what the old Power-ups tab showed), every other page at its top.</summary>
+        public const int AutoSection = -1;
         /// <summary>Spending more gems than this asks for a confirmation first (docs/14 FR-SHOP-20).</summary>
         public const int ConfirmGemThreshold = 50;
 
@@ -45,7 +51,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Tests set this to audit the development-build layout in the editor (where GameSettings.DevBuild is false).</summary>
         public static bool? TestPurchasesOverride;
 
-        public static bool TestPurchasesEnabled { get { return TestPurchasesOverride ?? GameSettings.SystemTest; } }
+        public static bool TestPurchasesEnabled { get { return TestPurchasesOverride ?? GameSettings.ShopTest; } }
 
         // Layout (reference pixels). Cards are anchored by fractions of the content width.
         const float CardGap = 14f, ColGap = 16f, ButtonH = 126f;
@@ -69,7 +75,7 @@ namespace BoingUpSkyTower.Gameplay
 
         public int Tab { get; private set; }
         /// <summary>Gems or Coins (legacy view of the tab for callers that think in sections).</summary>
-        public int Section { get { return Tab == TabCoins ? CoinsSection : GemsSection; } }
+        public int Section { get { return pageSection; } }
         public Text CoinText { get; private set; }
         public Text GemText { get; private set; }
         public Text StarText { get; private set; }
@@ -102,9 +108,10 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Builds the scene with the wallet and the page for the given tab (a legacy Gems tab with the Coins section opens Coins).</summary>
         public void Build(int tab, int section)
         {
-            if (tab == TabGems && section == CoinsSection) tab = TabCoins;
             Tab = Mathf.Clamp(tab, 0, ShopChrome.TabCount - 1);
-            vipSection = tab == TabVip && section == VipChestsSection ? VipChestsSection : VipSubscriptionSection;
+            if (section < 0) section = Tab == TabCharacter ? PowerupsSection : 0;
+            pageSection = section == 1 ? 1 : 0;   // the second section of a page (Chests, Power-ups, Coins) or the first
+            keepY = -1f;
             Text coin, gem, star;
             ShopChrome.BuildScene(screen, art, progress, out coin, out gem, out star);
             CoinText = coin;
@@ -113,27 +120,25 @@ namespace BoingUpSkyTower.Gameplay
             RebuildBody();
         }
 
-        public void SelectTab(int tab)
+        /// <summary>Opens a tab, scrolled to its first section, or to the second one (Chests, Power-ups, Coins) when <paramref name="section"/> is 1.</summary>
+        public void SelectTab(int tab, int section = 0)
         {
             Tab = Mathf.Clamp(tab, 0, ShopChrome.TabCount - 1);
-            vipSection = VipSubscriptionSection;
-            vipKeepY = -1f;
+            pageSection = section == 1 ? 1 : 0;
+            keepY = -1f;
             RebuildBody();
         }
 
         /// <summary>Opens the VIP tab scrolled to its Subscription or Chests section.</summary>
         public void OpenVip(int section)
         {
-            Tab = TabVip;
-            vipSection = section == VipChestsSection ? VipChestsSection : VipSubscriptionSection;
-            vipKeepY = -1f;
-            RebuildBody();
+            SelectTab(TabVip, section);
         }
 
-        /// <summary>Legacy: Gems or Coins.</summary>
+        /// <summary>Legacy: Gems or Coins (both are sections of the Gems tab now).</summary>
         public void SelectSection(int section)
         {
-            SelectTab(section == CoinsSection ? TabCoins : TabGems);
+            SelectTab(TabGems, section);
         }
 
         /// <summary>Sets the three wallet pills from the save (the host also refreshes the coin and gem ones on every wallet change).</summary>
@@ -158,18 +163,16 @@ namespace BoingUpSkyTower.Gameplay
             }
             treasure = null;
             vipSubscription = null;
-            body = ShopChrome.BuildBody(screen, ShopChrome.TabNames[Tab], ShopChrome.RibbonColor.Yellow);   // same yellow italic header on every page
+            body = ShopChrome.BuildBody(screen, ShopChrome.TabTitles[Tab], ShopChrome.RibbonColor.Yellow);   // the yellow banner = the page's first section (no VIP header)
             page = (RectTransform)body.parent;
             switch (Tab)
             {
                 case TabBundles: BuildBundles(); break;
-                case TabVip: BuildVip(); break;          // ShopScreen.Subscription.cs
-                case TabHeroes: BuildHeroes(); break;    // ShopScreen.Subscription.cs
-                case TabPowerups: BuildPowerUps(); break;
-                case TabCoins: BuildPackList(false); break;
-                default: BuildPackList(true); break;
+                case TabVip: BuildVip(); break;              // ShopScreen.Subscription.cs: Subscription, then the Chests banner
+                case TabCharacter: BuildCharacter(); break;  // ShopScreen.Subscription.cs: Heroes card, then the Power-ups banner and cards
+                default: BuildGemsCoins(); break;            // Gems packs, then the Coins banner and packs
             }
-            bar = ShopChrome.BuildTabBar(screen, Tab, SelectTab, null);
+            bar = ShopChrome.BuildTabBar(screen, Tab, t => SelectTab(t), null);
             RefreshWallet();
         }
 
@@ -219,30 +222,27 @@ namespace BoingUpSkyTower.Gameplay
 
         string lastBoughtId;
 
-        void BuildPowerUps()
+        /// <summary>The power-up cards (and, in test builds, the "add 3 of each" button) as layout children of the Character page list.</summary>
+        void BuildPowerUps(RectTransform pageList)
         {
-            bool dev = TestPurchasesEnabled;
-            RectTransform area = body;
-            if (dev)
+            if (TestPurchasesEnabled)
             {
-                Button give = UiKit.AddButton(body, "TestGive", "Test: add 3 of each", Btn(0), Color.white, new Vector2(760f, 126f), TestGrantAll, 44);
-                UiKit.Place((RectTransform)give.transform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(760f, 126f));
+                Button give = UiKit.AddButton(pageList, "TestGive", "Test: add 3 of each", Btn(0), Color.white, new Vector2(760f, 126f), TestGrantAll, 44);
                 give.GetComponent<A11yLabel>().Text = "Test only: add 3 of every power-up";
-                area = UiKit.Rect(body, "ListHost");
-                area.anchorMin = Vector2.zero;
-                area.anchorMax = Vector2.one;
-                area.offsetMin = Vector2.zero;
-                area.offsetMax = new Vector2(0f, -140f);
+                var gle = give.gameObject.AddComponent<LayoutElement>();
+                gle.minHeight = gle.preferredHeight = 126f;
             }
             var defs = new System.Collections.Generic.List<PowerUpDef>(progress.PowerUpDefs.Implemented);
             defs.Sort((x, y) => x.CoinPrice != y.CoinPrice ? x.CoinPrice.CompareTo(y.CoinPrice) : y.Order.CompareTo(x.Order));   // cheapest first, Flight last (owner 2026-10-24)
-            RectTransform list = ShopChrome.ScrollArea(area, ((defs.Count + 2) / 3) * (PowerCardH + CardGap));
+            RectTransform grid = UiKit.Rect(pageList, "PowerUpGrid");
+            var gridLe = grid.gameObject.AddComponent<LayoutElement>();
+            gridLe.minHeight = gridLe.preferredHeight = ((defs.Count + 2) / 3) * (PowerCardH + CardGap);
             for (int i = 0; i < defs.Count; i++)
             {
                 int row, col, cols;
                 float off;
                 Cell3(i, defs.Count, out row, out col, out cols, out off);
-                BuildPowerUpCard(list, row * (PowerCardH + CardGap), col, cols, off, defs[i]);
+                BuildPowerUpCard(grid, row * (PowerCardH + CardGap), col, cols, off, defs[i]);
             }
         }
 
@@ -332,7 +332,7 @@ namespace BoingUpSkyTower.Gameplay
             if (!TestPurchasesEnabled) return;
             foreach (PowerUpDef d in progress.PowerUpDefs.Implemented) progress.GrantPowerUp(d.Id, 3);
             lastBoughtId = null;
-            RebuildBody();
+            RebuildKeepScroll();
         }
 
         /// <summary>Tap on a Buy button: too few coins or gems explains it and points to the right place; a gem spend above 50 asks first.</summary>
@@ -349,7 +349,7 @@ namespace BoingUpSkyTower.Gameplay
                 host.PopupButton(coins ? "Get coins" : "Get gems", true, 230f, () =>
                 {
                     host.ClosePopup();
-                    SelectTab(coins ? TabCoins : TabGems);
+                    SelectTab(TabGems, coins ? CoinsSection : GemsSection);
                 });
                 host.PopupButton("Close", false, 60f, host.ClosePopup);
                 return;
@@ -373,7 +373,7 @@ namespace BoingUpSkyTower.Gameplay
                 case PowerUpBuyResult.Ok:
                     lastBoughtId = def.Id;
                     AudioManager.Play(Sfx.PowerUp);
-                    RebuildBody();   // the card shows the new count and a "Bought!" mark; the wallet follows through the host
+                    RebuildKeepScroll();   // the card shows the new count and a "Bought!" mark; the wallet follows through the host
                     break;
                 case PowerUpBuyResult.NotEnoughCoins:
                     Info("Not enough coins", "You do not have enough coins for " + def.Name + ".");
@@ -395,7 +395,17 @@ namespace BoingUpSkyTower.Gameplay
         static float TextK { get { return Mathf.Max(1f, UiKit.TextScale) - 1f; } }
         static float AmountH { get { return 58f + TextK * 80f; } }
 
-        void BuildPackList(bool gems)
+        /// <summary>The Gems / Coins page: the page banner "Gems" and the gem packs, then a "Coins" banner and the coin packs, in one scrolling list.</summary>
+        void BuildGemsCoins()
+        {
+            RectTransform list = NewSectionedList();
+            BuildPackList(true, list);
+            RectTransform coinsBanner = ShopChrome.SectionBanner(list, "Coins");
+            BuildPackList(false, list);
+            AttachScroller(list, pageSection == CoinsSection ? coinsBanner : null);
+        }
+
+        void BuildPackList(bool gems, RectTransform pageList)
         {
             progress.FirstPurchaseDoubleActive = GameSettings.FirstPurchaseDouble;   // switch, OFF by default
             int count = gems ? catalog.GemPacks.Count : catalog.CoinPacks.Count;
@@ -416,7 +426,9 @@ namespace BoingUpSkyTower.Gameplay
             // picture, label, amount, list price, note, gap, then the price strip (dark band with the green button)
             packCardH = PileTop + PileH + packLabelSlot + AmountH + packListPriceSlot + packNoteSlot + 8f + StripH + 9f;
             int rows = (count + 2) / 3;
-            RectTransform list = ShopChrome.ScrollArea(body, rows * (packCardH + CardGap));
+            RectTransform list = UiKit.Rect(pageList, gems ? "GemGrid" : "CoinGrid");
+            var gridLe = list.gameObject.AddComponent<LayoutElement>();
+            gridLe.minHeight = gridLe.preferredHeight = rows * (packCardH + CardGap);
             for (int i = 0; i < count; i++)
             {
                 int row, col, cols;
@@ -607,7 +619,7 @@ namespace BoingUpSkyTower.Gameplay
                 int added = progress.GemsFromPack(pack);
                 if (progress.GrantTestGemPurchase(pack) == ShopResult.Ok)
                 {
-                    RebuildBody();   // the first-purchase text goes away and the coin cards re-check what the player can afford
+                    RebuildKeepScroll();   // the first-purchase text goes away and the coin cards re-check what the player can afford
                     Info("Test buy complete", "+" + Num(added) + " gems added.\nThis was a test purchase.");
                 }
             });
@@ -624,7 +636,7 @@ namespace BoingUpSkyTower.Gameplay
             int price = progress.CoinPackPrice(pack);
             if (progress.Gems < price)
             {
-                SelectTab(TabGems);
+                SelectTab(TabGems, GemsSection);   // not enough gems: straight to the Gems banner at the top of the page
                 return;
             }
             host.OpenPopup("Confirm purchase", "Buy " + Num(pack.Coins) + " coins for " + Num(price) + " gems?\nYou have " + Num(progress.Gems) + " gems.", 1180f);
@@ -638,7 +650,7 @@ namespace BoingUpSkyTower.Gameplay
             ShopResult result = progress.TryBuyCoinPack(pack);
             if (result == ShopResult.Ok)
             {
-                RebuildBody();   // cards the player can no longer afford now show their gem shortfall
+                RebuildKeepScroll();   // cards the player can no longer afford now show their gem shortfall
                 Info("Coins purchased", "+" + Num(pack.Coins) + " coins added.");
             }
             else Info("Not enough gems", "You do not have enough gems for this pack.");

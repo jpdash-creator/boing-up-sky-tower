@@ -9,7 +9,7 @@ namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The shared look of every shop page (docs/26 section 1, reference screenshots SS11 to SS15): the Momo shopkeeper scene across the top on a
-    /// brownish wood background, a ribbon title, framed cards, and the bottom tab bar Bundles | VIP | Heroes | Power-ups | Coins | Gems (the selected tab is
+    /// brownish wood background, a ribbon title, framed cards, and the bottom tab bar Bundles | Crown | Character / Power-ups | Gems / Coins (the selected tab is
     /// yellow, the others are blue icon-only, a tab can carry a red dot). Menu screens only: everything is built once in code,
     /// nothing runs per frame. All touch targets are at least 48 dp; every position is an anchor or a fraction of the width, so it fits 9:16, 9:19.5,
     /// 9:21 and 3:4, the safe area and 130 percent text.
@@ -23,7 +23,7 @@ namespace BoingUpSkyTower.Gameplay
     ///   ShopChrome.Ribbon(parent, title, RibbonColor, anchor, pos, size)   yellow, red or blue ribbon with a title.
     ///   ShopChrome.PriceButton(parent, name, role, icon, text, a11y, onClick)   kit button (role 1 green, 0 yellow, 2 blue, 3 red) with an optional icon.
     ///   ShopChrome.IconPile(area, icon, tier01)   code-drawn pile of icons that grows with tier01 (fallback for the gem and coin pile pictures).
-    ///   ShopChrome.BuildTabBar(screen, selected, onSelect, bool[] dots)   the 5-tab bar; dots may be null; returns the bar root (destroy it to rebuild).
+    ///   ShopChrome.BuildTabBar(screen, selected, onSelect, bool[] dots)   the 4-tab bar; dots may be null; returns the bar root (destroy it to rebuild).
     ///   Layout constants: ContentTop (px below the safe-area top where the content starts), ContentBottom (tab bar reserve), SideMargin.
     /// </summary>
     public static class ShopChrome
@@ -31,12 +31,42 @@ namespace BoingUpSkyTower.Gameplay
         public enum RibbonColor { Yellow, Red, Blue }
         public enum FrameColor { Blue, Gold, Green }
 
-        /// <summary>Bottom bar order (owner issue 35): Bundles | VIP (crown; Subscription section then Chests section) | Heroes (coming soon) | Power-ups | Coins | Gems.</summary>
-        public const int TabBundles = 0, TabVip = 1, TabHeroes = 2, TabPowerups = 3, TabCoins = 4, TabGems = 5, TabCount = 6;
-        /// <summary>Page titles by tab (ribbon text and accessibility names).</summary>
-        public static readonly string[] TabNames = { "Bundles", "VIP", "Heroes", "Power Ups", "Coins", "Gems" };
-        /// <summary>Icon of each tab (Resources/Art/Ui); the Heroes tab uses the same art as the global bar's Heroes button.</summary>
-        static readonly string[] TabIcons = { "icon_bundle", "icon_crown", "icon_heroes", "icon_bolt", "icon_coin", "icon_gem" };
+        /// <summary>
+        /// Bottom bar (Bug List 1 section 4): exactly four tabs. Bundles | Crown (Subscription section, then Chests) | Character / Power-ups (Heroes section,
+        /// then Power-ups) | Gems / Coins (Gems section, then Coins). The old ids are aliases: Heroes and Power-ups = Character, Coins = Gems.
+        /// </summary>
+        public const int TabBundles = 0, TabVip = 1, TabCharacter = 2, TabGems = 3, TabCount = 4;
+        public const int TabHeroes = TabCharacter, TabPowerups = TabCharacter, TabCoins = TabGems;
+        /// <summary>Accessibility names of the tabs.</summary>
+        public static readonly string[] TabNames = { "Bundles", "Subscription and Chests", "Character and Power-ups", "Gems and Coins" };
+        /// <summary>The yellow banner at the top of each page = its first section (the VIP header is gone).</summary>
+        public static readonly string[] TabTitles = { "Bundles", "Subscription", "Heroes", "Gems" };
+        /// <summary>Icon of each tab (Resources/Art/Ui); the two merged tabs use <see cref="ShopIcons"/>.</summary>
+        static readonly string[] TabIcons = { "icon_bundle", "icon_crown", "icon_heroes", "icon_gem" };
+
+        static Sprite TabSprite(int i)
+        {
+            switch (i)
+            {
+                case TabBundles: return BundlesScreen.BagIcon(null) ?? ToyKit.Get(TabIcons[i]);   // Bundles tab = the same bag as the bundle rows
+                case TabCharacter: return ShopIcons.CharacterPower;
+                case TabGems: return ShopIcons.GemsCoins;
+                default: return ToyKit.Get(TabIcons[i]);
+            }
+        }
+
+        /// <summary>
+        /// A yellow section banner inside a scrolling page, centred like the page's top banner. A layout child (height <see cref="RibbonH"/>); the vertical
+        /// layout's spacing is the gap above it. Returns the host rect (the page scrolls to it).
+        /// </summary>
+        public static RectTransform SectionBanner(RectTransform parent, string title)
+        {
+            RectTransform host = UiKit.Rect(parent, "Banner_" + title);
+            var le = host.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = le.preferredHeight = RibbonH;
+            Ribbon(host, title, RibbonColor.Yellow, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(RibbonW, RibbonH));
+            return host;
+        }
 
         /// <summary>Height of the box the shop scene art is cover-fitted in (the v0.36 header height; the art's face position depends on it).</summary>
         public const float SceneArtBoxH = 520f;
@@ -374,7 +404,7 @@ namespace BoingUpSkyTower.Gameplay
         // ---------------- tab bar ----------------
 
         /// <summary>
-        /// The bottom tab bar on a blue backing. Six equal tabs, each a real button of at least 48 dp: the selected one is yellow, the others are blue; all
+        /// The bottom tab bar on a blue backing. Four equal tabs, each a real button of at least 48 dp: the selected one is yellow, the others are blue; all
         /// show an icon only. <paramref name="dots"/> (may be null) puts a red dot on a tab. Returns the bar root.
         /// </summary>
         public static RectTransform BuildTabBar(RectTransform screen, int selected, Action<int> onSelect, bool[] dots)
@@ -395,9 +425,9 @@ namespace BoingUpSkyTower.Gameplay
             tabs.offsetMin = new Vector2(102f, 300f + 18f);
             tabs.offsetMax = new Vector2(-102f, 300f + 18f + 158f);
 
-            // Six equal plates (the selected one is marked by its yellow colour, not by width): plate width = (W - 5 gaps) / 6, so the narrowest
-            // aspect (9:21 + notch, about 870 ref px) still gives >= 126 px (48 dp) per plate with the 8 dp gap.
-            float gap = UiKit.MinSpacingPx + 0.05f;
+            // Four equal, wide plates (the selected one is marked by its yellow colour, not by width): plate width = (W - 3 gaps) / 4, the gaps are all
+            // equal and at least 8 dp, so even the narrowest aspect (9:21 + notch, about 870 ref px) gives plates far above 48 dp.
+            float gap = Mathf.Max(UiKit.MinSpacingPx, 20f) + 0.05f;
             for (int i = 0; i < TabCount; i++)
             {
                 int idx = i;
@@ -411,12 +441,14 @@ namespace BoingUpSkyTower.Gameplay
                 rt.pivot = new Vector2(0.5f, 0.5f);
                 rt.offsetMin = new Vector2(i * gap / TabCount, 0f);
                 rt.offsetMax = new Vector2(-(TabCount - 1 - i) * gap / TabCount, 0f);
-                Image ic = UiKit.AddImage(b.transform, "Icon", i == TabBundles ? BundlesScreen.BagIcon(null) ?? ToyKit.Get(TabIcons[i]) : ToyKit.Get(TabIcons[i]), Color.white);   // Bundles tab = the same bag as the bundle rows
+                Image ic = UiKit.AddImage(b.transform, "Icon", TabSprite(i), Color.white);
+                ic.preserveAspect = true;
+                ic.raycastTarget = false;
                 var irt = ic.rectTransform;
                 irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 0.5f);
                 irt.pivot = new Vector2(0.5f, 0.5f);
                 irt.anchoredPosition = Vector2.zero;
-                irt.sizeDelta = new Vector2(80f, 80f);   // icons only: no caption text (the accessibility label names the tab)
+                irt.sizeDelta = new Vector2(116f, 116f);   // large icons only: no caption text (the accessibility label names the tab)
                 if (dots != null && i < dots.Length && dots[i]) ToyKit.AddBadge(b.transform);
             }
             return root;

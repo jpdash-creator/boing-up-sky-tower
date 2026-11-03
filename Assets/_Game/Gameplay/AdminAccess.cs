@@ -63,6 +63,20 @@ namespace BoingUpSkyTower.Gameplay
             return true;
         }
 
+        // ---------------- Admin popup grouping (Bug List 1 B3, docs/38) ----------------
+
+        /// <summary>The three test switches under the System Test master switch, in display order.</summary>
+        public static readonly string[] TestSwitchLabels = { "Game Test", "Shop Test", "Character Test" };
+
+        /// <summary>The status pill at the top of the Admin popup: PROD READY when System Test is off, TEST MODE when it is on.</summary>
+        public static string PillText(bool systemTest) { return systemTest ? "TEST MODE" : "PROD READY"; }
+
+        /// <summary>The test switches and tools below the master switch work only while System Test is on (otherwise they are dimmed and disabled).</summary>
+        public static bool TestToolsEnabled(bool systemTest) { return systemTest; }
+
+        /// <summary>True when any test switch (System, Game, Shop or Character) is on.</summary>
+        public static bool AnyTestOn { get { return GameSettings.SystemTest || GameSettings.GameJumpTest || GameSettings.ShopTest || GameSettings.CharacterTest; } }
+
         /// <summary>Turns the code-unlocked admin mode off again (release builds hide the button; the test flags go back to real behaviour).</summary>
         public static void Lock()
         {

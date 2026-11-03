@@ -21,13 +21,25 @@ namespace BoingUpSkyTower.Tests
             repo = ContentRepository.LoadFromResources();
             oldUnlocked = PlayerPrefs.GetInt("settings.adminunlocked", 0);
             PlayerPrefs.SetInt("settings.adminunlocked", 0);
+            oldKeys = new int[TestKeys.Length];
+            for (int i = 0; i < TestKeys.Length; i++) oldKeys[i] = PlayerPrefs.GetInt(TestKeys[i], -1);
+            oldAllChars = ProgressService.TestAllCharacters;
             AdminAccess.SetCodeForTests(null);
         }
+
+        int[] oldKeys;
+        bool oldAllChars;
 
         [TearDown]
         public void TearDown()
         {
             PlayerPrefs.SetInt("settings.adminunlocked", oldUnlocked);
+            for (int i = 0; i < TestKeys.Length; i++)
+            {
+                if (oldKeys[i] < 0) PlayerPrefs.DeleteKey(TestKeys[i]);
+                else PlayerPrefs.SetInt(TestKeys[i], oldKeys[i]);
+            }
+            ProgressService.TestAllCharacters = oldAllChars;
             AdminAccess.DevelopmentBuildOverride = null;
             AdminAccess.SetCodeForTests(null);
             GameSettings.ApplyFlags();
@@ -76,6 +88,94 @@ namespace BoingUpSkyTower.Tests
             AdminAccess.SetCodeForTests("ABCD-1234");
             Assert.IsFalse(AdminAccess.TryUnlock("0000-TEST"));
             Assert.IsTrue(AdminAccess.TryUnlock(" abcd-1234 "), "spaces and case are ignored");
+        }
+
+        // ---- Admin popup grouping: System Test master switch (Bug List 1 B3) ----
+
+        static readonly string[] TestKeys = { "settings.systemtest", "settings.gamejumptest", "settings.shoptest", "settings.charactertest" };
+
+        /// <summary>An install where the admin code was accepted: the test switches are real (a plain editor run has none).</summary>
+        static void AdminInstall() { PlayerPrefs.SetInt("settings.adminunlocked", 1); }
+
+        [Test]
+        public void AdminGroupsAreSystemTestThenGameShopCharacter()
+        {
+            CollectionAssert.AreEqual(new[] { "Game Test", "Shop Test", "Character Test" }, AdminAccess.TestSwitchLabels);
+            Assert.AreEqual("PROD READY", AdminAccess.PillText(false), "System Test OFF = PROD READY");
+            Assert.AreEqual("TEST MODE", AdminAccess.PillText(true));
+            Assert.IsFalse(AdminAccess.TestToolsEnabled(false), "the rows below are disabled while System Test is off");
+            Assert.IsTrue(AdminAccess.TestToolsEnabled(true));
+        }
+
+        [Test]
+        public void SystemTestOffClearsEveryTestSwitchAndStaysOff()
+        {
+            AdminInstall();
+            GameSettings.SystemTest = true;
+            GameSettings.GameJumpTest = true;
+            GameSettings.ShopTest = true;
+            GameSettings.CharacterTest = true;
+            Assert.IsTrue(AdminAccess.AnyTestOn);
+            Assert.IsFalse(GameSettings.ProdReady);
+            Assert.IsTrue(GameSettings.TestUnlockAll, "Game Test + System Test: every level open");
+            Assert.IsTrue(ProgressService.TestAllCharacters, "Character Test: every hero owned");
+
+            GameSettings.SystemTest = false;   // PROD READY
+            Assert.IsTrue(GameSettings.ProdReady);
+            Assert.IsFalse(GameSettings.GameJumpTest);
+            Assert.IsFalse(GameSettings.ShopTest);
+            Assert.IsFalse(GameSettings.CharacterTest);
+            Assert.IsFalse(AdminAccess.AnyTestOn);
+            Assert.IsFalse(GameSettings.TestUnlockAll);
+            Assert.IsFalse(ProgressService.TestAllCharacters, "the flags are pushed into the progress rules at once");
+            foreach (string k in TestKeys) Assert.AreEqual(0, PlayerPrefs.GetInt(k, -1), k + " is stored as off (persists)");
+
+            GameSettings.SystemTest = true;    // back on: the three switches are not silently on again
+            Assert.IsFalse(GameSettings.GameJumpTest);
+            Assert.IsFalse(GameSettings.ShopTest);
+            Assert.IsFalse(GameSettings.CharacterTest);
+        }
+
+        [Test]
+        public void SubSwitchesOnlyCountWhileSystemTestIsOn()
+        {
+            AdminInstall();
+            GameSettings.SystemTest = false;
+            PlayerPrefs.SetInt("settings.shoptest", 1);
+            PlayerPrefs.SetInt("settings.charactertest", 1);
+            Assert.IsFalse(GameSettings.ShopTest, "a stored Shop Test does nothing with System Test off");
+            Assert.IsFalse(GameSettings.CharacterTest);
+            GameSettings.ApplyFlags();
+            Assert.IsFalse(ProgressService.TestAllCharacters);
+            Assert.IsFalse(Gameplay.ShopScreen.TestPurchasesEnabled, "no test purchases in PROD READY");
+        }
+
+        [Test]
+        public void EachSwitchDrivesOnlyItsOwnArea()
+        {
+            AdminInstall();
+            GameSettings.SystemTest = true;
+            GameSettings.GameJumpTest = false;
+            GameSettings.ShopTest = true;
+            GameSettings.CharacterTest = false;
+            Assert.IsTrue(Gameplay.ShopScreen.TestPurchasesEnabled);
+            Assert.IsFalse(ProgressService.TestAllCharacters);
+            Assert.IsFalse(GameSettings.TestUnlockAll);
+            GameSettings.ShopTest = false;
+            GameSettings.CharacterTest = true;
+            Assert.IsFalse(Gameplay.ShopScreen.TestPurchasesEnabled);
+            Assert.IsTrue(ProgressService.TestAllCharacters);
+        }
+
+        [Test]
+        public void PlainBuildWithoutTheCodeHasNoTestSwitchOn()
+        {
+            Assert.IsFalse(GameSettings.DevBuild);
+            Assert.IsFalse(GameSettings.SystemTest);
+            Assert.IsFalse(GameSettings.ShopTest);
+            Assert.IsFalse(GameSettings.CharacterTest);
+            Assert.IsFalse(GameSettings.GameJumpTest);
+            Assert.IsTrue(GameSettings.ProdReady);
         }
 
         // ---- reset keeps purchases ----

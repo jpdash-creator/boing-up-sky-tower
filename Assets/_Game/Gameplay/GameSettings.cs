@@ -14,6 +14,8 @@ namespace BoingUpSkyTower.Gameplay
         const string DifficultyKey = "settings.difficulty";
         const string GameJumpKey = "settings.gamejumptest";
         const string SystemTestKey = "settings.systemtest";
+        const string ShopTestKey = "settings.shoptest";
+        const string CharacterTestKey = "settings.charactertest";
         const string PromoKey = "settings.launchpromo";
         const string FirstPurchaseKey = "settings.firstpurchasedouble";
 
@@ -40,7 +42,41 @@ namespace BoingUpSkyTower.Gameplay
         public static bool SystemTest
         {
             get { return DevBuild && PlayerPrefs.GetInt(SystemTestKey, Debug.isDebugBuild ? 1 : 0) == 1; }   // a release build opened with the admin code starts with it OFF
-            set { PlayerPrefs.SetInt(SystemTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
+            set
+            {
+                PlayerPrefs.SetInt(SystemTestKey, value ? 1 : 0);
+                if (!value) ClearTestSwitchKeys();   // System Test OFF = PROD READY: every test switch goes off and stays off (Bug List 1 B3.a)
+                PlayerPrefs.Save();
+                ApplyFlags();
+            }
+        }
+
+        /// <summary>
+        /// Admin switch SHOP TEST (docs/38): test gem and subscription purchases and the shop test rows. Only counts while SYSTEM_TEST is on; development builds
+        /// default to on (the old SYSTEM_TEST behaviour), a release build opened with the admin code starts with it off.
+        /// </summary>
+        public static bool ShopTest
+        {
+            get { return SystemTest && PlayerPrefs.GetInt(ShopTestKey, Debug.isDebugBuild ? 1 : 0) == 1; }
+            set { PlayerPrefs.SetInt(ShopTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
+        }
+
+        /// <summary>Admin switch CHARACTER TEST (docs/38): every hero owned and the hero test tools. Only counts while SYSTEM_TEST is on (same defaults as <see cref="ShopTest"/>).</summary>
+        public static bool CharacterTest
+        {
+            get { return SystemTest && PlayerPrefs.GetInt(CharacterTestKey, Debug.isDebugBuild ? 1 : 0) == 1; }
+            set { PlayerPrefs.SetInt(CharacterTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
+        }
+
+        /// <summary>True when no test switch is on: the build behaves exactly like production (the admin pill says PROD READY).</summary>
+        public static bool ProdReady { get { return !SystemTest; } }
+
+        /// <summary>Turns GAME TEST, SHOP TEST and CHARACTER TEST off (stored). Called when SYSTEM TEST goes off.</summary>
+        static void ClearTestSwitchKeys()
+        {
+            PlayerPrefs.SetInt(GameJumpKey, 0);
+            PlayerPrefs.SetInt(ShopTestKey, 0);
+            PlayerPrefs.SetInt(CharacterTestKey, 0);
         }
 
         /// <summary>The effective "every level and region open" state: SYSTEM_TEST and GAME_JUMP_TEST both on (the single value ProgressService.TestUnlockAll is driven from).</summary>
@@ -56,7 +92,7 @@ namespace BoingUpSkyTower.Gameplay
         public static void ApplyFlags()
         {
             BoingUpSkyTower.Economy.ProgressService.TestUnlockAll = TestUnlockAll;
-            BoingUpSkyTower.Economy.ProgressService.TestAllCharacters = SystemTest;
+            BoingUpSkyTower.Economy.ProgressService.TestAllCharacters = CharacterTest;
         }
 
         /// <summary>

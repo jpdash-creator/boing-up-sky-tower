@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
@@ -348,7 +348,7 @@ namespace BoingUpSkyTower.Gameplay
             int latest = progress != null ? Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, Mathf.Max(1, GameSession.PlayableRegions)) : 1;   // the latest UNLOCKED region (docs/23)
             RegionArt meadow = art != null ? (art.ForRegion(latest) ?? art.ForRegion(1)) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
-            AddCurrencyBar(true);   // home only: the round account button sits at the left end of the top row (owner issue 35.3)
+            // Bug List 1 B1.c/B1.d: no wallet pills, no round account button and no gear in the top row of Home any more.
             Sprite logo = ToyKit.Get("logo");
             if (logo != null)
             {
@@ -366,12 +366,12 @@ namespace BoingUpSkyTower.Gameplay
                 momoBase = momo.anchoredPosition;
                 // no hero sheet entry on the home screen (owner 2026-11-02): the (i) button lives on the Heroes screen
             }
-            AddRewardsButton();
+            AddHomeButtons();   // Bug List 1 B1.a/B1.b: one end-to-end Play button with the Settings button above it (MetaController.Home.cs)
             Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
-            UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, ToyKit.TabBarReserve + 4f), new Vector2(300f, 44f));   // bottom centre, clear of the bundle timer button at the left
-            AddTabBar(ToyKit.TabPlay, true, true);   // home bar: Shop | PLAY (two icons wide) | Heroes, no VIP crown (owner issue 35.3)
+            UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, HomeSettingsBottom), new Vector2(300f, 44f));   // bottom centre, between the bundle timer button (left) and Settings (right)
             BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
             MaybeShowHeroReveal();
+            MaybeShowGooglePrompt();   // B1.c: the guest-only "connect Google in Settings" pop-up (never over a hero reveal)
         }
 
         // ---------------- new hero reveal (docs/21) ----------------
@@ -441,23 +441,27 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>
-        /// The persistent bottom tab bar (docs/16 section C). With <paramref name="withPlay"/> false (World Map and Level screen, owner issue 16.3) the
-        /// middle PLAY button is left out. The bar holds Shop, Subscription, PLAY, Heroes (owner issue 29; Chests and Bundles are tabs of the Shop; Rewards is the gift button above Heroes).
+        /// The persistent bottom tab bar (docs/16 section C). World Map and Level screen (<paramref name="withPlay"/> false, owner Bug List 1 B5.d): exactly three equal
+        /// items, Shop | Character | Daily Rewards (gift, red dot when claimable); the VIP crown lives in the Shop. Home: Shop | PLAY (two slots) | Heroes.
+        /// Heroes screen: Shop | PLAY | Character.
         /// </summary>
         void AddTabBar(int selected, bool withPlay = true, bool home = false)
         {
-            // Home (owner issue 35.3): no VIP crown, PLAY spans two slots = exactly two icon buttons wide, same height, row Shop | PLAY | Heroes centred.
-            var items = new System.Collections.Generic.List<ToyKit.BarItem>
+            var items = new System.Collections.Generic.List<ToyKit.BarItem>();
+            var tabOf = new System.Collections.Generic.List<int>();
+            items.Add(new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" }); tabOf.Add(ToyKit.TabShop);
+            if (withPlay) { items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true, Span = home ? 2 : 1 }); tabOf.Add(ToyKit.TabPlay); }
+            if (home) items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
+            else items.Add(new ToyKit.BarItem { Icon = "icon_heroes", IconSprite = ShopIcons.CharacterPower, Caption = "Character", A11y = "Characters" });
+            tabOf.Add(ToyKit.TabHeroes);
+            if (!withPlay)
             {
-                new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" },
-            };
-            if (!(home && withPlay)) items.Add(new ToyKit.BarItem { Icon = "icon_crown", Caption = "VIP", A11y = "VIP" });
-            if (withPlay) items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true, Span = home ? 2 : 1 });
-            items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
-            int[] tabOf = !withPlay ? new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabHeroes }
-                : home ? new[] { ToyKit.TabShop, ToyKit.TabPlay, ToyKit.TabHeroes }
-                : new[] { ToyKit.TabShop, ToyKit.TabSubscription, ToyKit.TabPlay, ToyKit.TabHeroes };
-            ToyKit.BuildIconBar(screen, items.ToArray(), selected < 0 ? -1 : System.Array.IndexOf(tabOf, selected), i => OnTab(tabOf[i]));
+                bool claim = progress != null && progress.HasClaimable();
+                items.Add(new ToyKit.BarItem { Icon = "icon_daily", Caption = "Rewards", A11y = "Daily rewards", Badge = claim });
+                tabOf.Add(ToyKit.TabDaily);
+            }
+            int[] map = tabOf.ToArray();
+            ToyKit.BuildIconBar(screen, items.ToArray(), selected < 0 ? -1 : System.Array.IndexOf(map, selected), i => OnTab(map[i]));
         }
 
         void OnTab(int tab)
@@ -468,6 +472,7 @@ namespace BoingUpSkyTower.Gameplay
                 case ToyKit.TabPlay: ShowMap(); break;
                 case ToyKit.TabSubscription: if (CurrentScreen != "Shop" || shop == null || shop.Tab != ShopScreen.TabVip) ShowSubscription(); break;   // VIP = the shop's crown tab
                 case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
+                case ToyKit.TabDaily: ShowRewards(); break;
             }
         }
 
@@ -512,7 +517,7 @@ namespace BoingUpSkyTower.Gameplay
         public ShopScreen CurrentShop { get { return CurrentScreen == "Shop" ? shop : null; } }
 
         /// <summary>Shop (docs/14): four tabs, only Gems and Coins is live. Opens on that tab by default.</summary>
-        public void ShowShop(int tab = ShopScreen.TabPowerups, int section = ShopScreen.GemsSection)
+        public void ShowShop(int tab = ShopScreen.TabCharacter, int section = ShopScreen.AutoSection)
         {
             if (CurrentScreen != "Shop") treasureReturn = TreasureReturnFor(CurrentScreen);   // Back returns to the caller (home, map, levels)
             NewScreen("Shop");
@@ -801,7 +806,7 @@ namespace BoingUpSkyTower.Gameplay
             Color col = unlocked ? PaletteColor(region.Theme.Palette != null && region.Theme.Palette.Count > 0 ? region.Theme.Palette[0] : null) : new Color(0.36f, 0.42f, 0.55f);
             RegionDef r = region;
             Button b = UiKit.AddButton(page, "Region" + region.Index, "", Theme.RoundSprite, col, new Vector2(size, size), () => OnRegionTapped(r), 40);
-            b.GetComponent<A11yLabel>().Text = region.Name + (unlocked ? "" : (playable ? ", locked" : ", coming soon"));
+            b.GetComponent<A11yLabel>().Text = MapLabel(region) + (unlocked ? "" : (playable ? ", locked" : ", coming soon"));
             var brt = (RectTransform)b.transform;
             brt.anchorMin = brt.anchorMax = new Vector2(lane, frac);
             brt.pivot = new Vector2(0.5f, 0.5f);
@@ -1037,8 +1042,7 @@ namespace BoingUpSkyTower.Gameplay
             bar.rectTransform.offsetMax = Vector2.zero;
             AddPillRow();
             AddBack("Menu", ShowMenu);
-            AddTabBar(-1, false);
-            AddRewardsButton();   // above Heroes, same gap as home; the map viewport leaves a strip for it (no pin or tag can sit under it)
+            AddTabBar(-1, false);   // Shop | Character | Daily Rewards (the Rewards button is the third bar item now, B5.d)
             BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet, true, BundleTimerButton.MapLift);   // timer bundle offer, bottom left, raised on the map (docs/26)
 
             CenterMap(currentRise);
@@ -1190,10 +1194,9 @@ namespace BoingUpSkyTower.Gameplay
                                         score += TagOverlap(tag, new Rect(cj.x + t2.x - gap, cj.y + t2.y - gap, t2.width + 2f * gap, t2.height + 2f * gap), true);
                                     }
                                 }
-                                // keep-outs at the bottom of the lowest page (map scrolled to the bottom: map units = canvas units): tab bar strip, Rewards button, bundle timer button
+                                // keep-outs at the bottom of the lowest page (map scrolled to the bottom: map units = canvas units): tab bar strip (Shop | Character | Rewards, no floating Rewards button), bundle timer button
                                 const float notchLift = 48f;   // the notch/gesture inset lifts the bottom controls by up to about this much
                                 score += TagOverlap(tag, new Rect(0f, 0f, pw * s, ToyKit.TabBarButtonTop + 8f + notchLift), true);
-                                score += TagOverlap(tag, new Rect(pw * s * 0.97f - 18f - ToyKit.RewardsButtonSize - 8f, ToyKit.RewardsButtonBottom - 8f + notchLift, ToyKit.RewardsButtonSize + 16f + 0.03f * pw * s, ToyKit.RewardsButtonSize + 16f), true);
                                 score += TagOverlap(tag, new Rect(8f, ToyKit.TabBarReserve + BundleTimerButton.MapLift + notchLift, 236f + 0.03f * pw * s, 236f), true);
                                 for (int pj = 1; pj < painted.pages.Length; pj++)
                                     score += TagOverlap(tag, new Rect(0f, pj * ph * s - cloudHalf, pw * s, cloudHalf * 2f), false);
@@ -1262,9 +1265,19 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // The name tag is built from the real map size (see ReplanTags): first a default one below the pin, replaced once the map has its size.
-            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = region.Name, Open = playable && unlocked, Prefer = preferMode };   // only the real name; locked regions keep the padlock on the pin
+            var pt = new PinTag { Region = region, Pin = rt, Anchor = anchor, Label = MapLabel(region), Open = playable && unlocked, Prefer = preferMode };   // only the real name; locked regions keep the padlock on the pin
             pinTags.Add(pt);
             BuildPinTag(pt, tagMode, tagDx, tagDy, tagMaxW);
+        }
+
+        /// <summary>First region of the map that shows as "Coming Soon" (owner Bug List 1 B5.c: regions 6 to 30 carry the placeholder on the map only, the data keeps the real name).</summary>
+        public const int ComingSoonFromRegion = 6;
+        public const string ComingSoonLabel = "Coming Soon";
+
+        /// <summary>The text of a region's name tag on the map: the real name for regions 1-5, "Coming Soon" from region 6.</summary>
+        public static string MapLabel(RegionDef region)
+        {
+            return region != null && region.Index >= ComingSoonFromRegion ? ComingSoonLabel : (region != null ? region.Name : "");
         }
 
         /// <summary>One pin and its name tag (rebuilt when the planner moves it).</summary>
@@ -1309,8 +1322,9 @@ namespace BoingUpSkyTower.Gameplay
             bool open = pt.Open;
             // The backing is measured from the text (TagKit): padding >= 12 dp sides / 6 dp top and bottom, solid, long names wrap between words.
             Text name;
-            Image tag = TagKit.Build(rt, "NameBacking", pt.Label, 36, open ? Color.white : new Color(0.88f, 0.88f, 0.95f, 1f),
-                open ? new Color(0.05f, 0.08f, 0.22f, 0.95f) : new Color(0.16f, 0.14f, 0.28f, 0.95f), tagMaxW, out name);
+            Image tag = TagKit.Build(rt, "NameBacking", pt.Label, 36, open ? Color.white : new Color(0.95f, 0.95f, 1f, 1f),
+                open ? new Color(0.05f, 0.08f, 0.22f, TagKit.MapBackingAlpha) : new Color(0.04f, 0.04f, 0.12f, TagKit.MapBackingAlpha), tagMaxW, out name,
+                false, true, TagKit.PadX, TagKit.PadY, TagKit.MapTagMinAlpha);   // B5.b: 30 percent more transparent; locked tags are darker so the text keeps 4.5:1
             pt.Tag = tag.gameObject;
             Vector2 tagSize = tag.rectTransform.sizeDelta;
             bool tagRight = pt.Anchor.x < 0.5f;
@@ -1737,141 +1751,7 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- settings ----------------
 
-        public void ShowSettings()
-        {
-            NewScreen("Settings");
-            SkyBackground();
-            AddBack("Back", ShowMenu);
-            ToyKit.Ribbon(screen, "Settings", new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(580f, 206f));
-
-            bool admin = AdminAccess.Available || GameSettings.ShowDevRowsForTests;   // the Admin button (docs/38): development builds, or after the hidden code
-            // Rows grow with the real screen density so every switch and button is at least 48 dp (doc 26, emulator report 2).
-            settingsBtnH = Mathf.Max(126f, UiKit.MinTouchRef);
-            float rowH = settingsRowH = settingsBtnH + 22f;
-            const float padTop = 24f, gap = 28f, padBottom = 36f, resetH = 130f;
-            float resetBtnH = Mathf.Max(resetH, UiKit.MinTouchRef);
-            float footerH = Mathf.Max(110f, UiKit.MinTouchRef);   // version label (7 taps = hidden code box) and the small Admin button
-            int rows = 7;
-            float accountH = SettingsAccountBlock(null, 0f, resetBtnH);   // account status line + sign in/out at the top of the card (owner issue 35.3)
-            float cardH = padTop + accountH + rows * rowH + gap + resetBtnH + gap + resetBtnH + gap + footerH + padBottom;
-
-            // Scrolling area under the fixed header (back button and ribbon): the card is the content, so on a short or wide-aspect screen
-            // the rows and the reset button scroll instead of running off the screen or colliding with each other.
-            RectTransform vp = UiKit.Rect(screen, "SettingsViewport");
-            vp.anchorMin = Vector2.zero;
-            vp.anchorMax = Vector2.one;
-            vp.offsetMin = new Vector2(20f, 24f);
-            vp.offsetMax = new Vector2(-20f, -250f);
-            vp.gameObject.AddComponent<RectMask2D>();
-            var vpHit = vp.gameObject.AddComponent<Image>();
-            vpHit.color = new Color(0f, 0f, 0f, 0.001f);   // drag target between the rows
-            // One cream card holds the icon rows (icon, short label, switch or value button) and the reset button.
-            RectTransform card = UiKit.Rect(vp, "Card");
-            card.anchorMin = new Vector2(0f, 1f);
-            card.anchorMax = new Vector2(1f, 1f);
-            card.pivot = new Vector2(0.5f, 1f);
-            card.anchoredPosition = Vector2.zero;
-            card.sizeDelta = new Vector2(0f, cardH);
-            Theme.CardBacking(card);
-            var settingsScroll = vp.gameObject.AddComponent<ScrollRect>();
-            settingsScroll.viewport = vp;
-            settingsScroll.content = card;
-            settingsScroll.horizontal = false;
-            settingsScroll.vertical = true;
-            settingsScroll.movementType = ScrollRect.MovementType.Elastic;
-            settingsScroll.scrollSensitivity = 60f;
-            int r = 0;
-            SettingsAccountBlock(card, padTop, resetBtnH);
-            float y0 = padTop + accountH;
-            AddSwitchRow(card, y0 + r++ * rowH, "icon_sound", "Sound", () => GameSettings.Sound, v => GameSettings.Sound = v);
-            AddSwitchRow(card, y0 + r++ * rowH, "icon_music", "Music", () => GameSettings.Music, v => GameSettings.Music = v);
-            AddSwitchRow(card, y0 + r++ * rowH, "icon_vibrate", "Haptics", () => GameSettings.Haptics, v => GameSettings.Haptics = v);
-            AddSwitchRow(card, y0 + r++ * rowH, "icon_motion", "Reduced motion", () => GameSettings.ReducedMotion, v => GameSettings.ReducedMotion = v);
-            AddSwitchRow(card, y0 + r++ * rowH, "icon_hand", "Left-handed", () => GameSettings.LeftHanded, v => GameSettings.LeftHanded = v);
-            AddValueRow(card, y0 + r++ * rowH, "icon_size", "Text size", GameSettings.TextPercent + "%", () =>
-            {
-                GameSettings.NextTextPercent();
-                ShowSettings();   // rebuild so the new size applies to every label
-            });
-            AddValueRow(card, y0 + r++ * rowH, "icon_dial", "Difficulty", GameSettings.DifficultyNames[GameSettings.Difficulty], ShowDifficultyList);
-            // GAME_JUMP_TEST / SYSTEM_TEST moved into the Admin popup (docs/38).
-
-            // Restore Purchases and Reset Progress sit INSIDE the card, under the last row with clear gaps, so they can never collide with a row or the panel edge.
-            float yb = y0 + rows * rowH + gap;
-            Button restore = UiKit.AddButton(card, "RestorePurchases", "Restore Purchases", ToyKit.Button(0), Color.white, new Vector2(560f, resetBtnH), RestorePurchases, 46);
-            UiKit.Place((RectTransform)restore.transform, new Vector2(0.5f, 1f), new Vector2(0f, -yb), new Vector2(560f, resetBtnH));
-            yb += resetBtnH + gap;
-            Button reset = UiKit.AddButton(card, "Reset", "Reset Progress", ToyKit.Button(3), Color.white, new Vector2(560f, resetBtnH), ConfirmReset, 46);
-            UiKit.Place((RectTransform)reset.transform, new Vector2(0.5f, 1f), new Vector2(0f, -yb), new Vector2(560f, resetBtnH));
-            yb += resetBtnH + gap;
-            AddSettingsFooter(card, yb, footerH, admin);
-        }
-
-        float settingsRowH = 148f, settingsBtnH = 126f;
-
-        /// <summary>Left part of a settings row: the painted icon and a short label (ink on the cream card).</summary>
-        void AddRowLead(RectTransform card, float y, string icon, string label)
-        {
-            Image ic = UiKit.AddImage(card, label + "Icon", ToyKit.Get(icon), Color.white);
-            ic.preserveAspect = true;
-            ic.rectTransform.anchorMin = ic.rectTransform.anchorMax = new Vector2(0f, 1f);
-            ic.rectTransform.pivot = new Vector2(0f, 1f);
-            float iy = (settingsRowH - 92f) * 0.5f;   // icon and label centred on the row
-            ic.rectTransform.anchoredPosition = new Vector2(28f, -(y + iy));
-            ic.rectTransform.sizeDelta = new Vector2(92f, 92f);
-            Text t = UiKit.AddText(card, label, label, 46, Theme.Ink, TextAnchor.MiddleLeft, true);
-            DropOutline(t);
-            var rt = (RectTransform)t.transform;
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(0f, 1f);
-            rt.offsetMin = new Vector2(140f, -(y + iy + 92f));
-            rt.offsetMax = new Vector2(-270f, -(y + iy));
-        }
-
-        /// <summary>An on/off row: a kit switch (green with the knob right when on, blue with the knob left when off).</summary>
-        void AddSwitchRow(RectTransform card, float y, string icon, string label, Func<bool> get, Action<bool> set)
-        {
-            AddRowLead(card, y, icon, label);
-            Button b = UiKit.AddButton(card, label + "Toggle", "", ToyKit.Button(get() ? 1 : 2), Color.white, new Vector2(200f, settingsBtnH), null);
-            var rt = (RectTransform)b.transform;
-            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-28f, -(y + (settingsRowH - settingsBtnH) * 0.5f));
-            rt.sizeDelta = new Vector2(200f, settingsBtnH);
-            Image knob = UiKit.AddImage(b.transform, "Knob", Theme.RoundSprite, Color.white);
-            knob.type = Image.Type.Sliced;
-            knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(get() ? 0.74f : 0.26f, 0.5f);
-            knob.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            knob.rectTransform.anchoredPosition = Vector2.zero;
-            knob.rectTransform.sizeDelta = new Vector2(86f, 86f);
-            Image ring = UiKit.AddImage(knob.transform, "Ring", Theme.RingSprite, UiKit.ButtonInk);
-            ring.type = Image.Type.Sliced;
-            ring.preserveAspect = false;
-            UiKit.Stretch(ring.rectTransform);
-            b.GetComponent<A11yLabel>().Text = label + (get() ? ", on" : ", off");
-            b.onClick.AddListener(() =>
-            {
-                set(!get());
-                bool on = get();
-                b.GetComponent<Image>().sprite = ToyKit.Button(on ? 1 : 2);
-                knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(on ? 0.74f : 0.26f, 0.5f);
-                b.GetComponent<A11yLabel>().Text = label + (on ? ", on" : ", off");
-            });
-        }
-
-        /// <summary>A row with a yellow value button (text size, difficulty).</summary>
-        void AddValueRow(RectTransform card, float y, string icon, string label, string value, Action onClick)
-        {
-            AddRowLead(card, y, icon, label);
-            Button b = UiKit.AddButton(card, label + "Button", value, ToyKit.Button(0), Color.white, new Vector2(240f, settingsBtnH), onClick, 44);
-            var rt = (RectTransform)b.transform;
-            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-28f, -(y + (settingsRowH - settingsBtnH) * 0.5f));
-            rt.sizeDelta = new Vector2(240f, settingsBtnH);
-            b.GetComponent<A11yLabel>().Text = label + ", " + value;
-        }
+        // ShowSettings and its rows live in MetaController.Settings.cs
 
         public void ShowDifficultyList()
         {

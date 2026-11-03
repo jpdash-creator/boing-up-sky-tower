@@ -8,8 +8,8 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// Settings extras (docs/38-settings-admin.md): the version label and small Admin button, the hidden code box, the Admin popup (Game test, System test,
-    /// Hero test, Economy test, Ads/IAP test, Cloud save test), Reset Progress with its confirm popup and Restore Purchases.
+    /// Settings extras (docs/38-settings-admin.md): the version label and small Admin button, the hidden code box, the Admin popup (System Test master switch
+    /// with the PROD READY / TEST MODE pill, then Game Test, Shop Test, Character Test and Cloud Test), Reset Progress with its confirm popup and Restore Purchases.
     /// </summary>
     public sealed partial class MetaController
     {
@@ -17,18 +17,18 @@ namespace BoingUpSkyTower.Gameplay
         Text adminStatus;
         InputField codeField;
 
-        // ---------------- settings footer: version label + Admin button ----------------
+        // ---------------- settings footer: Admin icon + version label ----------------
 
-        /// <summary>Last line of the settings card: the version label at the left (7 quick taps open the code box) and, when allowed, the small Admin button at the right.</summary>
-        void AddSettingsFooter(RectTransform card, float y, float h, bool showAdmin)
+        /// <summary>Last line of the settings popup: the small Admin icon button at the left (when allowed) and the version label at the right (7 quick taps open the code box).</summary>
+        void AddSettingsFooter(RectTransform c, float y, float h, bool showAdmin, float width)
         {
-            Button v = UiKit.AddHitArea(card, "VersionTap", "Version " + Application.version, new Vector2(0f, 1f), new Vector2(28f, -y), new Vector2(380f, h), OnVersionTapped);
-            Text vt = UiKit.AddText(v.transform, "Label", "v" + Application.version, 34, Theme.InkSoft, TextAnchor.MiddleLeft);
+            Button v = UiKit.AddHitArea(c, "VersionTap", "Version " + Application.version, new Vector2(1f, 1f), new Vector2(0f, -y), new Vector2(380f, h), OnVersionTapped);
+            Text vt = UiKit.AddText(v.transform, "Label", "v" + Application.version, 34, Theme.InkSoft, TextAnchor.MiddleRight);
             DropOutline(vt);
             UiKit.Stretch((RectTransform)vt.transform);
             if (!showAdmin) return;
-            Button a = UiKit.AddButton(card, "Admin", "Admin", ToyKit.Button(2), Color.white, new Vector2(280f, h), () => ShowAdmin(), 40);
-            UiKit.Place((RectTransform)a.transform, new Vector2(1f, 1f), new Vector2(-28f, -y), new Vector2(280f, Mathf.Max(h, UiKit.MinTouchRef)));
+            Button a = ToyKit.IconButton(c, "Admin", "Admin", 2, ToyKit.Get("icon_lock"), new Vector2(h, h), () => ShowAdmin(), 0.6f);
+            UiKit.Place((RectTransform)a.transform, new Vector2(0f, 1f), new Vector2(0f, -y), new Vector2(h, h));
         }
 
         void OnVersionTapped()
@@ -131,43 +131,54 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- admin popup ----------------
 
-        const float AdminW = 920f, AdminH = 1340f, AdminPad = 28f;
+        const float AdminW = 920f, AdminPad = 28f, AdminMaxH = 1470f;
+        RectTransform adminContent;
+        int adminPage;
 
-        /// <summary>The Admin popup, page 0 = tests, page 1 = Hero test (public for the layout audit).</summary>
-        public void ShowAdmin(int page = 0)
+        sealed class AdminBtn
         {
+            public string Label, A11y;
+            public int Role;
+            public Action Click;
+            public AdminBtn(string label, int role, Action click, string a11y = null) { Label = label; Role = role; Click = click; A11y = a11y ?? label; }
+        }
+
+        /// <summary>
+        /// The Admin popup (public for the layout audit). Page 0 = System Test master switch with the PROD READY / TEST MODE pill, then (only while System Test is on)
+        /// Game Test, Shop Test, Character Test and Cloud Test; page 1 = Hero test. Height follows the content; it scrolls only when it does not fit.
+        /// </summary>
+        public void ShowAdmin(int page = 0) { ShowAdmin(page, 0f); }
+
+        void ShowAdmin(int page, float keepScroll)
+        {
+            adminPage = page;
             RectTransform overlay = NewOverlay();
             string title = page == 1 ? "Hero test" : "Admin";
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, title, art, new Vector2(AdminW, AdminH), page == 1 ? (Action)(() => ShowAdmin(0)) : ClosePopup);
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, title, art, new Vector2(AdminW, AdminMaxH), page == 1 ? (Action)(() => ShowAdmin(0)) : ClosePopup);
+            float statusH = Mathf.Ceil(Mathf.Max(36f, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.5f);
             adminStatus = UiKit.AddText(panel, "Status", "", 36, Theme.InkSoft, TextAnchor.MiddleCenter);
             DropOutline(adminStatus);
-            UiKit.Place((RectTransform)adminStatus.transform, new Vector2(0.5f, 1f), new Vector2(0f, -186f), new Vector2(AdminW - 2f * AdminPad, 60f));
+            UiKit.Place((RectTransform)adminStatus.transform, new Vector2(0.5f, 1f), new Vector2(0f, -186f), new Vector2(AdminW - 2f * AdminPad, statusH));
+            float top = 186f + statusH + 8f;
 
-            RectTransform vp = UiKit.Rect(panel, "AdminViewport");
-            vp.anchorMin = Vector2.zero;
-            vp.anchorMax = Vector2.one;
-            vp.offsetMin = new Vector2(AdminPad, AdminPad);
-            vp.offsetMax = new Vector2(-AdminPad, -254f);
-            vp.gameObject.AddComponent<RectMask2D>();
-            var hit = vp.gameObject.AddComponent<Image>();
-            hit.color = new Color(0f, 0f, 0f, 0.001f);
-            RectTransform content = UiKit.Rect(vp, "Content");
-            content.anchorMin = new Vector2(0f, 1f);
-            content.anchorMax = new Vector2(1f, 1f);
-            content.pivot = new Vector2(0.5f, 1f);
-            content.anchoredPosition = Vector2.zero;
-            var sr = vp.gameObject.AddComponent<ScrollRect>();
-            sr.viewport = vp;
-            sr.content = content;
-            sr.horizontal = false;
-            sr.vertical = true;
-            sr.movementType = ScrollRect.MovementType.Elastic;
-            sr.scrollSensitivity = 60f;
-
+            RectTransform content = PopupBodyBegin(panel, "AdminViewport", top, AdminPad);
+            adminContent = content;
             float y = 0f;
             if (page == 1) BuildHeroTest(content, ref y);
             else BuildAdminMain(content, ref y);
-            content.sizeDelta = new Vector2(0f, y + 16f);
+            PopupBodyEnd(panel, content, y + 16f, top, AdminPad, AdminMaxH);
+            if (keepScroll > 0f)
+            {
+                float vpH = panel.sizeDelta.y - top - AdminPad;
+                content.anchoredPosition = new Vector2(0f, Mathf.Clamp(keepScroll, 0f, Mathf.Max(0f, y + 16f - vpH)));
+            }
+        }
+
+        /// <summary>Rebuilds the popup after a switch changed (the tool rows follow the switches), keeping the scroll position.</summary>
+        void AdminRebuild()
+        {
+            float keep = adminContent != null ? adminContent.anchoredPosition.y : 0f;
+            ShowAdmin(adminPage, keep);
         }
 
         void AdminSay(string text) { if (adminStatus != null) UiKit.SetText(adminStatus, text); }
@@ -205,29 +216,57 @@ namespace BoingUpSkyTower.Gameplay
             if (note != null) AdminText(c, ref y, "Note" + label, note, 30, Theme.InkSoft, TextAnchor.UpperLeft, 8f, w, 40f, 12f);
         }
 
-        /// <summary>A full-width action button.</summary>
-        void AdminAction(RectTransform c, ref float y, string label, int role, Action onClick)
+        /// <summary>Dims a row and makes it untouchable (the test tools while System Test is off).</summary>
+        static void AdminDim(Component part, bool enabled)
         {
-            float w = AdminW - 2f * AdminPad;
-            Button b = UiKit.AddButton(c, label.Replace(' ', '_') + "Button", label, ToyKit.Button(role), Color.white, new Vector2(w, AdminBtnH), onClick, 40);
-            UiKit.Place((RectTransform)b.transform, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(w, AdminBtnH));
-            y += AdminBtnH + 18f;
+            if (enabled) return;
+            var g = part.gameObject.AddComponent<CanvasGroup>();
+            g.alpha = 0.45f;
+            g.interactable = false;
+            g.blocksRaycasts = false;
         }
 
-        /// <summary>An on/off row: label on the left, the kit switch on the right (green knob right = on).</summary>
-        void AdminSwitch(RectTransform c, ref float y, string label, Func<bool> get, Action<bool> set)
+        /// <summary>The PROD READY (green) or TEST MODE (orange) pill: the words differ as well as the colour.</summary>
+        void AdminPill(RectTransform c, ref float y, bool systemTest)
+        {
+            const float pw = 440f, ph = 84f;
+            Image pill = SoftPanel(c, "StatusPill", systemTest ? new Color(1f, 0.66f, 0.2f, 1f) : new Color(0.36f, 0.82f, 0.45f, 1f), 42f);
+            UiKit.Place(pill.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(pw, ph));
+            Image ic = UiKit.AddImage(pill.transform, "Icon", ToyKit.Get(systemTest ? "icon_bolt" : "icon_lock"), Color.white);
+            ic.preserveAspect = true;
+            var irt = ic.rectTransform;
+            irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
+            irt.pivot = new Vector2(0f, 0.5f);
+            irt.anchoredPosition = new Vector2(22f, 0f);
+            irt.sizeDelta = new Vector2(56f, 56f);
+            Text t = UiKit.AddText(pill.transform, "Label", AdminAccess.PillText(systemTest), 40, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+            DropOutline(t);
+            var trt = (RectTransform)t.transform;
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = new Vector2(84f, 0f);
+            trt.offsetMax = new Vector2(-16f, 0f);
+            y += ph + 20f;
+        }
+
+        /// <summary>An on/off row: icon and label on the left, the kit switch on the right (green knob right = on). A change rebuilds the popup so the tool rows follow.</summary>
+        void AdminSwitchRow(RectTransform c, ref float y, string label, string icon, Func<bool> get, Action<bool> set, bool enabled)
         {
             float w = AdminW - 2f * AdminPad, bh = AdminBtnH, sw = 200f;
+            Image ic = UiKit.AddImage(c, label + "Icon", ToyKit.Get(icon), Color.white);
+            ic.preserveAspect = true;
             Text t = UiKit.AddText(c, label + "Label", label, 40, Theme.Ink, TextAnchor.MiddleLeft, true);
             DropOutline(t);
-            float lw = w - sw - 40f;
+            float lw = w - 110f - sw - 32f;
             float rowH = Mathf.Max(bh, MeasureH(t, lw) + 12f);
-            UiKit.Place((RectTransform)t.transform, new Vector2(0f, 1f), new Vector2(8f, -y), new Vector2(lw, rowH));
-            Button b = UiKit.AddButton(c, label + "Toggle", "", ToyKit.Button(get() ? 1 : 2), Color.white, new Vector2(sw, bh), null);
+            UiKit.Place(ic.rectTransform, new Vector2(0f, 1f), new Vector2(8f, -(y + (rowH - 88f) * 0.5f)), new Vector2(88f, 88f));
+            UiKit.Place((RectTransform)t.transform, new Vector2(0f, 1f), new Vector2(110f, -y), new Vector2(lw, rowH));
+            bool on = get();
+            Button b = UiKit.AddButton(c, label + "Toggle", "", ToyKit.Button(on ? 1 : 2), Color.white, new Vector2(sw, bh), null);
             UiKit.Place((RectTransform)b.transform, new Vector2(1f, 1f), new Vector2(-8f, -y - (rowH - bh) * 0.5f), new Vector2(sw, bh));
             Image knob = UiKit.AddImage(b.transform, "Knob", Theme.RoundSprite, Color.white);
             knob.type = Image.Type.Sliced;
-            knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(get() ? 0.74f : 0.26f, 0.5f);
+            knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(on ? 0.74f : 0.26f, 0.5f);
             knob.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             knob.rectTransform.anchoredPosition = Vector2.zero;
             knob.rectTransform.sizeDelta = new Vector2(86f, 86f);
@@ -235,49 +274,77 @@ namespace BoingUpSkyTower.Gameplay
             ring.type = Image.Type.Sliced;
             ring.preserveAspect = false;
             UiKit.Stretch(ring.rectTransform);
-            b.GetComponent<A11yLabel>().Text = label + (get() ? ", on" : ", off");
+            b.GetComponent<A11yLabel>().Text = label + (on ? ", on" : ", off");
             b.onClick.AddListener(() =>
             {
                 set(!get());
-                bool on = get();
-                b.GetComponent<Image>().sprite = ToyKit.Button(on ? 1 : 2);
-                knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(on ? 0.74f : 0.26f, 0.5f);
-                b.GetComponent<A11yLabel>().Text = label + (on ? ", on" : ", off");
-                AdminSay(label + (on ? ": on" : ": off"));
+                AdminRebuild();
             });
+            AdminDim(ic, enabled);
+            AdminDim(t, enabled);
+            AdminDim(b, enabled);
             y += rowH + 12f;
+        }
+
+        /// <summary>Tool buttons in two columns (an odd last one spans the full width). Dimmed and untouchable when not enabled.</summary>
+        void AdminButtons(RectTransform c, ref float y, bool enabled, params AdminBtn[] btns)
+        {
+            float w = AdminW - 2f * AdminPad, bh = AdminBtnH, gap = Mathf.Ceil(UiKit.MinSpacingPx);
+            float half = (w - gap) * 0.5f;
+            for (int i = 0; i < btns.Length; i += 2)
+            {
+                bool single = i + 1 >= btns.Length;
+                for (int k = 0; k < (single ? 1 : 2); k++)
+                {
+                    AdminBtn d = btns[i + k];
+                    float bw = single ? w : half;
+                    Button b = UiKit.AddButton(c, d.Label.Replace(' ', '_') + "Button", d.Label, ToyKit.Button(d.Role), Color.white, new Vector2(bw, bh), d.Click, 40);
+                    UiKit.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(k * (half + gap), -y), new Vector2(bw, bh));
+                    b.GetComponent<A11yLabel>().Text = d.A11y;
+                    AdminDim(b, enabled);
+                }
+                y += bh + gap;
+            }
+            y += 6f;
         }
 
         void BuildAdminMain(RectTransform c, ref float y)
         {
-            AdminSection(c, ref y, "GAME TEST", "Level and region tools. All levels open needs System test on.");
-            AdminSwitch(c, ref y, "All levels open", () => GameSettings.GameJumpTest, v => GameSettings.GameJumpTest = v);
-            AdminAction(c, ref y, "Unlock all regions", 0, () => AdminSay("Regions unlocked: " + progress.AdminUnlockAllRegions()));
-            AdminAction(c, ref y, "Clear all levels", 0, () => { int n = progress.AdminCompleteAllLevels(); RefreshWallet(); AdminSay("Levels cleared: " + n); });
+            bool sys = GameSettings.SystemTest;
+            bool on = AdminAccess.TestToolsEnabled(sys);   // everything under the master switch works only while System Test is on
+            AdminPill(c, ref y, sys);
+            AdminSwitchRow(c, ref y, "System Test", "icon_settings", () => GameSettings.SystemTest, v => GameSettings.SystemTest = v, true);   // OFF clears the three switches below too
 
-            AdminSection(c, ref y, "SYSTEM TEST", "Opens everything: all heroes, test purchases, Autopilot.");
-            AdminSwitch(c, ref y, "System test", () => GameSettings.SystemTest, v => GameSettings.SystemTest = v);
-            AdminAction(c, ref y, "Big wallet", 0, () => { progress.AddCoins(1000000); progress.AddGems(100000); RefreshWallet(); AdminSay("+1,000,000 coins, +100,000 gems"); });
-            AdminAction(c, ref y, "VIP on (monthly)", 0, AdminVipOn);
+            // GAME TEST: the old Jump test (every level and region open) and the level tools
+            AdminSwitchRow(c, ref y, AdminAccess.TestSwitchLabels[0], "icon_flag", () => GameSettings.GameJumpTest, v => GameSettings.GameJumpTest = v, on);
+            if (on && GameSettings.GameJumpTest)
+                AdminButtons(c, ref y, true,
+                    new AdminBtn("Open regions", 0, () => AdminSay("Regions unlocked: " + progress.AdminUnlockAllRegions()), "Unlock all regions"),
+                    new AdminBtn("Clear levels", 0, () => { int n = progress.AdminCompleteAllLevels(); RefreshWallet(); AdminSay("Levels cleared: " + n); }, "Clear all levels"));
 
-            AdminSection(c, ref y, "HERO TEST");
-            AdminAction(c, ref y, "Pick a hero...", 1, () => ShowAdmin(1));
+            // SHOP TEST: test purchases, wallet and VIP, ads
+            AdminSwitchRow(c, ref y, AdminAccess.TestSwitchLabels[1], "icon_shop", () => GameSettings.ShopTest, v => GameSettings.ShopTest = v, on);
+            if (on && GameSettings.ShopTest)
+                AdminButtons(c, ref y, true,
+                    new AdminBtn("Big wallet", 0, () => { progress.AddCoins(1000000); progress.AddGems(100000); RefreshWallet(); AdminSay("+1M coins, +100k gems"); }, "Big wallet: add 1,000,000 coins and 100,000 gems"),
+                    new AdminBtn("VIP monthly", 0, AdminVipOn, "VIP on (monthly)"),
+                    new AdminBtn("+1,000 coins", 0, () => { progress.AddCoins(1000); RefreshWallet(); AdminSay("Coins: " + progress.Coins); }, "Add 1,000 coins"),
+                    new AdminBtn("+100 gems", 0, () => { progress.AddGems(100); RefreshWallet(); AdminSay("Gems: " + progress.Gems); }, "Add 100 gems"),
+                    new AdminBtn("Buy 50 gems", 0, AdminTestPurchase, "Buy 50 gems (store test)"),
+                    new AdminBtn("Rewarded ad", 0, AdminTestAd, "Show a rewarded ad"));
 
-            AdminSection(c, ref y, "ECONOMY TEST");
-            AdminAction(c, ref y, "Add 1,000 coins", 0, () => { progress.AddCoins(1000); RefreshWallet(); AdminSay("Coins: " + progress.Coins); });
-            AdminAction(c, ref y, "Add 100 gems", 0, () => { progress.AddGems(100); RefreshWallet(); AdminSay("Gems: " + progress.Gems); });
+            // CHARACTER TEST: every hero owned and the hero copies tool
+            AdminSwitchRow(c, ref y, AdminAccess.TestSwitchLabels[2], "icon_heroes", () => GameSettings.CharacterTest, v => GameSettings.CharacterTest = v, on);
+            if (on && GameSettings.CharacterTest)
+                AdminButtons(c, ref y, true, new AdminBtn("Pick a hero...", 1, () => ShowAdmin(1), "Pick a hero and add copies"));
 
-            AdminSection(c, ref y, "ADS / IAP TEST", "Uses the stub services in this build.");
-            AdminAction(c, ref y, "Show rewarded ad", 0, AdminTestAd);
-            AdminAction(c, ref y, "Buy 50 gems (store)", 0, AdminTestPurchase);
-
-            AdminSection(c, ref y, "CLOUD SAVE TEST");
-            BuildAdminCloud(c, ref y);
+            // CLOUD TEST: only while System Test is on
+            if (on) BuildAdminCloud(c, ref y);
 
             if (AdminAccess.Unlocked)
             {
                 AdminSection(c, ref y, "ADMIN MODE");
-                AdminAction(c, ref y, "Lock admin again", 3, () => { AdminAccess.Lock(); ClosePopup(); ShowSettings(); });
+                AdminButtons(c, ref y, true, new AdminBtn("Lock admin again", 3, () => { AdminAccess.Lock(); ClosePopup(); ShowSettings(); }));
             }
         }
 
@@ -308,7 +375,7 @@ namespace BoingUpSkyTower.Gameplay
                 {
                     progress.RecordPurchase(r.ProductId, PurchaseRecord.KindConsumable, r.TransactionId, DateTime.UtcNow);
                     RefreshWallet();
-                    AdminSay("Bought 50 gems (" + r.TransactionId + ")");
+                    AdminSay("Bought 50 gems");
                 }
                 else AdminSay("Purchase ok, pack missing");
             });
@@ -317,24 +384,26 @@ namespace BoingUpSkyTower.Gameplay
         void BuildAdminCloud(RectTransform c, ref float y)
         {
             IAccountService acc = Services.Account;
-            if (acc == null) { AdminSection(c, ref y, "", "No account service in this build."); return; }
+            AdminSection(c, ref y, "CLOUD TEST");
+            if (acc == null) { AdminText(c, ref y, "CloudState", "No account service in this build.", 36, Theme.InkSoft, TextAnchor.MiddleLeft, 8f, AdminW - 2f * AdminPad - 16f, 60f, 8f); return; }
             AdminText(c, ref y, "CloudState", acc.IsSignedIn ? "Signed in: " + acc.DisplayName : "Signed out", 36, Theme.Ink, TextAnchor.MiddleLeft, 8f, AdminW - 2f * AdminPad - 16f, 60f, 8f);
             if (acc.IsSignedIn)
             {
-                AdminAction(c, ref y, "Upload save now", 0, () =>
-                {
-                    AdminSay("Uploading...");
-                    acc.SaveCloud(SaveSync.Serialize(progress.Data), ok => { if (ok) progress.MarkCloudSynced(); AdminSay(ok ? "Cloud save uploaded" : "Upload failed"); });
-                });
-                AdminAction(c, ref y, "Sign out", 3, () => { acc.SignOut(); AdminSay("Signed out"); ShowAdmin(); });
+                AdminButtons(c, ref y, true,
+                    new AdminBtn("Upload save", 0, () =>
+                    {
+                        AdminSay("Uploading...");
+                        acc.SaveCloud(SaveSync.Serialize(progress.Data), ok => { if (ok) progress.MarkCloudSynced(); AdminSay(ok ? "Cloud save uploaded" : "Upload failed"); });
+                    }, "Upload the save now"),
+                    new AdminBtn("Sign out", 3, () => { acc.SignOut(); AdminSay("Signed out"); AdminRebuild(); }));
             }
             else
             {
-                AdminAction(c, ref y, "Sign in (Google)", 1, () =>
+                AdminButtons(c, ref y, true, new AdminBtn("Sign in", 1, () =>
                 {
                     AdminSay("Signing in...");
-                    acc.SignIn(res => { if (res.Success) ShowAdmin(); else AdminSay("Sign-in " + res.Status); });
-                });
+                    acc.SignIn(res => { if (res.Success) AdminRebuild(); else AdminSay("Sign-in " + res.Status); });
+                }, "Sign in (Google)"));
             }
         }
 

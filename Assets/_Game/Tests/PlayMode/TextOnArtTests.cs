@@ -51,6 +51,8 @@ namespace BoingUpSkyTower.Tests
             Time.captureFramerate = 60;
             GameSession.Reset();
             GameSession.InitForTests(new MemorySaveStore());
+            GoogleConnectPrompt.ResetForTests();
+            GoogleConnectPrompt.AutoShow = false;   // Bug List 1 B1.c: the Google connect pop-up is tested on its own, not over every Home screen
             renamed.Clear();
             measured = 0;
             measuredPills = 0;
@@ -110,6 +112,35 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
+        /// <summary>B5.c: every map tag of regions 6 to 30 reads "Coming Soon", regions 1 to 5 keep their names (the data is untouched).</summary>
+        [UnityTest]
+        public IEnumerator MapTagsOfRegions6To30ReadComingSoon()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            meta.ShowMap();
+            yield return null;
+            yield return null;
+            for (int i = 1; i <= 30; i++)
+            {
+                RegionDef r = GameSession.Repo.TryGetRegionByIndex(i);
+                if (r == null) continue;
+                string expect = i >= 6 ? "Coming Soon" : r.Name;
+                Assert.AreEqual(expect, MetaController.MapLabel(r), "map label of region " + i);
+                Transform pin = FindDeep(Object.FindFirstObjectByType<MetaController>().transform, "Region" + i);
+                if (pin == null) continue;   // that page is not painted
+                Transform name = FindDeep(pin, "Name");
+                Assert.IsNotNull(name, "tag of region " + i);
+                Assert.AreEqual(expect, name.GetComponent<Text>().text, "tag text of region " + i);
+            }
+        }
+
+        static Transform FindDeep(Transform root, string name)
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
+            return null;
+        }
+
         /// <summary>The map at normal text size, with some progress so unlocked, current and locked pins all appear.</summary>
         [UnityTest]
         public IEnumerator MapNameTagsFitTheirBackingAt100Percent()
@@ -146,7 +177,7 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("level-popup", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); }, problems);
             yield return CheckScreen("shop-gems", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.GemsSection), problems);
             yield return CheckScreen("shop-coins", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection), problems);
-            yield return CheckScreen("shop-powerups", () => meta.ShowShop(ShopScreen.TabPowerups, ShopScreen.GemsSection), problems);
+            yield return CheckScreen("shop-powerups", () => meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.PowerupsSection), problems);
             Assert.Greater(measured + measuredPills, 0);
             Report(problems);
         }
@@ -181,6 +212,20 @@ namespace BoingUpSkyTower.Tests
         // ---------------- audit ----------------
 
         static readonly TextGenerator wordGen = new TextGenerator();
+
+        static float Lum(Color c)
+        {
+            float r = Mathf.GammaToLinearSpace(c.r), g = Mathf.GammaToLinearSpace(c.g), b = Mathf.GammaToLinearSpace(c.b);
+            return 0.2126f * r + 0.7152f * g + 0.0722f * b;
+        }
+
+        /// <summary>Contrast of a text colour against its backing blended over pure white art (the worst case).</summary>
+        static float ContrastOverWhite(Color text, Color back)
+        {
+            Color bg = Color.Lerp(Color.white, new Color(back.r, back.g, back.b, 1f), back.a);
+            float l1 = Lum(text), l2 = Lum(bg);
+            return (Mathf.Max(l1, l2) + 0.05f) / (Mathf.Min(l1, l2) + 0.05f);
+        }
 
         static bool IsStrictTag(string name) { return name == "NameBacking"; }
 
@@ -287,7 +332,14 @@ namespace BoingUpSkyTower.Tests
                     bool badge = parent.parent != null && parent.parent.name == "Panel";   // shop card badge: 8 dp sides, otherwise 12 dp
                     float padX = (badge ? 8f : 12f) * UiKit.PxPerDp * bs, padY = 6f * UiKit.PxPerDp * bs;
                     if (t.fontSize < Mathf.RoundToInt(UiKit.MinBodyTextPx) - 1) problems.Add(who + " is below 16 sp (" + t.fontSize + ")");
-                    if (back.color.a < 0.9f) problems.Add(who + " backing is not solid (alpha " + back.color.a.ToString("F2") + ")");
+                    if (strict)
+                    {
+                        // B5.b: the map tags are 30 percent more transparent (alpha 0.665). Worst case art behind them is pure white: the text must still reach 4.5:1 on that blend.
+                        if (back.color.a < TagKit.MapTagMinAlpha - 0.001f) problems.Add(who + " backing is too transparent (alpha " + back.color.a.ToString("F2") + ")");
+                        float cr = ContrastOverWhite(t.color, back.color);
+                        if (cr < 4.5f) problems.Add(who + " contrast over the brightest art is " + cr.ToString("F2") + ":1 (< 4.5:1)");
+                    }
+                    else if (back.color.a < 0.9f) problems.Add(who + " backing is not solid (alpha " + back.color.a.ToString("F2") + ")");
                     float gapL = vis.xMin - bb.xMin, gapR = bb.xMax - vis.xMax, gapB = vis.yMin - bb.yMin, gapT = bb.yMax - vis.yMax;
                     if (gapL < padX - tol || gapR < padX - tol)
                         problems.Add(who + " text width + padding exceeds the backing: text " + pwC.ToString("F0") + " + 2x" + padX.ToString("F0") + " > backing " + bb.width.ToString("F0") + " (gaps " + gapL.ToString("F0") + "/" + gapR.ToString("F0") + ")");

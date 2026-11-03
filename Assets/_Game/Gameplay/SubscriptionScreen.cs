@@ -154,7 +154,7 @@ namespace BoingUpSkyTower.Gameplay
             countdowns.Clear();
             shownActive = progress.IsActive();
             shownCanClaim = progress.CanClaimToday();
-            RectTransform sec = NewSection(sectionsParent, SubscriptionSectionTitle);
+            RectTransform sec = NewSection(sectionsParent, SubscriptionSectionTitle, false);   // the page's yellow "Subscription" banner is the title
             BuildPlanCards(sec);
             var ticker = sec.gameObject.AddComponent<Ticker>();
             ticker.Tick = OnSecond;
@@ -173,7 +173,7 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>A section of the VIP page: a vertical layout holding a yellow italic header (children after it are the rows). Shared with the Chests section.</summary>
-        public static RectTransform NewSection(RectTransform parent, string title)
+        public static RectTransform NewSection(RectTransform parent, string title, bool header = true)
         {
             RectTransform sec = UiKit.Rect(parent, "Section_" + title);
             var v = sec.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -181,6 +181,7 @@ namespace BoingUpSkyTower.Gameplay
             v.childControlWidth = v.childControlHeight = true;
             v.childForceExpandWidth = true;
             v.childForceExpandHeight = false;
+            if (!header) return sec;   // inside the shop the yellow page / section banner is the title
             Text head = UiKit.AddText(sec, "Header", title, 48, HeaderColor, TextAnchor.MiddleLeft, true);
             head.fontStyle = FontStyle.Italic;
             head.horizontalOverflow = HorizontalWrapMode.Overflow;
