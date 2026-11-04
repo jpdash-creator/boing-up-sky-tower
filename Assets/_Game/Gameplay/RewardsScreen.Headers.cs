@@ -47,7 +47,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             float timerH = TimerH;
             float panelTop = 22f + timerH + 20f;
-            float panelH = daily ? TrackPanelH : SummaryH;
+            float panelH = TrackPanelH;   // Weekly is as tall as Daily so the scene shows (owner, Bug List 3 follow-up); its panel holds the tasks-done bar
             RectTransform scene = UiKit.Rect(content, "Scene");
             FixedHeight(scene, panelTop + panelH + 22f);
 
