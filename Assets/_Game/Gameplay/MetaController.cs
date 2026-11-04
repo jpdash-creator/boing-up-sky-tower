@@ -516,8 +516,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The shop while its screen is showing (null on every other screen). Tests drive purchases through it.</summary>
         public ShopScreen CurrentShop { get { return CurrentScreen == "Shop" ? shop : null; } }
 
-        /// <summary>Shop (docs/14): four tabs, only Gems and Coins is live. Opens on that tab by default.</summary>
-        public void ShowShop(int tab = ShopScreen.TabCharacter, int section = ShopScreen.AutoSection)
+        /// <summary>Shop (docs/14, docs/26 section 8b): four tabs. A normal entry (no arguments) always opens the Gems / Coins tab at the top; deep links pass a tab and section.</summary>
+        public void ShowShop(int tab = ShopScreen.DefaultTab, int section = ShopScreen.AutoSection)
         {
             if (CurrentScreen != "Shop") treasureReturn = TreasureReturnFor(CurrentScreen);   // Back returns to the caller (home, map, levels)
             NewScreen("Shop");

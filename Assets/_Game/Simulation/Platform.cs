@@ -58,7 +58,39 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Kelp Tangle (hazard type): after a landing no jump for KelpLockTicks; the jump input is kept and fires when the lock ends.</summary>
         KelpTangle = 27,
         /// <summary>Pufferfish Pad (hazard type): calm, swelling, puffed on a global cycle (PufferCycleTicks); landing or standing while puffed hops the player away, never a hit.</summary>
-        PufferfishPad = 28
+        PufferfishPad = 28,
+
+        // ---- Region 4 (Candy Canyon) special platforms (doc 30 section 5); values are stable, the art catalog looks them up by kind ----
+        /// <summary>Candy Bowl (helpful): a dish with raised lips; outside the centre BowlCenterPercent of its width a gentle pull (BowlPull) moves a standing player back toward the middle.</summary>
+        CandyBowl = 29,
+        /// <summary>Floss Glide (helpful): after a jump from it the air steering is doubled for GlideAirTicks.</summary>
+        FlossGlide = 30,
+        /// <summary>Fizz Vent (helpful, air zone): in the column VentHalfWidth either side and VentHeight above it gravity is cut by 80 percent while airborne.</summary>
+        FizzVent = 31,
+        /// <summary>Licorice Belt (demanding): a conveyor that carries a standing player BeltSpeed along Platform.Dir (away from the next platform).</summary>
+        LicoriceBelt = 32,
+        /// <summary>Taffy Stretch (demanding): the width breathes between Platform.Width (minimum) and Width + 2 x Platform.Amplitude, period Platform.Period.</summary>
+        TaffyStretch = 33,
+        /// <summary>Jelly Wobble (hazard type): after a landing it wobbles sideways by up to Platform.Amplitude (decaying over JellyWobbleTicks) and carries the player with it.</summary>
+        JellyWobble = 34,
+        /// <summary>Pinwheel Gust (hazard type, air zone): airborne players in the column above it are pushed PinwheelPush along Platform.Dir (toward the middle of the screen).</summary>
+        PinwheelGust = 35,
+
+        // ---- Region 5 (Bamboo Temple) special platforms (doc 30 section 15); values are stable, the art catalog looks them up by kind ----
+        /// <summary>Bamboo Flick (launch type, helpful): a landing flicks the player FlickLaunch x the standing jump high and FlickVx sideways toward Platform.Dir (the middle of the screen).</summary>
+        BambooFlick = 36,
+        /// <summary>Lantern Lift (helpful): a paper lantern that rises LanternRise over LanternRiseTicks while stood on (and sways sideways), floats back down once empty.</summary>
+        LanternLift = 37,
+        /// <summary>Koi Stone (helpful): a wide restful stone; standing still on it for KoiStillTicks charges the next jump (x KoiJumpMultiplier, full air steering for KoiAirTicks).</summary>
+        KoiStone = 38,
+        /// <summary>Swing Plank (demanding): a plank on two ropes that swings like a pendulum (Platform.Amplitude sideways each way, rising PlankRise at the ends, period Platform.Period).</summary>
+        SwingPlank = 39,
+        /// <summary>Pagoda Ridge (demanding): only the middle 2 x RidgeFlatHalf is flat; the sloping sides slide a standing player outward at RidgeSlide.</summary>
+        PagodaRidge = 40,
+        /// <summary>Mallet Smash (hazard type): a mallet at the end on side Platform.Dir smashes down on a global cycle (MalletCycleTicks); standing or landing in its zone at the smash hops the player inward.</summary>
+        MalletSmash = 41,
+        /// <summary>Rolling Log (hazard type): a log rolls back and forth along the platform (period Platform.Period); touching it from the side or landing on it bumps the player up and toward the middle.</summary>
+        RollingLog = 42
     }
 
     /// <summary>Static helpers that classify platform kinds (used by the builder, the endless tower, the bot and the view).</summary>
@@ -68,13 +100,14 @@ namespace BoingUpSkyTower.Simulation
         public static bool IsHazardType(PlatformKind k)
         {
             return k == PlatformKind.ThornBush || k == PlatformKind.SnapDaisy || k == PlatformKind.DizzySpores || k == PlatformKind.SporePop
-                || k == PlatformKind.KelpTangle || k == PlatformKind.PufferfishPad;
+                || k == PlatformKind.KelpTangle || k == PlatformKind.PufferfishPad || k == PlatformKind.JellyWobble || k == PlatformKind.PinwheelGust
+                || k == PlatformKind.MalletSmash || k == PlatformKind.RollingLog;
         }
 
         /// <summary>Platforms that launch the player (the landing speed on the next platform is not chosen by the player).</summary>
         public static bool IsLaunch(PlatformKind k)
         {
-            return k == PlatformKind.Bounce || k == PlatformKind.BounceCap || k == PlatformKind.Dandelion || k == PlatformKind.ClamShellPad;
+            return k == PlatformKind.Bounce || k == PlatformKind.BounceCap || k == PlatformKind.Dandelion || k == PlatformKind.ClamShellPad || k == PlatformKind.BambooFlick;
         }
 
         /// <summary>Pads whose launch speed is set by the previous flight and that the generator follows with a close next row (BounceNextGapMax, BounceNextDxMax): Bounce, BounceCap, Clam Shell Pad.</summary>
@@ -101,10 +134,22 @@ namespace BoingUpSkyTower.Simulation
             return k >= PlatformKind.SurfBoostWave && k <= PlatformKind.PufferfishPad;
         }
 
-        /// <summary>True for every region special platform (regions 1 to 3): they carry Params, painted pieces and the view's motion layer.</summary>
+        /// <summary>True for the seven region 4 platforms added by doc 30.</summary>
+        public static bool IsRegion4New(PlatformKind k)
+        {
+            return k >= PlatformKind.CandyBowl && k <= PlatformKind.PinwheelGust;
+        }
+
+        /// <summary>True for the seven region 5 platforms added by doc 30 (section 15).</summary>
+        public static bool IsRegion5New(PlatformKind k)
+        {
+            return k >= PlatformKind.BambooFlick && k <= PlatformKind.RollingLog;
+        }
+
+        /// <summary>True for every region special platform (regions 1 to 5): they carry Params, painted pieces and the view's motion layer.</summary>
         public static bool IsRegionNew(PlatformKind k)
         {
-            return k >= PlatformKind.WindPetal && k <= PlatformKind.PufferfishPad;
+            return k >= PlatformKind.WindPetal && k <= PlatformKind.RollingLog;
         }
 
         /// <summary>
@@ -113,7 +158,8 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         public static bool IsDemanding(PlatformKind k)
         {
-            return k == PlatformKind.FairyRing || k == PlatformKind.OrbitCap || k == PlatformKind.SinkingRaft || k == PlatformKind.TurtleShuttle;
+            return k == PlatformKind.FairyRing || k == PlatformKind.OrbitCap || k == PlatformKind.SinkingRaft || k == PlatformKind.TurtleShuttle
+                || k == PlatformKind.LicoriceBelt || k == PlatformKind.TaffyStretch || k == PlatformKind.SwingPlank || k == PlatformKind.PagodaRidge;
         }
 
         /// <summary>Platforms whose surface or position depends on the clock or on the player (the bot keys its states by time for them).</summary>
@@ -121,7 +167,8 @@ namespace BoingUpSkyTower.Simulation
         {
             return k == PlatformKind.Moving || k == PlatformKind.Vanishing || k == PlatformKind.WindPetal || k == PlatformKind.HiveLift
                 || k == PlatformKind.SnapDaisy || k == PlatformKind.Ladybug || k == PlatformKind.OrbitCap || k == PlatformKind.SporePop
-                || k == PlatformKind.SproutLift || k == PlatformKind.ClamShellPad || k == PlatformKind.TurtleShuttle || k == PlatformKind.PufferfishPad;
+                || k == PlatformKind.SproutLift || k == PlatformKind.ClamShellPad || k == PlatformKind.TurtleShuttle || k == PlatformKind.PufferfishPad
+                || k == PlatformKind.TaffyStretch || k == PlatformKind.LanternLift || k == PlatformKind.SwingPlank || k == PlatformKind.MalletSmash || k == PlatformKind.RollingLog;
         }
     }
 

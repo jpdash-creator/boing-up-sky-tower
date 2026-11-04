@@ -26,6 +26,8 @@ namespace BoingUpSkyTower.Gameplay
         float knobTopDropPx;
         Sprite stem;                    // sprout lift stem sprite (painted, behind the platform) and its top distance below the surface, in baked pixels
         float stemTopDropPx;
+        Sprite logArt;                  // rolling log of region 5 (own painted sprite) or null = tinted placeholder block
+        Sprite blank;                   // plain white sprite for the placeholder log
 
         public SpecialPlatformFx(SpriteFactory factory, bool reducedMotion)
         {
@@ -45,6 +47,13 @@ namespace BoingUpSkyTower.Gameplay
         {
             stem = sprite;
             stemTopDropPx = topDropPx;
+        }
+
+        /// <summary>Rolling Log object of the region art (null = placeholder block) and the plain sprite the placeholder is made of.</summary>
+        public void SetLog(Sprite sprite, Sprite plain)
+        {
+            logArt = sprite;
+            blank = plain;
         }
 
         /// <summary>True for the platform kinds this class dresses.</summary>
@@ -78,6 +87,22 @@ namespace BoingUpSkyTower.Gameplay
                 case PlatformKind.TurtleShuttle: return new Color(0.55f, 0.85f, 0.5f, 1f);
                 case PlatformKind.KelpTangle: return new Color(0.35f, 0.6f, 0.35f, 1f);
                 case PlatformKind.PufferfishPad: return new Color(1f, 0.88f, 0.45f, 1f);
+                // Region 4 placeholders (Candy Canyon: pink, mint, cream, caramel, licorice, taffy gold, strawberry jelly) until the painted pieces are imported
+                case PlatformKind.CandyBowl: return new Color(1f, 0.78f, 0.88f, 1f);
+                case PlatformKind.FlossGlide: return new Color(1f, 0.82f, 0.93f, 1f);
+                case PlatformKind.FizzVent: return new Color(0.66f, 0.95f, 0.85f, 1f);
+                case PlatformKind.LicoriceBelt: return new Color(0.55f, 0.3f, 0.35f, 1f);
+                case PlatformKind.TaffyStretch: return new Color(0.98f, 0.8f, 0.42f, 1f);
+                case PlatformKind.JellyWobble: return new Color(1f, 0.5f, 0.55f, 1f);
+                case PlatformKind.PinwheelGust: return new Color(0.96f, 0.92f, 1f, 1f);
+                // Region 5 placeholders (Bamboo Temple: bamboo green, lantern orange, river stone, plank wood, jade roof, lacquer red, log brown) until the painted pieces are imported
+                case PlatformKind.BambooFlick: return new Color(0.62f, 0.85f, 0.45f, 1f);
+                case PlatformKind.LanternLift: return new Color(1f, 0.62f, 0.3f, 1f);
+                case PlatformKind.KoiStone: return new Color(0.72f, 0.74f, 0.78f, 1f);
+                case PlatformKind.SwingPlank: return new Color(0.78f, 0.6f, 0.38f, 1f);
+                case PlatformKind.PagodaRidge: return new Color(0.42f, 0.78f, 0.62f, 1f);
+                case PlatformKind.MalletSmash: return new Color(0.85f, 0.35f, 0.3f, 1f);
+                case PlatformKind.RollingLog: return new Color(0.7f, 0.58f, 0.4f, 1f);
                 default: return Color.white;
             }
         }
@@ -98,12 +123,13 @@ namespace BoingUpSkyTower.Gameplay
             painted[i] = hasArt;
             // The only extra sprite: the painted Seesaw pivot knob (art, not a cue). Nothing else is drawn on top of a special platform.
             Sprite part = !hasArt ? null : (p.Kind == PlatformKind.Seesaw ? knob : (p.Kind == PlatformKind.SproutLift ? stem : null));
+            if (p.Kind == PlatformKind.RollingLog) part = hasArt && logArt != null ? logArt : blank;   // the log is a moving object: a tinted block until its sprite exists
             if (part == null) return;
             SpriteRenderer sr = pool.Count > 0 ? pool.Pop() : make("fx" + p.Id, part, OverlayOrder);
             sr.gameObject.SetActive(true);
             sr.sprite = part;
             sr.sortingOrder = p.Kind == PlatformKind.SproutLift ? -1 : OverlayOrder;   // the stem is behind the cap
-            sr.color = Color.white;
+            sr.color = p.Kind == PlatformKind.RollingLog && !(hasArt && logArt != null) ? Tint(PlatformKind.RollingLog) * 0.8f : Color.white;
             sr.transform.rotation = Quaternion.identity;
             parts[i] = sr;
         }
@@ -191,6 +217,38 @@ namespace BoingUpSkyTower.Gameplay
                             int pause = (period - 2 * glide) / 2;
                             int ph = (tick + p.Phase) % period;
                             baseSr.flipX = ph >= pause + glide;
+                        }
+                        break;
+                    }
+                case PlatformKind.LicoriceBelt:
+                case PlatformKind.PinwheelGust:
+                case PlatformKind.BambooFlick:
+                case PlatformKind.MalletSmash:
+                    {
+                        // The painted art looks toward +1: it mirrors to Platform.Dir (the belt tread and the pinwheel swirl lines point the way the platform pushes). The loop frames come from RunView.PoseOf.
+                        if (painted[i] && baseSr != null) baseSr.flipX = p.Dir < 0;
+                        break;
+                    }
+                case PlatformKind.RollingLog:
+                    {
+                        // The log rolls along the track (position from the Sim, LogX); its sprite sits on the walking surface at the scale of the track piece.
+                        SpriteRenderer lg = parts[i];
+                        if (lg == null) break;
+                        float lx = sim.LogX(p.Id, tick).F();
+                        Transform lt = lg.transform;
+                        if (painted[i] && logArt != null)
+                        {
+                            float ks = baseSr != null ? baseSr.transform.localScale.x : 1f;
+                            float lh = logArt.rect.height / logArt.pixelsPerUnit * ks;
+                            lt.position = new Vector3(lx, y + lh * 0.5f, 0f);
+                            lt.localScale = new Vector3(ks, ks, 1f);
+                        }
+                        else
+                        {
+                            Vector2 bs = blank != null ? (Vector2)blank.bounds.size : Vector2.one;
+                            float lw = sim.Cfg.LogWidth.F(), lh = 0.55f;
+                            lt.position = new Vector3(lx, y + lh * 0.5f, 0f);
+                            lt.localScale = new Vector3(lw / Mathf.Max(0.01f, bs.x), lh / Mathf.Max(0.01f, bs.y), 1f);
                         }
                         break;
                     }

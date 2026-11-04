@@ -116,7 +116,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
             Assert.Equal(-7839884808577442138L, LevelBuilder.Build(cfg, a).ComputeHash());   // re-rolled 2026-10-31 (doc 24: region 1 special platforms and the level 3 to 15 ramp)
-            Assert.Equal(-5175047465905895765L, LevelBuilder.Build(cfg, b).ComputeHash());   // level 10 now builds with the ramped difficulty (floor 0.708 vs 0.7)
+            Assert.Equal(6498144432617078768L, LevelBuilder.Build(cfg, b).ComputeHash());   // re-rolled 2026-11-04: SwingingGongs (region 5) now draws from its 7 new kinds (Bug List 3 D5); was -5175047465905895765
         }
 
         [Fact]

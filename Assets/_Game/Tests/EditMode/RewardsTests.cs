@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Gameplay;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
@@ -588,6 +589,137 @@ namespace BoingUpSkyTower.Tests
             SaveData parsed = JsonConvert.DeserializeObject<SaveData>("{\"coins\":3}");
             Assert.IsNotNull(parsed.Rewards, "an old save file without the rewards block gets the default one");
         }
+
+        // ---- the redesigned screen (docs/26 section 4, RewardsStyle): structure, slots and metrics (the pixel audit is CriticalUxTests rewards-*) ----
+
+        RewardsScreen BuildScreen(ProgressService svc, RewardTab tab, out GameObject root)
+        {
+            root = new GameObject("RewardsTestRoot", typeof(RectTransform));
+            var screen = new RewardsScreen((RectTransform)root.transform, svc, repo, null, null);
+            screen.Build(tab);
+            return screen;
+        }
+
+        [Test]
+        public void ScreenBuildsOneRowPerEntryOnEveryTabWithoutArt()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                Assert.AreEqual(1 + 9, s.ListContent.childCount, "region header + 9 star cards");
+                foreach (RewardEntry e in svc.RewardDefs.StarMilestones) Assert.IsNotNull(s.ListContent.Find("Row_" + e.Id + "/Card"), e.Id);
+                Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/Tabs"));
+                s.SelectTab(RewardTab.Daily);
+                Assert.AreEqual(1 + 10, s.ListContent.childCount, "scene header + 10 actions");
+                Assert.IsNotNull(s.ListContent.Find("Scene/TrackPanel/Cells/Cell20"), "the first chest of the points track");
+                s.SelectTab(RewardTab.Weekly);
+                Assert.AreEqual(1 + 11, s.ListContent.childCount, "scene header + 11 tasks");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void ReadyCardsAreButtonsWithAClaimTagAndClaimAllFollowsTheTab()
+        {
+            ProgressService svc = NewService();
+            ClearLevels(svc, 1, 15, 7);   // s_25 and r_1 ready
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                Transform ready = s.ListContent.Find("Row_s_25/Card");
+                Assert.IsNotNull(ready.GetComponent<UnityEngine.UI.Button>(), "a ready card is the claim button");
+                Assert.IsNotNull(ready.Find("Tag"), "with the green CLAIM tag");
+                Transform open = s.ListContent.Find("Row_s_50/Card");
+                Assert.IsNull(open.GetComponent<UnityEngine.UI.Button>());
+                Assert.IsNull(open.Find("Tag"));
+                Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "Claim All while something is ready");
+                s.SelectRegion(1);   // clearing region 1 moves the current region on; the ready bonus belongs to region 1
+                Assert.IsNotNull(s.ListContent.Find("MainHeader/Band").GetComponent<UnityEngine.UI.Button>(), "the region band is claimable too");
+
+                svc.ClaimAll(RewardTab.Main);
+                s.SelectTab(RewardTab.Main);
+                Assert.IsNull(s.ListContent.Find("Row_s_25/Card").GetComponent<UnityEngine.UI.Button>());
+                Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing left to claim");
+                // the same 15 cleared levels (45 stars, the no-wall level) also complete weekly tasks, so Claim All follows the Weekly tab on its own
+                s.SelectTab(RewardTab.Weekly);
+                Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "weekly tasks are ready too (levels, stars, no-wall)");
+                svc.ClaimAll(RewardTab.Weekly);
+                s.SelectTab(RewardTab.Weekly);
+                Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing left to claim in Weekly");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void DailyChestIsAButtonOnlyWhenReached()
+        {
+            ProgressService svc = NewService();
+            svc.RecordLogin();
+            svc.AddPlaySeconds(300);   // 20 points: the first chest only
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Daily, out root);
+            try
+            {
+                Assert.IsNotNull(s.ListContent.Find("Scene/TrackPanel/Cells/Cell20").GetComponent<UnityEngine.UI.Button>());
+                Assert.IsNull(s.ListContent.Find("Scene/TrackPanel/Cells/Cell40").GetComponent<UnityEngine.UI.Button>());
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void CardMetricsGrowWithTheTextSizeAndLeaveRoomForTheClaimTag()
+        {
+            float old = UiKit.TextScale;
+            try
+            {
+                UiKit.TextScale = 1f;
+                float h100 = RewardsScreen.CardHeight, gap100 = RewardsScreen.CardGap;
+                UiKit.TextScale = 1.3f;
+                float h130 = RewardsScreen.CardHeight, gap130 = RewardsScreen.CardGap;
+                Assert.GreaterOrEqual(h100, 214f);
+                Assert.Greater(h130, h100, "taller cards at 130 percent text");
+                Assert.Greater(gap130, gap100);
+                Assert.GreaterOrEqual(gap100, 8f + 20f, "the CLAIM tag sticks out above its card and stays clear of the card above");
+                Assert.GreaterOrEqual(RewardsScreen.BottomReserve(), RewardsScreen.FooterH + 130f, "list ends above the tab row and the footer");
+            }
+            finally { UiKit.TextScale = old; }
+        }
+
+        [Test]
+        public void PointsTrackPositionRunsFromZeroThroughTheChestCentres()
+        {
+            var ms = RewardCatalog.BuiltIn().DailyMilestones;
+            Assert.AreEqual(0f, RewardsScreen.TrackPosition(ms, 0), 1e-5f);
+            Assert.AreEqual(0.5f / 5f, RewardsScreen.TrackPosition(ms, 20), 1e-5f, "20 points = the first chest centre");
+            Assert.AreEqual(2.5f / 5f, RewardsScreen.TrackPosition(ms, 60), 1e-5f);
+            Assert.AreEqual(4.5f / 5f, RewardsScreen.TrackPosition(ms, 100), 1e-5f);
+            float prev = -1f;
+            for (int p = 0; p <= 100; p += 5) { float v = RewardsScreen.TrackPosition(ms, p); Assert.GreaterOrEqual(v, prev); prev = v; }
+        }
+
+        [Test]
+        public void EveryTaskHasAnIconAndTheChestKindsFollowTheThresholds()
+        {
+            RewardCatalog c = RewardCatalog.BuiltIn();
+            var all = new System.Collections.Generic.List<RewardEntry>();
+            foreach (RewardEntry e in c.DailyActions) all.Add(e);
+            foreach (RewardEntry e in c.WeeklyTasks) all.Add(e);
+            foreach (RewardEntry e in c.StarMilestones) all.Add(e);
+            foreach (RewardEntry e in all)
+            {
+                string slot, icon, kit;
+                RewardsScreen.TaskSources(e.Id, out slot, out icon, out kit);
+                Assert.IsNotNull(ToyKit_Get(kit), e.Id + ": the UI kit fallback icon " + kit + " must exist so a missing slot still draws");
+            }
+            string[] kinds = { "bronze", "bronze", "gold", "gold", "purple" };
+            for (int i = 0; i < 5; i++) Assert.AreEqual(kinds[i], RewardArt.ChestKind(i, 5), "chest " + i);
+            Assert.IsNull(RewardArt.Slot("task_does_not_exist"), "a missing slot is null, never an error");
+        }
+
+        static Sprite ToyKit_Get(string name) { return BoingUpSkyTower.Gameplay.ToyKit.Get(name); }
 
         [Test]
         public void ResetAllClearsTheRewardCounters()

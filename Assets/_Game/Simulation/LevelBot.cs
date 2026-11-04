@@ -247,6 +247,8 @@ namespace BoingUpSkyTower.Simulation
             if (here == PlatformKind.DizzySpores) return DizzyWaits;                                  // steering is locked for the first 60 ticks
             if (here == PlatformKind.KelpTangle) return KelpWaits;                                    // no jump for the first 36 ticks
             if (here == PlatformKind.SinkingRaft) return RaftWaits;                                   // the raft sinks 1 u in 90 ticks: leave within about 1.3 s
+            if (here == PlatformKind.LanternLift) return LanternWaits;                                // rises 2 u in 90 ticks: waiting for the full rise is the point
+            if (here == PlatformKind.KoiStone) return KoiWaits;                                       // 60 still ticks (plus the braking after the landing) charge the next jump
             return normal;
         }
 
@@ -254,6 +256,8 @@ namespace BoingUpSkyTower.Simulation
         private static readonly int[] DizzyWaits = { 0, 20, 62, 80 };
         private static readonly int[] KelpWaits = { 0, 38, 50, 80 };
         private static readonly int[] RaftWaits = { 0, 20, 45, 70 };
+        private static readonly int[] LanternWaits = { 0, 30, 95, 130 };
+        private static readonly int[] KoiWaits = { 0, 20, 85, 110 };
 
         /// <summary>Platforms on the one or two rows above a bounce platform (where the bounce flight should go next).</summary>
         private int NextTargets(int bounceId, int[] buf)
@@ -394,6 +398,11 @@ namespace BoingUpSkyTower.Simulation
                 case PlatformKind.ClamShellPad: return ((tick + p.Phase) % sim.Cfg.ClamCycleTicks) / 12;
                 case PlatformKind.PufferfishPad: return ((tick + p.Phase) % sim.Cfg.PufferCycleTicks) / 12;
                 case PlatformKind.TurtleShuttle: return ((tick + p.Phase) % sim.Cfg.TurtlePeriodTicks) / 12;
+                case PlatformKind.TaffyStretch: return ((tick + p.Phase) % sim.Cfg.TaffyPeriodTicks) / 12;
+                case PlatformKind.LanternLift: return ((tick + p.Phase) % sim.Cfg.LanternSwayTicks) / 12;
+                case PlatformKind.SwingPlank: return ((tick + p.Phase) % sim.Cfg.PlankPeriodTicks) / 12;
+                case PlatformKind.MalletSmash: return ((tick + p.Phase) % sim.Cfg.MalletCycleTicks) / 12;
+                case PlatformKind.RollingLog: return ((tick + p.Phase) % sim.Cfg.LogPeriodTicks) / 12;
                 default: return (tick / 20) % 24;
             }
         }

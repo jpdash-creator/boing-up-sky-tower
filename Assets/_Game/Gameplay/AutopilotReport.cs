@@ -250,6 +250,20 @@ namespace BoingUpSkyTower.Gameplay
                 case PlatformKind.TurtleShuttle: return "R";
                 case PlatformKind.KelpTangle: return "a";
                 case PlatformKind.PufferfishPad: return "f";
+                case PlatformKind.CandyBowl: return "b";
+                case PlatformKind.FlossGlide: return "g";
+                case PlatformKind.FizzVent: return "v";
+                case PlatformKind.LicoriceBelt: return "l";
+                case PlatformKind.TaffyStretch: return "t";
+                case PlatformKind.JellyWobble: return "j";
+                case PlatformKind.PinwheelGust: return "w";
+                case PlatformKind.BambooFlick: return "k";
+                case PlatformKind.LanternLift: return "n";
+                case PlatformKind.KoiStone: return "o";
+                case PlatformKind.SwingPlank: return "s";
+                case PlatformKind.PagodaRidge: return "d";
+                case PlatformKind.MalletSmash: return "m";
+                case PlatformKind.RollingLog: return "r";
                 default: return "?";
             }
         }

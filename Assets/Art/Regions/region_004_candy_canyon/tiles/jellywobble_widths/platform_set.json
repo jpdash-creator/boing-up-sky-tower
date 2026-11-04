@@ -1,0 +1,63 @@
+{
+  "asset": "jellywobble_widths",
+  "kind": "jellywobble",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 683,
+      "h": 168,
+      "bodyLeft": 7,
+      "bodyRight": 675,
+      "surfaceY": 77,
+      "bodyBottom": 161,
+      "width": 4.0,
+      "file": "reg004_jellywobble_calm_w4.png",
+      "ppu": 167.0,
+      "kind": "jellywobble",
+      "dir": -1,
+      "pose": "calm"
+    },
+    {
+      "w": 683,
+      "h": 146,
+      "bodyLeft": 7,
+      "bodyRight": 675,
+      "surfaceY": 53,
+      "bodyBottom": 137,
+      "width": 4.0,
+      "file": "reg004_jellywobble_squashed_w4.png",
+      "ppu": 167.0,
+      "kind": "jellywobble",
+      "dir": 1,
+      "pose": "squashed"
+    },
+    {
+      "w": 1015,
+      "h": 172,
+      "bodyLeft": 6,
+      "bodyRight": 1008,
+      "surfaceY": 80,
+      "bodyBottom": 164,
+      "width": 6.0,
+      "file": "reg004_jellywobble_calm_w6.png",
+      "ppu": 167.0,
+      "kind": "jellywobble",
+      "dir": -1,
+      "pose": "calm"
+    },
+    {
+      "w": 1017,
+      "h": 117,
+      "bodyLeft": 7,
+      "bodyRight": 1009,
+      "surfaceY": 24,
+      "bodyBottom": 108,
+      "width": 6.0,
+      "file": "reg004_jellywobble_squashed_w6.png",
+      "ppu": 167.0,
+      "kind": "jellywobble",
+      "dir": 1,
+      "pose": "squashed"
+    }
+  ]
+}

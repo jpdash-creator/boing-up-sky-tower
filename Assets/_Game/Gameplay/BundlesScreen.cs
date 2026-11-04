@@ -373,14 +373,11 @@ namespace BoingUpSkyTower.Gameplay
 
         static float NameLineH() { return Mathf.Ceil(Mathf.Max(NameFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.2f); }
 
-        /// <summary>1 or 2 name lines, estimated from the text length with a generous glyph width (the layout stays deterministic).</summary>
-        static int NameLines(BundleDef def)
-        {
-            float charW = Mathf.Max(NameFont, UiKit.MinBodyTextPx) * UiKit.TextScale * 0.6f;
-            int perLine = Mathf.Max(6, (int)(textAreaW / charW));
-            int len = def.Name != null ? def.Name.Length : 0;
-            return len > perLine * 2 ? 3 : (len > perLine ? 2 : 1);
-        }
+        /// <summary>
+        /// Bug List 3 D3: the name sits on ONE row with the "i" button (same centre line); the row is as high as the 48 dp "i" or the name line, whichever is taller
+        /// (the name line grows at 130 percent text). The name shrinks to fit between the "i" and the worth text, never below 16 sp.
+        /// </summary>
+        static float NameRowH() { return Mathf.Max(LeftColW, NameLineH()); }
 
         static int CompactRows(List<Chip> chips)
         {
@@ -398,7 +395,7 @@ namespace BoingUpSkyTower.Gameplay
         static float TextBlockHeight(BundleDef def)
         {
             int rows = CompactRows(MakeChips(def, null));
-            return NameLines(def) * NameLineH() + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
+            return NameRowH() + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
         }
 
         /// <summary>
@@ -407,9 +404,10 @@ namespace BoingUpSkyTower.Gameplay
         public static float CardHeight(BundleDef def)
         {
             // every row has at least the height of a one-line name over two chip rows (1 and 2 chip rows look the same); 3 chip rows or a long name still grow
-            float uniform = RowPad * 2f + NameLineH() + NameGap + 2f * CompactChipH + CompactGap;
-            float textBlock = RowPad * 2f + TextBlockHeight(def);
-            float leftCol = InfoPad + LeftColW + BagGap + BagMaxSize + RowPad;
+            // the name shares the "i" row (D3), so the text block starts at InfoPad (top) and only the bottom keeps RowPad
+            float uniform = InfoPad + NameRowH() + NameGap + 2f * CompactChipH + CompactGap + RowPad;
+            float textBlock = InfoPad + TextBlockHeight(def) + RowPad;
+            float leftCol = InfoPad + NameRowH() + BagGap + BagMaxSize + RowPad;
             float rightCol = 12f + WorthTextH() + 10f + PriceH + RowPad;
             return Mathf.Max(Mathf.Max(textBlock, uniform), Mathf.Max(leftCol, rightCol));
         }
@@ -464,7 +462,8 @@ namespace BoingUpSkyTower.Gameplay
         public static float AddCard(RectTransform parent, BundleDef def, ArtCatalog art, float y, int price, Action onBuy, Action onInfo = null)
         {
             float h = CardHeight(def);
-            float top = (h - TextBlockHeight(def)) * 0.5f;   // centre the text block when a side column makes the row taller
+            float rowH = NameRowH();
+            float iExtra = (rowH - LeftColW) * 0.5f;   // centres the 48 dp "i" on the name line when the line is taller (130 percent text)
 
             RectTransform card = ShopChrome.Card(parent, "Bundle_" + def.Id, ShopChrome.FrameColor.Gold);
             card.anchorMin = new Vector2(0f, 1f);
@@ -475,14 +474,13 @@ namespace BoingUpSkyTower.Gameplay
 
             string worthText = BundleWorth.Text(def, price);
             if (onInfo != null)
-                AddInfoButton(card, "BundleInfo", new Vector2(0f, 1f), new Vector2(InfoPad, -InfoPad), "About " + def.Name + ": what is inside, the hero chance and the worth", onInfo);
+                AddInfoButton(card, "BundleInfo", new Vector2(0f, 1f), new Vector2(InfoPad, -(InfoPad + iExtra)), "About " + def.Name + ": what is inside, the hero chance and the worth", onInfo);
 
             float icon = BagSize + (Mathf.Clamp(def.Tier, 1, 3) - 2) * 8f;   // the bag grows a little with the tier
             Image bag = UiKit.AddImage(card, "Bag", BagIcon(art), Color.white);
             bag.preserveAspect = true;
-            UiKit.Place(bag.rectTransform, new Vector2(0f, 1f), new Vector2(InfoPad + (LeftColW - icon) * 0.5f, -(InfoPad + LeftColW + BagGap + (BagMaxSize - icon) * 0.5f)), new Vector2(icon, icon));
+            UiKit.Place(bag.rectTransform, new Vector2(0f, 1f), new Vector2(InfoPad + (LeftColW - icon) * 0.5f, -(InfoPad + rowH + BagGap + (BagMaxSize - icon) * 0.5f)), new Vector2(icon, icon));
 
-            int lines = NameLines(def);
             Text name = UiKit.AddText(card, "Name", def.Name, (int)NameFont, UiKit.PanelInk, TextAnchor.MiddleLeft, true);
             UiKit.OnPanel(name);
             name.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -495,11 +493,12 @@ namespace BoingUpSkyTower.Gameplay
             nrt.anchorMin = new Vector2(0f, 1f);
             nrt.anchorMax = new Vector2(1f, 1f);
             nrt.pivot = new Vector2(0f, 1f);
-            nrt.offsetMin = new Vector2(TextLeft, -(top + lines * NameLineH()));
-            nrt.offsetMax = new Vector2(-PriceReserve, -top);
+            // D3: same row and centre line as the "i" (right of it), ending before the "Worth" text (which starts PriceReserve - 12 from the right edge)
+            nrt.offsetMin = new Vector2(TextLeft, -(InfoPad + rowH));
+            nrt.offsetMax = new Vector2(-PriceReserve, -InfoPad);
 
             // compact chips under the name, wrapping inside the text area
-            float chipTop = top + lines * NameLineH() + NameGap;
+            float chipTop = InfoPad + rowH + NameGap;
             float x = 0f;
             int row = 0;
             foreach (Chip c in MakeChips(def, art))
@@ -511,7 +510,7 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // top right: "Worth x2.1" as italic text in the name font (no star, no pill); it ends where the right edge of the name starts, so it never meets the name or the "i"
-            AddWorthText(card, worthText, new Vector2(1f, 1f), new Vector2(-RowPad, -12f), PriceReserve - RowPad - 12f);
+            AddWorthText(card, worthText, new Vector2(1f, 1f), new Vector2(-RowPad, -(InfoPad + Mathf.Max(0f, (rowH - WorthTextH()) * 0.5f))), PriceReserve - RowPad - 12f);   // same centre line as the name and the "i"
 
             string a11y = "Buy " + def.Name + " for " + Num(price) + " gems: " + Describe(def, ", ") + ". " + worthText;
             Button buy = ShopChrome.PriceButton(card, "Buy", 1, art != null ? art.GemIcon : null, Num(price), a11y, onBuy, 44);

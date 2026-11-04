@@ -38,8 +38,8 @@ namespace BoingUpSkyTower.Simulation.Tests
                 case 0: return new[] { PlatformKind.WindPetal, PlatformKind.HiveLift, PlatformKind.SnapDaisy, PlatformKind.Dandelion, PlatformKind.ThornBush, PlatformKind.Ladybug, PlatformKind.Seesaw, PlatformKind.Bounce };
                 case 1: return new[] { PlatformKind.SquishCap, PlatformKind.SproutLift, PlatformKind.PuffFloat, PlatformKind.FairyRing, PlatformKind.OrbitCap, PlatformKind.DizzySpores, PlatformKind.SporePop, PlatformKind.BounceCap, PlatformKind.Crumble, PlatformKind.Slippery };
                 case 2: return new[] { PlatformKind.SurfBoostWave, PlatformKind.SandcastleStep, PlatformKind.ClamShellPad, PlatformKind.SinkingRaft, PlatformKind.TurtleShuttle, PlatformKind.KelpTangle, PlatformKind.PufferfishPad, PlatformKind.Moving, PlatformKind.Crumble, PlatformKind.Vanishing };
-                case 3: return new[] { PlatformKind.Sticky, PlatformKind.Moving, PlatformKind.Crumble, PlatformKind.Vanishing, PlatformKind.Slippery, PlatformKind.Bounce };
-                default: return new[] { PlatformKind.Moving, PlatformKind.Crumble, PlatformKind.Vanishing, PlatformKind.Slippery, PlatformKind.Sticky, PlatformKind.Bounce };
+                case 3: return new[] { PlatformKind.CandyBowl, PlatformKind.FlossGlide, PlatformKind.FizzVent, PlatformKind.LicoriceBelt, PlatformKind.TaffyStretch, PlatformKind.JellyWobble, PlatformKind.PinwheelGust, PlatformKind.Sticky, PlatformKind.Crumble, PlatformKind.Slippery };
+                default: return new[] { PlatformKind.BambooFlick, PlatformKind.LanternLift, PlatformKind.KoiStone, PlatformKind.SwingPlank, PlatformKind.PagodaRidge, PlatformKind.MalletSmash, PlatformKind.RollingLog, PlatformKind.Moving, PlatformKind.Vanishing };
             }
         }
 

@@ -1,0 +1,46 @@
+{
+  "asset": "candybowl_widths",
+  "kind": "candybowl",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 685,
+      "h": 125,
+      "bodyLeft": 8,
+      "bodyRight": 676,
+      "surfaceY": 33,
+      "bodyBottom": 115,
+      "width": 4.0,
+      "file": "reg004_candybowl_w4.png",
+      "ppu": 167.0,
+      "kind": "candybowl",
+      "dir": 0
+    },
+    {
+      "w": 1019,
+      "h": 125,
+      "bodyLeft": 8,
+      "bodyRight": 1010,
+      "surfaceY": 33,
+      "bodyBottom": 115,
+      "width": 6.0,
+      "file": "reg004_candybowl_w6.png",
+      "ppu": 167.0,
+      "kind": "candybowl",
+      "dir": 0
+    },
+    {
+      "w": 1353,
+      "h": 125,
+      "bodyLeft": 8,
+      "bodyRight": 1344,
+      "surfaceY": 33,
+      "bodyBottom": 115,
+      "width": 8.0,
+      "file": "reg004_candybowl_w8.png",
+      "ppu": 167.0,
+      "kind": "candybowl",
+      "dir": 0
+    }
+  ]
+}

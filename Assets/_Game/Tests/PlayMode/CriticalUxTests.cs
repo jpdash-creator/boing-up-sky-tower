@@ -1227,6 +1227,30 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
+        /// <summary>Bug List 3 D2.a/b: ShowShop() with no arguments selects Gems / Coins at scroll 0; the Character page opens at its top (Heroes banner), not at Power-ups.</summary>
+        [UnityTest]
+        public IEnumerator ShopDefaultEntryIsGemsCoinsAtTopAndCharacterStartsAtTop()
+        {
+            ShopScreen.TestPurchasesOverride = null;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            meta.ShowShop();
+            yield return null;
+            yield return null;
+            if (meta.CurrentShop.Tab != ShopScreen.TabGems) problems.Add("default entry opened tab " + meta.CurrentShop.Tab + ", expected Gems / Coins");
+            if (meta.CurrentShop.Section != 0) problems.Add("default entry section " + meta.CurrentShop.Section + ", expected the top");
+            RectTransform list = FindRt("ShopList");
+            if (list == null || list.anchoredPosition.y > 0.5f) problems.Add("default entry: Gems list not at scroll 0");
+            meta.ShowShop(ShopScreen.TabCharacter);
+            yield return null;
+            yield return null;
+            list = FindRt("ShopList");
+            if (list == null || list.anchoredPosition.y > 0.5f) problems.Add("Character page not at scroll 0 (Heroes banner hidden)");
+            if (meta.CurrentShop.Section != 0) problems.Add("Character page section " + meta.CurrentShop.Section + ", expected 0");
+            Report(problems);
+        }
+
         /// <summary>Shows a shop tab at every aspect, scrolls its list by <paramref name="scrollPx"/> (reference px, clamped) and audits the result.</summary>
         static IEnumerator CheckShopScroll(string screen, System.Action show, string bannerName, float scrollPx, List<string> all)
         {
@@ -1339,6 +1363,14 @@ namespace BoingUpSkyTower.Tests
                 sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_shield");
                 meta.CurrentRewards.ShowClaimed(sample);
             }, problems);
+            // ready states of the redesign: yellow cards with the CLAIM tag, the region band as a claim button, Claim All, and a claimed (green, check, open chest) look
+            for (int lvl = 10; lvl <= 15; lvl++) GameSession.Progress.ApplyRun("lvl_001_" + lvl.ToString("00"), new RunOutcome { Completed = true, StarMask = 7, Score = 100, CoinsCollected = 10 });
+            GameSession.Progress.AddPlaySeconds(100 * 60);
+            yield return CheckScreen("rewards-main-ready", () => { meta.ShowRewards(RewardTab.Main); meta.CurrentRewards.SelectRegion(1); }, problems);
+            yield return CheckScreen("rewards-weekly-ready", () => meta.ShowRewards(RewardTab.Weekly), problems);
+            yield return CheckScreen("rewards-daily-ready", () => meta.ShowRewards(RewardTab.Daily), problems);
+            yield return CheckScreen("rewards-daily-claimed", () => { meta.ShowRewards(RewardTab.Daily); GameSession.Progress.TryClaimReward(RewardTab.Daily, "dp_20"); meta.ShowRewards(RewardTab.Daily); }, problems);
+            yield return CheckScreen("rewards-main-claimed", () => { GameSession.Progress.TryClaimReward(RewardTab.Main, "s_25"); GameSession.Progress.TryClaimReward(RewardTab.Main, "r_1"); meta.ShowRewards(RewardTab.Main); }, problems);
             Report(problems);
         }
 
@@ -1558,6 +1590,49 @@ namespace BoingUpSkyTower.Tests
             MetaUiActive(true);
             GameSession.Progress.ResetAll();
             for (int i = 0; i < 70 && GameSession.Progress.CurrentTimerOffer(System.DateTime.UtcNow) == null; i++) GameSession.Progress.TickPlayTime(60);
+        }
+
+        [UnityTest]
+        public IEnumerator BundleNameSharesTheRowWithTheInfoButton() { return BundleNameRowAudit(100); }
+
+        [UnityTest]
+        public IEnumerator BundleNameSharesTheRowWithTheInfoButtonAt130PercentText() { return BundleNameRowAudit(130); }
+
+        /// <summary>Bug List 3 D3: on every bundle card the name is right of the "i", on the same centre line, and ends before the Worth text; the name font stays at least 16 sp.</summary>
+        IEnumerator BundleNameRowAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            yield return Load("Meta");
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                foreach (Rect safe in new[] { FullSafe, NotchSafe })
+                {
+                    Rect s = safe;
+                    UiKit.SafeAreaNormalized = () => s;
+                    ShowBundlesPage(5000, 0);
+                    yield return ApplyAspect(a, holder);
+                    yield return null;
+                    string tag = "bundle-name-row@" + a.Name + (safe == NotchSafe ? "+notch" : "") + "/" + textPercent;
+                    int cards = 0;
+                    foreach (var card in Object.FindObjectsByType<RectTransform>(FindObjectsSortMode.None))
+                    {
+                        if (!card.gameObject.activeInHierarchy || !card.name.StartsWith("Bundle_")) continue;
+                        RectTransform info = card.Find("BundleInfo") as RectTransform, name = card.Find("Name") as RectTransform, worth = card.Find("Worth") as RectTransform;
+                        if (info == null || name == null || worth == null) { problems.Add(tag + ": " + card.name + " lacks BundleInfo/Name/Worth"); continue; }
+                        cards++;
+                        Rect ib = CanvasBox(info), nb = CanvasBox(name), wb = CanvasBox(worth);
+                        if (nb.xMin < ib.xMax - 0.5f) problems.Add(tag + ": " + card.name + " name starts left of the end of the i button");
+                        if (nb.xMax > wb.xMin + 0.5f) problems.Add(tag + ": " + card.name + " name runs into the Worth text");
+                        if (Mathf.Abs(nb.center.y - ib.center.y) > 2f) problems.Add(tag + ": " + card.name + " name is not on the i button's centre line (" + nb.center.y + " vs " + ib.center.y + ")");
+                        var txt = name.GetComponent<UnityEngine.UI.Text>();
+                        if (txt != null && txt.resizeTextMinSize < Mathf.RoundToInt(UiKit.MinBodyTextPx)) problems.Add(tag + ": name min font below 16 sp");
+                    }
+                    if (cards == 0) problems.Add(tag + ": no bundle cards found");
+                }
+            }
+            Report(problems);
         }
 
         IEnumerator BundlesAudit(int textPercent)

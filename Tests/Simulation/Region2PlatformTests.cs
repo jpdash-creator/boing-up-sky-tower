@@ -613,8 +613,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.All(set, k => Assert.True(PlatformKinds.IsRegion2New(k)));
             Assert.Equal(new[] { PlatformKind.Crumble, PlatformKind.Slippery }, RegionPlatformSets.GenericsFor(SignatureKind.BounceCaps));
             Assert.Empty(RegionPlatformSets.GenericsFor(SignatureKind.BounceFlowers));
-            Assert.Empty(RegionPlatformSets.For(SignatureKind.StickyGum));
-            Assert.Empty(RegionPlatformSets.For(SignatureKind.SwingingGongs));
+            Assert.Equal(7, RegionPlatformSets.For(SignatureKind.StickyGum).Length);   // region 4 has its own set since D5
+            Assert.Equal(7, RegionPlatformSets.For(SignatureKind.SwingingGongs).Length);   // region 5 got its seven kinds (Region5PlatformTests)
             Assert.True(PlatformKinds.IsHazardType(PlatformKind.DizzySpores) && PlatformKinds.IsHazardType(PlatformKind.SporePop));
             Assert.True(PlatformKinds.IsDemanding(PlatformKind.FairyRing) && PlatformKinds.IsDemanding(PlatformKind.OrbitCap));
             // the enum values of regions 1 and 2 are stable
@@ -631,7 +631,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             SimConfig cfg = new SimConfig();
             foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 4, 5))
                 foreach (Platform p in LevelBuilder.Build(cfg, ll.Spec.WithAttemptSeed(RandomLayoutTests.AttemptSeed(1))).Platforms)
-                    Assert.False(PlatformKinds.IsRegionNew(p.Kind), ll.Id + " has " + p.Kind);
+                    Assert.False(PlatformKinds.IsRegion2New(p.Kind), ll.Id + " has " + p.Kind);
             foreach (LoadedLevel ll in Region2())
                 foreach (Platform p in LevelBuilder.Build(cfg, ll.Spec.WithAttemptSeed(RandomLayoutTests.AttemptSeed(1))).Platforms)
                     Assert.False(PlatformKinds.IsRegion1New(p.Kind), ll.Id + " has " + p.Kind);

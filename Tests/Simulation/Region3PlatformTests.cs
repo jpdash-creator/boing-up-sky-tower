@@ -451,8 +451,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(7, set.Length);
             Assert.All(set, k => Assert.True(PlatformKinds.IsRegion3New(k)));
             Assert.Equal(new[] { PlatformKind.Crumble, PlatformKind.Vanishing }, RegionPlatformSets.GenericsFor(SignatureKind.DriftingPlatforms));
-            Assert.Empty(RegionPlatformSets.For(SignatureKind.StickyGum));
-            Assert.Empty(RegionPlatformSets.For(SignatureKind.SwingingGongs));
+            Assert.Equal(7, RegionPlatformSets.For(SignatureKind.StickyGum).Length);   // region 4 has its own set since D5
+            Assert.Equal(7, RegionPlatformSets.For(SignatureKind.SwingingGongs).Length);   // region 5 got its seven kinds (Region5PlatformTests)
             LevelSpec spec = Region3().First(l => l.Spec.LevelIndex == 5).Spec;
             PlatformKind[] options = SpecialPlatforms.Options(spec, PlatformKind.Moving);
             Assert.Equal(11, options.Length);   // 7 new + drifting twice + Crumble + Vanishing

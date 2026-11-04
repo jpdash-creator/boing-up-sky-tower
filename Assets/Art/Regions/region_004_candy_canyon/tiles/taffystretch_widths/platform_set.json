@@ -1,0 +1,63 @@
+{
+  "asset": "taffystretch_widths",
+  "kind": "taffystretch",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 543,
+      "h": 125,
+      "bodyLeft": 8,
+      "bodyRight": 534,
+      "surfaceY": 24,
+      "bodyBottom": 113,
+      "width": 2.4,
+      "file": "reg004_taffystretch_narrow_w2_4.png",
+      "ppu": 219.167,
+      "kind": "taffystretch",
+      "dir": -1,
+      "pose": "narrow"
+    },
+    {
+      "w": 798,
+      "h": 128,
+      "bodyLeft": 8,
+      "bodyRight": 789,
+      "surfaceY": 28,
+      "bodyBottom": 109,
+      "width": 3.3,
+      "file": "reg004_taffystretch_second_w3_3.png",
+      "ppu": 236.667,
+      "kind": "taffystretch",
+      "dir": 1,
+      "pose": "second"
+    },
+    {
+      "w": 1060,
+      "h": 128,
+      "bodyLeft": 8,
+      "bodyRight": 1051,
+      "surfaceY": 28,
+      "bodyBottom": 113,
+      "width": 4.3,
+      "file": "reg004_taffystretch_third_w4_3.png",
+      "ppu": 242.558,
+      "kind": "taffystretch",
+      "dir": 2,
+      "pose": "third"
+    },
+    {
+      "w": 1138,
+      "h": 128,
+      "bodyLeft": 8,
+      "bodyRight": 1129,
+      "surfaceY": 30,
+      "bodyBottom": 111,
+      "width": 5.2,
+      "file": "reg004_taffystretch_wide_w5_2.png",
+      "ppu": 215.577,
+      "kind": "taffystretch",
+      "dir": 3,
+      "pose": "wide"
+    }
+  ]
+}

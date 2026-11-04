@@ -47,6 +47,13 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
+        public void CUX_NormalEntryIsGemsCoinsAtTheTop()
+        {
+            Assert.AreEqual(ShopChrome.TabGems, ShopScreen.DefaultTab);   // Bug List 3 D2.b
+            Assert.AreEqual(ShopScreen.GemsSection, 0);
+        }
+
+        [Test]
         public void CUX_PageBannersHaveNoVipHeader()
         {
             Assert.AreEqual("Subscription", ShopChrome.TabTitles[ShopChrome.TabVip]);

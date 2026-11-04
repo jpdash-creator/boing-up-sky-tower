@@ -543,6 +543,7 @@ MonoBehaviour:
     SeesawKnobTopDropPx: 67
     SproutStem: {fileID: 0}
     SproutStemTopDropPx: 0
+    RollingLog: {fileID: 0}
   - Index: 2
     Id: region_002_mushroom_grove
     BgFar: {fileID: 21300000, guid: fb3605c00bbd0c94f8b642dff7f7691c, type: 3}
@@ -1236,6 +1237,7 @@ MonoBehaviour:
     SeesawKnobTopDropPx: 0
     SproutStem: {fileID: 21300000, guid: 8438da6afaed5cb47b82fc4db77164c1, type: 3}
     SproutStemTopDropPx: 79
+    RollingLog: {fileID: 0}
   - Index: 3
     Id: region_003_sunny_beach
     BgFar: {fileID: 21300000, guid: c137bf1f32f4cb04f99e132397e341cd, type: 3}
@@ -1913,6 +1915,7 @@ MonoBehaviour:
     SeesawKnobTopDropPx: 0
     SproutStem: {fileID: 0}
     SproutStemTopDropPx: 0
+    RollingLog: {fileID: 0}
   - Index: 4
     Id: region_004_candy_canyon
     BgFar: {fileID: 21300000, guid: b8e44d25a5b3f06429a01f66cc57340e, type: 3}
@@ -2128,11 +2131,355 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 174f75b5abc521a46b59140368d9e25d, type: 3}
     KindSprites:
     - {fileID: 0}
-    KindPieces: []
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 21300000, guid: bb1fa17a74b142c4fb985f216e5996e8, type: 3}
+    - {fileID: 21300000, guid: cf5869838cca99e439c80e6d8e449cb6, type: 3}
+    - {fileID: 21300000, guid: 5e4de1c9f72cb774caf4c5b8125f2a6d, type: 3}
+    - {fileID: 21300000, guid: eb3d2c21c4d21da43863546488110eb3, type: 3}
+    - {fileID: 21300000, guid: 1a088db92f77d6047a0f2bc70dd18f7b, type: 3}
+    - {fileID: 21300000, guid: 2236f53bb5383484ab45a3dde3cd319a, type: 3}
+    - {fileID: 21300000, guid: 08df92b9b875d8245be0ead6bfe9c499, type: 3}
+    KindPieces:
+    - Kind: 29
+      Dir: 0
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: bb1fa17a74b142c4fb985f216e5996e8, type: 3}
+      Metric:
+        W: 685
+        H: 125
+        BodyLeft: 8
+        BodyRight: 676
+        SurfaceY: 33
+        BodyBottom: 115
+    - Kind: 29
+      Dir: 0
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: 10fe1d47a4c39ca499543643ef0502d9, type: 3}
+      Metric:
+        W: 1019
+        H: 125
+        BodyLeft: 8
+        BodyRight: 1010
+        SurfaceY: 33
+        BodyBottom: 115
+    - Kind: 29
+      Dir: 0
+      WidthUnits: 8
+      Sprite: {fileID: 21300000, guid: a42464c57f76c934fbae185248985e2b, type: 3}
+      Metric:
+        W: 1353
+        H: 125
+        BodyLeft: 8
+        BodyRight: 1344
+        SurfaceY: 33
+        BodyBottom: 115
+    - Kind: 31
+      Dir: 0
+      WidthUnits: 2
+      Sprite: {fileID: 21300000, guid: c46f6e80e03748744893130962d9ea49, type: 3}
+      Metric:
+        W: 367
+        H: 215
+        BodyLeft: 25
+        BodyRight: 341
+        SurfaceY: 114
+        BodyBottom: 191
+    - Kind: 31
+      Dir: 0
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: 5e4de1c9f72cb774caf4c5b8125f2a6d, type: 3}
+      Metric:
+        W: 520
+        H: 214
+        BodyLeft: 9
+        BodyRight: 510
+        SurfaceY: 114
+        BodyBottom: 204
+    - Kind: 31
+      Dir: 0
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: 42c20e06cbbb2c645830e97c4fce41f3, type: 3}
+      Metric:
+        W: 687
+        H: 214
+        BodyLeft: 9
+        BodyRight: 677
+        SurfaceY: 114
+        BodyBottom: 204
+    - Kind: 30
+      Dir: 0
+      WidthUnits: 2
+      Sprite: {fileID: 21300000, guid: 15203f5903af8e94bb4bcf2c1378126e, type: 3}
+      Metric:
+        W: 359
+        H: 115
+        BodyLeft: 12
+        BodyRight: 346
+        SurfaceY: 23
+        BodyBottom: 105
+    - Kind: 30
+      Dir: 0
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: cf5869838cca99e439c80e6d8e449cb6, type: 3}
+      Metric:
+        W: 530
+        H: 125
+        BodyLeft: 14
+        BodyRight: 515
+        SurfaceY: 31
+        BodyBottom: 115
+    - Kind: 30
+      Dir: 0
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: d740e42e696c72c4f9ee739b3c1c2479, type: 3}
+      Metric:
+        W: 697
+        H: 125
+        BodyLeft: 14
+        BodyRight: 682
+        SurfaceY: 31
+        BodyBottom: 115
+    - Kind: 30
+      Dir: 0
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: bd6a954ce1caf0b49a369b6e681cae9d, type: 3}
+      Metric:
+        W: 1031
+        H: 125
+        BodyLeft: 14
+        BodyRight: 1016
+        SurfaceY: 31
+        BodyBottom: 115
+    - Kind: 34
+      Dir: -1
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: 2236f53bb5383484ab45a3dde3cd319a, type: 3}
+      Metric:
+        W: 683
+        H: 168
+        BodyLeft: 7
+        BodyRight: 675
+        SurfaceY: 77
+        BodyBottom: 161
+    - Kind: 34
+      Dir: 1
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: f8dc7baf98c336640ad394dd271e31f7, type: 3}
+      Metric:
+        W: 683
+        H: 146
+        BodyLeft: 7
+        BodyRight: 675
+        SurfaceY: 53
+        BodyBottom: 137
+    - Kind: 34
+      Dir: -1
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: bea18bc6d6cda9a4996f47af2c5fb7f0, type: 3}
+      Metric:
+        W: 1015
+        H: 172
+        BodyLeft: 6
+        BodyRight: 1008
+        SurfaceY: 80
+        BodyBottom: 164
+    - Kind: 34
+      Dir: 1
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: cdd5937011ec4b84489d00d3696f1b72, type: 3}
+      Metric:
+        W: 1017
+        H: 117
+        BodyLeft: 7
+        BodyRight: 1009
+        SurfaceY: 24
+        BodyBottom: 108
+    - Kind: 32
+      Dir: -1
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: eb3d2c21c4d21da43863546488110eb3, type: 3}
+      Metric:
+        W: 685
+        H: 135
+        BodyLeft: 8
+        BodyRight: 676
+        SurfaceY: 29
+        BodyBottom: 112
+    - Kind: 32
+      Dir: 1
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: 2bd41c670f013db489958583f5d54696, type: 3}
+      Metric:
+        W: 685
+        H: 136
+        BodyLeft: 8
+        BodyRight: 676
+        SurfaceY: 30
+        BodyBottom: 113
+    - Kind: 32
+      Dir: -1
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: 1d9c05814c7be1c4fb5e05cf85112a41, type: 3}
+      Metric:
+        W: 1019
+        H: 135
+        BodyLeft: 8
+        BodyRight: 1010
+        SurfaceY: 29
+        BodyBottom: 112
+    - Kind: 32
+      Dir: 1
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: 6b199bac778acb14294f1627e3f99e1f, type: 3}
+      Metric:
+        W: 1019
+        H: 136
+        BodyLeft: 8
+        BodyRight: 1010
+        SurfaceY: 30
+        BodyBottom: 113
+    - Kind: 35
+      Dir: -1
+      WidthUnits: 2
+      Sprite: {fileID: 21300000, guid: 16f2a73d9ac2b7c42afe8653f40cecb8, type: 3}
+      Metric:
+        W: 349
+        H: 306
+        BodyLeft: 7
+        BodyRight: 341
+        SurfaceY: 214
+        BodyBottom: 298
+    - Kind: 35
+      Dir: 1
+      WidthUnits: 2
+      Sprite: {fileID: 21300000, guid: e26d574edcf137f428f54f651b66e425, type: 3}
+      Metric:
+        W: 349
+        H: 292
+        BodyLeft: 7
+        BodyRight: 341
+        SurfaceY: 200
+        BodyBottom: 284
+    - Kind: 35
+      Dir: -1
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: 08df92b9b875d8245be0ead6bfe9c499, type: 3}
+      Metric:
+        W: 516
+        H: 306
+        BodyLeft: 7
+        BodyRight: 508
+        SurfaceY: 214
+        BodyBottom: 298
+    - Kind: 35
+      Dir: 1
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: 780b0780f415ea346a4e8bed6963122a, type: 3}
+      Metric:
+        W: 516
+        H: 292
+        BodyLeft: 7
+        BodyRight: 508
+        SurfaceY: 200
+        BodyBottom: 284
+    - Kind: 35
+      Dir: -1
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: 01dbc6d457df1704181282c4a408ba30, type: 3}
+      Metric:
+        W: 683
+        H: 306
+        BodyLeft: 7
+        BodyRight: 675
+        SurfaceY: 214
+        BodyBottom: 298
+    - Kind: 35
+      Dir: 1
+      WidthUnits: 4
+      Sprite: {fileID: 21300000, guid: 60941579eb1590d42ac3188e68064a7f, type: 3}
+      Metric:
+        W: 683
+        H: 292
+        BodyLeft: 7
+        BodyRight: 675
+        SurfaceY: 200
+        BodyBottom: 284
+    - Kind: 33
+      Dir: -1
+      WidthUnits: 2.4
+      Sprite: {fileID: 21300000, guid: 1a088db92f77d6047a0f2bc70dd18f7b, type: 3}
+      Metric:
+        W: 543
+        H: 125
+        BodyLeft: 8
+        BodyRight: 534
+        SurfaceY: 24
+        BodyBottom: 113
+    - Kind: 33
+      Dir: 1
+      WidthUnits: 3.3
+      Sprite: {fileID: 21300000, guid: ab059d6df5f75754ea695090dea488c4, type: 3}
+      Metric:
+        W: 798
+        H: 128
+        BodyLeft: 8
+        BodyRight: 789
+        SurfaceY: 28
+        BodyBottom: 109
+    - Kind: 33
+      Dir: 2
+      WidthUnits: 4.3
+      Sprite: {fileID: 21300000, guid: a4e69bb92dce77146a45ce9c36455183, type: 3}
+      Metric:
+        W: 1060
+        H: 128
+        BodyLeft: 8
+        BodyRight: 1051
+        SurfaceY: 28
+        BodyBottom: 113
+    - Kind: 33
+      Dir: 3
+      WidthUnits: 5.2
+      Sprite: {fileID: 21300000, guid: 0ca8d3ecc3c2c8a45acee5efd0107da4, type: 3}
+      Metric:
+        W: 1138
+        H: 128
+        BodyLeft: 8
+        BodyRight: 1129
+        SurfaceY: 30
+        BodyBottom: 111
     SeesawKnob: {fileID: 0}
     SeesawKnobTopDropPx: 0
     SproutStem: {fileID: 0}
     SproutStemTopDropPx: 0
+    RollingLog: {fileID: 0}
   - Index: 5
     Id: region_005_bamboo_temple
     BgFar: {fileID: 21300000, guid: fdf7e7325c7ba0f4e86335a0bcf792f5, type: 3}
@@ -2348,11 +2695,241 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 5f6cb54b78a943b49b31db542a7f6423, type: 3}
     KindSprites:
     - {fileID: 0}
-    KindPieces: []
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 21300000, guid: c3cbc4081c03600408292984b036ecbf, type: 3}
+    - {fileID: 21300000, guid: 0bbbf781baf99c244b7c2ddbfe4c9bc8, type: 3}
+    - {fileID: 21300000, guid: c42e2aee6800c5d44b7258fba56e71ff, type: 3}
+    - {fileID: 21300000, guid: 61d8783519ce5ca42a644214e154dbd6, type: 3}
+    - {fileID: 21300000, guid: 05f89388c447d054eafe9431d062dd61, type: 3}
+    - {fileID: 21300000, guid: c6ce2f515f040b44581467c4c8028c17, type: 3}
+    - {fileID: 21300000, guid: 46c8271af92ea854891addb62e49ee6c, type: 3}
+    KindPieces:
+    - Kind: 36
+      Dir: -1
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: c3cbc4081c03600408292984b036ecbf, type: 3}
+      Metric:
+        W: 516
+        H: 115
+        BodyLeft: 7
+        BodyRight: 508
+        SurfaceY: 31
+        BodyBottom: 80
+    - Kind: 36
+      Dir: 1
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: ddc1dadeac70e3d41967750d1163fdbf, type: 3}
+      Metric:
+        W: 792
+        H: 278
+        BodyLeft: 145
+        BodyRight: 646
+        SurfaceY: 199
+        BodyBottom: 253
+    - Kind: 38
+      Dir: 0
+      WidthUnits: 5
+      Sprite: {fileID: 21300000, guid: c42e2aee6800c5d44b7258fba56e71ff, type: 3}
+      Metric:
+        W: 860
+        H: 149
+        BodyLeft: 12
+        BodyRight: 847
+        SurfaceY: 63
+        BodyBottom: 142
+    - Kind: 38
+      Dir: 0
+      WidthUnits: 7
+      Sprite: {fileID: 21300000, guid: 0198c2fb6e0bb86449705631d9120772, type: 3}
+      Metric:
+        W: 1194
+        H: 149
+        BodyLeft: 12
+        BodyRight: 1181
+        SurfaceY: 63
+        BodyBottom: 142
+    - Kind: 37
+      Dir: 0
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: 0bbbf781baf99c244b7c2ddbfe4c9bc8, type: 3}
+      Metric:
+        W: 516
+        H: 155
+        BodyLeft: 7
+        BodyRight: 508
+        SurfaceY: 26
+        BodyBottom: 106
+    - Kind: 37
+      Dir: 0
+      WidthUnits: 5
+      Sprite: {fileID: 21300000, guid: 07e64308699fff34cae91dda33de5d41, type: 3}
+      Metric:
+        W: 850
+        H: 155
+        BodyLeft: 7
+        BodyRight: 842
+        SurfaceY: 26
+        BodyBottom: 106
+    - Kind: 41
+      Dir: -1
+      WidthUnits: 4.5
+      Sprite: {fileID: 21300000, guid: c6ce2f515f040b44581467c4c8028c17, type: 3}
+      Metric:
+        W: 767
+        H: 337
+        BodyLeft: 7
+        BodyRight: 759
+        SurfaceY: 245
+        BodyBottom: 328
+    - Kind: 41
+      Dir: 1
+      WidthUnits: 4.5
+      Sprite: {fileID: 21300000, guid: 22c643df367738d4b95a5fd9510f4fdd, type: 3}
+      Metric:
+        W: 771
+        H: 263
+        BodyLeft: 9
+        BodyRight: 761
+        SurfaceY: 163
+        BodyBottom: 246
+    - Kind: 41
+      Dir: -1
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: 0220e61951a0b8141a653eae8c55b61e, type: 3}
+      Metric:
+        W: 1015
+        H: 249
+        BodyLeft: 6
+        BodyRight: 1008
+        SurfaceY: 155
+        BodyBottom: 240
+    - Kind: 41
+      Dir: 1
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: 0b34ac52f36f7474ba597ea96012e37a, type: 3}
+      Metric:
+        W: 1023
+        H: 219
+        BodyLeft: 10
+        BodyRight: 1012
+        SurfaceY: 124
+        BodyBottom: 205
+    - Kind: 40
+      Dir: 0
+      WidthUnits: 2.5
+      Sprite: {fileID: 21300000, guid: 05f89388c447d054eafe9431d062dd61, type: 3}
+      Metric:
+        W: 447
+        H: 117
+        BodyLeft: 14
+        BodyRight: 432
+        SurfaceY: 27
+        BodyBottom: 110
+    - Kind: 40
+      Dir: 0
+      WidthUnits: 3.5
+      Sprite: {fileID: 21300000, guid: 506a039de2350f04fbf303cd0f19c81f, type: 3}
+      Metric:
+        W: 607
+        H: 115
+        BodyLeft: 11
+        BodyRight: 595
+        SurfaceY: 25
+        BodyBottom: 108
+    - Kind: 40
+      Dir: 0
+      WidthUnits: 4.5
+      Sprite: {fileID: 21300000, guid: d7d408411b8acda4d983187628aa41f6, type: 3}
+      Metric:
+        W: 775
+        H: 115
+        BodyLeft: 11
+        BodyRight: 763
+        SurfaceY: 25
+        BodyBottom: 108
+    - Kind: 42
+      Dir: 0
+      WidthUnits: 5
+      Sprite: {fileID: 21300000, guid: 46c8271af92ea854891addb62e49ee6c, type: 3}
+      Metric:
+        W: 850
+        H: 130
+        BodyLeft: 7
+        BodyRight: 842
+        SurfaceY: 39
+        BodyBottom: 122
+    - Kind: 39
+      Dir: 0
+      WidthUnits: 3
+      Sprite: {fileID: 21300000, guid: 61d8783519ce5ca42a644214e154dbd6, type: 3}
+      Metric:
+        W: 536
+        H: 312
+        BodyLeft: 17
+        BodyRight: 518
+        SurfaceY: 220
+        BodyBottom: 305
+    - Kind: 39
+      Dir: 0
+      WidthUnits: 4.5
+      Sprite: {fileID: 21300000, guid: a552dc874ee96694d8dfd86731401c74, type: 3}
+      Metric:
+        W: 799
+        H: 304
+        BodyLeft: 23
+        BodyRight: 775
+        SurfaceY: 215
+        BodyBottom: 297
+    - Kind: 39
+      Dir: 0
+      WidthUnits: 6
+      Sprite: {fileID: 21300000, guid: 27d222ee768db1845a757dbbfca70ff3, type: 3}
+      Metric:
+        W: 1025
+        H: 298
+        BodyLeft: 11
+        BodyRight: 1013
+        SurfaceY: 206
+        BodyBottom: 290
     SeesawKnob: {fileID: 0}
     SeesawKnobTopDropPx: 0
     SproutStem: {fileID: 0}
     SproutStemTopDropPx: 0
+    RollingLog: {fileID: 21300000, guid: 271096721a3fb5c4bba58ae78f55da72, type: 3}
   Player: {fileID: 21300000, guid: 9f88299ce88b6be4f84bd5cfa68fda68, type: 3}
   CoinFrames:
   - {fileID: 21300000, guid: 59901e9f38d985348864d0611cb06904, type: 3}

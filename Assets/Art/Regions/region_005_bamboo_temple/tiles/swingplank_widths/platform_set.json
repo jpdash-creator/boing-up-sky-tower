@@ -1,0 +1,52 @@
+{
+  "asset": "swingplank_widths",
+  "kind": "swingplank",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 536,
+      "h": 312,
+      "bodyLeft": 17,
+      "bodyRight": 518,
+      "surfaceY": 220,
+      "bodyBottom": 305,
+      "width": 3.0,
+      "file": "reg005_swingplank_w3.png",
+      "ppu": 167.0,
+      "kind": "swingplank",
+      "dir": 0,
+      "src_row": 1,
+      "src_natural_u": 3.04
+    },
+    {
+      "w": 799,
+      "h": 304,
+      "bodyLeft": 23,
+      "bodyRight": 775,
+      "surfaceY": 215,
+      "bodyBottom": 297,
+      "width": 4.5,
+      "file": "reg005_swingplank_w4_5.png",
+      "ppu": 167.111,
+      "kind": "swingplank",
+      "dir": 0,
+      "src_row": 2,
+      "src_natural_u": 4.46
+    },
+    {
+      "w": 1025,
+      "h": 298,
+      "bodyLeft": 11,
+      "bodyRight": 1013,
+      "surfaceY": 206,
+      "bodyBottom": 290,
+      "width": 6.0,
+      "file": "reg005_swingplank_w6.png",
+      "ppu": 167.0,
+      "kind": "swingplank",
+      "dir": 0,
+      "src_row": 3,
+      "src_natural_u": 6.98
+    }
+  ]
+}

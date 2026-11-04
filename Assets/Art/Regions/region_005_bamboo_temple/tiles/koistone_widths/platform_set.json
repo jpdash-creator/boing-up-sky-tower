@@ -1,0 +1,37 @@
+{
+  "asset": "koistone_widths",
+  "kind": "koistone",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 860,
+      "h": 149,
+      "bodyLeft": 12,
+      "bodyRight": 847,
+      "surfaceY": 63,
+      "bodyBottom": 142,
+      "width": 5.0,
+      "file": "reg005_koistone_w5.png",
+      "ppu": 167.0,
+      "kind": "koistone",
+      "dir": 0,
+      "src_row": 6,
+      "src_natural_u": 4.14
+    },
+    {
+      "w": 1194,
+      "h": 149,
+      "bodyLeft": 12,
+      "bodyRight": 1181,
+      "surfaceY": 63,
+      "bodyBottom": 142,
+      "width": 7.0,
+      "file": "reg005_koistone_w7.png",
+      "ppu": 167.0,
+      "kind": "koistone",
+      "dir": 0,
+      "src_row": 6,
+      "src_natural_u": 4.14
+    }
+  ]
+}

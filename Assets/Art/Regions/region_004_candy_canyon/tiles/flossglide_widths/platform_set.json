@@ -1,0 +1,59 @@
+{
+  "asset": "flossglide_widths",
+  "kind": "flossglide",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 359,
+      "h": 115,
+      "bodyLeft": 12,
+      "bodyRight": 346,
+      "surfaceY": 23,
+      "bodyBottom": 105,
+      "width": 2.0,
+      "file": "reg004_flossglide_w2.png",
+      "ppu": 167.0,
+      "kind": "flossglide",
+      "dir": 0
+    },
+    {
+      "w": 530,
+      "h": 125,
+      "bodyLeft": 14,
+      "bodyRight": 515,
+      "surfaceY": 31,
+      "bodyBottom": 115,
+      "width": 3.0,
+      "file": "reg004_flossglide_w3.png",
+      "ppu": 167.0,
+      "kind": "flossglide",
+      "dir": 0
+    },
+    {
+      "w": 697,
+      "h": 125,
+      "bodyLeft": 14,
+      "bodyRight": 682,
+      "surfaceY": 31,
+      "bodyBottom": 115,
+      "width": 4.0,
+      "file": "reg004_flossglide_w4.png",
+      "ppu": 167.0,
+      "kind": "flossglide",
+      "dir": 0
+    },
+    {
+      "w": 1031,
+      "h": 125,
+      "bodyLeft": 14,
+      "bodyRight": 1016,
+      "surfaceY": 31,
+      "bodyBottom": 115,
+      "width": 6.0,
+      "file": "reg004_flossglide_w6.png",
+      "ppu": 167.0,
+      "kind": "flossglide",
+      "dir": 0
+    }
+  ]
+}

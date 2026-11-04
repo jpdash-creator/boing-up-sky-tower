@@ -575,7 +575,7 @@ namespace BoingUpSkyTower.Gameplay
             };
             GameSession.Progress.LaunchPromoActive = GameSettings.LaunchPromo;
             shop = new ShopScreen(safe, GameSession.Progress, ShopCatalog.FromRepository(GameSession.Repo), art, host);
-            shop.Build(tab, ShopScreen.AutoSection);   // Power-ups: the Character page scrolled to its Power-ups banner
+            shop.Build(tab, tab == ShopScreen.TabCharacter ? ShopScreen.PowerupsSection : ShopScreen.AutoSection);   // deep link "Get power-ups": the Character page scrolled to its Power-ups banner
             Button back = ToyKit.GlyphButton(safe, "Back", "Back to pause", 2, Glyphs.Left, new Vector2(150f, 150f), CloseShop);
             UiKit.Place((RectTransform)back.transform, new Vector2(0f, 1f), new Vector2(20f, -20f), new Vector2(150f, 150f));
             GameSession.Progress.Changed += RefreshShopWallet;

@@ -93,6 +93,22 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Region 3 keeps the sand slab Crumble and the sea foam Vanishing, each once; the drifting platform (signature) is listed twice so it stays the most common kind.</summary>
         private static readonly PlatformKind[] Region3Generics = { PlatformKind.Crumble, PlatformKind.Vanishing };
 
+        private static readonly PlatformKind[] Region4Set =
+        {
+            PlatformKind.CandyBowl, PlatformKind.FlossGlide, PlatformKind.FizzVent, PlatformKind.LicoriceBelt,
+            PlatformKind.TaffyStretch, PlatformKind.JellyWobble, PlatformKind.PinwheelGust
+        };
+        /// <summary>Region 4 keeps the sugar crumble Crumble and the icing Slippery next to the sticky gum signature (doc 30 section 11 question 8).</summary>
+        private static readonly PlatformKind[] Region4Generics = { PlatformKind.Crumble, PlatformKind.Slippery };
+
+        private static readonly PlatformKind[] Region5Set =
+        {
+            PlatformKind.BambooFlick, PlatformKind.LanternLift, PlatformKind.KoiStone, PlatformKind.SwingPlank,
+            PlatformKind.PagodaRidge, PlatformKind.MalletSmash, PlatformKind.RollingLog
+        };
+        /// <summary>Region 5 keeps the paper-screen Vanishing and the rope-bridge Moving (doc 30 section 11 question 8); the swinging gongs are hazard OBJECTS, not a platform kind (the signature adds no platform option).</summary>
+        private static readonly PlatformKind[] Region5Generics = { PlatformKind.Moving, PlatformKind.Vanishing };
+
         /// <summary>True when the signature platform of the region is listed twice among the special options (it stays the most common kind).</summary>
         public static bool SignatureListedTwice(SignatureKind signature)
         {
@@ -104,6 +120,8 @@ namespace BoingUpSkyTower.Simulation
             if (signature == SignatureKind.BounceFlowers) return Region1Set;
             if (signature == SignatureKind.BounceCaps) return Region2Set;
             if (signature == SignatureKind.DriftingPlatforms) return Region3Set;
+            if (signature == SignatureKind.StickyGum) return Region4Set;
+            if (signature == SignatureKind.SwingingGongs) return Region5Set;
             return NoneSet;
         }
 
@@ -111,6 +129,8 @@ namespace BoingUpSkyTower.Simulation
         public static PlatformKind[] GenericsFor(SignatureKind signature)
         {
             if (signature == SignatureKind.DriftingPlatforms) return Region3Generics;
+            if (signature == SignatureKind.StickyGum) return Region4Generics;
+            if (signature == SignatureKind.SwingingGongs) return Region5Generics;
             return signature == SignatureKind.BounceCaps ? Region2Generics : NoneSet;
         }
     }

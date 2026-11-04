@@ -1,0 +1,25 @@
+{
+  "asset": "rollinglog_widths",
+  "kind": "rollinglog",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 850,
+      "h": 130,
+      "bodyLeft": 7,
+      "bodyRight": 842,
+      "surfaceY": 39,
+      "bodyBottom": 122,
+      "width": 5.0,
+      "file": "reg005_rollinglog_w5.png",
+      "ppu": 167.0,
+      "kind": "rollinglog",
+      "dir": 0,
+      "src_row": 5,
+      "src_natural_u": 5.59
+    }
+  ],
+  "log": {
+    "file": "log.png"
+  }
+}

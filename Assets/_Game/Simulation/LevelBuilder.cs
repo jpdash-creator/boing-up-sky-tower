@@ -435,6 +435,10 @@ namespace BoingUpSkyTower.Simulation
                 x = Fx.Clamp(x, lo, hi);
                 // After a dandelion the next platform sits where the arrow points (the launch carries the player sideways).
                 if (prevKind == PlatformKind.Dandelion && prevDir != 0) x = SpecialPlatforms.DandelionNextX(cfg, ref rng, prevX, prevDir, w, screen);
+                // After a licorice belt the next platform sits where the belt does not carry (toward the middle): the belt runs away from it.
+                if (prevKind == PlatformKind.LicoriceBelt && prevDir != 0) x = SpecialPlatforms.BeltNextX(prevX, prevDir, dx, w, screen);
+                // After a bamboo flick the next platform sits where the stalk flings you (toward the middle), FlickNextDxMin..Max away.
+                if (prevKind == PlatformKind.BambooFlick && prevDir != 0) x = SpecialPlatforms.FlickNextX(cfg, ref rng, prevX, prevDir, w, screen);
 
                 Fx amp = Fx.Zero;
                 int period = 0, phase = 0, pdir = 0;
@@ -548,13 +552,40 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Platform widths the art has real, unscaled pieces for (owner, 2026-10-23: platforms are never stretched). The 10 unit floor stays.</summary>
         private static readonly int[] NormalWidthsTenths = { 15, 20, 30, 40, 60, 80 };
         private static readonly int[] SpecialWidthsTenths = { 20, 40 };
+        /// <summary>Taffy Stretch (doc 30 section 5): the narrow width every taffy is built with (SimConfig.TaffyMinWidth).</summary>
+        private static readonly Fx TaffyNarrowWidth = Fx.FromRatio(24, 10);
+
+        /// <summary>Painted widths (tenths of a unit) of the region 5 kinds: Flick 3, Lantern 3 and 5, Koi 5 and 7, Swing Plank 3, 4.5 and 6, Pagoda Ridge 2.5, 3.5 and 4.5, Mallet 4.5 and 6, Log track 5; null for every other kind.</summary>
+        private static int[] Region5WidthsTenths(PlatformKind kind)
+        {
+            switch (kind)
+            {
+                case PlatformKind.BambooFlick: return FlickWidthsTenths;
+                case PlatformKind.LanternLift: return LanternWidthsTenths;
+                case PlatformKind.KoiStone: return KoiWidthsTenths;
+                case PlatformKind.SwingPlank: return PlankWidthsTenths;
+                case PlatformKind.PagodaRidge: return RidgeWidthsTenths;
+                case PlatformKind.MalletSmash: return MalletWidthsTenths;
+                case PlatformKind.RollingLog: return LogWidthsTenths;
+                default: return null;
+            }
+        }
+        private static readonly int[] FlickWidthsTenths = { 30 };
+        private static readonly int[] LanternWidthsTenths = { 30, 50 };
+        private static readonly int[] KoiWidthsTenths = { 50, 70 };
+        private static readonly int[] PlankWidthsTenths = { 30, 45, 60 };
+        private static readonly int[] RidgeWidthsTenths = { 25, 35, 45 };
+        private static readonly int[] MalletWidthsTenths = { 45, 60 };
+        private static readonly int[] LogWidthsTenths = { 50 };
 
         /// <summary>Snaps a width to the painted set of its kind (docs/16 section E): the campaign builder and the endless tower use the same set.</summary>
         public static Fx SnapWidth(Fx w, PlatformKind kind)
         {
             if (w >= Fx.FromInt(9)) return w;
+            if (kind == PlatformKind.TaffyStretch) return TaffyNarrowWidth;   // one painted narrow piece (2.4 u); the wide pose is the breathing
             bool special = kind == PlatformKind.Crumble || kind == PlatformKind.Moving || kind == PlatformKind.TurtleShuttle || kind == PlatformKind.Bounce || kind == PlatformKind.BounceCap;
-            int[] set = special ? SpecialWidthsTenths : NormalWidthsTenths;
+            int[] own = Region5WidthsTenths(kind);   // region 5 kinds have painted widths of their own (doc 30 section 15)
+            int[] set = own != null ? own : (special ? SpecialWidthsTenths : NormalWidthsTenths);
             Fx best = Fx.FromRatio(set[0], 10);
             Fx bestDist = Fx.Abs(w - best);
             for (int i = 1; i < set.Length; i++)
@@ -573,7 +604,7 @@ namespace BoingUpSkyTower.Simulation
             {
                 Fx w = SnapWidth(plats[i].Width, plats[i].Kind);
                 plats[i].Width = w;
-                Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving || plats[i].Kind == PlatformKind.Ladybug || plats[i].Kind == PlatformKind.OrbitCap || plats[i].Kind == PlatformKind.TurtleShuttle ? plats[i].Amplitude : Fx.Zero);
+                Fx edge = w / 2 + (plats[i].Kind == PlatformKind.Moving || plats[i].Kind == PlatformKind.Ladybug || plats[i].Kind == PlatformKind.OrbitCap || plats[i].Kind == PlatformKind.TurtleShuttle || plats[i].Kind == PlatformKind.TaffyStretch || plats[i].Kind == PlatformKind.JellyWobble || plats[i].Kind == PlatformKind.LanternLift || plats[i].Kind == PlatformKind.SwingPlank ? plats[i].Amplitude : Fx.Zero);
                 plats[i].X = Fx.Clamp(plats[i].X, edge, screen - edge);   // a wider piece (and its swing) must stay inside the walls
             }
             SeparateSameRowPlatforms(screen, plats);
@@ -766,6 +797,8 @@ namespace BoingUpSkyTower.Simulation
         private static readonly Fx OrbitRiseMargin = Fx.FromRatio(5, 10);     // an Orbit Cap laps +-OrbitAmplitudeY
         private static readonly Fx RaftSinkMargin = Fx.FromRatio(10, 10);     // a Sinking Raft sinks RaftSinkDepth below its base
         private static readonly Fx StepRiseMargin = Fx.FromRatio(16, 100);      // the raised half of a Sandcastle Step is SandcastleRise above its base
+        private static readonly Fx LanternRiseMargin = Fx.FromRatio(20, 10);   // a Lantern Lift rises LanternRise above its base
+        private static readonly Fx PlankRiseMargin = Fx.FromRatio(6, 10);      // a Swing Plank rises PlankRise at the ends of its swing
 
         /// <summary>
         /// True when a pickup centre lies in the slab zone of a platform (from 0.7 + half sprite below its surface to 0.45 + half sprite above it,
@@ -779,7 +812,7 @@ namespace BoingUpSkyTower.Simulation
                 Platform pl = platforms[i];
                 if (Fx.Abs(pk.X - pl.X) > pl.Width / 2 + margin) continue;
                 // a Bee Hive Lift bobs: keep pickups out of its whole travel (HiveBobAmplitude default 1.2 u)
-                Fx bob = pl.Kind == PlatformKind.HiveLift ? HiveBobMargin : (pl.Kind == PlatformKind.SproutLift ? SproutRiseMargin : (pl.Kind == PlatformKind.OrbitCap ? OrbitRiseMargin : (pl.Kind == PlatformKind.SinkingRaft ? RaftSinkMargin : (pl.Kind == PlatformKind.SandcastleStep ? StepRiseMargin : Fx.Zero))));
+                Fx bob = pl.Kind == PlatformKind.HiveLift ? HiveBobMargin : (pl.Kind == PlatformKind.SproutLift ? SproutRiseMargin : (pl.Kind == PlatformKind.OrbitCap ? OrbitRiseMargin : (pl.Kind == PlatformKind.SinkingRaft ? RaftSinkMargin : (pl.Kind == PlatformKind.SandcastleStep ? StepRiseMargin : (pl.Kind == PlatformKind.LanternLift ? LanternRiseMargin : (pl.Kind == PlatformKind.SwingPlank ? PlankRiseMargin : Fx.Zero))))));
                 if (pk.Y > pl.Y - Fx.FromRatio(7, 10) - PickupClearHalf - bob && pk.Y < pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf + bob)
                 {
                     liftY = pl.Y + Fx.FromRatio(45, 100) + PickupClearHalf + bob + Fx.FromRatio(1, 100);

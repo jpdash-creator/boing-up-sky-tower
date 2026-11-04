@@ -124,7 +124,7 @@ namespace BoingUpSkyTower.Simulation
                 for (int i = 0; i < options.Length; i++)
                 {
                     PlatformKind k = options[i];
-                    if (k == sig || k == PlatformKind.Crumble || later.Contains(k)) continue;
+                    if (k == sig || k == PlatformKind.Crumble || (sig == PlatformKind.Normal && k == PlatformKind.Moving) || later.Contains(k)) continue;   // region 5 (gong objects, no signature platform): the rope-bridge Moving platform is there from the start
                     int c = PlatformKinds.IsHazardType(k) ? 2 : (PlatformKinds.IsLaunch(k) || PlatformKinds.IsDemanding(k) ? 1 : 0);
                     if (c == cls) later.Add(k);
                 }
@@ -293,6 +293,8 @@ namespace BoingUpSkyTower.Simulation
             if (x < lo || x > hi) x = prevX - dx * dir;
             x = Fx.Clamp(x, lo, hi);
             if (prevKind == PlatformKind.Dandelion && prevDir != 0) x = SpecialPlatforms.DandelionNextX(cfg, ref specRng, prevX, prevDir, w, screen);
+            if (prevKind == PlatformKind.LicoriceBelt && prevDir != 0) x = SpecialPlatforms.BeltNextX(prevX, prevDir, dx, w, screen);
+            if (prevKind == PlatformKind.BambooFlick && prevDir != 0) x = SpecialPlatforms.FlickNextX(cfg, ref specRng, prevX, prevDir, w, screen);
 
             Fx amp = Fx.Zero;
             int period = 0, phase = 0, pdir = 0;

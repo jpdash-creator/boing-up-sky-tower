@@ -444,10 +444,23 @@ namespace BoingUpSkyTower.Gameplay
             return region.KindPieceIndex(p.Kind, PosedKind(p.Kind) ? -1 : (p.Dir < 0 ? -1 : 1), width);   // posed kinds start on pose -1; the pose is swapped per frame (see PoseOf)
         }
 
-        /// <summary>Kinds whose painted pieces are poses chosen by the Sim state (piece Dir = pose): Spore Pop (calm -1, swollen 1, flat 2), Clam Shell Pad (open -1, shut 1), Pufferfish Pad (calm -1, swelling 1, puffed 2).</summary>
+        /// <summary>
+        /// Kinds whose painted pieces are poses chosen by the Sim state (piece Dir = pose): Spore Pop (calm -1, swollen 1, flat 2), Clam Shell Pad (open -1, shut 1), Pufferfish Pad (calm -1, swelling 1, puffed 2),
+        /// region 4: Licorice Belt (tread frame A -1, B 1), Taffy Stretch (4 widths: narrow -1, 2nd 1, 3rd 2, wide 3), Jelly Wobble (calm -1, squashed 1), Pinwheel Gust (spin frame A -1, B 1).
+        /// </summary>
         static bool PosedKind(PlatformKind k)
         {
-            return k == PlatformKind.SporePop || k == PlatformKind.ClamShellPad || k == PlatformKind.PufferfishPad;
+            return k == PlatformKind.SporePop || k == PlatformKind.ClamShellPad || k == PlatformKind.PufferfishPad
+                || k == PlatformKind.LicoriceBelt || k == PlatformKind.TaffyStretch || k == PlatformKind.JellyWobble || k == PlatformKind.PinwheelGust
+                || k == PlatformKind.BambooFlick || k == PlatformKind.MalletSmash;
+        }
+
+        /// <summary>Walkable width the painted pose of a Taffy Stretch shows (four steps from the narrow 2.4 u to the wide 5.2 u: 2.4, 3.3, 4.3, 5.2); every other kind keeps its Platform.Width.</summary>
+        static float PoseWidth(Platform p, int pose)
+        {
+            if (p.Kind != PlatformKind.TaffyStretch) return p.Width.F();
+            float narrow = p.Width.F(), span = 2f * p.Amplitude.F();
+            return narrow + span * (pose < 0 ? 0 : pose) / 3f;
         }
 
         /// <summary>Pose number of a posed platform at a tick (the Sim clocks: Spore Pop landing clock, Clam (tick + Phase) % 144 &lt; 72 = open, Pufferfish (tick + Phase) % 180: 0..95 calm, 96..131 swelling, 132..179 puffed).</summary>
@@ -458,6 +471,24 @@ namespace BoingUpSkyTower.Gameplay
                 case PlatformKind.SporePop: { int ph = session.Sim.SporePopPhase(p.Id, tick, s.CrumbleTick); return ph == 0 ? -1 : (ph == 1 ? 1 : 2); }
                 case PlatformKind.ClamShellPad: return session.Sim.ClamOpen(p.Id, tick) ? -1 : 1;
                 case PlatformKind.PufferfishPad: { int ph = session.Sim.PufferPhase(p.Id, tick); return ph == 0 ? -1 : (ph == 1 ? 1 : 2); }
+                // Region 4: the belt and the pinwheel alternate two loop frames (reduced motion: still); the taffy picks the painted width nearest its Sim width; the jelly is squashed for the first
+                // 24 ticks of a wobble (the wobble itself is the Sim movement of the cube)
+                case PlatformKind.LicoriceBelt: return reduced ? -1 : ((tick / 6) % 2 == 0 ? -1 : 1);
+                case PlatformKind.PinwheelGust: return reduced ? -1 : ((tick / 8) % 2 == 0 ? -1 : 1);
+                case PlatformKind.TaffyStretch:
+                    {
+                        float span = 2f * p.Amplitude.F();
+                        int step = span < 0.01f ? 0 : Mathf.RoundToInt((session.Sim.WidthAt(p.Id, tick).F() - p.Width.F()) / span * 3f);   // nearest of the four painted widths
+                        return step <= 0 ? -1 : step;
+                    }
+                case PlatformKind.JellyWobble:
+                    {
+                        int landed = s.CrumbleTick[p.Id];
+                        return landed >= 0 && tick - landed < 24 ? 1 : -1;
+                    }
+                // Region 5: the Bamboo Flick is sprung for the half second after it flicked the player (rest -1, sprung 1); the Mallet Smash is down from the smash until it lifts again (raised -1, smashed 1); both read the Sim clocks
+                case PlatformKind.BambooFlick: return s.GroundId == p.Id && tick - s.LandTick < 30 ? 1 : -1;
+                case PlatformKind.MalletSmash: return session.Sim.MalletDown(p.Id, tick) ? 1 : -1;
                 default: return 0;
             }
         }
@@ -621,7 +652,7 @@ namespace BoingUpSkyTower.Gameplay
             platformPose[i] = kp >= 0 && PosedKind(p.Kind) ? -1 : 0;
             if (SpecialPlatformFx.Handles(p.Kind))
             {
-                if (region != null) { specialFx.SetKnob(region.SeesawKnob, region.SeesawKnobTopDropPx); specialFx.SetStem(region.SproutStem, region.SproutStemTopDropPx); }
+                if (region != null) { specialFx.SetKnob(region.SeesawKnob, region.SeesawKnobTopDropPx); specialFx.SetStem(region.SproutStem, region.SproutStemTopDropPx); specialFx.SetLog(region.RollingLog, white); }
                 specialFx.Attach(i, p, kp >= 0);
             }
             else specialFx.Release(i);
@@ -633,7 +664,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             platformPose[i] = pose;
             if (region == null) return;
-            float width = p.Width.F();
+            float width = PoseWidth(p, pose);
             int kp = region.KindPieceIndex(p.Kind, pose, width);
             if (kp < 0) return;
             KindPiece kpc = region.KindPieces[kp];
@@ -1180,7 +1211,10 @@ namespace BoingUpSkyTower.Gameplay
                     else if (p.Kind == PlatformKind.SproutLift) y = session.Sim.PlatformY(p.Id, tick, s.CrumbleTick).F();                                  // rises while stood on, sinks when empty
                     else if (p.Kind == PlatformKind.SquishCap) y = p.Y.F() - session.Sim.SquishSink(in s, p.Id).F();                                       // sinks under the player
                     else if (p.Kind == PlatformKind.TurtleShuttle) x = session.Sim.PlatformX(p.Id, tick).F();                                              // region 3: stop-and-go glide from the Sim
+                    else if (p.Kind == PlatformKind.JellyWobble) x = session.Sim.PlatformX(p.Id, tick, s.CrumbleTick).F();                                 // region 4: the wobble after a landing comes from the Sim
                     else if (p.Kind == PlatformKind.SinkingRaft) y = session.Sim.PlatformY(p.Id, tick, s.CrumbleTick).F();                                 // sinks while stood on, springs back when empty
+                    else if (p.Kind == PlatformKind.LanternLift) { x = session.Sim.PlatformX(p.Id, tick).F(); y = session.Sim.PlatformY(p.Id, tick, s.CrumbleTick).F(); }   // region 5: the lantern sways and rises while stood on (Sim)
+                    else if (p.Kind == PlatformKind.SwingPlank) { x = session.Sim.PlatformX(p.Id, tick).F(); y = session.Sim.PlatformY(p.Id, tick).F(); }                       // region 5: the pendulum swing from the Sim
                 }
                 var sr = platformSr[i];
                 if (platformPose[i] != 0)
@@ -1188,6 +1222,13 @@ namespace BoingUpSkyTower.Gameplay
                     // Painted poses chosen by the Sim state: Spore Pop calm / swollen / flat, Clam Shell Pad open / shut, Pufferfish Pad calm / swelling / puffed
                     int pose = PoseOf(p, tick, in s);
                     if (pose != platformPose[i]) SwapPosePiece(i, p, sr, pose);
+                }
+                if (p.Kind == PlatformKind.TaffyStretch && platformPose[i] == 0)
+                {
+                    // No painted pieces yet: the tinted normal platform breathes with the Sim width (a placeholder animation; the painted poses replace it)
+                    Vector3 ts = platformTf[i].localScale;
+                    float baseW = Mathf.Max(0.1f, p.Width.F());
+                    platformTf[i].localScale = new Vector3(platformBaseScaleX[i] * session.Sim.WidthAt(p.Id, tick).F() / baseW, ts.y, ts.z);
                 }
                 platformTf[i].position = new Vector3(x + platformOffX[i], y + platformOffY[i], 0f);
                 if (SpecialPlatformFx.Handles(p.Kind)) specialFx.Update(i, p, session.Sim, in s, tick, x, y, sr);

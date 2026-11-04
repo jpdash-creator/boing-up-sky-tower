@@ -1,0 +1,35 @@
+{
+  "asset": "bambooflick_widths",
+  "kind": "bambooflick",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 516,
+      "h": 115,
+      "bodyLeft": 7,
+      "bodyRight": 508,
+      "surfaceY": 31,
+      "bodyBottom": 80,
+      "width": 3.0,
+      "file": "reg005_bambooflick_rest_w3.png",
+      "ppu": 167.0,
+      "kind": "bambooflick",
+      "dir": -1,
+      "pose": "rest"
+    },
+    {
+      "w": 792,
+      "h": 278,
+      "bodyLeft": 145,
+      "bodyRight": 646,
+      "surfaceY": 199,
+      "bodyBottom": 253,
+      "width": 3.0,
+      "file": "reg005_bambooflick_sprung_w3.png",
+      "ppu": 167.0,
+      "kind": "bambooflick",
+      "dir": 1,
+      "pose": "sprung"
+    }
+  ]
+}

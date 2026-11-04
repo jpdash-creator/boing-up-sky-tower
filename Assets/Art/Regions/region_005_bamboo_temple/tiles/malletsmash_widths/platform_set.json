@@ -1,0 +1,63 @@
+{
+  "asset": "malletsmash_widths",
+  "kind": "malletsmash",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 767,
+      "h": 337,
+      "bodyLeft": 7,
+      "bodyRight": 759,
+      "surfaceY": 245,
+      "bodyBottom": 328,
+      "width": 4.5,
+      "file": "reg005_malletsmash_raised_w4_5.png",
+      "ppu": 167.111,
+      "kind": "malletsmash",
+      "dir": -1,
+      "pose": "raised"
+    },
+    {
+      "w": 771,
+      "h": 263,
+      "bodyLeft": 9,
+      "bodyRight": 761,
+      "surfaceY": 163,
+      "bodyBottom": 246,
+      "width": 4.5,
+      "file": "reg005_malletsmash_smashed_w4_5.png",
+      "ppu": 167.111,
+      "kind": "malletsmash",
+      "dir": 1,
+      "pose": "smashed"
+    },
+    {
+      "w": 1015,
+      "h": 249,
+      "bodyLeft": 6,
+      "bodyRight": 1008,
+      "surfaceY": 155,
+      "bodyBottom": 240,
+      "width": 6.0,
+      "file": "reg005_malletsmash_raised_w6.png",
+      "ppu": 167.0,
+      "kind": "malletsmash",
+      "dir": -1,
+      "pose": "raised"
+    },
+    {
+      "w": 1023,
+      "h": 219,
+      "bodyLeft": 10,
+      "bodyRight": 1012,
+      "surfaceY": 124,
+      "bodyBottom": 205,
+      "width": 6.0,
+      "file": "reg005_malletsmash_smashed_w6.png",
+      "ppu": 167.0,
+      "kind": "malletsmash",
+      "dir": 1,
+      "pose": "smashed"
+    }
+  ]
+}

@@ -41,8 +41,10 @@ namespace BoingUpSkyTower.Gameplay
         public const int HeroesSection = 0, PowerupsSection = 1;
         /// <summary>The sections of the Gems tab: ShowShop(TabGems, CoinsSection) opens the page scrolled to the Coins banner.</summary>
         public const int GemsSection = 0, CoinsSection = 1;
-        /// <summary>Default of the "section" argument: the Character page opens scrolled to Power-ups (what the old Power-ups tab showed), every other page at its top.</summary>
+        /// <summary>Default of the "section" argument: every page opens at its top (scroll 0). Deep links pass an explicit section (e.g. PowerupsSection).</summary>
         public const int AutoSection = -1;
+        /// <summary>The tab a normal entry (map bar, Home, run-end screens: ShowShop() with no tab) opens: Gems / Coins, at the top (Bug List 3 D2.b).</summary>
+        public const int DefaultTab = TabGems;
         /// <summary>Spending more gems than this asks for a confirmation first (docs/14 FR-SHOP-20).</summary>
         public const int ConfirmGemThreshold = 50;
 
@@ -109,7 +111,7 @@ namespace BoingUpSkyTower.Gameplay
         public void Build(int tab, int section)
         {
             Tab = Mathf.Clamp(tab, 0, ShopChrome.TabCount - 1);
-            if (section < 0) section = Tab == TabCharacter ? PowerupsSection : 0;
+            if (section < 0) section = 0;   // Bug List 3 D2.a: AutoSection = the top of the page (the Heroes banner is visible), never scrolled
             pageSection = section == 1 ? 1 : 0;   // the second section of a page (Chests, Power-ups, Coins) or the first
             keepY = -1f;
             Text coin, gem, star;

@@ -1,0 +1,46 @@
+{
+  "asset": "fizzvent_widths",
+  "kind": "fizzvent",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 367,
+      "h": 215,
+      "bodyLeft": 25,
+      "bodyRight": 341,
+      "surfaceY": 114,
+      "bodyBottom": 191,
+      "width": 2.0,
+      "file": "reg004_fizzvent_w2.png",
+      "ppu": 158.0,
+      "kind": "fizzvent",
+      "dir": 0
+    },
+    {
+      "w": 520,
+      "h": 214,
+      "bodyLeft": 9,
+      "bodyRight": 510,
+      "surfaceY": 114,
+      "bodyBottom": 204,
+      "width": 3.0,
+      "file": "reg004_fizzvent_w3.png",
+      "ppu": 167.0,
+      "kind": "fizzvent",
+      "dir": 0
+    },
+    {
+      "w": 687,
+      "h": 214,
+      "bodyLeft": 9,
+      "bodyRight": 677,
+      "surfaceY": 114,
+      "bodyBottom": 204,
+      "width": 4.0,
+      "file": "reg004_fizzvent_w4.png",
+      "ppu": 167.0,
+      "kind": "fizzvent",
+      "dir": 0
+    }
+  ]
+}

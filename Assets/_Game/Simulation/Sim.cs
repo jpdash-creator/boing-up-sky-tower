@@ -91,6 +91,18 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Times a Pufferfish Pad hopped the player away (it never damages or ends the run).</summary>
         public int PufferHops;
 
+        // ---- Region 4 special platforms (doc 30 section 5). Per-platform dynamic state lives in CrumbleTick (Jelly Wobble: landing tick). ----
+        /// <summary>Floss Glide: ticks left of the doubled air steering after a jump from it (cleared by every landing).</summary>
+        public int GlideTicks;
+
+        // ---- Region 5 special platforms (doc 30 section 15). Per-platform dynamic state lives in CrumbleTick (Lantern Lift: rise clock, same coding as the Sprout Lift). ----
+        /// <summary>Koi Stone: ticks the player has stood still on it (reset by any movement and every landing); KoiStillTicks charges the next jump.</summary>
+        public int KoiStill;
+        /// <summary>Koi Stone: ticks left of the full air steering after a charged jump (cleared by every landing).</summary>
+        public int KoiAir;
+        /// <summary>Times a Mallet Smash or Rolling Log bumped the player (they never damage or end the run).</summary>
+        public int Bumps;
+
         // ---- Power-ups. Plain ints for the stacked timers (no maximum, additions saturate at int.MaxValue); the OWNED STOCK lives outside the
         // state (RunSession counts it and only passes an activation bit while units are left), so the bot, which copies SimState on every
         // recursion level, stays small. Read and write the fields through the int properties. ----
@@ -156,6 +168,10 @@ namespace BoingUpSkyTower.Simulation
         private readonly Fx powerCapY;
         /// <summary>Vertical reach of bobbing platforms around their base Y (zero when the level has no Bee Hive Lift): widens the landing search.</summary>
         private readonly Fx bobMargin;
+        /// <summary>True when the level has a Fizz Vent or Pinwheel Gust (the air zones are only scanned then).</summary>
+        private readonly bool hasAirZones;
+        /// <summary>Largest height of an air zone above its platform (scan window below the player).</summary>
+        private readonly Fx zoneReach;
 
         /// <param name="difficulty">0..1 level difficulty; scales the scroll pressure.</param>
         public Sim(SimConfig cfg, Platform[] platforms, Fx difficulty, bool endless)
@@ -189,16 +205,24 @@ namespace BoingUpSkyTower.Simulation
             for (int i = 0; i < Pickups.Length; i++) if (Pickups[i].Radius > maxR) maxR = Pickups[i].Radius;
             maxPickupRadius = maxR;
             Fx bob = Fx.Zero;
+            bool zones = false;
+            Fx reach = Fx.Zero;
             for (int i = 0; i < Platforms.Length; i++)
             {
                 PlatformKind bk = Platforms[i].Kind;
+                if (bk == PlatformKind.FizzVent) { zones = true; if (cfg.VentHeight > reach) reach = cfg.VentHeight; }
+                else if (bk == PlatformKind.PinwheelGust) { zones = true; if (cfg.PinwheelHeight > reach) reach = cfg.PinwheelHeight; }
                 if (bk == PlatformKind.HiveLift && cfg.HiveBobAmplitude > bob) bob = cfg.HiveBobAmplitude;
                 else if (bk == PlatformKind.SproutLift && cfg.SproutRise > bob) bob = cfg.SproutRise;
+                else if (bk == PlatformKind.LanternLift && cfg.LanternRise > bob) bob = cfg.LanternRise;
+                else if (bk == PlatformKind.SwingPlank && cfg.PlankRise > bob) bob = cfg.PlankRise;
                 else if (bk == PlatformKind.OrbitCap && cfg.OrbitAmplitudeY > bob) bob = cfg.OrbitAmplitudeY;
                 else if (bk == PlatformKind.SinkingRaft && cfg.RaftSinkDepth > bob) bob = cfg.RaftSinkDepth;
                 else if (bk == PlatformKind.SandcastleStep && Platforms[i].Amplitude > bob) bob = Platforms[i].Amplitude;
             }
             bobMargin = bob;
+            hasAirZones = zones;
+            zoneReach = reach;
 
             // Flight and Rocket stop PowerFlightRowsBelowTop rows under the top row of a campaign level (never in endless).
             Fx cap = Fx.FromInt(30000);
@@ -268,19 +292,22 @@ namespace BoingUpSkyTower.Simulation
                 rid--;
             s.BestGroundId = rid;
             PlatformKind rk = Platforms[rid].Kind;
-            if ((rk == PlatformKind.Crumble || rk == PlatformKind.SnapDaisy || rk == PlatformKind.SporePop) && s.CrumbleTick != null) s.CrumbleTick[rid] = -1;
+            if ((rk == PlatformKind.Crumble || rk == PlatformKind.SnapDaisy || rk == PlatformKind.SporePop || rk == PlatformKind.JellyWobble) && s.CrumbleTick != null) s.CrumbleTick[rid] = -1;
             Platform p = Platforms[s.BestGroundId];
             p.Y = PlatformY(s.BestGroundId, s.Tick, s.CrumbleTick);   // a Bee Hive Lift is somewhere on its bob, a Sprout Lift somewhere on its rise
             s.TiltDir = 0;
             s.SteerLock = 0;
             s.FloatTicks = 0;
             s.JumpLock = 0;
+            s.GlideTicks = 0;
+            s.KoiStill = 0;
+            s.KoiAir = 0;
             s.Dead = false;
             s.GroundId = s.BestGroundId;
             s.X = PlatformX(s.BestGroundId, s.Tick);
             if (p.Kind == PlatformKind.FairyRing) s.X = p.X + p.Amplitude + Fx.One;   // never revive into the hole
             s.LandTick = s.Tick;
-            if (p.Kind == PlatformKind.SproutLift || p.Kind == PlatformKind.SinkingRaft) OccupySprout(ref s, s.BestGroundId, s.Tick);
+            if (p.Kind == PlatformKind.SproutLift || p.Kind == PlatformKind.SinkingRaft || p.Kind == PlatformKind.LanternLift) OccupySprout(ref s, s.BestGroundId, s.Tick);
             s.Y = p.Kind == PlatformKind.SandcastleStep ? SandSurfaceY(in p, s.X) : p.Y;
             s.Vx = Fx.Zero;
             s.Vy = Fx.Zero;
@@ -331,6 +358,13 @@ namespace BoingUpSkyTower.Simulation
                 return p.X + SpecialPlatforms.Cos((tick + p.Phase) % p.Period, p.Period) * p.Amplitude;   // counter-clockwise lap: x = cos, y = sin
             }
             else if (p.Kind == PlatformKind.TurtleShuttle) return p.X + TurtleOffset(in p, tick);
+            else if (p.Kind == PlatformKind.JellyWobble) return p.X + JellyOffset(in p, id, tick, aux);
+            else if (p.Kind == PlatformKind.LanternLift || p.Kind == PlatformKind.SwingPlank)
+            {
+                // region 5: a lantern sways and a plank swings on a sine of its own period (Platform.Amplitude each way)
+                if (p.Period <= 0) return p.X;
+                return p.X + SpecialPlatforms.Sin((tick + p.Phase) % p.Period, p.Period) * p.Amplitude;
+            }
             else if (p.Kind != PlatformKind.Moving) return p.X;
             int half = p.Period / 2;
             int phase = (tick + p.Phase + shift) % p.Period;
@@ -355,6 +389,38 @@ namespace BoingUpSkyTower.Simulation
             else if (t < 2 * pause + glide) u = Fx.One;
             else u = Fx.One - Ease(t - 2 * pause - glide, glide);
             return (u * 2 - Fx.One) * p.Amplitude;
+        }
+
+        /// <summary>
+        /// Jelly Wobble: sideways offset at a tick. <paramref name="aux"/> is SimState.CrumbleTick (the landing tick lives there; -1 or null = calm). After a landing
+        /// the cube swings on a triangle wave of JellyWaveTicks (3 Hz) that starts at 0, with an amplitude that fades linearly to 0 over JellyWobbleTicks.
+        /// </summary>
+        public Fx JellyOffset(in Platform p, int id, int tick, int[] aux)
+        {
+            if (aux == null) return Fx.Zero;
+            int landed = aux[id];
+            if (landed < 0) return Fx.Zero;
+            int e = tick - landed;
+            if (e < 0 || e >= Cfg.JellyWobbleTicks) return Fx.Zero;
+            int wave = Cfg.JellyWaveTicks;
+            int q = wave / 4;                       // quarter wave: 0 to +1 in q ticks, back to 0 and on to -1, then to 0
+            int ph = e % wave;
+            Fx tri;
+            if (ph < q) tri = Fx.FromRatio(ph, q);
+            else if (ph < 3 * q) tri = Fx.FromRatio(2 * q - ph, q);
+            else tri = Fx.FromRatio(ph - wave, q);
+            return p.Amplitude * tri * (Cfg.JellyWobbleTicks - e) / Cfg.JellyWobbleTicks;
+        }
+
+        /// <summary>Width of a platform at a tick: Platform.Width, except the Taffy Stretch, which breathes between Width and Width + 2 x Amplitude on a triangle wave of its period.</summary>
+        public Fx WidthAt(int id, int tick)
+        {
+            Platform p = Platforms[id];
+            if (p.Kind != PlatformKind.TaffyStretch || p.Period <= 0) return p.Width;
+            int half = p.Period / 2;
+            int phase = (tick + p.Phase) % p.Period;
+            int tri = phase < half ? phase : p.Period - phase;
+            return p.Width + p.Amplitude * 2 * Fx.FromRatio(tri, half);
         }
 
         private static Fx Ease(int t, int total)
@@ -399,6 +465,15 @@ namespace BoingUpSkyTower.Simulation
                     return p.Y + Cfg.SproutRise * SproutLevel(id, tick, aux) / Cfg.SproutRiseTicks;
                 case PlatformKind.SinkingRaft:
                     return p.Y - Cfg.RaftSinkDepth * SproutLevel(id, tick, aux) / Cfg.RaftSinkTicks;
+                case PlatformKind.LanternLift:
+                    return p.Y + Cfg.LanternRise * SproutLevel(id, tick, aux) / Cfg.LanternRiseTicks;
+                case PlatformKind.SwingPlank:
+                    {
+                        // pendulum: lowest in the middle, PlankRise higher at both ends (y = rise x sin^2)
+                        if (p.Period <= 0) return p.Y;
+                        Fx sn = SpecialPlatforms.Sin((tick + p.Phase) % p.Period, p.Period);
+                        return p.Y + Cfg.PlankRise * sn * sn;
+                    }
                 default:
                     return p.Y;
             }
@@ -413,8 +488,10 @@ namespace BoingUpSkyTower.Simulation
             if (aux == null) return 0;
             int v = aux[id];
             if (v == -1) return 0;
-            bool raft = Platforms[id].Kind == PlatformKind.SinkingRaft;   // the Sinking Raft uses the same clock: its "rise" is the sink, its release is the spring back
-            int cap = raft ? Cfg.RaftSinkTicks : Cfg.SproutRiseTicks;
+            PlatformKind lk = Platforms[id].Kind;
+            bool raft = lk == PlatformKind.SinkingRaft;   // the Sinking Raft uses the same clock: its "rise" is the sink, its release is the spring back
+            bool lantern = lk == PlatformKind.LanternLift;   // the Lantern Lift (region 5) too: own rise ticks and a slower float down
+            int cap = raft ? Cfg.RaftSinkTicks : (lantern ? Cfg.LanternRiseTicks : Cfg.SproutRiseTicks);
             if (v >= 0)
             {
                 int l = tick - v;
@@ -422,7 +499,7 @@ namespace BoingUpSkyTower.Simulation
             }
             int packed = -(v + 2);
             int tl = packed >> 7, ll = packed & 127;
-            int level = ll - (tick - tl) * (raft ? Cfg.RaftSpringPercent : Cfg.SproutSinkPercent) / 100;
+            int level = ll - (tick - tl) * (raft ? Cfg.RaftSpringPercent : (lantern ? Cfg.LanternSinkPercent : Cfg.SproutSinkPercent)) / 100;
             return level < 0 ? 0 : level;
         }
 
@@ -475,6 +552,49 @@ namespace BoingUpSkyTower.Simulation
             if (p.Kind != PlatformKind.PufferfishPad) return 0;
             int c = (tick + p.Phase) % Cfg.PufferCycleTicks;
             return c >= Cfg.PufferPuffStart ? 2 : (c >= Cfg.PufferSwellStart ? 1 : 0);
+        }
+
+        /// <summary>Mallet Smash: position in the global cycle at a tick, 0 to MalletCycleTicks - 1 (rising until MalletSmashStart, smashing for MalletSmashTicks, then down and lifting again).</summary>
+        public int MalletCycle(int id, int tick)
+        {
+            Platform p = Platforms[id];
+            return p.Kind == PlatformKind.MalletSmash ? (tick + p.Phase) % Cfg.MalletCycleTicks : 0;
+        }
+
+        /// <summary>Mallet Smash: true during the smash window (ticks MalletSmashStart to MalletSmashStart + MalletSmashTicks - 1 of the cycle): the only time the zone hurts.</summary>
+        public bool MalletSmashing(int id, int tick)
+        {
+            if (Platforms[id].Kind != PlatformKind.MalletSmash) return false;
+            int c = (tick + Platforms[id].Phase) % Cfg.MalletCycleTicks;
+            return c >= Cfg.MalletSmashStart && c < Cfg.MalletSmashStart + Cfg.MalletSmashTicks;
+        }
+
+        /// <summary>Mallet Smash painted pose: true from the smash until MalletDownEnd (the mallet lies on the slab), false while it is raised or rising. Pure presentation of the cycle.</summary>
+        public bool MalletDown(int id, int tick)
+        {
+            if (Platforms[id].Kind != PlatformKind.MalletSmash) return false;
+            int c = (tick + Platforms[id].Phase) % Cfg.MalletCycleTicks;
+            return c >= Cfg.MalletSmashStart && c < Cfg.MalletDownEnd;
+        }
+
+        /// <summary>Mallet Smash: true when x is inside the smash zone (MalletZoneHalf either side of a point MalletZoneHalf inside the end on side Platform.Dir).</summary>
+        public bool InMalletZone(in Platform p, Fx x)
+        {
+            if (p.Kind != PlatformKind.MalletSmash || p.Dir == 0) return false;
+            Fx zoneX = p.X + (p.Width / 2 - Cfg.MalletZoneHalf) * p.Dir;
+            return Fx.Abs(x - zoneX) < Cfg.MalletZoneHalf;
+        }
+
+        /// <summary>Rolling Log: centre x of the log at a tick (triangle wave over the platform: LogWidth in from each end, Platform.Period for there and back at a constant speed).</summary>
+        public Fx LogX(int id, int tick)
+        {
+            Platform p = Platforms[id];
+            if (p.Kind != PlatformKind.RollingLog || p.Period <= 1) return p.X;
+            int half = p.Period / 2;
+            int phase = (tick + p.Phase) % p.Period;
+            int tri = phase < half ? phase : p.Period - phase;
+            Fx travel = p.Width - Cfg.LogWidth;
+            return p.X - travel / 2 + travel * Fx.FromRatio(tri, half);
         }
 
         /// <summary>Squish Cap: how far the cap has sunk under the player standing on it (0 to SquishDepth); the player and the cap are drawn this much lower.</summary>
@@ -675,7 +795,7 @@ namespace BoingUpSkyTower.Simulation
             int dir = ((input & SimInput.Right) != 0 ? 1 : 0) - ((input & SimInput.Left) != 0 ? 1 : 0);
             if (s.SteerLock > 0) dir = 0;   // Dizzy Spores: steering is ignored (never inverted); momentum and friction still work
             PlatformKind groundKind = Platforms[s.GroundId].Kind;
-            int sproutId = s.Grounded && (groundKind == PlatformKind.SproutLift || groundKind == PlatformKind.SinkingRaft) ? s.GroundId : -1;
+            int sproutId = s.Grounded && (groundKind == PlatformKind.SproutLift || groundKind == PlatformKind.SinkingRaft || groundKind == PlatformKind.LanternLift) ? s.GroundId : -1;
             Fx maxSpeed = CurrentMaxSpeed(s.Row);
 
             // --- power-ups: activation edges, then the effect flags of this tick ---
@@ -707,6 +827,8 @@ namespace BoingUpSkyTower.Simulation
             if (!s.Grounded)
             {
                 accel = accel * Cfg.AirControl;
+                if (s.GlideTicks > 0) accel = accel * Cfg.GlideAirMultiplier;   // Floss Glide: the air steering after a jump from it is doubled
+                else if (s.KoiAir > 0) accel = Cfg.Accel;                       // Koi Stone: a charged jump keeps the full ground steering in the air
             }
             else if (surface == PlatformKind.Slippery)
             {
@@ -747,6 +869,13 @@ namespace BoingUpSkyTower.Simulation
                 if (surface == PlatformKind.Sticky) v0 = v0 * Cfg.StickyJumpMultiplier;
                 else if (surface == PlatformKind.SquishCap && s.Grounded) v0 = v0 * SquishJumpMultiplier(in s);   // a charged cap launches up to x1.45
                 else if (surface == PlatformKind.PuffFloat) s.FloatTicks = Cfg.PuffFloatTicks;                      // the fall after this jump is slowed
+                else if (surface == PlatformKind.FlossGlide) s.GlideTicks = Cfg.GlideAirTicks;                      // the air steering after this jump is doubled
+                else if (surface == PlatformKind.KoiStone && s.Grounded && s.KoiStill >= Cfg.KoiStillTicks)
+                {
+                    v0 = v0 * Cfg.KoiJumpMultiplier;   // a rested player launches about 10 percent higher and keeps the full air steering for a second
+                    s.KoiAir = Cfg.KoiAirTicks;
+                }
+                s.KoiStill = 0;
                 s.Vy = v0;
                 s.Grounded = false;
                 s.Coyote = 0;
@@ -776,6 +905,9 @@ namespace BoingUpSkyTower.Simulation
             }
             else
             {
+                // Air zones (Fizz Vent: low gravity, Pinwheel Gust: sideways push): read once per tick from the platforms below the player
+                Fx gravity = Cfg.Gravity, zonePush = Fx.Zero;
+                if (hasAirZones && !flying && !holding) ReadAirZones(in s, out gravity, out zonePush);
                 if (flying)
                 {
                     if (rocket)
@@ -805,10 +937,10 @@ namespace BoingUpSkyTower.Simulation
                 }
                 else
                 {
-                    s.Vy = s.Vy - Cfg.Gravity;
+                    s.Vy = s.Vy - gravity;
                 }
                 s.Y = s.Y + s.Vy;
-                s.X = s.X + s.Vx;
+                s.X = s.X + s.Vx + zonePush;
                 if (flying && s.Y >= powerCapY)
                 {
                     // never skip the finish: stop under the top rows, then fall slowly
@@ -853,7 +985,7 @@ namespace BoingUpSkyTower.Simulation
                 {
                     KnockFromThorns(ref s, in g);   // stepping onto the thorny half hops the player away like a landing there
                 }
-                else if (!solid || Fx.Abs(s.X - PlatformX(s.GroundId, tick, s.CrumbleTick)) > g.Width / 2 + Cfg.LandingMargin || InHole(in g, s.X))
+                else if (!solid || Fx.Abs(s.X - PlatformX(s.GroundId, tick, s.CrumbleTick)) > WidthAt(s.GroundId, tick) / 2 + Cfg.LandingMargin || InHole(in g, s.X))
                 {
                     s.Grounded = false;
                     s.Vy = Fx.Zero;
@@ -871,10 +1003,24 @@ namespace BoingUpSkyTower.Simulation
                 {
                     HopFromPuffer(ref s, in g);   // standing on a puffed pufferfish hops the player away
                 }
+                else if (g.Kind == PlatformKind.MalletSmash && s.Invuln == 0 && MalletSmashing(s.GroundId, tick) && InMalletZone(in g, s.X))
+                {
+                    HopFromMallet(ref s, in g);   // standing in the smash zone at the smash: hopped inward
+                }
+                else if (g.Kind == PlatformKind.RollingLog && s.Invuln == 0 && Fx.Abs(s.X - LogX(s.GroundId, tick)) < Cfg.LogContactHalf)
+                {
+                    BumpFromLog(ref s, in g, tick);   // the rolling log runs into the player
+                }
             }
             else
             {
                 if (s.Coyote > 0) s.Coyote--;
+                if (s.Invuln == 0 && Platforms[s.GroundId].Kind == PlatformKind.RollingLog && s.Y >= Platforms[s.GroundId].Y && s.Y - Platforms[s.GroundId].Y < Cfg.LogLowAir
+                    && Fx.Abs(s.X - LogX(s.GroundId, tick)) < Cfg.LogContactHalf && Fx.Abs(s.X - Platforms[s.GroundId].X) < Platforms[s.GroundId].Width / 2 + Cfg.LandingMargin)
+                {
+                    Platform lp = Platforms[s.GroundId];
+                    BumpFromLog(ref s, in lp, tick);   // still low over the platform it just left: the log catches the feet (jump over it instead)
+                }
                 if (s.Vy < Fx.Zero)
                 {
                     int best = -1;
@@ -892,7 +1038,8 @@ namespace BoingUpSkyTower.Simulation
                             else if (p.Y <= prevY && p.Y >= s.Y) surfaceY = p.Y;
                             else continue;
                         }
-                        else if (p.Kind == PlatformKind.HiveLift || p.Kind == PlatformKind.OrbitCap || p.Kind == PlatformKind.SproutLift || p.Kind == PlatformKind.SinkingRaft)
+                        else if (p.Kind == PlatformKind.HiveLift || p.Kind == PlatformKind.OrbitCap || p.Kind == PlatformKind.SproutLift || p.Kind == PlatformKind.SinkingRaft
+                            || p.Kind == PlatformKind.LanternLift || p.Kind == PlatformKind.SwingPlank)
                         {
                             // a bobbing, orbiting or rising surface is crossed when the feet were above it last tick and are at or below it now
                             surfaceY = PlatformY(i, tick, s.CrumbleTick);
@@ -900,7 +1047,7 @@ namespace BoingUpSkyTower.Simulation
                         }
                         else if (p.Y < s.Y || p.Y > prevY) continue;   // outside the fall of this tick (only possible with the widened window)
                         if (!IsSolid(i, tick, s.CrumbleTick)) continue;
-                        if (Fx.Abs(s.X - PlatformX(i, tick, s.CrumbleTick)) > p.Width / 2 + Cfg.LandingMargin) continue;
+                        if (Fx.Abs(s.X - PlatformX(i, tick, s.CrumbleTick)) > (p.Kind == PlatformKind.TaffyStretch ? WidthAt(i, tick) : p.Width) / 2 + Cfg.LandingMargin) continue;
                         if (InHole(in p, s.X)) continue;   // Fairy Ring: the hole is no landing spot
                         if (best < 0 || surfaceY > bestY) { best = i; bestY = surfaceY; }
                     }
@@ -917,6 +1064,18 @@ namespace BoingUpSkyTower.Simulation
                             Platform tp = Platforms[best];
                             s.Y = tp.Y;
                             KnockFromThorns(ref s, in tp);   // a landing on the thorns does not count as a landing
+                        }
+                        else if (Platforms[best].Kind == PlatformKind.MalletSmash && s.Invuln == 0 && MalletSmashing(best, tick) && InMalletZone(in Platforms[best], s.X))
+                        {
+                            Platform mp = Platforms[best];
+                            s.Y = mp.Y;
+                            HopFromMallet(ref s, in mp);   // a landing under the smashing mallet is no landing: it hops the player inward
+                        }
+                        else if (Platforms[best].Kind == PlatformKind.RollingLog && s.Invuln == 0 && Fx.Abs(s.X - LogX(best, tick)) < Cfg.LogContactHalf)
+                        {
+                            Platform gp = Platforms[best];
+                            s.Y = gp.Y;
+                            BumpFromLog(ref s, in gp, tick);   // landing on the log bumps the player up and toward the middle
                         }
                         else Land(ref s, best, tick, bestY);
                     }
@@ -944,6 +1103,8 @@ namespace BoingUpSkyTower.Simulation
             if (s.PwUsed > 0) TickPowerUps(ref s);
             if (s.SteerLock > 0) s.SteerLock--;
             if (s.JumpLock > 0) s.JumpLock--;
+            if (s.GlideTicks > 0) s.GlideTicks--;
+            if (s.KoiAir > 0) s.KoiAir--;
             if (s.FloatTicks > 0 && s.Vy < Fx.Zero) s.FloatTicks--;   // Puff Float: the window runs while the player falls (the rise does not eat it)
             if (sproutId >= 0 && !(s.Grounded && s.GroundId == sproutId)) ReleaseSprout(ref s, sproutId, tick);   // the Sprout Lift starts to sink once it is empty
             s.Tick = tick;
@@ -1149,6 +1310,9 @@ namespace BoingUpSkyTower.Simulation
             s.AirJumpUsed = false;   // Double Jump: every landing (also on a bounce platform) gives the next air phase its extra jump back
             p.Y = p.Kind == PlatformKind.SandcastleStep ? surfaceY : PlatformY(id, tick, s.CrumbleTick);   // the surface of a Bee Hive Lift is somewhere on its bob, an Orbit Cap on its lap, a Sprout Lift on its rise, a raft on its sink, a Sandcastle Step at the player's x
             s.JumpLock = 0;
+            s.GlideTicks = 0;   // Floss Glide ends with the next landing
+            s.KoiStill = 0;     // Koi Stone: the rest starts over with every landing, the charged flight ends
+            s.KoiAir = 0;
             s.SteerLock = 0;    // Dizzy Spores and Puff Float end with the next landing
             s.FloatTicks = 0;
             s.Y = p.Y;
@@ -1239,8 +1403,19 @@ namespace BoingUpSkyTower.Simulation
                     }
                 case PlatformKind.SproutLift:
                 case PlatformKind.SinkingRaft:
+                case PlatformKind.LanternLift:
                     OccupySprout(ref s, id, tick);
                     break;
+                case PlatformKind.BambooFlick:
+                    {
+                        // the stalk springs back: a fixed 0.8 jump (not dependent on the run speed) and 8 u/s sideways toward the middle of the screen
+                        s.Vy = Cfg.JumpBase * Cfg.FlickLaunch;
+                        s.Vx = Cfg.FlickVx * (p.Dir == 0 ? 1 : p.Dir);
+                        s.Grounded = false;
+                        s.Coyote = 0;
+                        s.JumpStartRow = p.Row;
+                        break;
+                    }
                 case PlatformKind.KelpTangle:
                     s.JumpLock = Cfg.KelpLockTicks;
                     break;
@@ -1257,6 +1432,13 @@ namespace BoingUpSkyTower.Simulation
                 case PlatformKind.DizzySpores:
                     s.SteerLock = Cfg.DizzyLockTicks;
                     break;
+                case PlatformKind.JellyWobble:
+                    {
+                        // a new wobble starts unless the cube is still wobbling from the last landing
+                        int landed = s.CrumbleTick[id];
+                        if (landed < 0 || tick - landed >= Cfg.JellyWobbleTicks) s.CrumbleTick[id] = tick;
+                        break;
+                    }
                 case PlatformKind.SporePop:
                     {
                         // a new countdown starts unless the puffball is already swelling or flat
@@ -1308,6 +1490,27 @@ namespace BoingUpSkyTower.Simulation
                 case PlatformKind.SinkingRaft:
                     s.Y = PlatformY(id, tick, s.CrumbleTick);
                     break;
+                case PlatformKind.LanternLift:
+                    // the lantern sways (x) and rises (y) under the player
+                    s.X = s.X + PlatformX(id, tick) - PlatformX(id, s.Tick);
+                    s.Y = PlatformY(id, tick, s.CrumbleTick);
+                    break;
+                case PlatformKind.SwingPlank:
+                    // the pendulum carries the player along its arc
+                    s.X = s.X + PlatformX(id, tick) - PlatformX(id, s.Tick);
+                    s.Y = PlatformY(id, tick);
+                    break;
+                case PlatformKind.KoiStone:
+                    s.KoiStill = s.Vx.Raw == 0 ? s.KoiStill + 1 : 0;   // standing still: no horizontal speed
+                    break;
+                case PlatformKind.PagodaRidge:
+                    {
+                        // beyond the flat middle the glazed tiles slope away: a standing player slides outward
+                        Fx roff = s.X - Platforms[id].X;
+                        if (roff > Cfg.RidgeFlatHalf) s.X = s.X + Cfg.RidgeSlide;
+                        else if (roff < -Cfg.RidgeFlatHalf) s.X = s.X - Cfg.RidgeSlide;
+                        break;
+                    }
                 case PlatformKind.SurfBoostWave:
                     {
                         // the wave carries the player along Dir (toward the middle of the screen) up to the top speed
@@ -1318,6 +1521,21 @@ namespace BoingUpSkyTower.Simulation
                     }
                 case PlatformKind.TurtleShuttle:
                     s.X = s.X + PlatformX(id, tick) - PlatformX(id, s.Tick);
+                    break;
+                case PlatformKind.JellyWobble:
+                    // the wobbling cube carries the player most of the way (JellyCarryPercent), so the footing slides a little under an edge-standing player
+                    s.X = s.X + (PlatformX(id, tick, s.CrumbleTick) - PlatformX(id, s.Tick, s.CrumbleTick)) * Cfg.JellyCarryPercent / 100;
+                    break;
+                case PlatformKind.CandyBowl:
+                    {
+                        // outside the centre share of the dish a gentle pull moves the player back toward the middle
+                        Platform bp = Platforms[id];
+                        Fx off = s.X - bp.X;
+                        if (Fx.Abs(off) > bp.Width / 2 * Cfg.BowlCenterPercent / 100) s.X = off > Fx.Zero ? s.X - Cfg.BowlPull : s.X + Cfg.BowlPull;
+                        break;
+                    }
+                case PlatformKind.LicoriceBelt:
+                    s.X = s.X + Cfg.BeltSpeed * (Platforms[id].Dir == 0 ? 1 : Platforms[id].Dir);   // the conveyor carries along Dir (away from the next platform)
                     break;
                 case PlatformKind.OrbitCap:
                     {
@@ -1345,6 +1563,28 @@ namespace BoingUpSkyTower.Simulation
             }
         }
 
+        /// <summary>
+        /// Air zones above the platforms below the player: a Fizz Vent column cuts gravity to VentGravityPercent, a Pinwheel Gust column pushes along its Dir.
+        /// The zone starts at the surface (the player's feet must be above it) and is VentHeight / PinwheelHeight high.
+        /// </summary>
+        private void ReadAirZones(in SimState s, out Fx gravity, out Fx push)
+        {
+            gravity = Cfg.Gravity;
+            push = Fx.Zero;
+            for (int i = LowerBound(s.Y - zoneReach); i < Platforms.Length && Platforms[i].Y < s.Y; i++)
+            {
+                Platform p = Platforms[i];
+                if (p.Kind == PlatformKind.FizzVent)
+                {
+                    if (Fx.Abs(s.X - p.X) < Cfg.VentHalfWidth && s.Y - p.Y < Cfg.VentHeight) gravity = Cfg.Gravity * Cfg.VentGravityPercent / 100;
+                }
+                else if (p.Kind == PlatformKind.PinwheelGust)
+                {
+                    if (Fx.Abs(s.X - p.X) < Cfg.PinwheelHalfWidth && s.Y - p.Y < Cfg.PinwheelHeight) push = push + Cfg.PinwheelPush * (p.Dir == 0 ? 1 : p.Dir);
+                }
+            }
+        }
+
         /// <summary>Pufferfish Pad: hops the player away from its centre. Never damages, never counts as a landing, never ends the run.</summary>
         private void HopFromPuffer(ref SimState s, in Platform p)
         {
@@ -1354,6 +1594,31 @@ namespace BoingUpSkyTower.Simulation
             s.Coyote = 0;
             s.JumpStartRow = p.Row;
             s.PufferHops++;
+        }
+
+        /// <summary>Mallet Smash: hops the player inward (away from the mallet end on side Platform.Dir). Never damages, never counts as a landing, never ends the run; invulnerable afterwards so nothing chains.</summary>
+        private void HopFromMallet(ref SimState s, in Platform p)
+        {
+            s.Grounded = false;
+            s.Vx = Cfg.MalletKnockVx * -p.Dir;
+            s.Vy = Cfg.MalletKnockVy;
+            s.Coyote = 0;
+            s.JumpStartRow = p.Row;
+            if (s.Invuln < Cfg.MalletInvulnTicks) s.Invuln = Cfg.MalletInvulnTicks;
+            s.Bumps++;
+        }
+
+        /// <summary>Rolling Log: bumps the player up and toward the middle of the platform (away from the platform ends, never into a wall). Never damages, never counts as a landing, never ends the run.</summary>
+        private void BumpFromLog(ref SimState s, in Platform p, int tick)
+        {
+            int toward = s.X < p.X ? 1 : (s.X > p.X ? -1 : (LogX(p.Id, tick) < p.X ? 1 : -1));
+            s.Grounded = false;
+            s.Vx = Cfg.LogBumpVx * toward;
+            s.Vy = Cfg.LogBumpVy;
+            s.Coyote = 0;
+            s.JumpStartRow = p.Row;
+            if (s.Invuln < Cfg.LogInvulnTicks) s.Invuln = Cfg.LogInvulnTicks;
+            s.Bumps++;
         }
 
         /// <summary>Thorn Bush: hops the player away from the thorny half. Never damages, never counts as a landing, never ends the run.</summary>

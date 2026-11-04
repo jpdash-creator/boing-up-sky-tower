@@ -62,6 +62,8 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Sprout Lift stem (own painted sprite, centred under the platform) and the distance from the walking surface to its top, in baked pixels.</summary>
         public Sprite SproutStem;
         public float SproutStemTopDropPx;
+        /// <summary>Rolling Log (region 5): the log is its own painted sprite (it rolls along the track piece), drawn with its bottom on the walking surface at the same uniform scale as the track; null = the tinted placeholder log.</summary>
+        public Sprite RollingLog;
 
         /// <summary>Index into KindPieces of the painted piece for this kind, thorny side and width (nearest width within 1 unit), or -1 when there is none.</summary>
         public int KindPieceIndex(BoingUpSkyTower.Simulation.PlatformKind kind, int dir, float width)

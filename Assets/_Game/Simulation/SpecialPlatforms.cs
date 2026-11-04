@@ -57,6 +57,8 @@ namespace BoingUpSkyTower.Simulation
             if (launch && PlatformKinds.IsLaunch(prev)) return false;
             // doc 30 section 8: a demanding kind (Fairy Ring, Orbit Cap) never touches another one, a hazard or a launch flight
             if (demanding && (PlatformKinds.IsDemanding(prev) || PlatformKinds.IsHazardType(prev) || PlatformKinds.IsLaunch(prev))) return false;
+            // doc 30 section 5 (risk R4): the Taffy Stretch and the region's sticky gum both reduce control, so they never sit in adjacent rows
+            if ((k == PlatformKind.TaffyStretch && prev == PlatformKind.Sticky) || (k == PlatformKind.Sticky && prev == PlatformKind.TaffyStretch)) return false;
             return true;
         }
 
@@ -100,7 +102,8 @@ namespace BoingUpSkyTower.Simulation
             }
             if (spec.LevelIndex <= 1) list.RemoveAll(k => PlatformKinds.IsHazardType(k));
             // doc 30 section 4: the Surf Boost Wave can carry a landing player into a wall, so a no-wall-bounce level never has one
-            if (spec.Goal != null && spec.Goal.Type == GoalType.NoWallBounce) list.RemoveAll(k => k == PlatformKind.SurfBoostWave);
+            // doc 30 section 8 item 8: the same for the Pinwheel Gust, which pushes airborne players sideways
+            if (spec.Goal != null && spec.Goal.Type == GoalType.NoWallBounce) list.RemoveAll(k => k == PlatformKind.SurfBoostWave || k == PlatformKind.PinwheelGust);
             return list.ToArray();
         }
 
@@ -174,7 +177,9 @@ namespace BoingUpSkyTower.Simulation
                 for (int o = 0; o < options.Length; o++)
                 {
                     PlatformKind k = options[o];
-                    if (beside && (k == PlatformKind.HiveLift || k == PlatformKind.Sticky || k == PlatformKind.SproutLift || k == PlatformKind.OrbitCap || k == PlatformKind.SinkingRaft || k == PlatformKind.SandcastleStep || PlatformKinds.IsLaunch(k))) continue;
+                    if (beside && (k == PlatformKind.HiveLift || k == PlatformKind.Sticky || k == PlatformKind.SproutLift || k == PlatformKind.OrbitCap || k == PlatformKind.SinkingRaft || k == PlatformKind.SandcastleStep
+                        || k == PlatformKind.FizzVent || k == PlatformKind.PinwheelGust || k == PlatformKind.LicoriceBelt || k == PlatformKind.TaffyStretch
+                        || k == PlatformKind.LanternLift || k == PlatformKind.SwingPlank || k == PlatformKind.PagodaRidge || PlatformKinds.IsLaunch(k))) continue;
                     if (restricted && k == PlatformKind.Vanishing) continue;   // the finish never blinks
                     if (PlatformKinds.IsHazardType(k) && hazardsPlaced >= hazardBudget) continue;
                     if (PlatformKinds.IsLaunch(k) && launchesPlaced >= launchBudget) continue;
@@ -188,7 +193,7 @@ namespace BoingUpSkyTower.Simulation
                     {
                         PlatformKind k = options[o];
                         if (PlatformKinds.IsHazardType(k) || PlatformKinds.IsLaunch(k) || PlatformKinds.IsDemanding(k) || k == PlatformKind.HiveLift || k == PlatformKind.Sticky || k == PlatformKind.Vanishing
-                            || k == PlatformKind.SproutLift || k == PlatformKind.SinkingRaft || k == PlatformKind.SandcastleStep || k == PlatformKind.SurfBoostWave) continue;
+                            || k == PlatformKind.SproutLift || k == PlatformKind.SinkingRaft || k == PlatformKind.SandcastleStep || k == PlatformKind.SurfBoostWave || k == PlatformKind.LanternLift) continue;
                         pool.Add(o);
                         break;
                     }
@@ -244,6 +249,20 @@ namespace BoingUpSkyTower.Simulation
                 case PlatformKind.TurtleShuttle: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
                 case PlatformKind.KelpTangle: return Fx.Max(w, Fx.FromInt(2));
                 case PlatformKind.PufferfishPad: return Fx.Clamp(w, cfg.PufferMinWidth, Fx.FromInt(6));         // room to stay clear of the centre while puffed
+                case PlatformKind.CandyBowl: return Fx.Clamp(w, cfg.BowlMinWidth, cfg.BowlMaxWidth);            // painted dish: 4, 6 or 8 u
+                case PlatformKind.FlossGlide: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(6));
+                case PlatformKind.FizzVent: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));                   // the bubble column is 1.8 u wide
+                case PlatformKind.LicoriceBelt: return Fx.Clamp(w, cfg.BeltMinWidth, Fx.FromInt(6));            // room to run against the belt: 4 or 6 u
+                case PlatformKind.TaffyStretch: return cfg.TaffyMinWidth;                                       // the narrow width; the breathing is Platform.Amplitude per edge
+                case PlatformKind.JellyWobble: return Fx.Clamp(w, cfg.JellyMinWidth, Fx.FromInt(6));            // stand in the middle: at least 3.5 u (painted 4 or 6)
+                case PlatformKind.PinwheelGust: return Fx.Clamp(w, Fx.FromInt(2), Fx.FromInt(4));
+                case PlatformKind.BambooFlick: return cfg.FlickWidth;                                           // one painted piece (3 u)
+                case PlatformKind.LanternLift: return Fx.Clamp(w, Fx.FromInt(3), Fx.FromInt(5));               // painted 3 or 5 u
+                case PlatformKind.KoiStone: return Fx.Clamp(w, cfg.KoiMinWidth, cfg.KoiMaxWidth);               // wide and restful: 5 or 7 u
+                case PlatformKind.SwingPlank: return Fx.Clamp(w, Fx.FromInt(3), Fx.FromInt(6));               // painted 3, 4.5 or 6 u
+                case PlatformKind.PagodaRidge: return Fx.Clamp(w, cfg.RidgeMinWidth, cfg.RidgeMaxWidth);       // painted 2.5, 3.5 or 4.5 u
+                case PlatformKind.MalletSmash: return Fx.Clamp(w, cfg.MalletMinWidth, cfg.MalletMaxWidth);     // 2.9 u safe + the 1.6 u zone: painted 4.5 or 6 u
+                case PlatformKind.RollingLog: return cfg.LogPlatformWidth;                                      // one painted track (5 u)
                 default: return w;
             }
         }
@@ -263,6 +282,12 @@ namespace BoingUpSkyTower.Simulation
             if (kind == PlatformKind.SinkingRaft || prevKind == PlatformKind.SinkingRaft) gap = Fx.Clamp(gap, cfg.HiveGapMin, cfg.NormalGapMax - cfg.RaftSinkDepth);
             // Sandcastle Step: the climb onto the raised half is a normal jump 0.9 u shorter, so the gap below it stays within NormalGapMax - SandcastleRise.
             if (kind == PlatformKind.SandcastleStep) gap = Fx.Min(gap, cfg.NormalGapMax - cfg.SandcastleRise);
+            // Lantern Lift (doc 30 section 15): it rises LanternRise (2.0 u) once stood on, so both neighbours keep LanternGapMin (a risen lantern leaves 1.0 u of air under the row above).
+            if (kind == PlatformKind.LanternLift || prevKind == PlatformKind.LanternLift) gap = Fx.Clamp(gap, cfg.LanternGapMin, cfg.NormalGapMax);
+            // Swing Plank: it rises PlankRise at the ends of its swing, so both neighbours keep PlankGapMin and every height stays within a jump.
+            if (kind == PlatformKind.SwingPlank || prevKind == PlatformKind.SwingPlank) gap = Fx.Clamp(gap, cfg.PlankGapMin, cfg.NormalGapMax - cfg.PlankRise);
+            // Bamboo Flick: the flick peaks 2.76 u, so the next row is FlickGapMin to FlickGapMax higher (the flight lands on the way down).
+            if (prevKind == PlatformKind.BambooFlick) gap = Fx.Clamp(gap, cfg.FlickGapMin, cfg.FlickGapMax);
             return gap;
         }
 
@@ -272,6 +297,13 @@ namespace BoingUpSkyTower.Simulation
             Fx dx = rng.Range(cfg.DandelionNextDxMin, cfg.DandelionNextDxMax);
             Fx x = prevX + dx * prevDir;
             return Fx.Clamp(x, w / 2, screen - w / 2);
+        }
+
+        /// <summary>The x of the platform after a Bamboo Flick: in the direction of its Dir (toward the middle), FlickNextDxMin to Max away, kept inside the walls.</summary>
+        public static Fx FlickNextX(SimConfig cfg, ref Rng rng, Fx prevX, int prevDir, Fx w, Fx screen)
+        {
+            Fx dx = rng.Range(cfg.FlickNextDxMin, cfg.FlickNextDxMax);
+            return Fx.Clamp(prevX + dx * prevDir, w / 2, screen - w / 2);
         }
 
         /// <summary>
@@ -337,7 +369,52 @@ namespace BoingUpSkyTower.Simulation
                 case PlatformKind.PufferfishPad:
                     phase = rng.Next(cfg.PufferCycleTicks);
                     break;
+                case PlatformKind.LicoriceBelt:
+                    dir = x < screen / 2 ? -1 : 1;   // carries toward the nearest wall; the next platform sits toward the middle (BeltNextX), so the belt runs AWAY from it
+                    break;
+                case PlatformKind.TaffyStretch:
+                    amp = Fx.Min(cfg.TaffyAmplitude, room);   // how far each edge travels; the platform stays inside the walls at its widest
+                    if (amp < Fx.Zero) amp = Fx.Zero;
+                    period = cfg.TaffyPeriodTicks;
+                    phase = rng.Next(period);
+                    break;
+                case PlatformKind.JellyWobble:
+                    amp = Fx.Min(cfg.JellyAmplitude, room);
+                    if (amp < Fx.Zero) amp = Fx.Zero;
+                    break;
+                case PlatformKind.PinwheelGust:
+                    dir = x < screen / 2 ? 1 : -1;   // the gust pushes toward the middle of the screen, never into a wall
+                    break;
+                case PlatformKind.BambooFlick:
+                    dir = x < screen / 2 ? 1 : -1;   // the flick carries toward the middle of the screen, never into a wall
+                    break;
+                case PlatformKind.LanternLift:
+                    amp = Fx.Min(cfg.LanternSwayAmplitude, room);
+                    if (amp < Fx.Zero) amp = Fx.Zero;
+                    period = cfg.LanternSwayTicks;
+                    phase = rng.Next(period);
+                    break;
+                case PlatformKind.SwingPlank:
+                    amp = Fx.Min(cfg.PlankAmplitude, room);   // the whole swing stays inside the walls
+                    if (amp < Fx.Zero) amp = Fx.Zero;
+                    period = cfg.PlankPeriodTicks;
+                    phase = rng.Next(period);
+                    break;
+                case PlatformKind.MalletSmash:
+                    dir = x < screen / 2 ? -1 : 1;   // the mallet stands at the end toward the nearest wall: the hop goes inward, never into a wall
+                    phase = rng.Next(cfg.MalletCycleTicks);
+                    break;
+                case PlatformKind.RollingLog:
+                    period = cfg.LogPeriodTicks;
+                    phase = rng.Next(period);
+                    break;
             }
+        }
+
+        /// <summary>The x of the platform after a Licorice Belt: toward the middle, opposite to the belt's Dir (it carries away from the next platform), dx away, kept inside the walls.</summary>
+        public static Fx BeltNextX(Fx prevX, int prevDir, Fx dx, Fx w, Fx screen)
+        {
+            return Fx.Clamp(prevX - dx * prevDir, w / 2, screen - w / 2);
         }
 
         // ------------------------------------------------------------------------------------------------------------------

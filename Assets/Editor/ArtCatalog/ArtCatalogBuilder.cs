@@ -232,6 +232,9 @@ namespace BoingUpSkyTower.Editor
                     });
                     if ((int)kind > maxKind) maxKind = (int)kind;
                 }
+                JToken logTok = root["log"];   // Rolling Log (region 5): the log object of the set, a sprite file next to the track pieces
+                if (logTok != null && kind == BoingUpSkyTower.Simulation.PlatformKind.RollingLog)
+                    ra.RollingLog = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)logTok["file"]);
                 JToken knob = root["knob"];
                 if (knob != null && kind == BoingUpSkyTower.Simulation.PlatformKind.Seesaw)
                 {

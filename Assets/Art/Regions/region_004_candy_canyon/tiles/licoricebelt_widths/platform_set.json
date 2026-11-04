@@ -1,0 +1,63 @@
+{
+  "asset": "licoricebelt_widths",
+  "kind": "licoricebelt",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 685,
+      "h": 135,
+      "bodyLeft": 8,
+      "bodyRight": 676,
+      "surfaceY": 29,
+      "bodyBottom": 112,
+      "width": 4.0,
+      "file": "reg004_licoricebelt_framea_w4.png",
+      "ppu": 167.0,
+      "kind": "licoricebelt",
+      "dir": -1,
+      "pose": "framea"
+    },
+    {
+      "w": 685,
+      "h": 136,
+      "bodyLeft": 8,
+      "bodyRight": 676,
+      "surfaceY": 30,
+      "bodyBottom": 113,
+      "width": 4.0,
+      "file": "reg004_licoricebelt_frameb_w4.png",
+      "ppu": 167.0,
+      "kind": "licoricebelt",
+      "dir": 1,
+      "pose": "frameb"
+    },
+    {
+      "w": 1019,
+      "h": 135,
+      "bodyLeft": 8,
+      "bodyRight": 1010,
+      "surfaceY": 29,
+      "bodyBottom": 112,
+      "width": 6.0,
+      "file": "reg004_licoricebelt_framea_w6.png",
+      "ppu": 167.0,
+      "kind": "licoricebelt",
+      "dir": -1,
+      "pose": "framea"
+    },
+    {
+      "w": 1019,
+      "h": 136,
+      "bodyLeft": 8,
+      "bodyRight": 1010,
+      "surfaceY": 30,
+      "bodyBottom": 113,
+      "width": 6.0,
+      "file": "reg004_licoricebelt_frameb_w6.png",
+      "ppu": 167.0,
+      "kind": "licoricebelt",
+      "dir": 1,
+      "pose": "frameb"
+    }
+  ]
+}

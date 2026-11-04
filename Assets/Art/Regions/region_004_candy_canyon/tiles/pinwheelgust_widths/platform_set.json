@@ -1,0 +1,91 @@
+{
+  "asset": "pinwheelgust_widths",
+  "kind": "pinwheelgust",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 349,
+      "h": 306,
+      "bodyLeft": 7,
+      "bodyRight": 341,
+      "surfaceY": 214,
+      "bodyBottom": 298,
+      "width": 2.0,
+      "file": "reg004_pinwheelgust_framea_w2.png",
+      "ppu": 167.0,
+      "kind": "pinwheelgust",
+      "dir": -1,
+      "pose": "framea"
+    },
+    {
+      "w": 349,
+      "h": 292,
+      "bodyLeft": 7,
+      "bodyRight": 341,
+      "surfaceY": 200,
+      "bodyBottom": 284,
+      "width": 2.0,
+      "file": "reg004_pinwheelgust_frameb_w2.png",
+      "ppu": 167.0,
+      "kind": "pinwheelgust",
+      "dir": 1,
+      "pose": "frameb"
+    },
+    {
+      "w": 516,
+      "h": 306,
+      "bodyLeft": 7,
+      "bodyRight": 508,
+      "surfaceY": 214,
+      "bodyBottom": 298,
+      "width": 3.0,
+      "file": "reg004_pinwheelgust_framea_w3.png",
+      "ppu": 167.0,
+      "kind": "pinwheelgust",
+      "dir": -1,
+      "pose": "framea"
+    },
+    {
+      "w": 516,
+      "h": 292,
+      "bodyLeft": 7,
+      "bodyRight": 508,
+      "surfaceY": 200,
+      "bodyBottom": 284,
+      "width": 3.0,
+      "file": "reg004_pinwheelgust_frameb_w3.png",
+      "ppu": 167.0,
+      "kind": "pinwheelgust",
+      "dir": 1,
+      "pose": "frameb"
+    },
+    {
+      "w": 683,
+      "h": 306,
+      "bodyLeft": 7,
+      "bodyRight": 675,
+      "surfaceY": 214,
+      "bodyBottom": 298,
+      "width": 4.0,
+      "file": "reg004_pinwheelgust_framea_w4.png",
+      "ppu": 167.0,
+      "kind": "pinwheelgust",
+      "dir": -1,
+      "pose": "framea"
+    },
+    {
+      "w": 683,
+      "h": 292,
+      "bodyLeft": 7,
+      "bodyRight": 675,
+      "surfaceY": 200,
+      "bodyBottom": 284,
+      "width": 4.0,
+      "file": "reg004_pinwheelgust_frameb_w4.png",
+      "ppu": 167.0,
+      "kind": "pinwheelgust",
+      "dir": 1,
+      "pose": "frameb"
+    }
+  ]
+}

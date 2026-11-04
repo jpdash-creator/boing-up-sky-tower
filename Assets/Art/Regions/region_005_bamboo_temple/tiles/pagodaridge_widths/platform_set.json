@@ -1,0 +1,52 @@
+{
+  "asset": "pagodaridge_widths",
+  "kind": "pagodaridge",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 447,
+      "h": 117,
+      "bodyLeft": 14,
+      "bodyRight": 432,
+      "surfaceY": 27,
+      "bodyBottom": 110,
+      "width": 2.5,
+      "file": "reg005_pagodaridge_w2_5.png",
+      "ppu": 167.2,
+      "kind": "pagodaridge",
+      "dir": 0,
+      "src_row": 5,
+      "src_natural_u": 2.53
+    },
+    {
+      "w": 607,
+      "h": 115,
+      "bodyLeft": 11,
+      "bodyRight": 595,
+      "surfaceY": 25,
+      "bodyBottom": 108,
+      "width": 3.5,
+      "file": "reg005_pagodaridge_w3_5.png",
+      "ppu": 166.857,
+      "kind": "pagodaridge",
+      "dir": 0,
+      "src_row": 6,
+      "src_natural_u": 3.58
+    },
+    {
+      "w": 775,
+      "h": 115,
+      "bodyLeft": 11,
+      "bodyRight": 763,
+      "surfaceY": 25,
+      "bodyBottom": 108,
+      "width": 4.5,
+      "file": "reg005_pagodaridge_w4_5.png",
+      "ppu": 167.111,
+      "kind": "pagodaridge",
+      "dir": 0,
+      "src_row": 6,
+      "src_natural_u": 3.58
+    }
+  ]
+}

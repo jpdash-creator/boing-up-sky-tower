@@ -302,6 +302,95 @@ namespace BoingUpSkyTower.Simulation
         public Fx PufferHopVx = Fx.FromRatio(10, 100);
         public Fx PufferMinWidth = Fx.FromInt(3);
 
+        // ---- Region 4 (Candy Canyon) special platforms (doc 30 section 5) ----
+        /// <summary>Candy Bowl: 4 to 8 u wide; outside the centre BowlCenterPercent of the width a standing player is pulled back toward the middle at BowlPull per tick (1.5 u/s).</summary>
+        public Fx BowlMinWidth = Fx.FromInt(4);
+        public Fx BowlMaxWidth = Fx.FromInt(8);
+        public int BowlCenterPercent = 55;
+        public Fx BowlPull = Fx.FromRatio(15, 600);
+        /// <summary>Floss Glide: for GlideAirTicks (1.5 s) after a jump from it the air steering is GlideAirMultiplier times as strong.</summary>
+        public int GlideAirTicks = 90;
+        public int GlideAirMultiplier = 2;
+        /// <summary>Fizz Vent: in the column VentHalfWidth either side of its centre and up to VentHeight above its surface gravity is only VentGravityPercent while airborne (a jump from it climbs about 7 u instead of 4.5 u).</summary>
+        public Fx VentHalfWidth = Fx.FromRatio(9, 10);
+        public Fx VentHeight = Fx.FromRatio(32, 10);
+        public int VentGravityPercent = 20;
+        /// <summary>Licorice Belt: carries a standing player BeltSpeed (2.0 u/s) along Platform.Dir; at least BeltMinWidth wide.</summary>
+        public Fx BeltSpeed = Fx.FromRatio(2, 60);
+        public Fx BeltMinWidth = Fx.FromInt(4);
+        /// <summary>Taffy Stretch: Platform.Width is the narrow width (TaffyMinWidth, 2.4 u), each edge travels up to TaffyAmplitude (1.4 u, so 5.2 u wide) in half a TaffyPeriodTicks (4.5 s period, edges move 0.6 u/s).</summary>
+        public Fx TaffyMinWidth = Fx.FromRatio(24, 10);
+        public Fx TaffyAmplitude = Fx.FromRatio(14, 10);
+        public int TaffyPeriodTicks = 270;
+        /// <summary>Jelly Wobble: after a landing the cube wobbles sideways up to JellyAmplitude (0.6 u), fading over JellyWobbleTicks (1.5 s), with a JellyWaveTicks (20 = 3 Hz) wave. At least JellyMinWidth wide.</summary>
+        public Fx JellyAmplitude = Fx.FromRatio(6, 10);
+        public int JellyWobbleTicks = 90;
+        public int JellyWaveTicks = 20;
+        /// <summary>Jelly Wobble: the share (percent) of the cube's sideways movement that carries a standing player along; the rest slides under the feet, so a wobble can shake an edge-standing player off.</summary>
+        public int JellyCarryPercent = 60;
+        public Fx JellyMinWidth = Fx.FromRatio(35, 10);
+        /// <summary>Pinwheel Gust: airborne players in the column PinwheelHalfWidth either side (2.0 u wide) and up to PinwheelHeight (3.5 u) above it are pushed PinwheelPush (3.0 u/s) along Platform.Dir.</summary>
+        public Fx PinwheelHalfWidth = Fx.One;
+        public Fx PinwheelHeight = Fx.FromRatio(35, 10);
+        public Fx PinwheelPush = Fx.FromRatio(3, 60);
+
+        // ---- Region 5 (Bamboo Temple) special platforms (doc 30 section 15) ----
+        /// <summary>Bamboo Flick: a landing sets the launch speed to FlickLaunch (0.8) x the standing jump speed (JumpBase; apex 2.76 u as integrated) and FlickVx (8 u/s) sideways along Platform.Dir (toward the middle of the screen). Always 3 u wide.
+        /// The next platform sits FlickNextDxMin..Max away in that direction (SpecialPlatforms.FlickNextX) and 2.0 to 2.2 u higher (FlickGapMin..Max): a 0.8 flick peaks 2.76 u, so it always clears the gap, and the no-steering flight covers 4.3 to 4.7 u.</summary>
+        public Fx FlickLaunch = Fx.FromRatio(8, 10);
+        public Fx FlickVx = Fx.FromRatio(8, 60);
+        public Fx FlickWidth = Fx.FromInt(3);
+        public Fx FlickNextDxMin = Fx.FromRatio(36, 10);
+        public Fx FlickNextDxMax = Fx.FromRatio(46, 10);
+        public Fx FlickGapMin = Fx.FromInt(2);
+        public Fx FlickGapMax = Fx.FromRatio(22, 10);
+        /// <summary>Lantern Lift: rises LanternRise (2.0 u) over LanternRiseTicks (1.5 s) while stood on, floats down at LanternSinkPercent (60) of the rise speed once empty; it sways LanternSwayAmplitude (0.3 u) either side on a LanternSwayTicks (3 s) sine, always.
+        /// The rows next to a lantern keep LanternGapMin (3.0 u) to NormalGapMax so a risen lantern leaves 1.0 u of air under the row above.</summary>
+        public Fx LanternRise = Fx.FromInt(2);
+        public int LanternRiseTicks = 90;
+        public int LanternSinkPercent = 60;
+        public Fx LanternSwayAmplitude = Fx.FromRatio(3, 10);
+        public int LanternSwayTicks = 180;
+        public Fx LanternGapMin = Fx.FromInt(3);
+        /// <summary>Koi Stone: 5 or 7 u wide, never moves. Standing still (no horizontal speed) for KoiStillTicks (1.0 s) charges it: the next jump from it is KoiJumpMultiplier (1.05 on the launch speed = about +10 percent height) and the flight has the full ground steering (no AirControl cut) for KoiAirTicks (1.0 s).</summary>
+        public Fx KoiMinWidth = Fx.FromInt(5);
+        public Fx KoiMaxWidth = Fx.FromInt(7);
+        public int KoiStillTicks = 60;
+        public Fx KoiJumpMultiplier = Fx.FromRatio(105, 100);
+        public int KoiAirTicks = 60;
+        /// <summary>Swing Plank: swings PlankAmplitude (1.5 u each way, 3.0 u total) on a PlankPeriodTicks (4.4 s) sine, rising PlankRise (0.6 u) at the ends (y = rise x sin^2). Rows next to a plank keep PlankGapMin to NormalGapMax - PlankRise.</summary>
+        public Fx PlankAmplitude = Fx.FromRatio(15, 10);
+        public int PlankPeriodTicks = 264;
+        public Fx PlankRise = Fx.FromRatio(6, 10);
+        public Fx PlankGapMin = Fx.FromInt(2);
+        /// <summary>Pagoda Ridge: 2.5 to 4.5 u wide; beyond RidgeFlatHalf (0.5 u) of the centre a standing player slides outward at RidgeSlide (2.4 u/s).</summary>
+        public Fx RidgeFlatHalf = Fx.FromRatio(5, 10);
+        public Fx RidgeSlide = Fx.FromRatio(24, 600);
+        public Fx RidgeMinWidth = Fx.FromRatio(25, 10);
+        public Fx RidgeMaxWidth = Fx.FromRatio(45, 10);
+        /// <summary>Mallet Smash: global cycle MalletCycleTicks (2.5 s): the mallet rises 0 to MalletSmashStart (1.0 s), smashes for MalletSmashTicks (10 ticks), lies down until MalletDownEnd (pose only), then lifts again. The zone is MalletZoneHalf (0.8 u) either side of a point MalletZoneHalf inside the end on side Platform.Dir
+        /// (1.6 u wide; the rest of a 4.5 u platform, 2.9 u, is always safe). A standing or landing player in the zone at the smash is hopped MalletKnockVx (inward, 3 u) and MalletKnockVy (0.7 u up) and is invulnerable MalletInvulnTicks (also against gongs). Width 4.5 or 6 u.</summary>
+        public int MalletCycleTicks = 150;
+        public int MalletSmashStart = 60;
+        public int MalletSmashTicks = 10;
+        public int MalletDownEnd = 110;
+        public Fx MalletZoneHalf = Fx.FromRatio(8, 10);
+        public Fx MalletKnockVx = Fx.FromRatio(8, 60);
+        public Fx MalletKnockVy = Fx.FromRatio(131, 1000);
+        public int MalletInvulnTicks = 60;
+        public Fx MalletMinWidth = Fx.FromRatio(45, 10);
+        public Fx MalletMaxWidth = Fx.FromInt(6);
+        /// <summary>Rolling Log: the platform is LogPlatformWidth (5 u) wide; a LogWidth (1.2 u) log rolls end to end (3.8 u) at 2.4 u/s, LogPeriodTicks = 190 for there and back. Contact within LogContactHalf (0.7 u) of the log centre while grounded, when landing on it, or
+        /// while less than LogLowAir (0.6 u) above the platform it was jumped from: bump up LogBumpVy (1.0 u) and LogBumpVx (2 u) toward the middle of the platform, invulnerable LogInvulnTicks (also against gongs).</summary>
+        public Fx LogPlatformWidth = Fx.FromInt(5);
+        public Fx LogWidth = Fx.FromRatio(12, 10);
+        public int LogPeriodTicks = 190;
+        public Fx LogContactHalf = Fx.FromRatio(7, 10);
+        public Fx LogLowAir = Fx.FromRatio(6, 10);
+        public Fx LogBumpVy = Fx.FromRatio(155, 1000);
+        public Fx LogBumpVx = Fx.FromRatio(72, 1000);
+        public int LogInvulnTicks = 60;
+
         // ---- Generator: how many rows carry a new special platform (percent of free rows), by campaign level ----
         /// <summary>Share of rows with a new special platform: SpecialShareLevel3Percent at level 3 rising linearly to SpecialShareLevel15Percent at level 15.</summary>
         public int SpecialShareLevel3Percent = 15;

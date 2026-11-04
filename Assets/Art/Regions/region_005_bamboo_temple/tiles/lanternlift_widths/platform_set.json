@@ -1,0 +1,37 @@
+{
+  "asset": "lanternlift_widths",
+  "kind": "lanternlift",
+  "ppuBake": 167.0,
+  "pieces": [
+    {
+      "w": 516,
+      "h": 155,
+      "bodyLeft": 7,
+      "bodyRight": 508,
+      "surfaceY": 26,
+      "bodyBottom": 106,
+      "width": 3.0,
+      "file": "reg005_lanternlift_w3.png",
+      "ppu": 167.0,
+      "kind": "lanternlift",
+      "dir": 0,
+      "src_row": 4,
+      "src_natural_u": 5.15
+    },
+    {
+      "w": 850,
+      "h": 155,
+      "bodyLeft": 7,
+      "bodyRight": 842,
+      "surfaceY": 26,
+      "bodyBottom": 106,
+      "width": 5.0,
+      "file": "reg005_lanternlift_w5.png",
+      "ppu": 167.0,
+      "kind": "lanternlift",
+      "dir": 0,
+      "src_row": 4,
+      "src_natural_u": 5.15
+    }
+  ]
+}
