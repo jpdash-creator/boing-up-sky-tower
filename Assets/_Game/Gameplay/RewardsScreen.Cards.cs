@@ -6,41 +6,38 @@ using UnityEngine.UI;
 
 namespace BoingUpSkyTower.Gameplay
 {
-    /// <summary>Cards, plates and bars of the Rewards screen (RewardsStyle: cream open, yellow ready with a green CLAIM tag, green claimed with a check).</summary>
+    /// <summary>Cards, plates and bars of the Rewards screen (RewardsStyle: cream open, yellow ready with a big green Claim button on its reward plate, green claimed with a check).</summary>
     public sealed partial class RewardsScreen
     {
         enum CardState { Open, Ready, Done }
 
-        // ---- card metrics ----
-        const float IconW = 140f, PlateW = 176f, CardPadX = 22f, CardCorner = 56f, RewardCorner = 34f, RailW = 110f, TagW = 190f;
-        static float TagH { get { return LineH(BodyPx) + 14f; } }
-        static float TagInside { get { return Mathf.Round(TagH * 0.55f); } }
-        static float TagProtrude { get { return TagH - TagInside; } }
-        /// <summary>Space between cards: the CLAIM tag sticks out above its card into this gap and never reaches the card above.</summary>
-        public static float CardGap { get { return Mathf.Ceil(TagProtrude) + 18f; } }
-        static float PlateTop { get { return TagInside + 8f; } }
-        static float PlateNeeded
-        {
-            get
-            {
-                float one = 12f + 76f + 4f + LineH(BodyPx) + 12f;
-                float two = 12f + 2f * Mathf.Max(56f, LineH(BodyPx)) + 6f + 12f;
-                return Mathf.Max(one, two);
-            }
-        }
-        static float TitleZone { get { return LineH(BodyPx) * 2f; } }
+        // ---- card metrics (compact lists, Bug List 4 E4.c) ----
+        // The card is 136 px on the 1080 reference (it was 214) and the gap 10 (it was 49). It cannot be as low as 90: a ready card carries a real Claim button
+        // and every button must be at least 48 dp (UiKit.MinTouchPx, about 126 px), so the card is that button plus 5 px above and below.
+        const float IconW = 104f, CardPadX = 20f, CardCorner = 48f, RewardCorner = 30f, RailW = 90f, TagW = 190f;
+        const float CardPadY = 8f, ItemIcon = 48f, ItemGap = 12f, PlatePad = 14f, CheckW = 44f, RailBadge = 80f;
+        /// <summary>Space between cards.</summary>
+        public const float CardGap = 10f;
+        /// <summary>Base height of a card; it grows (never shrinks) with the text size and a wrapped title.</summary>
+        public const float CompactCardH = 136f;
+        /// <summary>Space between the title and the progress bar in the card's text column (at least 6 px).</summary>
+        public const float TitleBarGap = 6f;
+        /// <summary>Height of the green Claim button on a ready card: the 48 dp touch minimum.</summary>
+        public static float ClaimButtonH { get { return Mathf.Ceil(UiKit.MinTouchPx); } }
         static float BarH { get { return LineH(BodyPx) + 14f; } }
+        static float CardBarH { get { return LineH(BodyPx) + 4f; } }
+        static float PlateRowH { get { return Mathf.Max(ItemIcon, LineH(BodyPx)) + 16f; } }
 
-        /// <summary>Height of a task card at the current text size: two title lines over the bar, and the reward plate fits under the CLAIM tag.</summary>
-        public static float CardHeight
+        /// <summary>Height of a card whose title needs <paramref name="titleH"/>: the compact base, or the text (title over the bar) when that is more, or the plate row.</summary>
+        public static float CardHeightFor(float titleH)
         {
-            get
-            {
-                float byText = 12f + TitleZone + 6f + BarH + 18f;
-                float byPlate = PlateTop + PlateNeeded + 14f;
-                return Mathf.Max(214f, byText, byPlate);
-            }
+            float byText = CardPadY + titleH + TitleBarGap + CardBarH + CardPadY;
+            float byPlate = PlateRowH + 12f;
+            return Mathf.Max(CompactCardH, byText, byPlate, ClaimButtonH + 10f);
         }
+
+        /// <summary>Height of a card with a one-line title at the current text size (a longer title makes its own card taller).</summary>
+        public static float CardHeight { get { return CardHeightFor(LineH(BodyPx)); } }
 
         static Color StateTint(CardState s)
         {
@@ -202,17 +199,55 @@ namespace BoingUpSkyTower.Gameplay
             return p.rectTransform;
         }
 
-        // ---------------- claim tag, check, claimable ----------------
-
-        /// <summary>The green CLAIM tag at the top right of a ready card, half above its edge (a picture and a word: the whole card is the button).</summary>
-        static void AddClaimTag(RectTransform card)
+        static float AmountW(string text)
         {
-            Image tag = Plate(card, "Tag", "btn_green", Color.white, 30f);
-            UiKit.Place(tag.rectTransform, new Vector2(1f, 1f), new Vector2(-18f, TagProtrude), new Vector2(TagW, TagH));
-            Text t = UiKit.AddText(tag.transform, "Label", "Claim", BodyPx, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
-            UiKit.OnPanel(t).horizontalOverflow = HorizontalWrapMode.Overflow;
-            UiKit.Stretch(t.rectTransform);
+            float fs = Mathf.Round(Mathf.Max(BodyPx, UiKit.MinBodyTextPx) * UiKit.TextScale);
+            return Mathf.Ceil(fs * 0.62f * (text != null ? text.Length : 1));
         }
+
+        /// <summary>Width of a card's reward plate (a row of icon + amount items; a ready card adds the check glyph and is at least a 48 dp touch target).</summary>
+        static float CardPlateWidth(List<RItem> items, bool claim)
+        {
+            float w = 2f * PlatePad + (claim ? CheckW + ItemGap : 0f);
+            for (int i = 0; i < items.Count; i++) w += ItemIcon + 6f + AmountW(items[i].Text) + (i > 0 ? ItemGap : 0f);
+            return Mathf.Max(w, claim ? ClaimButtonH : 0f);
+        }
+
+        /// <summary>
+        /// The reward plate of a card: one row of icon + amount items. Ready cards get the green plate (btn_green) with a check glyph first: it is the Claim button.
+        /// </summary>
+        static Image CardPlate(Transform parent, List<RItem> items, bool claim)
+        {
+            Image p = Plate(parent, "RewardPlate", claim ? "btn_green" : "plate_chip", Color.white, RewardCorner);
+            var hl = p.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.padding = new RectOffset((int)PlatePad, (int)PlatePad, 6, 6);
+            hl.spacing = ItemGap;
+            hl.childAlignment = TextAnchor.MiddleCenter;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = false;
+            if (claim)
+            {
+                Image tick = UiKit.AddImage(p.transform, "Check", RewardArt.Icon("check") ?? Glyphs.Check, Color.white);
+                SetPref(tick.gameObject, CheckW, CheckW);
+            }
+            foreach (RItem it in items)
+            {
+                RectTransform row = UiKit.Rect(p.transform, "Item");
+                var rl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+                rl.spacing = 6f;
+                rl.childAlignment = TextAnchor.MiddleCenter;
+                rl.childControlWidth = rl.childControlHeight = true;
+                rl.childForceExpandWidth = rl.childForceExpandHeight = false;
+                Image ic = UiKit.AddImage(row, "Icon", it.Icon, Color.white);
+                SetPref(ic.gameObject, ItemIcon, ItemIcon);
+                Text t = UiKit.AddText(row, "Amount", it.Text, BodyPx, Color.white, TextAnchor.MiddleCenter, true);
+                t.horizontalOverflow = HorizontalWrapMode.Overflow;
+                if (claim) UiKit.OnPanel(t).color = UiKit.ButtonInk;
+            }
+            return p;
+        }
+
+        // ---------------- claim tag, check, claimable ----------------
 
         /// <summary>A round green check badge (shape and colour both say "done").</summary>
         static Image CheckBadge(Transform parent, string name, float size)
@@ -237,6 +272,14 @@ namespace BoingUpSkyTower.Gameplay
             host.gameObject.AddComponent<A11yLabel>().Text = a11y;
         }
 
+        /// <summary>Height the title needs when wrapped at <paramref name="width"/> canvas units (extents are scaled by pixelsPerUnit like Text.preferredHeight does).</summary>
+        static float MeasureTitle(Text t, float width)
+        {
+            float ppu = Mathf.Max(0.01f, t.pixelsPerUnit);
+            float m = t.cachedTextGeneratorForLayout.GetPreferredHeight(t.text, t.GetGenerationSettings(new Vector2(width * ppu, 0f))) / ppu;
+            return Mathf.Ceil(m);
+        }
+
         string TitleOf(RewardEntry e)
         {
             return Tab == RewardTab.Main ? "Collect " + e.Target + " Stars" : e.Title;
@@ -245,9 +288,11 @@ namespace BoingUpSkyTower.Gameplay
         // ---------------- the card ----------------
 
         /// <summary>
-        /// One task card: big icon at the left, the title centred on top, a thin bar with "n/N" in it and the reward plate at the right.
-        /// <paramref name="claimable"/> cards (stars, weekly tasks) are claimed by tapping them when ready (yellow with a CLAIM tag) and turn green with a check once claimed;
-        /// Daily action cards only show points (green when done). <paramref name="rail"/> (Main) adds the numbered rail with its line at the left.
+        /// One task card: icon at the left, the title on top, a bar with "n/N" under it and the reward plate at the right (compact, Bug List 4 E4.c).
+        /// <paramref name="claimable"/> cards (stars, weekly tasks) are ready when complete and unclaimed: the card turns yellow and its reward plate becomes a BIG GREEN
+        /// CLAIM BUTTON (check glyph + the reward, at least 48 dp, "Claim 20 gems" for screen readers) that claims exactly that reward; tapping the rest of the card claims it too
+        /// (button and card both claim). Claimed cards turn green with a check badge. Daily action cards only show points (green when done).
+        /// <paramref name="rail"/> (Main) adds the numbered rail with its line at the left. The card height is the compact base or the measured title + bar when that is more.
         /// </summary>
         void AddCard(RectTransform list, RewardEntry e, bool claimable, int index, int count, bool rail)
         {
@@ -258,8 +303,6 @@ namespace BoingUpSkyTower.Gameplay
             CardState st = claimed ? CardState.Done : (ready ? CardState.Ready : CardState.Open);
 
             RectTransform row = UiKit.Rect(list, "Row_" + e.Id);
-            FixedHeight(row, CardHeight);
-            if (rail) BuildRail(row, index, count, st);
             RectTransform card = UiKit.Rect(row, "Card");
             UiKit.Stretch(card);
             if (rail) card.offsetMin = new Vector2(RailW + 12f, 0f);
@@ -267,46 +310,67 @@ namespace BoingUpSkyTower.Gameplay
             Image bg = Plate(card, "Bg", "plate_cream", StateTint(st), CardCorner);
             UiKit.Stretch(bg.rectTransform);
 
-            Image icon = UiKit.AddImage(card, "Icon", TaskIcon(e.Id), Color.white);
-            UiKit.Place(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(CardPadX, 0f), new Vector2(IconW, IconW));
-            if (claimed)
-            {
-                Image tick = CheckBadge(card, "Check", 64f);
-                UiKit.Place(tick.rectTransform, new Vector2(0f, 0f), new Vector2(CardPadX + IconW - 56f, 12f), new Vector2(64f, 64f));
-            }
+            List<RItem> items = RewardItems(e, !claimable);
+            float plateW = CardPlateWidth(items, ready);
+            float midL = CardPadX + IconW + 14f, midR = CardPadX + plateW + 14f;
+            float listW = screen != null && screen.rect.width > 200f ? screen.rect.width : 1080f;
+            float cardW = listW - 2f * Side - (rail ? RailW + 12f : 0f);
 
-            float midL = CardPadX + IconW + 16f, midR = CardPadX + PlateW + 14f + 16f;
             Text title = UiKit.AddText(card, "Title", TitleOf(e), BodyPx, Theme.Ink, TextAnchor.MiddleCenter, true);
             UiKit.OnPanel(title);
             title.horizontalOverflow = HorizontalWrapMode.Wrap;
+            float textW = Mathf.Max(1f, cardW - midL - midR - 4f);
+            float titleH = Mathf.Max(LineH(BodyPx), MeasureTitle(title, textW));   // same measure for the card height and the title rect
+            if (UiKit.TextScale > 1.01f)
+            {
+                // 130 percent text: shrink the title down to the 16 sp minimum before the card grows.
+                float budget = CompactCardH - 2f * CardPadY - TitleBarGap - CardBarH;
+                int minFs = Mathf.CeilToInt(UiKit.MinBodyTextPx);
+                while (titleH > budget && title.fontSize - 2 >= minFs)
+                {
+                    title.fontSize -= 2;
+                    titleH = Mathf.Max(Mathf.Ceil(title.fontSize * 1.22f), MeasureTitle(title, textW));
+                }
+            }
+            float h = CardHeightFor(titleH);
+            FixedHeight(row, h);
+            if (rail) BuildRail(row, index, count, st);
+            // Text column = title over the bar, one stack from the top (they cannot overlap); extra card height is split above and below.
+            float stack = titleH + TitleBarGap + CardBarH;
+            float top = Mathf.Max(CardPadY, (h - stack) * 0.5f);
             RectTransform trt = title.rectTransform;
             trt.anchorMin = new Vector2(0f, 1f);
             trt.anchorMax = new Vector2(1f, 1f);
             trt.pivot = new Vector2(0.5f, 1f);
-            trt.offsetMin = new Vector2(midL, -(12f + TitleZone));
-            trt.offsetMax = new Vector2(-midR, -12f);
+            trt.offsetMin = new Vector2(midL, -(top + titleH));
+            trt.offsetMax = new Vector2(-midR, -top);
+
+            Image icon = UiKit.AddImage(card, "Icon", TaskIcon(e.Id), Color.white);
+            UiKit.Place(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(CardPadX, 0f), new Vector2(IconW, IconW));
+            if (claimed)
+            {
+                Image tick = CheckBadge(card, "Check", 48f);
+                UiKit.Place(tick.rectTransform, new Vector2(0f, 0.5f), new Vector2(CardPadX + IconW - 40f, -IconW * 0.5f + 20f), new Vector2(48f, 48f));
+            }
 
             int shown = Mathf.Min(value, target);
             string label = (e.Stat == RewardStat.PlaySeconds) ? (shown / 60) + "/" + (target / 60) : Num(shown) + "/" + Num(target);
             Color fill = claimed || ready ? BarGreen : BarBlue;
-            RectTransform bar = Bar(card, label, target > 0 ? Mathf.Clamp01(value / (float)target) : 0f, fill, BarH);
-            bar.anchorMin = new Vector2(0f, 0f);
-            bar.anchorMax = new Vector2(1f, 0f);
-            bar.pivot = new Vector2(0.5f, 0f);
-            bar.offsetMin = new Vector2(midL, 18f);
-            bar.offsetMax = new Vector2(-midR, 18f + BarH);
+            RectTransform bar = Bar(card, label, target > 0 ? Mathf.Clamp01(value / (float)target) : 0f, fill, CardBarH);
+            bar.anchorMin = new Vector2(0f, 1f);
+            bar.anchorMax = new Vector2(1f, 1f);
+            bar.pivot = new Vector2(0.5f, 1f);
+            bar.offsetMin = new Vector2(midL, -(top + titleH + TitleBarGap + CardBarH));
+            bar.offsetMax = new Vector2(-midR, -(top + titleH + TitleBarGap));
 
-            RectTransform plate = RewardPlate(card, "RewardPlate", RewardItems(e, !claimable));
-            plate.anchorMin = new Vector2(1f, 0f);
-            plate.anchorMax = new Vector2(1f, 1f);
-            plate.pivot = new Vector2(1f, 0.5f);
-            plate.offsetMin = new Vector2(-(CardPadX + PlateW), 14f);
-            plate.offsetMax = new Vector2(-CardPadX, -PlateTop);
+            Image plate = CardPlate(card, items, ready);
+            float plateH = ready ? ClaimButtonH : Mathf.Max(PlateRowH, h - 28f);
+            UiKit.Place(plate.rectTransform, new Vector2(1f, 0.5f), new Vector2(-CardPadX, 0f), new Vector2(plateW, plateH));
 
             if (ready)
             {
-                AddClaimTag(card);
-                MakeClaimable(card, bg, Tab, e, TitleOf(e) + ": claim " + Describe(e));
+                MakeClaimable(card, bg, Tab, e, TitleOf(e) + ": claim " + Describe(e));                       // the rest of the card claims too
+                MakeClaimable(plate.rectTransform, plate, Tab, e, "Claim " + Describe(e));                    // the green button claims exactly this reward
             }
             else if (claimable) card.gameObject.AddComponent<A11yLabel>().Text = TitleOf(e) + ": " + label + (claimed ? ", claimed" : "");
         }
@@ -332,13 +396,13 @@ namespace BoingUpSkyTower.Gameplay
             Sprite circle = ToyKit.Get("plate_circle") ?? Theme.RoundSprite;
             Image badge = UiKit.AddImage(rail, "Badge", circle, Color.white);
             badge.preserveAspect = true;
-            UiKit.Place(badge.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(100f, 100f));
+            UiKit.Place(badge.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(RailBadge, RailBadge));
             if (st == CardState.Done)
             {
                 Image mark = UiKit.AddImage(badge.transform, "Mark", RewardArt.Icon("check") ?? Glyphs.Check, new Color(0.45f, 0.95f, 0.5f, 1f));
                 UiKit.Stretch(mark.rectTransform);
-                mark.rectTransform.offsetMin = new Vector2(18f, 18f);
-                mark.rectTransform.offsetMax = new Vector2(-18f, -18f);
+                mark.rectTransform.offsetMin = new Vector2(14f, 14f);
+                mark.rectTransform.offsetMax = new Vector2(-14f, -14f);
             }
             else
             {

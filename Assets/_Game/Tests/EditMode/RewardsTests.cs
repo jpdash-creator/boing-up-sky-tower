@@ -6,6 +6,7 @@ using BoingUpSkyTower.Gameplay;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BoingUpSkyTower.Tests
 {
@@ -621,7 +622,7 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void ReadyCardsAreButtonsWithAClaimTagAndClaimAllFollowsTheTab()
+        public void ReadyCardsAreButtonsWithAGreenClaimButtonAndClaimAllFollowsTheTab()
         {
             ProgressService svc = NewService();
             ClearLevels(svc, 1, 15, 7);   // s_25 and r_1 ready
@@ -631,10 +632,11 @@ namespace BoingUpSkyTower.Tests
             {
                 Transform ready = s.ListContent.Find("Row_s_25/Card");
                 Assert.IsNotNull(ready.GetComponent<UnityEngine.UI.Button>(), "a ready card is the claim button");
-                Assert.IsNotNull(ready.Find("Tag"), "with the green CLAIM tag");
+                Assert.IsNotNull(ready.Find("RewardPlate").GetComponent<UnityEngine.UI.Button>(), "with a green Claim button as its reward plate");
+                Assert.IsNull(ready.Find("Tag"), "the small CLAIM tag is gone");
                 Transform open = s.ListContent.Find("Row_s_50/Card");
                 Assert.IsNull(open.GetComponent<UnityEngine.UI.Button>());
-                Assert.IsNull(open.Find("Tag"));
+                Assert.IsNull(open.Find("RewardPlate").GetComponent<UnityEngine.UI.Button>(), "an open card has a plain reward plate");
                 Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "Claim All while something is ready");
                 s.SelectRegion(1);   // clearing region 1 moves the current region on; the ready bonus belongs to region 1
                 Assert.IsNotNull(s.ListContent.Find("MainHeader/Band").GetComponent<UnityEngine.UI.Button>(), "the region band is claimable too");
@@ -670,20 +672,135 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void CardMetricsGrowWithTheTextSizeAndLeaveRoomForTheClaimTag()
+        public void ReadyCardHasAClaimButtonOfAtLeast48DpInsideTheCardThatClaimsExactlyThatReward()
+        {
+            ProgressService svc = NewService();
+            ClearLevels(svc, 1, 15, 7);   // 45 stars: s_25 ready, 3 weekly tasks ready too
+            int gems = svc.Gems, coins = svc.Coins;
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                var card = (RectTransform)s.ListContent.Find("Row_s_25/Card");
+                var plate = (RectTransform)card.Find("RewardPlate");
+                var btn = plate.GetComponent<UnityEngine.UI.Button>();
+                Assert.IsNotNull(btn);
+                Assert.GreaterOrEqual(plate.sizeDelta.x, UiKit.MinTouchPx - 1f, "button width >= 48 dp");
+                Assert.GreaterOrEqual(plate.sizeDelta.y, UiKit.MinTouchPx - 1f, "button height >= 48 dp");
+                var row = (RectTransform)card.parent;
+                Assert.LessOrEqual(plate.sizeDelta.y, row.GetComponent<UnityEngine.UI.LayoutElement>().preferredHeight, "the button fits inside its card");
+                Assert.IsNotNull(card.GetComponent<UnityEngine.UI.Button>(), "the card itself claims too");
+                Assert.AreEqual("Claim 20 gems", plate.GetComponent<A11yLabel>().Text);
+
+                btn.onClick.Invoke();   // tap the green button
+                Assert.IsTrue(svc.IsRewardClaimed(RewardTab.Main, svc.RewardDefs.Find(RewardTab.Main, "s_25")));
+                Assert.AreEqual(gems + 20, svc.Gems, "paid exactly the 20 gems of s_25");
+                Assert.AreEqual(coins, svc.Coins);
+                Assert.IsFalse(svc.IsRewardClaimed(RewardTab.Main, svc.RewardDefs.Find(RewardTab.Main, "r_1")), "the region bonus was not claimed");
+                Assert.IsNull(s.ListContent.Find("Row_s_25/Card").GetComponent<UnityEngine.UI.Button>(), "claimed: green check card, no button");
+                Assert.IsNotNull(s.ListContent.Find("Row_s_25/Card/Check"), "claimed cards keep the check badge");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void WeeklyReadyCardGetsTheSameClaimButton()
+        {
+            ProgressService svc = NewService();
+            svc.AddPlaySeconds(100 * 60);
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Weekly, out root);
+            try
+            {
+                var plate = (RectTransform)s.ListContent.Find("Row_w_play100/Card/RewardPlate");
+                var btn = plate.GetComponent<UnityEngine.UI.Button>();
+                Assert.IsNotNull(btn);
+                Assert.GreaterOrEqual(plate.sizeDelta.y, UiKit.MinTouchPx - 1f);
+                int coins = svc.Coins;
+                btn.onClick.Invoke();
+                Assert.AreEqual(coins + 500, svc.Coins);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void MainHeaderHasTheSceneBehindTheCirclesAndTheBandUnderIt()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                Transform header = s.ListContent.Find("MainHeader");
+                Assert.IsNotNull(header.Find("Scene/SceneClip/Backdrop"), "the scene picture (or its sky fallback) sits behind the circle strip");
+                Assert.IsNotNull(header.Find("Slot1/Region1"), "the circles stay");
+                Assert.IsNotNull(header.Find("Backdrop"), "dark glass strip behind the names");
+                Assert.Less(header.Find("Scene").GetSiblingIndex(), header.Find("Slot1").GetSiblingIndex(), "the scene is drawn first (behind)");
+                Assert.IsNotNull(header.Find("Band"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void CompactCardMetricsGrowWithTheTextSizeInsteadOfClipping()
         {
             float old = UiKit.TextScale;
             try
             {
                 UiKit.TextScale = 1f;
-                float h100 = RewardsScreen.CardHeight, gap100 = RewardsScreen.CardGap;
+                float h100 = RewardsScreen.CardHeight;
+                Assert.AreEqual(10f, RewardsScreen.CardGap, "gap between cards");
+                Assert.AreEqual(136f, RewardsScreen.CompactCardH);
+                Assert.AreEqual(RewardsScreen.CompactCardH, h100, 1.5f, "compact base at 100 percent text (was 214)");
+                Assert.GreaterOrEqual(h100, RewardsScreen.ClaimButtonH + 10f, "room for the 48 dp Claim button");
+                Assert.Less(h100, 214f * 0.75f, "at least 25 percent tighter than before");
                 UiKit.TextScale = 1.3f;
-                float h130 = RewardsScreen.CardHeight, gap130 = RewardsScreen.CardGap;
-                Assert.GreaterOrEqual(h100, 214f);
-                Assert.Greater(h130, h100, "taller cards at 130 percent text");
-                Assert.Greater(gap130, gap100);
-                Assert.GreaterOrEqual(gap100, 8f + 20f, "the CLAIM tag sticks out above its card and stays clear of the card above");
+                float h130 = RewardsScreen.CardHeight;
+                Assert.GreaterOrEqual(h130, h100, "never shorter at 130 percent text");
+                Assert.Greater(RewardsScreen.CardHeightFor(RewardsScreen.LineH(44) * 3f), RewardsScreen.CardHeightFor(RewardsScreen.LineH(44)), "a wrapped title grows the card");
                 Assert.GreaterOrEqual(RewardsScreen.BottomReserve(), RewardsScreen.FooterH + 130f, "list ends above the tab row and the footer");
+            }
+            finally { UiKit.TextScale = old; }
+        }
+
+        [Test]
+        public void TitleAndBarNeverOverlapAt130PercentText()
+        {
+            float old = UiKit.TextScale;
+            try
+            {
+                foreach (float scale in new[] { 1f, 1.3f })
+                {
+                    UiKit.TextScale = scale;
+                    foreach (RewardTab tab in new[] { RewardTab.Main, RewardTab.Daily, RewardTab.Weekly })
+                    {
+                        GameObject root;
+                        RewardsScreen s = BuildScreen(NewService(), tab, out root);
+                        try
+                        {
+                            int cards = 0;
+                            foreach (Transform row in s.ListContent)
+                            {
+                                Transform card = row.Find("Card");
+                                if (card == null) continue;
+                                cards++;
+                                var title = (RectTransform)card.Find("Title");
+                                var bar = (RectTransform)card.Find("Bar");
+                                float rowH = row.GetComponent<LayoutElement>().preferredHeight;
+                                string who = scale + " " + tab + " " + row.name;
+                                Assert.AreEqual(1f, title.anchorMin.y, who + ": title hangs from the top");
+                                Assert.AreEqual(1f, bar.anchorMin.y, who + ": bar hangs from the top");
+                                float titleBottom = title.offsetMin.y, barTop = bar.offsetMax.y;
+                                Assert.LessOrEqual(barTop, titleBottom - RewardsScreen.TitleBarGap + 0.01f, who + ": title rect above the bar rect with a gap");
+                                Assert.GreaterOrEqual(bar.offsetMin.y, -rowH, who + ": bar inside the card");
+                                Assert.LessOrEqual(title.offsetMax.y, 0.01f, who + ": title inside the card");
+                                if (scale == 1f) Assert.AreEqual(RewardsScreen.CompactCardH, rowH, 1.5f, who + ": 100 percent card unchanged");
+                            }
+                            Assert.Greater(cards, 0, tab + " has cards");
+                        }
+                        finally { UnityEngine.Object.DestroyImmediate(root); }
+                    }
+                }
             }
             finally { UiKit.TextScale = old; }
         }

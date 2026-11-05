@@ -28,6 +28,8 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("bestCombo")] public int BestCombo;
         /// <summary>Claims made so far: seeds the random power-up picks so they are repeatable.</summary>
         [JsonProperty("claims")] public int Claims;
+        /// <summary>Admin "Main rewards" test switch (docs/38): every Main reward counts as complete (not claimed, nothing paid). Cleared when System Test goes off.</summary>
+        [JsonProperty("testMainReady", DefaultValueHandling = DefaultValueHandling.Ignore)] public bool TestMainReady;
     }
 
     public enum RewardClaimResult
@@ -315,7 +317,7 @@ namespace BoingUpSkyTower.Economy
         public int RewardProgress(RewardTab tab, RewardEntry e)
         {
             if (e == null) return 0;
-            if (tab == RewardTab.Main) return IsRegionEntry(e) ? RegionLevelsCleared(e.Target) : TotalStars();
+            if (tab == RewardTab.Main) return MainProgress(e);
             if (e.Stat == null) return DailyPoints();   // a daily points milestone
             return RewardStatValue(tab, e.Stat);
         }

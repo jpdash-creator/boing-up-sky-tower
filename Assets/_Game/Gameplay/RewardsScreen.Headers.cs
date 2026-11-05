@@ -43,6 +43,21 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
+        static readonly Color SceneFallback = new Color(0.25f, 0.42f, 0.70f, 1f);
+
+        /// <summary>The scene picture of a header (scene_daily / scene_weekly); else the backdrop of the latest unlocked region; null = the plain sky colour.</summary>
+        Sprite SceneSprite(string kind)
+        {
+            Sprite bgSprite = RewardArt.Scene(kind);
+            if (bgSprite == null)
+            {
+                int latest = Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, GameSession.PlayableRegions);
+                RegionArt ra = art != null ? (art.ForRegion(latest) ?? art.ForRegion(1)) : null;
+                bgSprite = ra != null ? ra.BgFar : null;
+            }
+            return bgSprite;
+        }
+
         void BuildSceneHeader(RectTransform content, bool daily)
         {
             float timerH = TimerH;
@@ -52,14 +67,7 @@ namespace BoingUpSkyTower.Gameplay
             FixedHeight(scene, panelTop + panelH + 22f);
 
             // scene_daily / scene_weekly art when it exists; else the backdrop of the latest unlocked region; else a plain sky colour
-            Sprite bgSprite = RewardArt.Scene(daily ? "daily" : "weekly");
-            if (bgSprite == null)
-            {
-                int latest = Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, GameSession.PlayableRegions);
-                RegionArt ra = art != null ? (art.ForRegion(latest) ?? art.ForRegion(1)) : null;
-                bgSprite = ra != null ? ra.BgFar : null;
-            }
-            SceneBackdrop(scene, bgSprite, new Color(0.25f, 0.42f, 0.70f, 1f));
+            SceneBackdrop(scene, SceneSprite(daily ? "daily" : "weekly"), SceneFallback);
 
             // the dark timer pill: hourglass and the time left (an icon instead of "Resets in")
             Image pill = Theme.GlassPanel(scene, "TimerPill", timerH * 0.25f);
@@ -252,6 +260,24 @@ namespace BoingUpSkyTower.Gameplay
         {
             RectTransform header = UiKit.Rect(content, "MainHeader");
             FixedHeight(header, CircleZone + BandH);
+
+            // Bug List 4 E4.a: the same scene picture as Daily (scene_daily) runs edge to edge behind the circle strip and the region names, the purple band sits under it.
+            // CircleZone is measured (circles, name zone at the text scale, gap), so the picture, the circles and the band never overlap.
+            RectTransform scene = UiKit.Rect(header, "Scene");
+            scene.anchorMin = new Vector2(0f, 1f);
+            scene.anchorMax = new Vector2(1f, 1f);
+            scene.pivot = new Vector2(0.5f, 1f);
+            scene.offsetMin = new Vector2(0f, -CircleZone);
+            scene.offsetMax = Vector2.zero;
+            SceneBackdrop(scene, SceneSprite("daily"), SceneFallback);
+            // a dark glass strip behind the names so the white names read on any scene
+            Image names = Plate(header, "Backdrop", null, new Color(0.04f, 0.07f, 0.22f, 0.70f), 6f);
+            RectTransform nrt0 = names.rectTransform;
+            nrt0.anchorMin = new Vector2(0f, 1f);
+            nrt0.anchorMax = new Vector2(1f, 1f);
+            nrt0.pivot = new Vector2(0.5f, 1f);
+            nrt0.offsetMin = new Vector2(-Side, -(CircleBottom + NameGap + NameZone + 6f));
+            nrt0.offsetMax = new Vector2(Side, -(CircleBottom + NameGap - 6f));
 
             int regions = GameSession.PlayableRegions;
             for (int i = 1; i <= regions; i++) BuildCircle(header, repo != null ? repo.TryGetRegionByIndex(i) : null, i, regions);

@@ -164,6 +164,8 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Campaign scroll ramp (BossChase): endless step formula clamped to SimConfig.CampaignRampCapPercent.</summary>
         public readonly bool CampaignRamp;
         private readonly Fx scrollPerTick;
+        /// <summary>Endless: base scroll per tick of campaign level N (index 1..15), the speed of that level (EndlessTower.LevelForFloor); null otherwise.</summary>
+        private readonly Fx[] endlessScroll;
         private readonly Fx maxPickupRadius;
         private readonly Fx powerCapY;
         /// <summary>Vertical reach of bobbing platforms around their base Y (zero when the level has no Bee Hive Lift): widens the landing search.</summary>
@@ -201,6 +203,18 @@ namespace BoingUpSkyTower.Simulation
             Endless = endless;
             CampaignRamp = campaignRamp;
             scrollPerTick = Fx.Lerp(cfg.ScrollSpeedEasy, cfg.ScrollSpeedHard, difficulty) * cfg.ScrollBasePercent / 100 / SimConfig.TicksPerSecond;
+            if (endless)
+            {
+                // Endless cycle (owner 2026-11-05): the base speed follows the level of the floor, like a campaign level of that number. Level 1 is the run starting
+                // difficulty (the HUD percent is measured against it); the region offset is recovered from it (spec.Difficulty = Effective(0.05, offset)).
+                endlessScroll = new Fx[EndlessTower.MaxLevel + 1];
+                Fx offset = EndlessTower.OffsetFromStartDifficulty(difficulty);
+                for (int n = 1; n <= EndlessTower.MaxLevel; n++)
+                {
+                    Fx dn = n == 1 ? difficulty : LevelSpec.DifficultyForLevel(cfg, n, offset);
+                    endlessScroll[n] = Fx.Lerp(cfg.ScrollSpeedEasy, cfg.ScrollSpeedHard, dn) * cfg.ScrollBasePercent / 100 / SimConfig.TicksPerSecond;
+                }
+            }
             Fx maxR = Fx.Zero;
             for (int i = 0; i < Pickups.Length; i++) if (Pickups[i].Radius > maxR) maxR = Pickups[i].Radius;
             maxPickupRadius = maxR;
@@ -734,13 +748,8 @@ namespace BoingUpSkyTower.Simulation
 
         private Fx CurrentMaxSpeed(int row)
         {
-            Fx max = Cfg.MaxSpeed;
-            if (Endless)
-            {
-                int pct = Cfg.RampPercentAt(row) * Cfg.PlayerSpeedSharePercent / 100;
-                max = max * (100 + pct) / 100;
-            }
-            return max;
+            // Endless (owner 2026-11-05): no player-speed bonus any more; a floor at level N plays like campaign level N, which has none.
+            return Cfg.MaxSpeed;
         }
 
         /// <summary>
@@ -749,27 +758,21 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         public Fx ScrollPerTickAt(in SimState s, int tick)
         {
-            Fx scroll = scrollPerTick;
+            Fx scroll = Endless ? endlessScroll[EndlessTower.LevelForFloor(s.Row)] : scrollPerTick;
             int steps = (tick - s.StartTick) / (Cfg.ScrollStepSeconds * SimConfig.TicksPerSecond);
             if (steps > Cfg.ScrollStepMaxSteps) steps = Cfg.ScrollStepMaxSteps;
             int stepPct = CampaignRamp ? 0 : steps * Cfg.ScrollStepPercent;   // boss levels already ramp with the row
             if (stepPct > Cfg.ScrollStepCapPercent) stepPct = Cfg.ScrollStepCapPercent;
             scroll = scroll * (100 + stepPct) / 100;
-            if (Endless)
-            {
-                scroll = scroll * (100 + Cfg.RampPercentAt(s.Row)) / 100;
-            }
-            else if (CampaignRamp)
+            if (!Endless && CampaignRamp)
             {
                 int pct = Cfg.RampPercentAt(s.Row);
                 if (pct > Cfg.CampaignRampCapPercent) pct = Cfg.CampaignRampCapPercent;
                 scroll = scroll * (100 + pct) / 100;
             }
-            if (!Endless)
-            {
-                Fx ceiling = Cfg.ScrollMaxSpeed / SimConfig.TicksPerSecond;
-                if (scroll > ceiling) scroll = ceiling;
-            }
+            // the campaign ceiling holds in endless too: a floor at level N is as fast as campaign level N, never faster
+            Fx ceiling = Cfg.ScrollMaxSpeed / SimConfig.TicksPerSecond;
+            if (scroll > ceiling) scroll = ceiling;
             return scroll;
         }
 

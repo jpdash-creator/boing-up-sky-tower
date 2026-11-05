@@ -413,14 +413,24 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Hazard-type specials (Thorn Bush, Snap Daisy) are rare early: at most one per this many rows up to level HazardEarlyLastLevel (owner decision).</summary>
         public int HazardEarlyRowsPerHazard = 6;
         public int HazardEarlyLastLevel = 6;
-        /// <summary>Endless: the special share rises from level-3 to level-15 values over this many floors.</summary>
-        public int EndlessSpecialRampFloors = 150;
-        /// <summary>Endless: the region's new kinds phase in one by one, one more every this many floors (the signature platform and Crumble are there from the start).</summary>
-        public int EndlessKindStepFloors = 10;
+        /// <summary>
+        /// Content difficulty (permille) of campaign level N (index 1..15), the same numbers the shipped level files carry (region 1; the other regions
+        /// match). The endless cycle (EndlessTower.LevelForFloor) reads the level's difficulty through LevelSpec.DifficultyForLevel, a test pins this table
+        /// to the shipped content.
+        /// </summary>
+        public int[] LevelContentDifficultyPermille = { 0, 50, 100, 150, 220, 400, 350, 420, 500, 580, 700, 620, 700, 780, 860, 1000 };
 
         // ---- Difficulty ramp (all regions): from level 3 the layout difficulty never falls below a floor that rises from level 3 to 15 ----
         public int RampFloorLevel3Permille = 300;
         public int RampFloorLevel15Permille = 1000;
+
+        /// <summary>The difficulty floor (permille) of campaign level <paramref name="idx"/>: 0 below level 3, then linear from RampFloorLevel3Permille (level 3) to RampFloorLevel15Permille (level 15).</summary>
+        public int RampFloorPermille(int idx)
+        {
+            if (idx < 3) return 0;
+            if (idx > 15) idx = 15;
+            return RampFloorLevel3Permille + (RampFloorLevel15Permille - RampFloorLevel3Permille) * (idx - 3) / 12;
+        }
 
         // Campaign scroll ramp (BossChase, LevelSpec.Ramp): same step formula as the endless ramp, clamped.
         public int CampaignRampCapPercent = 60;

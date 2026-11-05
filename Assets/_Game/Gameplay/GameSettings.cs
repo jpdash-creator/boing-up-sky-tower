@@ -93,6 +93,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             BoingUpSkyTower.Economy.ProgressService.TestUnlockAll = TestUnlockAll;
             BoingUpSkyTower.Economy.ProgressService.TestAllCharacters = CharacterTest;
+            BoingUpSkyTower.Economy.ProgressService.TestMainRewardsAllowed = SystemTest;   // the saved Main rewards test override counts only while System Test is on
         }
 
         /// <summary>

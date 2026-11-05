@@ -9,8 +9,12 @@ namespace BoingUpSkyTower.Simulation
     /// The tower grows in chunks of ChunkRows rows; after each growth <see cref="Data"/> is a fresh snapshot (new arrays), and the
     /// caller builds a new Sim from it and calls <see cref="Sim.GrowState"/>. Growth happens once per chunk, never per frame.
     /// Same row geometry and reach rules as LevelBuilder (generated rows only): no goal, no stars, no chunks, no pickups.
-    /// Difficulty d(row) = base + offset * (1 - base) with base = min(1, row / DifficultyFloors), so it starts at the region offset
-    /// and reaches 1 at the endless difficulty floor (doc 09 D16).
+    ///
+    /// ENDLESS CYCLE (owner 2026-11-05, doc 24 section "Endless cycle"): the difficulty is stepped by <see cref="LevelForFloor"/>, ONE pure function floor ->
+    /// level 1..15. Floors 1-1500 are levels 1..15 of 100 floors each; floors 1501-2500 restart at level 9 (9..14 for 100 floors each, then level 15 held
+    /// for 400 floors) and every 1000 floors repeat that, without end. A floor at level N uses EVERYTHING the region's campaign level N uses: layout
+    /// difficulty d (LevelSpec.DifficultyForLevel: content difficulty, region offset and the level 3..15 ramp floor), special-platform share
+    /// (SpecialPlatforms.RowPercent), hazard spacing, the kind list (SpecialPlatforms.Options), gong density and the scroll speed (Sim). Floor n is row n.
     /// </summary>
     public sealed class EndlessTower
     {
@@ -18,10 +22,56 @@ namespace BoingUpSkyTower.Simulation
         public const int ChunkRows = 40;
         /// <summary>The tower is kept this many rows above the player.</summary>
         public const int LookaheadRows = 60;
-        /// <summary>Hard cap: Q16.16 holds about 32000 u, a row is at most 4.2 u, so rows past 7000 would overflow. Unreachable in practice.</summary>
+        /// <summary>
+        /// Hard cap of the PLAYABLE tower: Q16.16 holds about 32000 u, a row is at most 4.2 u, so rows past 7000 would overflow the Sim (about two hours of
+        /// perfect play). The generator itself has no limit: in <see cref="Stream"/> mode it re-bases its coordinates and reaches floor 100000 and beyond.
+        /// </summary>
         public const int MaxRows = 7000;
-        /// <summary>Floors a newly unlocked kind needs to reach its full draw weight (weight 1 at its unlock floor, EndlessFadeFloors from then on).</summary>
-        public const int EndlessFadeFloors = 10;
+
+        // ---- the endless cycle (owner 2026-11-05) ----
+        /// <summary>Floors per difficulty step.</summary>
+        public const int FloorsPerLevel = 100;
+        /// <summary>The first climb: floors 1 to 1500 are levels 1 to 15.</summary>
+        public const int FirstCycleFloors = 1500;
+        /// <summary>Every later cycle is 1000 floors long: levels 9..14 for 100 floors each, then level 15 for 400 floors.</summary>
+        public const int CycleFloors = 1000;
+        /// <summary>The level a cycle restarts at.</summary>
+        public const int ResetLevel = 9;
+        /// <summary>The highest level (campaign level 15).</summary>
+        public const int MaxLevel = 15;
+        /// <summary>The owner's planned end of the scripted cycle; the rule simply goes on repeating beyond it.</summary>
+        public const int PlannedLastFloor = 100000;
+
+        /// <summary>
+        /// The campaign level (1..15) whose difficulty the endless floor <paramref name="floor"/> (= row, 1-based; the start platform is floor 0) uses.
+        /// Pure, allocation free, defined for every int.
+        /// </summary>
+        public static int LevelForFloor(int floor)
+        {
+            if (floor <= 1) return 1;
+            if (floor <= FirstCycleFloors) return (floor + FloorsPerLevel - 1) / FloorsPerLevel;
+            int block = ((floor - FirstCycleFloors - 1) % CycleFloors) / FloorsPerLevel;
+            int level = ResetLevel + block;
+            return level > MaxLevel ? MaxLevel : level;
+        }
+
+        /// <summary>Position of a floor inside its 100-floor level step, 1..100 (floor 0 counts as 1).</summary>
+        public static int PositionInLevel(int floor)
+        {
+            return floor <= 1 ? 1 : (floor - 1) % FloorsPerLevel + 1;
+        }
+
+        /// <summary>Recovers the region offset from the base difficulty of an endless run (spec.Difficulty = EffectiveDifficulty(StartBase, offset)).</summary>
+        public static Fx OffsetFromStartDifficulty(Fx difficulty)
+        {
+            Fx start = StartBase;
+            if (difficulty <= start) return Fx.Zero;
+            Fx off = (difficulty - start) / (Fx.One - start);
+            return off > Fx.One ? Fx.One : off;
+        }
+
+        /// <summary>Content difficulty of campaign level 1 (0.05): the base the endless run starts from.</summary>
+        public static readonly Fx StartBase = Fx.FromRatio(5, 100);
 
         private readonly SimConfig cfg;
         private readonly LevelSpec spec;
@@ -38,11 +88,37 @@ namespace BoingUpSkyTower.Simulation
         private readonly PlatformKind sigKind;
         // Region special platforms (doc 24): own Rng stream, so the base geometry of the tower is independent of them; prefix stable like the rest.
         private Rng specRng;
-        private readonly PlatformKind[] specialOptions;
-        /// <summary>Per option: the floor (rows past the fixed start) from which the kind may be drawn; the new kinds phase in one by one (UnlockFloors).</summary>
-        private readonly int[] unlockFloor;
+        /// <summary>Per campaign level 1..15: the layout difficulty (index 0 unused).</summary>
+        private readonly Fx[] levelD = new Fx[MaxLevel + 1];
+        /// <summary>Per campaign level: the kinds a special row may draw (the region's level-N list).</summary>
+        private readonly PlatformKind[][] levelOptions = new PlatformKind[MaxLevel + 1][];
         private int lastHazardRow = -1000;
         private int prevDir;
+        // scratch buffers (no allocation per row)
+        private readonly int[] pool = new int[32];
+        private readonly Fx[] usedX = new Fx[4];
+        private readonly Fx[] usedW = new Fx[4];
+
+        // ---- stream mode (generation beyond the Q16.16 range) ----
+        /// <summary>
+        /// Generator-only mode for towers beyond <see cref="MaxRows"/>: when the stored heights pass <see cref="RebaseAtYRaw"/> the oldest rows are dropped
+        /// and every height is shifted down (the dropped amount is kept in <see cref="OriginYRaw"/>), so memory stays small and no coordinate overflows.
+        /// <see cref="Data"/> is then only the recent window (ids restart at 0 after a re-base). The game does NOT use it: the Sim cannot re-base a running state.
+        /// </summary>
+        public bool Stream;
+        /// <summary>Stream mode: re-base when the top height passes this (default 12000 u).</summary>
+        public int RebaseAtYRaw = Fx.FromInt(12000).Raw;
+        /// <summary>Stream mode: rows kept below the top after a re-base.</summary>
+        public const int KeepRows = 200;
+        /// <summary>Total height (raw Q16.16) removed by re-bases; absolute height = OriginYRaw + stored height.</summary>
+        public long OriginYRaw { get; private set; }
+        private ulong fp = 14695981039346656037UL;
+        private readonly List<long> milestones = new List<long>();
+
+        /// <summary>Rolling hash of everything generated so far (absolute heights), independent of re-bases and snapshots: equal for equal prefixes.</summary>
+        public long Fingerprint { get { return (long)fp; } }
+        /// <summary>Fingerprint after every 1000th row (index 0 = row 1000), for prefix-stability checks of very long towers.</summary>
+        public IList<long> Milestones { get { return milestones; } }
 
         /// <summary>Latest snapshot. Replaced (new arrays) after every growth; compare <see cref="Version"/> to detect it.</summary>
         public LevelData Data { get; private set; }
@@ -63,8 +139,11 @@ namespace BoingUpSkyTower.Simulation
             rng = new Rng(spec.Seed);
             hazRng = new Rng(spec.Seed ^ 0x5A3C9E17);
             specRng = new Rng(spec.Seed ^ 0x6A09E667);
-            specialOptions = EndlessOptions(spec, sigKind);
-            unlockFloor = UnlockFloors(cfg, spec, specialOptions);
+            for (int n = 1; n <= MaxLevel; n++)
+            {
+                levelD[n] = LevelSpec.DifficultyForLevel(cfg, n, spec.RegionOffset);
+                levelOptions[n] = OptionsForLevel(spec, n);
+            }
             plats = new List<Platform>(512);
 
             Platform start = new Platform();
@@ -84,8 +163,9 @@ namespace BoingUpSkyTower.Simulation
         }
 
         /// <summary>
-        /// The spec of an endless run. Difficulty is the scroll-pressure difficulty of the run (the region offset applied to a base of
-        /// 0.05, like a first campaign level); the layout difficulty per row comes from the offset and the floor (DifficultyAt).
+        /// The spec of an endless run. Difficulty is the scroll-pressure difficulty of the run start (the region offset applied to the base of campaign
+        /// level 1, 0.05); the layout difficulty per row comes from the offset and the level of the floor (LevelForFloor, DifficultyAt).
+        /// <paramref name="difficultyFloors"/> is kept for the remote config but no longer used: the old 400-floor ramp is replaced by the endless cycle.
         /// </summary>
         public static LevelSpec MakeSpec(int seed, Fx regionOffset, SignatureKind signature, int difficultyFloors)
         {
@@ -94,63 +174,40 @@ namespace BoingUpSkyTower.Simulation
             spec.Endless = true;
             spec.RegionOffset = regionOffset;
             spec.EndlessDifficultyFloors = difficultyFloors < 1 ? 400 : difficultyFloors;
-            spec.Difficulty = LevelGenerator.EffectiveDifficulty(Fx.FromRatio(5, 100), regionOffset);
+            spec.Difficulty = LevelGenerator.EffectiveDifficulty(StartBase, regionOffset);
             spec.LevelIndex = 4;
             spec.Signature = signature;
             spec.Goal = new GoalSpec { Type = GoalType.ReachFloor, Value = int.MaxValue };
             return spec;
         }
 
-        /// <summary>The kinds an endless row may carry: the region's new set plus its signature platform (endless has no level 2 light touch, it ramps by floor).</summary>
+        /// <summary>The kinds a special row of campaign level <paramref name="level"/> may carry in this region: exactly SpecialPlatforms.Options of that level (level 1 has no hazard types).</summary>
+        public static PlatformKind[] OptionsForLevel(LevelSpec spec, int level)
+        {
+            if (spec.Signature == SignatureKind.None && spec.ActiveNewPlatforms().Length == 0) return new PlatformKind[0];
+            LevelSpec ls = new LevelSpec();
+            ls.Signature = spec.Signature;
+            ls.NewPlatforms = spec.NewPlatforms;
+            ls.Goal = spec.Goal;
+            ls.LevelIndex = level;
+            return SpecialPlatforms.Options(ls, SignatureKinds.PlatformFor(spec.Signature));
+        }
+
+        /// <summary>All kinds an endless row may carry in the region (the level 15 list, which is the union of the lists of all levels).</summary>
         public static PlatformKind[] EndlessOptions(LevelSpec spec, PlatformKind sig)
         {
-            // Owner 2026-11-02: endless uses ALL the platforms of the region, the same kinds as its campaign levels (SpecialPlatforms.Options): the region's
-            // new set, its signature platform and the generic kinds it keeps. A spec without a signature or new set has no specials.
-            if (spec.Signature == SignatureKind.None && spec.ActiveNewPlatforms().Length == 0) return new PlatformKind[0];
-            return SpecialPlatforms.Options(spec, sig);
+            return OptionsForLevel(spec, MaxLevel);
         }
 
-        /// <summary>
-        /// The floor from which each option may appear (index = option index): the signature platform and the sand slab / rotting log Crumble are there from the
-        /// start, the other kinds phase in one by one every SimConfig.EndlessKindStepFloors floors, easy ones first (plain timing kinds, then launchers and
-        /// demanding kinds, then hazard types), so the mix changes a little every 10 floors and never in one jump.
-        /// </summary>
-        public static int[] UnlockFloors(SimConfig cfg, LevelSpec spec, PlatformKind[] options)
-        {
-            PlatformKind sig = SignatureKinds.PlatformFor(spec.Signature);
-            int[] floor = new int[options.Length];
-            List<PlatformKind> later = new List<PlatformKind>();
-            for (int cls = 0; cls < 3; cls++)
-                for (int i = 0; i < options.Length; i++)
-                {
-                    PlatformKind k = options[i];
-                    if (k == sig || k == PlatformKind.Crumble || (sig == PlatformKind.Normal && k == PlatformKind.Moving) || later.Contains(k)) continue;   // region 5 (gong objects, no signature platform): the rope-bridge Moving platform is there from the start
-                    int c = PlatformKinds.IsHazardType(k) ? 2 : (PlatformKinds.IsLaunch(k) || PlatformKinds.IsDemanding(k) ? 1 : 0);
-                    if (c == cls) later.Add(k);
-                }
-            for (int i = 0; i < options.Length; i++)
-            {
-                int n = later.IndexOf(options[i]);
-                floor[i] = n < 0 ? 0 : (n + 1) * cfg.EndlessKindStepFloors;
-            }
-            return floor;
-        }
-
-        /// <summary>Floor from which <paramref name="kind"/> may appear in the endless tower of <paramref name="spec"/>, or -1 when the region does not use it.</summary>
+        /// <summary>Floor from which <paramref name="kind"/> may appear in the endless tower of <paramref name="spec"/> (the start of the first level whose list has it), or -1 when the region does not use it.</summary>
         public static int KindUnlockFloor(SimConfig cfg, LevelSpec spec, PlatformKind kind)
         {
-            PlatformKind[] options = EndlessOptions(spec, SignatureKinds.PlatformFor(spec.Signature));
-            int[] floor = UnlockFloors(cfg, spec, options);
-            for (int i = 0; i < options.Length; i++) if (options[i] == kind) return floor[i];
+            for (int n = 1; n <= MaxLevel; n++)
+            {
+                PlatformKind[] o = OptionsForLevel(spec, n);
+                for (int i = 0; i < o.Length; i++) if (o[i] == kind) return (n - 1) * FloorsPerLevel;
+            }
             return -1;
-        }
-
-        /// <summary>Minimum rows between two hazard-type specials after <paramref name="f"/> floors: 6 at the start, one row less about every 37 floors, 2 from EndlessSpecialRampFloors on (a smooth ramp, no step).</summary>
-        public static int HazardSpacingAt(SimConfig cfg, int f)
-        {
-            int ramp = cfg.EndlessSpecialRampFloors;
-            int ff = f < 0 ? 0 : (f > ramp ? ramp : f);
-            return cfg.HazardEarlyRowsPerHazard - (cfg.HazardEarlyRowsPerHazard - 2) * ff / ramp;
         }
 
         /// <summary>Builds a tower with exactly <paramref name="rows"/> rows (tests and golden hashes).</summary>
@@ -165,12 +222,10 @@ namespace BoingUpSkyTower.Simulation
             return new Sim(cfg, Data, spec.Difficulty, true, false);
         }
 
-        /// <summary>Difficulty of a row, 0..1 (region offset applied).</summary>
+        /// <summary>Layout difficulty of a row, 0..1: the difficulty of the campaign level LevelForFloor(r) in this region (offset applied).</summary>
         public Fx DifficultyAt(int r)
         {
-            int floors = spec.EndlessDifficultyFloors < 1 ? 400 : spec.EndlessDifficultyFloors;
-            Fx b = r >= floors ? Fx.One : Fx.FromRatio(r, floors);
-            return LevelGenerator.EffectiveDifficulty(b, spec.RegionOffset);
+            return levelD[LevelForFloor(r)];
         }
 
         /// <summary>Grows the tower (in whole chunks) until it reaches <paramref name="playerRow"/> + LookaheadRows. True when it grew.</summary>
@@ -202,12 +257,16 @@ namespace BoingUpSkyTower.Simulation
             return Fx.Lerp(Fx.FromInt(easy), Fx.FromInt(hard), d).FloorToInt();
         }
 
-        /// <summary>Generates rows up to and including <paramref name="target"/> (capped at MaxRows) and publishes a new snapshot.</summary>
+        /// <summary>Generates rows up to and including <paramref name="target"/> (capped at MaxRows unless Stream) and publishes a new snapshot.</summary>
         public void GenerateTo(int target)
         {
-            if (target > MaxRows) target = MaxRows;
+            if (!Stream && target > MaxRows) target = MaxRows;
             if (target <= row) return;
-            while (row < target) AddRow(row + 1);
+            while (row < target)
+            {
+                AddRow(row + 1);
+                if (Stream && prevY.Raw > RebaseAtYRaw) Rebase();
+            }
             LevelData d = new LevelData();
             d.Platforms = plats.ToArray();
             d.Hazards = hazards.ToArray();
@@ -216,12 +275,48 @@ namespace BoingUpSkyTower.Simulation
             Version++;
         }
 
+        /// <summary>Stream mode: drops the rows below TopRow - KeepRows and shifts every stored height down, so Q16.16 never overflows.</summary>
+        private void Rebase()
+        {
+            int keepFromRow = row - KeepRows;
+            int k = 0;
+            while (k < plats.Count && plats[k].Row < keepFromRow) k++;
+            if (k == 0 || k >= plats.Count) return;
+            int shift = plats[k].Y.Raw;
+            plats.RemoveRange(0, k);
+            for (int i = 0; i < plats.Count; i++)
+            {
+                Platform p = plats[i];
+                p.Id = i;
+                p.Y = Fx.FromRaw(p.Y.Raw - shift);
+                plats[i] = p;
+            }
+            int h = 0;
+            while (h < hazards.Count && hazards[h].Y.Raw < shift) h++;
+            hazards.RemoveRange(0, h);
+            for (int i = 0; i < hazards.Count; i++)
+            {
+                Hazard z = hazards[i];
+                z.Id = i;
+                z.Y = Fx.FromRaw(z.Y.Raw - shift);
+                hazards[i] = z;
+            }
+            prevY = Fx.FromRaw(prevY.Raw - shift);
+            OriginYRaw += shift;
+        }
+
+        private void MixFp(long v)
+        {
+            unchecked { fp = (fp ^ (ulong)v) * 1099511628211UL; }
+        }
+
         private void AddRow(int r)
         {
             Fx screen = cfg.ScreenWidth;
             Fx half = cfg.PlayerHalfWidth;
             Fx maxGap = cfg.LayoutMaxJumpHeight() * 9 / 10;
-            Fx d = DifficultyAt(r);
+            int level = LevelForFloor(r);
+            Fx d = levelD[level];
 
             Fx widthEasyLo = Fx.FromInt(6), widthEasyHi = Fx.FromInt(8);
             Fx widthHardLo = Fx.FromRatio(16, 10), widthHardHi = Fx.FromRatio(24, 10);
@@ -247,15 +342,15 @@ namespace BoingUpSkyTower.Simulation
             bool afterBounce = PlatformKinds.IsBouncePad(prevKind);
             if (afterBounce) gap = Fx.Min(gap, cfg.BounceNextGapMax);
 
-            // Signature platforms: the share grows with d like a campaign level 4+ (the first fixed rows stay plain).
+            // Special platforms of the row: the region's level-N list at the level-N share (the first fixed rows stay plain).
             PlatformKind kind = PlatformKind.Normal;
-            if (specialOptions.Length > 0)
+            if (levelOptions[level].Length > 0)
             {
-                if (r > LevelGenerator.FixedRows) kind = PickSpecial(r);
+                if (r > LevelGenerator.FixedRows) kind = PickSpecial(r, level);
             }
-            else if (sigKind != PlatformKind.Normal && r > LevelGenerator.FixedRows)
+            else if (sigKind != PlatformKind.Normal && r > LevelGenerator.FixedRows && level >= 3)
             {
-                int sigShare = PercentLerp(cfg.SignatureBasePercent, cfg.SignatureMaxPercent, d);
+                int sigShare = level == 3 ? cfg.SignatureIntroPercent : PercentLerp(cfg.SignatureBasePercent, cfg.SignatureMaxPercent, d);
                 if (sigShare > cfg.SignatureMaxPercent) sigShare = cfg.SignatureMaxPercent;
                 if (sigShare > 0 && rng.Next(100) < sigShare) kind = sigKind;
             }
@@ -319,8 +414,6 @@ namespace BoingUpSkyTower.Simulation
             {
                 // Dense patch: 1 to 3 extra small platforms on the same row (about one in four crumbles); the spine platform stays reachable.
                 int extras = 1 + rng.Next(3);
-                Fx[] usedX = new Fx[4];
-                Fx[] usedW = new Fx[4];
                 usedX[0] = x; usedW[0] = w + amp * 2;   // a swinging platform keeps its whole path clear
                 int nUsed = 1;
                 for (int e = 0; e < extras; e++)
@@ -347,42 +440,32 @@ namespace BoingUpSkyTower.Simulation
                 }
             }
 
-            if (signature == SignatureKind.SwingingGongs && r > LevelGenerator.FixedRows + 1) AddGong(r, d, x, y);
+            if (signature == SignatureKind.SwingingGongs && level >= 3 && r > LevelGenerator.FixedRows + 1) AddGong(r, d, x, y, level);
 
             prevX = x; prevW = w; prevY = y; prevKind = kind; prevDir = pdir;
             row = r;
+            if (r % 1000 == 0) milestones.Add((long)fp);
         }
 
         /// <summary>
-        /// Draws the special platform of endless row <paramref name="r"/> from the per-floor ramp (share 15 percent rising to 55 percent over
-        /// EndlessSpecialRampFloors) and the same placement rules as the campaign (SpecialPlatforms.Allowed). Normal when the row stays plain.
+        /// Draws the special platform of endless row <paramref name="r"/> (campaign level <paramref name="level"/>): the share is the level's own row ramp
+        /// (SpecialPlatforms.RowPercent over the 100 floors of the step), the hazard spacing the level's (SpecialPlatforms.HazardSpacing), the kinds the
+        /// region's level-N list, with the same placement rules as the campaign (SpecialPlatforms.Allowed). Normal when the row stays plain.
         /// </summary>
-        private PlatformKind PickSpecial(int r)
+        private PlatformKind PickSpecial(int r, int level)
         {
-            int f = r - LevelGenerator.FixedRows;
-            int share = SpecialPlatforms.EndlessSharePercent(cfg, f);
+            int share = SpecialPlatforms.RowPercent(cfg, level, PositionInLevel(r), FloorsPerLevel);
             if (specRng.Next(100) >= share) return PlatformKind.Normal;
-            int spacing = HazardSpacingAt(cfg, f);
-            // A kind that has just unlocked fades in: its weight grows by one tenth of the full weight per floor, so the mix shifts a little every floor
-            // instead of jumping when the kind arrives (full weight EndlessFadeFloors floors after its unlock floor).
-            int n = 0, total = 0;
-            int[] pool = new int[specialOptions.Length];
-            int[] weight = new int[specialOptions.Length];
-            for (int i = 0; i < specialOptions.Length; i++)
+            int spacing = SpecialPlatforms.HazardSpacing(cfg, level);
+            PlatformKind[] opts = levelOptions[level];
+            int n = 0;
+            for (int i = 0; i < opts.Length; i++)
             {
-                if (f < unlockFloor[i] || !SpecialPlatforms.Allowed(specialOptions[i], prevKind, r - lastHazardRow, spacing, false)) continue;
-                int w = f - unlockFloor[i] + 1;
-                if (w > EndlessFadeFloors) w = EndlessFadeFloors;
-                pool[n] = i; weight[n] = w; total += w; n++;
+                if (!SpecialPlatforms.Allowed(opts[i], prevKind, r - lastHazardRow, spacing, false)) continue;
+                pool[n++] = i;
             }
             if (n == 0) return PlatformKind.Normal;
-            int roll = specRng.Next(total), acc = 0;
-            for (int j = 0; j < n; j++)
-            {
-                acc += weight[j];
-                if (roll < acc) return specialOptions[pool[j]];
-            }
-            return specialOptions[pool[n - 1]];
+            return opts[pool[specRng.Next(n)]];
         }
 
         private void Add(int r, PlatformKind kind, Fx x, Fx y, Fx w, Fx amp, int period, int phase, int dir = 0)
@@ -399,17 +482,19 @@ namespace BoingUpSkyTower.Simulation
             p.Period = period;
             p.Phase = phase;
             plats.Add(p);
+            MixFp(r); MixFp((int)kind); MixFp(x.Raw); MixFp(OriginYRaw + y.Raw); MixFp(w.Raw); MixFp(amp.Raw); MixFp(period); MixFp(phase); MixFp(dir);
         }
 
-        /// <summary>Gong in the jump corridor between the previous and this spine platform (same rules as LevelBuilder.BuildHazards).</summary>
-        private void AddGong(int r, Fx d, Fx x, Fx y)
+        /// <summary>Gong in the jump corridor between the previous and this spine platform (same rules as LevelBuilder.BuildHazards; level 3 halves the density).</summary>
+        private void AddGong(int r, Fx d, Fx x, Fx y, int level)
         {
             int chance = PercentLerp(cfg.GongDensityEasyPercent, cfg.GongDensityHardPercent, d);
+            if (level == 3) chance /= 2;
             if (chance <= 0 || hazRng.Next(100) >= chance) return;
             int side = hazRng.Next(2) == 0 ? -1 : 1;
             Fx screen = cfg.ScreenWidth;
             Fx mx = (prevX + x) / 2;
-            Fx my = (prevY + y) / 2;
+            Fx my = prevY + (y - prevY) / 2;   // not (prevY + y) / 2: that sum wraps past 16384 u (about floor 4500) and misplaced the gongs high in a very tall tower
             Hazard h = new Hazard();
             h.Id = hazards.Count;
             h.Kind = HazardKind.Gong;
@@ -424,6 +509,7 @@ namespace BoingUpSkyTower.Simulation
             h.Period = 2 * hazRng.Range(70, 120);
             h.Phase = hazRng.Next(h.Period);
             hazards.Add(h);
+            MixFp(-r); MixFp(h.X.Raw); MixFp(OriginYRaw + h.Y.Raw); MixFp(h.Radius.Raw); MixFp(h.Amplitude.Raw); MixFp(h.Period); MixFp(h.Phase);
         }
     }
 }

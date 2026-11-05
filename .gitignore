@@ -50,3 +50,6 @@ Art/_pick/
 
 Tests/Simulation/dotnet_home/
 Tests/Simulation/nuget/
+
+# test run output (crash dumps are >100MB)
+Tests/Simulation/TestResults/

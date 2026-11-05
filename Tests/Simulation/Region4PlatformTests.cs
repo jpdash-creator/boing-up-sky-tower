@@ -797,8 +797,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             }
             double ep = early * 100 / e, lp = late * 100 / l;
             output.WriteLine("endless special share: floors 5-40 " + ep.ToString("F1") + " percent, floors 200-320 " + lp.ToString("F1") + " percent");
-            Assert.InRange(ep, 12, 32);
-            Assert.InRange(lp, 48, 62);
+            Assert.InRange(ep, 8, 16);   // endless cycle: floors 5-40 are the start of level 1 (10 to 30 percent ramp over its 100 floors)
+            Assert.InRange(lp, 31, 45);   // floors 200-320 are levels 2 to 4 (30 to 50 percent ramps)
             Assert.Equal(10, seen.Count);   // seven new platforms, the sticky signature and the two generics appear
         }
 

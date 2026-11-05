@@ -29,7 +29,13 @@ namespace BoingUpSkyTower.Gameplay
         const float InfoPad = 6f, LeftColW = UiKit.MinTouchPx, BagMaxSize = BagSize + 8f, BagGap = 8f;
         const float TextLeft = InfoPad + LeftColW + 14f;
         /// <summary>Width reserved for the name and the chips: the narrowest canvas (9:21, about 940 px) minus margins, pads, bag and price button.</summary>
-        const float PriceReserve = PriceW + RowPad + 12f;   // right edge of the text block: price button, its pad and a gap
+        /// <summary>
+        /// E1: the green gem-price button sits in a brown rounded frame plate, the same colour and corner radius as the dark price strip on the Gems/Coins and Power-up cards
+        /// (0.66, 0.36, 0.08; radius 26; 9 px from the card edges). The plate adds <see cref="FramePad"/> (12 px, at least 8 dp) around the 260 x 130 button. Refresh buttons have no frame.
+        /// </summary>
+        public const float FramePad = 12f, FrameEdge = 9f, FrameW = PriceW + 2f * FramePad, FrameH = PriceH + 2f * FramePad;
+        public static readonly Color BuyFrameColor = new Color(0.66f, 0.36f, 0.08f, 1f);
+        const float PriceReserve = FrameW + FrameEdge + 12f;   // right edge of the text block: the brown frame plate, its edge gap and a gap
         /// <summary>Width of the name and chip block. Set from the real body width at the start of Build (conservative fallback when not laid out yet).</summary>
         static float textAreaW = 380f;
         const float CompactChipH = 72f, CompactGap = 8f, NameGap = 6f, NameFont = 42f, WorthFont = 38f;
@@ -408,7 +414,7 @@ namespace BoingUpSkyTower.Gameplay
             float uniform = InfoPad + NameRowH() + NameGap + 2f * CompactChipH + CompactGap + RowPad;
             float textBlock = InfoPad + TextBlockHeight(def) + RowPad;
             float leftCol = InfoPad + NameRowH() + BagGap + BagMaxSize + RowPad;
-            float rightCol = 12f + WorthTextH() + 10f + PriceH + RowPad;
+            float rightCol = 12f + WorthTextH() + 8f + FrameH + FrameEdge;   // worth text over the brown frame plate (E1)
             return Mathf.Max(Mathf.Max(textBlock, uniform), Mathf.Max(leftCol, rightCol));
         }
 
@@ -513,8 +519,13 @@ namespace BoingUpSkyTower.Gameplay
             AddWorthText(card, worthText, new Vector2(1f, 1f), new Vector2(-RowPad, -(InfoPad + Mathf.Max(0f, (rowH - WorthTextH()) * 0.5f))), PriceReserve - RowPad - 12f);   // same centre line as the name and the "i"
 
             string a11y = "Buy " + def.Name + " for " + Num(price) + " gems: " + Describe(def, ", ") + ". " + worthText;
-            Button buy = ShopChrome.PriceButton(card, "Buy", 1, art != null ? art.GemIcon : null, Num(price), a11y, onBuy, 44);
-            UiKit.Place((RectTransform)buy.transform, new Vector2(1f, 0f), new Vector2(-RowPad, RowPad), new Vector2(PriceW, PriceH));
+            // E1: brown rounded frame plate (like the Gems/Coins price strip) at the bottom right, the green button inside it
+            Image frame = ToyKit.Sliced(card, "BuyFrame", Theme.RoundSprite, 26f);
+            frame.color = BuyFrameColor;
+            frame.raycastTarget = false;
+            UiKit.Place(frame.rectTransform, new Vector2(1f, 0f), new Vector2(-FrameEdge, FrameEdge), new Vector2(FrameW, FrameH));
+            Button buy = ShopChrome.PriceButton(frame.transform, "Buy", 1, art != null ? art.GemIcon : null, Num(price), a11y, onBuy, 44);
+            UiKit.Place((RectTransform)buy.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(PriceW, PriceH));
             return h;
         }
 

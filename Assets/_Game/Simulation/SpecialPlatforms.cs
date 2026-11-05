@@ -30,13 +30,6 @@ namespace BoingUpSkyTower.Simulation
             return (cfg.RampLowPercent[idx] + cfg.RampHighPercent[idx]) / 2;
         }
 
-        /// <summary>Endless: share after <paramref name="floorsPastFixed"/> rows; rises from the level 3 share to the level 15 share over EndlessSpecialRampFloors.</summary>
-        public static int EndlessSharePercent(SimConfig cfg, int floorsPastFixed)
-        {
-            int f = floorsPastFixed < 0 ? 0 : (floorsPastFixed > cfg.EndlessSpecialRampFloors ? cfg.EndlessSpecialRampFloors : floorsPastFixed);
-            return cfg.SpecialShareLevel3Percent + (cfg.SpecialShareLevel15Percent - cfg.SpecialShareLevel3Percent) * f / cfg.EndlessSpecialRampFloors;
-        }
-
         /// <summary>Minimum row distance between two hazard-type specials at a level (2 = just not adjacent).</summary>
         public static int HazardSpacing(SimConfig cfg, int levelIndex)
         {

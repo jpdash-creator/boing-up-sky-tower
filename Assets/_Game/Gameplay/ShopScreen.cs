@@ -303,12 +303,18 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The (i) info button at the top LEFT of a power-up card: a 48 dp target with a small circled i drawn at its top left corner.</summary>
         void AddInfoButton(Transform card, string title, string body)
         {
+            AddInfoButton(card, title, () => Info(title, body));
+        }
+
+        /// <summary>Same, with its own tap action (the Heroes cards open a tier popup instead of the plain text card).</summary>
+        void AddInfoButton(Transform card, string title, Action onTap)
+        {
             Image hit = UiKit.AddImage(card, "Info", null, new Color(0f, 0f, 0f, 0f));
             hit.rectTransform.anchorMin = hit.rectTransform.anchorMax = new Vector2(0f, 1f);
             hit.rectTransform.pivot = new Vector2(0f, 1f);
             hit.rectTransform.anchoredPosition = new Vector2(4f, -4f);
             hit.rectTransform.sizeDelta = new Vector2(UiKit.MinTouchPx, UiKit.MinTouchPx);
-            MakeInfo(hit, title, body);
+            MakeInfo(hit, title, onTap);
             Image ring = UiKit.AddImage(hit.transform, "Ring", Glyphs.Ring, Theme.Ink);
             ring.raycastTarget = false;
             ring.rectTransform.anchorMin = ring.rectTransform.anchorMax = new Vector2(0f, 1f);
@@ -324,10 +330,15 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Makes a card image the tap target for its details popup.</summary>
         void MakeInfo(Image img, string title, string body)
         {
+            MakeInfo(img, title, () => Info(title, body));
+        }
+
+        void MakeInfo(Image img, string title, Action onTap)
+        {
             img.raycastTarget = true;
             var b = img.gameObject.AddComponent<Button>();
             b.transition = Selectable.Transition.None;
-            b.onClick.AddListener(() => Info(title, body));
+            b.onClick.AddListener(() => onTap());
             img.gameObject.AddComponent<A11yLabel>().Text = "More about " + title;
         }
 

@@ -6,7 +6,7 @@ namespace BoingUpSkyTower.Gameplay
     /// <summary>
     /// The multi-section pages of the shop (owner issue 35; Bug List 1 section 4; docs/26 section 8). Crown is ONE scrollable page: the fixed yellow banner
     /// "Subscription" (no VIP header), the plan cards of <see cref="SubscriptionScreen"/>, a yellow "Chests" banner, then the chest cards of
-    /// <see cref="TreasureChestScreen"/>. Character / Power-ups is one scrollable page: "Heroes" banner, the "Heroes coming soon" card (nothing to buy),
+    /// <see cref="TreasureChestScreen"/>. Character / Power-ups is one scrollable page: "Heroes" banner, the 2 x 2 hero cards (HeroCardsSection.cs),
     /// the "Power-ups" banner and the power-up cards. The Gems / Coins page lives in ShopScreen.cs.
     /// </summary>
     public sealed partial class ShopScreen
@@ -19,7 +19,6 @@ namespace BoingUpSkyTower.Gameplay
         public const string VipChestsSectionTitle = "Chests";
         public const string PowerupsSectionTitle = "Power-ups";
         public const string CoinsSectionTitle = "Coins";
-        public const string HeroesComingSoonText = "Heroes coming soon";
 
         // ---------------- shared scrolling page ----------------
 
@@ -120,45 +119,16 @@ namespace BoingUpSkyTower.Gameplay
         // ---------------- Character / Power-ups ----------------
 
         /// <summary>
-        /// The merged Character / Power-ups page, one scrolling list: the page banner "Heroes", the "Heroes coming soon" card, a gap, the "Power-ups" banner and
+        /// The merged Character / Power-ups page, one scrolling list: the page banner "Heroes", the 2 x 2 hero cards, the "Power-ups" banner and
         /// the power-up cards. ShowShop(TabPowerups) opens it scrolled to the Power-ups banner.
         /// </summary>
         void BuildCharacter()
         {
             RectTransform list = NewSectionedList();
-            BuildHeroesSoon(list);
+            BuildHeroCards(list);   // HeroCardsSection.cs: the 2 x 2 hero cards (Bug List 4 E2)
             RectTransform powerBanner = ShopChrome.SectionBanner(list, PowerupsSectionTitle);
             BuildPowerUps(list);
             AttachScroller(list, pageSection == PowerupsSection ? powerBanner : null);
-        }
-
-        /// <summary>The Heroes placeholder: a card with the heroes icon and "Heroes coming soon". No buttons: nothing can be bought here.</summary>
-        void BuildHeroesSoon(RectTransform list)
-        {
-            RectTransform card = ShopChrome.Card(list, "HeroesSoon", ShopChrome.FrameColor.Blue);
-            float k = Mathf.Max(1f, UiKit.TextScale) - 1f;
-            float titleH = 90f + k * 120f;
-            var le = card.gameObject.AddComponent<LayoutElement>();
-            le.minHeight = le.preferredHeight = 36f + 170f + 16f + titleH + 36f;
-            card.gameObject.AddComponent<A11yLabel>().Text = HeroesComingSoonText + ". Nothing to buy here yet.";
-
-            Image icon = UiKit.AddImage(card, "HeroesIcon", ToyKit.Get("icon_heroes"), Color.white);
-            icon.preserveAspect = true;
-            icon.raycastTarget = false;
-            icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            icon.rectTransform.pivot = new Vector2(0.5f, 1f);
-            icon.rectTransform.anchoredPosition = new Vector2(0f, -36f);
-            icon.rectTransform.sizeDelta = new Vector2(170f, 170f);
-
-            Text title = UiKit.AddText(card, "Title", HeroesComingSoonText, 56, Color.white, TextAnchor.MiddleCenter, true);
-            title.fontStyle = FontStyle.Italic;
-            title.horizontalOverflow = HorizontalWrapMode.Wrap;
-            title.verticalOverflow = VerticalWrapMode.Overflow;
-            title.rectTransform.anchorMin = new Vector2(0.05f, 1f);
-            title.rectTransform.anchorMax = new Vector2(0.95f, 1f);
-            title.rectTransform.pivot = new Vector2(0.5f, 1f);
-            title.rectTransform.anchoredPosition = new Vector2(0f, -(36f + 170f + 16f));
-            title.rectTransform.sizeDelta = new Vector2(0f, titleH);
         }
     }
 }

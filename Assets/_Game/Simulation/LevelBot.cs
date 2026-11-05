@@ -178,6 +178,15 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         public BotResult Solve()
         {
+            return SolveFrom(sim.NewState());
+        }
+
+        /// <summary>
+        /// As Solve, but the search starts at <paramref name="start"/> (a grounded state, for example in the middle of an endless tower) instead of the bottom.
+        /// Tests only: lets the endless cycle boundaries (floor 1500 to 1501, 2500 to 2501) be proven without climbing the floors below.
+        /// </summary>
+        public BotResult SolveFrom(SimState start)
+        {
             if (spec != null && spec.Goal.Type == GoalType.Speedrun) return SolveFast();
             BotResult result = default(BotResult);
             System.Exception error = null;
@@ -185,7 +194,6 @@ namespace BoingUpSkyTower.Simulation
             {
                 try
                 {
-                    SimState start = sim.NewState();
                     best = start;
                     bool solved = Search(start, 0);
                     result = Result(solved);

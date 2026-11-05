@@ -344,6 +344,15 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("admin-system-off", () => { AdminScenario(false); meta.ShowSettings(); meta.ShowAdmin(); }, problems);
             yield return CheckScreen("admin-system-on", () => { AdminScenario(true, false); meta.ShowSettings(); meta.ShowAdmin(); }, problems);
             yield return CheckScreen("admin-system-on-all-switches", () => { AdminScenario(true, true); meta.ShowSettings(); meta.ShowAdmin(); }, problems);
+            yield return CheckScreen("admin-main-rewards-on", () =>
+            {
+                AdminScenario(true, true);
+                GameSession.Progress.AdminSetMainRewardsReady(true);   // E3: the button reads "Main rewards ON"
+                meta.ShowSettings();
+                meta.ShowAdmin();
+                Assert.IsNotNull(FindRt("Main_rewards_ONButton"), "the Main rewards test button shows with System Test on");
+            }, problems);
+            GameSession.Progress.AdminSetMainRewardsReady(false);
             yield return CheckScreen("admin-heroes", () => { AdminScenario(true, true); meta.ShowSettings(); meta.ShowAdmin(1); }, problems);
             AdminCleanup();
             yield return CheckScreen("settings-reset-confirm", () => { meta.ShowSettings(); GameSession.Progress.SetAccount("google", "test"); meta.ConfirmReset(); }, problems);
@@ -550,6 +559,7 @@ namespace BoingUpSkyTower.Tests
             Assert.Greater(CanvasBox(master).yMin, CanvasBox(game).yMax - 1f, "System Test sits above Game Test");
             Assert.IsFalse(game.GetComponentInParent<CanvasGroup>().interactable, "Game Test is disabled while System Test is off");
             Assert.IsNull(FindRt("Big_walletButton"), "no test tools while System Test is off");
+            Assert.IsNull(FindRt("Main_rewards_OFFButton"), "no Main rewards test button while System Test is off");
             master.GetComponent<Button>().onClick.Invoke();   // System Test on
             yield return null;
             yield return null;
@@ -560,6 +570,7 @@ namespace BoingUpSkyTower.Tests
             yield return null;
             Assert.IsTrue(GameSettings.ShopTest);
             Assert.IsNotNull(FindRt("Big_walletButton"), "Shop Test on: its tools show");
+            Assert.IsNotNull(FindRt("Main_rewards_OFFButton"), "System Test on: the Main rewards test button shows (Game Test group)");
             FindRt("System TestToggle").GetComponent<Button>().onClick.Invoke();   // System Test off again: everything off
             yield return null;
             yield return null;
@@ -1318,7 +1329,23 @@ namespace BoingUpSkyTower.Tests
             // VIP tab (owner issue 35): one scrollable page, Subscription section first, Chests under it; the old 'Chests' tab is gone
             yield return CheckScreen("shop-tab-vip", () => meta.ShowShop(ShopScreen.TabVip), problems);
             yield return CheckScreen("shop-tab-vip-chests-section", () => meta.ShowShop(ShopScreen.TabVip, ShopScreen.VipChestsSection), problems);
-            yield return CheckScreen("shop-tab-character-heroes-section", () => meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection), problems);   // Heroes banner + "Heroes coming soon" card, nothing to buy
+            yield return CheckScreen("shop-tab-character-heroes-section", () => meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection), problems);   // Heroes banner + the 2 x 2 hero cards (Bug List 4 E2)
+            // Heroes section popups (E2.c, E2.e): the (i) of each tier, "No Rare heroes yet" (nothing charged), the confirm popup and the hero reveal (gems topped up first, so later screens see the same wallet)
+            foreach (CharacterRarity tier in HeroPurchase.Tiers)
+            {
+                CharacterRarity t = tier;
+                yield return CheckScreen("shop-heroes-info-" + HeroPurchase.RarityName(t).ToLowerInvariant(), () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection); meta.CurrentShop.TapHeroInfo(t); }, problems);
+            }
+            yield return CheckScreen("shop-heroes-none-popup", () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection); meta.CurrentShop.TapHeroBuy(CharacterRarity.Rare); }, problems);
+            yield return CheckScreen("shop-heroes-none-popup-legendary", () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection); meta.CurrentShop.TapHeroBuy(CharacterRarity.Legendary); }, problems);
+            yield return CheckScreen("shop-heroes-confirm-popup", () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection); meta.CurrentShop.TapHeroBuy(CharacterRarity.Uncommon); }, problems);
+            yield return CheckScreen("shop-heroes-reveal", () =>
+            {
+                GameSession.Progress.AddGems(HeroPurchase.GemPrice(CharacterRarity.Uncommon));
+                meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection);
+                meta.CurrentShop.TapHeroBuy(CharacterRarity.Uncommon);
+                ClickByName("Buy for");
+            }, problems);
             yield return CheckScreen("treasure-confirm", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Golden, 10); }, problems);
             yield return CheckScreen("treasure-reveal-single", () => { GameSession.Progress.AddGems(100); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Iron, 1); meta.CurrentTreasure.Reveal.Skip(); }, problems);
             yield return CheckScreen("treasure-reveal-ten", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Golden, 10); meta.CurrentTreasure.Reveal.Skip(); }, problems);
@@ -1348,6 +1375,8 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("treasure-need-gems", () => { GameSession.Progress.TrySpendGems(GameSession.Progress.Gems); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Iron, 1); }, problems);
             yield return CheckScreen("shop-tab2-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.PowerupsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_rocket"), PowerUpCurrency.Coins); }, problems);
 
+            yield return CheckScreen("shop-heroes-not-enough-popup", () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection); meta.CurrentShop.TapHeroBuy(CharacterRarity.Uncommon); }, problems);   // empty wallet
+
             // Rewards (docs/26 section 4): the three tabs with something claimable (stars, points, play time), and the "Reward!" card
             for (int lvl = 1; lvl <= 9; lvl++) GameSession.Progress.ApplyRun("lvl_001_0" + lvl, new RunOutcome { Completed = true, StarMask = 7, Score = 100, CoinsCollected = 10 });
             GameSession.Progress.RecordLogin();
@@ -1371,6 +1400,7 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("rewards-daily-ready", () => meta.ShowRewards(RewardTab.Daily), problems);
             yield return CheckScreen("rewards-daily-claimed", () => { meta.ShowRewards(RewardTab.Daily); GameSession.Progress.TryClaimReward(RewardTab.Daily, "dp_20"); meta.ShowRewards(RewardTab.Daily); }, problems);
             yield return CheckScreen("rewards-main-claimed", () => { GameSession.Progress.TryClaimReward(RewardTab.Main, "s_25"); GameSession.Progress.TryClaimReward(RewardTab.Main, "r_1"); meta.ShowRewards(RewardTab.Main); }, problems);
+            yield return CheckScreen("rewards-weekly-claimed", () => { GameSession.Progress.TryClaimReward(RewardTab.Weekly, "w_play100"); meta.ShowRewards(RewardTab.Weekly); }, problems);   // compact cards: claimed look
             Report(problems);
         }
 
@@ -1632,6 +1662,65 @@ namespace BoingUpSkyTower.Tests
                     if (cards == 0) problems.Add(tag + ": no bundle cards found");
                 }
             }
+            Report(problems);
+        }
+
+        [UnityTest]
+        public IEnumerator BundleBuyButtonsSitInABrownFrame() { return BundleBuyFrameAudit(100); }
+
+        [UnityTest]
+        public IEnumerator BundleBuyButtonsSitInABrownFrameAt130PercentText() { return BundleBuyFrameAudit(130); }
+
+        /// <summary>Bug List 4 E1: on every bundle card the green Buy button is a child of the brown BuyFrame plate (same brown as the Coins strip), at least 48 dp, with at least 8 dp of frame around it, inside the card and clear of the "i", name, Worth text and chips. The Refresh buttons have no frame.</summary>
+        IEnumerator BundleBuyFrameAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            yield return Load("Meta");
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                foreach (Rect safe in new[] { FullSafe, NotchSafe })
+                {
+                    Rect s = safe;
+                    UiKit.SafeAreaNormalized = () => s;
+                    ShowBundlesPage(5000, 0);
+                    yield return ApplyAspect(a, holder);
+                    yield return null;
+                    string tag = "bundle-buy-frame@" + a.Name + (safe == NotchSafe ? "+notch" : "") + "/" + textPercent;
+                    int cards = 0;
+                    float minPx = UiKit.MinTouchPx;
+                    foreach (var card in Object.FindObjectsByType<RectTransform>(FindObjectsSortMode.None))
+                    {
+                        if (!card.gameObject.activeInHierarchy || !card.name.StartsWith("Bundle_")) continue;
+                        RectTransform frame = card.Find("BuyFrame") as RectTransform;
+                        RectTransform buy = frame != null ? frame.Find("Buy") as RectTransform : null;
+                        if (frame == null || buy == null) { problems.Add(tag + ": " + card.name + " has no BuyFrame/Buy"); continue; }
+                        cards++;
+                        Rect cb = CanvasBox(card), fb = CanvasBox(frame), bb = CanvasBox(buy);
+                        var fi = frame.GetComponent<UnityEngine.UI.Image>();
+                        if (fi == null || (Vector4)fi.color != (Vector4)BundlesScreen.BuyFrameColor) problems.Add(tag + ": " + card.name + " frame is not the Coins brown");
+                        if (bb.width < minPx - 0.5f || bb.height < minPx - 0.5f) problems.Add(tag + ": " + card.name + " buy button below 48 dp");
+                        if (bb.xMin - fb.xMin < 8f - 0.5f || fb.xMax - bb.xMax < 8f - 0.5f || bb.yMin - fb.yMin < 8f - 0.5f || fb.yMax - bb.yMax < 8f - 0.5f)
+                            problems.Add(tag + ": " + card.name + " frame padding below 8 dp");
+                        if (fb.xMin < cb.xMin - 0.5f || fb.xMax > cb.xMax + 0.5f || fb.yMin < cb.yMin - 0.5f || fb.yMax > cb.yMax + 0.5f) problems.Add(tag + ": " + card.name + " frame leaves the card");
+                        foreach (string other in new[] { "BundleInfo", "Name", "Worth" })
+                        {
+                            RectTransform o = card.Find(other) as RectTransform;
+                            if (o != null && CanvasBox(o).Overlaps(fb)) problems.Add(tag + ": " + card.name + " frame overlaps " + other);
+                        }
+                        foreach (Transform ch in card)
+                            if (ch.name == "Chip" && ch.gameObject.activeInHierarchy && CanvasBox((RectTransform)ch).Overlaps(fb)) problems.Add(tag + ": " + card.name + " frame overlaps a chip");
+                    }
+                    if (cards == 0) problems.Add(tag + ": no bundle cards found");
+                    foreach (string refresh in new[] { "RefreshGems", "RefreshCoins" })
+                    {
+                        RectTransform rb = FindRt(refresh);
+                        if (rb != null && rb.parent.name == "BuyFrame") problems.Add(tag + ": " + refresh + " must not have the brown frame");
+                    }
+                }
+            }
+            DropBundlesCanvas();
             Report(problems);
         }
 

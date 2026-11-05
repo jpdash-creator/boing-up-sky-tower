@@ -314,5 +314,68 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(75, svc.AdminCompleteAllLevels(), "5 playable regions x 15 levels");
             Assert.IsTrue(svc.IsLevelCleared("lvl_001_01"));
         }
+
+        // ---- Main rewards test switch (Bug List 4 E3) ----
+
+        [Test]
+        public void MainRewardsSwitchMakesEveryMainRewardReadyUnclaimedAndUnpaid()
+        {
+            AdminInstall();
+            GameSettings.SystemTest = true;
+            var svc = NewService();
+            int gems = svc.Gems, coins = svc.Coins, stars = svc.TotalStars();
+            Assert.IsFalse(svc.HasClaimable(RewardTab.Main), "fresh save: nothing ready");
+            Assert.IsTrue(svc.AdminSetMainRewardsReady(true));
+            int regions = 0, starCards = 0;
+            foreach (RewardEntry e in svc.ClaimableEntries(RewardTab.Main))
+            {
+                Assert.IsTrue(svc.IsRewardReady(RewardTab.Main, e), e.Id + " ready");
+                Assert.IsFalse(svc.IsRewardClaimed(RewardTab.Main, e), e.Id + " unclaimed");
+                if (e.Id.StartsWith("r_")) regions++; else starCards++;
+            }
+            Assert.AreEqual(5, regions);
+            Assert.Greater(starCards, 0);
+            Assert.AreEqual(gems, svc.Gems, "nothing paid");
+            Assert.AreEqual(coins, svc.Coins);
+            Assert.AreEqual(stars, svc.TotalStars(), "real progress untouched");
+            Assert.IsTrue(svc.HasClaimable(RewardTab.Main));
+
+            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Main, "r_1").Result, "claiming works afterwards");
+            Assert.IsTrue(svc.IsRewardClaimed(RewardTab.Main, svc.RewardDefs.Find(RewardTab.Main, "r_1")));
+            Assert.AreEqual(RewardClaimResult.Ok, svc.ClaimAll(RewardTab.Main).Result);
+            Assert.IsFalse(svc.HasClaimable(RewardTab.Main), "everything claimed");
+        }
+
+        [Test]
+        public void MainRewardsSwitchOffRestoresRealProgressAndSurvivesSave()
+        {
+            AdminInstall();
+            GameSettings.SystemTest = true;
+            var store = new MemorySaveStore();
+            var svc = new ProgressService(repo, store, 5);
+            svc.AdminSetMainRewardsReady(true);
+            var again = new ProgressService(repo, store, 5);
+            Assert.IsTrue(again.AdminMainRewardsReady, "persisted in the save");
+            Assert.IsTrue(again.HasClaimable(RewardTab.Main));
+            Assert.IsFalse(again.AdminSetMainRewardsReady(false));
+            Assert.IsFalse(again.HasClaimable(RewardTab.Main), "back to the real progress");
+            foreach (RewardEntry e in again.ClaimableEntries(RewardTab.Main)) Assert.IsFalse(again.IsRewardReady(RewardTab.Main, e));
+        }
+
+        [Test]
+        public void SystemTestOffDropsTheMainRewardsOverride()
+        {
+            AdminInstall();
+            GameSettings.SystemTest = true;
+            var svc = NewService();
+            svc.AdminSetMainRewardsReady(true);
+            GameSettings.SystemTest = false;   // PROD READY: ApplyFlags withdraws the permission
+            Assert.IsFalse(svc.AdminMainRewardsReady, "ignored and cleared without System Test");
+            Assert.IsFalse(svc.HasClaimable(RewardTab.Main));
+            GameSettings.SystemTest = true;
+            Assert.IsFalse(svc.AdminMainRewardsReady, "stays off when System Test comes back");
+            GameSettings.SystemTest = false;
+            Assert.IsFalse(svc.AdminSetMainRewardsReady(true), "cannot be switched on in PROD READY");
+        }
     }
 }

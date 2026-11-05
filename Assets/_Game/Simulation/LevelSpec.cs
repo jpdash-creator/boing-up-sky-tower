@@ -251,9 +251,22 @@ namespace BoingUpSkyTower.Simulation
         {
             if (Endless || LevelIndex < 3) return Difficulty;
             int idx = LevelIndex > 15 ? 15 : LevelIndex;
-            int permille = cfg.RampFloorLevel3Permille + (cfg.RampFloorLevel15Permille - cfg.RampFloorLevel3Permille) * (idx - 3) / 12;
-            Fx floor = Fx.FromRatio(permille, 1000);
+            Fx floor = Fx.FromRatio(cfg.RampFloorPermille(idx), 1000);
             return Difficulty > floor ? Difficulty : floor;
+        }
+
+        /// <summary>
+        /// The effective difficulty of campaign level <paramref name="levelIndex"/> (1..15) in a region with difficulty offset <paramref name="regionOffset"/>,
+        /// computed the way the shipped levels get it (content difficulty with the offset applied, then the level 3..15 ramp floor). The endless cycle
+        /// uses it for every floor, so a floor at level N has the layout difficulty of the region level N.
+        /// </summary>
+        public static Fx DifficultyForLevel(SimConfig cfg, int levelIndex, Fx regionOffset)
+        {
+            int idx = levelIndex < 1 ? 1 : (levelIndex > 15 ? 15 : levelIndex);
+            Fx eff = LevelGenerator.EffectiveDifficulty(Fx.FromRatio(cfg.LevelContentDifficultyPermille[idx], 1000), regionOffset);
+            if (idx < 3) return eff;
+            Fx floor = Fx.FromRatio(cfg.RampFloorPermille(idx), 1000);
+            return eff > floor ? eff : floor;
         }
 
         /// <summary>Level number inside the region, 1..15. Drives the signature template (1-2 none, 3 gentle, 4+ normal).</summary>

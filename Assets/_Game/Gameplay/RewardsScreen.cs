@@ -11,9 +11,9 @@ namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The Rewards screen (docs/26 section 4, "RewardsStyle"), sleek redesign of Bug List 3 D4: tabs Main | Daily | Weekly in a footer with Back and Claim All.
-    /// Main: the region circle strip, a purple bonus band (clear all levels of the chosen region) and the star milestone cards on a numbered rail.
+    /// Main: a scene header (scene_daily, like Daily) behind the region circle strip and names, a purple bonus band (clear all levels of the chosen region) and the star milestone cards on a numbered rail.
     /// Daily and Weekly: a scene header with the reset timer and the points track (Daily, chests with thresholds) or the tasks done bar (Weekly), then the task cards.
-    /// Cards: cream (open), yellow with a green CLAIM tag (ready), green with a check (claimed); a dark reward plate at the right.
+    /// Cards (compact: 136 px, gap 10): cream (open), yellow with a big green Claim button as the reward plate (ready; the card itself claims too), green with a check (claimed); a dark reward plate at the right.
     /// Files: this one (frame, tabs, claiming), RewardsScreen.Cards.cs (cards, plates, bars), RewardsScreen.Headers.cs (Main band, scene headers, track).
     /// Everything scrolls in one list, so short screens never lose content. Menu screen only: no per-frame work except the once-a-second countdown text.
     /// </summary>

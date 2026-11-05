@@ -140,7 +140,8 @@ namespace BoingUpSkyTower.Gameplay
             public string Label, A11y;
             public int Role;
             public Action Click;
-            public AdminBtn(string label, int role, Action click, string a11y = null) { Label = label; Role = role; Click = click; A11y = a11y ?? label; }
+            public string Icon;
+            public AdminBtn(string label, int role, Action click, string a11y = null, string icon = null) { Label = label; Role = role; Click = click; A11y = a11y ?? label; Icon = icon; }
         }
 
         /// <summary>
@@ -301,6 +302,19 @@ namespace BoingUpSkyTower.Gameplay
                     Button b = UiKit.AddButton(c, d.Label.Replace(' ', '_') + "Button", d.Label, ToyKit.Button(d.Role), Color.white, new Vector2(bw, bh), d.Click, 40);
                     UiKit.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(k * (half + gap), -y), new Vector2(bw, bh));
                     b.GetComponent<A11yLabel>().Text = d.A11y;
+                    if (d.Icon != null)
+                    {
+                        Image ic = UiKit.AddImage(b.transform, "Icon", ToyKit.Get(d.Icon), Color.white);
+                        ic.preserveAspect = true;
+                        ic.raycastTarget = false;
+                        RectTransform irt = ic.rectTransform;
+                        irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
+                        irt.pivot = new Vector2(0f, 0.5f);
+                        irt.anchoredPosition = new Vector2(16f, 0f);
+                        irt.sizeDelta = new Vector2(72f, 72f);
+                        Text lt = b.GetComponentInChildren<Text>();
+                        if (lt != null) { RectTransform lrt = lt.rectTransform; lrt.offsetMin = new Vector2(96f, lrt.offsetMin.y); }
+                    }
                     AdminDim(b, enabled);
                 }
                 y += bh + gap;
@@ -313,14 +327,19 @@ namespace BoingUpSkyTower.Gameplay
             bool sys = GameSettings.SystemTest;
             bool on = AdminAccess.TestToolsEnabled(sys);   // everything under the master switch works only while System Test is on
             AdminPill(c, ref y, sys);
-            AdminSwitchRow(c, ref y, "System Test", "icon_settings", () => GameSettings.SystemTest, v => GameSettings.SystemTest = v, true);   // OFF clears the three switches below too
+            AdminSwitchRow(c, ref y, "System Test", "icon_settings", () => GameSettings.SystemTest, v => { GameSettings.SystemTest = v; if (!v) progress.AdminSetMainRewardsReady(false); }, true);   // OFF clears the three switches below too
 
             // GAME TEST: the old Jump test (every level and region open) and the level tools
             AdminSwitchRow(c, ref y, AdminAccess.TestSwitchLabels[0], "icon_flag", () => GameSettings.GameJumpTest, v => GameSettings.GameJumpTest = v, on);
-            if (on && GameSettings.GameJumpTest)
-                AdminButtons(c, ref y, true,
-                    new AdminBtn("Open regions", 0, () => AdminSay("Regions unlocked: " + progress.AdminUnlockAllRegions()), "Unlock all regions"),
-                    new AdminBtn("Clear levels", 0, () => { int n = progress.AdminCompleteAllLevels(); RefreshWallet(); AdminSay("Levels cleared: " + n); }, "Clear all levels"));
+            if (on)
+            {
+                if (GameSettings.GameJumpTest)
+                    AdminButtons(c, ref y, true,
+                        new AdminBtn("Open regions", 0, () => AdminSay("Regions unlocked: " + progress.AdminUnlockAllRegions()), "Unlock all regions"),
+                        new AdminBtn("Clear levels", 0, () => { int n = progress.AdminCompleteAllLevels(); RefreshWallet(); AdminSay("Levels cleared: " + n); }, "Clear all levels"),
+                        MainRewardsBtn());
+                else AdminButtons(c, ref y, true, MainRewardsBtn());   // the Main rewards review tool works without the jump switch
+            }
 
             // SHOP TEST: test purchases, wallet and VIP, ads
             AdminSwitchRow(c, ref y, AdminAccess.TestSwitchLabels[1], "icon_shop", () => GameSettings.ShopTest, v => GameSettings.ShopTest = v, on);
@@ -346,6 +365,19 @@ namespace BoingUpSkyTower.Gameplay
                 AdminSection(c, ref y, "ADMIN MODE");
                 AdminButtons(c, ref y, true, new AdminBtn("Lock admin again", 3, () => { AdminAccess.Lock(); ClosePopup(); ShowSettings(); }));
             }
+        }
+
+        /// <summary>The "Main rewards" test button (Game Test group): icon-first, label shows ON/OFF. Marks every Main reward complete but unclaimed, tap again to restore.</summary>
+        AdminBtn MainRewardsBtn()
+        {
+            bool on = progress.AdminMainRewardsReady;
+            return new AdminBtn("Main rewards " + (on ? "ON" : "OFF"), on ? 1 : 0, () =>
+            {
+                bool now = progress.AdminSetMainRewardsReady(!progress.AdminMainRewardsReady);
+                RefreshWallet();
+                AdminSay(now ? "All Main rewards ready to claim" : "Main rewards back to real progress");
+                AdminRebuild();
+            }, "Main rewards test, " + (on ? "on" : "off") + ". Marks every Main reward complete, not claimed.", "icon_daily");
         }
 
         void AdminVipOn()

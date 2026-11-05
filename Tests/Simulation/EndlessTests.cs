@@ -101,15 +101,19 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void DifficultyGrowsWithTheFloorFromTheRegionOffset()
+        public void DifficultyFollowsTheLevelOfTheFloorNotTheFloorItself()
         {
+            // Endless cycle (owner 2026-11-05): d(floor) is the difficulty of campaign level LevelForFloor(floor); the full table is in EndlessCycleTests.
             SimConfig cfg = new SimConfig();
             EndlessTower t = new EndlessTower(cfg, SpecFor(4, 1), 10);
-            Assert.Equal(Fx.FromRatio(345, 10000).Raw, t.DifficultyAt(0).Raw);
-            Assert.True(t.DifficultyAt(100) > t.DifficultyAt(10));
-            Assert.True(t.DifficultyAt(200) > t.DifficultyAt(100));
-            Assert.Equal(Fx.One.Raw, t.DifficultyAt(400).Raw);
-            Assert.Equal(Fx.One.Raw, t.DifficultyAt(5000).Raw);
+            Fx offset = Fx.FromRatio(345, 10000);
+            Assert.Equal(LevelGenerator.EffectiveDifficulty(Fx.FromRatio(5, 100), offset).Raw, t.DifficultyAt(0).Raw);   // level 1: content 0.05 with the region offset
+            Assert.Equal(t.DifficultyAt(1).Raw, t.DifficultyAt(100).Raw);                                                // one level for 100 floors
+            Assert.True(t.DifficultyAt(101) > t.DifficultyAt(100));
+            Assert.Equal(Fx.One.Raw, t.DifficultyAt(1401).Raw);                                                          // level 15
+            Assert.Equal(Fx.One.Raw, t.DifficultyAt(1500).Raw);
+            Assert.True(t.DifficultyAt(1501) < t.DifficultyAt(1500));                                                    // reset to level 9
+            Assert.Equal(Fx.One.Raw, t.DifficultyAt(4500).Raw);                                                          // the hold of the cycle 3501-4500 is level 15 again
         }
 
         [Fact]
@@ -180,7 +184,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(GoldenR3S12345, d.ComputeHash());
         }
 
-        private const long GoldenR3S12345 = -7790185848617333387L;
+        private const long GoldenR3S12345 = -6597721552106057681L;
     }
 }
 

@@ -212,5 +212,7 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("poolVer")] public int PoolVersion;
         /// <summary>Hidden hero cards drawn so far (with Seed it makes every card draw repeatable and different).</summary>
         [JsonProperty("cardDraws")] public int CardDraws;
+        /// <summary>Hero cards bought in the Shop Heroes section so far (Bug List 4 E2; with Seed it makes every pick repeatable and different).</summary>
+        [JsonProperty("heroBuys")] public int HeroBuys;
     }
 }
