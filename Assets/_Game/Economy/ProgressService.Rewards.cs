@@ -17,13 +17,31 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("claimed")] public List<string> Claimed = new List<string>();
     }
 
+    /// <summary>Lifetime counters of the play inside ONE region (Main goals, docs/39). Counted from the build that introduced them; never reset.</summary>
+    public sealed class RegionStats
+    {
+        [JsonProperty("jumps")] public int Jumps;
+        /// <summary>Combo chains that reached 3 landings.</summary>
+        [JsonProperty("combos")] public int Combos;
+        [JsonProperty("playSec")] public int PlaySeconds;
+        /// <summary>Coins earned in the region (level payouts and endless payouts).</summary>
+        [JsonProperty("coins")] public int Coins;
+        [JsonProperty("powerUps")] public int PowerUps;
+        /// <summary>Levels cleared on Hard or Insane.</summary>
+        [JsonProperty("hardClears")] public int HardClears;
+    }
+
     /// <summary>Everything the Rewards screen needs from the save (docs/26 section 4). Additive part of SaveData, no version bump.</summary>
     public sealed class RewardsData
     {
         [JsonProperty("day")] public RewardPeriod Day = new RewardPeriod();
         [JsonProperty("week")] public RewardPeriod Week = new RewardPeriod();
-        /// <summary>Star and region rewards already claimed (claimed once, never reset).</summary>
+        /// <summary>Obsolete since Bug List 5 (the star cards and region rewards are gone): old claimed ids stay here untouched and are ignored.</summary>
         [JsonProperty("mainClaimed")] public List<string> MainClaimed = new List<string>();
+        /// <summary>Ids of the region goals already claimed (g_region_type_tier; claimed once, never reset). Additive field, no version bump.</summary>
+        [JsonProperty("goalsClaimed")] public List<string> GoalsClaimed = new List<string>();
+        /// <summary>Per-region activity counters, key = region index ("1" ... "5"). Additive field: old saves start every counter at 0 (stars, clears and best endless floor are read from the existing save fields).</summary>
+        [JsonProperty("regions")] public Dictionary<string, RegionStats> Regions = new Dictionary<string, RegionStats>();
         /// <summary>Best combo chain ever reached (lifetime).</summary>
         [JsonProperty("bestCombo")] public int BestCombo;
         /// <summary>Claims made so far: seeds the random power-up picks so they are repeatable.</summary>
@@ -46,6 +64,8 @@ namespace BoingUpSkyTower.Economy
         public RewardClaimResult Result;
         public int Gems, Coins;
         public readonly List<string> PowerUpIds = new List<string>();
+        /// <summary>Hero copies granted (one entry per copy: the id of the Common hero). Empty for most rewards.</summary>
+        public readonly List<string> HeroIds = new List<string>();
     }
 
     /// <summary>
@@ -112,6 +132,8 @@ namespace BoingUpSkyTower.Economy
                 if (r.Day.Key == null) r.Day.Key = "";
                 if (r.Week.Key == null) r.Week.Key = "";
                 if (r.MainClaimed == null) r.MainClaimed = new List<string>();
+                if (r.GoalsClaimed == null) r.GoalsClaimed = new List<string>();
+                if (r.Regions == null) r.Regions = new Dictionary<string, RegionStats>();
                 return r;
             }
         }
@@ -170,19 +192,20 @@ namespace BoingUpSkyTower.Economy
         /// Adds play time (seconds) to today and this week. Never writes a file by itself unless <paramref name="save"/> is true and a whole
         /// minute was crossed (menus). In a run pass false: the time reaches the disk with the next save or <see cref="FlushPlayTime"/>.
         /// </summary>
-        public void AddPlaySeconds(int seconds, bool save = false)
+        public void AddPlaySeconds(int seconds, bool save = false, int regionIndex = 0)
         {
             if (seconds <= 0) return;
             RolloverRewards();
             RewardsData r = Rw;
             int before = StatOf(r.Day, RewardStat.PlaySeconds);
             AddBoth(RewardStat.PlaySeconds, seconds);
+            if (regionIndex > 0) { RegionStats rs = RegionStatsFor(regionIndex, true); rs.PlaySeconds = SaturatingAdd(rs.PlaySeconds, seconds); }   // only play inside a region counts for its goals
             playDirty = true;
             if (save && before / 60 != StatOf(r.Day, RewardStat.PlaySeconds) / 60) FlushPlayTime();
         }
 
         /// <summary>Frame-time feed (named apart from the bundle timer TickPlayTime) for <see cref="AddPlaySeconds"/>: collects fractions and passes whole seconds on every 5 seconds or so.</summary>
-        public void FeedPlayTime(float deltaSeconds, bool save)
+        public void FeedPlayTime(float deltaSeconds, bool save, int regionIndex = 0)
         {
             if (deltaSeconds <= 0f) return;
             if (deltaSeconds > 1f) deltaSeconds = 1f;   // a long frame (resume from the background) is not play time
@@ -190,7 +213,7 @@ namespace BoingUpSkyTower.Economy
             if (playFraction < 5f) return;
             int whole = (int)playFraction;
             playFraction -= whole;
-            AddPlaySeconds(whole, save);
+            AddPlaySeconds(whole, save, regionIndex);
         }
 
         /// <summary>Writes pending play time to the save (no Changed event). Call when a run pauses, ends or is left.</summary>
@@ -204,6 +227,7 @@ namespace BoingUpSkyTower.Economy
         /// <summary>A campaign level was started on this difficulty setting (3 or more counts as a hard level). Saves when it counted.</summary>
         public void RecordLevelStarted(int difficultySetting)
         {
+            startedDifficulty = difficultySetting;   // the clear of this level counts as a hard clear when it was started on Hard or Insane
             if (difficultySetting < RewardStat.HardDifficulty) return;
             RolloverRewards();
             if (StatOf(Rw.Day, RewardStat.Hard) > 0) return;   // already counted today: no save at every retry
@@ -218,13 +242,50 @@ namespace BoingUpSkyTower.Economy
         public void RecordRunStats(RunOutcome run)
         {
             RolloverRewards();
-            if (ApplyRunDelta(run)) Commit();
+            if (ApplyRunDelta(run, run.Region)) Commit();
         }
 
-        bool ApplyRunDelta(RunOutcome run)
+        /// <summary>Difficulty setting of the campaign level started last (RecordLevelStarted); a clear reads it to count hard clears. Not saved.</summary>
+        int startedDifficulty;
+
+        /// <summary>The counters of one region (null when none exists and <paramref name="create"/> is false, or the index is not a region).</summary>
+        RegionStats RegionStatsFor(int regionIndex, bool create)
+        {
+            if (regionIndex < 1 || regionIndex > RegionGoalTable.TotalRegions) return null;
+            string key = RegionKey(regionIndex);
+            RegionStats s;
+            if (Rw.Regions.TryGetValue(key, out s) && s != null) return s;
+            if (!create) return null;
+            s = new RegionStats();
+            Rw.Regions[key] = s;
+            return s;
+        }
+
+        static readonly string[] regionKeys = BuildRegionKeys();
+        static string[] BuildRegionKeys()
+        {
+            var k = new string[RegionGoalTable.TotalRegions + 1];
+            for (int i = 0; i < k.Length; i++) k[i] = i.ToString(CultureInfo.InvariantCulture);
+            return k;
+        }
+        static string RegionKey(int regionIndex) { return regionKeys[regionIndex]; }   // cached: no string building in the per-5-seconds play feed
+
+        /// <summary>Run statistics of one region (Main goals): jumps, combo chains and power-ups used since the last report. Returns true when something counted.</summary>
+        bool ApplyRegionDelta(RunOutcome run, int regionIndex)
+        {
+            if (regionIndex < 1 || (run.Jumps <= 0 && run.ComboChains <= 0 && run.PowerUpsUsed <= 0)) return false;
+            RegionStats s = RegionStatsFor(regionIndex, true);
+            if (s == null) return false;
+            if (run.Jumps > 0) s.Jumps = SaturatingAdd(s.Jumps, run.Jumps);
+            if (run.ComboChains > 0) s.Combos = SaturatingAdd(s.Combos, run.ComboChains);
+            if (run.PowerUpsUsed > 0) s.PowerUps = SaturatingAdd(s.PowerUps, run.PowerUpsUsed);
+            return true;
+        }
+
+        bool ApplyRunDelta(RunOutcome run, int regionIndex)
         {
             RewardsData r = Rw;
-            bool any = false;
+            bool any = ApplyRegionDelta(run, regionIndex);
             if (run.ComboChains > 0) { AddBoth(RewardStat.Combos, run.ComboChains); any = true; }
             if (run.BestCombo > 0)
             {
@@ -237,10 +298,12 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>Called by ApplyRun for a completed run, before its save: the completion counters plus the run statistics.</summary>
-        void TrackCompletedRun(LevelDef level, RunOutcome run, bool firstClear)
+        void TrackCompletedRun(LevelDef level, RunOutcome run, bool firstClear, int coinsPaid = 0)
         {
             RolloverRewards();
-            ApplyRunDelta(run);
+            int regionIndex = repo.GetRegion(level.Region).Index;   // a completed run always counts for the level's own region
+            ApplyRunDelta(run, regionIndex);
+            if (coinsPaid > 0 && regionIndex > 0) { RegionStats rs = RegionStatsFor(regionIndex, true); if (rs != null) rs.Coins = SaturatingAdd(rs.Coins, coinsPaid); }
             if (!firstClear)
             {
                 // a replay of a cleared level: the level counters take at most 3 such replays per day, across all levels
@@ -249,7 +312,12 @@ namespace BoingUpSkyTower.Economy
                 day.Stats[RewardStat.Replays] = StatOf(day, RewardStat.Replays) + 1;
             }
             AddBoth(RewardStat.Levels, 1);
-            if (level.Index == 7) AddBoth(RewardStat.NoWall, 1);
+            if (startedDifficulty >= RewardStat.HardDifficulty)
+            {
+                AddBoth(RewardStat.HardClear, 1);   // daily "clear a hard level", weekly "clear 5 hard levels"
+                if (regionIndex > 0) { RegionStats hs = RegionStatsFor(regionIndex, true); if (hs != null) hs.HardClears = SaturatingAdd(hs.HardClears, 1); }
+            }
+            if (level.Index == RegionGoalTable.NoWallLevelIndex) AddBoth(RewardStat.NoWall, 1);
             if (level.Index == 8 || level.Index == 15) AddBoth(RewardStat.GemLevel, 1);
             int stars = run.Stars;   // star pickups are never stripped on replays, so these two counters work on every level
             if (stars >= 2) AddBoth(RewardStat.Stars2, 1);
@@ -286,12 +354,6 @@ namespace BoingUpSkyTower.Economy
             return points;
         }
 
-        bool IsRegionEntry(RewardEntry e)
-        {
-            foreach (RewardEntry r in RewardDefs.RegionRewards) if (ReferenceEquals(r, e)) return true;
-            return false;
-        }
-
         /// <summary>Levels of the region with this index that are cleared.</summary>
         public int RegionLevelsCleared(int regionIndex)
         {
@@ -302,14 +364,9 @@ namespace BoingUpSkyTower.Economy
             return n;
         }
 
-        /// <summary>The value an entry needs to be complete: its target, or all levels of the region for a region reward.</summary>
+        /// <summary>The value an entry needs to be complete: its target.</summary>
         public int RewardTarget(RewardTab tab, RewardEntry e)
         {
-            if (tab == RewardTab.Main && IsRegionEntry(e))
-            {
-                RegionDef region = repo.TryGetRegionByIndex(e.Target);
-                return region != null ? region.Levels.Count : int.MaxValue;
-            }
             return e.Target;
         }
 
@@ -328,14 +385,15 @@ namespace BoingUpSkyTower.Economy
             if (e == null) return false;
             RolloverRewards();
             RewardsData r = Rw;
-            if (tab == RewardTab.Main) return r.MainClaimed.Contains(e.Id);
+            if (tab == RewardTab.Main) return r.GoalsClaimed.Contains(e.Id);
             return (tab == RewardTab.Daily ? r.Day : r.Week).Claimed.Contains(e.Id);
         }
 
         /// <summary>True when the entry is complete and not claimed yet.</summary>
         public bool IsRewardReady(RewardTab tab, RewardEntry e)
         {
-            return e != null && !IsRewardClaimed(tab, e) && RewardProgress(tab, e) >= RewardTarget(tab, e);
+            if (e == null || IsRewardClaimed(tab, e) || RewardProgress(tab, e) < RewardTarget(tab, e)) return false;
+            return tab != RewardTab.Main || GoalsOpen(e);
         }
 
         /// <summary>True when something in the tab can be claimed (drives the red dot on the tab).</summary>
@@ -357,8 +415,7 @@ namespace BoingUpSkyTower.Economy
             RewardCatalog defs = RewardDefs;
             if (tab == RewardTab.Main)
             {
-                foreach (RewardEntry e in defs.StarMilestones) yield return e;
-                foreach (RewardEntry e in defs.RegionRewards) yield return e;
+                foreach (RegionGoal g in defs.AllRegionGoals) yield return g;
             }
             else if (tab == RewardTab.Daily)
             {
@@ -393,10 +450,10 @@ namespace BoingUpSkyTower.Economy
             if (e == null) { outcome.Result = RewardClaimResult.Invalid; return outcome; }
             RolloverRewards();
             if (IsRewardClaimed(tab, e)) { outcome.Result = RewardClaimResult.AlreadyClaimed; return outcome; }
-            if (RewardProgress(tab, e) < RewardTarget(tab, e)) { outcome.Result = RewardClaimResult.NotReady; return outcome; }
+            if (RewardProgress(tab, e) < RewardTarget(tab, e) || (tab == RewardTab.Main && !GoalsOpen(e))) { outcome.Result = RewardClaimResult.NotReady; return outcome; }
             PayReward(tab, e, outcome);
             outcome.Result = RewardClaimResult.Ok;
-            Commit();
+            FinishClaim(outcome);
             return outcome;
         }
 
@@ -413,8 +470,42 @@ namespace BoingUpSkyTower.Economy
             if (ready.Count == 0) return outcome;
             foreach (RewardEntry e in ready) PayReward(tab, e, outcome);
             outcome.Result = RewardClaimResult.Ok;
-            Commit();
+            FinishClaim(outcome);
             return outcome;
+        }
+
+        /// <summary>Saves a finished claim once. Hero copies go through AddCopies (the existing API: it saves), after the wallet and the claimed marks are already set, so that one save holds everything.</summary>
+        void FinishClaim(RewardClaimOutcome outcome)
+        {
+            if (outcome.HeroIds.Count == 0) { Commit(); return; }
+            for (int i = 0; i < outcome.HeroIds.Count; i++) AddCopies(outcome.HeroIds[i], 1);
+        }
+
+        /// <summary>The Common hero of a region (the base hero with Region == index), null when none exists.</summary>
+        static CharacterSpec CommonHeroOf(int regionIndex)
+        {
+            foreach (CharacterSpec c in CharacterDefs.All) if (c.IsRegionHero && c.Region == regionIndex) return c;
+            return null;
+        }
+
+        /// <summary>
+        /// One random Common hero of an OPEN region (region 1, or a region the player unlocked): repeatable from the per-account seed (the bundle seed) and the claim
+        /// counter, never UnityEngine.Random. Null when no such hero exists.
+        /// </summary>
+        CharacterSpec RandomOpenCommonHero()
+        {
+            var open = new List<CharacterSpec>(5);
+            foreach (CharacterSpec c in CharacterDefs.All)
+            {
+                if (!c.IsRegionHero) continue;
+                RegionDef rd = c.Region > 1 ? repo.TryGetRegionByIndex(c.Region) : null;
+                if (c.Region <= 1 || (rd != null && IsRegionUnlocked(rd))) open.Add(c);
+            }
+            if (open.Count == 0) return null;
+            BundleSaveData b = Data.Bundles ?? (Data.Bundles = new BundleSaveData());
+            EnsureBundleSeed(b);
+            ulong roll = BundleMix(((ulong)(uint)b.Seed << 32) ^ (ulong)(uint)Rw.Claims ^ 0x4845524FUL);
+            return open[(int)(roll % (ulong)open.Count)];
         }
 
         /// <summary>Pays one reward into the wallet and the power-up stock and marks it claimed, without saving (the caller saves once).</summary>
@@ -442,7 +533,12 @@ namespace BoingUpSkyTower.Economy
                     }
                 }
             }
-            if (tab == RewardTab.Main) r.MainClaimed.Add(e.Id);
+            if (e.HeroRegion != 0)
+            {
+                CharacterSpec hero = e.HeroRegion > 0 ? CommonHeroOf(e.HeroRegion) : RandomOpenCommonHero();
+                if (hero != null) outcome.HeroIds.Add(hero.Id);   // granted by FinishClaim
+            }
+            if (tab == RewardTab.Main) r.GoalsClaimed.Add(e.Id);
             else if (tab == RewardTab.Daily) r.Day.Claimed.Add(e.Id);
             else r.Week.Claimed.Add(e.Id);
             r.Claims++;

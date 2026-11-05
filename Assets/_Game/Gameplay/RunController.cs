@@ -140,7 +140,7 @@ namespace BoingUpSkyTower.Gameplay
             if (Session == null) return;
             float dt = Mathf.Min(Time.deltaTime, 0.1f);   // the game never changes timeScale; deltaTime also honours Time.captureFramerate in tests
             Input.Update();
-            if (!Paused && !Session.Over && GameSession.Progress != null) GameSession.Progress.FeedPlayTime(dt, false);   // reward statistics: play time (no file write in a run)
+            if (!Paused && !Session.Over && GameSession.Progress != null) GameSession.Progress.FeedPlayTime(dt, false, Session.Region.Index);   // reward statistics: play time (no file write in a run)
             if (!Paused && !Session.Over && GameSession.Progress != null) { bundleTickAcc += dt; if (bundleTickAcc >= 1f) { GameSession.Progress.TickPlayTime(bundleTickAcc, true); bundleTickAcc = 0f; } }   // bundle timer: run time counts, no offer starts in a run, no file write
 
             bool introDone = Hud.IntroRemaining <= 0f;

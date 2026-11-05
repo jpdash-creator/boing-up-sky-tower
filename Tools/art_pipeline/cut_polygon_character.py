@@ -165,6 +165,45 @@ def key_outline(rgb):
     return cv2.erode(out, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))) > 0   # trims the light fringe outside the outline (no grey halo)
 
 
+WALL = 15
+
+
+def key_flood(rgb):
+    """For paintings with a glowing halo of light rays behind the head (Sunlord Momo): the character is everything enclosed by its dark outline, found by flooding the OUTSIDE from the
+    corners through every pixel that is not near-black; the sticker border, the grey ground and the halo are outside. Returns (character mask, halo alpha 0..1 or None, halo rgb).
+    The halo is the warm bright glow outside the outline (soft alpha from how much brighter than the grey ground it is)."""
+    h, w = rgb.shape[:2]
+    v = rgb.max(axis=2)
+    rr, bb = rgb[..., 0].astype(np.int16), rgb[..., 2].astype(np.int16)
+    wall = cv2.dilate(((v <= 70) | ((rr - bb > 45) & (v < 175))).astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (WALL, WALL)))   # a thick wall closes gaps in the outline where the rays cross it
+    free = ((v > 70) & (wall == 0)).astype(np.uint8)
+    free = cv2.morphologyEx(free, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    n, lab = cv2.connectedComponents(free, connectivity=4)
+    bgl = {lab[2, 2], lab[2, w - 3], lab[h - 3, 2], lab[h - 3, w - 3]} - {0}
+    outside = np.isin(lab, list(bgl))
+    ch = (~outside).astype(np.uint8)
+    n, lab2, st, _ = cv2.connectedComponentsWithStats(ch, 8)
+    big = st[1:, cv2.CC_STAT_AREA].max()
+    ch = np.isin(lab2, [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] > max(3000, big * 0.01)]).astype(np.uint8)
+    ch = cv2.morphologyEx(ch, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+    ch = cv2.morphologyEx(ch, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    ch = cv2.erode(ch, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (WALL, WALL)))   # undo the wall's growth: back to the outline's outer edge
+    # fill holes (anything not reachable from the corners through the outside)
+    inv = (1 - ch).astype(np.uint8)
+    nl, ll = cv2.connectedComponents(inv, connectivity=4)
+    ch = (ll != ll[2, 2]).astype(np.uint8)
+    corners = np.concatenate([rgb[:40, :40].reshape(-1, 3), rgb[:40, -40:].reshape(-1, 3), rgb[-40:, :40].reshape(-1, 3), rgb[-40:, -40:].reshape(-1, 3)])
+    bgc = np.median(corners, axis=0).astype(np.float32)
+    r, g, b = [rgb[..., i].astype(np.float32) for i in range(3)]
+    away = cv2.dilate(ch, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))) == 0   # keep clear of the outline's own fringe
+    a = np.clip((r - bgc[0] - 28.0) / 110.0, 0, 1) * np.clip((r - b - 12.0) / 30.0, 0, 1)
+    a = a * away
+    a = cv2.GaussianBlur(a, (0, 0), 1.2)
+    a[cv2.dilate(ch, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))) > 0] = 0
+    colour = np.where(a[..., None] > 0.02, np.clip((rgb.astype(np.float32) - bgc * (1 - a[..., None])) / np.maximum(a[..., None], 0.25), 0, 255), np.array([255, 225, 150], np.float32))
+    return ch > 0, a, colour.astype(np.uint8)
+
+
 def register(alpha):
     """Uniform scale and translation to the doll canvas: character height from y 60 (ear tips) to 1605 (soles), feet centred on x 682."""
     ys, xs = np.where(alpha)
@@ -217,14 +256,22 @@ def main():
         zones = sys.argv[sys.argv.index("--zones") + 1]
     bgv = 128
     img = cv2.cvtColor(cv2.imread(src), cv2.COLOR_BGR2RGB)
-    alpha = key_outline(img) if "--outline-key" in sys.argv else key_background(img)
+    halo_a = halo_rgb = None
+    if "--flood-key" in sys.argv:
+        alpha, halo_a, halo_rgb = key_flood(img)
+        if "--no-halo" in sys.argv: halo_a = None
+    else:
+        alpha = key_outline(img) if "--outline-key" in sys.argv else key_background(img)
     cc, Af = register(alpha)
-    if zones in ("momo", "momo_u") and "--ref" in sys.argv:
+    if zones in ("momo", "momo_u") and "--ref" in sys.argv and "--reg-from" not in sys.argv:
         cc, Af = refine_to_doll(alpha, Af, sys.argv[sys.argv.index("--ref") + 1])
+    if "--reg-from" in sys.argv:   # take the registration of another sheet of the same pose (e.g. the Elite sheet for the Legendary one, whose halo rays would skew the silhouette fit)
+        Af = np.array(json.load(open(sys.argv[sys.argv.index("--reg-from") + 1]))["A"], np.float32)
+        cc = 1.0
     if zones == "spore":
         POLY = POLY_SPORE
         cc, Af = refine_to_doll(alpha, Af)
-    if zones in ZONE_SETS:
+    if zones in ZONE_SETS and "--reg-from" not in sys.argv:
         POLY = ZONE_SETS[zones]
         refimg = sys.argv[sys.argv.index("--ref") + 1] if "--ref" in sys.argv else None
         cc, Af = refine_to_doll(alpha, Af, refimg)
@@ -232,6 +279,9 @@ def main():
         POLY = POLY_DOLL
         refimg = sys.argv[sys.argv.index("--ref") + 1] if "--ref" in sys.argv else None
         cc, Af = refine_to_doll(alpha, Af, refimg)
+    if zones in ZONE_SETS: POLY = ZONE_SETS[zones]
+    os.makedirs(out, exist_ok=True)
+    json.dump({"A": Af.tolist()}, open(os.path.join(out, "reg.json"), "w"))
     # colour bleed: transparent pixels take the colour of the nearest character pixel, so the resampling never mixes the grey key colour into the edge (no grey halo)
     _, near = cv2.distanceTransformWithLabels((alpha == 0).astype(np.uint8), cv2.DIST_L2, 3, labelType=cv2.DIST_LABEL_PIXEL)
     ys0, xs0 = np.where(alpha > 0)
@@ -307,6 +357,14 @@ def main():
         tgt = OUT_PARTS[n]
         parts[tgt][sel] = canvas[sel]
     parts["back"][back] = canvas[back]
+    if halo_a is not None:   # the halo of light rays goes behind everything in the back piece (cape painted over it); soft alpha
+        hr = np.dstack([halo_rgb, (halo_a * 255).astype(np.uint8)])
+        hc = cv2.warpAffine(hr, Af, (W, H), flags=cv2.INTER_LINEAR | cv2.WARP_INVERSE_MAP, borderValue=(255, 225, 150, 0))
+        ha = hc[..., 3].astype(np.float32) / 255.0
+        ba = parts["back"][..., 3].astype(np.float32) / 255.0
+        out_a = ba + ha * (1 - ba)
+        col = (parts["back"][..., :3].astype(np.float32) * ba[..., None] + hc[..., :3].astype(np.float32) * (ha * (1 - ba))[..., None]) / np.maximum(out_a, 1e-3)[..., None]
+        parts["back"] = np.dstack([col.clip(0, 255).astype(np.uint8), (out_a * 255).astype(np.uint8)])
     for k, v in parts.items():
         cv2.imwrite(os.path.join(out, k + ".png"), cv2.cvtColor(v, cv2.COLOR_RGBA2BGRA))
     json.dump({"canvas": [W, H], "order": ["back", "legL", "legR", "body", "handL", "handR", "head"] if (back.any()) else ["legL", "legR", "body", "handL", "handR", "head"], "ecc": float(cc)},

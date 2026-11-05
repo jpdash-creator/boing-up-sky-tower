@@ -23,8 +23,9 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>The tower is kept this many rows above the player.</summary>
         public const int LookaheadRows = 60;
         /// <summary>
-        /// Hard cap of the PLAYABLE tower: Q16.16 holds about 32000 u, a row is at most 4.2 u, so rows past 7000 would overflow the Sim (about two hours of
-        /// perfect play). The generator itself has no limit: in <see cref="Stream"/> mode it re-bases its coordinates and reaches floor 100000 and beyond.
+        /// Cap of a FLAT (non-<see cref="Stream"/>) tower: Q16.16 holds about 32000 u and a row is at most 4.2 u, so a tower that never re-bases must stop at row 7000
+        /// (tests and golden hashes build flat towers). The PLAYED tower is a Stream tower owned by <see cref="EndlessWorld"/>: it re-bases its heights (and the
+        /// running state with them), so it has no cap and reaches floor 100000 and far beyond (owner 2026-11-05, "Fix the limit now").
         /// </summary>
         public const int MaxRows = 7000;
 
@@ -101,9 +102,11 @@ namespace BoingUpSkyTower.Simulation
 
         // ---- stream mode (generation beyond the Q16.16 range) ----
         /// <summary>
-        /// Generator-only mode for towers beyond <see cref="MaxRows"/>: when the stored heights pass <see cref="RebaseAtYRaw"/> the oldest rows are dropped
+        /// Mode for towers beyond <see cref="MaxRows"/>: when the stored heights pass <see cref="RebaseAtYRaw"/> the oldest rows are dropped
         /// and every height is shifted down (the dropped amount is kept in <see cref="OriginYRaw"/>), so memory stays small and no coordinate overflows.
-        /// <see cref="Data"/> is then only the recent window (ids restart at 0 after a re-base). The game does NOT use it: the Sim cannot re-base a running state.
+        /// <see cref="Data"/> is then only the recent window (platform and gong ids restart at 0 after a re-base; Platform.Row stays the ABSOLUTE floor).
+        /// A running Sim state follows a re-base through <see cref="Sim.ShiftState"/> with the deltas of <see cref="DroppedPlatforms"/>, <see cref="DroppedHazards"/>
+        /// and <see cref="OriginYRaw"/>; <see cref="EndlessWorld"/> does exactly that for the game.
         /// </summary>
         public bool Stream;
         /// <summary>Stream mode: re-base when the top height passes this (default 12000 u).</summary>
@@ -112,6 +115,16 @@ namespace BoingUpSkyTower.Simulation
         public const int KeepRows = 200;
         /// <summary>Total height (raw Q16.16) removed by re-bases; absolute height = OriginYRaw + stored height.</summary>
         public long OriginYRaw { get; private set; }
+        /// <summary>Total platforms and gongs dropped from the bottom of the window by re-bases (window id = absolute generation index - this).</summary>
+        public int DroppedPlatforms { get; private set; }
+        public int DroppedHazards { get; private set; }
+        /// <summary>Number of re-bases so far.</summary>
+        public int Rebases { get; private set; }
+        /// <summary>A re-base never drops a row at or above this one (default: no limit). EndlessWorld sets it from the player's platform, so the player's ground always survives.</summary>
+        public int ProtectRow = int.MaxValue;
+        /// <summary>Test hook: when above 0, a re-base is also forced whenever this many rows were generated since the last one.</summary>
+        public int RebaseEveryRows;
+        private int lastRebaseRow;
         private ulong fp = 14695981039346656037UL;
         private readonly List<long> milestones = new List<long>();
 
@@ -232,7 +245,7 @@ namespace BoingUpSkyTower.Simulation
         public bool EnsureAhead(int playerRow)
         {
             int need = playerRow + LookaheadRows;
-            if (row >= need || row >= MaxRows) return false;
+            if (row >= need || (!Stream && row >= MaxRows)) return false;
             int target = row;
             while (target < need) target += ChunkRows;
             GenerateTo(target);
@@ -265,7 +278,7 @@ namespace BoingUpSkyTower.Simulation
             while (row < target)
             {
                 AddRow(row + 1);
-                if (Stream && prevY.Raw > RebaseAtYRaw) Rebase();
+                if (Stream && (prevY.Raw > RebaseAtYRaw || (RebaseEveryRows > 0 && row - lastRebaseRow >= RebaseEveryRows))) Rebase();
             }
             LevelData d = new LevelData();
             d.Platforms = plats.ToArray();
@@ -275,15 +288,23 @@ namespace BoingUpSkyTower.Simulation
             Version++;
         }
 
-        /// <summary>Stream mode: drops the rows below TopRow - KeepRows and shifts every stored height down, so Q16.16 never overflows.</summary>
+        /// <summary>Test hook: re-bases right now (Stream mode only; drops everything below TopRow - KeepRows, never a protected row). Call <see cref="GenerateTo"/> or EndlessWorld.Grow afterwards to publish it.</summary>
+        public void RebaseNow()
+        {
+            if (Stream) Rebase();
+        }
+
+        /// <summary>Stream mode: drops the rows below TopRow - KeepRows (never a protected row) and shifts every stored height down, so Q16.16 never overflows.</summary>
         private void Rebase()
         {
             int keepFromRow = row - KeepRows;
+            if (ProtectRow < keepFromRow) keepFromRow = ProtectRow;
             int k = 0;
             while (k < plats.Count && plats[k].Row < keepFromRow) k++;
             if (k == 0 || k >= plats.Count) return;
             int shift = plats[k].Y.Raw;
             plats.RemoveRange(0, k);
+            DroppedPlatforms += k;
             for (int i = 0; i < plats.Count; i++)
             {
                 Platform p = plats[i];
@@ -294,6 +315,7 @@ namespace BoingUpSkyTower.Simulation
             int h = 0;
             while (h < hazards.Count && hazards[h].Y.Raw < shift) h++;
             hazards.RemoveRange(0, h);
+            DroppedHazards += h;
             for (int i = 0; i < hazards.Count; i++)
             {
                 Hazard z = hazards[i];
@@ -303,6 +325,8 @@ namespace BoingUpSkyTower.Simulation
             }
             prevY = Fx.FromRaw(prevY.Raw - shift);
             OriginYRaw += shift;
+            Rebases++;
+            lastRebaseRow = row;
         }
 
         private void MixFp(long v)

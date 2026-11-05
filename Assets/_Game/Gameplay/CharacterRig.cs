@@ -203,8 +203,27 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The player's hero inventory as the Heroes screen lists it (docs/36): hero then tier, Momo always first line. The hidden CharacterInventory is never listed.</summary>
         public static CharacterDef[] HeroList(ProgressService p) { return Available(p); }
 
-        /// <summary>The number on a hero card (docs/36): copies, never below 1.</summary>
-        public static int BadgeCount(ProgressService p, CharacterDef who) { return p == null || who == null ? 1 : p.HeroInventory.BadgeCount(who.Id); }
+        /// <summary>The specs of <see cref="Available"/> in list order (the pure card lists take specs).</summary>
+        static List<CharacterSpec> AvailableSpecs(ProgressService p)
+        {
+            var list = new List<CharacterSpec>(All.Length);
+            foreach (CharacterDef c in Available(p)) { CharacterSpec s = c.Info; if (s != null) list.Add(s); }
+            return list;
+        }
+
+        /// <summary>
+        /// The main Heroes list (docs/34 section 10): ONE CARD PER OWNED COPY, no counts anywhere. Two Common Momo are two cards with the same artwork; the chosen tick sits on the first card of the chosen type.
+        /// </summary>
+        public static List<HeroCard> OwnedCards(ProgressService p)
+        {
+            return HeroCards.Owned(AvailableSpecs(p), id => p != null ? p.Copies(id) : 1);
+        }
+
+        /// <summary>The Merge screen list: every copy of every hero type that has a next tier and at least 3 copies (types with fewer copies are not listed).</summary>
+        public static List<HeroCard> MergeCards(ProgressService p)
+        {
+            return p == null ? new List<HeroCard>() : HeroCards.Mergeable(AvailableSpecs(p), id => p.Copies(id));
+        }
 
         /// <summary>The chosen character (Momo until another is picked, and when the chosen one is not owned).</summary>
         public static CharacterDef Selected

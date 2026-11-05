@@ -3,7 +3,7 @@ using System;
 namespace BoingUpSkyTower.Economy
 {
     /// <summary>
-    /// Admin "Main rewards" test switch (docs/38, Bug List 4 E3): every Main-tab reward (the five region rewards and all star milestones) reads as complete but
+    /// Admin "Main rewards" test switch (docs/38, Bug List 4 E3): every Main-tab region goal (all goals of regions 1 to 5) reads as complete but
     /// stays unclaimed and unpaid, so the owner can review and claim each one. It is an override stored in the save (additive field, no version break); the
     /// real level and star progress is never touched, so switching it off restores the previous progress exactly.
     /// </summary>
@@ -34,20 +34,13 @@ namespace BoingUpSkyTower.Economy
             return on;
         }
 
-        /// <summary>Main progress with the override applied: a region reward is complete (all its levels), a star reward reaches the largest star target.</summary>
+        /// <summary>Main progress with the override applied: with the switch on every region goal of every playable region reads as complete (progress at least its target).</summary>
         int MainProgress(RewardEntry e)
         {
-            bool region = IsRegionEntry(e);
-            int real = region ? RegionLevelsCleared(e.Target) : TotalStars();
-            if (!AdminMainRewardsReady) return real;
-            int need;
-            if (region) need = RewardTarget(RewardTab.Main, e);
-            else
-            {
-                need = 0;
-                foreach (RewardEntry s in RewardDefs.StarMilestones) need = Math.Max(need, s.Target);
-            }
-            return Math.Max(real, need);
+            RegionGoal g = e as RegionGoal;
+            if (g == null) return 0;
+            int real = RealGoalProgress(g);
+            return AdminMainRewardsReady ? Math.Max(real, g.Target) : real;
         }
     }
 }

@@ -29,7 +29,7 @@ namespace BoingUpSkyTower.Gameplay
         public static HeroSheetData For(CharacterDef who)
         {
             CharacterSpec spec = who.Info;
-            string region = "Found in chests";
+            string region = spec != null && spec.IsMergeTier ? "Merged" : "Found in chests";
             if (spec != null && spec.Region > 0)
             {
                 RegionDef r = GameSession.Repo != null ? GameSession.Repo.TryGetRegionByIndex(spec.Region) : null;

@@ -4,22 +4,25 @@ using System.Globalization;
 using System.Text;
 using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
+using BoingUpSkyTower.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The Rewards screen (docs/26 section 4, "RewardsStyle"), sleek redesign of Bug List 3 D4: tabs Main | Daily | Weekly in a footer with Back and Claim All.
-    /// Main: a scene header (scene_daily, like Daily) behind the region circle strip and names, a purple bonus band (clear all levels of the chosen region) and the star milestone cards on a numbered rail.
+    /// The Rewards screen (docs/26 section 4, "RewardsStyle"), tabs Main | Daily | Weekly in a footer with Back and Claim All.
+    /// Main (Bug List 5 F1.a, docs/39): a PINNED scene header (scene_daily, like Daily) with a horizontally scrolling, snapping strip of all 30 region circles (1-5 playable, 6-30 "Coming Soon"),
+    /// then the goal cards of the SELECTED region (the same compact cards as Daily and Weekly; the endless tiers come last under an "Endless" divider). Claim All on Main claims the selected region's ready goals.
     /// Daily and Weekly: a scene header with the reset timer and the points track (Daily, chests with thresholds) or the tasks done bar (Weekly), then the task cards.
     /// Cards (compact: 136 px, gap 10): cream (open), yellow with a big green Claim button as the reward plate (ready; the card itself claims too), green with a check (claimed); a dark reward plate at the right.
-    /// Files: this one (frame, tabs, claiming), RewardsScreen.Cards.cs (cards, plates, bars), RewardsScreen.Headers.cs (Main band, scene headers, track).
-    /// Everything scrolls in one list, so short screens never lose content. Menu screen only: no per-frame work except the once-a-second countdown text.
+    /// A claim shows a SMALL ICON CARD (chips with amounts, hero faces, a green OK; closes after 4 s or on a tap), never a sentence.
+    /// Files: this one (frame, tabs, claiming, the small reward card), RewardsScreen.Cards.cs (cards, plates, bars, hero faces), RewardsScreen.Headers.cs (Main region strip, scene headers, track).
+    /// Menu screen only: no per-frame work except the once-a-second countdown text and the strip's snap glide (only while it moves).
     /// </summary>
     public sealed partial class RewardsScreen
     {
-        /// <summary>What the screen needs from the meta scene: the dim overlay layer for the "Reward!" card and the way back. It never owns a canvas.</summary>
+        /// <summary>What the screen needs from the meta scene: the dim overlay layer for the reward card and the way back. It never owns a canvas.</summary>
         public sealed class Host
         {
             public Func<RectTransform> NewOverlay;
@@ -35,11 +38,12 @@ namespace BoingUpSkyTower.Gameplay
         public const float FooterH = BottomPad + BackSize + BottomPad;
         const int BodyPx = 44;
 
-        // Main header stack (top to bottom): circles (selected one is 190 tall, starts at -14), 10 gap, name zone, gap, bonus band.
-        // The name zone reserves two lines at the current text scale so a wrapped name can never reach the band (CUX-3).
+        // Main header stack (top to bottom): circles (selected one is 190 tall, starts at -14), 10 gap, name zone, gap (holds the pointer).
+        // The name zone reserves two lines at the current text scale so a wrapped name can never reach the list (CUX-3).
         const float CircleBottom = 14f + 190f, NameGap = 10f, PanelGap = 44f;
         static float NameZone { get { return Mathf.Ceil(Mathf.Max(36f, UiKit.MinBodyTextPx) * UiKit.TextScale * 3.9f) + 8f; } }
-        static float CircleZone { get { return CircleBottom + NameGap + NameZone + PanelGap; } }
+        /// <summary>Height of the pinned Main header (the region strip) at the current text size.</summary>
+        public static float CircleZone { get { return CircleBottom + NameGap + NameZone + PanelGap; } }
 
         // ---- colours ----
         static readonly Color FooterColor = new Color(0.10f, 0.13f, 0.32f, 1f);
@@ -47,8 +51,6 @@ namespace BoingUpSkyTower.Gameplay
         static readonly Color BarBlue = new Color(0.20f, 0.60f, 1f, 1f);
         static readonly Color BarGreen = new Color(0.22f, 0.78f, 0.34f, 1f);
         static readonly Color BarGold = new Color(1f, 0.72f, 0.12f, 1f);
-        static readonly Color PurpleBand = new Color(0.48f, 0.32f, 0.74f, 1f);
-        static readonly Color PurpleEdge = new Color(0.32f, 0.20f, 0.54f, 1f);
 
         readonly RectTransform screen;
         readonly ProgressService progress;
@@ -57,6 +59,9 @@ namespace BoingUpSkyTower.Gameplay
         readonly Host host;
 
         RectTransform root, body;
+        RectTransform listViewport, mainHeader;
+        RegionStripSnap stripSnap;
+        GameObject claimAllGo;
         Button backButton;
         RewardsTicker ticker;
         Text timerText;
@@ -67,8 +72,12 @@ namespace BoingUpSkyTower.Gameplay
         public Text CoinText { get; private set; }
         public Text GemText { get; private set; }
         public RewardTab Tab { get; private set; }
+        /// <summary>The region whose goals the Main tab lists (1..30).</summary>
+        public int SelectedRegion { get { return selectedRegion; } }
         /// <summary>The scrolling list of the current tab (tests scroll it or count its rows).</summary>
         public RectTransform ListContent { get; private set; }
+        /// <summary>The card of the last <see cref="ShowClaimed"/> (null before the first one; tests read its chips).</summary>
+        public RectTransform RewardCard { get; private set; }
 
         public RewardsScreen(RectTransform screen, ProgressService progress, ContentRepository repo, ArtCatalog art, Host host)
         {
@@ -103,7 +112,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             Tab = tab;
             int cur = progress.CurrentRegion().Index;
-            selectedRegion = Mathf.Clamp(cur, 1, GameSession.PlayableRegions);
+            selectedRegion = Mathf.Clamp(cur, 1, RegionGoalTable.PlayableRegions);
             root = UiKit.Rect(screen, "RewardsRoot");
             UiKit.Stretch(root);
 
@@ -138,44 +147,64 @@ namespace BoingUpSkyTower.Gameplay
             Render();
         }
 
-        /// <summary>Chooses the region shown in the Main tab's bonus band (tests and the circles use it).</summary>
+        /// <summary>
+        /// Chooses the region whose goals the Main tab lists (1..30; the circles, tests and the admin tools use it). On Main the strip is re-centred and the goal list and the
+        /// Claim All button are rebuilt (the list is NOT static: it changes with every region); on another tab only the choice is stored.
+        /// </summary>
         public void SelectRegion(int index)
         {
-            selectedRegion = Mathf.Clamp(index, 1, GameSession.PlayableRegions);
-            if (Tab == RewardTab.Main) Render();
+            selectedRegion = Mathf.Clamp(index, 1, RegionGoalTable.TotalRegions);
+            if (Tab != RewardTab.Main || body == null) return;
+            ApplyStripSelection();
+            if (stripSnap != null) stripSnap.CenterOn(selectedRegion - 1, true);
+            RebuildGoals();
+            BuildClaimAll();
         }
 
         static void Kill(GameObject go)
         {
+            go.name = "Dead";   // a delayed Destroy keeps the old object for a frame: name lookups must not find it
             go.SetActive(false);
             if (Application.isPlaying) UnityEngine.Object.Destroy(go);
             else UnityEngine.Object.DestroyImmediate(go);
         }
 
-        void Render()
+        void Render(bool keepScroll = false)
         {
             if (root == null) return;
+            float keepY = keepScroll && ListContent != null ? ListContent.anchoredPosition.y : 0f;
             if (body != null) Kill(body.gameObject);
             body = UiKit.Rect(root, "Body");
             UiKit.Stretch(body);
             timerText = null;
             timerSeconds = -1;
+            listViewport = null;
+            mainHeader = null;
+            claimAllGo = null;
+            stripSnap = null;
             lastRemaining = Tab == RewardTab.Main ? 0.0 : Remaining().TotalSeconds;
 
+            if (Tab == RewardTab.Main) BuildMainHeader(body);
             BuildList();
             BuildFooter();
             BuildTabs();
             BuildClaimAll();
             if (backButton != null) backButton.transform.SetAsLastSibling();   // above the footer bar
+            if (keepScroll && ListContent != null) ListContent.anchoredPosition = new Vector2(0f, keepY);
             Tick();
         }
 
         TimeSpan Remaining() { return Tab == RewardTab.Weekly ? progress.WeeklyResetIn() : progress.DailyResetIn(); }
 
-        /// <summary>Once-a-second countdown and the rollover check (a day or week that ends while the screen is open rebuilds the tab).</summary>
+        /// <summary>Once-a-second countdown and the rollover check (a day or week that ends while the screen is open rebuilds the tab); on Main it drives the strip's snap glide.</summary>
         void Tick()
         {
-            if (Tab == RewardTab.Main || timerText == null) return;
+            if (Tab == RewardTab.Main)
+            {
+                if (stripSnap != null) stripSnap.Step(Time.unscaledDeltaTime);
+                return;
+            }
+            if (timerText == null) return;
             TimeSpan left = Remaining();
             if (left.TotalSeconds > lastRemaining + 1.0) { Render(); return; }   // the period rolled over: new counters, new claims
             lastRemaining = left.TotalSeconds;
@@ -193,13 +222,15 @@ namespace BoingUpSkyTower.Gameplay
         void BuildList()
         {
             RectTransform viewport = UiKit.Rect(body, "Viewport");
+            listViewport = viewport;
             viewport.anchorMin = Vector2.zero;
             viewport.anchorMax = Vector2.one;
-            viewport.offsetMin = new Vector2(0f, BottomReserve());   // full width: the scene headers and the band run edge to edge
-            viewport.offsetMax = new Vector2(0f, -(WalletTop + WalletH + 12f));
+            viewport.offsetMin = new Vector2(0f, BottomReserve());   // full width: the scene headers run edge to edge
+            viewport.offsetMax = new Vector2(0f, -(WalletTop + WalletH + 12f + (Tab == RewardTab.Main ? CircleZone : 0f)));
             viewport.gameObject.AddComponent<RectMask2D>();
             Image hit = viewport.gameObject.AddComponent<Image>();   // catches the drag on the gaps between cards
             hit.color = new Color(0f, 0f, 0f, 0.001f);
+            if (mainHeader != null) viewport.SetSiblingIndex(mainHeader.GetSiblingIndex() + 1);   // a rebuilt list stays under the footer
 
             RectTransform content = UiKit.Rect(viewport, "Content");
             content.anchorMin = new Vector2(0f, 1f);
@@ -209,7 +240,7 @@ namespace BoingUpSkyTower.Gameplay
             content.sizeDelta = Vector2.zero;
             var vl = content.gameObject.AddComponent<VerticalLayoutGroup>();
             vl.spacing = CardGap;
-            vl.padding = new RectOffset((int)Side, (int)Side, 4, 72);   // the last card scrolls fully clear of the tab row
+            vl.padding = new RectOffset((int)Side, (int)Side, Tab == RewardTab.Main ? 14 : 4, 72);   // the last card scrolls fully clear of the tab row
             vl.childAlignment = TextAnchor.UpperCenter;
             vl.childControlWidth = vl.childControlHeight = true;
             vl.childForceExpandWidth = true;
@@ -229,20 +260,25 @@ namespace BoingUpSkyTower.Gameplay
             RewardCatalog defs = progress.RewardDefs;
             if (Tab == RewardTab.Main)
             {
-                BuildMainHeader(content);
-                int n = defs.StarMilestones.Count;
-                for (int i = 0; i < n; i++) AddCard(content, defs.StarMilestones[i], true, i, n, true);
+                BuildMainGoals(content);
             }
             else if (Tab == RewardTab.Daily)
             {
                 BuildSceneHeader(content, true);
-                foreach (RewardEntry a in defs.DailyActions) AddCard(content, a, false, 0, 0, false);
+                foreach (RewardEntry a in defs.DailyActions) AddCard(content, a, false);
             }
             else
             {
                 BuildSceneHeader(content, false);
-                foreach (RewardEntry e in defs.WeeklyTasks) AddCard(content, e, true, 0, 0, false);
+                foreach (RewardEntry e in defs.WeeklyTasks) AddCard(content, e, true);
             }
+        }
+
+        /// <summary>Main: rebuilds only the goal list (a region was chosen); the strip and the footer stay.</summary>
+        void RebuildGoals()
+        {
+            if (listViewport != null) Kill(listViewport.gameObject);
+            BuildList();
         }
 
         // ---------------- footer: tabs, bar, Back and Claim All ----------------
@@ -299,20 +335,27 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>The green Claim All button, bottom right in the footer; it only exists while something in the tab is ready.</summary>
+        /// <summary>
+        /// The green Claim All button, bottom right in the footer; it only exists while something in the tab is ready.
+        /// On Main it claims the goals that are ready in the SELECTED region (the red dots on the strip circles lead to the other regions).
+        /// </summary>
         void BuildClaimAll()
         {
-            if (!progress.HasClaimable(Tab)) return;
+            if (claimAllGo != null) { Kill(claimAllGo); claimAllGo = null; }
+            bool any = Tab == RewardTab.Main ? progress.HasClaimableInRegion(selectedRegion) : progress.HasClaimable(Tab);
+            if (!any) return;
             RewardTab tab = Tab;
             Button b = UiKit.AddButton(body, "ClaimAll", "Claim All", ToyKit.Button(1), Color.white, new Vector2(440f, 130f), () => ClaimAll(tab), 50);
-            b.GetComponent<A11yLabel>().Text = "Claim all ready rewards";
+            b.GetComponent<A11yLabel>().Text = tab == RewardTab.Main ? "Claim all ready rewards of this region" : "Claim all ready rewards";
             b.GetComponent<Image>().raycastTarget = true;
             UiKit.Place((RectTransform)b.transform, new Vector2(1f, 0f), new Vector2(-Side, BottomPad + (BackSize - 130f) * 0.5f), new Vector2(440f, 130f));
+            claimAllGo = b.gameObject;
+            if (backButton != null) backButton.transform.SetAsLastSibling();
         }
 
         // ---------------- claiming ----------------
 
-        /// <summary>Claims one reward (a card, a track chest or tests). Shows the "Reward!" card and redraws the tab on success.</summary>
+        /// <summary>Claims one reward (a card, a track chest or tests). Shows the small reward card and redraws the tab on success.</summary>
         public RewardClaimOutcome Claim(RewardTab tab, string id)
         {
             RewardClaimOutcome res = progress.TryClaimReward(tab, id);
@@ -320,10 +363,10 @@ namespace BoingUpSkyTower.Gameplay
             return res;
         }
 
-        /// <summary>Claims everything ready in a tab in one tap (one save).</summary>
+        /// <summary>Claims everything ready in a tab in one tap (one save). On Main: the ready goals of the selected region only.</summary>
         public RewardClaimOutcome ClaimAll(RewardTab tab)
         {
-            RewardClaimOutcome res = progress.ClaimAll(tab);
+            RewardClaimOutcome res = tab == RewardTab.Main ? progress.ClaimAllRegion(selectedRegion) : progress.ClaimAll(tab);
             if (res.Result == RewardClaimResult.Ok) AfterClaim(res);
             return res;
         }
@@ -334,19 +377,33 @@ namespace BoingUpSkyTower.Gameplay
             Haptics.Pulse();
             UiKit.SetText(CoinText, progress.Coins.ToString());
             UiKit.SetText(GemText, progress.Gems.ToString());
-            Render();
+            Render(true);
             ShowClaimed(res);
         }
 
-        /// <summary>The "Reward!" card listing what a claim paid (the layout audit shows it with a sample).</summary>
-        public void ShowClaimed(RewardClaimOutcome res)
+        // ---------------- the small reward card ----------------
+
+        const float ChipCardW = 206f, ChipCardGap = 14f, ChipIcon = 96f, CardPad = 36f;
+        const int ChipsPerRow = 4;
+        /// <summary>Seconds the small reward card stays before it closes itself.</summary>
+        public const float RewardCardSeconds = 4f;
+
+        /// <summary>One icon chip of the small reward card: a picture (or a hero face) and a short amount ("40", "2K", "x3"); no sentences.</summary>
+        struct ClaimChip
         {
-            if (host == null || host.NewOverlay == null) return;
-            RectTransform overlay = host.NewOverlay();
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, "Reward!", art, new Vector2(860f, 980f), host.CloseOverlay);
-            var sb = new StringBuilder();
-            if (res.Gems > 0) sb.Append("+").Append(Num(res.Gems)).Append(" gems\n");
-            if (res.Coins > 0) sb.Append("+").Append(Num(res.Coins)).Append(" coins\n");
+            public Sprite Icon;
+            public PowerUp? Power;
+            public string HeroId, Amount, Spoken;
+        }
+
+        static float ChipH { get { return 14f + ChipIcon + 6f + LineH(BodyPx) + 10f; } }
+
+        /// <summary>The icon chips a claim paid, in order: gems, coins, each power-up type with its count, one face per hero copy.</summary>
+        List<ClaimChip> ClaimChips(RewardClaimOutcome res)
+        {
+            var chips = new List<ClaimChip>(6);
+            if (res.Gems > 0) chips.Add(new ClaimChip { Icon = GemSprite, Amount = Compact(res.Gems), Spoken = Num(res.Gems) + " gems" });
+            if (res.Coins > 0) chips.Add(new ClaimChip { Icon = CoinSprite, Amount = Compact(res.Coins), Spoken = Num(res.Coins) + " coins" });
             var counts = new Dictionary<string, int>();
             var order = new List<string>();
             foreach (string pid in res.PowerUpIds)
@@ -357,22 +414,114 @@ namespace BoingUpSkyTower.Gameplay
             foreach (string pid in order)
             {
                 PowerUpDef def = progress.PowerUpDefs.Get(pid);
-                sb.Append("+").Append(counts[pid]).Append(' ').Append(def != null ? def.Name : pid).Append('\n');
+                chips.Add(new ClaimChip { Icon = BoltSprite, Power = def != null ? def.Type : (PowerUp?)null, Amount = "x" + counts[pid], Spoken = counts[pid] + " " + (def != null ? def.Name : "power-up") });
             }
-            Text t = UiKit.AddText(panel, "Body", sb.ToString().TrimEnd('\n'), 56, Theme.Ink);
-            UiKit.OnPanel(t);
-            UiKit.Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(0f, -230f), new Vector2(740f, 520f));
-            ToyKit.PopupAction(panel, "OK", null, Color.white, 60f, host.CloseOverlay);
+            foreach (string hid in res.HeroIds)
+            {
+                CharacterSpec spec = CharacterInventory.Get(hid);
+                chips.Add(new ClaimChip { HeroId = hid, Amount = "", Spoken = (spec != null ? spec.Name : "hero") + " hero" });
+            }
+            return chips;
         }
 
-        /// <summary>"20 gems and 1 power-up" for screen readers and the reward card.</summary>
+        /// <summary>
+        /// The small reward card: a compact centred card with a row of icon chips (gem, coin, power-up with x n, a hero face for every hero copy) and a green check OK button
+        /// (at least 48 dp, "OK" for screen readers). No sentences. It closes on OK, on a tap anywhere, or by itself after <see cref="RewardCardSeconds"/>.
+        /// </summary>
+        public void ShowClaimed(RewardClaimOutcome res)
+        {
+            if (host == null || host.NewOverlay == null) return;
+            RectTransform overlay = host.NewOverlay();
+            List<ClaimChip> chips = ClaimChips(res);
+            int n = Mathf.Max(1, chips.Count);
+            int rows = (n + ChipsPerRow - 1) / ChipsPerRow;
+            int perRow = Mathf.Min(n, ChipsPerRow);
+            float chipH = ChipH;
+            float ok = Mathf.Max(130f, UiKit.MinTouchRef);
+            float w = 2f * CardPad + perRow * ChipCardW + (perRow - 1) * ChipCardGap;
+            float h = CardPad + rows * chipH + (rows - 1) * ChipCardGap + 26f + ok + 30f;
+
+            RectTransform panel = UiKit.Rect(overlay, "Panel");
+            UiKit.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(w, h));
+            panel.pivot = new Vector2(0.5f, 0.5f);
+            Theme.CardBacking(panel);
+            RewardCard = panel;
+
+            var spoken = new List<string>();
+            for (int i = 0; i < chips.Count; i++)
+            {
+                int row = i / ChipsPerRow, inRow = Mathf.Min(ChipsPerRow, chips.Count - row * ChipsPerRow);
+                float rowW = inRow * ChipCardW + (inRow - 1) * ChipCardGap;
+                float x = -rowW * 0.5f + (i % ChipsPerRow) * (ChipCardW + ChipCardGap) + ChipCardW * 0.5f;
+                BuildClaimChip(panel, chips[i], new Vector2(x, -(CardPad + row * (chipH + ChipCardGap))), chipH);
+                spoken.Add(chips[i].Spoken);
+            }
+            panel.gameObject.AddComponent<A11yLabel>().Text = "Reward: " + string.Join(", ", spoken.ToArray());
+
+            ToyKit.PopupAction(panel, "OK", null, Color.white, 30f, host.CloseOverlay);
+
+            // a tap anywhere closes it (the dim overlay is the button), and so does the timer
+            Action close = host.CloseOverlay;
+            var tap = overlay.gameObject.AddComponent<Button>();
+            Image dim = overlay.GetComponent<Image>();
+            if (dim != null) { dim.raycastTarget = true; tap.targetGraphic = dim; }
+            tap.transition = Selectable.Transition.None;
+            tap.onClick.AddListener(() => { if (close != null) close(); });
+            var timer = overlay.gameObject.AddComponent<RewardCardTimer>();
+            timer.Seconds = RewardCardSeconds;
+            timer.OnTimeUp = close;
+        }
+
+        void BuildClaimChip(RectTransform panel, ClaimChip c, Vector2 pos, float chipH)
+        {
+            Image chip = Plate(panel, "Chip", "plate_chip", Color.white, RewardCorner);
+            UiKit.Place(chip.rectTransform, new Vector2(0.5f, 1f), pos, new Vector2(ChipCardW, chipH));
+            if (c.HeroId != null)
+            {
+                RectTransform face = HeroFace(chip.transform, "HeroFace", c.HeroId, ChipIcon);
+                UiKit.Place(face, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(ChipIcon, ChipIcon));
+                return;
+            }
+            if (c.Power.HasValue) PowerUpUi.AddIcon(chip.transform, "Icon", c.Power.Value, new Vector2(0.5f, 1f), new Vector2(0f, -14f), ChipIcon, false);
+            else
+            {
+                Image ic = UiKit.AddImage(chip.transform, "Icon", c.Icon, Color.white);
+                UiKit.Place(ic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(ChipIcon, ChipIcon));
+            }
+            Text t = UiKit.AddText(chip.transform, "Amount", c.Amount, BodyPx, Color.white, TextAnchor.MiddleCenter, true);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            RectTransform trt = t.rectTransform;
+            trt.anchorMin = new Vector2(0f, 0f);
+            trt.anchorMax = new Vector2(1f, 0f);
+            trt.pivot = new Vector2(0.5f, 0f);
+            trt.offsetMin = new Vector2(0f, 8f);
+            trt.offsetMax = new Vector2(0f, 8f + LineH(BodyPx));
+        }
+
+        /// <summary>"20 gems and 1 power-up" for screen readers.</summary>
         static string Describe(RewardEntry e)
         {
             var parts = new List<string>();
             if (e.Gems > 0) parts.Add(Num(e.Gems) + " gems");
             if (e.Coins > 0) parts.Add(Num(e.Coins) + " coins");
             if (e.PowerUps > 0) parts.Add(e.PowerUps + (e.PowerUps == 1 ? " power-up" : " power-ups"));
+            if (e.GivesHero) parts.Add("a hero");
             return string.Join(" and ", parts.ToArray());
+        }
+    }
+
+    /// <summary>Closes the small reward card after a few seconds (unscaled time). Lives on the overlay, so it dies with it; one float subtraction per frame, no allocation.</summary>
+    public sealed class RewardCardTimer : MonoBehaviour
+    {
+        public float Seconds = 4f;
+        public Action OnTimeUp;
+
+        void Update()
+        {
+            Seconds -= Time.unscaledDeltaTime;
+            if (Seconds > 0f) return;
+            enabled = false;
+            if (OnTimeUp != null) OnTimeUp();
         }
     }
 }

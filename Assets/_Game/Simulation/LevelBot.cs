@@ -195,8 +195,11 @@ namespace BoingUpSkyTower.Simulation
                 try
                 {
                     best = start;
+                    pathRev.Clear();
+                    InputTrace = null;
                     bool solved = Search(start, 0);
                     result = Result(solved);
+                    if (RecordInputs && solved) BuildTrace();
                 }
                 catch (System.Exception e) { error = e; }
             }, 128 * 1024 * 1024);
@@ -229,15 +232,17 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Returns 1 when the child led to the goal, -1 when the node budget is spent, 0 otherwise.</summary>
         private int Visit(SimState s, SimState c, int sameRow)
         {
+            int[] seg = null;
+            if (RecordInputs) { seg = new int[recN]; System.Array.Copy(rec, seg, recN); }   // the inputs of the jump that led to c (TryJump ran just before)
             // A goal met on the way (for example the hidden gem picked up while running along the take-off platform) ends the search even when the
             // jump itself did not change the platform or the row.
-            if (c.Row >= s.Row && !Prune(c) && Done(c)) { best = c; return 1; }
+            if (c.Row >= s.Row && !Prune(c) && Done(c)) { best = c; if (seg != null) pathRev.Add(seg); return 1; }
             if (c.Row <= s.Row && c.GroundId == s.GroundId) return 0;
             if (c.Row < s.Row) return 0;
             if (c.Row == s.Row && sameRow >= MaxSameRowHops) return 0;
             if (Prune(c)) return 0;
             if (!visited.Add(Key(c))) return 0;
-            if (Search(c, c.Row == s.Row ? sameRow + 1 : 0)) return 1;
+            if (Search(c, c.Row == s.Row ? sameRow + 1 : 0)) { if (seg != null) pathRev.Add(seg); return 1; }
             return nodes > maxNodes ? -1 : 0;
         }
 
@@ -431,32 +436,63 @@ namespace BoingUpSkyTower.Simulation
             scratch.PickupTaken = pt;
         }
 
+        // ---- optional input recording (tests): the exact per-tick inputs of the solving line, so a run can be replayed through another world (determinism tests) ----
+
+        /// <summary>Set before Solve/SolveFrom: records the per-tick inputs of the solving line into <see cref="InputTrace"/> (depth-first search only). Slightly slower.</summary>
+        public bool RecordInputs;
+        /// <summary>The inputs (one per tick, from the start state of SolveFrom) of the line that solved the level; null unless RecordInputs was set and the level was solved.</summary>
+        public int[] InputTrace;
+        private int[] rec = new int[1024];
+        private int recN;
+        private readonly List<int[]> pathRev = new List<int[]>();
+
+        private void StepScratch(int input)
+        {
+            sim.Step(ref scratch, input);
+            if (RecordInputs)
+            {
+                if (recN == rec.Length) System.Array.Resize(ref rec, rec.Length * 2);
+                rec[recN++] = input;
+            }
+        }
+
+        private void BuildTrace()
+        {
+            int total = 0;
+            for (int i = 0; i < pathRev.Count; i++) total += pathRev[i].Length;
+            int[] t = new int[total];
+            int at = 0;
+            for (int i = pathRev.Count - 1; i >= 0; i--) { System.Array.Copy(pathRev[i], 0, t, at, pathRev[i].Length); at += pathRev[i].Length; }
+            InputTrace = t;
+        }
+
         private bool TryJump(SimState from, int wait, int back, int runDir, int runTicks, int airDir, int airHold, int home, int home2, int bias, out SimState result)
         {
             result = from;
+            recN = 0;
             LoadScratch(from);
             int runInput = runDir < 0 ? SimInput.Left : (runDir > 0 ? SimInput.Right : 0);
             int airInput = airDir < 0 ? SimInput.Left : (airDir > 0 ? SimInput.Right : 0);
 
             for (int i = 0; i < wait; i++)
             {
-                sim.Step(ref scratch, 0);
+                StepScratch(0);
                 if (scratch.Dead || !scratch.Grounded) return false;
             }
             int backInput = runDir < 0 ? SimInput.Right : (runDir > 0 ? SimInput.Left : 0);
             for (int i = 0; i < back; i++)
             {
-                sim.Step(ref scratch, backInput);
+                StepScratch(backInput);
                 if (scratch.Dead || !scratch.Grounded) return false;
                 if (noWall && scratch.WallBounces > 0) return false;
             }
             for (int i = 0; i < runTicks; i++)
             {
-                sim.Step(ref scratch, runInput);
+                StepScratch(runInput);
                 if (scratch.Dead || !scratch.Grounded) return false;
                 if (noWall && scratch.WallBounces > 0) return false;
             }
-            sim.Step(ref scratch, runInput | SimInput.Jump);
+            StepScratch(runInput | SimInput.Jump);
             if (scratch.Dead || scratch.Grounded) return false;
 
             int air = 0;
@@ -468,7 +504,7 @@ namespace BoingUpSkyTower.Simulation
             while (!scratch.Grounded && !scratch.Dead && air < MaxAirTicks)
             {
                 int input = curHome >= 0 ? HomeInput(scratch, curHome, curHome == home ? exitBias : Fx.Zero) : (airHold > 0 && air >= airHold ? 0 : airInput);
-                sim.Step(ref scratch, input);
+                StepScratch(input);
                 air++;
                 if (scratch.GroundId != lastGround)
                 {

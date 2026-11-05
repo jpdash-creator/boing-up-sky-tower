@@ -115,6 +115,18 @@ namespace BoingUpSkyTower.Gameplay
             if (painted.Length < n) System.Array.Resize(ref painted, n);
         }
 
+        /// <summary>Endless re-base: platform ids moved down by k (the first k platforms left the window). Releases their parts and moves the per-platform slots down. No allocation.</summary>
+        public void ShiftDown(int k)
+        {
+            if (k <= 0) return;
+            for (int i = 0; i < k && i < parts.Length; i++) Release(i);
+            if (k >= parts.Length) return;   // everything was released (and the slots are empty)
+            System.Array.Copy(parts, k, parts, 0, parts.Length - k);
+            System.Array.Clear(parts, parts.Length - k, k);
+            System.Array.Copy(painted, k, painted, 0, painted.Length - k);
+            System.Array.Clear(painted, painted.Length - k, k);
+        }
+
         /// <param name="hasArt">True when RunView drew the painted piece of this platform (the squash of the Snap Daisy only applies to painted art).</param>
         public void Attach(int i, Platform p, bool hasArt)
         {

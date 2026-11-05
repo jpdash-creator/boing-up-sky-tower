@@ -589,13 +589,33 @@ namespace BoingUpSkyTower.Gameplay
         {
             NewScreen("Characters");
             Stage stage = StageScene.Build(screenRoot, art, progress, StageScene.CharacterLayout());
-            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters), OpenMerge = ShowMerge });
+            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters), OpenMerge = ShowMerge, OpenAllHeroes = ShowAllHeroes });
             characters.Build();
             AddBack("Back", ShowMenu);
             AddTabBar(ToyKit.TabHeroes);
             coinText = characters.CoinText;
             gemText = characters.GemText;
             RefreshWallet();
+        }
+
+        // ---------------- all heroes (docs/34 section 10) ----------------
+
+        AllHeroesScreen allHeroes;
+
+        public AllHeroesScreen CurrentAllHeroes { get { return CurrentScreen == AllHeroesScreen.ScreenName ? allHeroes : null; } }
+
+        /// <summary>All Heroes: every character of the game, grouped by region, locked ones greyed with a padlock. Opened from the All Heroes button on the Heroes screen; Back returns there.</summary>
+        public void ShowAllHeroes()
+        {
+            NewScreen(AllHeroesScreen.ScreenName);
+            allHeroes = new AllHeroesScreen(screen, screenRoot, progress, art, new AllHeroesScreen.Host
+            {
+                NewOverlay = NewOverlay,
+                CloseOverlay = ClosePopup,
+                Back = ShowCharacters,
+                RegionName = i => { RegionDef r = repo != null ? repo.TryGetRegionByIndex(i) : null; return r != null ? r.Name : null; },
+            });
+            allHeroes.Build();
         }
 
         // ---------------- character merge (docs/34) ----------------

@@ -407,7 +407,7 @@ namespace BoingUpSkyTower.Economy
                     reward.UnlockedRegionId = next.Id;
                 }
             }
-            TrackCompletedRun(level, run, reward.FirstClear);   // reward statistics (ProgressService.Rewards.cs), saved by the Commit below
+            TrackCompletedRun(level, run, reward.FirstClear, reward.TotalCoins);   // reward statistics (ProgressService.Rewards.cs), saved by the Commit below
             Commit();
             return reward;
         }
@@ -466,6 +466,7 @@ namespace BoingUpSkyTower.Economy
             {
                 result.RunsToday = EndlessRunsOn(dayKey);
             }
+            TrackEndlessRun(region, floors, result.Coins);   // Main goals: region coins, the daily and weekly endless floor (ProgressService.RegionGoals.cs)
             Commit();
             return result;
         }

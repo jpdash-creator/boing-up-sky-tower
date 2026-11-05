@@ -101,26 +101,44 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void BadgeIsNeverBelowOneAndFollowsTheCopies()
+        public void OwnedListIsOneCardPerCopyWithNoCounts()
         {
             ProgressService svc = NewService();
-            Assert.AreEqual(1, svc.HeroInventory.BadgeCount("momo"));
-            Assert.AreEqual(1, svc.HeroInventory.BadgeCount("momo_u"), "minimum 1");
-            svc.AddCopies("momo", 11);
-            Assert.AreEqual(12, svc.HeroInventory.BadgeCount("momo"));
-            Assert.AreEqual(12, CharacterCatalog.BadgeCount(svc, CharacterCatalog.Momo));
+            Assert.AreEqual(1, CharacterCatalog.OwnedCards(svc).Count, "a new player: one Momo card");
+            svc.AddCopies("momo", 1);   // a second Common Momo
+            List<HeroCard> cards = CharacterCatalog.OwnedCards(svc);
+            Assert.AreEqual(2, cards.Count, "another copy of the same hero = another card");
+            Assert.AreEqual("momo", cards[0].Id);
+            Assert.AreEqual("momo", cards[1].Id);
+            Assert.IsTrue(cards[0].IsFirstOfType);
+            Assert.IsFalse(cards[1].IsFirstOfType);
+            svc.AddCopies("momo_u", 2);
+            Assert.AreEqual(4, CharacterCatalog.OwnedCards(svc).Count);
+            Assert.IsNull(typeof(HeroInventory).GetMethod("BadgeCount"), "no count badge any more");
         }
 
         [Test]
-        public void MergeConsumesCopiesAndBadgeUpdates()
+        public void CharacterTestOwnedListHasOnlyCommonHeroes()
+        {
+            ProgressService.TestAllCharacters = true;
+            ProgressService svc = NewService();
+            List<HeroCard> cards = CharacterCatalog.OwnedCards(svc);
+            Assert.AreEqual(5, cards.Count, "the five Common heroes, one card each");
+            foreach (HeroCard c in cards) Assert.AreEqual(CharacterRarity.Common, c.Spec.Rarity, c.Id);
+        }
+
+        [Test]
+        public void MergeConsumesExactlyThreeCopiesAndTheNewTierJoinsTheOwnedList()
         {
             ProgressService svc = NewService();
-            svc.AddCopies("momo", 3);   // 4 copies
-            Assert.AreEqual(4, svc.HeroInventory.BadgeCount("momo"));
+            svc.AddCopies("momo", 3);   // 4 copies = 4 cards
+            Assert.AreEqual(4, CharacterCatalog.OwnedCards(svc).Count);
             Assert.AreEqual(MergeResult.Ok, svc.TryMerge("momo").Result);
-            Assert.AreEqual(1, svc.HeroInventory.BadgeCount("momo"));
-            Assert.AreEqual(1, svc.HeroInventory.BadgeCount("momo_u"));
-            CollectionAssert.Contains(CharacterCatalog.Available(svc), CharacterCatalog.Get("momo_u"), "the merged hero is a card with its count");
+            List<HeroCard> cards = CharacterCatalog.OwnedCards(svc);
+            Assert.AreEqual(2, cards.Count, "1 Momo copy left plus the new Uncommon");
+            Assert.AreEqual("momo", cards[0].Id);
+            Assert.AreEqual("momo_u", cards[1].Id);
+            CollectionAssert.Contains(CharacterCatalog.Available(svc), CharacterCatalog.Get("momo_u"));
         }
 
         [Test]

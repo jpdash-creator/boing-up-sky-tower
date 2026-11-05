@@ -8,12 +8,10 @@ using UnityEngine.UI;
 
 namespace BoingUpSkyTower.Gameplay
 {
-    /// <summary>Headers of the Rewards tabs: the Main region strip and purple bonus band, the Daily / Weekly scene with its timer, the points track (chests) and the tasks done bar.</summary>
+    /// <summary>Headers of the Rewards tabs: the Main region strip (30 circles, goals of the selected region), the Daily / Weekly scene with its timer, the points track (chests) and the tasks done bar.</summary>
     public sealed partial class RewardsScreen
     {
         // ---- header metrics ----
-        const float ChipW = 150f, ChipGap = 12f;
-        static float BandH { get { return 34f + LineH(BodyPx) + 14f + 96f + 18f; } }
         static float TimerH { get { return Mathf.Max(96f, LineH(52) + 26f); } }
         const float ChestSize = 108f;
         static float CellH { get { return 4f + ChestSize + 4f + LineH(BodyPx) + 2f + LineH(BodyPx) + 8f; } }
@@ -24,13 +22,13 @@ namespace BoingUpSkyTower.Gameplay
         // ---------------- scene (Daily and Weekly) ----------------
 
         /// <summary>Cover-fitted picture behind a header, full width (it grows past the list padding to the screen edges) and cropped to the header height.</summary>
-        static void SceneBackdrop(RectTransform parent, Sprite sprite, Color fallback)
+        static void SceneBackdrop(RectTransform parent, Sprite sprite, Color fallback, float bleed = Side)
         {
             RectTransform clip = UiKit.Rect(parent, "SceneClip");
             clip.anchorMin = Vector2.zero;
             clip.anchorMax = Vector2.one;
-            clip.offsetMin = new Vector2(-Side, 0f);
-            clip.offsetMax = new Vector2(Side, 0f);
+            clip.offsetMin = new Vector2(-bleed, 0f);
+            clip.offsetMax = new Vector2(bleed, 0f);
             clip.gameObject.AddComponent<RectMask2D>();
             Image bg = UiKit.AddImage(clip, "Backdrop", sprite, sprite != null ? Color.white : fallback);
             bg.preserveAspect = false;
@@ -254,201 +252,373 @@ namespace BoingUpSkyTower.Gameplay
             else { pic = BoltSprite; count = "x" + e.PowerUps; }
         }
 
-        // ---------------- Main header: region circles and the purple bonus band ----------------
+        // ---------------- Main: the pinned region strip ----------------
 
-        void BuildMainHeader(RectTransform content)
+        /// <summary>Width of one region slot in the strip (five fit across the 1080 reference).</summary>
+        public const float StripSlotW = 216f;
+        const float SmallCircle = 150f, BigCircle = 190f;
+        static readonly Color RingGold = new Color(1f, 0.82f, 0.2f, 1f);
+
+        sealed class StripSlot
         {
-            RectTransform header = UiKit.Rect(content, "MainHeader");
-            FixedHeight(header, CircleZone + BandH);
+            public RectTransform Slot, Btn, MarkRt;
+            public Image Mark;
+            public string Name;
+            public int Levels, Cleared;
+            public bool Soon, Open, Done, Dot;
+        }
 
-            // Bug List 4 E4.a: the same scene picture as Daily (scene_daily) runs edge to edge behind the circle strip and the region names, the purple band sits under it.
-            // CircleZone is measured (circles, name zone at the text scale, gap), so the picture, the circles and the band never overlap.
+        StripSlot[] stripSlots;
+        RectTransform stripRow, ringRt, pointerRt;
+
+        /// <summary>The strip's row: exactly 30 children (Slot1 ... Slot30), built once per screen build and reused (selection only restyles them).</summary>
+        public RectTransform StripRow { get { return stripRow; } }
+
+        /// <summary>
+        /// The pinned Main header: the scene picture (scene_daily, like Daily), a dark glass strip for the names and ONE horizontally scrolling strip of all 30 regions.
+        /// Regions 1-5 show their pin; 6-30 are grey with a lock and "Coming Soon". The selected circle is big, ringed, has a pointer under its name and is centred;
+        /// a red dot marks a region with something to claim. The strip snaps to the nearest circle when the finger lifts; a tap selects.
+        /// </summary>
+        void BuildMainHeader(RectTransform parent)
+        {
+            float top = WalletTop + WalletH + 12f;
+            RectTransform header = UiKit.Rect(parent, "MainHeader");
+            header.anchorMin = new Vector2(0f, 1f);
+            header.anchorMax = new Vector2(1f, 1f);
+            header.pivot = new Vector2(0.5f, 1f);
+            header.offsetMin = new Vector2(0f, -(top + CircleZone));
+            header.offsetMax = new Vector2(0f, -top);
+            mainHeader = header;
+
             RectTransform scene = UiKit.Rect(header, "Scene");
-            scene.anchorMin = new Vector2(0f, 1f);
-            scene.anchorMax = new Vector2(1f, 1f);
-            scene.pivot = new Vector2(0.5f, 1f);
-            scene.offsetMin = new Vector2(0f, -CircleZone);
-            scene.offsetMax = Vector2.zero;
-            SceneBackdrop(scene, SceneSprite("daily"), SceneFallback);
+            UiKit.Stretch(scene);
+            SceneBackdrop(scene, SceneSprite("daily"), SceneFallback, 0f);
             // a dark glass strip behind the names so the white names read on any scene
             Image names = Plate(header, "Backdrop", null, new Color(0.04f, 0.07f, 0.22f, 0.70f), 6f);
             RectTransform nrt0 = names.rectTransform;
             nrt0.anchorMin = new Vector2(0f, 1f);
             nrt0.anchorMax = new Vector2(1f, 1f);
             nrt0.pivot = new Vector2(0.5f, 1f);
-            nrt0.offsetMin = new Vector2(-Side, -(CircleBottom + NameGap + NameZone + 6f));
-            nrt0.offsetMax = new Vector2(Side, -(CircleBottom + NameGap - 6f));
+            nrt0.offsetMin = new Vector2(0f, -(CircleBottom + NameGap + NameZone + 6f));
+            nrt0.offsetMax = new Vector2(0f, -(CircleBottom + NameGap - 6f));
 
-            int regions = GameSession.PlayableRegions;
-            for (int i = 1; i <= regions; i++) BuildCircle(header, repo != null ? repo.TryGetRegionByIndex(i) : null, i, regions);
-            BuildBand(header);
+            int total = RegionGoalTable.TotalRegions;
+            RectTransform vp = UiKit.Rect(header, "Strip");
+            UiKit.Stretch(vp);
+            vp.gameObject.AddComponent<RectMask2D>();
+            Image hit = vp.gameObject.AddComponent<Image>();   // the drag also starts on the gaps between circles
+            hit.color = new Color(0f, 0f, 0f, 0.001f);
+            RectTransform content = UiKit.Rect(vp, "Content");
+            content.anchorMin = new Vector2(0f, 0f);
+            content.anchorMax = new Vector2(0f, 1f);
+            content.pivot = new Vector2(0f, 0.5f);
+            RectTransform row = UiKit.Rect(content, "Row");
+            row.anchorMin = new Vector2(0f, 0f);
+            row.anchorMax = new Vector2(0f, 1f);
+            row.pivot = new Vector2(0f, 0.5f);
+            row.sizeDelta = new Vector2(total * StripSlotW, 0f);
+            stripRow = row;
+
+            var sr = vp.gameObject.AddComponent<ScrollRect>();
+            sr.viewport = vp;
+            sr.content = content;
+            sr.horizontal = true;
+            sr.vertical = false;
+            sr.movementType = ScrollRect.MovementType.Elastic;
+            sr.scrollSensitivity = 20f;
+            var snap = vp.gameObject.AddComponent<RegionStripSnap>();
+            snap.Scroll = sr;
+            snap.Content = content;
+            snap.Row = row;
+            snap.Viewport = vp;
+            snap.SlotW = StripSlotW;
+            snap.Count = total;
+            snap.FallbackWidth = screen != null && screen.rect.width > 200f ? screen.rect.width : 1080f;
+            stripSnap = snap;
+
+            stripSlots = new StripSlot[total];
+            for (int i = 1; i <= total; i++) stripSlots[i - 1] = BuildStripSlot(row, i);
+
+            // one ring and one pointer, moved to the selected slot (the ring is drawn behind the circle)
+            Transform sel = stripSlots[selectedRegion - 1].Slot;
+            Image ring = UiKit.AddImage(sel, "Ring", Glyphs.Ring, RingGold);
+            ring.preserveAspect = true;
+            ringRt = ring.rectTransform;
+            UiKit.Place(ringRt, new Vector2(0.5f, 1f), new Vector2(0f, -2f), new Vector2(BigCircle + 24f, BigCircle + 24f));
+            Image pointer = Plate(sel, "Pointer", null, RingGold, 2f);
+            pointerRt = pointer.rectTransform;
+            UiKit.Place(pointerRt, new Vector2(0.5f, 1f), new Vector2(0f, -(CircleZone - 34f)), new Vector2(24f, 24f));   // a small gold diamond just above the list, inside the header (centre 22 px above its edge)
+            pointerRt.localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+            for (int i = 0; i < total; i++) ApplySlot(i);
+            ApplyStripSelection();
+            snap.CenterOn(selectedRegion - 1, false);
         }
 
-        // the region circles are kept exactly as they were (owner answer: the strip is okay)
-        void BuildCircle(RectTransform header, RegionDef region, int index, int count)
+        StripSlot BuildStripSlot(RectTransform row, int index)
         {
-            if (region == null) return;
-            bool selected = index == selectedRegion;
-            bool unlocked = progress.IsRegionUnlocked(region) && progress.IsRegionPlayable(region);
-            int cleared = progress.RegionLevelsCleared(index);
-            bool done = cleared >= region.Levels.Count;
+            bool soon = progress.IsRegionComingSoon(index);
+            RegionDef region = !soon && repo != null ? repo.TryGetRegionByIndex(index) : null;
+            bool playable = region != null;
+            bool open = playable && progress.IsRegionGoalsOpen(index);
+            int cleared = playable ? progress.RegionLevelsCleared(index) : 0;
+            bool done = playable && region.Levels.Count > 0 && cleared >= region.Levels.Count;
+            var s = new StripSlot { Soon = soon || !playable, Open = open, Done = done, Cleared = cleared, Levels = playable ? region.Levels.Count : 0 };
 
-            RectTransform slot = UiKit.Rect(header, "Slot" + index);
-            slot.anchorMin = new Vector2((index - 1) / (float)count, 1f);
-            slot.anchorMax = new Vector2(index / (float)count, 1f);
-            slot.pivot = new Vector2(0.5f, 1f);
-            slot.offsetMin = new Vector2(2f, -CircleZone);
-            slot.offsetMax = new Vector2(-2f, 0f);
+            RectTransform slot = UiKit.Rect(row, "Slot" + index);
+            slot.anchorMin = new Vector2(0f, 0f);
+            slot.anchorMax = new Vector2(0f, 1f);
+            slot.pivot = new Vector2(0.5f, 0.5f);
+            slot.offsetMin = new Vector2((index - 1) * StripSlotW + 2f, 0f);
+            slot.offsetMax = new Vector2(index * StripSlotW - 2f, 0f);
+            s.Slot = slot;
 
-            float size = selected ? 190f : 150f;
-            string slug = region.Id.Length > 11 ? region.Id.Substring(11) : region.Id;
-            Sprite pin = Resources.Load<Sprite>("Art/Pins/pin_" + slug);
-            Color tint = unlocked ? Color.white : new Color(0.55f, 0.58f, 0.68f, 1f);
-            Button b = UiKit.AddButton(slot, "Region" + index, "", pin != null ? pin : Theme.RoundSprite, pin != null ? tint : new Color(0.35f, 0.55f, 0.85f, 1f), new Vector2(size, size), () => SelectRegion(index), 40);
-            b.GetComponent<A11yLabel>().Text = region.Name + (done ? ", cleared" : (unlocked ? ", " + cleared + " of " + region.Levels.Count + " levels" : ", locked")) + (selected ? ", selected" : "");
+            Sprite circle = ToyKit.Get("plate_circle") ?? Theme.RoundSprite;
+            Sprite sprite = circle;
+            Color tint = new Color(0.40f, 0.43f, 0.55f, 1f);   // Coming Soon: grey
+            if (playable)
+            {
+                string slug = region.Id.Length > 11 ? region.Id.Substring(11) : region.Id;
+                Sprite pin = Resources.Load<Sprite>("Art/Pins/pin_" + slug);
+                sprite = pin != null ? pin : circle;
+                tint = pin == null ? new Color(0.35f, 0.55f, 0.85f, 1f) : (open ? Color.white : new Color(0.55f, 0.58f, 0.68f, 1f));
+            }
+            int idx = index;
+            Button b = UiKit.AddButton(slot, "Region" + index, "", sprite, tint, new Vector2(SmallCircle, SmallCircle), () => SelectRegion(idx), 40);
             b.GetComponent<Image>().preserveAspect = true;
-            RectTransform brt = (RectTransform)b.transform;
-            brt.anchorMin = brt.anchorMax = new Vector2(0.5f, 1f);
-            brt.pivot = new Vector2(0.5f, 1f);
-            brt.anchoredPosition = new Vector2(0f, selected ? -14f : -64f);   // the chosen region is bigger and raised
+            s.Btn = (RectTransform)b.transform;
+            s.Btn.anchorMin = s.Btn.anchorMax = new Vector2(0.5f, 1f);
+            s.Btn.pivot = new Vector2(0.5f, 1f);
 
-            if (done || !unlocked)
+            if (done || !open)
             {
                 Sprite st = done ? (RewardArt.Icon("check") ?? Glyphs.Check) : (RewardArt.Icon("lock") ?? ToyKit.Get("icon_lock"));
-                Image mark = UiKit.AddImage(brt, "State", st, Color.white);
-                UiKit.Place(mark.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size * 0.55f, size * 0.55f));
+                s.Mark = UiKit.AddImage(s.Btn, "State", st, Color.white);
+                s.MarkRt = s.Mark.rectTransform;
             }
+            s.Dot = playable && progress.HasClaimableInRegion(index);
+            if (s.Dot) ToyKit.AddBadge(s.Btn);   // red dot: something to claim in this region
 
-            Text name = UiKit.AddText(slot, "Name", region.Name, Mathf.RoundToInt(Mathf.Max(36f, UiKit.MinBodyTextPx)), Color.white, TextAnchor.UpperCenter, true);
+            s.Name = s.Soon ? "Coming\nSoon" : region.Name.Replace(' ', '\n');
+            Text name = UiKit.AddText(slot, "Name", s.Name, Mathf.RoundToInt(Mathf.Max(36f, UiKit.MinBodyTextPx)), s.Soon ? new Color(0.84f, 0.87f, 0.96f, 1f) : Color.white, TextAnchor.UpperCenter, true);
             Head(name);
-            // Never break inside a word (1080x2520 showed "Mushroo / m Grove"): break only at the spaces and let a word that is a little
-            // wider than its slot spill into the free space beside it. The size is already at the 16 sp floor, so it cannot shrink further.
-            name.text = region.Name.Replace(' ', '\n');
+            // Never break inside a word (1080x2520 showed "Mushroo / m Grove"): the lines are split by hand at the spaces and a word that is a little
+            // wider than its slot spills into the free space beside it. The size is already at the 16 sp floor, so it cannot shrink further.
             name.horizontalOverflow = HorizontalWrapMode.Overflow;
+            name.verticalOverflow = VerticalWrapMode.Truncate;
             RectTransform nrt = name.rectTransform;
             nrt.anchorMin = new Vector2(0f, 1f);
             nrt.anchorMax = new Vector2(1f, 1f);
             nrt.pivot = new Vector2(0.5f, 1f);
-            // fixed name zone below the biggest circle: the raised/bigger selected circle cannot push it into the band
-            name.verticalOverflow = VerticalWrapMode.Truncate;
-            nrt.offsetMin = new Vector2(0f, -(CircleBottom + NameGap + NameZone));
+            nrt.offsetMin = new Vector2(0f, -(CircleBottom + NameGap + NameZone));   // fixed name zone below the biggest circle
             nrt.offsetMax = new Vector2(0f, -(CircleBottom + NameGap));
+            return s;
         }
 
-        /// <summary>
-        /// The purple bonus band under the circles (full width, with a pointer under the chosen circle): the scroll icon, a thin bar with n/N in it
-        /// and the reward chips (gems, coins) at the right. When ready the title becomes a green CLAIM tag and the whole band is the claim button.
-        /// </summary>
-        void BuildBand(RectTransform header)
+        string SlotLabel(int index, StripSlot s)
         {
-            RewardEntry e = null;
-            foreach (RewardEntry r in progress.RewardDefs.RegionRewards) if (r.Target == selectedRegion) e = r;
-            RegionDef region = repo != null ? repo.TryGetRegionByIndex(selectedRegion) : null;
-            if (e == null || region == null) return;
-            int value = progress.RewardProgress(RewardTab.Main, e), target = progress.RewardTarget(RewardTab.Main, e);
-            bool claimed = progress.IsRewardClaimed(RewardTab.Main, e);
-            bool ready = !claimed && value >= target;
-            float bandH = BandH;
-
-            RectTransform band = UiKit.Rect(header, "Band");
-            band.anchorMin = new Vector2(0f, 1f);
-            band.anchorMax = new Vector2(1f, 1f);
-            band.pivot = new Vector2(0.5f, 1f);
-            band.offsetMin = new Vector2(-Side, -(CircleZone + bandH));   // edge to edge: past the list padding
-            band.offsetMax = new Vector2(Side, -CircleZone);
-            Image bg = Plate(band, "Bg", null, PurpleBand, 6f);
-            UiKit.Stretch(bg.rectTransform);
-            Image edge = Plate(band, "Backdrop", null, PurpleEdge, 3f);
-            edge.rectTransform.anchorMin = new Vector2(0f, 0f);
-            edge.rectTransform.anchorMax = new Vector2(1f, 0f);
-            edge.rectTransform.pivot = new Vector2(0.5f, 0f);
-            edge.rectTransform.offsetMin = Vector2.zero;
-            edge.rectTransform.offsetMax = new Vector2(0f, 6f);
-            if (ready) MakeClaimable(band, bg, RewardTab.Main, e, region.Name + " bonus: claim " + Describe(e));
-            else band.gameObject.AddComponent<A11yLabel>().Text = region.Name + " bonus: " + Mathf.Min(value, target) + " of " + target + " levels cleared" + (claimed ? ", claimed" : "");
-
-            // pointer under the chosen circle
-            RectTransform ph = UiKit.Rect(band, "PointerHost");
-            ph.anchorMin = Vector2.zero;
-            ph.anchorMax = Vector2.one;
-            ph.offsetMin = new Vector2(Side, 0f);
-            ph.offsetMax = new Vector2(-Side, 0f);
-            Image pointer = Plate(ph, "Pointer", null, PurpleBand, 2f);
-            UiKit.Place(pointer.rectTransform, new Vector2((selectedRegion - 0.5f) / GameSession.PlayableRegions, 1f), Vector2.zero, new Vector2(40f, 40f));
-            pointer.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            pointer.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-
-            RectTransform inner = UiKit.Rect(band, "Inner");
-            inner.anchorMin = Vector2.zero;
-            inner.anchorMax = Vector2.one;
-            inner.offsetMin = new Vector2(Side + 16f, 14f);
-            inner.offsetMax = new Vector2(-(Side + 16f), -34f);
-
-            // the reward chips at the right
-            List<RItem> items = RewardItems(e, false);
-            int nc = Mathf.Max(1, items.Count);
-            float chipsW = nc * ChipW + (nc - 1) * ChipGap;
-            RectTransform chips = UiKit.Rect(inner, "Chips");
-            chips.anchorMin = new Vector2(1f, 0f);
-            chips.anchorMax = new Vector2(1f, 1f);
-            chips.pivot = new Vector2(1f, 0.5f);
-            chips.offsetMin = new Vector2(-chipsW, 0f);
-            chips.offsetMax = Vector2.zero;
-            var chl = chips.gameObject.AddComponent<HorizontalLayoutGroup>();
-            chl.spacing = ChipGap;
-            chl.childControlWidth = chl.childControlHeight = true;
-            chl.childForceExpandWidth = false;
-            chl.childForceExpandHeight = true;
-            foreach (RItem it in items)
-            {
-                var one = new List<RItem>(1) { it };
-                RectTransform chip = RewardPlate(chips, "Chip", one);
-                var le = chip.gameObject.AddComponent<LayoutElement>();
-                le.minWidth = le.preferredWidth = ChipW;
-                le.flexibleWidth = 0f;
-            }
-
-            RectTransform left = UiKit.Rect(inner, "Left");
-            left.anchorMin = Vector2.zero;
-            left.anchorMax = Vector2.one;
-            left.offsetMin = Vector2.zero;
-            left.offsetMax = new Vector2(-(chipsW + 20f), 0f);
-            float lh = LineH(BodyPx);
-            if (ready)
-            {
-                Image tag = Plate(left, "Tag", "btn_green", Color.white, 28f);
-                UiKit.Place(tag.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(TagW, lh + 6f));
-                Text tt = UiKit.AddText(tag.transform, "Label", "Claim", BodyPx, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
-                UiKit.OnPanel(tt).horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.Stretch(tt.rectTransform);
-            }
+            string what;
+            if (s.Soon) what = "Region " + index + ", Coming Soon";
             else
             {
-                Text title = UiKit.AddText(left, "Title", "Clear all levels", BodyPx, Color.white, TextAnchor.MiddleLeft, true);
-                title.horizontalOverflow = HorizontalWrapMode.Overflow;
-                RectTransform trt = title.rectTransform;
-                trt.anchorMin = new Vector2(0f, 1f);
-                trt.anchorMax = new Vector2(1f, 1f);
-                trt.pivot = new Vector2(0f, 1f);
-                trt.offsetMin = new Vector2(0f, -lh);
-                trt.offsetMax = Vector2.zero;
+                RegionDef r = repo != null ? repo.TryGetRegionByIndex(index) : null;
+                string nm = r != null ? r.Name : "Region " + index;
+                what = nm + (s.Done ? ", cleared" : (s.Open ? ", " + s.Cleared + " of " + s.Levels + " levels" : ", locked"));
             }
+            return what + (s.Dot ? ", something to claim" : "") + (index == selectedRegion ? ", selected" : "");
+        }
 
-            RectTransform row2 = UiKit.Rect(left, "ProgressRow");
-            row2.anchorMin = new Vector2(0f, 0f);
-            row2.anchorMax = new Vector2(1f, 0f);
-            row2.pivot = new Vector2(0.5f, 0f);
-            row2.offsetMin = Vector2.zero;
-            row2.offsetMax = new Vector2(0f, 96f);
-            Sprite pic = RewardArt.Slot("task_login_scroll") ?? RewardArt.Icon("scroll") ?? ToyKit.Get("icon_flag");
-            Image icon = UiKit.AddImage(row2, "Icon", pic, Color.white);
-            UiKit.Place(icon.rectTransform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(84f, 84f));
-            RectTransform bar = Bar(row2, Mathf.Min(value, target) + "/" + target, target > 0 ? Mathf.Clamp01(value / (float)target) : 0f, claimed || ready ? BarGreen : BarBlue, BarH);
-            bar.anchorMin = new Vector2(0f, 0.5f);
-            bar.anchorMax = new Vector2(1f, 0.5f);
-            bar.pivot = new Vector2(0.5f, 0.5f);
-            bar.offsetMin = new Vector2(100f, -BarH * 0.5f);
-            bar.offsetMax = new Vector2(0f, BarH * 0.5f);
+        /// <summary>Restyles one slot (selected = big and raised, others small).</summary>
+        void ApplySlot(int slotIndex)
+        {
+            StripSlot s = stripSlots[slotIndex];
+            bool sel = slotIndex + 1 == selectedRegion;
+            float size = sel ? BigCircle : SmallCircle;
+            s.Btn.sizeDelta = new Vector2(size, size);
+            s.Btn.anchoredPosition = new Vector2(0f, sel ? -14f : -64f);   // the chosen region is bigger and raised
+            if (s.MarkRt != null) UiKit.Place(s.MarkRt, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size * 0.55f, size * 0.55f));
+            A11yLabel a = s.Btn.GetComponent<A11yLabel>();
+            if (a != null) a.Text = SlotLabel(slotIndex + 1, s);
+        }
+
+        /// <summary>The selected region changed: restyle the slots and move the ring and the pointer (no rebuild, no allocation beyond the label strings).</summary>
+        void ApplyStripSelection()
+        {
+            if (stripSlots == null) return;
+            for (int i = 0; i < stripSlots.Length; i++) ApplySlot(i);
+            Transform slot = stripSlots[selectedRegion - 1].Slot;
+            if (ringRt != null) { ringRt.SetParent(slot, false); ringRt.SetAsFirstSibling(); }
+            if (pointerRt != null) pointerRt.SetParent(slot, false);
+        }
+
+        // ---------------- Main: the goal list of the selected region ----------------
+
+        void BuildMainGoals(RectTransform content)
+        {
+            if (progress.IsRegionComingSoon(selectedRegion)) { BuildComingSoon(content); return; }
+            if (!progress.IsRegionGoalsOpen(selectedRegion)) BuildLockedNote(content);
+            IReadOnlyList<RegionGoal> goals = progress.RegionGoals(selectedRegion);
+            bool divider = false;
+            for (int i = 0; i < goals.Count; i++)
+            {
+                RegionGoal g = goals[i];
+                if (g.IsEndless && !divider) { BuildEndlessDivider(content); divider = true; }   // the endless tiers come last, under their own heading
+                AddCard(content, g, true);
+            }
+        }
+
+        /// <summary>One centred card for a region without goals: a lock and "Coming Soon", nothing to claim.</summary>
+        void BuildComingSoon(RectTransform content)
+        {
+            RectTransform row = UiKit.Rect(content, "ComingSoon");
+            float h = Mathf.Max(340f, 70f + 140f + 16f + LineH(60) * 2f + 40f);
+            FixedHeight(row, h);
+            Image bg = Plate(row, "Panel", "plate_cream", StateTint(CardState.Open), CardCorner);
+            UiKit.Stretch(bg.rectTransform);
+            Sprite lockSprite = RewardArt.Icon("lock") ?? ToyKit.Get("icon_lock");
+            Image icon = UiKit.AddImage(row, "Lock", lockSprite, Color.white);
+            UiKit.Place(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(140f, 140f));
+            Text t = UiKit.AddText(row, "Label", "Coming Soon", 60, Theme.Ink, TextAnchor.MiddleCenter, true);
+            UiKit.OnPanel(t);
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
+            RectTransform trt = t.rectTransform;
+            trt.anchorMin = new Vector2(0f, 0f);
+            trt.anchorMax = new Vector2(1f, 1f);
+            trt.offsetMin = new Vector2(30f, 20f);
+            trt.offsetMax = new Vector2(-30f, -(40f + 140f + 16f));
+            row.gameObject.AddComponent<A11yLabel>().Text = "Region " + selectedRegion + " is coming soon";
+        }
+
+        /// <summary>A short note on top of a region that is not open yet (the goals below start counting once it is unlocked).</summary>
+        void BuildLockedNote(RectTransform content)
+        {
+            RectTransform row = UiKit.Rect(content, "LockedNote");
+            Image bg = Plate(row, "Panel", "plate_chip", Color.white, RewardCorner);
+            UiKit.Stretch(bg.rectTransform);
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.padding = new RectOffset(24, 24, 12, 12);
+            hl.spacing = 16f;
+            hl.childAlignment = TextAnchor.MiddleCenter;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = false;
+            var le = row.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = 96f;
+            Image ic = UiKit.AddImage(row, "Lock", RewardArt.Icon("lock") ?? ToyKit.Get("icon_lock"), Color.white);
+            SetPref(ic.gameObject, 64f, 64f);
+            Text t = UiKit.AddText(row, "Text", "Unlock this region to earn", BodyPx, Color.white, TextAnchor.MiddleCenter, true);
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
+            row.gameObject.AddComponent<A11yLabel>().Text = "This region is locked. Unlock it to earn these rewards.";
+        }
+
+        /// <summary>The small "Endless" heading (tower icon between two lines) above the endless tiers.</summary>
+        void BuildEndlessDivider(RectTransform content)
+        {
+            RectTransform row = UiKit.Rect(content, "EndlessDivider");
+            var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hl.padding = new RectOffset(8, 8, 6, 6);
+            hl.spacing = 16f;
+            hl.childAlignment = TextAnchor.MiddleCenter;
+            hl.childControlWidth = hl.childControlHeight = true;
+            hl.childForceExpandWidth = hl.childForceExpandHeight = false;
+            var le = row.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = LineH(BodyPx) + 12f;
+            MakeLine(row);
+            Image ic = UiKit.AddImage(row, "Icon", ToyKit.Get("icon_tower"), Color.white);
+            SetPref(ic.gameObject, 56f, 56f);
+            Text t = UiKit.AddText(row, "Label", "Endless", BodyPx, Color.white, TextAnchor.MiddleCenter, true);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            MakeLine(row);
+            row.gameObject.AddComponent<A11yLabel>().Text = "Endless goals";
+        }
+
+        static void MakeLine(RectTransform row)
+        {
+            Image line = Plate(row, "Line", null, new Color(0.66f, 0.72f, 0.95f, 0.8f), 3f);
+            var le = line.gameObject.AddComponent<LayoutElement>();
+            le.minWidth = 20f;
+            le.flexibleWidth = 1f;
+            le.minHeight = le.preferredHeight = 6f;
+            le.flexibleHeight = 0f;
+        }
+    }
+
+    /// <summary>
+    /// Snap and centring of the Main region strip (30 equal slots). The content has half a viewport of padding at both ends, so EVERY slot can be centred: centring slot i
+    /// is content x = -i * slot width, whatever the screen width. When the finger lifts the strip glides (frame-rate independent) to the nearest slot, with a little
+    /// carry for a flick. The glide is stepped by the screen's ticker, so a resting strip costs nothing; no allocation anywhere.
+    /// </summary>
+    public sealed class RegionStripSnap : MonoBehaviour, UnityEngine.EventSystems.IBeginDragHandler, UnityEngine.EventSystems.IEndDragHandler
+    {
+        public ScrollRect Scroll;
+        public RectTransform Content, Row, Viewport;
+        public float SlotW = 216f;
+        public int Count = 30;
+        public float FallbackWidth = 1080f;
+
+        bool dirty = true, dragging;
+        float target = float.NaN;
+        int centered;
+
+        float ViewW { get { float w = Viewport != null ? Viewport.rect.width : 0f; return w > 10f ? w : FallbackWidth; } }
+
+        /// <summary>The slot index (0-based) nearest to the viewport centre right now.</summary>
+        public int NearestIndex { get { return Mathf.Clamp(Mathf.RoundToInt(-Content.anchoredPosition.x / SlotW), 0, Count - 1); } }
+
+        /// <summary>Content x that centres a slot.</summary>
+        public float XFor(int index) { return -Mathf.Clamp(index, 0, Count - 1) * SlotW; }
+
+        /// <summary>Sizes the content and the row for the current viewport width.</summary>
+        public void Fit()
+        {
+            float vw = ViewW;
+            float pad = Mathf.Max(0f, (vw - SlotW) * 0.5f);
+            Content.sizeDelta = new Vector2((Count - 1) * SlotW + vw, 0f);
+            Row.anchoredPosition = new Vector2(pad, 0f);
+        }
+
+        /// <summary>Centres a slot, gliding or at once (reduced motion and the first build jump).</summary>
+        public void CenterOn(int index, bool animate)
+        {
+            centered = Mathf.Clamp(index, 0, Count - 1);
+            Fit();
+            float x = XFor(centered);
+            if (!animate || GameSettings.ReducedMotion)
+            {
+                if (Scroll != null) Scroll.StopMovement();
+                Content.anchoredPosition = new Vector2(x, 0f);
+                target = float.NaN;
+            }
+            else target = x;
+        }
+
+        public void OnBeginDrag(UnityEngine.EventSystems.PointerEventData e) { dragging = true; target = float.NaN; }
+
+        public void OnEndDrag(UnityEngine.EventSystems.PointerEventData e)
+        {
+            dragging = false;
+            float v = Scroll != null ? Scroll.velocity.x : 0f;
+            int idx = Mathf.Clamp(Mathf.RoundToInt((-Content.anchoredPosition.x - v * 0.16f) / SlotW), 0, Count - 1);
+            centered = idx;
+            target = XFor(idx);
+        }
+
+        void OnRectTransformDimensionsChange() { dirty = true; }
+
+        /// <summary>Called once per frame by the Rewards ticker.</summary>
+        public void Step(float dt)
+        {
+            if (dirty)
+            {
+                dirty = false;
+                Fit();
+                if (!dragging && float.IsNaN(target)) Content.anchoredPosition = new Vector2(XFor(centered), 0f);   // a new screen size: keep the centred slot centred
+            }
+            if (dragging || float.IsNaN(target)) return;
+            if (Scroll != null) Scroll.StopMovement();   // the glide replaces the scroll rect's own inertia
+            float x = Content.anchoredPosition.x;
+            x = Mathf.Lerp(x, target, 1f - Mathf.Exp(-14f * dt));   // time based: the same glide at any frame rate (CUX-1)
+            if (Mathf.Abs(x - target) < 0.5f) { x = target; target = float.NaN; }
+            Content.anchoredPosition = new Vector2(x, 0f);
         }
     }
 }

@@ -92,8 +92,9 @@ namespace BoingUpSkyTower.Gameplay
     }
 
     /// <summary>
-    /// Character merge (docs/34): the big result slot on top (the next tier of the chosen hero with its rarity change and stat gains), three input slots that fill with the
-    /// copies the player holds, a green arrow, the gold MERGE button, and under it the grid of heroes that have copies (tap one to choose it, "x2/3" shows its stack).
+    /// Character merge (docs/34 section 10): the big result slot on top (the next tier of the first selected hero with its rarity change and stat gains), three input slots that fill with the
+    /// selected cards, a green arrow, the gold MERGE button (enabled only for 3 selected cards of one hero type), and under it the list of heroes that CAN merge: one card per owned copy of
+    /// every hero type with 3 or more copies, no numbers. A tap selects a card (green tick).
     /// Everything is built once per change (no Update, no per-frame work). Layout is anchored by fractions and computed from the real text sizes, so it holds at 130 percent text.
     /// </summary>
     public sealed class MergeScreen
@@ -101,7 +102,6 @@ namespace BoingUpSkyTower.Gameplay
         public const string ScreenName = "Merge";
         const float Margin = 28f, TileH = 232f, TileGap = 10f, SlotH = 190f, ArrowH = 64f, Pad = 18f;
         const int Columns = 5, NameFont = 46, BodyFont = 40, GainLines = 6, RarityLines = 2;
-        static readonly Color PillInk = new Color(0.07f, 0.06f, 0.20f, 0.94f);
         static readonly Color Gold = new Color(1f, 0.82f, 0.24f, 1f);
         static readonly Color ArrowGreen = new Color(0.36f, 0.95f, 0.52f, 1f);
 
@@ -119,15 +119,22 @@ namespace BoingUpSkyTower.Gameplay
         readonly ArtCatalog art;
         readonly Host host;
         RectTransform body, bg, content;
-        CharacterDef selected;
+        /// <summary>The cards of the Merge list: every copy of every hero type that can merge (3 or more copies and a next tier).</summary>
+        List<HeroCard> cards = new List<HeroCard>();
+        /// <summary>The selected cards, in the order they were tapped (the three slots show them).</summary>
+        readonly List<HeroCard> picked = new List<HeroCard>(3);
         float scroll;
 
-        /// <summary>The hero whose copies are shown in the slots (null when the player has no copies at all).</summary>
-        public CharacterDef Selected { get { return selected; } }
-        /// <summary>The MERGE button (interactable only when a merge would succeed). Tests tap it through <see cref="TapMerge"/>.</summary>
+        /// <summary>The cards of the list under the slots (one per copy of every mergeable hero type, no counts).</summary>
+        public IList<HeroCard> Cards { get { return cards; } }
+        /// <summary>The selected cards (0 to 3).</summary>
+        public IList<HeroCard> Picked { get { return picked; } }
+        /// <summary>The MERGE button (interactable only when exactly 3 cards of one hero type are selected). Tests tap it through <see cref="TapMerge"/>.</summary>
         public Button MergeButton { get; private set; }
-        /// <summary>The character the result slot previews, or null.</summary>
+        /// <summary>The character the result slot previews (next tier of the first selected card), or null.</summary>
         public CharacterDef Preview { get; private set; }
+        /// <summary>True when Merge is enabled: exactly 3 selected cards of the same hero type.</summary>
+        public bool CanMerge { get { return HeroCards.IsMergeSet(picked); } }
 
         public MergeScreen(RectTransform screen, RectTransform screenRoot, ProgressService progress, ArtCatalog art, Host host)
         {
@@ -142,58 +149,49 @@ namespace BoingUpSkyTower.Gameplay
 
         // ------------------------------------------------------------ build
 
-        /// <summary>Builds (or rebuilds) the screen. <paramref name="preselectId"/> picks the hero shown first.</summary>
+        /// <summary>Builds (or rebuilds) the screen. <paramref name="preselectId"/> (tests and shortcuts) selects the first three copies of that hero type; null keeps the current selection.</summary>
         public void Build(string preselectId = null)
         {
-            if (body != null) UnityEngine.Object.Destroy(body.gameObject);
+            if (preselectId != null) PreselectType(preselectId);
+            BuildNow();
+        }
+
+        void PreselectType(string id)
+        {
+            cards = CharacterCatalog.MergeCards(progress);
+            picked.Clear();
+            foreach (HeroCard c in cards)
+                if (c.Id == id && picked.Count < MergeRules.CopiesNeeded) picked.Add(c);
+        }
+
+        void BuildNow()
+        {
+            if (body != null)
+            {
+                body.gameObject.SetActive(false);   // never shows or counts as a stale copy while the destroy is deferred
+                if (Application.isPlaying) UnityEngine.Object.Destroy(body.gameObject);
+                else UnityEngine.Object.DestroyImmediate(body.gameObject);   // edit mode (tests): Destroy is not allowed and would leave the old tree
+                body = null;
+            }
             if (bg == null) BuildBackground();
 
-            List<CharacterDef> owned = OwnedWithCopies();
-            if (preselectId != null) selected = Find(owned, preselectId) ?? selected;
-            if (selected == null || !owned.Contains(selected)) selected = DefaultPick(owned);
+            cards = CharacterCatalog.MergeCards(progress);
+            List<HeroCard> kept = HeroCards.Prune(picked, cards);   // copies that were merged away are gone from the selection
+            picked.Clear();
+            picked.AddRange(kept);
 
             body = UiKit.Rect(screen, "MergeBody");
             UiKit.Stretch(body);
 
             float y = BuildTopBar();
-            CharacterSpec spec = selected != null ? selected.Info : null;
+            CharacterSpec spec = picked.Count > 0 ? picked[0].Spec : null;
             CharacterSpec next = spec != null ? MergeRules.NextTier(spec) : null;
-            int copies = selected != null ? progress.Copies(selected.Id) : 0;
             Preview = next != null ? CharacterCatalog.Get(next.Id) : null;
 
             y = BuildResultCard(y, spec, next);
-            y = BuildSlots(y, spec, copies, next != null);
-            y = BuildMergeButton(y, spec, copies, next);
-            BuildGrid(y, owned);
-        }
-
-        /// <summary>The heroes the player may see and holds at least one copy of, in list order.</summary>
-        List<CharacterDef> OwnedWithCopies()
-        {
-            var list = new List<CharacterDef>(CharacterCatalog.All.Length);
-            foreach (CharacterDef c in CharacterCatalog.Available(progress))
-                if (progress.Copies(c.Id) > 0) list.Add(c);
-            return list;
-        }
-
-        static CharacterDef Find(List<CharacterDef> list, string id)
-        {
-            foreach (CharacterDef c in list) if (c.Id == id) return c;
-            return null;
-        }
-
-        /// <summary>A hero that can merge now, else the one with the biggest stack that has a next tier, else the first.</summary>
-        CharacterDef DefaultPick(List<CharacterDef> owned)
-        {
-            CharacterDef best = null;
-            int bestCopies = -1;
-            foreach (CharacterDef c in owned)
-            {
-                if (progress.CanMerge(c.Id)) return c;
-                int n = progress.Copies(c.Id);
-                if (progress.NextTierOf(c.Id) != null && n > bestCopies) { best = c; bestCopies = n; }
-            }
-            return best ?? (owned.Count > 0 ? owned[0] : null);
+            y = BuildSlots(y);
+            y = BuildMergeButton(y);
+            BuildGrid(y);
         }
 
         // ------------------------------------------------------------ background (slot: MergeBackground)
@@ -330,7 +328,8 @@ namespace BoingUpSkyTower.Gameplay
             info.anchorMax = new Vector2(0.98f, 1f);
             info.offsetMin = info.offsetMax = Vector2.zero;
             string nameText, rarityText, gains;
-            if (spec == null) { nameText = "Nothing to merge"; rarityText = "Collect copies of a hero"; gains = ""; }
+            if (spec == null && cards.Count == 0) { nameText = "Nothing to merge"; rarityText = "Collect 3 of the same hero"; gains = ""; }
+            else if (spec == null) { nameText = "Pick 3 of a hero"; rarityText = "Tap heroes below"; gains = ""; }
             else if (next == null) { nameText = spec.Name; rarityText = "Top tier"; gains = "Cannot merge further"; }
             else
             {
@@ -354,7 +353,8 @@ namespace BoingUpSkyTower.Gameplay
 
         // ------------------------------------------------------------ input slots
 
-        float BuildSlots(float y, CharacterSpec spec, int copies, bool hasNext)
+        /// <summary>The three slots fill with the selected cards in tap order; a tap on a filled slot removes that card. Empty slots are dim.</summary>
+        float BuildSlots(float y)
         {
             // green arrow pointing from the slots up to the result
             Image arrow = UiKit.AddImage(body, "Arrow", Glyphs.Up, ArrowGreen);
@@ -362,11 +362,11 @@ namespace BoingUpSkyTower.Gameplay
             y += ArrowH + 8f;
 
             RectTransform row = TopRow(body, "Slots", y, SlotH, Margin);
-            CharacterRarity rarity = spec != null ? spec.Rarity : CharacterRarity.Common;
-            CharacterDef who = selected;
             for (int i = 0; i < MergeRules.CopiesNeeded; i++)
             {
-                bool filled = who != null && copies > i;
+                bool filled = i < picked.Count;
+                HeroCard card = filled ? picked[i] : null;
+                CharacterRarity rarity = filled ? card.Spec.Rarity : CharacterRarity.Common;
                 RectTransform inner = RarityUi.Box(row, "Slot_" + (i + 1), rarity, !filled, new Vector2(100f, 100f));
                 RectTransform outer = (RectTransform)inner.parent;
                 float x0 = 0.03f + i * 0.33f;
@@ -376,6 +376,7 @@ namespace BoingUpSkyTower.Gameplay
                 outer.pivot = new Vector2(0.5f, 0.5f);
                 if (filled)
                 {
+                    CharacterDef who = CharacterCatalog.Get(card.Id);
                     RectTransform area = UiKit.Rect(inner, "FaceArea");
                     area.anchorMin = new Vector2(0.06f, 0.05f);
                     area.anchorMax = new Vector2(0.94f, 0.95f);
@@ -385,27 +386,38 @@ namespace BoingUpSkyTower.Gameplay
                     var fit = face.gameObject.AddComponent<AspectRatioFitter>();
                     fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
                     fit.aspectRatio = who.Rig.CanvasW / who.Rig.CanvasH;
+                    var b = outer.gameObject.AddComponent<Button>();   // tap = take the card out of the slot
+                    b.transition = Selectable.Transition.None;
+                    outer.GetComponent<Image>().raycastTarget = true;
+                    HeroCard pick = card;
+                    b.onClick.AddListener(() => { AudioManager.Play(Sfx.Tap); Toggle(pick); });
                 }
-                outer.gameObject.AddComponent<A11yLabel>().Text = "Merge slot " + (i + 1) + (filled ? ", " + who.Name : ", empty");
+                outer.gameObject.AddComponent<A11yLabel>().Text = "Merge slot " + (i + 1) + (filled ? ", " + CharacterCatalog.Get(card.Id).Name + ", tap to remove" : ", empty");
             }
             return y + SlotH + 14f;
         }
 
         // ------------------------------------------------------------ MERGE button
 
-        float BuildMergeButton(float y, CharacterSpec spec, int copies, CharacterSpec next)
+        /// <summary>The hint under the button, in words and without numbers of copies.</summary>
+        public string HintText()
         {
-            bool can = spec != null && next != null && copies >= MergeRules.CopiesNeeded;
+            if (cards.Count == 0) return "No hero to merge yet";
+            if (picked.Count == 0) return "Pick 3 of the same hero";
+            if (HeroCards.IsMergeSet(picked)) return "Ready to merge";
+            if (HeroCards.IsMixed(picked)) return picked.Count >= MergeRules.CopiesNeeded ? "Wrong mix: remove a card" : "Wrong mix: pick the same hero";
+            return "Pick more of the same hero";
+        }
+
+        float BuildMergeButton(float y)
+        {
+            bool can = HeroCards.IsMergeSet(picked);
             const float bh = 140f;
             Color tint = can ? Color.white : new Color(0.62f, 0.62f, 0.68f, 1f);
             MergeButton = UiKit.AddButton(body, "MergeButton", "MERGE", ToyKit.Button(0), tint, new Vector2(560f, bh), OnMergeTapped, 64);
             MergeButton.interactable = can;
             UiKit.Place((RectTransform)MergeButton.transform, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(560f, bh));
-            string hint;
-            if (spec == null) hint = "No heroes with copies yet";
-            else if (next == null) hint = "Top tier: nothing to merge into";
-            else if (can) hint = "Ready: " + copies + "/" + MergeRules.CopiesNeeded + " copies";
-            else hint = "Need " + MergeRules.CopiesNeeded + " copies (you have " + copies + ")";
+            string hint = HintText();
             MergeButton.GetComponent<A11yLabel>().Text = "Merge. " + hint;
             y += bh + 6f;
             float lh = Line(BodyFont);
@@ -416,30 +428,33 @@ namespace BoingUpSkyTower.Gameplay
 
         void OnMergeTapped()
         {
-            if (selected == null) return;
-            MergeOutcome o = progress.TryMerge(selected.Id);
-            if (o.Result != MergeResult.Ok) { Build(); return; }
+            if (!HeroCards.IsMergeSet(picked)) return;
+            string id = picked[0].Id;
+            MergeOutcome o = progress.TryMerge(id);   // consumes exactly 3 copies of that hero and adds 1 of the next tier (the save keeps counts)
+            picked.Clear();
+            if (o.Result != MergeResult.Ok) { BuildNow(); return; }
             AudioManager.Play(Sfx.Win);
             Haptics.Pulse();
-            // the lower tier stays selected while copies are left, else the new hero
-            selected = progress.Copies(o.FromId) > 0 ? selected : CharacterCatalog.Get(o.ToId);
-            Build();
+            BuildNow();   // the list is rebuilt from the save: the three consumed copies are gone, a type with fewer than 3 left vanishes
             ShowResult(o);
         }
 
         /// <summary>Taps MERGE as a player would (tests). Returns the outcome; NotEnoughCopies when the button is not usable.</summary>
         public MergeOutcome TapMerge()
         {
-            if (selected == null) return new MergeOutcome { Result = MergeResult.Unknown };
-            if (MergeButton == null || !MergeButton.interactable) return new MergeOutcome { Result = progress.NextTierOf(selected.Id) == null ? MergeResult.MaxTier : MergeResult.NotEnoughCopies, FromId = selected.Id };
-            string from = selected.Id;
+            string from = picked.Count > 0 ? picked[0].Id : null;
+            if (MergeButton == null || !MergeButton.interactable) return new MergeOutcome { Result = MergeResult.NotEnoughCopies, FromId = from };
+            string to = MergeRules.NextTier(picked[0].Spec).Id;
             OnMergeTapped();
-            return new MergeOutcome { Result = MergeResult.Ok, FromId = from };
+            return new MergeOutcome { Result = MergeResult.Ok, FromId = from, ToId = to };
         }
 
         // ------------------------------------------------------------ hero grid
 
-        void BuildGrid(float y, List<CharacterDef> owned)
+        /// <summary>Card tile name: "Tile_{id}" for the first copy, "Tile_{id}_{n}" for the n-th.</summary>
+        public static string TileName(HeroCard c) { return c.Copy == 0 ? "Tile_" + c.Id : "Tile_" + c.Id + "_" + (c.Copy + 1); }
+
+        void BuildGrid(float y)
         {
             RectTransform vp = UiKit.Rect(body, "GridViewport");
             vp.anchorMin = Vector2.zero;
@@ -449,7 +464,7 @@ namespace BoingUpSkyTower.Gameplay
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
-            int rows = Mathf.Max(1, (owned.Count + Columns - 1) / Columns);
+            int rows = Mathf.Max(1, (cards.Count + Columns - 1) / Columns);
             content = UiKit.Rect(vp, "GridContent");
             content.anchorMin = new Vector2(0f, 1f);
             content.anchorMax = new Vector2(1f, 1f);
@@ -464,15 +479,22 @@ namespace BoingUpSkyTower.Gameplay
             sr.movementType = ScrollRect.MovementType.Elastic;
             sr.scrollSensitivity = 60f;
 
-            float pillH = Mathf.Ceil(Line(BodyFont) + 6f);
-            for (int i = 0; i < owned.Count; i++)
+            if (cards.Count == 0)
             {
-                CharacterDef who = owned[i];
-                CharacterSpec s = who.Info;
-                CharacterSpec nx = MergeRules.NextTier(s);
-                int n = progress.Copies(who.Id);
+                float lh = Line(BodyFont);
+                Text none = UiKit.AddText(TopRow(content, "EmptyNote", 12f, 2f * lh, 12f), "Empty", "Hold 3 of the same hero to merge it", BodyFont, Color.white, TextAnchor.UpperCenter);
+                UiKit.Stretch(none.rectTransform);
+                content.sizeDelta = new Vector2(0f, 2f * lh + 24f);
+            }
+
+            for (int i = 0; i < cards.Count; i++)
+            {
+                HeroCard card = cards[i];
+                CharacterDef who = CharacterCatalog.Get(card.Id);
+                CharacterSpec s = card.Spec;
                 int col = i % Columns, row = i / Columns;
-                RectTransform inner = RarityUi.Box(content, "Tile_" + who.Id, s.Rarity, false, new Vector2(100f, TileH));
+                bool isPicked = HeroCards.IndexOf(picked, card) >= 0;
+                RectTransform inner = RarityUi.Box(content, TileName(card), s.Rarity, false, new Vector2(100f, TileH));
                 RectTransform outer = (RectTransform)inner.parent;
                 outer.anchorMin = new Vector2(col / (float)Columns, 1f);
                 outer.anchorMax = new Vector2((col + 1) / (float)Columns, 1f);
@@ -483,7 +505,7 @@ namespace BoingUpSkyTower.Gameplay
                 RectTransform area = UiKit.Rect(inner, "FaceArea");
                 area.anchorMin = new Vector2(0.04f, 0f);
                 area.anchorMax = new Vector2(0.96f, 1f);
-                area.offsetMin = new Vector2(0f, pillH + 12f);
+                area.offsetMin = new Vector2(0f, 6f);
                 area.offsetMax = new Vector2(0f, -6f);
                 RectTransform face = MomoDoll.Build(area, "Face", 100f, who, art);
                 UiKit.Stretch(face);
@@ -491,51 +513,48 @@ namespace BoingUpSkyTower.Gameplay
                 fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
                 fit.aspectRatio = who.Rig.CanvasW / who.Rig.CanvasH;
 
-                // "x2/3" on a dark pill (white text, always readable); a mergeable stack says so in words on the button, not only by colour
-                bool ready = nx != null && n >= MergeRules.CopiesNeeded;
-                Image pill = UiKit.AddPanel(inner, "CountPill", ready ? new Color(0.10f, 0.45f, 0.24f, 0.96f) : PillInk);
-                RectTransform pr = pill.rectTransform;
-                pr.anchorMin = new Vector2(0.06f, 0f);
-                pr.anchorMax = new Vector2(0.94f, 0f);
-                pr.pivot = new Vector2(0.5f, 0f);
-                pr.anchoredPosition = new Vector2(0f, 6f);
-                pr.sizeDelta = new Vector2(0f, pillH);
-                string count = nx != null ? "x" + n + "/" + MergeRules.CopiesNeeded : "x" + n;
-                Text ct = UiKit.AddText(pill.transform, "Count", count, BodyFont, Color.white, TextAnchor.MiddleCenter, true);
-                ct.horizontalOverflow = HorizontalWrapMode.Overflow;
-                var co = ct.GetComponent<Outline>();
-                if (co != null) co.enabled = false;
-                UiKit.Stretch(ct.rectTransform);
-
-                if (who == selected)
+                if (isPicked)
                 {
-                    Image chosen = UiKit.AddImage(outer, "Chosen", Theme.RingSprite, Gold);
-                    chosen.type = Image.Type.Sliced;
-                    chosen.preserveAspect = false;
-                    chosen.pixelsPerUnitMultiplier = 1.0f;
-                    chosen.rectTransform.anchorMin = Vector2.zero;
-                    chosen.rectTransform.anchorMax = Vector2.one;
-                    chosen.rectTransform.offsetMin = new Vector2(-3f, -3f);
-                    chosen.rectTransform.offsetMax = new Vector2(3f, 3f);
+                    // a selected card: gold ring AND the green tick (SS19 style), so it never relies on colour alone
+                    Image ring = UiKit.AddImage(outer, "PickedRing", Theme.RingSprite, Gold);
+                    ring.type = Image.Type.Sliced;
+                    ring.preserveAspect = false;
+                    ring.pixelsPerUnitMultiplier = 1.0f;
+                    ring.rectTransform.anchorMin = Vector2.zero;
+                    ring.rectTransform.anchorMax = Vector2.one;
+                    ring.rectTransform.offsetMin = new Vector2(-3f, -3f);
+                    ring.rectTransform.offsetMax = new Vector2(3f, 3f);
+                    CharactersScreen.AddTick(outer, "Picked", 64f);
                 }
 
                 var b = outer.gameObject.AddComponent<Button>();
                 b.transition = Selectable.Transition.None;
                 outer.GetComponent<Image>().raycastTarget = true;
-                CharacterDef pick = who;
-                b.onClick.AddListener(() => { AudioManager.Play(Sfx.Tap); Select(pick); });
-                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)s.Rarity] + ", " + n + (nx != null ? " of " + MergeRules.CopiesNeeded + " copies" : " copies, top tier") + (ready ? ", ready to merge" : "") + (who == selected ? ", chosen" : "");
+                HeroCard pick = card;
+                b.onClick.AddListener(() => { AudioManager.Play(Sfx.Tap); Toggle(pick); });
+                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)s.Rarity] + (isPicked ? ", selected" : "");
             }
             if (scroll > 0f) content.anchoredPosition = new Vector2(0f, scroll);
             sr.onValueChanged.AddListener(_ => scroll = content.anchoredPosition.y);
         }
 
-        /// <summary>Chooses which hero's copies are merged (a tap on its tile).</summary>
-        public void Select(CharacterDef who)
+        /// <summary>Selects or deselects a card (a tap on its tile or on its slot). A full selection ignores more cards until one is removed.</summary>
+        public void Toggle(HeroCard card)
         {
-            if (who == null || progress.Copies(who.Id) <= 0) return;
-            selected = who;
-            Build();
+            if (HeroCards.Toggle(picked, card)) BuildNow();
+        }
+
+        /// <summary>Taps the card at this position of <see cref="Cards"/> (tests).</summary>
+        public void TapCard(int index)
+        {
+            if (index >= 0 && index < cards.Count) Toggle(cards[index]);
+        }
+
+        /// <summary>Selects the first three cards of a hero type (tests and shortcuts) and rebuilds.</summary>
+        public void SelectType(string id)
+        {
+            PreselectType(id);
+            BuildNow();
         }
 
         // ------------------------------------------------------------ result popup: "New hero: <name>"

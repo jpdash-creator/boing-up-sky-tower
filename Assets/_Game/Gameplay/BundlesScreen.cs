@@ -385,6 +385,55 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         static float NameRowH() { return Mathf.Max(LeftColW, NameLineH()); }
 
+        /// <summary>Width of the name rect (card width minus the left column and the price reserve); set with <see cref="textAreaW"/> at the start of Build.</summary>
+        static float nameAreaW = 392f;
+        static readonly TextGenerator nameGen = new TextGenerator();
+
+        /// <summary>Height the bundle name needs at <paramref name="fontPx"/> wrapped to <paramref name="width"/> (same generator the audit's Text.preferredHeight uses).</summary>
+        static float MeasureName(string text, int fontPx, float width)
+        {
+            Font f = UiKit.DisplayFont;
+            if (f == null) return Mathf.Ceil(fontPx * 1.2f);
+            var s = new TextGenerationSettings
+            {
+                font = f, fontSize = fontPx, fontStyle = FontStyle.Normal, lineSpacing = 1f, richText = false, scaleFactor = 1f, color = Color.white,
+                textAnchor = TextAnchor.MiddleLeft, alignByGeometry = false, resizeTextForBestFit = false, updateBounds = false,
+                horizontalOverflow = HorizontalWrapMode.Wrap, verticalOverflow = VerticalWrapMode.Overflow,
+                generationExtents = new Vector2(Mathf.Max(10f, width), 0f), pivot = new Vector2(0f, 1f), generateOutOfBounds = false
+            };
+            return Mathf.Ceil(nameGen.GetPreferredHeight(text ?? "", s)) + 2f;
+        }
+
+        /// <summary>
+        /// Font size (px) and height of the name. At 100 percent text it is the plain one-line name. At bigger text the font shrinks step by step (never below the 16 sp
+        /// minimum) until the name fits on one line; only when it still wraps at the minimum does the row grow to the measured height.
+        /// </summary>
+        static void FitName(BundleDef def, out int fontPx, out float textH)
+        {
+            int max = Mathf.RoundToInt(Mathf.Max(NameFont, UiKit.MinBodyTextPx) * UiKit.TextScale);
+            fontPx = max;
+            textH = NameLineH();
+            if (UiKit.TextScale <= 1.01f) return;
+            int min = Mathf.Min(max, Mathf.RoundToInt(UiKit.MinBodyTextPx));
+            float oneLine = textH;
+            for (int fs = max; fs >= min; fs -= 2)
+            {
+                float m = MeasureName(def.Name, fs, nameAreaW);
+                fontPx = fs;
+                textH = Mathf.Max(Mathf.Ceil(fs * 1.2f), m);
+                if (m <= Mathf.Ceil(fs * 1.2f) + 4f) { textH = Mathf.Min(textH, oneLine); return; }   // fits on one line
+            }
+            // still wraps at the minimum size: the row grows to the measured height
+        }
+
+        /// <summary>Height of the top row: the 48 dp "i", the (measured) name and the Worth text, whichever is tallest.</summary>
+        static float NameRowH(BundleDef def)
+        {
+            int fs; float h;
+            FitName(def, out fs, out h);
+            return Mathf.Max(Mathf.Max(LeftColW, h), Mathf.Max(NameLineH(), WorthTextH()));
+        }
+
         static int CompactRows(List<Chip> chips)
         {
             int rows = 1;
@@ -401,7 +450,7 @@ namespace BoingUpSkyTower.Gameplay
         static float TextBlockHeight(BundleDef def)
         {
             int rows = CompactRows(MakeChips(def, null));
-            return NameRowH() + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
+            return NameRowH(def) + NameGap + rows * CompactChipH + (rows - 1) * CompactGap;
         }
 
         /// <summary>
@@ -411,9 +460,9 @@ namespace BoingUpSkyTower.Gameplay
         {
             // every row has at least the height of a one-line name over two chip rows (1 and 2 chip rows look the same); 3 chip rows or a long name still grow
             // the name shares the "i" row (D3), so the text block starts at InfoPad (top) and only the bottom keeps RowPad
-            float uniform = InfoPad + NameRowH() + NameGap + 2f * CompactChipH + CompactGap + RowPad;
+            float uniform = InfoPad + NameRowH(def) + NameGap + 2f * CompactChipH + CompactGap + RowPad;
             float textBlock = InfoPad + TextBlockHeight(def) + RowPad;
-            float leftCol = InfoPad + NameRowH() + BagGap + BagMaxSize + RowPad;
+            float leftCol = InfoPad + NameRowH(def) + BagGap + BagMaxSize + RowPad;
             float rightCol = 12f + WorthTextH() + 8f + FrameH + FrameEdge;   // worth text over the brown frame plate (E1)
             return Mathf.Max(Mathf.Max(textBlock, uniform), Mathf.Max(leftCol, rightCol));
         }
@@ -468,7 +517,9 @@ namespace BoingUpSkyTower.Gameplay
         public static float AddCard(RectTransform parent, BundleDef def, ArtCatalog art, float y, int price, Action onBuy, Action onInfo = null)
         {
             float h = CardHeight(def);
-            float rowH = NameRowH();
+            float rowH = NameRowH(def);
+            int nameFs; float nameTextH;
+            FitName(def, out nameFs, out nameTextH);
             float iExtra = (rowH - LeftColW) * 0.5f;   // centres the 48 dp "i" on the name line when the line is taller (130 percent text)
 
             RectTransform card = ShopChrome.Card(parent, "Bundle_" + def.Id, ShopChrome.FrameColor.Gold);
@@ -494,6 +545,12 @@ namespace BoingUpSkyTower.Gameplay
             name.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
             name.resizeTextMaxSize = name.fontSize;
             name.verticalOverflow = VerticalWrapMode.Truncate;
+            if (UiKit.TextScale > 1.01f)
+            {
+                // larger text: the size was measured (shrunk toward 16 sp before the row grows), so use it as is; the rect is as high as the measured text
+                name.resizeTextForBestFit = false;
+                name.fontSize = nameFs;
+            }
             // stretch between the left column and the right column: the right edge is tied to the row, so it can never run under the pill or the button
             var nrt = (RectTransform)name.transform;
             nrt.anchorMin = new Vector2(0f, 1f);
@@ -549,6 +606,7 @@ namespace BoingUpSkyTower.Gameplay
             float rectW = body.rect.width;
             if (rectW >= 300f) bodyW = rectW;   // a laid-out rect is the truth; BundleRelayout rebuilds once if it only appears after this call
             textAreaW = Mathf.Clamp(bodyW - TextLeft - PriceReserve - 12f, 200f, 600f);
+            nameAreaW = Mathf.Max(100f, bodyW - TextLeft - PriceReserve - 2f);   // the name rect stretches from TextLeft to PriceReserve
             List<BundleDef> offers = progress.CurrentBundleOffers();
             if (offers.Count == 0)
             {

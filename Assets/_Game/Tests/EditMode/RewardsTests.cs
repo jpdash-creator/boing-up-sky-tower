@@ -65,8 +65,6 @@ namespace BoingUpSkyTower.Tests
             string json = File.ReadAllText(Path.Combine(ProjectRoot, "Content", "economy", "rewards.json"));
             RewardCatalog fromJson = RewardCatalog.FromJson(json);
             RewardCatalog builtIn = RewardCatalog.BuiltIn();
-            AssertSame(builtIn.StarMilestones, fromJson.StarMilestones);
-            AssertSame(builtIn.RegionRewards, fromJson.RegionRewards);
             AssertSame(builtIn.DailyActions, fromJson.DailyActions);
             AssertSame(builtIn.DailyMilestones, fromJson.DailyMilestones);
             AssertSame(builtIn.WeeklyTasks, fromJson.WeeklyTasks);
@@ -85,6 +83,7 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(a[i].Gems, b[i].Gems, a[i].Id);
                 Assert.AreEqual(a[i].Coins, b[i].Coins, a[i].Id);
                 Assert.AreEqual(a[i].PowerUps, b[i].PowerUps, a[i].Id);
+                Assert.AreEqual(a[i].HeroRegion, b[i].HeroRegion, a[i].Id);
             }
         }
 
@@ -92,24 +91,23 @@ namespace BoingUpSkyTower.Tests
         public void TablesFollowTheDocument()
         {
             RewardCatalog c = RewardCatalog.BuiltIn();
-            int[] stars = { 25, 50, 75, 100, 125, 150, 175, 200, 225 };
-            int[] gems = { 20, 0, 30, 0, 40, 0, 60, 80, 100 };
-            int[] coins = { 0, 1000, 0, 1500, 0, 2000, 0, 0, 0 };
-            int[] powerUps = { 0, 0, 0, 0, 1, 0, 2, 3, 5 };
-            Assert.AreEqual(9, c.StarMilestones.Count);
-            for (int i = 0; i < 9; i++)
-            {
-                Assert.AreEqual(stars[i], c.StarMilestones[i].Target);
-                Assert.AreEqual(gems[i], c.StarMilestones[i].Gems);
-                Assert.AreEqual(coins[i], c.StarMilestones[i].Coins);
-                Assert.AreEqual(powerUps[i], c.StarMilestones[i].PowerUps);
-            }
-            Assert.AreEqual(5, c.RegionRewards.Count);
-            foreach (RewardEntry r in c.RegionRewards) { Assert.AreEqual(50, r.Gems); Assert.AreEqual(2000, r.Coins); }
-            Assert.AreEqual(10, c.DailyActions.Count);
+            Assert.AreEqual(6, c.DailyActions.Count, "Daily: log in, play 5, play 15, complete 3 levels, 5 combos, clear a hard level");
             Assert.AreEqual(100, c.DailyMaxPoints);
             Assert.AreEqual(5, c.DailyMilestones.Count);
-            Assert.AreEqual(11, c.WeeklyTasks.Count);
+            int[] thresholds = { 20, 40, 60, 80, 100 };
+            for (int i = 0; i < 5; i++) Assert.AreEqual(thresholds[i], c.DailyMilestones[i].Target);
+            Assert.AreEqual(9, c.WeeklyTasks.Count, "Weekly: login 5 days, play 100 min, 150 combos, 5 hard, 2 no-wall, 10 power-ups, 20 stars, 20 levels, endless floor 100");
+            Assert.AreEqual(RewardEntry.RandomOpenRegionHero, c.WeeklyTasks[8].HeroRegion, "the top weekly task gives a random Common hero of an open region");
+            for (int i = 0; i < 8; i++) Assert.AreEqual(0, c.WeeklyTasks[i].HeroRegion, c.WeeklyTasks[i].Id);
+            int dayGems = 0, dayCoins = 0, weekGems = 0;
+            foreach (RewardEntry m in c.DailyMilestones) { dayGems += m.Gems; dayCoins += m.Coins; }
+            foreach (RewardEntry w in c.WeeklyTasks) weekGems += w.Gems;
+            Assert.AreEqual(10, dayGems, "a full day pays 10 gems");
+            Assert.AreEqual(1500, dayCoins);
+            Assert.AreEqual(72, weekGems, "a full week of tasks pays 72 gems");
+            Assert.LessOrEqual(7 * dayGems + weekGems, 150, "perfect Daily + Weekly stays under the tight gem budget (docs/39)");
+            Assert.AreEqual(0, c.StarMilestones.Count, "the 25..225 star cards are gone");
+            Assert.AreEqual(0, c.RegionRewards.Count, "the five region rewards are gone (clear all levels is the last Levels goal)");
         }
 
         // ---- counters ----
@@ -137,7 +135,7 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(0, svc.DailyPoints());
             Assert.AreEqual(4, Weekly(svc, RewardStat.PlayMinutes));
             svc.AddPlaySeconds(1);
-            Assert.AreEqual(10, svc.DailyPoints(), "play 5 minutes is worth 10 points");
+            Assert.AreEqual(15, svc.DailyPoints(), "play 5 minutes is worth 15 points");
             Assert.AreEqual(5, Weekly(svc, RewardStat.PlayMinutes));
             svc.AddPlaySeconds(0);
             svc.AddPlaySeconds(-5);
@@ -165,7 +163,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService svc = NewService();
             ClearLevels(svc, 1, 1);
             Assert.AreEqual(1, Daily(svc, RewardStat.Levels));
-            Assert.AreEqual(10, svc.DailyPoints(), "complete a level");
+            Assert.AreEqual(0, svc.DailyPoints(), "one level is not a daily action any more");
             ClearLevels(svc, 1, 3);   // a replay of level 1 (counted) and first clears of 2 and 3
             Assert.AreEqual(4, Daily(svc, RewardStat.Levels));
             Assert.AreEqual(20, svc.DailyPoints(), "complete 3 levels");
@@ -251,17 +249,17 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(4, Daily(svc, RewardStat.BestCombo));
             Assert.AreEqual(1, Daily(svc, RewardStat.PowerUps));
             Assert.AreEqual(4, svc.BestComboEver);
-            Assert.AreEqual(20, svc.DailyPoints(), "a combo of 3 or more and a power-up used");
+            Assert.AreEqual(0, svc.DailyPoints(), "2 combos are not yet the daily 5");
             svc.ApplyRun("lvl_001_01", new RunOutcome { Completed = true, StarMask = 1, ComboChains = 3, BestCombo = 2, PowerUpsUsed = 2 });
             Assert.AreEqual(5, Daily(svc, RewardStat.Combos));
             Assert.AreEqual(4, Daily(svc, RewardStat.BestCombo), "the best stays the best");
             Assert.AreEqual(3, Daily(svc, RewardStat.PowerUps));
             Assert.AreEqual(5, Weekly(svc, RewardStat.Combos));
-            Assert.IsTrue(svc.IsRewardReady(RewardTab.Weekly, svc.RewardDefs.Find(RewardTab.Weekly, "w_combos5")));
+            Assert.AreEqual(15, svc.DailyPoints(), "5 combos is worth 15 points");
         }
 
         [Test]
-        public void HardLevelsCountFromDifficultyThreeUp()
+        public void HardLevelsStartedCountFromDifficultyThreeUp()
         {
             ProgressService svc = NewService();
             svc.RecordLevelStarted(0);
@@ -271,27 +269,44 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(1, Daily(svc, RewardStat.Hard));
             svc.RecordLevelStarted(4);
             Assert.AreEqual(1, Daily(svc, RewardStat.Hard), "counted once per day (no save at every retry)");
-            Assert.AreEqual(10, svc.DailyPoints());
+            Assert.AreEqual(0, svc.DailyPoints(), "starting a hard level is not enough: it has to be cleared");
         }
 
         [Test]
-        public void AllTenDailyActionsGiveOneHundredPoints()
+        public void HardClearsNeedTheLevelToBeClearedOnHardOrInsane()
+        {
+            ProgressService svc = NewService();
+            svc.RecordLevelStarted(2);
+            svc.ApplyRun("lvl_001_01", Won());
+            Assert.AreEqual(0, Daily(svc, RewardStat.HardClear), "cleared on Normal");
+            svc.RecordLevelStarted(3);
+            svc.ApplyRun("lvl_001_02", Won());
+            Assert.AreEqual(1, Daily(svc, RewardStat.HardClear));
+            Assert.AreEqual(1, Weekly(svc, RewardStat.HardClear));
+            Assert.AreEqual(20, svc.DailyPoints(), "clear a hard level");
+            svc.RecordLevelStarted(4);
+            svc.ApplyRun("lvl_001_03", new RunOutcome { Completed = false });
+            Assert.AreEqual(1, Daily(svc, RewardStat.HardClear), "a failed run is not a clear");
+            Assert.AreEqual(1, svc.RegionStatsOf(1).HardClears);
+        }
+
+        [Test]
+        public void AllSixDailyActionsGiveOneHundredPoints()
         {
             ProgressService svc = NewService();
             svc.RecordLogin();
-            svc.AddPlaySeconds(300);
+            svc.AddPlaySeconds(900);
             svc.RecordLevelStarted(3);
-            svc.RecordRunStats(new RunOutcome { ComboChains = 1, BestCombo = 3, PowerUpsUsed = 1 });
-            ClearLevels(svc, 1, 7);
-            svc.ApplyRun("lvl_001_08", new RunOutcome { Completed = true, StarMask = 3 });   // 2 stars: the "earn 2 stars in a level" action (always possible, also on cleared levels)
+            svc.RecordRunStats(new RunOutcome { ComboChains = 5, BestCombo = 3, PowerUpsUsed = 1, Region = 1 });
+            ClearLevels(svc, 1, 3);   // the hard setting is still active: these clears are hard clears too
             Assert.AreEqual(100, svc.DailyPoints());
 
             int gems = svc.Gems, coins = svc.Coins;
             int[] points = { 20, 40, 60, 80, 100 };
             foreach (int p in points) Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Daily, "dp_" + p).Result, "dp_" + p);
-            Assert.AreEqual(10 + 15 + 20, svc.Gems - gems);
-            Assert.AreEqual(500 + 1000, svc.Coins - coins);
-            Assert.AreEqual(1, TotalPowerUps(svc), "100 points pay one random power-up");
+            Assert.AreEqual(3 + 3 + 4, svc.Gems - gems);
+            Assert.AreEqual(300 + 500 + 700, svc.Coins - coins);
+            Assert.AreEqual(0, TotalPowerUps(svc), "the daily track pays no power-up any more (docs/39)");
             Assert.IsFalse(svc.HasClaimable(RewardTab.Daily));
         }
 
@@ -304,7 +319,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService svc = NewService();
             svc.RecordLogin();
             svc.AddPlaySeconds(300);
-            Assert.AreEqual(20, svc.DailyPoints());
+            Assert.AreEqual(25, svc.DailyPoints());
             Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Daily, "dp_20").Result);
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Daily, "dp_20").Result);
 
@@ -328,16 +343,16 @@ namespace BoingUpSkyTower.Tests
             for (int d = 0; d < 7; d++) { now = Monday.AddDays(d); svc.RecordLogin(); }   // Monday to Sunday
             Assert.AreEqual(7, Weekly(svc, RewardStat.LoginDays));
             int gems = svc.Gems;
-            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_login7").Result);
-            Assert.AreEqual(30, svc.Gems - gems);
-            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Weekly, "w_login7").Result);
+            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_login5").Result);
+            Assert.AreEqual(8, svc.Gems - gems);
+            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Weekly, "w_login5").Result);
 
             now = new DateTime(2026, 11, 8, 23, 59, 59);   // still Sunday
             Assert.AreEqual(7, Weekly(svc, RewardStat.LoginDays));
             now = new DateTime(2026, 11, 9, 0, 0, 1);      // Monday: a new week
             Assert.AreEqual(0, Weekly(svc, RewardStat.LoginDays));
-            Assert.IsFalse(svc.IsRewardClaimed(RewardTab.Weekly, svc.RewardDefs.Find(RewardTab.Weekly, "w_login7")));
-            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Weekly, "w_login7").Result);
+            Assert.IsFalse(svc.IsRewardClaimed(RewardTab.Weekly, svc.RewardDefs.Find(RewardTab.Weekly, "w_login5")));
+            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Weekly, "w_login5").Result);
         }
 
         [Test]
@@ -361,7 +376,7 @@ namespace BoingUpSkyTower.Tests
             svc.AddPlaySeconds(300);
             Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Daily, "dp_20").Result);
             now = Monday;   // back to Monday
-            Assert.AreEqual(20, svc.DailyPoints(), "no reset when the date goes back");
+            Assert.AreEqual(25, svc.DailyPoints(), "no reset when the date goes back");
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Daily, "dp_20").Result);
         }
 
@@ -377,13 +392,13 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(RewardClaimResult.Invalid, svc.TryClaimReward(RewardTab.Weekly, "dp_20").Result, "ids are per tab");
             Assert.AreEqual(RewardClaimResult.Invalid, svc.TryClaimReward(RewardTab.Daily, null).Result);
             svc.AddPlaySeconds(300);
-            int gems = svc.Gems;
+            int coins = svc.Coins;
             RewardClaimOutcome ok = svc.TryClaimReward(RewardTab.Daily, "dp_20");
             Assert.AreEqual(RewardClaimResult.Ok, ok.Result);
-            Assert.AreEqual(10, ok.Gems);
-            Assert.AreEqual(gems + 10, svc.Gems);
+            Assert.AreEqual(300, ok.Coins);
+            Assert.AreEqual(coins + 300, svc.Coins);
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Daily, "dp_20").Result);
-            Assert.AreEqual(gems + 10, svc.Gems, "a second claim pays nothing");
+            Assert.AreEqual(coins + 300, svc.Coins, "a second claim pays nothing");
         }
 
         [Test]
@@ -393,7 +408,7 @@ namespace BoingUpSkyTower.Tests
             svc.RecordLogin();
             string before = JsonConvert.SerializeObject(svc.Data);
             svc.TryClaimReward(RewardTab.Daily, "dp_20");   // not ready
-            svc.TryClaimReward(RewardTab.Main, "s_25");      // not ready
+            svc.TryClaimReward(RewardTab.Main, "g_1_stars_1");   // not ready
             svc.TryClaimReward(RewardTab.Weekly, "bogus");
             Assert.AreEqual(before, JsonConvert.SerializeObject(svc.Data));
         }
@@ -402,29 +417,29 @@ namespace BoingUpSkyTower.Tests
         public void AClaimIsOneSaveWithWalletStockAndMarkTogether()
         {
             ProgressService svc = NewService();
-            svc.RecordRunStats(new RunOutcome { ComboChains = 50 });
+            svc.RecordRunStats(new RunOutcome { PowerUpsUsed = 10 });
             int saves = 0;
             svc.Changed += () => saves++;
             int units = TotalPowerUps(svc);
-            RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_combos50");
+            RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_powerups10");
             Assert.AreEqual(RewardClaimResult.Ok, res.Result);
             Assert.AreEqual(1, saves, "one save per claim");
-            Assert.AreEqual(1, res.PowerUpIds.Count);
-            Assert.AreEqual(units + 1, TotalPowerUps(svc));
-            Assert.AreEqual(1, svc.PowerUpCount(res.PowerUpIds[0]));
+            Assert.AreEqual(2, res.PowerUpIds.Count);
+            Assert.AreEqual(units + 2, TotalPowerUps(svc));
+            Assert.GreaterOrEqual(svc.PowerUpCount(res.PowerUpIds[0]), 1);
             var reloaded = new ProgressService(repo, store, 5) { Clock = () => now };
-            Assert.IsTrue(reloaded.IsRewardClaimed(RewardTab.Weekly, reloaded.RewardDefs.Find(RewardTab.Weekly, "w_combos50")));
-            Assert.AreEqual(1, TotalPowerUps(reloaded), "the stock and the mark reached the same save");
+            Assert.IsTrue(reloaded.IsRewardClaimed(RewardTab.Weekly, reloaded.RewardDefs.Find(RewardTab.Weekly, "w_powerups10")));
+            Assert.AreEqual(2, TotalPowerUps(reloaded), "the stock and the mark reached the same save");
         }
 
         [Test]
         public void ClaimsSaturateInsteadOfOverflowing()
         {
             ProgressService svc = NewService();
-            svc.AddGems(int.MaxValue - 5);
+            svc.AddGems(int.MaxValue - 2);
             svc.RecordLogin();
-            svc.AddPlaySeconds(300);
-            svc.TryClaimReward(RewardTab.Daily, "dp_20");
+            svc.AddPlaySeconds(900);   // 10 + 15 + 20 = 45 points: dp_40 pays 3 gems
+            svc.TryClaimReward(RewardTab.Daily, "dp_40");
             Assert.AreEqual(int.MaxValue, svc.Gems);
         }
 
@@ -433,103 +448,86 @@ namespace BoingUpSkyTower.Tests
         {
             ProgressService svc = NewService();
             svc.AddPlaySeconds(100 * 60);
-            svc.RecordRunStats(new RunOutcome { ComboChains = 10 });
+            svc.RecordRunStats(new RunOutcome { ComboChains = 150 });
             svc.RecordLogin();
             int coins = svc.Coins, gems = svc.Gems;
             Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_play100").Result);
             Assert.AreEqual(500, svc.Coins - coins);
-            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Weekly, "w_play150").Result);
-            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_combos5").Result);
-            Assert.AreEqual(300, svc.Coins - coins - 500);
-            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_combos10").Result);
-            Assert.AreEqual(10, svc.Gems - gems);
-            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Weekly, "w_combos25").Result);
-        }
-
-        // ---- Main: stars and regions ----
-
-        [Test]
-        public void StarMilestonesAndRegionRewardsAreClaimedOnce()
-        {
-            ProgressService svc = NewService();
-            ClearLevels(svc, 1, 15, 7);   // 45 stars, region 1 cleared
-            Assert.AreEqual(45, svc.TotalStars());
-            Assert.AreEqual(15, svc.RegionLevelsCleared(1));
-            RewardCatalog defs = svc.RewardDefs;
-            Assert.IsTrue(svc.IsRewardReady(RewardTab.Main, defs.Find(RewardTab.Main, "s_25")));
-            Assert.IsFalse(svc.IsRewardReady(RewardTab.Main, defs.Find(RewardTab.Main, "s_50")));
-            Assert.IsTrue(svc.IsRewardReady(RewardTab.Main, defs.Find(RewardTab.Main, "r_1")));
-            Assert.IsFalse(svc.IsRewardReady(RewardTab.Main, defs.Find(RewardTab.Main, "r_2")));
-            Assert.IsTrue(svc.HasClaimable());
-
-            int gems = svc.Gems, coins = svc.Coins;
-            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Main, "s_25").Result);
-            Assert.AreEqual(20, svc.Gems - gems);
-            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Main, "r_1").Result);
-            Assert.AreEqual(70, svc.Gems - gems);
-            Assert.AreEqual(2000, svc.Coins - coins);
-            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Main, "s_25").Result);
-            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Main, "r_1").Result);
-            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Main, "s_50").Result);
-            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Main, "r_2").Result);
-            Assert.IsFalse(svc.HasClaimable(RewardTab.Main));
+            Assert.AreEqual(8, svc.Gems - gems);
+            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Weekly, "w_login5").Result, "one login day is not five");
+            int units = TotalPowerUps(svc);
+            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_combos150").Result);
+            Assert.AreEqual(500 + 800, svc.Coins - coins);
+            Assert.AreEqual(8 + 10, svc.Gems - gems);
+            Assert.AreEqual(1, TotalPowerUps(svc) - units);
+            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Weekly, "w_hard5").Result);
         }
 
         [Test]
-        public void MainClaimsNeverResetWithTheClock()
+        public void EndlessFloorFeedsTheWeeklyTask()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 15, 7);
-            svc.TryClaimReward(RewardTab.Main, "s_25");
-            now = Monday.AddDays(30);
-            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Main, "s_25").Result);
+            svc.ApplyEndlessRun("region_001_meadow_springs", 80, "20261102");
+            Assert.AreEqual(80, Weekly(svc, RewardStat.EndlessFloor));
+            Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimReward(RewardTab.Weekly, "w_endless100").Result);
+            svc.ApplyEndlessRun("region_001_meadow_springs", 120, "20261102");
+            svc.ApplyEndlessRun("region_001_meadow_springs", 30, "20261102");
+            Assert.AreEqual(120, Weekly(svc, RewardStat.EndlessFloor), "the best floor of the week");
+            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_endless100").Result);
         }
 
         [Test]
-        public void AllFiveRegionsAndNineStarMilestonesPayTheDocumentedTotals()
+        public void TheTopWeeklyTaskGivesExactlyOneCommonHeroCopyOfAnOpenRegion()
         {
             ProgressService svc = NewService();
-            for (int r = 1; r <= 5; r++) ClearLevels(svc, r, 15, 7);
-            Assert.AreEqual(225, svc.TotalStars());
-            int gems = svc.Gems, coins = svc.Coins, units = TotalPowerUps(svc);
-            foreach (RewardEntry e in svc.ClaimableEntries(RewardTab.Main))
-                Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Main, e.Id).Result, e.Id);
-            Assert.AreEqual(20 + 30 + 40 + 60 + 80 + 100 + 5 * 50, svc.Gems - gems);
-            Assert.AreEqual(1000 + 1500 + 2000 + 5 * 2000, svc.Coins - coins);
-            Assert.AreEqual(1 + 2 + 3 + 5, TotalPowerUps(svc) - units);
-            Assert.IsFalse(svc.HasClaimable(RewardTab.Main));
-        }
-
-        [Test]
-        public void ClaimAllPaysEverythingReadyInOneSave()
-        {
-            ProgressService svc = NewService();
-            ClearLevels(svc, 1, 15, 7);   // 45 stars, region 1 cleared: s_25 and r_1 ready
-            int gems = svc.Gems, coins = svc.Coins, saves = 0;
-            svc.Changed += () => saves++;
-            RewardClaimOutcome res = svc.ClaimAll(RewardTab.Main);
+            svc.RecordLevelStarted(3);
+            ClearLevels(svc, 1, 5);   // five hard clears
+            Assert.AreEqual(5, Weekly(svc, RewardStat.HardClear));
+            int before = svc.Copies("momo");
+            RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_hard5");
             Assert.AreEqual(RewardClaimResult.Ok, res.Result);
-            Assert.AreEqual(1, saves, "one save for everything");
-            Assert.AreEqual(70, res.Gems);
-            Assert.AreEqual(2000, res.Coins);
-            Assert.AreEqual(gems + 70, svc.Gems);
-            Assert.AreEqual(coins + 2000, svc.Coins);
-            Assert.IsFalse(svc.HasClaimable(RewardTab.Main));
-            Assert.AreEqual(RewardClaimResult.NotReady, svc.ClaimAll(RewardTab.Main).Result, "nothing left");
-            Assert.AreEqual(1, saves, "an empty claim saves nothing");
-            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Main, "r_1").Result);
+            Assert.AreEqual(1, res.HeroIds.Count);
+            Assert.AreEqual("momo", res.HeroIds[0], "only region 1 is open: its Common hero is the only candidate");
+            Assert.AreEqual(before + 1, svc.Copies("momo"));
+            Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Weekly, "w_hard5").Result);
+            Assert.AreEqual(before + 1, svc.Copies("momo"), "no second copy");
         }
+
+        [Test]
+        public void TheRandomWeeklyHeroIsRepeatableFromTheSeedAndNeverFromAClosedRegion()
+        {
+            string[] picks = new string[2];
+            for (int run = 0; run < 2; run++)
+            {
+                var st = new MemorySaveStore();
+                var seeded = new SaveData();
+                seeded.Bundles.Seed = 12345;
+                seeded.UnlockedRegions.Add("region_002_mushroom_grove");
+                seeded.UnlockedRegions.Add("region_003_sunny_beach");
+                st.Save(seeded);
+                var svc = new ProgressService(repo, st, 5) { Clock = () => now };
+                svc.AddPlaySeconds(1);
+                svc.Data.Rewards.Week.Stats[RewardStat.HardClear] = 5;
+                RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_hard5");
+                Assert.AreEqual(RewardClaimResult.Ok, res.Result);
+                picks[run] = res.HeroIds[0];
+                CollectionAssert.Contains(new[] { "momo", "forestgirl", "beachotter" }, picks[run], "regions 4 and 5 are closed");
+            }
+            Assert.AreEqual(picks[0], picks[1], "same seed and claim count, same hero");
+        }
+
+        // ---- Main: the region goals are tested in RegionGoalTests ----
 
         [Test]
         public void ClaimAllOnDailyAndWeeklyKeepsTabsApart()
         {
             ProgressService svc = NewService();
             svc.RecordLogin();
-            svc.AddPlaySeconds(300);   // 20 points
+            svc.AddPlaySeconds(300);   // 25 points
             Assert.AreEqual(RewardClaimResult.NotReady, svc.ClaimAll(RewardTab.Weekly).Result);
             RewardClaimOutcome res = svc.ClaimAll(RewardTab.Daily);
             Assert.AreEqual(RewardClaimResult.Ok, res.Result);
-            Assert.AreEqual(10, res.Gems);
+            Assert.AreEqual(300, res.Coins);
             Assert.IsTrue(svc.IsRewardClaimed(RewardTab.Daily, svc.RewardDefs.Find(RewardTab.Daily, "dp_20")));
         }
 
@@ -558,7 +556,7 @@ namespace BoingUpSkyTower.Tests
             svc.RecordRunStats(new RunOutcome { ComboChains = 4, BestCombo = 6 });
             ClearLevels(svc, 1, 9, 7);   // 27 stars
             svc.TryClaimReward(RewardTab.Daily, "dp_20");
-            svc.TryClaimReward(RewardTab.Main, "s_25");
+            svc.TryClaimReward(RewardTab.Main, "g_1_stars_2");
             svc.FlushPlayTime();
 
             var again = new ProgressService(repo, store, 5) { Clock = () => now };
@@ -569,7 +567,7 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(6, again.BestComboEver);
             Assert.AreEqual(1, Weekly(again, RewardStat.LoginDays));
             Assert.IsTrue(again.IsRewardClaimed(RewardTab.Daily, again.RewardDefs.Find(RewardTab.Daily, "dp_20")));
-            Assert.IsTrue(again.IsRewardClaimed(RewardTab.Main, again.RewardDefs.Find(RewardTab.Main, "s_25")));
+            Assert.IsTrue(again.IsRewardClaimed(RewardTab.Main, again.RewardDefs.Find(RewardTab.Main, "g_1_stars_2")));
             Assert.AreEqual(svc.Gems, again.Gems);
         }
 
@@ -587,6 +585,7 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(0, svc.DailyPoints());
             svc.RecordLogin();
             Assert.AreEqual(10, svc.DailyPoints());
+            Assert.AreEqual(0, svc.RegionStatsOf(1).Jumps, "no per-region counters in an old save");
             SaveData parsed = JsonConvert.DeserializeObject<SaveData>("{\"coins\":3}");
             Assert.IsNotNull(parsed.Rewards, "an old save file without the rewards block gets the default one");
         }
@@ -606,51 +605,46 @@ namespace BoingUpSkyTower.Tests
         {
             ProgressService svc = NewService();
             GameObject root;
-            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            RewardsScreen s = BuildScreen(svc, RewardTab.Daily, out root);
             try
             {
-                Assert.AreEqual(1 + 9, s.ListContent.childCount, "region header + 9 star cards");
-                foreach (RewardEntry e in svc.RewardDefs.StarMilestones) Assert.IsNotNull(s.ListContent.Find("Row_" + e.Id + "/Card"), e.Id);
                 Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/Tabs"));
-                s.SelectTab(RewardTab.Daily);
-                Assert.AreEqual(1 + 10, s.ListContent.childCount, "scene header + 10 actions");
+                Assert.AreEqual(1 + 6, s.ListContent.childCount, "scene header + 6 actions");
                 Assert.IsNotNull(s.ListContent.Find("Scene/TrackPanel/Cells/Cell20"), "the first chest of the points track");
                 s.SelectTab(RewardTab.Weekly);
-                Assert.AreEqual(1 + 11, s.ListContent.childCount, "scene header + 11 tasks");
+                Assert.AreEqual(1 + 9, s.ListContent.childCount, "scene header + 9 tasks");
+                s.SelectTab(RewardTab.Main);
+                Assert.AreEqual(44 + 1, s.ListContent.childCount, "region 1: 44 goal cards + the Endless divider");
+                Assert.IsNull(root.transform.Find("RewardsRoot/Body/MainHeader/Band"));
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
 
         [Test]
-        public void ReadyCardsAreButtonsWithAGreenClaimButtonAndClaimAllFollowsTheTab()
+        public void ReadyCardsAreButtonsWithAGreenClaimButtonAndClaimAllFollowsTheSelectedRegion()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 15, 7);   // s_25 and r_1 ready
+            ClearLevels(svc, 1, 3);   // g_1_levels_1 (clear 3 levels) is ready, nothing else
             GameObject root;
             RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
             try
             {
-                Transform ready = s.ListContent.Find("Row_s_25/Card");
-                Assert.IsNotNull(ready.GetComponent<UnityEngine.UI.Button>(), "a ready card is the claim button");
-                Assert.IsNotNull(ready.Find("RewardPlate").GetComponent<UnityEngine.UI.Button>(), "with a green Claim button as its reward plate");
-                Assert.IsNull(ready.Find("Tag"), "the small CLAIM tag is gone");
-                Transform open = s.ListContent.Find("Row_s_50/Card");
-                Assert.IsNull(open.GetComponent<UnityEngine.UI.Button>());
-                Assert.IsNull(open.Find("RewardPlate").GetComponent<UnityEngine.UI.Button>(), "an open card has a plain reward plate");
-                Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "Claim All while something is ready");
-                s.SelectRegion(1);   // clearing region 1 moves the current region on; the ready bonus belongs to region 1
-                Assert.IsNotNull(s.ListContent.Find("MainHeader/Band").GetComponent<UnityEngine.UI.Button>(), "the region band is claimable too");
+                s.SelectRegion(1);
+                Transform ready = s.ListContent.Find("Row_g_1_levels_1/Card");
+                Assert.IsNotNull(ready.GetComponent<Button>(), "a ready card is the claim button");
+                Assert.IsNotNull(ready.Find("RewardPlate").GetComponent<Button>(), "with a green Claim button as its reward plate");
+                Transform open = s.ListContent.Find("Row_g_1_levels_2/Card");
+                Assert.IsNull(open.GetComponent<Button>());
+                Assert.IsNull(open.Find("RewardPlate").GetComponent<Button>(), "an open card has a plain reward plate");
+                Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "Claim All while something is ready in the selected region");
+                s.SelectRegion(2);
+                Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing is ready in region 2: no Claim All there");
+                s.SelectRegion(1);
+                Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"));
 
-                svc.ClaimAll(RewardTab.Main);
-                s.SelectTab(RewardTab.Main);
-                Assert.IsNull(s.ListContent.Find("Row_s_25/Card").GetComponent<UnityEngine.UI.Button>());
-                Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing left to claim");
-                // the same 15 cleared levels (45 stars, the no-wall level) also complete weekly tasks, so Claim All follows the Weekly tab on its own
-                s.SelectTab(RewardTab.Weekly);
-                Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "weekly tasks are ready too (levels, stars, no-wall)");
-                svc.ClaimAll(RewardTab.Weekly);
-                s.SelectTab(RewardTab.Weekly);
-                Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing left to claim in Weekly");
+                s.ClaimAll(RewardTab.Main);
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1/Card").GetComponent<Button>(), "claimed: no button any more");
+                Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing left to claim in the region");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
@@ -660,7 +654,7 @@ namespace BoingUpSkyTower.Tests
         {
             ProgressService svc = NewService();
             svc.RecordLogin();
-            svc.AddPlaySeconds(300);   // 20 points: the first chest only
+            svc.AddPlaySeconds(300);   // 25 points: the first chest only
             GameObject root;
             RewardsScreen s = BuildScreen(svc, RewardTab.Daily, out root);
             try
@@ -672,33 +666,35 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void ReadyCardHasAClaimButtonOfAtLeast48DpInsideTheCardThatClaimsExactlyThatReward()
+        public void ReadyGoalCardHasAClaimButtonOfAtLeast48DpThatClaimsExactlyThatGoal()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 15, 7);   // 45 stars: s_25 ready, 3 weekly tasks ready too
+            ClearLevels(svc, 1, 3);   // g_1_levels_1 = 150 coins; nothing else is complete
             int gems = svc.Gems, coins = svc.Coins;
             GameObject root;
             RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
             try
             {
-                var card = (RectTransform)s.ListContent.Find("Row_s_25/Card");
+                s.SelectRegion(1);
+                var card = (RectTransform)s.ListContent.Find("Row_g_1_levels_1/Card");
                 var plate = (RectTransform)card.Find("RewardPlate");
-                var btn = plate.GetComponent<UnityEngine.UI.Button>();
+                var btn = plate.GetComponent<Button>();
                 Assert.IsNotNull(btn);
                 Assert.GreaterOrEqual(plate.sizeDelta.x, UiKit.MinTouchPx - 1f, "button width >= 48 dp");
                 Assert.GreaterOrEqual(plate.sizeDelta.y, UiKit.MinTouchPx - 1f, "button height >= 48 dp");
                 var row = (RectTransform)card.parent;
-                Assert.LessOrEqual(plate.sizeDelta.y, row.GetComponent<UnityEngine.UI.LayoutElement>().preferredHeight, "the button fits inside its card");
-                Assert.IsNotNull(card.GetComponent<UnityEngine.UI.Button>(), "the card itself claims too");
-                Assert.AreEqual("Claim 20 gems", plate.GetComponent<A11yLabel>().Text);
+                Assert.LessOrEqual(plate.sizeDelta.y, row.GetComponent<LayoutElement>().preferredHeight, "the button fits inside its card");
+                Assert.IsNotNull(card.GetComponent<Button>(), "the card itself claims too");
+                Assert.AreEqual("Claim 150 coins", plate.GetComponent<A11yLabel>().Text);
 
                 btn.onClick.Invoke();   // tap the green button
-                Assert.IsTrue(svc.IsRewardClaimed(RewardTab.Main, svc.RewardDefs.Find(RewardTab.Main, "s_25")));
-                Assert.AreEqual(gems + 20, svc.Gems, "paid exactly the 20 gems of s_25");
-                Assert.AreEqual(coins, svc.Coins);
-                Assert.IsFalse(svc.IsRewardClaimed(RewardTab.Main, svc.RewardDefs.Find(RewardTab.Main, "r_1")), "the region bonus was not claimed");
-                Assert.IsNull(s.ListContent.Find("Row_s_25/Card").GetComponent<UnityEngine.UI.Button>(), "claimed: green check card, no button");
-                Assert.IsNotNull(s.ListContent.Find("Row_s_25/Card/Check"), "claimed cards keep the check badge");
+                RegionGoal goal = svc.RewardDefs.FindGoal("g_1_levels_1");
+                Assert.IsTrue(svc.IsRegionGoalClaimed(goal));
+                Assert.AreEqual(coins + 150, svc.Coins, "paid exactly the 150 coins of that goal");
+                Assert.AreEqual(gems, svc.Gems);
+                Assert.AreEqual(1, svc.RegionGoalsClaimedCount(1), "no other goal was claimed");
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1/Card").GetComponent<Button>(), "claimed: green check card, no button");
+                Assert.IsNotNull(s.ListContent.Find("Row_g_1_levels_1/Card/Check"), "claimed cards keep the check badge");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
@@ -724,19 +720,316 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void MainHeaderHasTheSceneBehindTheCirclesAndTheBandUnderIt()
+        public void MainHeaderHasTheSceneBehindTheStripAndNoBandOrRail()
         {
             ProgressService svc = NewService();
             GameObject root;
             RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
             try
             {
-                Transform header = s.ListContent.Find("MainHeader");
+                Transform header = root.transform.Find("RewardsRoot/Body/MainHeader");
+                Assert.IsNotNull(header, "the header is pinned above the list, not inside it");
+                Assert.IsNull(s.ListContent.Find("MainHeader"), "...so the horizontal strip never fights the vertical list");
                 Assert.IsNotNull(header.Find("Scene/SceneClip/Backdrop"), "the scene picture (or its sky fallback) sits behind the circle strip");
-                Assert.IsNotNull(header.Find("Slot1/Region1"), "the circles stay");
                 Assert.IsNotNull(header.Find("Backdrop"), "dark glass strip behind the names");
-                Assert.Less(header.Find("Scene").GetSiblingIndex(), header.Find("Slot1").GetSiblingIndex(), "the scene is drawn first (behind)");
-                Assert.IsNotNull(header.Find("Band"));
+                Assert.Less(header.Find("Scene").GetSiblingIndex(), header.Find("Strip").GetSiblingIndex(), "the scene is drawn first (behind)");
+                Assert.IsNull(header.Find("Band"), "the purple band is gone");
+                Assert.IsNull(s.ListContent.Find("Row_s_25"), "the 25..225 star cards are gone");
+                foreach (Transform t in s.ListContent) Assert.IsNull(t.Find("Rail"), "no numbered rail");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        // ---- Main tab, Bug List 5 F1.a: the region strip, the goal lists, the small reward card ----
+
+        [Test]
+        public void RegionStripHas30EntriesFivePlayableAndTwentyFiveComingSoon()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                Assert.AreEqual(30, s.StripRow.childCount, "all 30 regions, built once");
+                int playable = 0, soon = 0;
+                for (int i = 1; i <= 30; i++)
+                {
+                    Transform slot = s.StripRow.Find("Slot" + i);
+                    Assert.IsNotNull(slot, "Slot" + i);
+                    string name = slot.Find("Name").GetComponent<Text>().text;
+                    var circle = (RectTransform)slot.Find("Region" + i);
+                    Assert.GreaterOrEqual(circle.sizeDelta.x, UiKit.MinTouchPx - 1f, "circle " + i + " is a 48 dp touch target");
+                    if (i <= 5)
+                    {
+                        playable++;
+                        Assert.AreNotEqual("Coming\nSoon", name, "region " + i + " keeps its real name");
+                        Assert.IsFalse(name.Contains(" "), "names are split by hand: never a break inside a word");
+                    }
+                    else
+                    {
+                        soon++;
+                        Assert.AreEqual("Coming\nSoon", name, "region " + i + " is Coming Soon (no real name)");
+                        Assert.IsNotNull(circle.Find("State"), "region " + i + " shows a lock");
+                        StringAssert.Contains("Coming Soon", circle.GetComponent<A11yLabel>().Text);
+                    }
+                }
+                Assert.AreEqual(5, playable);
+                Assert.AreEqual(25, soon);
+                Assert.AreEqual(1, s.SelectedRegion);
+                Assert.Greater(((RectTransform)s.StripRow.Find("Slot1/Region1")).sizeDelta.x, ((RectTransform)s.StripRow.Find("Slot2/Region2")).sizeDelta.x, "the selected circle is the big one");
+                Assert.IsNotNull(s.StripRow.Find("Slot1/Ring"), "with a ring");
+                Assert.IsNotNull(s.StripRow.Find("Slot1/Pointer"), "and a pointer");
+                s.SelectRegion(4);
+                Assert.IsNotNull(s.StripRow.Find("Slot4/Ring"), "the ring moves with the selection");
+                Assert.IsNull(s.StripRow.Find("Slot1/Ring"));
+                Assert.AreEqual(30, s.StripRow.childCount, "selecting never rebuilds or adds strip entries");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void StripSnapsAndCentresTheSelectedCircle()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                var snap = s.StripRow.GetComponentInParent<RegionStripSnap>();
+                Assert.IsNotNull(snap);
+                var sr = snap.GetComponent<ScrollRect>();
+                Assert.IsTrue(sr.horizontal && !sr.vertical, "the strip scrolls sideways only");
+                Assert.AreEqual(-0f * RewardsScreen.StripSlotW, snap.Content.anchoredPosition.x, 0.01f, "region 1 starts centred");
+                Assert.AreEqual(-3f * RewardsScreen.StripSlotW, snap.XFor(3), 0.01f, "slot i is centred at content x = -i * slot width (padding of half a viewport at both ends)");
+                snap.CenterOn(3, false);
+                Assert.AreEqual(3, snap.NearestIndex);
+                Assert.AreEqual(snap.XFor(3), snap.Content.anchoredPosition.x, 0.01f);
+                snap.CenterOn(29, false);
+                Assert.AreEqual(29, snap.NearestIndex, "the last circle can be centred too");
+                // the glide is time based and rests at the target
+                snap.CenterOn(0, true);
+                for (int i = 0; i < 400; i++) snap.Step(0.016f);
+                Assert.AreEqual(snap.XFor(0), snap.Content.anchoredPosition.x, 0.01f);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void SelectingARegionRebuildsTheGoalListWith44GoalsInTypeOrderAndEndlessLast()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                string firstOfPrevious = null;
+                for (int r = 1; r <= 5; r++)
+                {
+                    s.SelectRegion(r);
+                    var rows = new System.Collections.Generic.List<string>();
+                    int dividerAt = -1, i = 0;
+                    foreach (Transform t in s.ListContent)
+                    {
+                        if (t.name.StartsWith("Row_", StringComparison.Ordinal)) rows.Add(t.name.Substring(4));
+                        else if (t.name == "EndlessDivider") dividerAt = rows.Count;
+                        i++;
+                    }
+                    var goals = svc.RegionGoals(r);
+                    Assert.AreEqual(44, goals.Count);
+                    Assert.AreEqual(goals.Count, rows.Count, "region " + r + ": one card per goal");
+                    for (int k = 0; k < goals.Count; k++) Assert.AreEqual(goals[k].Id, rows[k], "region " + r + " card " + k + " follows the type-group order");
+                    int firstEndless = 0;
+                    while (!goals[firstEndless].IsEndless) firstEndless++;
+                    Assert.AreEqual(firstEndless, dividerAt, "the single 'Endless' divider sits right before the first endless tier");
+                    for (int k = firstEndless; k < goals.Count; k++) Assert.IsTrue(goals[k].IsEndless, "endless tiers come last");
+                    Assert.AreEqual(r, s.SelectedRegion);
+                    Assert.AreNotEqual(firstOfPrevious, rows[0], "the list changes with every region (it is not static)");
+                    firstOfPrevious = rows[0];
+                }
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void ComingSoonRegionShowsOneLockedCardAndNoGoals()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                s.SelectRegion(8);
+                int cards = 0;
+                foreach (Transform t in s.ListContent) if (t.name.StartsWith("Row_", StringComparison.Ordinal)) cards++;
+                Assert.AreEqual(0, cards, "no goal cards in a Coming Soon region");
+                Assert.AreEqual(1, s.ListContent.childCount, "exactly one card");
+                Transform soon = s.ListContent.Find("ComingSoon");
+                Assert.IsNotNull(soon);
+                Assert.AreEqual("Coming Soon", soon.Find("Label").GetComponent<Text>().text);
+                Assert.IsNotNull(soon.Find("Lock"), "with a lock icon");
+                Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing to claim");
+                s.SelectRegion(1);
+                Assert.IsNull(s.ListContent.Find("ComingSoon"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void ClaimAllOnMainClaimsOnlyTheSelectedRegion()
+        {
+            ProgressService svc = NewService();
+            ClearLevels(svc, 1, 15, 7);   // region 1: stars, levels, 3-star goals ready (and region 2 opens)
+            ClearLevels(svc, 2, 3);        // region 2: g_2_levels_1 ready
+            Assert.IsTrue(svc.HasClaimableInRegion(1));
+            Assert.IsTrue(svc.HasClaimableInRegion(2));
+            int readyOne = svc.RegionGoalsReadyCount(1);
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                s.SelectRegion(2);
+                RewardClaimOutcome res = s.ClaimAll(RewardTab.Main);
+                Assert.AreEqual(RewardClaimResult.Ok, res.Result);
+                Assert.AreEqual(0, svc.RegionGoalsReadyCount(2), "region 2 is done");
+                Assert.AreEqual(readyOne, svc.RegionGoalsReadyCount(1), "region 1 was not touched");
+                Assert.AreEqual(0, svc.RegionGoalsClaimedCount(1));
+                Assert.IsTrue(svc.HasClaimableMain(), "region 1 still has something to claim (red dot on its circle)");
+                Assert.IsNotNull(s.StripRow.Find("Slot1/Region1/Badge"), "the circle of region 1 carries the alert dot");
+                Assert.IsNull(s.StripRow.Find("Slot2/Region2/Badge"), "region 2 has nothing left");
+                s.SelectRegion(1);
+                Assert.AreEqual(RewardClaimResult.Ok, s.ClaimAll(RewardTab.Main).Result);
+                Assert.AreEqual(0, svc.RegionGoalsReadyCount(1));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void HeroGoalAndWeeklyHeroShowAHeroFaceOnTheirRewardPlate()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                s.SelectRegion(1);
+                Transform face = s.ListContent.Find("Row_g_1_levels_5/Card/RewardPlate/Hero");
+                Assert.IsNotNull(face, "'clear all levels' gives the region hero: its face is on the plate");
+                StringAssert.Contains("hero", face.GetComponent<A11yLabel>().Text);
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_4/Card/RewardPlate/Hero"), "other goals have no hero");
+                s.SelectTab(RewardTab.Weekly);
+                Transform weekly = s.ListContent.Find("Row_w_hard5/Card/RewardPlate/Hero");
+                Assert.IsNotNull(weekly, "the weekly top reward shows a hero chip");
+                Assert.AreEqual("Random hero", weekly.GetComponent<A11yLabel>().Text);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        GameObject lastOverlay;
+
+        RewardsScreen BuildScreenWithHost(ProgressService svc, RewardTab tab, out GameObject root)
+        {
+            GameObject r = new GameObject("RewardsTestRoot", typeof(RectTransform));
+            root = r;
+            var host = new RewardsScreen.Host
+            {
+                NewOverlay = () =>
+                {
+                    lastOverlay = new GameObject("Overlay", typeof(RectTransform), typeof(Image));
+                    lastOverlay.transform.SetParent(r.transform, false);
+                    return (RectTransform)lastOverlay.transform;
+                },
+                CloseOverlay = () => { if (lastOverlay != null) UnityEngine.Object.DestroyImmediate(lastOverlay); lastOverlay = null; }
+            };
+            var screen = new RewardsScreen((RectTransform)r.transform, svc, repo, null, host);
+            screen.Build(tab);
+            return screen;
+        }
+
+        [Test]
+        public void SmallRewardCardHasIconChipsAndNoLongText()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreenWithHost(svc, RewardTab.Main, out root);
+            try
+            {
+                var res = new RewardClaimOutcome { Result = RewardClaimResult.Ok, Gems = 40, Coins = 2000 };
+                res.PowerUpIds.Add("pw_flight"); res.PowerUpIds.Add("pw_flight"); res.PowerUpIds.Add("pw_shield");
+                s.ShowClaimed(res);
+                RectTransform card = s.RewardCard;
+                Assert.IsNotNull(card);
+                int chips = 0;
+                foreach (Transform t in card) if (t.name == "Chip") chips++;
+                Assert.AreEqual(4, chips, "gem, coin and one chip per power-up type");
+                foreach (Text t in card.GetComponentsInChildren<Text>()) Assert.LessOrEqual(t.text.Length, 5, "amounts only, no sentences: \"" + t.text + "\"");
+                Assert.AreEqual("40", card.Find("Chip/Amount").GetComponent<Text>().text);
+                Assert.Less(card.sizeDelta.y, 980f * 0.6f, "about half of the old 980 px reward popup");
+                Assert.Less(card.sizeDelta.x, 1080f);
+                var ok = (RectTransform)card.Find("OK");
+                Assert.IsNotNull(ok.GetComponent<Button>());
+                Assert.GreaterOrEqual(ok.sizeDelta.x, UiKit.MinTouchPx - 1f);
+                Assert.GreaterOrEqual(ok.sizeDelta.y, UiKit.MinTouchPx - 1f);
+                Assert.AreEqual("OK", ok.GetComponent<A11yLabel>().Text);
+                StringAssert.Contains("40 gems", card.GetComponent<A11yLabel>().Text);
+
+                // closes on OK, on a tap anywhere and by itself after about 4 seconds
+                var timer = lastOverlay.GetComponent<RewardCardTimer>();
+                Assert.AreEqual(4f, timer.Seconds, 0.01f);
+                GameObject first = lastOverlay;
+                ok.GetComponent<Button>().onClick.Invoke();
+                Assert.IsTrue(first == null, "OK closed the card");
+
+                s.ShowClaimed(res);
+                GameObject second = lastOverlay;
+                second.GetComponent<Button>().onClick.Invoke();
+                Assert.IsTrue(second == null, "a tap anywhere closed it");
+
+                s.ShowClaimed(res);
+                GameObject third = lastOverlay;
+                third.GetComponent<RewardCardTimer>().OnTimeUp();
+                Assert.IsTrue(third == null, "the timer closes it");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void SmallRewardCardShowsAHeroFacePerHeroCopy()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreenWithHost(svc, RewardTab.Main, out root);
+            try
+            {
+                var res = new RewardClaimOutcome { Result = RewardClaimResult.Ok, Gems = 8 };
+                res.HeroIds.Add("forestgirl"); res.HeroIds.Add("forestgirl");
+                s.ShowClaimed(res);
+                int faces = 0, chips = 0;
+                foreach (Transform t in s.RewardCard)
+                {
+                    if (t.name != "Chip") continue;
+                    chips++;
+                    if (t.Find("HeroFace") != null) faces++;
+                }
+                Assert.AreEqual(3, chips, "gems + 2 hero copies");
+                Assert.AreEqual(2, faces, "one face portrait per hero copy");
+                foreach (Text t in s.RewardCard.GetComponentsInChildren<Text>()) Assert.LessOrEqual(t.text.Length, 5, "no sentences");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void ClaimingAGoalShowsTheSmallCardWithItsRewardChips()
+        {
+            ProgressService svc = NewService();
+            ClearLevels(svc, 1, 3);
+            GameObject root;
+            RewardsScreen s = BuildScreenWithHost(svc, RewardTab.Main, out root);
+            try
+            {
+                s.SelectRegion(1);
+                s.ListContent.Find("Row_g_1_levels_1/Card/RewardPlate").GetComponent<Button>().onClick.Invoke();
+                Assert.IsNotNull(lastOverlay, "the claim opened the reward card");
+                Assert.AreEqual("150", s.RewardCard.Find("Chip/Amount").GetComponent<Text>().text, "150 coins: a single coin chip");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
@@ -824,7 +1117,7 @@ namespace BoingUpSkyTower.Tests
             var all = new System.Collections.Generic.List<RewardEntry>();
             foreach (RewardEntry e in c.DailyActions) all.Add(e);
             foreach (RewardEntry e in c.WeeklyTasks) all.Add(e);
-            foreach (RewardEntry e in c.StarMilestones) all.Add(e);
+            foreach (RegionGoal e in c.AllRegionGoals) all.Add(e);
             foreach (RewardEntry e in all)
             {
                 string slot, icon, kit;
@@ -835,6 +1128,55 @@ namespace BoingUpSkyTower.Tests
             for (int i = 0; i < 5; i++) Assert.AreEqual(kinds[i], RewardArt.ChestKind(i, 5), "chest " + i);
             Assert.IsNull(RewardArt.Slot("task_does_not_exist"), "a missing slot is null, never an error");
         }
+
+        [Test]
+        public void TaskIconsFollowTheTaskTypeForGoalsAndTheNewDailyAndWeeklyTasks()
+        {
+            string slot, icon, kit;
+            Check("g_1_stars_1", "icon_star", out slot, out icon, out kit);
+            Assert.AreEqual("flag1", Src("g_1_levels_2")); Assert.AreEqual("task_flag", Slot("g_1_levels_2"));
+            Assert.AreEqual("star3", Src("g_1_stars3_1"), "3-star levels: three stars (icon_star3)");
+            Assert.AreEqual("task_upgrade", Slot("g_1_jumps_1"), "jumps: the up arrow");
+            Assert.AreEqual("task_flame", Slot("g_1_combos_1"));
+            Assert.AreEqual("task_hourglass", Slot("g_1_time_1"));
+            Assert.AreEqual("task_coins", Slot("g_1_coins_1"));
+            Assert.AreEqual("bolt", Src("g_1_powerups_1"));
+            Assert.AreEqual("task_boss_skull", Slot("g_1_hard_1"));
+            Assert.AreEqual("wall", Src("g_1_nowall_1"));
+            RewardsScreen.TaskSources("g_1_endless_1", out slot, out icon, out kit);
+            Assert.AreEqual("icon_tower", kit, "endless floors: the tower");
+            Assert.AreEqual("task_key", Slot("d_login"));
+            Assert.AreEqual("task_hourglass", Slot("d_play5"));
+            Assert.AreEqual("task_flag", Slot("d_level3"));
+            Assert.AreEqual("task_flame", Slot("d_combo5"));
+            Assert.AreEqual("task_boss_skull", Slot("d_hard"));
+            Assert.AreEqual("wall", Src("w_nowall2"));
+            Assert.AreEqual("bolt", Src("w_powerups10"));
+            Assert.AreEqual("star1", Src("w_stars20"));
+            RewardsScreen.TaskSources("w_endless100", out slot, out icon, out kit);
+            Assert.AreEqual("icon_tower", kit);
+            Assert.AreEqual("task_boss_skull", Slot("w_hard5"));
+        }
+
+        [Test]
+        public void LongTitlesAreShortenedWhereTheIconSaysIt()
+        {
+            Assert.AreEqual("Reach floor 100", RewardsScreen.ShortTitle("Reach floor 100 in Endless"));
+            Assert.AreEqual("No-wall level x2", RewardsScreen.ShortTitle("Clear the no-wall level 2 times"));
+            Assert.AreEqual("Clear the no-wall level", RewardsScreen.ShortTitle("Clear the no-wall level"));
+            Assert.AreEqual("3 stars on 15 levels", RewardsScreen.ShortTitle("Get 3 stars on 15 levels"));
+            Assert.AreEqual("Earn 20 stars", RewardsScreen.ShortTitle("Earn 20 stars"));
+            foreach (RegionGoal g in RewardCatalog.BuiltIn().AllRegionGoals) Assert.LessOrEqual(RewardsScreen.ShortTitle(g.Title).Length, 24, g.Id);
+        }
+
+        static void Check(string id, string expectKit, out string slot, out string icon, out string kit)
+        {
+            RewardsScreen.TaskSources(id, out slot, out icon, out kit);
+            Assert.AreEqual(expectKit, kit, id);
+        }
+
+        static string Src(string id) { string s, i, k; RewardsScreen.TaskSources(id, out s, out i, out k); return i; }
+        static string Slot(string id) { string s, i, k; RewardsScreen.TaskSources(id, out s, out i, out k); return s; }
 
         static Sprite ToyKit_Get(string name) { return BoingUpSkyTower.Gameplay.ToyKit.Get(name); }
 

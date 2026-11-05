@@ -291,6 +291,31 @@ namespace BoingUpSkyTower.Simulation
         }
 
         /// <summary>
+        /// Endless re-base (EndlessTower.Stream): the tower dropped its lowest <paramref name="dropPlatforms"/> platforms and moved every height down by
+        /// <paramref name="yShift"/>. Makes the running state follow: every stored absolute height (Y, KillY, MaxY, the rocket target) moves by the same exact amount, the
+        /// platform ids (GroundId, BestGroundId, the per-platform CrumbleTick array) move down by the dropped count. Nothing else in a state is a height or an id
+        /// (rows are absolute floors and stay), and the Sim only ever compares heights with heights, so the run goes on bit for bit as if nothing happened.
+        /// Allocates one array: call it once per re-base (a few hundred floors), never per tick. Call it BEFORE <see cref="GrowState"/> of the new Sim.
+        /// </summary>
+        public static void ShiftState(ref SimState s, int dropPlatforms, Fx yShift)
+        {
+            s.Y = s.Y - yShift;
+            s.KillY = s.KillY - yShift;
+            s.MaxY = s.MaxY - yShift;
+            if (s.RocketTicks > 0) s.RocketTargetY = s.RocketTargetY - yShift;   // only a running burn reads it (it is set again at the next tap)
+            s.GroundId -= dropPlatforms;
+            s.BestGroundId -= dropPlatforms;
+            if (dropPlatforms > 0 && s.CrumbleTick != null)
+            {
+                int keep = s.CrumbleTick.Length - dropPlatforms;
+                if (keep < 0) keep = 0;
+                int[] c = new int[keep];
+                System.Array.Copy(s.CrumbleTick, dropPlatforms, c, 0, keep);
+                s.CrumbleTick = c;
+            }
+        }
+
+        /// <summary>
         /// Minimal revive: if dead, puts the player back on the highest platform landed on, clears speed,
         /// grants a short invulnerability and counts the revive. UI and payment are the caller's job.
         /// </summary>
@@ -1334,7 +1359,7 @@ namespace BoingUpSkyTower.Simulation
 
             if (newRow)
             {
-                s.Score += (p.Row - oldRow) * Cfg.FloorPoints;
+                s.Score = PowerUps.SatAdd(s.Score, (p.Row - oldRow) * Cfg.FloorPoints);   // saturating: a very long endless chain (combo^2 points) must never wrap negative
                 s.Row = p.Row;
                 s.BestGroundId = id;
             }
@@ -1342,7 +1367,7 @@ namespace BoingUpSkyTower.Simulation
             {
                 s.Combo++;
                 if (s.Combo > s.BestCombo) s.BestCombo = s.Combo;
-                s.Score += s.Combo * s.Combo * Cfg.ComboPointsMultiplier;
+                s.Score = PowerUps.SatAdd(s.Score, (int)System.Math.Min((long)s.Combo * s.Combo * Cfg.ComboPointsMultiplier, int.MaxValue));
             }
             else
             {

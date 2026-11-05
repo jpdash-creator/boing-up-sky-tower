@@ -43,6 +43,8 @@ namespace BoingUpSkyTower.Economy
         public int ComboChains, BestCombo;
         /// <summary>Power-up units used.</summary>
         public int PowerUpsUsed;
+        /// <summary>Per-region statistics (Bug List 5 F1.a): the region index the run was played in (0 = unknown, the level's own region is used for a completed run) and the jumps made since the last report.</summary>
+        public int Region, Jumps;
 
         public int Stars
         {

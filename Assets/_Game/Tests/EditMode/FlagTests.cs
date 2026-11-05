@@ -242,14 +242,17 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void SystemTestShowsEveryCharacter()
+        public void CharacterTestOwnsTheCommonHeroesOnly()
         {
             var svc = NewService();
             Assert.IsFalse(svc.OwnsCharacter("forestgirl"));
             ProgressService.TestAllCharacters = true;
             Assert.IsTrue(svc.OwnsCharacter("forestgirl"));
             Assert.IsTrue(CharacterCatalog.Owns(svc, CharacterCatalog.ForestGirl));
-            Assert.AreEqual(CharacterCatalog.All.Length, CharacterCatalog.Available(svc).Length);
+            Assert.IsFalse(svc.OwnsCharacter("forestgirl_u"), "Uncommon heroes are merged or bought, never given by Character Test");
+            int commons = 0;
+            foreach (CharacterSpec s in CharacterDefs.All) if (s.Rarity == CharacterRarity.Common && s.Region > 0) commons++;
+            Assert.AreEqual(commons, CharacterCatalog.Available(svc).Length, "only the Common heroes are owned");
         }
 
         [Test]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using BoingUpSkyTower.Economy;
 using UnityEngine;
 using UnityEngine.UI;
@@ -197,8 +198,11 @@ namespace BoingUpSkyTower.Gameplay
         public const float DollH = 336f;   // was 420: 20 percent smaller (owner 2026-11-02)
         /// <summary>The (i) button right of the hero on the stage (at least 48 dp).</summary>
         public const float InfoSize = 132f;
-        /// <summary>The Merge button above the (i) button: the same size.</summary>
-        public const float MergeSize = InfoSize;
+        /// <summary>Height of the action row (All Heroes and Merge) between the stage and the list: at least 150, and never below 48 dp on the real screen.</summary>
+        public static float ActionRowH { get { return Mathf.Max(150f, UiKit.MinTouchRef); } }
+        const float RowGap = 12f;
+        /// <summary>The tick on the chosen hero's first card.</summary>
+        public const string ChosenName = "Chosen";
 
         /// <summary>What the screen needs from the menu: the land stage it stands on.</summary>
         public sealed class Host
@@ -206,8 +210,10 @@ namespace BoingUpSkyTower.Gameplay
             public Stage Stage;
             /// <summary>The (i) button opens the shown hero's sheet (docs/21); the sheet has the "Use this hero" button. Tapping a tile only selects it.</summary>
             public Action<CharacterDef> OpenHero;
-            /// <summary>The Merge icon above the (i) button opens the Merge screen. No Merge button when null.</summary>
+            /// <summary>The Merge button (painted MergeIcon plus the word "Merge") in the action row opens the Merge screen. No Merge button when null.</summary>
             public Action OpenMerge;
+            /// <summary>The "All Heroes" button in the action row opens the full list of every character (locked ones included). No button when null.</summary>
+            public Action OpenAllHeroes;
         }
 
         readonly RectTransform screen;
@@ -302,27 +308,9 @@ namespace BoingUpSkyTower.Gameplay
             nameBottomDist = Mathf.Max(nameBottomDist, UiKit.TopInsetRef() + 126f + Mathf.Max(0f, UiKit.TextScale - 1f) * 220f + nameH);   // never up under the wallet row (notch aspects push the row down)
             nrt.anchoredPosition = new Vector2(0f, -nameBottomDist);
 
-            // Merge icon above the (i) button (same size, same column). The picture is a placeholder plus glyph named "MergeIcon" so the OpenArt icon can be swapped in.
             float infoY = -(host.Stage.GroundBottom - UiKit.TopInsetRef() - InfoSize - 28f);
-            if (host.OpenMerge != null)
-            {
-                Button merge = UiKit.AddButton(body, "MergeButton", "", MergeArt.Icon, Color.white, new Vector2(MergeSize, MergeSize), () => host.OpenMerge());   // the painted OpenArt icon is the whole button (it has its own plate)
-                merge.GetComponent<Image>().preserveAspect = true;
-                var mergeLabel = merge.GetComponent<A11yLabel>();
-                if (mergeLabel != null) mergeLabel.Text = "Merge";
-                merge.transform.name = "MergeButton";
-                UiKit.Place((RectTransform)merge.transform, new Vector2(1f, 1f), new Vector2(-SideMargin, infoY + InfoSize + 16f), new Vector2(MergeSize, MergeSize));
-            }
-
-            // system test builds only: add two test copies of the shown hero (feeds the merge screen)
-            if (GameSettings.SystemTest)
-            {
-                float bh = Mathf.Ceil(UiKit.MinTouchPx);   // 200 wide so it stays left of the dirt oval on the narrowest aspect; the label wraps to two lines
-                Button add = UiKit.AddButton(body, "DebugAddCopies", "Add 2 copies", ToyKit.Button(0), Color.white, new Vector2(200f, bh),
-                    () => { CharacterCatalog.DebugAddCopies(CharacterCatalog.Selected, 2); Build(); }, 36);
-                add.GetComponent<A11yLabel>().Text = "Add 2 test copies of the shown hero";
-                UiKit.Place((RectTransform)add.transform, new Vector2(0f, 1f), new Vector2(SideMargin, infoY - InfoSize + bh), new Vector2(200f, bh));
-            }
+            // The Merge button and the All Heroes button live in the action row under the stage (BuildActionRow). The test-only 'Add 2 copies' button is gone from this screen:
+            // the admin Character Test popup (Hero test page) adds copies.
 
             // (i) opens the shown hero's sheet (docs/21). It sits in the bottom right corner of the stage, clear of the hero and the dirt oval
             // (the oval is 600 px wide centred, the button is in the outer 24 to 156 px of the screen edge), never in the middle of the stage.
@@ -341,12 +329,14 @@ namespace BoingUpSkyTower.Gameplay
             vp.anchorMin = Vector2.zero;
             vp.anchorMax = Vector2.one;
             vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);
-            vp.offsetMax = new Vector2(0f, -(host.Stage.GroundBottom - UiKit.TopInsetRef() + 18f));   // body top is the safe-area top; the stage counts from the screen top
+            float listTop = host.Stage.GroundBottom - UiKit.TopInsetRef() + 18f;   // body top is the safe-area top; the stage counts from the screen top
+            vp.offsetMax = new Vector2(0f, -(listTop + ActionRowH + RowGap));
+            BuildActionRow(listTop);
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
-            CharacterDef[] owned = CharacterCatalog.Available(progress);
-            int rows = Mathf.Max(1, (owned.Length + Columns - 1) / Columns);
+            List<HeroCard> cards = CharacterCatalog.OwnedCards(progress);   // one card per owned copy, no counts (docs/34 section 10)
+            int rows = Mathf.Max(1, (cards.Count + Columns - 1) / Columns);
             // End to end: 5 cells fill the whole width and 4 rows fill the list height (owner 2026-11-02); more heroes scroll. Everything is anchored by
             // fractions of the list viewport (no pixel maths), so it fits every aspect and safe area by construction.
             int layoutRows = Mathf.Max(VisibleRows, rows);
@@ -356,6 +346,9 @@ namespace BoingUpSkyTower.Gameplay
             content.pivot = new Vector2(0.5f, 1f);
             content.offsetMin = new Vector2(EdgeMargin, 0f);
             content.offsetMax = new Vector2(-EdgeMargin, 0f);
+            // CUX-4: when 4 rows would make a card shorter than 48 dp (3:4, big text), the content grows past the viewport and the list scrolls instead.
+            var fitter = vp.gameObject.AddComponent<RosterRowFitter>();
+            fitter.Init(vp, content, layoutRows, VisibleRows, Mathf.Ceil(Mathf.Max(UiKit.MinTouchPx, MinTile)) + Gap + 1f);
             var sr = vp.gameObject.AddComponent<ScrollRect>();
             sr.content = content;
             sr.viewport = vp;
@@ -364,13 +357,14 @@ namespace BoingUpSkyTower.Gameplay
             sr.movementType = ScrollRect.MovementType.Elastic;
             sr.scrollSensitivity = 60f;
 
-            // only the characters the player has are shown (no locked or placeholder slots, no lock icons)
+            // Only heroes the player really owns, one card per copy. A tap on ANY card selects that hero type; the tick sits on the FIRST card of the chosen type only.
             CharacterDef chosen = CharacterCatalog.Selected;
-            for (int i = 0; i < owned.Length; i++)
+            for (int i = 0; i < cards.Count; i++)
             {
-                CharacterDef who = owned[i];
-                CharacterRarity rarity = who.Rarity;
-                RectTransform inner = RarityUi.Box(content, "Char_" + who.Id, rarity, false, new Vector2(100f, 100f));
+                HeroCard card = cards[i];
+                CharacterDef who = CharacterCatalog.Get(card.Id);
+                CharacterRarity rarity = card.Spec.Rarity;
+                RectTransform inner = RarityUi.Box(content, CardName(card), rarity, false, new Vector2(100f, 100f));
                 RectTransform outer = (RectTransform)inner.parent;
                 int col = i % Columns, row = i / Columns;
                 outer.anchorMin = new Vector2(col / (float)Columns, 1f - (row + 1) / (float)layoutRows);
@@ -379,14 +373,11 @@ namespace BoingUpSkyTower.Gameplay
                 outer.offsetMin = new Vector2(Gap * 0.5f, Gap * 0.5f);
                 outer.offsetMax = new Vector2(-Gap * 0.5f, -Gap * 0.5f);
 
-                // the bottom strip of the card is reserved for the copy badge (docs/36): the hero holder ends above it, so the number never sits on hero art (CUX-3).
-                // The AspectRatioFitter takes over its own rect, so the reserved strip lives on a plain holder around the hero.
-                float badgeStrip = BadgeHeight() + 8f;
+                // The AspectRatioFitter takes over its own rect, so the hero sits on a plain holder around it.
                 RectTransform holder = UiKit.Rect(inner, "FaceHolder");
-                holder.anchorMin = new Vector2(0.04f, 0f);
+                holder.anchorMin = new Vector2(0.04f, 0.04f);
                 holder.anchorMax = new Vector2(0.96f, 0.96f);
-                holder.offsetMin = new Vector2(0f, badgeStrip);
-                holder.offsetMax = Vector2.zero;
+                holder.offsetMin = holder.offsetMax = Vector2.zero;
                 RectTransform face = MomoDoll.Build(holder, "Face", 100f, who, art);
                 face.anchorMin = Vector2.zero;
                 face.anchorMax = Vector2.one;
@@ -394,53 +385,147 @@ namespace BoingUpSkyTower.Gameplay
                 var fit = face.gameObject.AddComponent<AspectRatioFitter>();   // the hero keeps its proportions inside the holder
                 fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
                 fit.aspectRatio = who.Rig.CanvasW / (float)who.Rig.CanvasH;
-                if (who == chosen)
-                {
-                    Image tick = UiKit.AddImage(outer, "Chosen", Glyphs.Check, Color.white);
-                    tick.rectTransform.anchorMin = tick.rectTransform.anchorMax = new Vector2(1f, 1f);
-                    tick.rectTransform.pivot = new Vector2(1f, 1f);
-                    tick.rectTransform.anchoredPosition = new Vector2(-2f, -2f);
-                    tick.rectTransform.sizeDelta = new Vector2(48f, 48f);
-                }
-
-                int copies = CharacterCatalog.BadgeCount(progress, who);
-                AddCopyBadge(inner, copies);
+                bool isChosen = who == chosen && card.IsFirstOfType;
+                if (isChosen) AddTick(outer, ChosenName, 56f);
 
                 var b = outer.gameObject.AddComponent<Button>();
                 b.transition = Selectable.Transition.None;
                 outer.GetComponent<Image>().raycastTarget = true;
                 CharacterDef pick = who;
-                // a tap only selects the hero (the (i) button on the stage opens its stat sheet)
+                // a tap only selects the hero type (the (i) button on the stage opens its stat sheet)
                 b.onClick.AddListener(() => { CharacterCatalog.Selected = pick; Build(); });
-                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + ", " + copies + (copies == 1 ? " copy" : " copies") + (who == chosen ? ", chosen" : "");
+                outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)rarity] + (isChosen ? ", chosen" : "");
             }
         }
 
-        /// <summary>Name of the copy-count badge on a hero card (docs/36); its text child is "Count".</summary>
-        public const string BadgeName = "CopyBadge";
+        /// <summary>Keeps every roster row at least minRow px tall: fractional anchors while 4 rows fit, a fixed pixel height (scrolling) when they do not.</summary>
+        public sealed class RosterRowFitter : UnityEngine.EventSystems.UIBehaviour
+        {
+            RectTransform vp, content;
+            int layoutRows, visibleRows;
+            float minRow;
+
+            public void Init(RectTransform viewport, RectTransform list, int rows, int visible, float minRowPx)
+            {
+                vp = viewport; content = list; layoutRows = rows; visibleRows = visible; minRow = minRowPx;
+                Apply();
+            }
+
+            protected override void OnRectTransformDimensionsChange() { Apply(); }
+            protected override void OnEnable() { base.OnEnable(); Apply(); }
+
+            void Apply()
+            {
+                if (vp == null || content == null) return;
+                float h = vp.rect.height;
+                if (h <= 1f) return;
+                float need = layoutRows * minRow;
+                if (h / visibleRows >= minRow)
+                {
+                    content.anchorMin = new Vector2(0f, 1f - layoutRows / (float)visibleRows);
+                    content.anchorMax = new Vector2(1f, 1f);
+                    content.offsetMin = new Vector2(content.offsetMin.x, 0f);
+                    content.offsetMax = new Vector2(content.offsetMax.x, 0f);
+                }
+                else
+                {
+                    content.anchorMin = new Vector2(0f, 1f);
+                    content.anchorMax = new Vector2(1f, 1f);
+                    content.offsetMin = new Vector2(content.offsetMin.x, -Mathf.Max(need, h));
+                    content.offsetMax = new Vector2(content.offsetMax.x, 0f);
+                }
+            }
+        }
+
+        /// <summary>Name of a card object: "Char_{id}" for the first card of a hero, "Char_{id}_{n}" for the n-th copy (n starts at 2).</summary>
+        public static string CardName(HeroCard c) { return c.Copy == 0 ? "Char_" + c.Id : "Char_" + c.Id + "_" + (c.Copy + 1); }
+
+        /// <summary>The green tick (SS19 style) in the top right corner of a card: a white disc under a green check, so it reads on every rarity colour; never a touch target.</summary>
+        public static void AddTick(RectTransform card, string name, float size)
+        {
+            Image disc = UiKit.AddImage(card, name, Theme.RoundSprite, Color.white);
+            disc.type = Image.Type.Sliced;
+            disc.preserveAspect = false;
+            disc.raycastTarget = false;
+            RectTransform dr = disc.rectTransform;
+            dr.anchorMin = dr.anchorMax = new Vector2(1f, 1f);
+            dr.pivot = new Vector2(1f, 1f);
+            dr.anchoredPosition = new Vector2(-2f, -2f);
+            dr.sizeDelta = new Vector2(size, size);
+            Image tick = UiKit.AddImage(disc.transform, "Check", Glyphs.Check, new Color(0.10f, 0.72f, 0.26f, 1f));
+            tick.raycastTarget = false;
+            tick.rectTransform.anchorMin = new Vector2(0.06f, 0.06f);
+            tick.rectTransform.anchorMax = new Vector2(0.94f, 0.94f);
+            tick.rectTransform.offsetMin = tick.rectTransform.offsetMax = Vector2.zero;
+        }
 
         /// <summary>
-        /// The copy count in the bottom right corner of a card: a small dark rounded pill with a white bold number (at least 16 sp = 36 px, scaled with the text size),
-        /// inside the card, never a touch target. The pill grows with the digits so the number is never clipped.
+        /// The row between the stage and the list: "All Heroes" on the left (hero icon plus a short label), "Merge" on the right (the painted MergeIcon as the button, the word next to it).
+        /// Both are at least 48 dp high and wide, with a gap of at least 8 dp; the row is anchored by fractions so it fits every aspect and the label survives 130 percent text.
         /// </summary>
-        static float BadgeHeight() { return Mathf.Ceil(UiKit.MinBodyTextPx * UiKit.TextScale * 1.3f); }
-
-        static void AddCopyBadge(RectTransform card, int copies)
+        void BuildActionRow(float top)
         {
-            string s = copies.ToString();
-            float h = BadgeHeight();
-            float w = Mathf.Max(h, Mathf.Ceil(UiKit.MinBodyTextPx * UiKit.TextScale * 0.62f * s.Length + 24f));
-            Image pill = UiKit.AddPanel(card, BadgeName, new Color(0.09f, 0.11f, 0.24f, 0.94f));
-            pill.raycastTarget = false;
-            RectTransform prt = pill.rectTransform;
-            prt.anchorMin = prt.anchorMax = new Vector2(1f, 0f);
-            prt.pivot = new Vector2(1f, 0f);
-            prt.anchoredPosition = new Vector2(-4f, 4f);
-            prt.sizeDelta = new Vector2(w, h);
-            Text t = UiKit.AddText(pill.transform, "Count", s, Mathf.RoundToInt(UiKit.MinBodyTextPx), Color.white, TextAnchor.MiddleCenter, true);
+            float h = ActionRowH;
+            RectTransform row = UiKit.Rect(body, "ActionRow");
+            row.anchorMin = new Vector2(0f, 1f);
+            row.anchorMax = new Vector2(1f, 1f);
+            row.pivot = new Vector2(0.5f, 1f);
+            row.offsetMin = new Vector2(SideMargin, -(top + h));
+            row.offsetMax = new Vector2(-SideMargin, -top);
+
+            if (host.OpenAllHeroes != null)
+            {
+                Button all = UiKit.AddButton(row, "AllHeroesButton", "", ToyKit.Button(0), Color.white, new Vector2(420f, h), () => host.OpenAllHeroes());
+                all.GetComponent<A11yLabel>().Text = "All Heroes";
+                RectTransform cell = (RectTransform)all.transform;
+                cell.anchorMin = Vector2.zero;
+                cell.anchorMax = new Vector2(0.485f, 1f);
+                cell.offsetMin = cell.offsetMax = Vector2.zero;
+                AddIconAndLabel(cell, ToyKit.Get("icon_heroes") ?? ShopIcons.CharacterPower, "All Heroes", UiKit.ButtonInk, false);
+            }
+
+            if (host.OpenMerge != null)
+            {
+                // the painted icon carries its own plate; the whole row cell is the touch target, the word sits next to the icon on the dark list panel
+                Button merge = UiKit.AddButton(row, "MergeButton", "", null, new Color(1f, 1f, 1f, 0f), new Vector2(420f, h), () => host.OpenMerge());
+                merge.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.001f);
+                merge.GetComponent<A11yLabel>().Text = "Merge";
+                RectTransform cell = (RectTransform)merge.transform;
+                cell.anchorMin = new Vector2(0.515f, 0f);
+                cell.anchorMax = Vector2.one;
+                cell.offsetMin = cell.offsetMax = Vector2.zero;
+                AddIconAndLabel(cell, MergeArt.Icon, "Merge", Color.white, true);
+            }
+        }
+
+        /// <summary>An icon square at the left of a row cell and a one-line label to its right (names "Icon" or "MergeIcon", and "Label"). A painted icon fills the cell height; a plain one is inset on the plate.</summary>
+        static void AddIconAndLabel(RectTransform cell, Sprite icon, string label, Color ink, bool paintedIcon)
+        {
+            float inset = paintedIcon ? 0f : 0.14f;
+            float left = paintedIcon ? 0f : 14f;
+            float side = ActionRowH * (1f - 2f * inset);
+            Image ic = UiKit.AddImage(cell, paintedIcon ? "MergeIcon" : "Icon", icon, Color.white);
+            ic.preserveAspect = true;
+            ic.raycastTarget = false;
+            RectTransform ir = ic.rectTransform;
+            ir.anchorMin = new Vector2(0f, 0.5f);
+            ir.anchorMax = new Vector2(0f, 0.5f);
+            ir.pivot = new Vector2(0f, 0.5f);
+            ir.anchoredPosition = new Vector2(left, 0f);
+            ir.sizeDelta = new Vector2(side, side);
+
+            Text t = UiKit.AddText(cell, "Label", label, 44, ink, TextAnchor.MiddleLeft, true);
             t.horizontalOverflow = HorizontalWrapMode.Overflow;
-            t.verticalOverflow = VerticalWrapMode.Overflow;
-            UiKit.Stretch(t.rectTransform);
+            if (!paintedIcon)
+            {
+                var o = t.GetComponent<Outline>();
+                if (o != null) o.enabled = false;
+            }
+            RectTransform tr = t.rectTransform;
+            tr.anchorMin = Vector2.zero;
+            tr.anchorMax = Vector2.one;
+            tr.offsetMin = new Vector2(left + side + 8f, 0f);
+            tr.offsetMax = new Vector2(-6f, 0f);
         }
 
         /// <summary>Picks a character as the tests do (the same as a tap on its tile).</summary>

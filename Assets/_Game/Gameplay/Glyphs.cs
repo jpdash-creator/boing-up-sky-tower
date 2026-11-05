@@ -10,7 +10,7 @@ namespace BoingUpSkyTower.Gameplay
     public static class Glyphs
     {
         const int N = 256;
-        static Sprite left, up, pause, cross, check, restart, ring, infinity;
+        static Sprite left, up, pause, cross, check, restart, ring, infinity, lockIcon;
 
         public static Sprite Left { get { return left != null ? left : (left = Build(ChevronShape(-1f, 0f), "glyph_left")); } }
         public static Sprite Up { get { return up != null ? up : (up = Build(ChevronShape(0f, 1f), "glyph_up")); } }
@@ -26,9 +26,12 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>A chunky plus: placeholder for the Merge icon until the OpenArt icon replaces it.</summary>
         public static Sprite Plus { get { return plus != null ? plus : (plus = Build((x, y) => Mathf.Min(Seg(x, y, 0.25f, 0.5f, 0.75f, 0.5f), Seg(x, y, 0.5f, 0.25f, 0.5f, 0.75f)) - 0.11f, "glyph_plus")); } }
 
+        /// <summary>A padlock (body and shackle): the locked mark of the All Heroes cards.</summary>
+        public static Sprite Lock { get { return lockIcon != null ? lockIcon : (lockIcon = Build(LockShape(), "glyph_lock")); } }
+
         public static void Warmup() { WarmupBasic(); }
 
-        static void WarmupBasic() { Sprite a = Left, b = Up, c = Pause, d = Cross, e = Check, f = Restart, g = Ring, h = Infinity, i = Plus; }
+        static void WarmupBasic() { Sprite a = Left, b = Up, c = Pause, d = Cross, e = Check, f = Restart, g = Ring, h = Infinity, i = Plus, j = Lock; }
 
         /// <summary>A shape = distance to the nearest stroke segment, minus the stroke radius (negative inside).</summary>
         delegate float Sdf(float x, float y);
@@ -57,6 +60,17 @@ namespace BoingUpSkyTower.Gameplay
         {
             float qx = Mathf.Abs(x - cx) - (hx - r), qy = Mathf.Abs(y - cy) - (hy - r);
             return Mathf.Sqrt(Mathf.Max(qx, 0f) * Mathf.Max(qx, 0f) + Mathf.Max(qy, 0f) * Mathf.Max(qy, 0f)) + Mathf.Min(Mathf.Max(qx, qy), 0f) - r;
+        }
+
+        /// <summary>Padlock: a rounded body with a keyhole-free solid face and a U shackle on top.</summary>
+        static Sdf LockShape()
+        {
+            return (x, y) =>
+            {
+                float body = Box(x, y, 0.5f, 0.36f, 0.26f, 0.2f, 0.06f);
+                float arc = y > 0.56f ? Mathf.Abs(Mathf.Sqrt((x - 0.5f) * (x - 0.5f) + (y - 0.56f) * (y - 0.56f)) - 0.17f) : Mathf.Min(Seg(x, y, 0.33f, 0.5f, 0.33f, 0.56f), Seg(x, y, 0.67f, 0.5f, 0.67f, 0.56f));
+                return Mathf.Min(body, arc - 0.055f);
+            };
         }
 
         static Sdf BarsShape()

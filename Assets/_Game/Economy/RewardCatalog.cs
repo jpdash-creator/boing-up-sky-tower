@@ -21,7 +21,7 @@ namespace BoingUpSkyTower.Economy
         public const string Levels = "levels";          // levels completed (first clears and replays)
         public const string Combos = "combos";          // combo chains that reached 3 or more landings
         public const string BestCombo = "bestCombo";    // day: best chain; the week keeps the max too
-        public const string Hard = "hard";              // levels played on difficulty 3 (Hard) or more
+        public const string Hard = "hard";              // levels STARTED on difficulty 3 (Hard) or more (no longer used by a task, see HardClear)
         public const string NoWall = "noWall";          // no-wall-touch level (level 7) cleared
         public const string GemLevel = "gemLevel";      // gem levels (8 and 15) cleared
         public const string Stars2 = "stars2";          // levels cleared with 2 or more stars (works on replays: star pickups are not stripped)
@@ -30,6 +30,8 @@ namespace BoingUpSkyTower.Economy
         public const string Stars3 = "stars3";          // 3-star clears
         public const string Replays = "replays";        // day: replays of already cleared levels that were counted (at most MaxCountedReplaysPerDay)
         public const string LoginMask = "loginMask";    // week: bit 0 = Monday ... bit 6 = Sunday
+        public const string HardClear = "hardClear";    // levels CLEARED on difficulty 3 (Hard) or more (Bug List 5 F1.b)
+        public const string EndlessFloor = "endlessFloor"; // best endless floor reached (day and week keep the maximum)
 
         /// <summary>Hard starts at this difficulty setting (0 Relaxed, 1 Easy, 2 Normal, 3 Hard, 4 Insane).</summary>
         public const int HardDifficulty = 3;
@@ -38,49 +40,32 @@ namespace BoingUpSkyTower.Economy
         public const int MaxCountedReplaysPerDay = 3;
     }
 
-    /// <summary>What a claim pays: gems, coins and a number of RANDOM power-up units (any of the implemented types, repeats allowed).</summary>
-    public struct RewardGrant
-    {
-        public int Gems, Coins, PowerUps;
-        public bool IsEmpty { get { return Gems <= 0 && Coins <= 0 && PowerUps <= 0; } }
-    }
-
-    /// <summary>One reward row: a star milestone, a region reward, a daily points milestone, a daily action or a weekly task.</summary>
-    public sealed class RewardEntry
-    {
-        public string Id;
-        public string Title;
-        /// <summary>The counter this entry reads (RewardStat), or null for star, region and points milestones.</summary>
-        public string Stat;
-        /// <summary>Stars, region index, points or the counter value that completes the entry.</summary>
-        public int Target;
-        /// <summary>Daily actions only: the points the action is worth.</summary>
-        public int Points;
-        public int Gems, Coins, PowerUps;
-
-        public RewardGrant Grant { get { return new RewardGrant { Gems = Gems, Coins = Coins, PowerUps = PowerUps }; } }
-    }
-
     /// <summary>
-    /// The reward tables (docs/26 section 4). The runtime uses the built-in copy below; a unit test keeps it identical to
-    /// Content/economy/rewards.json, the editable source (parsed by FromJson for tools and remote overrides).
+    /// The reward tables (docs/26 section 4, docs/39). The Main tab is a list of GOALS per region built from <see cref="RegionGoalTable"/> (the one place to
+    /// retune them); Daily and Weekly come from the tables below. Content/economy/rewards.json is the editable copy of the Daily and Weekly tables (parsed by
+    /// FromJson); a unit test keeps it identical to the built-in copy. Region goals are code-only: they are generated from the table, region by region.
     /// </summary>
     public sealed class RewardCatalog
     {
-        public IReadOnlyList<RewardEntry> StarMilestones { get { return stars; } }
-        /// <summary>One entry per region (Target = region index), paid when all 15 levels of the region are cleared.</summary>
-        public IReadOnlyList<RewardEntry> RegionRewards { get { return regions; } }
-        /// <summary>The ten daily actions, worth 10 points each.</summary>
+        /// <summary>Removed (Bug List 5 F1.a): the 25..225 star cards are gone. Always empty; kept so older UI code compiles until the Rewards UI is redone.</summary>
+        [System.Obsolete("Replaced by RegionGoals(region)")]
+        public IReadOnlyList<RewardEntry> StarMilestones { get { return empty; } }
+        /// <summary>Removed (Bug List 5 F1.a): "clear all levels" is now the last Levels goal of each region. Always empty.</summary>
+        [System.Obsolete("Replaced by RegionGoals(region)")]
+        public IReadOnlyList<RewardEntry> RegionRewards { get { return empty; } }
+        /// <summary>The six daily actions (10 + 15 + 20 + 20 + 15 + 20 = 100 points).</summary>
         public IReadOnlyList<RewardEntry> DailyActions { get { return dailyActions; } }
         /// <summary>The daily points milestones (Target = points).</summary>
         public IReadOnlyList<RewardEntry> DailyMilestones { get { return dailyMilestones; } }
         public IReadOnlyList<RewardEntry> WeeklyTasks { get { return weekly; } }
 
-        readonly List<RewardEntry> stars = new List<RewardEntry>();
-        readonly List<RewardEntry> regions = new List<RewardEntry>();
+        static readonly IReadOnlyList<RewardEntry> empty = new List<RewardEntry>();
+        static readonly IReadOnlyList<RegionGoal> noGoals = new List<RegionGoal>();
         readonly List<RewardEntry> dailyActions = new List<RewardEntry>();
         readonly List<RewardEntry> dailyMilestones = new List<RewardEntry>();
         readonly List<RewardEntry> weekly = new List<RewardEntry>();
+        readonly List<List<RegionGoal>> regionGoals = new List<List<RegionGoal>>();   // index = region - 1, 30 entries (empty for Coming Soon regions)
+        readonly List<RegionGoal> allGoals = new List<RegionGoal>();
 
         public int DailyMaxPoints
         {
@@ -92,78 +77,86 @@ namespace BoingUpSkyTower.Economy
             }
         }
 
-        static RewardEntry E(string id, string title, string stat, int target, int points, int gems, int coins, int powerUps)
+        /// <summary>The goals of a region in listing order. Regions 6 to 30 (Coming Soon) and invalid indexes have none.</summary>
+        public IReadOnlyList<RegionGoal> RegionGoals(int region)
         {
-            return new RewardEntry { Id = id, Title = title, Stat = stat, Target = target, Points = points, Gems = gems, Coins = coins, PowerUps = powerUps };
+            return region >= 1 && region <= regionGoals.Count ? regionGoals[region - 1] : noGoals;
         }
 
-        // star milestone: stars, gems, coins, power-ups
-        static readonly int[][] StarRows =
+        /// <summary>Every goal of every playable region (what the Admin switch and Claim All walk).</summary>
+        public IReadOnlyList<RegionGoal> AllRegionGoals { get { return allGoals; } }
+
+        /// <summary>True for regions 6 to 30 (and any region without goals): the Main tab shows "Coming Soon".</summary>
+        public bool IsComingSoon(int region) { return RegionGoals(region).Count == 0; }
+
+        void BuildRegionGoals()
         {
-            new[] { 25, 20, 0, 0 }, new[] { 50, 0, 1000, 0 }, new[] { 75, 30, 0, 0 }, new[] { 100, 0, 1500, 0 }, new[] { 125, 40, 0, 1 },
-            new[] { 150, 0, 2000, 0 }, new[] { 175, 60, 0, 2 }, new[] { 200, 80, 0, 3 }, new[] { 225, 100, 0, 5 },
-        };
+            regionGoals.Clear();
+            allGoals.Clear();
+            for (int r = 1; r <= RegionGoalTable.TotalRegions; r++)
+            {
+                List<RegionGoal> g = RegionGoalTable.Build(r);
+                regionGoals.Add(g);
+                allGoals.AddRange(g);
+            }
+        }
 
-        static readonly string[] RegionNames = { "Meadow Springs", "Mushroom Grove", "Sunny Beach", "Candy Canyon", "Bamboo Temple" };
+        static RewardEntry E(string id, string title, string stat, int target, int points, int gems, int coins, int powerUps, int hero = 0)
+        {
+            return new RewardEntry { Id = id, Title = title, Stat = stat, Target = target, Points = points, Gems = gems, Coins = coins, PowerUps = powerUps, HeroRegion = hero };
+        }
 
-        // daily action: id, title, counter, target (points are 10 each)
+        // daily action: id, title, counter, target, points (6 actions, 100 points)
         static readonly object[][] DailyRows =
         {
-            new object[] { "d_login", "Log in today", RewardStat.Login, 1 },
-            new object[] { "d_play5", "Play for 5 minutes", RewardStat.PlaySeconds, 300 },
-            new object[] { "d_level1", "Complete a level", RewardStat.Levels, 1 },
-            new object[] { "d_level3", "Complete 3 levels", RewardStat.Levels, 3 },
-            new object[] { "d_combo3", "Do a combo of 3 or more", RewardStat.Combos, 1 },
-            new object[] { "d_hard", "Play a hard level", RewardStat.Hard, 1 },
-            new object[] { "d_nowall", "Clear the no-wall level", RewardStat.NoWall, 1 },
-            new object[] { "d_gemlevel", "Clear a gem level", RewardStat.GemLevel, 1 },
-            new object[] { "d_stars2", "Earn 2 stars in a level", RewardStat.Stars2, 1 },
-            new object[] { "d_powerup", "Use a power-up", RewardStat.PowerUps, 1 },
+            new object[] { "d_login", "Log in today", RewardStat.Login, 1, 10 },
+            new object[] { "d_play5", "Play for 5 minutes", RewardStat.PlaySeconds, 300, 15 },
+            new object[] { "d_play15", "Play for 15 minutes", RewardStat.PlaySeconds, 900, 20 },
+            new object[] { "d_level3", "Complete 3 levels", RewardStat.Levels, 3, 20 },
+            new object[] { "d_combo5", "Make 5 combos", RewardStat.Combos, 5, 15 },
+            new object[] { "d_hard", "Clear a hard level", RewardStat.HardClear, 1, 20 },
         };
 
-        // daily milestone: points, gems, coins, power-ups
+        // daily milestone: points, gems, coins, power-ups (a day of 100 points pays 10 gems + 1,500 coins)
         static readonly int[][] DailyMilestoneRows =
         {
-            new[] { 20, 10, 0, 0 }, new[] { 40, 0, 500, 0 }, new[] { 60, 15, 0, 0 }, new[] { 80, 0, 1000, 0 }, new[] { 100, 20, 0, 1 },
+            new[] { 20, 0, 300, 0 }, new[] { 40, 3, 0, 0 }, new[] { 60, 0, 500, 0 }, new[] { 80, 3, 0, 0 }, new[] { 100, 4, 700, 0 },
         };
 
-        // weekly task: id, title, counter, target, gems, coins, power-ups
+        // weekly task: id, title, counter, target, gems, coins, power-ups, hero (the LAST row, the hardest, gives one random Common hero of an open region)
         static readonly object[][] WeeklyRows =
         {
-            new object[] { "w_login7", "Log in every day of the week", RewardStat.LoginDays, 7, 30, 0, 0 },
-            new object[] { "w_play100", "Play for 100 minutes", RewardStat.PlayMinutes, 100, 0, 500, 0 },
-            new object[] { "w_play150", "Play for 150 minutes", RewardStat.PlayMinutes, 150, 20, 0, 0 },
-            new object[] { "w_combos5", "Do 5 combos", RewardStat.Combos, 5, 0, 300, 0 },
-            new object[] { "w_combos10", "Do 10 combos", RewardStat.Combos, 10, 10, 0, 0 },
-            new object[] { "w_combos25", "Do 25 combos", RewardStat.Combos, 25, 20, 0, 0 },
-            new object[] { "w_combos50", "Do 50 combos", RewardStat.Combos, 50, 0, 0, 1 },
-            new object[] { "w_levels15", "Clear 15 levels", RewardStat.Levels, 15, 40, 0, 0 },
-            new object[] { "w_stars20", "Earn 20 stars in levels", RewardStat.StarsEarned, 20, 0, 1000, 0 },
-            new object[] { "w_nowall", "Clear the no-wall level", RewardStat.NoWall, 1, 15, 0, 0 },
-            new object[] { "w_stars3", "Earn 3 stars on 5 levels", RewardStat.Stars3, 5, 25, 0, 0 },
+            new object[] { "w_login5", "Log in on 5 days", RewardStat.LoginDays, 5, 8, 400, 0, 0 },
+            new object[] { "w_play100", "Play for 100 minutes", RewardStat.PlayMinutes, 100, 8, 500, 0, 0 },
+            new object[] { "w_powerups10", "Use 10 power-ups", RewardStat.PowerUps, 10, 0, 0, 2, 0 },
+            new object[] { "w_stars20", "Earn 20 stars", RewardStat.StarsEarned, 20, 6, 800, 0, 0 },
+            new object[] { "w_levels20", "Complete 20 levels", RewardStat.Levels, 20, 8, 600, 0, 0 },
+            new object[] { "w_nowall2", "Clear the no-wall level 2 times", RewardStat.NoWall, 2, 8, 500, 0, 0 },
+            new object[] { "w_endless100", "Reach floor 100 in Endless", RewardStat.EndlessFloor, 100, 8, 500, 0, 0 },
+            new object[] { "w_combos150", "Make 150 combos", RewardStat.Combos, 150, 10, 800, 1, 0 },
+            new object[] { "w_hard5", "Clear 5 hard levels", RewardStat.HardClear, 5, 16, 1000, 0, RewardEntry.RandomOpenRegionHero },
         };
 
         public static RewardCatalog BuiltIn()
         {
             var c = new RewardCatalog();
-            foreach (int[] r in StarRows) c.stars.Add(E("s_" + r[0], r[0] + " stars", null, r[0], 0, r[1], r[2], r[3]));
-            for (int i = 0; i < RegionNames.Length; i++) c.regions.Add(E("r_" + (i + 1), RegionNames[i] + " cleared", null, i + 1, 0, 50, 2000, 0));
-            foreach (object[] r in DailyRows) c.dailyActions.Add(E((string)r[0], (string)r[1], (string)r[2], (int)r[3], 10, 0, 0, 0));
+            c.BuildRegionGoals();
+            foreach (object[] r in DailyRows) c.dailyActions.Add(E((string)r[0], (string)r[1], (string)r[2], (int)r[3], (int)r[4], 0, 0, 0));
             foreach (int[] r in DailyMilestoneRows) c.dailyMilestones.Add(E("dp_" + r[0], r[0] + " points", null, r[0], 0, r[1], r[2], r[3]));
-            foreach (object[] r in WeeklyRows) c.weekly.Add(E((string)r[0], (string)r[1], (string)r[2], (int)r[3], 0, (int)r[4], (int)r[5], (int)r[6]));
+            foreach (object[] r in WeeklyRows) c.weekly.Add(E((string)r[0], (string)r[1], (string)r[2], (int)r[3], 0, (int)r[4], (int)r[5], (int)r[6], (int)r[7]));
             return c;
         }
 
         /// <summary>
-        /// Parses Content/economy/rewards.json: { "stars": [..], "regions": [..], "dailyActions": [..], "dailyMilestones": [..], "weekly": [..] }.
-        /// Every entry has id, title, target and any of gems, coins, powerups; actions have stat and points; weekly tasks have stat.
+        /// Parses Content/economy/rewards.json: { "dailyActions": [..], "dailyMilestones": [..], "weekly": [..] }.
+        /// Every entry has id, title, target and any of gems, coins, powerups, heroRegion; actions have stat and points; weekly tasks have stat.
+        /// The region goals are not in the file: they come from <see cref="RegionGoalTable"/>.
         /// </summary>
         public static RewardCatalog FromJson(string json)
         {
             var c = new RewardCatalog();
+            c.BuildRegionGoals();
             JObject root = JObject.Parse(json);
-            Read(root, "stars", c.stars);
-            Read(root, "regions", c.regions);
             Read(root, "dailyActions", c.dailyActions);
             Read(root, "dailyMilestones", c.dailyMilestones);
             Read(root, "weekly", c.weekly);
@@ -179,18 +172,27 @@ namespace BoingUpSkyTower.Economy
                 into.Add(new RewardEntry
                 {
                     Id = (string)t["id"], Title = (string)t["title"], Stat = (string)t["stat"], Target = (int?)t["target"] ?? 0,
-                    Points = (int?)t["points"] ?? 0, Gems = (int?)t["gems"] ?? 0, Coins = (int?)t["coins"] ?? 0, PowerUps = (int?)t["powerups"] ?? 0
+                    Points = (int?)t["points"] ?? 0, Gems = (int?)t["gems"] ?? 0, Coins = (int?)t["coins"] ?? 0, PowerUps = (int?)t["powerups"] ?? 0,
+                    HeroRegion = (int?)t["heroRegion"] ?? 0
                 });
             }
         }
 
-        /// <summary>Finds an entry of the tab's tables by id (null when unknown).</summary>
+        /// <summary>Finds an entry of the tab's tables by id (null when unknown). The Main tab finds region goals.</summary>
         public RewardEntry Find(RewardTab tab, string id)
         {
             if (id == null) return null;
-            if (tab == RewardTab.Main) return FindIn(stars, id) ?? FindIn(regions, id);
+            if (tab == RewardTab.Main) return FindGoal(id);
             if (tab == RewardTab.Daily) return FindIn(dailyMilestones, id);
             return FindIn(weekly, id);
+        }
+
+        /// <summary>Finds a region goal by id (g_region_type_tier), null when unknown.</summary>
+        public RegionGoal FindGoal(string id)
+        {
+            if (id == null) return null;
+            for (int i = 0; i < allGoals.Count; i++) if (allGoals[i].Id == id) return allGoals[i];
+            return null;
         }
 
         static RewardEntry FindIn(List<RewardEntry> list, string id)

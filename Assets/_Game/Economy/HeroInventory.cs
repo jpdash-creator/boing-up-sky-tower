@@ -5,7 +5,7 @@ namespace BoingUpSkyTower.Economy
 {
     /// <summary>
     /// The HERO INVENTORY (docs/36): the heroes one player (account or guest) owns, with a copy count per character id. It is a view over the save
-    /// (<see cref="SaveData.Copies"/>, JSON "copies": no format change) and is what the Heroes screen lists. Owned = copies of 1 or more.
+    /// (<see cref="SaveData.Copies"/>, JSON "copies": no format change). The Heroes screen shows ONE CARD PER COPY of it (<see cref="HeroCards.Owned"/>), never a number. Owned = copies of 1 or more.
     /// Get it with <c>progress.HeroInventory</c>. The master list of all characters is the hidden <see cref="CharacterInventory"/>.
     /// Every changing call saves once.
     /// </summary>
@@ -21,15 +21,12 @@ namespace BoingUpSkyTower.Economy
             CharacterSpec c = CharacterInventory.Get(id);
             if (c == null) return 0;
             int n;
-            if (p.Data.Copies.TryGetValue(id, out n)) return n > 0 ? n : 0;
-            return p.OwnedWithoutCopyCount(c) ? 1 : 0;
+            if (p.Data.Copies.TryGetValue(id, out n)) return n > 0 ? n : (ProgressService.TestOwns(c) ? 1 : 0);
+            return p.OwnedWithoutCopyCount(c) || ProgressService.TestOwns(c) ? 1 : 0;
         }
 
         /// <summary>True when the player has the character (copies of 1 or more; SYSTEM_TEST shows every hero as owned).</summary>
         public bool Owns(string id) { return p.OwnsCharacter(id); }
-
-        /// <summary>The number to show on a card: never below 1, because a card in the list means the hero is available.</summary>
-        public int BadgeCount(string id) { return Math.Max(1, Copies(id)); }
 
         /// <summary>Adds copies (rewards, bundles, debug). Returns the new count; an unknown id or a count below 1 changes nothing. Adding a character the player does not have yet adds its card to the list.</summary>
         public int AddCopies(string id, int count)

@@ -53,6 +53,14 @@ namespace BoingUpSkyTower.Gameplay
         public readonly EndlessTower Tower;
         /// <summary>Changes every time the endless tower grew (the view then extends its world). Always 0 for campaign levels.</summary>
         public int WorldVersion { get; private set; }
+        /// <summary>Endless world (tower, Sim, re-base bookkeeping), null for campaign levels. The tower re-bases its HEIGHTS about every 500 floors so the run can go on to floor 100000 and beyond; floors stay absolute.</summary>
+        public readonly EndlessWorld World;
+        /// <summary>Endless re-base (see EndlessWorld): changes exactly when all window heights and platform/gong ids were shifted. The view re-bases its caches when it sees a new value. 0 for campaign levels.</summary>
+        public int RebaseCount { get { return World == null ? 0 : World.RebaseCount; } }
+        /// <summary>Height (raw Q16.16) removed from the window so far: absolute height = this + window height. Platform / gong ids dropped so far. 0 for campaign levels.</summary>
+        public long OriginYRaw { get { return World == null ? 0L : World.OriginYRaw; } }
+        public int DroppedPlatforms { get { return World == null ? 0 : World.DroppedPlatforms; } }
+        public int DroppedHazards { get { return World == null ? 0 : World.DroppedHazards; } }
 
         public bool GoalReached { get; private set; }
         /// <summary>The goal became impossible while alive (NoWallBounce after a wall bounce): the run ends, a revive cannot undo it.</summary>
@@ -94,11 +102,12 @@ namespace BoingUpSkyTower.Gameplay
             IsEndless = true;
             Seed = seed;
             Spec = LevelSpecFactory.BuildEndless(region, seed, repo.RemoteConfig.Generator.EndlessDifficultyFloors);
-            Tower = new EndlessTower(cfg, Spec);
-            Data = Tower.Data;
-            Sim = Tower.CreateSim();
+            World = new EndlessWorld(cfg, Spec);
+            Tower = World.Tower;
+            Data = World.Data;
+            Sim = World.Sim;
             State = Sim.NewState();
-            WorldVersion = Tower.Version;
+            WorldVersion = World.Version;
         }
 
         /// <summary>Advances one 1/60 s tick. Does nothing once the run is over.</summary>
@@ -107,7 +116,9 @@ namespace BoingUpSkyTower.Gameplay
             if (Over) return;
             if ((input & SimInput.PowerMask) != 0) input = TakePowerUnits(input);
             if ((input & SimInput.HeroMask) != 0) input = TakeHeroPowers(input);
+            bool wasGroundedForJumps = State.Grounded;
             Sim.Step(ref State, input);
+            if (wasGroundedForJumps && !State.Grounded && State.Vy.Raw > 0) jumpsMade++;   // region statistics (Main goals): a take-off from a platform is a jump
             if (Hero != null) Hero.Tick();   // hero cooldowns run in simulation ticks
             if (State.Combo >= 3 && lastCombo < 3) comboChains++;   // reward statistics: a chain reached 3 landings
             lastCombo = State.Combo;
@@ -115,12 +126,12 @@ namespace BoingUpSkyTower.Gameplay
             if (IsEndless)
             {
                 // Keep the tower 60 rows above the player. Growth happens once per 40 rows (about every 15 s), never per frame.
-                if (Tower.EnsureAhead(State.Row))
+                // (EndlessWorld.Grow also re-bases the heights and shifts State when the window top passes 2500 u, see EndlessWorld.)
+                if (World.Grow(ref State))
                 {
-                    Data = Tower.Data;
-                    Sim = Tower.CreateSim();
-                    Sim.GrowState(ref State);
-                    WorldVersion = Tower.Version;
+                    Data = World.Data;
+                    Sim = World.Sim;
+                    WorldVersion = World.Version;
                 }
                 return;
             }
@@ -293,18 +304,22 @@ namespace BoingUpSkyTower.Gameplay
                 GemPickupsTaken = CountGemPickups(true),
                 ComboChains = comboChains - reportedChains,
                 BestCombo = bestComboSeen,
-                PowerUpsUsed = powerUpsUsed - reportedPowerUps
+                PowerUpsUsed = powerUpsUsed - reportedPowerUps,
+                Region = Region.Index,
+                Jumps = jumpsMade - reportedJumps
             };
         }
 
         // ---- reward statistics (docs/26 section 4): combo chains reaching 3 landings, best combo, power-up units used ----
 
         int lastCombo, comboChains, bestComboSeen, powerUpsUsed, reportedChains, reportedPowerUps;
+        int jumpsMade, reportedJumps;   // region statistics (Main goals, docs/39)
 
         /// <summary>Marks the combo chains and power-up units counted so far as reported, so the next outcome only carries new ones (a revive keeps the session).</summary>
         public void MarkStatsReported()
         {
             reportedChains = comboChains;
+            reportedJumps = jumpsMade;
             reportedPowerUps = powerUpsUsed;
         }
 

@@ -326,12 +326,15 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void SystemTestOwnsEveryHeroWithoutCopies()
+        public void CharacterTestOwnsTheCommonHeroesButNeverTheMergeTiers()
         {
             ProgressService.TestAllCharacters = true;
             ProgressService svc = NewService();
-            Assert.IsTrue(svc.OwnsCharacter("momo_u"), "SYSTEM_TEST shows every hero");
-            Assert.AreEqual(0, svc.Copies("momo_u"), "but it has no copies to merge");
+            Assert.IsTrue(svc.OwnsCharacter("momo"));
+            Assert.IsTrue(svc.OwnsCharacter("candygirl"), "Character Test: every Common hero is owned");
+            Assert.AreEqual(1, svc.Copies("candygirl"));
+            Assert.IsFalse(svc.OwnsCharacter("momo_u"), "Uncommon stays locked until merged, bought or received");
+            Assert.AreEqual(0, svc.Copies("momo_u"));
         }
     }
 }

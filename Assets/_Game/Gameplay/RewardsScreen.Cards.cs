@@ -14,8 +14,8 @@ namespace BoingUpSkyTower.Gameplay
         // ---- card metrics (compact lists, Bug List 4 E4.c) ----
         // The card is 136 px on the 1080 reference (it was 214) and the gap 10 (it was 49). It cannot be as low as 90: a ready card carries a real Claim button
         // and every button must be at least 48 dp (UiKit.MinTouchPx, about 126 px), so the card is that button plus 5 px above and below.
-        const float IconW = 104f, CardPadX = 20f, CardCorner = 48f, RewardCorner = 30f, RailW = 90f, TagW = 190f;
-        const float CardPadY = 8f, ItemIcon = 48f, ItemGap = 12f, PlatePad = 14f, CheckW = 44f, RailBadge = 80f;
+        const float IconW = 104f, CardPadX = 20f, CardCorner = 48f, RewardCorner = 30f;
+        const float CardPadY = 8f, ItemIcon = 48f, ItemGap = 12f, PlatePad = 14f, CheckW = 44f, HeroFaceSize = 72f;
         /// <summary>Space between cards.</summary>
         public const float CardGap = 10f;
         /// <summary>Base height of a card; it grows (never shrinks) with the text size and a wrapped title.</summary>
@@ -114,25 +114,45 @@ namespace BoingUpSkyTower.Gameplay
             slot = null; icon = "star1"; kit = "icon_star";
             switch (id)
             {
-                case "d_login": slot = "task_key"; icon = "key"; kit = "icon_daily"; break;
-                case "d_play5": slot = "task_hourglass"; icon = "hourglass"; kit = "icon_dial"; break;
-                case "d_level1": case "d_level3": slot = "task_flag"; icon = id == "d_level1" ? "flag1" : "flag3"; kit = "icon_flag"; break;
-                case "d_combo3": slot = "task_flame"; icon = "flame"; kit = "icon_flame"; break;
-                case "d_hard": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;
-                case "d_nowall": icon = "wall"; kit = "icon_hand"; break;
-                case "d_gemlevel": slot = "task_gem"; icon = "gem"; kit = "icon_gem"; break;
-                case "d_stars2": icon = "star1"; kit = "icon_star"; break;
-                case "d_powerup": slot = "task_upgrade"; icon = "bolt"; kit = "icon_bolt"; break;
-                case "w_login7": slot = "task_calendar"; icon = "calendar"; kit = "icon_daily"; break;
-                case "w_play100": case "w_play150": slot = "task_hourglass"; icon = "clock"; kit = "icon_dial"; break;
-                case "w_levels15": slot = "task_flag"; icon = "levels"; kit = "icon_flag"; break;
-                case "w_stars20": icon = "medal"; kit = "icon_star"; break;
-                case "w_nowall": icon = "wall"; kit = "icon_hand"; break;
-                case "w_stars3": icon = "star3"; kit = "icon_star"; break;
+                case "d_login": slot = "task_key"; icon = "key"; kit = "icon_daily"; break;                                   // log in: key
+                case "d_play5": case "d_play15": slot = "task_hourglass"; icon = "hourglass"; kit = "icon_dial"; break;       // play minutes: hourglass
+                case "d_level3": slot = "task_flag"; icon = "flag3"; kit = "icon_flag"; break;                                  // complete levels: flag
+                case "d_combo5": slot = "task_flame"; icon = "flame"; kit = "icon_flame"; break;                                // combos: flame
+                case "d_hard": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;                             // hard levels: boss skull
+                case "w_login5": slot = "task_calendar"; icon = "calendar"; kit = "icon_daily"; break;                          // log in on days: calendar
+                case "w_play100": slot = "task_hourglass"; icon = "hourglass"; kit = "icon_dial"; break;
+                case "w_powerups10": icon = "bolt"; kit = "icon_bolt"; break;                                                   // use power-ups: bolt
+                case "w_stars20": icon = "star1"; kit = "icon_star"; break;                                                     // earn stars: star
+                case "w_levels20": slot = "task_flag"; icon = "levels"; kit = "icon_flag"; break;
+                case "w_nowall2": icon = "wall"; kit = "icon_hand"; break;                                                      // no-wall: wall
+                case "w_endless100": icon = null; kit = "icon_tower"; break;                                                    // endless floor: tower
+                case "w_combos150": slot = "task_flame"; icon = "flame"; kit = "icon_flame"; break;
+                case "w_hard5": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;
                 default:
-                    if (id != null && id.StartsWith("w_combos", StringComparison.Ordinal)) { slot = "task_flame"; icon = "flame"; kit = "icon_flame"; }
-                    else if (id == "s_225") { icon = "trophy"; kit = "icon_star"; }
+                    if (id != null && id.StartsWith("g_", StringComparison.Ordinal)) GoalSources(id, out slot, out icon, out kit);
                     break;
+            }
+        }
+
+        /// <summary>Icon of a region goal by the type token inside its id (g_&lt;region&gt;_&lt;token&gt;_&lt;tier&gt;).</summary>
+        static void GoalSources(string id, out string slot, out string icon, out string kit)
+        {
+            string[] parts = id.Split('_');
+            string token = parts.Length > 2 ? parts[2] : "";
+            slot = null; icon = "star1"; kit = "icon_star";
+            switch (token)
+            {
+                case "stars": break;                                                                              // stars: star
+                case "levels": slot = "task_flag"; icon = "flag1"; kit = "icon_flag"; break;                     // levels: flag
+                case "stars3": icon = "star3"; kit = "icon_star"; break;                                          // 3-star levels: three stars (icon_star3)
+                case "jumps": slot = "task_upgrade"; icon = "bolt"; kit = "icon_speed"; break;                   // jumps: up arrow
+                case "combos": slot = "task_flame"; icon = "flame"; kit = "icon_flame"; break;                   // combos: flame
+                case "time": slot = "task_hourglass"; icon = "hourglass"; kit = "icon_dial"; break;              // play time: hourglass
+                case "coins": slot = "task_coins"; icon = "coinbag"; kit = "icon_coin"; break;                   // coins: coin
+                case "powerups": icon = "bolt"; kit = "icon_bolt"; break;                                         // power-ups: bolt
+                case "hard": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;                // hard levels: boss skull
+                case "nowall": icon = "wall"; kit = "icon_hand"; break;                                           // no-wall: wall
+                case "endless": icon = null; kit = "icon_tower"; break;                                           // endless floors: tower
             }
         }
 
@@ -146,57 +166,63 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- reward plate ----------------
 
-        struct RItem { public Sprite Icon; public string Text; }
+        struct RItem { public Sprite Icon; public string Text; public string HeroId; public bool IsHero; }
+
+        /// <summary>Id of the Common hero of a region (the hero a region goal gives), null when the region has none.</summary>
+        static string RegionHeroId(int region)
+        {
+            foreach (CharacterSpec c in CharacterDefs.All) if (c.IsRegionHero && c.Region == region) return c.Id;
+            return null;
+        }
 
         List<RItem> RewardItems(RewardEntry e, bool pointsOnly)
         {
-            var l = new List<RItem>(3);
+            var l = new List<RItem>(4);
             if (pointsOnly) { l.Add(new RItem { Icon = StarSprite, Text = "+" + e.Points }); return l; }
             if (e.Gems > 0) l.Add(new RItem { Icon = GemSprite, Text = Compact(e.Gems) });
             if (e.Coins > 0) l.Add(new RItem { Icon = CoinSprite, Text = Compact(e.Coins) });
             if (e.PowerUps > 0) l.Add(new RItem { Icon = BoltSprite, Text = "x" + e.PowerUps });
+            // a hero reward shows the hero's face; the random weekly hero (HeroRegion -1) is not known before the claim and shows the generic heroes icon
+            if (e.GivesHero) l.Add(new RItem { IsHero = true, HeroId = e.HeroRegion > 0 ? RegionHeroId(e.HeroRegion) : null, Icon = ToyKit.Get("icon_heroes"), Text = "" });
             return l;
         }
 
-        /// <summary>Icons and amounts inside a dark plate: one reward is a big icon over its amount, two or more are stacked rows. No overlap by construction (layout groups).</summary>
-        static void FillRewardPlate(RectTransform plate, List<RItem> items)
+        /// <summary>
+        /// A hero face chip: a round cream disc with the top of the hero doll (the same parts the hero reveal draws) cropped by a circle mask.
+        /// Without a hero id (the random weekly hero) it shows the generic heroes icon. The caller sets the size (layout element or Place).
+        /// </summary>
+        RectTransform HeroFace(Transform parent, string name, string heroId, float size)
         {
-            if (items.Count == 0) return;
-            var vl = plate.gameObject.AddComponent<VerticalLayoutGroup>();
-            vl.padding = new RectOffset(6, 6, 10, 10);
-            vl.spacing = 4f;
-            vl.childAlignment = TextAnchor.MiddleCenter;
-            vl.childControlWidth = vl.childControlHeight = true;
-            vl.childForceExpandWidth = vl.childForceExpandHeight = false;
-            if (items.Count == 1)
+            RectTransform frame = UiKit.Rect(parent, name);
+            frame.sizeDelta = new Vector2(size, size);
+            Sprite circle = ToyKit.Get("plate_circle") ?? Theme.RoundSprite;
+            Image disc = UiKit.AddImage(frame, "Disc", circle, new Color(0.99f, 0.93f, 0.78f, 1f));
+            disc.preserveAspect = false;
+            UiKit.Stretch(disc.rectTransform);
+            if (!string.IsNullOrEmpty(heroId))
             {
-                Image ic = UiKit.AddImage(plate, "Icon", items[0].Icon, Color.white);
-                SetPref(ic.gameObject, 76f, 76f);
-                Text t = UiKit.AddText(plate, "Amount", items[0].Text, BodyPx, Color.white, TextAnchor.MiddleCenter, true);
-                t.horizontalOverflow = HorizontalWrapMode.Overflow;
-                return;
+                Image clip = UiKit.AddImage(frame, "Clip", circle, Color.white);
+                clip.preserveAspect = false;
+                UiKit.Stretch(clip.rectTransform);
+                clip.rectTransform.offsetMin = new Vector2(3f, 3f);
+                clip.rectTransform.offsetMax = new Vector2(-3f, -3f);
+                var mask = clip.gameObject.AddComponent<Mask>();
+                mask.showMaskGraphic = false;
+                CharacterDef who = CharacterCatalog.Get(heroId);
+                RectTransform doll = MomoDoll.Build(clip.transform, "Portrait", size * 2.2f, who, art);
+                UiKit.Place(doll, new Vector2(0.5f, 1f), new Vector2(0f, size * 0.12f), doll.sizeDelta);   // the head sits in the top of the doll canvas
+                CharacterSpec spec = CharacterInventory.Get(heroId);
+                frame.gameObject.AddComponent<A11yLabel>().Text = (spec != null ? spec.Name : "Hero") + " hero";
             }
-            foreach (RItem it in items)
+            else
             {
-                RectTransform row = UiKit.Rect(plate, "Item");
-                var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-                hl.spacing = 4f;
-                hl.childAlignment = TextAnchor.MiddleCenter;
-                hl.childControlWidth = hl.childControlHeight = true;
-                hl.childForceExpandWidth = hl.childForceExpandHeight = false;
-                Image ic = UiKit.AddImage(row, "Icon", it.Icon, Color.white);
-                SetPref(ic.gameObject, 56f, 56f);
-                Text t = UiKit.AddText(row, "Amount", it.Text, BodyPx, Color.white, TextAnchor.MiddleCenter, true);
-                t.horizontalOverflow = HorizontalWrapMode.Overflow;
+                Image generic = UiKit.AddImage(frame, "Generic", ToyKit.Get("icon_heroes"), Color.white);
+                UiKit.Stretch(generic.rectTransform);
+                generic.rectTransform.offsetMin = new Vector2(size * 0.12f, size * 0.12f);
+                generic.rectTransform.offsetMax = new Vector2(-size * 0.12f, -size * 0.12f);
+                frame.gameObject.AddComponent<A11yLabel>().Text = "Random hero";
             }
-        }
-
-        /// <summary>A dark reward plate (chip) with the items; <paramref name="plate"/> is returned so the caller can anchor it.</summary>
-        RectTransform RewardPlate(Transform parent, string name, List<RItem> items)
-        {
-            Image p = Plate(parent, name, "plate_chip", Color.white, RewardCorner);
-            FillRewardPlate(p.rectTransform, items);
-            return p.rectTransform;
+            return frame;
         }
 
         static float AmountW(string text)
@@ -209,14 +235,14 @@ namespace BoingUpSkyTower.Gameplay
         static float CardPlateWidth(List<RItem> items, bool claim)
         {
             float w = 2f * PlatePad + (claim ? CheckW + ItemGap : 0f);
-            for (int i = 0; i < items.Count; i++) w += ItemIcon + 6f + AmountW(items[i].Text) + (i > 0 ? ItemGap : 0f);
+            for (int i = 0; i < items.Count; i++) w += (items[i].IsHero ? HeroFaceSize : ItemIcon + 6f + AmountW(items[i].Text)) + (i > 0 ? ItemGap : 0f);
             return Mathf.Max(w, claim ? ClaimButtonH : 0f);
         }
 
         /// <summary>
         /// The reward plate of a card: one row of icon + amount items. Ready cards get the green plate (btn_green) with a check glyph first: it is the Claim button.
         /// </summary>
-        static Image CardPlate(Transform parent, List<RItem> items, bool claim)
+        Image CardPlate(Transform parent, List<RItem> items, bool claim)
         {
             Image p = Plate(parent, "RewardPlate", claim ? "btn_green" : "plate_chip", Color.white, RewardCorner);
             var hl = p.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -232,6 +258,12 @@ namespace BoingUpSkyTower.Gameplay
             }
             foreach (RItem it in items)
             {
+                if (it.IsHero)
+                {
+                    RectTransform face = HeroFace(p.transform, "Hero", it.HeroId, HeroFaceSize);
+                    SetPref(face.gameObject, HeroFaceSize, HeroFaceSize);
+                    continue;
+                }
                 RectTransform row = UiKit.Rect(p.transform, "Item");
                 var rl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
                 rl.spacing = 6f;
@@ -280,10 +312,22 @@ namespace BoingUpSkyTower.Gameplay
             return Mathf.Ceil(m);
         }
 
-        string TitleOf(RewardEntry e)
+        /// <summary>
+        /// The card title: the table title, shortened where the icon already says it (a tower for Endless) so a title stays on one line next to the reward plate and the
+        /// compact 136 px card holds ("Reach floor 100 in Endless" becomes "Reach floor 100"). Screen readers get the same short words plus the reward.
+        /// </summary>
+        public static string ShortTitle(string title)
         {
-            return Tab == RewardTab.Main ? "Collect " + e.Target + " Stars" : e.Title;
+            string t = title ?? "";
+            const string endless = " in Endless", noWall = "Clear the no-wall level ", times = " times", threeStar = "Get 3 stars on ";
+            if (t.EndsWith(endless, StringComparison.Ordinal)) t = t.Substring(0, t.Length - endless.Length);
+            if (t.StartsWith(noWall, StringComparison.Ordinal) && t.EndsWith(times, StringComparison.Ordinal) && t.Length > noWall.Length + times.Length)
+                t = "No-wall level x" + t.Substring(noWall.Length, t.Length - noWall.Length - times.Length);
+            if (t.StartsWith(threeStar, StringComparison.Ordinal)) t = "3 stars on " + t.Substring(threeStar.Length);
+            return t;
         }
+
+        string TitleOf(RewardEntry e) { return ShortTitle(e.Title); }
 
         // ---------------- the card ----------------
 
@@ -292,20 +336,26 @@ namespace BoingUpSkyTower.Gameplay
         /// <paramref name="claimable"/> cards (stars, weekly tasks) are ready when complete and unclaimed: the card turns yellow and its reward plate becomes a BIG GREEN
         /// CLAIM BUTTON (check glyph + the reward, at least 48 dp, "Claim 20 gems" for screen readers) that claims exactly that reward; tapping the rest of the card claims it too
         /// (button and card both claim). Claimed cards turn green with a check badge. Daily action cards only show points (green when done).
-        /// <paramref name="rail"/> (Main) adds the numbered rail with its line at the left. The card height is the compact base or the measured title + bar when that is more.
+        /// Region goals (Main) use the same card; a goal that gives a hero adds the hero's face to the plate. The card height is the compact base or the measured title + bar when that is more.
         /// </summary>
-        void AddCard(RectTransform list, RewardEntry e, bool claimable, int index, int count, bool rail)
+        void AddCard(RectTransform list, RewardEntry e, bool claimable)
         {
-            int value = progress.RewardProgress(Tab, e);
-            int target = progress.RewardTarget(Tab, e);
-            bool claimed = claimable ? progress.IsRewardClaimed(Tab, e) : value >= target;
-            bool ready = claimable && !claimed && value >= target;
+            // region goals read the region API (ready needs an open region); daily actions and weekly tasks use the generic one
+            RegionGoal goal = e as RegionGoal;
+            int value = goal != null ? progress.RegionGoalProgress(goal) : progress.RewardProgress(Tab, e);
+            int target = goal != null ? goal.Target : progress.RewardTarget(Tab, e);
+            bool claimed, ready;
+            if (goal != null) { claimed = progress.IsRegionGoalClaimed(goal); ready = progress.IsRegionGoalReady(goal); }
+            else
+            {
+                claimed = claimable ? progress.IsRewardClaimed(Tab, e) : value >= target;
+                ready = claimable && !claimed && value >= target;
+            }
             CardState st = claimed ? CardState.Done : (ready ? CardState.Ready : CardState.Open);
 
             RectTransform row = UiKit.Rect(list, "Row_" + e.Id);
             RectTransform card = UiKit.Rect(row, "Card");
             UiKit.Stretch(card);
-            if (rail) card.offsetMin = new Vector2(RailW + 12f, 0f);
 
             Image bg = Plate(card, "Bg", "plate_cream", StateTint(st), CardCorner);
             UiKit.Stretch(bg.rectTransform);
@@ -314,7 +364,7 @@ namespace BoingUpSkyTower.Gameplay
             float plateW = CardPlateWidth(items, ready);
             float midL = CardPadX + IconW + 14f, midR = CardPadX + plateW + 14f;
             float listW = screen != null && screen.rect.width > 200f ? screen.rect.width : 1080f;
-            float cardW = listW - 2f * Side - (rail ? RailW + 12f : 0f);
+            float cardW = listW - 2f * Side;
 
             Text title = UiKit.AddText(card, "Title", TitleOf(e), BodyPx, Theme.Ink, TextAnchor.MiddleCenter, true);
             UiKit.OnPanel(title);
@@ -334,7 +384,6 @@ namespace BoingUpSkyTower.Gameplay
             }
             float h = CardHeightFor(titleH);
             FixedHeight(row, h);
-            if (rail) BuildRail(row, index, count, st);
             // Text column = title over the bar, one stack from the top (they cannot overlap); extra card height is split above and below.
             float stack = titleH + TitleBarGap + CardBarH;
             float top = Mathf.Max(CardPadY, (h - stack) * 0.5f);
@@ -373,43 +422,6 @@ namespace BoingUpSkyTower.Gameplay
                 MakeClaimable(plate.rectTransform, plate, Tab, e, "Claim " + Describe(e));                    // the green button claims exactly this reward
             }
             else if (claimable) card.gameObject.AddComponent<A11yLabel>().Text = TitleOf(e) + ": " + label + (claimed ? ", claimed" : "");
-        }
-
-        /// <summary>The numbered rail of the Main list: a dark round badge with the milestone number (a check once claimed) on a line that runs through the cards.</summary>
-        void BuildRail(RectTransform row, int index, int count, CardState st)
-        {
-            RectTransform rail = UiKit.Rect(row, "Rail");
-            rail.anchorMin = new Vector2(0f, 0f);
-            rail.anchorMax = new Vector2(0f, 1f);
-            rail.pivot = new Vector2(0f, 0.5f);
-            rail.offsetMin = Vector2.zero;
-            rail.offsetMax = new Vector2(RailW, 0f);
-
-            bool first = index == 0, last = index == count - 1;
-            Image line = Plate(rail, "Backdrop", null, st == CardState.Done ? BarGreen : new Color(0.42f, 0.48f, 0.80f, 1f), 7f);
-            RectTransform lrt = line.rectTransform;
-            lrt.anchorMin = new Vector2(0.5f, last ? 0.5f : 0f);
-            lrt.anchorMax = new Vector2(0.5f, first ? 0.5f : 1f);
-            lrt.offsetMin = new Vector2(-7f, last ? 0f : -CardGap);
-            lrt.offsetMax = new Vector2(7f, first ? 0f : CardGap);
-
-            Sprite circle = ToyKit.Get("plate_circle") ?? Theme.RoundSprite;
-            Image badge = UiKit.AddImage(rail, "Badge", circle, Color.white);
-            badge.preserveAspect = true;
-            UiKit.Place(badge.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(RailBadge, RailBadge));
-            if (st == CardState.Done)
-            {
-                Image mark = UiKit.AddImage(badge.transform, "Mark", RewardArt.Icon("check") ?? Glyphs.Check, new Color(0.45f, 0.95f, 0.5f, 1f));
-                UiKit.Stretch(mark.rectTransform);
-                mark.rectTransform.offsetMin = new Vector2(14f, 14f);
-                mark.rectTransform.offsetMax = new Vector2(-14f, -14f);
-            }
-            else
-            {
-                Text n = UiKit.AddText(badge.transform, "Number", (index + 1).ToString(), BodyPx, st == CardState.Ready ? Theme.Gold : Color.white, TextAnchor.MiddleCenter, true);
-                n.horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.Stretch(n.rectTransform);
-            }
         }
     }
 }

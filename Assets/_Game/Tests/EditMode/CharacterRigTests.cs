@@ -65,31 +65,21 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void ChestsGiveCoinsAndPowerUpsOnly()
+        public void ChestsGiveCoinsPowerUpsAndOneHero()
         {
             var types = new System.Collections.Generic.List<PowerUpDef>(new ProgressService(Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5).PowerUpDefs.Implemented);
             ChestContents iron = ChestRolls.Roll(ChestKind.Iron, 0, types);
             ChestContents gold = ChestRolls.Roll(ChestKind.Golden, 0, types);
             Assert.AreEqual(1, iron.PowerUps.Count);
             Assert.AreEqual(3, gold.PowerUps.Count);
-            Assert.That(iron.Coins, Is.InRange(400, 600));
-            Assert.That(gold.Coins, Is.InRange(1000, 1400));
+            Assert.That(iron.Coins, Is.InRange(800, 1200));
+            Assert.That(gold.Coins, Is.InRange(3000, 4200));
+            Assert.IsNotNull(iron.Hero);
+            Assert.IsNotNull(gold.Hero);
         }
 
         [Test]
-        public void ChestsDropNoCharactersWhileTheyAreSwitchedOff()
-        {
-            Assert.IsFalse(ChestRolls.CharactersEnabled);
-            var types = new System.Collections.Generic.List<PowerUpDef>(new ProgressService(Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5).PowerUpDefs.Implemented);
-            for (int i = 0; i < 200; i++)
-            {
-                Assert.AreEqual(0, ChestRolls.Roll(ChestKind.Iron, i, types).Characters.Count);
-                Assert.AreEqual(0, ChestRolls.Roll(ChestKind.Golden, i, types).Characters.Count);
-            }
-        }
-
-        [Test]
-        public void ARegionUnlockGivesItsCommonCharacterAndChestsAddNoCharacter()
+        public void AChestHeroIsAnotherCopyAndNoGemsComeBack()
         {
             var svc = new ProgressService(Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
             Assert.IsTrue(svc.OwnsCharacter("momo"));
@@ -97,16 +87,10 @@ namespace BoingUpSkyTower.Tests
             svc.Data.Gems = 1000;
             System.Collections.Generic.List<ChestContents> opened;
             Assert.AreEqual(ChestOpenResult.Ok, svc.TryOpenChests(ChestKind.Iron, 1, out opened));
-            Assert.AreEqual(0, opened[0].Characters.Count, "characters are switched off");
-            Assert.IsFalse(svc.OwnsCharacter("forestgirl"));
-            Assert.That(opened[0].Coins, Is.InRange(400, 600));
-        }
-
-        [Test]
-        public void ADuplicateCharacterRefundsAQuarterOfItsGemPrice()
-        {
-            Assert.AreEqual(100, ChestRolls.DuplicateRefundGems(400));
-            Assert.AreEqual(0, ChestRolls.DuplicateRefundGems(0));
+            Assert.IsNotNull(opened[0].Hero);
+            Assert.AreEqual(1000 - ChestRolls.Price(ChestKind.Iron, 1), svc.Gems, "no refund");
+            Assert.IsFalse(svc.OwnsCharacter("forestgirl"), "a locked region's hero never drops");
+            Assert.That(opened[0].Coins, Is.InRange(800, 1200));
         }
 
         [Test]

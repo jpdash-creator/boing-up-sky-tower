@@ -18,6 +18,7 @@ namespace BoingUpSkyTower.Gameplay
 
         readonly DelayLine delay = new DelayLine();
         RunSession session;
+        int seenRebase, seenDropped;   // endless re-base: platform ids of a running plan move down by the dropped count
         Maneuver current;
         ManeuverCursor cursor;
         bool active;
@@ -60,6 +61,8 @@ namespace BoingUpSkyTower.Gameplay
             session = ses;
             active = false;
             cursor = new ManeuverCursor();
+            seenRebase = ses.RebaseCount;
+            seenDropped = ses.DroppedPlatforms;
             delay.Reset(DelayTicks);
         }
 
@@ -68,6 +71,17 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (!ReferenceEquals(ses, session)) Reset(ses);
             if (ses.Over) return 0;
+            if (ses.RebaseCount != seenRebase)
+            {
+                // the endless world was re-based: platform ids of the plan in progress moved down (ids are window indices)
+                int d = ses.DroppedPlatforms - seenDropped;
+                seenRebase = ses.RebaseCount;
+                seenDropped = ses.DroppedPlatforms;
+                if (current.Target >= 0) current.Target -= d;
+                if (current.Target2 >= 0) current.Target2 -= d;
+                if (cursor.Home >= 0) cursor.Home -= d;
+                cursor.LastGround -= d;
+            }
             for (int pass = 0; pass < 2; pass++)
             {
                 if (!active)

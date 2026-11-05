@@ -326,22 +326,22 @@ namespace BoingUpSkyTower.Tests
             int gems = svc.Gems, coins = svc.Coins, stars = svc.TotalStars();
             Assert.IsFalse(svc.HasClaimable(RewardTab.Main), "fresh save: nothing ready");
             Assert.IsTrue(svc.AdminSetMainRewardsReady(true));
-            int regions = 0, starCards = 0;
+            var perRegion = new int[RegionGoalTable.TotalRegions + 1];
             foreach (RewardEntry e in svc.ClaimableEntries(RewardTab.Main))
             {
                 Assert.IsTrue(svc.IsRewardReady(RewardTab.Main, e), e.Id + " ready");
                 Assert.IsFalse(svc.IsRewardClaimed(RewardTab.Main, e), e.Id + " unclaimed");
-                if (e.Id.StartsWith("r_")) regions++; else starCards++;
+                perRegion[((RegionGoal)e).Region]++;
             }
-            Assert.AreEqual(5, regions);
-            Assert.Greater(starCards, 0);
+            for (int r = 1; r <= RegionGoalTable.PlayableRegions; r++) Assert.AreEqual(svc.RegionGoals(r).Count, perRegion[r], "every goal of region " + r + " is ready");
+            for (int r = RegionGoalTable.PlayableRegions + 1; r <= RegionGoalTable.TotalRegions; r++) Assert.AreEqual(0, perRegion[r], "Coming Soon region " + r + " has no goals");
             Assert.AreEqual(gems, svc.Gems, "nothing paid");
             Assert.AreEqual(coins, svc.Coins);
             Assert.AreEqual(stars, svc.TotalStars(), "real progress untouched");
             Assert.IsTrue(svc.HasClaimable(RewardTab.Main));
 
-            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Main, "r_1").Result, "claiming works afterwards");
-            Assert.IsTrue(svc.IsRewardClaimed(RewardTab.Main, svc.RewardDefs.Find(RewardTab.Main, "r_1")));
+            Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimRegionGoal("g_1_levels_5").Result, "claiming works afterwards");
+            Assert.IsTrue(svc.IsRewardClaimed(RewardTab.Main, svc.RewardDefs.Find(RewardTab.Main, "g_1_levels_5")));
             Assert.AreEqual(RewardClaimResult.Ok, svc.ClaimAll(RewardTab.Main).Result);
             Assert.IsFalse(svc.HasClaimable(RewardTab.Main), "everything claimed");
         }

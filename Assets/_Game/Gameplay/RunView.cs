@@ -62,6 +62,11 @@ namespace BoingUpSkyTower.Gameplay
         // everything once; their window is the whole level.
         bool endless;
         int builtVersion;
+        // Endless re-base (EndlessWorld): the Sim heights and the platform / gong ids of the window are shifted about every 500 floors. The view follows in the same frame
+        // (SyncRebase): its index-based caches move down, every stored world position moves by the same amount, and the parallax / wall patterns use the ABSOLUTE height
+        // (originY + camera) so they stay seamless. Between re-bases nothing here costs anything.
+        int seenRebase, seenDropP, seenDropH;
+        double originY;   // absolute height (u) of the window's zero
         int actLo, actHi;             // active platform views are [actLo, actHi)
         int hazLo, hazHi;             // active gong views are [hazLo, hazHi)
         readonly Stack<SpriteRenderer> platPool = new Stack<SpriteRenderer>();
@@ -209,6 +214,10 @@ namespace BoingUpSkyTower.Gameplay
             session = s;
             endless = s.IsEndless;
             builtVersion = s.WorldVersion;
+            seenRebase = s.RebaseCount;
+            seenDropP = s.DroppedPlatforms;
+            seenDropH = s.DroppedHazards;
+            originY = s.OriginYRaw / 65536.0;
             reduced = GameSettings.ReducedMotion;
             AudioManager.SetMusic(MusicTrack.Run, s.Region.Index);
             art = catalog;
@@ -709,6 +718,66 @@ namespace BoingUpSkyTower.Gameplay
             return lo;
         }
 
+        /// <summary>Moves the contents of a view array down by k slots (the first k are dropped) and clears the tail. In place, no allocation.</summary>
+        static void ShiftDown<T>(T[] a, int k)
+        {
+            if (a == null || k <= 0) return;
+            if (k >= a.Length) { System.Array.Clear(a, 0, a.Length); return; }
+            System.Array.Copy(a, k, a, 0, a.Length - k);
+            System.Array.Clear(a, a.Length - k, k);
+        }
+
+        /// <summary>
+        /// Endless re-base, called at the start of OnTick and Render (a single integer compare when nothing happened). When the world was re-based the Sim lowered all heights
+        /// by one amount and renumbered platforms and gongs: this lowers every height the view stored by the same amount in the same frame (previous / current player and kill
+        /// line, the camera, the effect pops), moves the index-based caches (platform and gong views, special platform parts, the active windows) down by the dropped counts, and
+        /// takes the new absolute origin. Platform and gong views are positioned from the Sim every frame, so they need nothing else. No allocation, no visual pop.
+        /// </summary>
+        void SyncRebase()
+        {
+            if (!endless || session.RebaseCount == seenRebase) return;
+            int dropP = session.DroppedPlatforms - seenDropP;
+            int dropH = session.DroppedHazards - seenDropH;
+            double newOrigin = session.OriginYRaw / 65536.0;
+            float d = (float)(newOrigin - originY);
+
+            if (dropP > 0 && platformSr != null)
+            {
+                for (int i = 0; i < dropP && i < platformSr.Length; i++) ReleasePlatform(i);   // (already below the window in practice)
+                ShiftDown(platformSr, dropP);
+                ShiftDown(platformTf, dropP);
+                ShiftDown(platformBaseScaleX, dropP);
+                ShiftDown(platformPose, dropP);
+                ShiftDown(platformOffX, dropP);
+                ShiftDown(platformOffY, dropP);
+                specialFx.ShiftDown(dropP);
+                actLo = actLo > dropP ? actLo - dropP : 0;
+                actHi = actHi > dropP ? actHi - dropP : 0;
+            }
+            if (dropH > 0 && hazardSr != null)
+            {
+                for (int i = 0; i < dropH && i < hazardSr.Length; i++) ReleaseHazard(i);
+                ShiftDown(hazardSr, dropH);
+                ShiftDown(hazardTf, dropH);
+                hazLo = hazLo > dropH ? hazLo - dropH : 0;
+                hazHi = hazHi > dropH ? hazHi - dropH : 0;
+            }
+
+            prevY -= d;
+            curY -= d;
+            prevKill -= d;
+            curKill -= d;
+            camY -= d;
+            for (int i = 0; i < pops.Length; i++)
+                if (pops[i] != null && pops[i].Tf != null) { Vector3 pp = pops[i].Tf.position; pp.y -= d; pops[i].Tf.position = pp; }
+            if (cam != null) ApplyCamera();
+
+            originY = newOrigin;
+            seenRebase = session.RebaseCount;
+            seenDropP = session.DroppedPlatforms;
+            seenDropH = session.DroppedHazards;
+        }
+
         /// <summary>
         /// Endless mode, once per frame: picks up a grown tower (arrays are extended, a rare step), then makes sure exactly the platforms and gongs
         /// between a little below the screen and a few rows above it have views. Views leaving the window go back to the pools.
@@ -1077,6 +1146,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Call once after every Sim tick: remembers the previous and current player position for interpolation and spawns effects.</summary>
         public void OnTick(bool coinTaken, float coinX, float coinY)
         {
+            SyncRebase();   // endless: the session may have re-based its heights in this tick
             prevX = curX;
             prevKill = curKill;
             curKill = session.State.KillY.F();
@@ -1167,6 +1237,7 @@ namespace BoingUpSkyTower.Gameplay
         public void Render(float alpha, float deltaTime)
         {
             if (session == null) return;
+            SyncRebase();
             frameDt = deltaTime;
             SimState s = session.State;
             int tick = s.Tick;
@@ -1320,12 +1391,14 @@ namespace BoingUpSkyTower.Gameplay
 
         void UpdateBackground()
         {
+            double absCam = (double)camY + originY;   // endless: the pattern follows the ABSOLUTE height, so a re-base of the window does not move the background
             for (int i = 0; i < layers.Count; i++)
             {
                 Layer l = layers[i];
-                float scrolled = reduced ? 0f : camY * l.Factor;
-                float offset = Mathf.Repeat(scrolled, l.Height);
-                int baseIdx = Mathf.FloorToInt(scrolled / l.Height);
+                double scrolled = reduced ? 0.0 : absCam * l.Factor;
+                double cell = System.Math.Floor(scrolled / l.Height);
+                float offset = (float)(scrolled - cell * l.Height);
+                long baseIdx = (long)cell;
                 for (int k = 0; k < l.Tiles.Length; k++)
                 {
                     // Every other tile is mirrored vertically so neighbouring tiles meet on identical pixels: no visible seam.
@@ -1340,11 +1413,11 @@ namespace BoingUpSkyTower.Gameplay
         void UpdateWalls()
         {
             if (wallL == null) return;
-            float bottom = camY - camHalfH - wallSegHeight;
-            int first = Mathf.FloorToInt(bottom / wallSegHeight);
+            double bottom = (double)(camY - camHalfH - wallSegHeight) + originY;   // absolute height: the wall tiles keep their places across an endless re-base
+            long first = (long)System.Math.Floor(bottom / wallSegHeight);
             for (int i = 0; i < wallL.Length; i++)
             {
-                float y = (first + i) * wallSegHeight + wallSegHeight * 0.5f;
+                float y = (float)((first + i) * (double)wallSegHeight + wallSegHeight * 0.5 - originY);
                 bool tiled = region != null && region.WallTileL != null;
                 float inset = tiled ? wallWidth * 0.5f - 0.1f : 0.3f;   // the playfield edge is x = 0 / screen width; the wall overlaps it by 0.1
                 if (wallL[i] != null) wallL[i].transform.position = new Vector3(inset, y, 0f);

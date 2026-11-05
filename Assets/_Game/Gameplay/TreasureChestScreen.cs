@@ -9,12 +9,12 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// The Treasure Shop page (docs/22 point 3, restyled by docs/26 section 1 like reference SS13). It is a PAGE of the shop (the Chests tab of
-    /// <see cref="ShopScreen"/>), built inside <see cref="ShopChrome"/>: a red CHEST ribbon and two cards, IRON CHEST (blue) and GOLD CHEST (gold), each with
-    /// the chest picture on the left, the title top right, DIRECT coloured text of what is inside (no (i) button) and the buttons Open 1 (green) and
-    /// Open 10 (yellow) with the gem price at the bottom right. Opening asks first (every price is above 50 gems), plays a reveal of about 1.2 s that a tap
-    /// skips (reduced motion shows the result at once) and ends on a Collect button. Too few gems offers the smallest gem pack that covers the shortfall.
-    /// Gems only; power-ups and coins only. Menu screen only: no per-frame code except the reveal animation.
+    /// The Treasure Shop page (docs/22 point 3, docs/26 section 1; reworked by Bug List 5 F3 to match the Bundles: coins + power-ups + exactly one hero card, a "Worth x.." tag and an "i" popup).
+    /// It is the "Chests" section of the shop's VIP page, built inside <see cref="ShopChrome"/>: two cards, IRON CHEST (blue) and GOLD CHEST (gold). Each card has a top row with the 48 dp "i"
+    /// button, the chest name and the italic "Worth x1.8" tag (top right, no star, the name's font); under it the chest picture on the left and, on the right, icon chips (coins range,
+    /// power-ups, the hero card as the "?" hero icon) above the buttons Open 1 (green) and Open 10 (yellow) with the gem price. Opening asks first (every price is above 50 gems), plays a
+    /// reveal of about 1.2 s that a tap skips (reduced motion shows the result at once) and ends on a Collect button. The reveal is compact and icon-first: small hero rows, icon chips.
+    /// Too few gems offers the smallest gem pack that covers the shortfall. Gems only. Menu screen only: no per-frame code except the reveal animation.
     /// </summary>
     public sealed class TreasureChestScreen
     {
@@ -27,14 +27,20 @@ namespace BoingUpSkyTower.Gameplay
             public Action<int> BuyGemPack;
         }
 
-        // Compact cards (owner issue list 27): both fit one screen at 100% text on every aspect; at 130% the page scrolls.
-        const float CardBaseH = 424f, RowGap = 14f;
+        // Cards: the top row (info + name + worth) is 48 dp or the name line, the right column holds two chip rows above the open buttons. At 130 percent the page scrolls.
+        const float CardBaseH = 470f, RowGap = 14f;
         const float BuyBottom = 14f, TextTop = 14f;
+        const float ChipH = 72f, ChipGap = 8f, WorthW = 330f;
         static float TextK { get { return Mathf.Max(1f, UiKit.TextScale) - 1f; } }
         static float BuyH { get { return 140f + TextK * 40f; } }
         static float TitleH { get { return 60f + TextK * 220f; } }
-        const float ListRowH = 100f;
-        const int MaxListRows = 6;
+        /// <summary>Height of the card's top row: the 48 dp "i" or the (possibly wrapped) name, whichever is taller.</summary>
+        static float TopRowH { get { return Mathf.Max(UiKit.MinTouchPx, TitleH); } }
+        const float HeroRowMin = 130f;
+        const int MaxHeroRows = 4;
+
+        static readonly Color ChipFrame = new Color(0.42f, 0.24f, 0.10f, 1f);
+        static readonly Color ChipFill = new Color(0.99f, 0.95f, 0.84f, 1f);
 
         readonly RectTransform screen;
         readonly ProgressService progress;
@@ -71,46 +77,106 @@ namespace BoingUpSkyTower.Gameplay
             return s;
         }
 
-        // ---------------- the direct text of a chest ----------------
+        // ---------------- the text and chips of a chest ----------------
 
-        static readonly string[] RarityNames = { "Common", "Uncommon", "Rare", "Elite", "Legendary" };
-
-        /// <summary>Rarity colours (Common grey, Uncommon green, Rare blue, Epic purple, Legendary gold); darker shades on the gold card so the words stay readable.</summary>
-        static Color RarityColor(int rarity, bool onGold)
+        /// <summary>The coin range as a chip shows it: "800-1,200".</summary>
+        public static string CoinRangeText(ChestKind kind)
         {
-            switch (rarity)
-            {
-                case 0: return onGold ? new Color(0.30f, 0.30f, 0.34f) : new Color(0.80f, 0.82f, 0.86f);
-                case 1: return onGold ? new Color(0.02f, 0.36f, 0.12f) : new Color(0.45f, 0.98f, 0.50f);
-                case 2: return onGold ? new Color(0.05f, 0.25f, 0.75f) : new Color(0.55f, 0.78f, 1f);
-                case 3: return onGold ? new Color(0.45f, 0.10f, 0.60f) : new Color(0.84f, 0.60f, 1f);
-                default: return onGold ? new Color(0.50f, 0.26f, 0.0f) : new Color(1f, 0.86f, 0.30f);
-            }
+            return Num(ChestRolls.MinCoins(kind)) + "-" + Num(ChestRolls.MaxCoins(kind));
         }
 
-        static string Colored(string text, Color c) { return "<color=#" + ColorUtility.ToHtmlStringRGB(c) + ">" + text + "</color>"; }
-
-        /// <summary>What a chest gives, as plain text (accessibility label and tests): for example "Contains 1 power-up and 400 to 600 coins."</summary>
+        /// <summary>What a chest gives, as plain text (accessibility label and tests): "800 to 1,200 coins, 1 power-up, 1 hero card".</summary>
         public static string DescriptionText(ChestKind kind)
         {
             int pu = ChestRolls.PowerUpCount(kind);
-            return "Contains " + pu + (pu == 1 ? " power-up" : " power-ups") + " and " + Num(ChestRolls.MinCoins(kind)) + " to " + Num(ChestRolls.MaxCoins(kind)) + " coins.";
+            return Num(ChestRolls.MinCoins(kind)) + " to " + Num(ChestRolls.MaxCoins(kind)) + " coins, " + pu + (pu == 1 ? " power-up" : " power-ups") + ", 1 hero card";
         }
 
-        /// <summary>The same text with coloured words (coins gold, power-ups green, character rarities in their colours) plus the characters line.</summary>
-        public static string DescriptionRich(ChestKind kind)
+        /// <summary>The worth tag of a chest, for example "Worth x1.8" (see <see cref="ChestRolls.Worth"/>).</summary>
+        public static string WorthText(ChestKind kind) { return ChestRolls.WorthLabel(kind); }
+
+        /// <summary>
+        /// One content chip (cream plate in a brown frame, like the bundle chips): an icon and a short text, or only the "?" hero card icon when <paramref name="hero"/>.
+        /// Placed from the top-left of <paramref name="parent"/> at (x, y); <paramref name="stretch"/> makes it span the parent from x to the right edge.
+        /// </summary>
+        public static RectTransform AddChip(RectTransform parent, string name, float x, float y, float w, float h, Sprite icon, bool hero, string text, bool stretch = false)
         {
-            bool gold = kind == ChestKind.Golden;
-            Color coins = gold ? new Color(0.45f, 0.24f, 0.0f) : new Color(1f, 0.86f, 0.30f);
-            Color power = gold ? new Color(0.02f, 0.36f, 0.12f) : new Color(0.45f, 0.98f, 0.50f);
-            int pu = ChestRolls.PowerUpCount(kind);
-            string text = "Contains " + Colored(pu + (pu == 1 ? " power-up" : " power-ups"), power) + " and " + Colored(Num(ChestRolls.MinCoins(kind)) + " to " + Num(ChestRolls.MaxCoins(kind)) + " coins", coins) + ".";
-            if (!ChestRolls.CharactersEnabled) return text + "\nCharacters: coming soon";
-            int low = (int)ChestRolls.LowestRarity(kind);
-            string chars = "";
-            for (int i = 0; i < 3 && low + i < RarityNames.Length; i++)
-                chars += (i > 0 ? ", " : "") + Colored(RarityNames[low + i], RarityColor(low + i, gold));
-            return text + "\nCharacters: " + chars + ", up to " + ChestRolls.MaxCharacters(kind);
+            RectTransform root = UiKit.Rect(parent, name);
+            root.anchorMin = new Vector2(0f, 1f);
+            root.anchorMax = new Vector2(stretch ? 1f : 0f, 1f);
+            root.pivot = new Vector2(0f, 1f);
+            root.anchoredPosition = new Vector2(x, -y);
+            root.sizeDelta = new Vector2(stretch ? -x : w, h);
+            Image frame = ToyKit.Sliced(root, "Frame", Theme.RoundSprite, 22f);
+            frame.color = ChipFrame;
+            UiKit.Stretch(frame.rectTransform);
+            Image fill = ToyKit.Sliced(root, "Fill", Theme.RoundSprite, 18f);
+            fill.color = ChipFill;
+            fill.rectTransform.anchorMin = Vector2.zero;
+            fill.rectTransform.anchorMax = Vector2.one;
+            fill.rectTransform.offsetMin = new Vector2(4f, 4f);
+            fill.rectTransform.offsetMax = new Vector2(-4f, -4f);
+            if (hero)
+            {
+                BundlesScreen.AddHeroCardIcon(root, new Vector2(0.5f, 0.5f), Vector2.zero, Mathf.Min(h - 12f, 60f));   // icon and "?" only
+                return root;
+            }
+            float ic = Mathf.Min(h - 20f, 52f);
+            Image img = UiKit.AddImage(root, "Icon", icon, Color.white);
+            UiKit.Place(img.rectTransform, new Vector2(0f, 0.5f), new Vector2(10f, 0f), new Vector2(ic, ic));
+            Text count = UiKit.AddText(root, "Count", text, 42, UiKit.PanelInk, TextAnchor.MiddleCenter, true);
+            UiKit.OnPanel(count);
+            count.horizontalOverflow = HorizontalWrapMode.Wrap;
+            count.resizeTextForBestFit = true;   // shrinks (never below 16 sp) instead of leaving the chip
+            count.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+            count.resizeTextMaxSize = count.fontSize;
+            var crt = (RectTransform)count.transform;
+            crt.anchorMin = Vector2.zero;
+            crt.anchorMax = Vector2.one;
+            crt.offsetMin = new Vector2(ic + 16f, 2f);
+            crt.offsetMax = new Vector2(-8f, -2f);
+            return root;
+        }
+
+        /// <summary>
+        /// The three content chips of a chest in two rows: the coin range (full width of the column, or centred and at most 340 wide in a popup), then the power-up count (generic bolt icon,
+        /// the type is random) and the hero card ("?" icon).
+        /// </summary>
+        static void AddContentChips(RectTransform parent, ChestKind kind, float puChipW, float chipH, float gap, bool centered, float width)
+        {
+            Sprite coin = GameSession.Art != null ? GameSession.Art.CoinIcon : null;
+            Sprite bolt = ToyKit.Get("icon_bolt");
+            float coinW = centered ? Mathf.Min(width, 340f) : 0f;
+            float row2W = puChipW + gap + 100f;
+            float x1 = 0f, x2 = 0f;
+            if (centered)
+            {
+                x1 = (width - coinW) * 0.5f;
+                x2 = (width - row2W) * 0.5f;
+            }
+            AddChip(parent, "CoinsChip", x1, 0f, coinW, chipH, coin, false, CoinRangeText(kind), !centered);
+            AddChip(parent, "PowerUpsChip", x2, chipH + gap, puChipW, chipH, bolt, false, "x" + ChestRolls.PowerUpCount(kind));
+            AddChip(parent, "HeroChip", x2 + puChipW + gap, chipH + gap, 100f, chipH, null, true, "");
+        }
+
+        /// <summary>The "i" button: a 48 dp touch target with a circled i drawn in the given colour (the chest cards are blue or gold, so the ink is chosen per card).</summary>
+        static Button AddInfoButton(Transform parent, string name, Vector2 anchor, Vector2 pos, string a11y, Color ink, Action onTap)
+        {
+            Image hit = UiKit.AddImage(parent, name, null, new Color(0f, 0f, 0f, 0f));
+            hit.raycastTarget = true;
+            UiKit.Place(hit.rectTransform, anchor, pos, new Vector2(UiKit.MinTouchPx, UiKit.MinTouchPx));
+            var b = hit.gameObject.AddComponent<Button>();
+            b.transition = Selectable.Transition.None;
+            b.onClick.AddListener(() => { AudioManager.Play(Sfx.Tap); if (onTap != null) onTap(); });
+            hit.gameObject.AddComponent<A11yLabel>().Text = a11y;
+            Image ring = UiKit.AddImage(hit.transform, "Ring", Glyphs.Ring, ink);
+            ring.raycastTarget = false;
+            UiKit.Place(ring.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(64f, 64f));
+            Text i = UiKit.AddText(ring.transform, "I", "i", 32, ink, TextAnchor.MiddleCenter, true);
+            i.raycastTarget = false;
+            i.GetComponent<Outline>().enabled = false;
+            UiKit.Stretch((RectTransform)i.transform);
+            return b;
         }
 
         // ---------------- build ----------------
@@ -154,19 +220,28 @@ namespace BoingUpSkyTower.Gameplay
                 card.sizeDelta = new Vector2(0f, cardH);
             }
 
-            // left column: the title on top (wraps to two lines at large text), the chest picture under it
+            float rowH = TopRowH, rowBottom = TextTop + rowH + 6f;
             Color titleCol = gold ? new Color(0.33f, 0.14f, 0.02f) : new Color(0.82f, 0.93f, 1f);
             Color baseCol = gold ? new Color(0.20f, 0.08f, 0.02f) : Color.white;
+
+            // top row: the "i" (top left), the name, and the italic "Worth x1.8" (top right, no star, the name's font)
+            AddInfoButton(card, "ChestInfo", new Vector2(0f, 1f), new Vector2(6f, -TextTop), "About the " + ChestName(kind), baseCol, () => ShowInfo(kind));
             Text name = UiKit.AddText(card, "Name", ChestName(kind).ToUpperInvariant(), 44, titleCol, TextAnchor.MiddleLeft, true);
             if (gold) name.GetComponent<Outline>().enabled = false;
             name.horizontalOverflow = HorizontalWrapMode.Wrap;
             name.verticalOverflow = VerticalWrapMode.Overflow;
             RectTransform nrt = name.rectTransform;
-            nrt.anchorMin = new Vector2(0.03f, 1f);
-            nrt.anchorMax = new Vector2(0.35f, 1f);
+            nrt.anchorMin = new Vector2(0f, 1f);
+            nrt.anchorMax = new Vector2(1f, 1f);
             nrt.pivot = new Vector2(0.5f, 1f);
-            nrt.anchoredPosition = new Vector2(0f, -TextTop);
-            nrt.sizeDelta = new Vector2(0f, TitleH);
+            nrt.offsetMin = new Vector2(UiKit.MinTouchPx + 14f, -(TextTop + rowH));
+            nrt.offsetMax = new Vector2(-(WorthW + 22f), -TextTop);
+
+            float worthH = BundlesScreen.WorthTextH(44f);
+            Text worth = BundlesScreen.AddWorthText(card, WorthText(kind), new Vector2(1f, 1f), new Vector2(-14f, -(TextTop + Mathf.Max(0f, (rowH - worthH) * 0.5f))), WorthW, 44f);
+            worth.color = titleCol;
+            var wo = worth.GetComponent<Outline>();
+            if (wo != null) wo.enabled = !gold;
 
             Sprite chest = ChestArt(kind);
             Image pic = UiKit.AddImage(card, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
@@ -174,19 +249,16 @@ namespace BoingUpSkyTower.Gameplay
             pic.rectTransform.anchorMin = new Vector2(0.02f, 0f);
             pic.rectTransform.anchorMax = new Vector2(0.36f, 1f);
             pic.rectTransform.offsetMin = new Vector2(0f, 14f);
-            pic.rectTransform.offsetMax = new Vector2(0f, -(TextTop + TitleH + 6f));
+            pic.rectTransform.offsetMax = new Vector2(0f, -rowBottom);
 
-            // right column: the direct text (what is inside, coloured by what it is) above the two buttons
-            Text desc = UiKit.AddText(card, "Contents", DescriptionRich(kind), 42, baseCol, TextAnchor.UpperLeft);
-            if (gold) desc.GetComponent<Outline>().enabled = false;
-            desc.horizontalOverflow = HorizontalWrapMode.Wrap;
-            desc.verticalOverflow = VerticalWrapMode.Overflow;
-            RectTransform drt = desc.rectTransform;
-            drt.anchorMin = new Vector2(0.38f, 0f);
-            drt.anchorMax = new Vector2(0.97f, 1f);
-            drt.offsetMin = new Vector2(0f, BuyBottom + BuyH + 10f);
-            drt.offsetMax = new Vector2(0f, -TextTop);
-            card.gameObject.AddComponent<A11yLabel>().Text = ChestName(kind) + ". " + DescriptionText(kind) + (ChestRolls.CharactersEnabled ? "" : " Characters: coming soon.");
+            // right column: icon chips (coins range; power-ups; the hero card as the "?" icon) above the two buttons
+            RectTransform contents = UiKit.Rect(card, "Contents");
+            contents.anchorMin = new Vector2(0.38f, 0f);
+            contents.anchorMax = new Vector2(0.97f, 1f);
+            contents.offsetMin = new Vector2(0f, BuyBottom + BuyH + 10f);
+            contents.offsetMax = new Vector2(0f, -rowBottom);
+            AddContentChips(contents, kind, 180f, ChipH, ChipGap, false, 0f);
+            card.gameObject.AddComponent<A11yLabel>().Text = ChestName(kind) + ". " + DescriptionText(kind) + ". " + WorthText(kind);
 
             BuildBuyButton(card, kind, 1, 0.38f, 0.675f, 0f, -6f);
             BuildBuyButton(card, kind, 10, 0.675f, 0.97f, 6f, 0f);
@@ -232,6 +304,83 @@ namespace BoingUpSkyTower.Gameplay
             cost.GetComponent<Outline>().enabled = false;
         }
 
+        // ---------------- the info popup ("i") ----------------
+
+        /// <summary>
+        /// The "i" popup of one chest: icon chips (coins, power-ups, the "?" hero card), a short hero line ("Only heroes of your open regions") with the chance per rarity (Iron 70/20/10,
+        /// Gold 50/40/10) and "Worth x1.8 for 100 gems". Icons first, short text, all at least 16 sp.
+        /// </summary>
+        public void ShowInfo(ChestKind kind)
+        {
+            if (host.NewOverlay == null) return;
+            RectTransform overlay = host.NewOverlay();
+            int regions = progress.BundleOpenRegionCount();
+            const float panelW = 860f, W = 780f, gap = 14f, chipsY = 215f, colW = 250f, colGap = 15f, popupChipH = 96f;
+            string heroText = "Only heroes of your open regions (" + regions + ")";
+            string worthLine = WorthText(kind) + " for " + Num(ChestRolls.Price(kind, 1)) + " gems";
+            float chipsH = 2f * popupChipH + gap;
+            float heroY = chipsY + chipsH + gap * 2f, heroH = Mathf.Max(80f, BundlesScreen.TextHeight(heroText, 40f, W - 100f));
+            float chanceY = heroY + heroH + gap, chanceH = BundlesScreen.TextHeight("Uncommon\n70%", 40f, colW);
+            float worthY = chanceY + chanceH + gap, worthH = BundlesScreen.WorthPillH();
+            string foot = "Same hero twice? You keep both.";
+            float footY = worthY + worthH + gap, footH = BundlesScreen.TextHeight(foot, 40f, W);
+            float buttonReserve = 50f + Mathf.Max(170f, UiKit.MinTouchRef) + gap;
+            float panelH = Mathf.Max(1100f, footY + footH + buttonReserve);
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, ChestName(kind), art, new Vector2(panelW, panelH), host.CloseOverlay);
+            panel.name = "ChestInfoPopup";
+
+            RectTransform chips = UiKit.Rect(panel, "Chips");
+            BundlesScreen.PlaceTop(chips, chipsY, W, chipsH);
+            AddContentChips(chips, kind, 180f, popupChipH, gap, true, W);
+
+            RectTransform hero = UiKit.Rect(panel, "HeroLine");
+            BundlesScreen.PlaceTop(hero, heroY, W, heroH);
+            BundlesScreen.AddHeroCardIcon(hero, new Vector2(0f, 0.5f), new Vector2(4f, 0f), 72f);
+            Text ht = UiKit.AddText(hero, "HeroText", heroText, 40, UiKit.PanelInk, TextAnchor.MiddleLeft);
+            UiKit.OnPanel(ht);
+            ht.horizontalOverflow = HorizontalWrapMode.Wrap;
+            ht.resizeTextForBestFit = true;
+            ht.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+            ht.resizeTextMaxSize = ht.fontSize;
+            var hrt = (RectTransform)ht.transform;
+            hrt.anchorMin = Vector2.zero;
+            hrt.anchorMax = Vector2.one;
+            hrt.offsetMin = new Vector2(92f, 0f);
+            hrt.offsetMax = Vector2.zero;
+
+            CharacterRarity[] tiers = ChestRolls.Tiers(kind);
+            float x0 = (panelW - (3f * colW + 2f * colGap)) * 0.5f;
+            for (int i = 0; i < tiers.Length; i++)
+            {
+                string label = BundleCards.RarityName(tiers[i]) + "\n" + ChestRolls.ChancePercent(kind, i) + "%";
+                Text ct = UiKit.AddText(panel, "Chance_" + BundleCards.RarityName(tiers[i]), label, 40, BundlesScreen.RarityInk(tiers[i]), TextAnchor.MiddleCenter, true);
+                UiKit.OnPanel(ct);
+                ct.color = BundlesScreen.RarityInk(tiers[i]);
+                ct.fontStyle = FontStyle.Bold;
+                ct.horizontalOverflow = HorizontalWrapMode.Wrap;
+                ct.resizeTextForBestFit = true;
+                ct.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+                ct.resizeTextMaxSize = ct.fontSize;
+                var crt = (RectTransform)ct.transform;
+                crt.anchorMin = crt.anchorMax = new Vector2(0f, 1f);
+                crt.pivot = new Vector2(0f, 1f);
+                crt.anchoredPosition = new Vector2(x0 + i * (colW + colGap), -chanceY);
+                crt.sizeDelta = new Vector2(colW, chanceH);
+            }
+
+            BundlesScreen.AddWorthPill(panel, worthLine, new Vector2(0.5f, 1f), new Vector2(0f, -worthY), W);
+            Text ft = UiKit.AddText(panel, "Note", foot, 40, UiKit.PanelInk, TextAnchor.MiddleCenter);
+            UiKit.OnPanel(ft);
+            ft.fontStyle = FontStyle.Italic;
+            ft.horizontalOverflow = HorizontalWrapMode.Wrap;
+            ft.resizeTextForBestFit = true;
+            ft.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+            ft.resizeTextMaxSize = ft.fontSize;
+            BundlesScreen.PlaceTop((RectTransform)ft.transform, footY, W, footH);
+            panel.gameObject.AddComponent<A11yLabel>().Text = ChestName(kind) + ". " + DescriptionText(kind) + ". " + heroText + ". " + worthLine;
+            ToyKit.PopupAction(panel, "OK", ToyKit.Button(1), Color.white, 50f, host.CloseOverlay);
+        }
+
         // ---------------- buying ----------------
 
         /// <summary>Tap on Buy or Buy 10: too few gems offers the gem packs; otherwise a confirmation (every price is above 50 gems) comes first.</summary>
@@ -244,7 +393,7 @@ namespace BoingUpSkyTower.Gameplay
             OpenNow(kind, opens);
         }
 
-        /// <summary>Pays and opens at once, without the confirmation (the confirmation calls this). Saves once inside TryOpenChests.</summary>
+        /// <summary>Pays and opens at once, without the confirmation (the confirmation calls this). Saves inside TryOpenChests.</summary>
         public void OpenNow(ChestKind kind, int opens)
         {
             int price = ChestRolls.Price(kind, opens);
@@ -259,10 +408,9 @@ namespace BoingUpSkyTower.Gameplay
         void ShowConfirm(ChestKind kind, int opens, int price)
         {
             RectTransform overlay = host.NewOverlay();
-            RectTransform panel = UiKit.BuildPopupFrame(overlay, "Open chests?", art, new Vector2(860f, 1180f), host.CloseOverlay);
-            int powerUps = ChestRolls.PowerUpCount(kind);
+            RectTransform panel = UiKit.BuildPopupFrame(overlay, "Open chests?", art, new Vector2(860f, 1100f), host.CloseOverlay);
             string body = "Open " + (opens == 1 ? "1 " + ChestName(kind) : "10 " + ChestName(kind) + "s") + " for " + Num(price) + " gems?\n"
-                + "Each chest: " + powerUps + (powerUps == 1 ? " power-up and " : " power-ups and ") + Num(ChestRolls.MinCoins(kind)) + " to " + Num(ChestRolls.MaxCoins(kind)) + " coins.\n"
+                + WorthText(kind) + "\n" + "Includes 1 hero card (?)" + "\n"
                 + "You have " + Num(progress.Gems) + " gems.";
             Text t = UiKit.AddText(panel, "Body", body, 44, Theme.Ink);
             UiKit.OnPanel(t);
@@ -312,11 +460,17 @@ namespace BoingUpSkyTower.Gameplay
             host.CloseOverlay();
         }
 
+        /// <summary>
+        /// The compact, icon-first reveal: a small chest (tap skips the animation), icon chips for the coins and each power-up with its count, then one small row per hero won
+        /// (portrait, name, rarity word in its colour, "x2" when the same hero came more than once; a scrolling list after four rows) and Collect. No sentences.
+        /// </summary>
         void ShowReveal(ChestKind kind, int opens, List<ChestContents> contents)
         {
             RectTransform overlay = host.NewOverlay();
             int coins = 0;
             var counts = new Dictionary<string, int>();
+            var heroes = new List<CharacterSpec>();
+            var heroCount = new Dictionary<string, int>();
             foreach (ChestContents c in contents)
             {
                 coins += c.Coins;
@@ -326,22 +480,47 @@ namespace BoingUpSkyTower.Gameplay
                     counts.TryGetValue(id, out have);
                     counts[id] = have + 1;
                 }
+                if (c.Hero != null)
+                {
+                    int n;
+                    heroCount.TryGetValue(c.Hero.Id, out n);
+                    if (n == 0) heroes.Add(c.Hero);
+                    heroCount[c.Hero.Id] = n + 1;
+                }
             }
             var types = new List<PowerUpDef>();
             foreach (PowerUpDef d in progress.PowerUpDefs.Implemented) if (counts.ContainsKey(d.Id)) types.Add(d);
 
-            const float chestY = 255f, chestH = 170f, coinsY = 445f, listY = 565f;   // the chest starts below the title
-            float listH = Mathf.Min(types.Count, MaxListRows) * ListRowH;
-            float panelH = listY + listH + 24f + 130f + 40f;
+            const float chestY = 250f, chestH = 150f, chipH = 96f, chipGap = 10f, listW = 820f, coinW = 300f, puW = 150f;
+            float heroRowH = Mathf.Max(HeroRowMin, Mathf.Ceil(2f * 46f * Mathf.Max(1f, UiKit.TextScale) * 1.2f) + 24f);
+            // chips: the coin chip, then one chip per power-up type, wrapped into rows of the list width and centred
+            var widths = new List<float>(types.Count + 1) { coinW };
+            foreach (PowerUpDef d in types) widths.Add(puW);
+            var rowOf = new int[widths.Count];
+            var rowW = new List<float>();
+            float cur = 0f;
+            int rows = 1;
+            for (int i = 0; i < widths.Count; i++)
+            {
+                if (cur > 0f && cur + chipGap + widths[i] > listW) { rowW.Add(cur); rows++; cur = 0f; }
+                cur += (cur > 0f ? chipGap : 0f) + widths[i];
+                rowOf[i] = rows - 1;
+            }
+            rowW.Add(cur);
+            float chipsY = chestY + chestH + 14f, chipsH = rows * chipH + (rows - 1) * chipGap;
+            float heroesY = chipsY + chipsH + 16f;
+            float listH = Mathf.Min(heroes.Count, MaxHeroRows) * heroRowH;
+            float panelH = heroesY + listH + (listH > 0f ? 20f : 0f) + 130f + 40f;
             string title = opens == 1 ? ChestName(kind) : "10 " + ChestName(kind) + "s";
             RectTransform panel = UiKit.BuildPopupFrame(overlay, title, art, new Vector2(900f, panelH), null);
+            panel.name = "ChestReveal";
             var anim = overlay.gameObject.AddComponent<ChestRevealAnim>();
             Reveal = anim;
 
             // the chest, shaking, then bursting open; a tap on it skips the animation
             Sprite chest = ChestArt(kind);
             Image pic = UiKit.AddImage(panel, "Chest", chest, chest != null ? Color.white : new Color(0.7f, 0.5f, 0.3f, 1f));
-            UiKit.Place(pic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -chestY), new Vector2(240f, chestH));
+            UiKit.Place(pic.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -chestY), new Vector2(210f, chestH));
             pic.rectTransform.pivot = new Vector2(0.5f, 1f);
             pic.raycastTarget = true;
             var skip = pic.gameObject.AddComponent<Button>();
@@ -351,64 +530,54 @@ namespace BoingUpSkyTower.Gameplay
             anim.Chest = pic.rectTransform;
             anim.ChestImage = pic;
 
-            // coins gained, with the word
-            RectTransform coinRow = ToyKit.PillRow(panel, "Coins", coinsY, 96f);
-            ToyKit.InfoPill(coinRow, art != null ? art.CoinIcon : null, "+" + Num(coins) + " coins", new Color(1f, 0.92f, 0.5f), 600f, 96f);
-            coinRow.gameObject.AddComponent<A11yLabel>().Text = Num(coins) + " coins";
-            anim.Items.Add(coinRow);
-
-            // power-ups gained by NAME, with a count (a scrolling list when there are many types)
-            RectTransform vp = UiKit.Rect(panel, "PowerUps");
-            vp.anchorMin = vp.anchorMax = new Vector2(0.5f, 1f);
-            vp.pivot = new Vector2(0.5f, 1f);
-            vp.sizeDelta = new Vector2(820f, Mathf.Max(10f, listH));
-            vp.anchoredPosition = new Vector2(0f, -listY);
-            vp.gameObject.AddComponent<RectMask2D>();
-            var vhit = vp.gameObject.AddComponent<Image>();
-            vhit.color = new Color(0f, 0f, 0f, 0f);
-            RectTransform content = UiKit.Rect(vp, "Content");
-            content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
-            content.pivot = new Vector2(0.5f, 1f);
-            content.anchoredPosition = Vector2.zero;
-            content.sizeDelta = new Vector2(820f, Mathf.Max(10f, types.Count * ListRowH));
-            var sr = vp.gameObject.AddComponent<ScrollRect>();
-            sr.content = content;
-            sr.viewport = vp;
-            sr.horizontal = false;
-            sr.vertical = true;
-            sr.movementType = ScrollRect.MovementType.Clamped;
-            for (int i = 0; i < types.Count; i++)
+            // coin and power-up chips (icon and count only)
+            RectTransform chipArea = UiKit.Rect(panel, "Chips");
+            BundlesScreen.PlaceTop(chipArea, chipsY, listW, chipsH);
+            var xs = new float[rows];
+            for (int r = 0; r < rows; r++) xs[r] = (listW - rowW[r]) * 0.5f;
+            for (int i = 0; i < widths.Count; i++)
             {
-                PowerUpDef d = types[i];
-                int n = counts[d.Id];
-                RectTransform r = UiKit.Rect(content, "Row" + i);
-                r.anchorMin = new Vector2(0f, 1f);
-                r.anchorMax = new Vector2(1f, 1f);
-                r.pivot = new Vector2(0.5f, 0.5f);
-                r.sizeDelta = new Vector2(0f, ListRowH - 8f);
-                r.anchoredPosition = new Vector2(0f, -(i + 0.5f) * ListRowH);
-                Image ic = PowerUpUi.AddIcon(r, "Icon", d.Type, new Vector2(0f, 0.5f), Vector2.zero, 84f, false);
-                ic.rectTransform.pivot = new Vector2(0f, 0.5f);
-                ic.rectTransform.anchoredPosition = new Vector2(30f, 0f);
-                Text nm = UiKit.AddText(r, "Name", d.Name, 46, Theme.Ink, TextAnchor.MiddleLeft, true);
-                nm.horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.OnPanel(nm);
-                RectTransform nrt = nm.rectTransform;
-                nrt.anchorMin = Vector2.zero;
-                nrt.anchorMax = Vector2.one;
-                nrt.offsetMin = new Vector2(138f, 0f);
-                nrt.offsetMax = new Vector2(-170f, 0f);
-                Text ct = UiKit.AddText(r, "Count", "x" + n, 52, Theme.Ink, TextAnchor.MiddleRight, true);
-                ct.horizontalOverflow = HorizontalWrapMode.Overflow;
-                UiKit.OnPanel(ct);
-                RectTransform crt = ct.rectTransform;
-                crt.anchorMin = new Vector2(1f, 0f);
-                crt.anchorMax = new Vector2(1f, 1f);
-                crt.pivot = new Vector2(1f, 0.5f);
-                crt.sizeDelta = new Vector2(150f, 0f);
-                crt.anchoredPosition = new Vector2(-24f, 0f);
-                r.gameObject.AddComponent<A11yLabel>().Text = n + " " + d.Name;
-                anim.Items.Add(r);
+                int r = rowOf[i];
+                RectTransform chip;
+                if (i == 0)
+                {
+                    chip = AddChip(chipArea, "CoinsChip", xs[r], r * (chipH + chipGap), coinW, chipH, art != null ? art.CoinIcon : null, false, "+" + BundlesScreen.Compact(coins));
+                    chip.gameObject.AddComponent<A11yLabel>().Text = Num(coins) + " coins";
+                }
+                else
+                {
+                    PowerUpDef d = types[i - 1];
+                    chip = AddPowerChip(chipArea, xs[r], r * (chipH + chipGap), puW, chipH, d, counts[d.Id]);
+                    chip.gameObject.AddComponent<A11yLabel>().Text = counts[d.Id] + " " + d.Name;
+                }
+                xs[r] += widths[i] + chipGap;
+                anim.Items.Add(chip);
+            }
+
+            // heroes won: one small row each (a scrolling list after four)
+            if (heroes.Count > 0)
+            {
+                RectTransform vp = UiKit.Rect(panel, "Heroes");
+                BundlesScreen.PlaceTop(vp, heroesY, listW, listH);
+                vp.gameObject.AddComponent<RectMask2D>();
+                var vhit = vp.gameObject.AddComponent<Image>();
+                vhit.color = new Color(0f, 0f, 0f, 0f);
+                RectTransform content = UiKit.Rect(vp, "Content");
+                content.anchorMin = content.anchorMax = new Vector2(0.5f, 1f);
+                content.pivot = new Vector2(0.5f, 1f);
+                content.anchoredPosition = Vector2.zero;
+                content.sizeDelta = new Vector2(listW, heroes.Count * heroRowH);
+                var sr = vp.gameObject.AddComponent<ScrollRect>();
+                sr.content = content;
+                sr.viewport = vp;
+                sr.horizontal = false;
+                sr.vertical = true;
+                sr.movementType = ScrollRect.MovementType.Clamped;
+                for (int i = 0; i < heroes.Count; i++)
+                {
+                    RectTransform row = AddHeroRow(content, i, heroRowH, heroes[i], heroCount[heroes[i].Id]);
+                    anim.Items.Add(row);
+                }
             }
 
             // Collect: the first tap during the animation only skips it
@@ -419,6 +588,77 @@ namespace BoingUpSkyTower.Gameplay
             }, 46);
             UiKit.Place((RectTransform)done.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(560f, 130f));
             anim.Begin(GameSettings.ReducedMotion);
+        }
+
+        /// <summary>A power-up chip: its round icon and "x3".</summary>
+        static RectTransform AddPowerChip(RectTransform parent, float x, float y, float w, float h, PowerUpDef d, int count)
+        {
+            RectTransform chip = AddChip(parent, "PowerChip_" + d.Id, x, y, w, h, null, false, "x" + count);
+            Transform old = chip.Find("Icon");
+            if (old != null)
+            {
+                old.gameObject.SetActive(false);
+                UnityEngine.Object.Destroy(old.gameObject);
+            }
+            PowerUpUi.AddIcon(chip, "PowerIcon", d.Type, new Vector2(0f, 0.5f), new Vector2(10f, 0f), Mathf.Min(h - 20f, 52f), false);
+            return chip;
+        }
+
+        /// <summary>One hero row of the reveal: the portrait, the name with the rarity word in its colour, and "x2" when the same hero came more than once.</summary>
+        RectTransform AddHeroRow(RectTransform content, int index, float rowH, CharacterSpec spec, int count)
+        {
+            RectTransform r = UiKit.Rect(content, "Hero" + index);
+            r.anchorMin = new Vector2(0f, 1f);
+            r.anchorMax = new Vector2(1f, 1f);
+            r.pivot = new Vector2(0.5f, 0.5f);
+            r.sizeDelta = new Vector2(0f, rowH - 8f);
+            r.anchoredPosition = new Vector2(0f, -(index + 0.5f) * rowH);
+            Image frame = ToyKit.Sliced(r, "Frame", Theme.RoundSprite, 22f);
+            frame.color = ChipFrame;
+            UiKit.Stretch(frame.rectTransform);
+            Image fill = ToyKit.Sliced(r, "Fill", Theme.RoundSprite, 18f);
+            fill.color = ChipFill;
+            fill.rectTransform.anchorMin = Vector2.zero;
+            fill.rectTransform.anchorMax = Vector2.one;
+            fill.rectTransform.offsetMin = new Vector2(4f, 4f);
+            fill.rectTransform.offsetMax = new Vector2(-4f, -4f);
+            float textLeft = 24f;
+            CharacterDef who = CharacterCatalog.Get(spec.Id);
+            float dollH = rowH - 24f;
+            if (who != null)
+            {
+                RectTransform doll = MomoDoll.Build(r, "Portrait", dollH, who, art);
+                UiKit.Place(doll, new Vector2(0f, 0.5f), new Vector2(14f, 0f), doll.sizeDelta);
+                textLeft = 14f + doll.sizeDelta.x + 14f;
+            }
+            string rarity = BundleCards.RarityName(spec.Rarity);
+            string rich = spec.Name + "\n<color=#" + ColorUtility.ToHtmlStringRGB(BundlesScreen.RarityInk(spec.Rarity)) + ">" + rarity + "</color>";
+            Text nm = UiKit.AddText(r, "Name", rich, 46, UiKit.PanelInk, TextAnchor.MiddleLeft, true);
+            UiKit.OnPanel(nm);
+            nm.fontStyle = FontStyle.Bold;
+            nm.horizontalOverflow = HorizontalWrapMode.Wrap;
+            nm.resizeTextForBestFit = true;
+            nm.resizeTextMinSize = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+            nm.resizeTextMaxSize = nm.fontSize;
+            RectTransform nrt = nm.rectTransform;
+            nrt.anchorMin = Vector2.zero;
+            nrt.anchorMax = Vector2.one;
+            nrt.offsetMin = new Vector2(textLeft, 6f);
+            nrt.offsetMax = new Vector2(count > 1 ? -150f : -20f, -6f);
+            if (count > 1)
+            {
+                Text ct = UiKit.AddText(r, "Count", "x" + count, 52, UiKit.PanelInk, TextAnchor.MiddleRight, true);
+                UiKit.OnPanel(ct);
+                ct.horizontalOverflow = HorizontalWrapMode.Overflow;
+                RectTransform crt = ct.rectTransform;
+                crt.anchorMin = new Vector2(1f, 0f);
+                crt.anchorMax = new Vector2(1f, 1f);
+                crt.pivot = new Vector2(1f, 0.5f);
+                crt.sizeDelta = new Vector2(130f, 0f);
+                crt.anchoredPosition = new Vector2(-20f, 0f);
+            }
+            r.gameObject.AddComponent<A11yLabel>().Text = spec.Name + ", " + rarity + (count > 1 ? ", " + count + " cards" : "");
+            return r;
         }
     }
 

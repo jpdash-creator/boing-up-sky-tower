@@ -73,8 +73,9 @@ namespace BoingUpSkyTower.Gameplay
 
         public static Sprite Icon(string name)
         {
+            if (string.IsNullOrEmpty(name)) return null;   // a task without an older icon (the callers fall back to the UI kit)
             Sprite s;
-            if (icons.TryGetValue(name, out s) && s != null) return s;
+            if (icons.TryGetValue(name, out s)) return s;   // a miss is cached too: no Resources.Load per card
             s = Resources.Load<Sprite>("Art/Rewards/icon_" + name);
             icons[name] = s;
             return s;

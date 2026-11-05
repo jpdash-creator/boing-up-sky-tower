@@ -361,9 +361,10 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("settings-code-box", () => { meta.ShowSettings(); meta.ShowAdminCodeBox(); }, problems);
             GameSession.Progress.SetAccount("guest", "");
 
-            // Characters: the chosen character on the land stage and the roster
+            // Characters: the chosen character on the land stage, the action row (All Heroes + Merge) and the list of OWNED hero cards (one card per copy, no counts)
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
-            ProgressService.TestAllCharacters = true;   // SYSTEM_TEST: every hero is owned, so the roster has five tiles (Momo, Capi, Otto, Bonbon, Bao)
+            ProgressService.TestAllCharacters = true;   // Character Test: only the five Common heroes are owned (Uncommon and above stay locked)
+            yield return CheckScreen("characters-test", () => meta.ShowCharacters(), problems);
             foreach (CharacterDef hero in new[] { CharacterCatalog.ForestGirl, CharacterCatalog.BeachOtter, CharacterCatalog.CandyGirl, CharacterCatalog.Monk })
             {
                 CharacterCatalog.Selected = hero;
@@ -373,24 +374,33 @@ namespace BoingUpSkyTower.Tests
             CharacterCatalog.Selected = CharacterCatalog.Momo;
             ProgressService.TestAllCharacters = false;
 
-            // Hero inventory badges (docs/36): copies of several heroes (a one-digit, a two-digit count and a brand new card), no overlap and the number fits at this text size
+            // Owned cards (Bug List 5 F2.d): duplicates are more cards (no number anywhere), the tick sits on the first card of the chosen type, and a long list scrolls.
             var savedCopies = new Dictionary<string, int>(GameSession.Progress.Data.Copies);
-            GameSession.Progress.HeroInventory.AddCopies("momo", 11);      // 12 copies
-            GameSession.Progress.HeroInventory.AddCopies("momo_u", 2);     // a new card with 2 copies
-            yield return CheckScreen("characters-copies", () => meta.ShowCharacters(), problems);
+            var savedRevealed = new List<string>(GameSession.Progress.Data.HeroesRevealed);
+            GameSession.Progress.HeroInventory.AddCopies("momo", 1);       // 2 Common Momo
+            GameSession.Progress.HeroInventory.AddCopies("momo_u", 2);     // a new card type with 2 copies
+            yield return CheckScreen("characters-duplicates", () => meta.ShowCharacters(), problems);
             meta.ShowCharacters();
             yield return null;
-            var badges = new Dictionary<string, string>();
+            var cardNames = new List<string>();
+            int ticks = 0;
             foreach (Image im in Object.FindObjectsByType<Image>(FindObjectsSortMode.None))
-                if (im.name == CharactersScreen.BadgeName && im.transform.parent != null && im.transform.parent.parent != null)
-                {
-                    Assert.IsFalse(im.raycastTarget, "the badge is not a touch target");
-                    badges[im.transform.parent.parent.name] = im.GetComponentInChildren<Text>().text;
-                }
-            Assert.AreEqual("12", badges["Char_momo"], "badge shows the copies");
-            Assert.AreEqual("2", badges["Char_momo_u"], "a new card appears with its copies");
+            {
+                if (im.name.StartsWith("Char_")) cardNames.Add(im.name);
+                if (im.name == CharactersScreen.ChosenName) { ticks++; Assert.AreEqual("Char_momo", im.transform.parent.name, "the tick is on the first card of the chosen type"); }
+            }
+            CollectionAssert.AreEquivalent(new[] { "Char_momo", "Char_momo_2", "Char_momo_u", "Char_momo_u_2" }, cardNames, "one card per copy");
+            Assert.AreEqual(1, ticks, "exactly one tick");
+            foreach (Text t in Object.FindObjectsByType<Text>(FindObjectsSortMode.None))
+                for (Transform up = t.transform.parent; up != null; up = up.parent)
+                    Assert.IsFalse(up.name.StartsWith("Char_"), "no count or text on a hero card");
+            GameSession.Progress.HeroInventory.AddCopies("momo", 10);      // 12 Momo
+            foreach (string extra in new[] { "forestgirl", "candygirl" }) { GameSession.Progress.HeroInventory.AddCopies(extra, 4); GameSession.Progress.MarkHeroRevealed(extra); }
+            yield return CheckScreen("characters-many", () => meta.ShowCharacters(), problems);
             GameSession.Progress.Data.Copies.Clear();
             foreach (KeyValuePair<string, int> kv in savedCopies) GameSession.Progress.Data.Copies[kv.Key] = kv.Value;
+            GameSession.Progress.Data.HeroesRevealed.Clear();
+            GameSession.Progress.Data.HeroesRevealed.AddRange(savedRevealed);
 
             // Hero sheet (docs/21): Common Momo on both tabs, plus fake heroes of every higher rarity (long name, long region, maximum stats, powers) so the banner colours and the longest texts are audited.
             yield return CheckScreen("hero-sheet-common", () => meta.ShowHeroSheet(CharacterCatalog.Momo), problems);
@@ -1349,6 +1359,10 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("treasure-confirm", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.TapBuy(ChestKind.Golden, 10); }, problems);
             yield return CheckScreen("treasure-reveal-single", () => { GameSession.Progress.AddGems(100); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Iron, 1); meta.CurrentTreasure.Reveal.Skip(); }, problems);
             yield return CheckScreen("treasure-reveal-ten", () => { GameSession.Progress.AddGems(3000); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Golden, 10); meta.CurrentTreasure.Reveal.Skip(); }, problems);
+            // Bug List 5 F3: the chests hold a hero card too. The "i" popup of each chest, the Open 1 reveal with a hero row, the Open 10 reveal with a list of hero rows
+            yield return CheckScreen("treasure-info-iron", () => { meta.ShowShop(ShopScreen.TabVip, ShopScreen.VipChestsSection); meta.CurrentTreasure.ShowInfo(ChestKind.Iron); }, problems);
+            yield return CheckScreen("treasure-info-gold", () => { meta.ShowShop(ShopScreen.TabVip, ShopScreen.VipChestsSection); meta.CurrentTreasure.ShowInfo(ChestKind.Golden); }, problems);
+            yield return CheckScreen("treasure-reveal-iron-ten", () => { GameSession.Progress.AddGems(1000); meta.ShowTreasureChests(); meta.CurrentTreasure.OpenNow(ChestKind.Iron, 10); meta.CurrentTreasure.Reveal.Skip(); }, problems);
             yield return CheckScreen("shop-tab-bundles", () => meta.ShowShop(ShopScreen.TabBundles), problems);
             yield return CheckScreen("shop-gems-notbuyable-popup", () => { meta.ShowShop(); meta.CurrentShop.TapGemPack(3); }, problems);
 
@@ -1384,22 +1398,32 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("rewards-main", () => meta.ShowRewards(RewardTab.Main), problems);
             yield return CheckScreen("rewards-daily", () => meta.ShowRewards(RewardTab.Daily), problems);
             yield return CheckScreen("rewards-weekly", () => meta.ShowRewards(RewardTab.Weekly), problems);
-            yield return CheckScreen("rewards-main-region3", () => { meta.ShowRewards(RewardTab.Main); meta.CurrentRewards.SelectRegion(3); }, problems);   // a locked region: lock on the circle, empty bar
-            yield return CheckScreen("rewards-claim-card", () =>
+            yield return CheckScreen("rewards-main-region3", () => { meta.ShowRewards(RewardTab.Main); meta.CurrentRewards.SelectRegion(3); }, problems);   // a locked region: lock on the circle, the locked note on top, goals at 0
+            yield return CheckScreen("rewards-main-comingsoon", () => { meta.ShowRewards(RewardTab.Main); meta.CurrentRewards.SelectRegion(8); }, problems);   // Coming Soon: one centred locked card, no goals
+            yield return CheckScreen("rewards-reward-card", () =>
             {
-                meta.ShowRewards(RewardTab.Daily);
+                // the small icon card: gem, coin, two power-up types and a hero face per hero copy (two rows of chips, the widest case)
+                meta.ShowRewards(RewardTab.Main);
                 var sample = new RewardClaimOutcome { Result = RewardClaimResult.Ok, Gems = 40, Coins = 2000 };
                 sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_flight"); sample.PowerUpIds.Add("pw_shield");
+                sample.HeroIds.Add("forestgirl"); sample.HeroIds.Add("forestgirl");
                 meta.CurrentRewards.ShowClaimed(sample);
             }, problems);
-            // ready states of the redesign: yellow cards with the CLAIM tag, the region band as a claim button, Claim All, and a claimed (green, check, open chest) look
+            // ready states of the redesign: yellow region-goal cards with the green Claim button (the last Levels goal also shows the region hero's face), Claim All, and a claimed (green, check, open chest) look
             for (int lvl = 10; lvl <= 15; lvl++) GameSession.Progress.ApplyRun("lvl_001_" + lvl.ToString("00"), new RunOutcome { Completed = true, StarMask = 7, Score = 100, CoinsCollected = 10 });
             GameSession.Progress.AddPlaySeconds(100 * 60);
             yield return CheckScreen("rewards-main-ready", () => { meta.ShowRewards(RewardTab.Main); meta.CurrentRewards.SelectRegion(1); }, problems);
             yield return CheckScreen("rewards-weekly-ready", () => meta.ShowRewards(RewardTab.Weekly), problems);
             yield return CheckScreen("rewards-daily-ready", () => meta.ShowRewards(RewardTab.Daily), problems);
             yield return CheckScreen("rewards-daily-claimed", () => { meta.ShowRewards(RewardTab.Daily); GameSession.Progress.TryClaimReward(RewardTab.Daily, "dp_20"); meta.ShowRewards(RewardTab.Daily); }, problems);
-            yield return CheckScreen("rewards-main-claimed", () => { GameSession.Progress.TryClaimReward(RewardTab.Main, "s_25"); GameSession.Progress.TryClaimReward(RewardTab.Main, "r_1"); meta.ShowRewards(RewardTab.Main); }, problems);
+            yield return CheckScreen("rewards-main-claimed", () =>
+            {
+                // region 1: the first goals of two groups claimed (green check cards), the rest still ready or open; the circle keeps its dot while something is left
+                GameSession.Progress.TryClaimRegionGoal("g_1_levels_1");
+                GameSession.Progress.TryClaimRegionGoal("g_1_stars_1");
+                meta.ShowRewards(RewardTab.Main);
+                meta.CurrentRewards.SelectRegion(1);
+            }, problems);
             yield return CheckScreen("rewards-weekly-claimed", () => { GameSession.Progress.TryClaimReward(RewardTab.Weekly, "w_play100"); meta.ShowRewards(RewardTab.Weekly); }, problems);   // compact cards: claimed look
             Report(problems);
         }
@@ -1413,18 +1437,16 @@ namespace BoingUpSkyTower.Tests
         [UnityTest]
         public IEnumerator MergeScreenSurvives130PercentText() { return MergeAudit(130); }
 
-        /// <summary>A clean save: Momo with 3 copies (ready), and every other hero revealed with a few copies so the grid has two rows.</summary>
+        /// <summary>A clean save: Momo with 3 copies (mergeable), and with <paramref name="full"/> also 4 Capi, 3 Bonbon and 2 Otto (only types with 3 or more copies are listed) so the list has two rows.</summary>
         static void MergeState(bool full)
         {
             GameSession.Progress.ResetAll();
             GameSession.Progress.AddCopies("momo", 2);
             if (!full) return;
-            int n = 0;
-            foreach (CharacterSpec s in CharacterDefs.All)
+            foreach (KeyValuePair<string, int> kv in new Dictionary<string, int> { { "forestgirl", 4 }, { "candygirl", 3 }, { "beachotter", 2 }, { "momo", 1 } })
             {
-                if (s.Id == "momo") continue;
-                GameSession.Progress.AddCopies(s.Id, 1 + (n++ % 3));
-                GameSession.Progress.MarkHeroRevealed(s.Id);
+                GameSession.Progress.AddCopies(kv.Key, kv.Value);
+                GameSession.Progress.MarkHeroRevealed(kv.Key);
             }
         }
 
@@ -1434,13 +1456,53 @@ namespace BoingUpSkyTower.Tests
             yield return Load("Meta");
             var meta = Object.FindFirstObjectByType<MetaController>();
             var problems = new List<string>();
-            yield return CheckScreen("merge-ready", () => { MergeState(false); meta.ShowMerge(); }, problems);
+            // the list: only hero types with 3 or more copies, one card per copy, no numbers
+            yield return CheckScreen("merge-list", () => { MergeState(false); meta.ShowMerge(); }, problems);
             yield return CheckScreen("merge-full-grid", () => { MergeState(true); meta.ShowMerge(); }, problems);
-            yield return CheckScreen("merge-not-enough", () => { GameSession.Progress.ResetAll(); meta.ShowMerge(); }, problems);   // Momo with his one starting copy
-            yield return CheckScreen("merge-top-tier", () => { GameSession.Progress.ResetAll(); GameSession.Progress.AddCopies("momo_u", 2); meta.ShowMerge("momo_u"); }, problems);
-            yield return CheckScreen("merge-pick-other", () => { MergeState(true); meta.ShowMerge("candygirl"); }, problems);
-            yield return CheckScreen("merge-result-card", () => { MergeState(false); meta.ShowMerge(); meta.CurrentMerge.TapMerge(); }, problems);
+            yield return CheckScreen("merge-not-enough", () => { GameSession.Progress.ResetAll(); meta.ShowMerge(); }, problems);   // Momo with his one starting copy: an empty list
+            // selection: three of one type (green ticks, three filled slots, Merge enabled), a wrong mix (Merge disabled with the hint)
+            yield return CheckScreen("merge-selected-3", () => { MergeState(true); meta.ShowMerge(); meta.CurrentMerge.SelectType("momo"); }, problems);
+            yield return CheckScreen("merge-selected-capi", () => { MergeState(true); meta.ShowMerge(); meta.CurrentMerge.SelectType("forestgirl"); }, problems);
+            yield return CheckScreen("merge-wrong-selection", () => { MergeState(true); meta.ShowMerge(); var m = meta.CurrentMerge; m.TapCard(0); m.TapCard(1); m.TapCard(m.Cards.Count - 1); }, problems);
+            yield return CheckScreen("merge-one-selected", () => { MergeState(true); meta.ShowMerge(); meta.CurrentMerge.TapCard(0); }, problems);
+            // after a merge: the three consumed cards are gone, the type vanished (1 Momo left), the result card is on top
+            yield return CheckScreen("merge-after", () => { MergeState(false); meta.ShowMerge(); meta.CurrentMerge.SelectType("momo"); meta.CurrentMerge.TapMerge(); }, problems);
             Assert.AreEqual(1, GameSession.Progress.Copies("momo_u"), "the audit's merge produced the Uncommon hero");
+            Assert.AreEqual(0, meta.CurrentMerge.Cards.Count, "the merged type left the list");
+            Report(problems);
+        }
+
+        // ---- All Heroes (Bug List 5 F2.c): top of the list, scrolled, the details popup of a locked and of an owned hero ----
+
+        [UnityTest]
+        public IEnumerator AllHeroesScreenHasNoOverlapAndFitsEveryAspect() { return AllHeroesAudit(100); }
+
+        /// <summary>CUX-5: the All Heroes screen survives the 130 percent text size too.</summary>
+        [UnityTest]
+        public IEnumerator AllHeroesScreenSurvives130PercentText() { return AllHeroesAudit(130); }
+
+        IEnumerator AllHeroesAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            yield return CheckScreen("all-heroes", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); }, problems);
+            yield return CheckScreen("all-heroes-scrolled", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(0.5f); }, problems);
+            yield return CheckScreen("all-heroes-bottom", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(1f); }, problems);
+            yield return CheckScreen("all-heroes-owned", () => { MergeState(true); GameSession.Progress.AddCopies("momo_u", 1); meta.ShowAllHeroes(); }, problems);
+            // details popups: a real locked hero, a not-yet-made tier, and an owned hero
+            yield return CheckScreen("all-heroes-info", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("momo_u"); }, problems);
+            yield return CheckScreen("all-heroes-info-legendary", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("monk_legendary"); }, problems);
+            yield return CheckScreen("all-heroes-info-owned", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("momo"); }, problems);
+            // Back returns to the Heroes screen
+            meta.ShowAllHeroes();
+            yield return null;
+            Button back = null;
+            foreach (Button bt in Object.FindObjectsByType<Button>(FindObjectsSortMode.None)) if (bt.name == "Back") back = bt;
+            Assert.IsNotNull(back, "All Heroes has a Back button");
+            back.onClick.Invoke();
+            Assert.AreEqual("Characters", meta.CurrentScreen, "Back returns to the Hero screen");
             Report(problems);
         }
 
@@ -1658,6 +1720,13 @@ namespace BoingUpSkyTower.Tests
                         if (Mathf.Abs(nb.center.y - ib.center.y) > 2f) problems.Add(tag + ": " + card.name + " name is not on the i button's centre line (" + nb.center.y + " vs " + ib.center.y + ")");
                         var txt = name.GetComponent<UnityEngine.UI.Text>();
                         if (txt != null && txt.resizeTextMinSize < Mathf.RoundToInt(UiKit.MinBodyTextPx)) problems.Add(tag + ": name min font below 16 sp");
+                        if (txt != null)
+                        {
+                            // the wrapped name must fit its row (so it cannot reach the chips below), in canvas pixels like the layout audit
+                            float ppu = Mathf.Max(0.01f, txt.pixelsPerUnit);
+                            float needed = txt.preferredHeight / ppu * (nb.height / Mathf.Max(0.01f, name.rect.height));
+                            if (needed > nb.height * 1.15f + 1f) problems.Add(tag + ": " + card.name + " name text (" + needed + " px) is taller than its row (" + nb.height + " px)");   // 15 percent tolerance: the real overlap audit is the authority, this is a sanity check
+                        }
                     }
                     if (cards == 0) problems.Add(tag + ": no bundle cards found");
                 }
