@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "ask": [
+      "mcp__73f004bd-92f2-4e13-8abf-f0c13bc6ba8f__openart_generate_image",
+      "mcp__73f004bd-92f2-4e13-8abf-f0c13bc6ba8f__openart_generate_video"
+    ]
+  }
+}

@@ -1,0 +1,300 @@
+BOING UP: SKY TOWER - RECOMMENDED CHANGES RC 1 TO RC 14 (DETAILED)
+Written 2026-11-01. Based on the game code in E:\Code\boing-up-sky-tower (build v0.38.0.40)
+and the economy reference docs/27-economy-tables-from-code.md.
+No code or data was changed. These are proposals for the owner to approve.
+
+Rules applied: 1 gem = 20 coins (fixed). No gear anywhere.
+Dollar values use the reference gem price of $0.01099 (1,000-gem pack at list) unless stated.
+GE = gem-equivalent (1 gem, or 20 coins). A random power-up unit is worth 60.7 gems.
+Effort is in Claude minutes, plus or minus 40 percent.
+
+======================================================================
+RC 1: FIX THE STALE CONSTANTS
+======================================================================
+Problem: coinsPerGem is 100 in four places while the code and doc 22 use 20.
+vipGemsPerDay 25 refers to a VIP that was replaced by the Subscription. Only tests and
+reports read coinsPerGem (no runtime conversion does), so nothing is broken, but the
+reports show wrong values.
+
+File and line                                          Now                          Change
+Content/config/remote_config.json line 18              "coinsPerGem": 100           20
+Content/config/remote_config.json line 21              "vipGemsPerDay": 25          delete the key
+Assets/_Game/Content/Models.cs lines 189, 192          both Required.Always         keep CoinsPerGem; delete VipGemsPerDay
+                                                                                    (same commit as the JSON, or loading fails)
+Tools/content_cli/gen_content.py lines 214-215         coinsPerGem 100,             20, 50, remove.
+                                                       replayCoinPercent 40,        Edit the generator but do not run it blindly:
+                                                       vipGemsPerDay 25             it overwrites regions, levels, items and config.
+Assets/Resources/Content/content_manifest.json         100 and 25                   do not hand-edit; run the Unity manifest merge
+  lines 16925-16928                                                                 so contentHash updates
+Assets/_Game/Tests/EditMode/ContentRepositoryTests.cs  AreEqual(100, CoinsPerGem)   20
+  line 43
+Tests/Simulation/EconomyTests.cs lines 85-228          "Gem equivalent at 100       rerun the test to regenerate. Region 1 becomes
+  and ECONOMY_TABLES.md                                coins/gem", revive text      187.5 gems instead of 37.5; skip price in coins
+                                                       "2 then 5"                   becomes gems x 20. Fix the "2 then 5" wording.
+Tests/Simulation/ECONOMY_REPORT.md item 6              "coins have no gem sink      rewrite for 20
+                                                       ... at coinsPerGem 100"
+
+Check afterwards: python Tools/content_cli/content.py validate;
+python -m unittest discover -s Tests/content; Unity EditMode tests.
+Also check Content/schemas and Tests/content/test_content.py for hard-coded values (not verified).
+Effort: about 45 min. Risk: low.
+
+======================================================================
+RC 2: REVIEW THE DAILY REWARD SIZE
+======================================================================
+Problem: a fully done day pays 45 gems + 1,500 coins + 1 random power-up = 180.7 GE ($1.99).
+That is about 37 minutes of campaign income (293 GE per hour), earned in roughly one session.
+Gems alone are 1,350 a month.
+
+Option                                         Gems  Coins  Power-ups  GE/day  $ ref/day  GE/30 days
+Now                                             45   1,500     1       180.7     1.99      5,421
+A: 100-point power-up becomes +500 coins        45   2,000     0       145.0     1.59      4,350
+B: gem milestones halved (10/15/20 -> 5/8/10)   23   1,500     1       158.7     1.74      4,761
+C (recommended): A and B together               23   2,000     0       123.0     1.35      3,690
+
+Why C: gems are the premium currency and the pack seller, so cut them first. Coins have
+sinks (power-ups cost 1,000 to 1,500 coins). Option C leaves a daily player at 690 gems a
+month instead of 1,350.
+Files: Content/economy/rewards.json (dailyMilestones); the built-in table in RewardCatalog.cs
+(the RewardsTests test requires the two to be identical); doc 26 section 4.
+Effort: about 30 min. Risk: low. This is a tuning decision for the owner.
+
+======================================================================
+RC 3: REVIEW THE RANDOM POWER-UPS
+======================================================================
+Problem: each random power-up unit is worth 60.7 gems. Rewards hand out about 34 units a
+month to a daily player (30 daily, about 4 weekly) plus 6 from the monthly subscription:
+about 2,082 GE ($22.9). Doc 22 flagged this as open item 2.
+
+Option                                                       Unit value   GE per month
+Now: any of the 7 types                                        60.7        about 2,082
+A: reward power-ups from the four 50-gem types only             50.0        about 1,715 (-18%)
+   (Double Jump, Wall Stick, Shield, Magnet)
+B: weekly 50-combo power-up becomes 1,000 coins                 50.0        -10.7 per week
+C (recommended): daily power-up moves behind a rewarded ad      60.7        about 1,041 expected (taken ~50% of days),
+   (doc 22 point 8)                                                         plus about 15 ad views a month (+$0.15/player)
+
+Files: ProgressService.Rewards.cs (the random pick). Option C needs the ad flow from RC 10.
+Option A is a one-line pool change. Effort: A about 25 min; C is covered by RC 10.
+Note: RC 2 options A/C remove the 100-point power-up, so decide RC 2 and RC 3 together.
+
+======================================================================
+RC 4: CHECK MAIN REWARDS
+======================================================================
+Problem: Main pays 580 gems, which is 2.2 times all gem pickups (260). It is one-time
+(about $21.68 at ref), so this is a design choice, not a leak.
+
+Option                                   Star gems   Region gems   Total gems   GE total   Gems / pickups
+Now                                        330          250           580        1,973        2.2x
+Halve (if rewards should not lead)        165          150           315        1,708        1.2x
+                                       (10/15/20/30/40/50)  (30 each)
+Coins (14,500) and power-ups (11) stay either way.
+Files: rewards.json (stars, regions) and the RewardCatalog.cs built-in table. Effort: about 20 min.
+
+======================================================================
+RC 5: REPRICE POWER-UPS BY EFFECT TIME
+======================================================================
+Problem: cost per second of effect ranges from 0.83 gems (Shield) to 18.75 (Rocket).
+
+Option                      Change                                   Rocket g/s  Flight g/s  Slow Time g/s
+Now                         none                                        18.75       7.50        2.50
+A: one price                all 7 at 50 gems / 1,000 coins              12.50       5.00        1.67
+B: longer effects           Flight 10 s -> 15 s, Rocket 20 -> 30        12.50       5.00        1.67
+ (recommended)              floors, Slow Time 30 s -> 45 s;
+                            prices unchanged
+
+Knock-on of A: chest value drops (Iron to 75 GE = 75% return, Gold to 210 GE = 70%);
+bundles must be regenerated; subscription "worth" with power-ups becomes 3.75x.
+Files for A: PowerUpCatalog.cs and powerups.json (must match); gen_bundles.py (POWERUPS values)
+and regenerate bundles.json; ChestTests and PowerUpTests; doc 26 section 3.
+Files for B: SimConfig durations and powerups.json descriptions. No economy ripple, but it
+needs a playtest and bot-proof run.
+Effort: A about 90 min; B about 60 min plus the owner's playtest.
+
+======================================================================
+RC 6: DECIDE ON THE SUBSCRIPTION
+======================================================================
+Problem: the subscription gives 232 to 354 GE per dollar, against 63 to 125 in packs.
+Most payers will pick it.
+
+Option            Monthly price  Daily coins  GE (with 6 PU)   GE per $ (with PU)  Worth x (with PU)  Dev net/month
+Now                  $4.99          600       1,400 (1,764)      281 (354)          3.1 (3.9)          $4.24
+A: raise price       $6.99          600       1,400 (1,764)      200 (252)          2.2 (2.8)          $5.94
+B: cut coins         $4.99          300         950 (1,314)      190 (263)          2.1 (2.9)          $4.24
+C: both              $5.99          400       1,100 (1,464)      184 (244)          2.0 (2.7)          $5.09
+Weekly ($1.49, 345 GE, 232 per $): cutting daily coins 500 -> 300 gives 275 GE (185 per $, worth 2.0x).
+
+View: keep it as it is while it is a retention hook, and watch whether it crowds out pack
+sales in soft launch (RC 14). The weekly plan costs $0.213 a day and the monthly $0.166, so
+monthly is already 22% cheaper per day.
+Files: subscriptions.json; SubscriptionCatalog.BuiltIn() (SubscriptionTests line 48 keeps them
+identical); doc 26 section 2; the store price points (Rs 149 / Rs 449 would change).
+Effort: about 30 min.
+
+======================================================================
+RC 7: KEEP CHESTS BELOW 1.0 AND BUNDLES AT 1.6
+======================================================================
+Change: none in code. Chests: Iron 85.7%, Gold 80.7% (tests enforce 70 to 105%).
+Bundles: 1.41 to 1.79, average 1.60 (tests enforce 1.4 to 1.8).
+If chests should be used more, raise their contents:
+
+Chest   Now                    Contents change          New return
+Iron    400-600 coins          500-700 coins            90.7%
+Gold    1,000-1,400 coins      1,200-1,600 coins        86.7%
+Doc work: state the rule "chest 70-105%, bundles 1.4-1.8" in doc 22 (already in doc 27).
+Effort: zero, or about 20 min to change contents.
+
+======================================================================
+RC 8: DO NOT ENABLE CHARACTERS IN CHESTS YET
+======================================================================
+Problem: ChestRolls.CharactersEnabled is false. At doc 22's odds, one character per chest
+returns 286% (Iron) and 276% (Gold) of the price.
+Before enabling, pick one:
+
+Option                         Iron                                   Gold                                  Return after
+A: lower the character chance  4.5% chance (+9 GE), coins 400-600     7% chance (+41 GE), coins 1,000-1,400  about 86% / 81%
+                               -> 355-555                             -> 590-990
+B: raise chest prices          100 -> 110                             300 -> 350                             about 86% / 81%
+C: both, smaller steps         105 and 2.5% chance                    325 and 4% chance                      about 86% / 81%
+Character gem prices (owner list 150 / 300 / 700 / 1,500 for Uncommon to Legendary) are still 0
+in CharacterSpec.GemPrice, so the 25% duplicate refund is 0 until they are set.
+Files: Chests.cs (IronPercent, GoldenPercent, prices, coin ranges), Characters.cs, ChestTests
+(100,000-opening simulation), doc 22 point 3. Effort: about 60 min, only when characters ship.
+
+======================================================================
+RC 9: CAP REPLAY FARMING BELOW 3 STARS
+======================================================================
+Problem: replaying a level with fewer than 3 stars pays full coins every time, no limit.
+At about 17.6 levels an hour:
+
+Case                 Coins per replay   Coins per hour   Share of first-clear income (4,650/h)
+1-star replay             130              2,290             49%
+2-star replay             190              3,344             72%
+3-star replay             125              2,200             47%
+So the coin faucet never dries up.
+
+Proposal: full pay only when the run raises the level's stars. Every other replay pays 50%.
+Case                                Before   After
+Replay raising 1 -> 2 stars          190      190
+2-star replay, no improvement        190       95
+1-star replay, no improvement        130       65
+Files: CoinPayoutRules.IsReducedReplay(starsBefore) becomes "has cleared before and this run's
+stars <= previous stars"; Rewards.cs lines 108-118; Tests/Simulation/GemCoinEconomyTests.cs
+and RewardsTests; doc 22 point 6.
+Check first: gem pickups on replays. Doc 26 says cleared levels strip their pickups, so keep
+gems as they are. Effort: about 60 min. This is a rule change, so the owner decides.
+
+======================================================================
+RC 10: ADD AD PLACEMENTS, WITH CAPS
+======================================================================
+Today only the revive ad (first revive of a run) exists. It adds about $0.007 per player per day.
+
+Placement                 Reward                        Value to player          Cap          Views/player/day  Dev revenue/player
+Revive (built)            free revive, saves 5 gems     5 GE ($0.055)            1 per run        0.7             $0.007
+Double result             +100% of that level's coins   3 stars R1: +250 coins   20 a day         0.6             $0.006
+                                                        = 12.5 GE ($0.14)
+Daily power-up ad         1 random power-up             60.7 GE                  1 a day          0.3             $0.003
+                          (doc 22 point 8)
+Total                                                                                           1.6             $0.016 (from $0.007)
+At 2.5 views and $10 eCPM the total is $0.025; at $25 eCPM $0.063. (Ad revenue per view is an assumption.)
+
+Needed in code: an ad placement enum and AdService.ShowRewarded(placement, callback); a ledger
+key ad:<placement>:<run id> so a reward is paid once; per-day counters in the save (adDay,
+adCounts); buttons on the results screen and the Daily tile; a consent and age-gate step before
+the first request (AdConfig still holds placeholder keys); tests with TestRewardedAds.
+Guardrails: ads stay optional and Retry stays one tap. No ad pays gems; the free revive is the
+only gem-saving reward. Effort: about 240 min.
+
+======================================================================
+RC 11: LAUNCH PROMO AND FIRST-PURCHASE DOUBLE
+======================================================================
+Both exist and are off. Gems per dollar by pack:
+
+Pack     List    First-purchase double (first time, once per pack)    Promo (always)
+50       63.3         126.6                                              102.0
+100      67.1         134.2                                              126.6
+200      80.3         160.6                                              155.0
+500      83.5         166.9                                              167.2
+1,000    91.0         182.0                                              182.1
+2,000    95.3           -                                                190.7
+5,000   100.0           -                                                200.1
+10,000  111.1           -                                                222.3
+15,000  125.0           -                                                250.0
+
+What the promo does: halves every gem pack price (a gem is worth $0.004 to $0.0079); halves coin
+pack gem prices (40 to 50 coins per gem); needs two store SKUs per pack (list and .launch) so the
+charged price matches what is shown; raises a reference-price question in some markets (verify).
+Recommendation: keep both off until billing exists. Use the first-purchase double as the launch
+lever: it beats the promo on the small packs and only applies once. If the promo is turned on
+later, every dollar column in doc 27 must be recomputed.
+Files: GameSettings.FirstPurchaseDouble, LaunchPromo, ProgressService.Shop.cs.
+Effort: none for off; about 30 min for tests and docs if a flag is flipped.
+
+======================================================================
+RC 12: STARTER PACK WHEN BILLING EXISTS
+======================================================================
+Source: doc 22 point 7: one-time $0.99 for 100 gems + 2,000 coins.
+
+                          Gems   Coins   GE    $ ref value   Value / price   GE per $
+Starter                    100   2,000   200      $2.20          2.2x           202
+100-gem pack (compare)     100       0   100      $1.10          0.74x           67
+It sits between the packs (63 to 125 GE per $) and the subscriptions (232 to 354), so it does
+not undercut either.
+Needed: SKU boingupskytower.starter (store price point about Rs 99); an account flag
+starterBought; hide the offer after purchase and decide whether it also expires after N days
+(doc 22 open item 7); a shop placement; tests for once per account, atomic grant and restore.
+Dependency: Play Billing (doc 13), which is not built. Effort: about 120 min after billing exists.
+
+======================================================================
+RC 13: REMOVE GEAR LEFTOVERS
+======================================================================
+The code already ignores gear (doc 20). What is left in the live game:
+
+Item                          Location                                              Action
+boots_cloud_runner item       Content/items/items.json; gen_content.py 205-207      make items.json an empty array; drop the generator row
+Item validation               Tools/content_cli/content.py 139-140                  keep; works on an empty list
+Slots in item schema          Content/schemas/item.schema.json                      allow only character and powerup
+Test requires items           ContentRepositoryTests.cs line 39                     allow an empty list
+                              (Assert.IsNotEmpty(Repo.Items))
+Stale comments                SimConfig.cs line 13 ("applies gear boosts"),         reword
+                              MetaController.cs line 1784 ("gear and chest overlays")
+Old-save test                 CharacterRigTests.cs line 98                          keep (proves old saves with gear fields load)
+Power-up wings art            PowerGearArt.cs                                       NOT gear (Flight wings, Rocket pack): keep;
+                                                                                    optional rename PowerUpWingsArt
+Asset catalog                 Content/assets/catalog/boots.md, outfit.md,           strip the gear classes and regenerate
+                              manifest.json, gen_asset_manifest.py                  (doc 10 totals overstate the need)
+Old approvals                 approvals/B01.md, P1.md, T52-T59                      keep as history
+Docs                          15, 17, 18, 19                                        already bannered or shrunk
+Effort: about 60 min.
+
+======================================================================
+RC 14: VALIDATE IN SOFT LAUNCH
+======================================================================
+Prerequisite: no analytics layer exists (doc 22 open item 16), so choose a service first.
+Events to log: gem_source(source, amount) and gem_sink(sink, amount); coin_source and coin_sink;
+ad_reward(placement); revive_taken(type); chest_open; bundle_bought; subscription_started;
+gem_pack_bought(pack, first_purchase).
+
+Metric                                 Healthy         If lower                  If higher
+Median gem balance after day 7         100 to 400      faucet too low            faucet too high (RC 2, RC 3)
+Gems spent on bundles                  30 to 50%       tune bundle value         fine
+Gems spent on chests                   15 to 25%       raise contents (RC 7)     fine
+Gems spent on revives                  10 to 20%       fine                      check difficulty
+Subscribers among payers               below 50%       fine                      RC 6
+Gem pack buyers per monthly active     1.2 to 1.6%     review small packs        fine
+Revive ad opt-in                       30% of offers   change placement          fine
+Coins per player at day 30             below 20,000    coin surplus: more sinks  fine
+Effort: about 120 min for the events once the service is chosen; the soft launch runs 4 to 6 weeks.
+
+======================================================================
+DECISIONS NEEDED FROM THE OWNER
+======================================================================
+1. RC 1: go ahead with the constants fix? It touches Models.cs and the manifest.
+2. RC 2 and RC 3: which Daily and power-up option? (Recommended: C and C.)
+3. RC 5: price all 7 power-ups the same (A), lengthen effects (B), or keep?
+4. RC 6: keep the subscription as it is, or change it?
+5. RC 9: cap replays as proposed?
+Mechanical items that can start first: RC 1 and RC 13.
+
+Assumptions behind the numbers (replace with soft-launch data): 60% gem pickup, 3.4 minutes
+per level, $0.01 per rewarded ad view, 2% payer rate, $18.40 average payer spend.
