@@ -165,7 +165,7 @@ def key_outline(rgb):
     return cv2.erode(out, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))) > 0   # trims the light fringe outside the outline (no grey halo)
 
 
-WALL = 15
+WALL = 31
 
 
 def key_flood(rgb):
@@ -175,7 +175,7 @@ def key_flood(rgb):
     h, w = rgb.shape[:2]
     v = rgb.max(axis=2)
     rr, bb = rgb[..., 0].astype(np.int16), rgb[..., 2].astype(np.int16)
-    wall = cv2.dilate(((v <= 70) | ((rr - bb > 45) & (v < 175))).astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (WALL, WALL)))   # a thick wall closes gaps in the outline where the rays cross it
+    wall = cv2.dilate(((v <= 70) | ((rr - bb > 45) & (v < 130))).astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (WALL, WALL)))   # a thick wall closes gaps in the outline where the rays cross it
     free = ((v > 70) & (wall == 0)).astype(np.uint8)
     free = cv2.morphologyEx(free, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     n, lab = cv2.connectedComponents(free, connectivity=4)
@@ -191,7 +191,9 @@ def key_flood(rgb):
     # fill holes (anything not reachable from the corners through the outside)
     inv = (1 - ch).astype(np.uint8)
     nl, ll = cv2.connectedComponents(inv, connectivity=4)
-    ch = (ll != ll[2, 2]).astype(np.uint8)
+    border = set(ll[0, :].tolist()) | set(ll[-1, :].tolist()) | set(ll[:, 0].tolist()) | set(ll[:, -1].tolist())   # the character may touch the picture edge, so the outside can be several pieces
+    border.discard(0)
+    ch = (~np.isin(ll, list(border)) ).astype(np.uint8)
     corners = np.concatenate([rgb[:40, :40].reshape(-1, 3), rgb[:40, -40:].reshape(-1, 3), rgb[-40:, :40].reshape(-1, 3), rgb[-40:, -40:].reshape(-1, 3)])
     bgc = np.median(corners, axis=0).astype(np.float32)
     r, g, b = [rgb[..., i].astype(np.float32) for i in range(3)]
