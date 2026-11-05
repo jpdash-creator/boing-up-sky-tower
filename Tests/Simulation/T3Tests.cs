@@ -605,7 +605,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Sim endless = new Sim(cfg, d, Fx.One, true, false);
             long dPlain = KillDelta(plain, 1000), dRamp = KillDelta(ramp, 1000), dEnd = KillDelta(endless, 1000);
             Assert.True(Math.Abs(dRamp * 10 - dPlain * 16) < dPlain / 2, "campaign ramp caps at +60 percent");
-            Assert.True(dEnd > dRamp, "endless goes beyond the campaign cap (+150 percent)");
+            Assert.True(dEnd >= dPlain, "endless speed follows the base speed of the level of the floor (Bug List 4 P2 cycle: no separate +150 percent ramp), never below the base");
             long dLow = KillDelta(ramp, 100); // row 100: 4 steps x 4 percent = 16 percent
             Assert.True(Math.Abs(dLow * 100 - dPlain * 116) < dPlain, "step formula below the cap");
         }
