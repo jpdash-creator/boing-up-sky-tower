@@ -1,0 +1,168 @@
+momo_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 10.26% of 7728 edge px
+   legL   area   89573  bbox x  204.. 683  y 1330..1606
+   legR   area  109137  bbox x  684..1309  y 1330..1606
+   body   area  212295  bbox x  286.. 804  y  906..1329
+   handL  area    3913  bbox x  227.. 285  y 1119..1330
+   handR  area  197155  bbox x  805..1342  y  906..1330
+   head   area  450964  bbox x  234..1144  y  216.. 905
+momo_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 4.50% of 7371 edge px
+   legL   area   87447  bbox x  239.. 683  y 1330..1606
+   legR   area  101999  bbox x  684..1235  y 1330..1606
+   body   area  208377  bbox x  286.. 804  y  906..1329
+   handL  area    2424  bbox x  239.. 285  y 1234..1330
+   handR  area  176249  bbox x  805..1343  y  906..1330
+   head   area  423572  bbox x  248..1037  y  234.. 905
+momo_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 3.93% of 9153 edge px
+   back   area   33646  bbox x  224..1235  y  142..1567
+   legL   area   86912  bbox x  238.. 683  y 1330..1606
+   legR   area  100989  bbox x  684..1231  y 1330..1606
+   body   area  210947  bbox x  286.. 804  y  906..1329
+   handL  area    2297  bbox x  251.. 285  y 1116..1330
+   handR  area  178828  bbox x  805..1343  y  906..1330
+   head   area  529106  bbox x  224..1084  y  141.. 905
+wrote ../../../Tools/art_pipeline/previews/region1_qa_momo_r.png
+bumble: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.63% of 9904 edge px
+   legL   area   53734  bbox x  430.. 683  y 1330..1607
+   legR   area   64599  bbox x  684..1127  y 1330..1607
+   body   area  248464  bbox x  381.. 984  y  901..1329
+   handL  area    7865  bbox x  333.. 380  y  901..1272
+   handR  area   37764  bbox x  985..1162  y  901..1330
+   head   area  511980  bbox x  271..1100  y   58.. 900
+bumble_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.76% of 11548 edge px
+   legL   area   68186  bbox x  230.. 683  y 1330..1607
+   legR   area   73057  bbox x  684..1201  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   34532  bbox x  223.. 380  y  901..1330
+   handR  area   51510  bbox x  985..1206  y  901..1330
+   head   area  517948  bbox x  292..1344  y  114.. 900
+bumble_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.24% of 12460 edge px
+   legL   area  133962  bbox x  113.. 683  y 1330..1607
+   legR   area  133817  bbox x  684..1268  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   46139  bbox x  207.. 380  y  901..1330
+   handR  area   28280  bbox x  985..1138  y  901..1330
+   head   area  571417  bbox x   82..1307  y   58.. 900
+bumble_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 4.12% of 13263 edge px
+   legL   area  132310  bbox x  111.. 683  y 1330..1607
+   legR   area  133088  bbox x  684..1268  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   42529  bbox x  211.. 380  y  901..1330
+   handR  area   36783  bbox x  985..1269  y  901..1330
+   head   area  591987  bbox x   92..1307  y   58.. 900
+bumble_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 3.16% of 20461 edge px
+   back   area  140031  bbox x  245..1214  y  357..1129
+   legL   area  118006  bbox x  143.. 683  y 1330..1607
+   legR   area  120264  bbox x  684..1283  y 1330..1604
+   body   area  248313  bbox x  381.. 984  y  901..1329
+   handL  area    7348  bbox x  301.. 380  y 1142..1330
+   handR  area   23210  bbox x  985..1120  y  901..1330
+   head   area  363011  bbox x  275..1168  y   58.. 900
+wrote ../../../Tools/art_pipeline/previews/region1_qa_bumble.png
+ribbi: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.24% of 10659 edge px
+   legL   area   50476  bbox x  304.. 626  y 1330..1606
+   legR   area   49817  bbox x  736..1061  y 1330..1607
+   body   area  196012  bbox x  381.. 984  y  901..1329
+   handL  area    5462  bbox x  330.. 380  y 1061..1205
+   handR  area    3285  bbox x  985..1019  y 1069..1199
+   head   area  548074  bbox x  279..1067  y   58.. 900
+ribbi_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.97% of 10706 edge px
+   legL   area   52683  bbox x  303.. 627  y 1330..1607
+   legR   area   51379  bbox x  736..1061  y 1330..1607
+   body   area  204842  bbox x  381.. 984  y  901..1329
+   handL  area    5678  bbox x  329.. 380  y 1060..1208
+   handR  area    3297  bbox x  985..1019  y 1074..1203
+   head   area  556303  bbox x  278..1070  y   58.. 900
+ribbi_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.77% of 10720 edge px
+   legL   area   53947  bbox x  302.. 683  y 1330..1607
+   legR   area   52826  bbox x  684..1062  y 1330..1607
+   body   area  239646  bbox x  381.. 984  y  901..1329
+   handL  area    8697  bbox x  329.. 380  y  908..1209
+   handR  area    4622  bbox x  985..1018  y  909..1202
+   head   area  564159  bbox x  278..1069  y   58.. 900
+ribbi_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.47% of 10570 edge px
+   legL   area   63663  bbox x  197.. 683  y 1330..1607
+   legR   area   63484  bbox x  684..1169  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   67838  bbox x  111.. 380  y  901..1330
+   handR  area   66503  bbox x  985..1252  y  901..1330
+   head   area  585095  bbox x  280..1068  y   58.. 900
+ribbi_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.16% of 13500 edge px
+   legL   area   96925  bbox x  178.. 683  y 1330..1606
+   legR   area   96671  bbox x  684..1181  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   72467  bbox x  112.. 380  y  901..1330
+   handR  area   70238  bbox x  985..1251  y  901..1330
+   head   area  644716  bbox x  202..1155  y   58.. 900
+wrote ../../../Tools/art_pipeline/previews/region1_qa_ribbi.png
+dandy: overlap 0 px, touches canvas edge 0 px, grey edge pixels 20.10% of 9550 edge px
+   legL   area   52557  bbox x  438.. 683  y 1330..1606
+   legR   area   53478  bbox x  684.. 910  y 1330..1607
+   body   area  217905  bbox x  381.. 984  y  901..1329
+   handL  area    3926  bbox x  342.. 380  y 1111..1266
+   handR  area    1925  bbox x  985..1013  y 1133..1256
+   head   area  661681  bbox x  212..1200  y   58.. 900
+dandy_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 11.47% of 10837 edge px
+   legL   area   52464  bbox x  440.. 683  y 1330..1607
+   legR   area   52401  bbox x  684.. 913  y 1330..1607
+   body   area  213962  bbox x  381.. 984  y  901..1329
+   handL  area    2547  bbox x  356.. 380  y  901..1275
+   handR  area    1261  bbox x  985..1008  y  901..1269
+   head   area  616981  bbox x  230..1187  y   58.. 900
+dandy_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 12.27% of 10203 edge px
+   legL   area   53114  bbox x  445.. 683  y 1330..1607
+   legR   area   53272  bbox x  684.. 909  y 1330..1607
+   body   area  249091  bbox x  381.. 984  y  901..1329
+   handL  area    8273  bbox x  317.. 380  y  901..1279
+   handR  area   12344  bbox x  985..1056  y  901..1272
+   head   area  620649  bbox x  227..1188  y   58.. 900
+dandy_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 21.59% of 11953 edge px
+   legL   area  130407  bbox x   68.. 683  y 1330..1607
+   legR   area  128779  bbox x  684..1250  y 1330..1607
+   body   area  251708  bbox x  381.. 984  y  901..1329
+   handL  area   55656  bbox x  177.. 380  y  901..1330
+   handR  area   21970  bbox x  985..1113  y  951..1330
+   head   area  608849  bbox x  172..1117  y   58.. 900
+dandy_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 26.53% of 9958 edge px
+   legL   area  158883  bbox x   20.. 683  y 1330..1607
+   legR   area  157730  bbox x  684..1312  y 1330..1604
+   body   area  256210  bbox x  381.. 984  y  901..1329
+   handL  area   73577  bbox x   20.. 380  y  901..1330
+   handR  area   50223  bbox x  985..1312  y  955..1330
+   head   area  533217  bbox x  209..1105  y  133.. 900
+wrote ../../../Tools/art_pipeline/previews/region1_qa_dandy.png
+pip: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.39% of 9058 edge px
+   legL   area   59648  bbox x  350.. 683  y 1330..1605
+   legR   area   61691  bbox x  684..1035  y 1330..1605
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   57152  bbox x  192.. 380  y  901..1330
+   handR  area   65685  bbox x  985..1195  y  901..1330
+   head   area  491455  bbox x  283..1095  y   60.. 900
+pip_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.41% of 10058 edge px
+   legL   area   66858  bbox x  224.. 683  y 1330..1605
+   legR   area   69188  bbox x  684..1162  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   74701  bbox x  174.. 380  y  901..1330
+   handR  area   83927  bbox x  985..1211  y  901..1330
+   head   area  532970  bbox x  182..1204  y   60.. 900
+pip_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.43% of 10579 edge px
+   legL   area   79771  bbox x  201.. 683  y 1330..1607
+   legR   area   81310  bbox x  684..1183  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   79759  bbox x  122.. 380  y  901..1330
+   handR  area   87471  bbox x  985..1263  y  901..1330
+   head   area  590257  bbox x  129..1257  y   60.. 900
+pip_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.49% of 10931 edge px
+   legL   area   78468  bbox x  204.. 683  y 1330..1607
+   legR   area   79641  bbox x  684..1177  y 1330..1603
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   77423  bbox x  127.. 380  y  901..1330
+   handR  area   84549  bbox x  985..1257  y  901..1330
+   head   area  594071  bbox x  117..1267  y   58.. 900
+pip_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 5.52% of 13430 edge px
+   legL   area  131097  bbox x  114.. 683  y 1330..1607
+   legR   area  130499  bbox x  684..1251  y 1330..1603
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area  102608  bbox x   40.. 380  y  901..1330
+   handR  area   99862  bbox x  985..1287  y  901..1330
+   head   area  649911  bbox x   29..1316  y   58.. 900
+wrote ../../../Tools/art_pipeline/previews/region1_qa_pip.png

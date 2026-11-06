@@ -116,12 +116,12 @@ namespace BoingUpSkyTower.Tests
         public void BuyingPaysTheGemsAndAddsExactlyOneCopyOfAnOpenUncommonHero()
         {
             ProgressService svc = NewService(1000);
-            int before = svc.Copies("momo_u");
+            int before = svc.Copies("momo_u") + svc.Copies("bumble_u") + svc.Copies("ribbi_u") + svc.Copies("dandy_u") + svc.Copies("pip_u");
             CharacterSpec hero;
             Assert.AreEqual(HeroBuyResult.Ok, svc.TryBuyHero(CharacterRarity.Uncommon, out hero));
-            Assert.AreEqual("momo_u", hero.Id, "only region 1 is open: Momo's Uncommon is the only candidate");
+            CollectionAssert.Contains(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u" }, hero.Id, "only region 1 is open: one of its five Uncommon heroes");
             Assert.AreEqual(1000 - 150, svc.Gems);
-            Assert.AreEqual(before + 1, svc.Copies("momo_u"), "exactly one copy");
+            Assert.AreEqual(before + 1, svc.Copies("momo_u") + svc.Copies("bumble_u") + svc.Copies("ribbi_u") + svc.Copies("dandy_u") + svc.Copies("pip_u"), "exactly one copy");
             Assert.AreEqual(1, svc.Data.Bundles.HeroBuys);
         }
 
@@ -156,10 +156,12 @@ namespace BoingUpSkyTower.Tests
         public void OnlyHeroesOfOpenRegionsCanBeBought()
         {
             ProgressService svc = NewService(100000);
-            Assert.AreEqual(1, svc.HeroBuyPool(CharacterRarity.Uncommon).Count);
+            Assert.AreEqual(5, svc.HeroBuyPool(CharacterRarity.Uncommon).Count, "Region 1: Momo, Bumble, Ribbi, Dandy, Pip");
+            foreach (CharacterRarity r in new[] { CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary })
+                Assert.AreEqual(5, svc.HeroBuyPool(r).Count, r + ": five heroes in Region 1, none from the closed regions");
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(2).Id);
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(3).Id);
-            var allowed = new HashSet<string>(new[] { "momo_u", "forestgirl_u", "beachotter_u" });
+            var allowed = new HashSet<string>(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u", "forestgirl_u", "nib_u", "spike_u", "moss_u", "fenn_u", "beachotter_u" });
             Assert.IsTrue(allowed.SetEquals(svc.HeroBuyPool(CharacterRarity.Uncommon).Select(c => c.Id)));
             var got = new HashSet<string>();
             for (int i = 0; i < 40; i++)
@@ -169,7 +171,7 @@ namespace BoingUpSkyTower.Tests
                 Assert.IsTrue(allowed.Contains(hero.Id), hero.Id + " is from a closed region");
                 got.Add(hero.Id);
             }
-            Assert.Greater(got.Count, 1, "40 buys show more than one of the three open heroes");
+            Assert.Greater(got.Count, 1, "40 buys show more than one of the eleven open heroes");
         }
 
         [Test]
@@ -178,7 +180,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService svc = NewService(5000);
             foreach (CharacterRarity r in HeroPurchase.Tiers)
             {
-                if (svc.HeroBuyPool(r).Count != 0) continue;   // today Rare, Elite and Legendary
+                if (svc.HeroBuyPool(r).Count != 0) continue;   // none today: Region 1 has heroes of every tier (a future empty tier must still charge nothing)
                 string before = Snapshot(svc);
                 CharacterSpec hero;
                 Assert.AreEqual(HeroBuyResult.NoHeroes, svc.TryBuyHero(r, out hero));

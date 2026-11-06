@@ -19,6 +19,8 @@ namespace BoingUpSkyTower.Gameplay
         public const string ScreenName = "AllHeroes";
         public const string InfoPopupName = "AllHeroesInfo";
         const int Columns = 3;
+        /// <summary>Cards of one hero line: Common, Uncommon, Rare, Elite, Legendary.</summary>
+        const int LineSize = 5;
         const float Margin = 16f, Gap = 12f, DollH = 210f, Pad = 8f;
         const int BodyFont = 40;
         static readonly Color PillInk = new Color(0.07f, 0.06f, 0.20f, 0.94f);
@@ -144,13 +146,14 @@ namespace BoingUpSkyTower.Gameplay
             {
                 BuildBanner(content, g, y, bannerH);
                 y += bannerH + 10f;
-                for (int i = 0; i < g.Entries.Count; i++)
+                // one hero line (Common to Legendary = 5 cards) per block of rows, so a hero's ladder is never split across other heroes: 3 cards, then 2
+                for (int b = 0; b * LineSize < g.Entries.Count; b++)
                 {
-                    int col = i % Columns;
-                    if (i > 0 && col == 0) y += cardH + Gap;
-                    BuildCard(content, g.Entries[i], col, y, cardH);
+                    int inBlock = Math.Min(LineSize, g.Entries.Count - b * LineSize);
+                    for (int k = 0; k < inBlock; k++) BuildCard(content, g.Entries[b * LineSize + k], k % Columns, y + (k / Columns) * (cardH + Gap), cardH);
+                    y += ((inBlock + Columns - 1) / Columns) * (cardH + Gap);
                 }
-                y += cardH + Gap + 14f;
+                y += 14f;
             }
             content.sizeDelta = new Vector2(0f, y);
         }

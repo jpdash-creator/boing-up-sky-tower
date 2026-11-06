@@ -481,10 +481,10 @@ namespace BoingUpSkyTower.Economy
             for (int i = 0; i < outcome.HeroIds.Count; i++) AddCopies(outcome.HeroIds[i], 1);
         }
 
-        /// <summary>The Common hero of a region (the base hero with Region == index), null when none exists.</summary>
+        /// <summary>The starter Common hero of a region (the one the region hands over, Momo for region 1), null when none exists.</summary>
         static CharacterSpec CommonHeroOf(int regionIndex)
         {
-            foreach (CharacterSpec c in CharacterDefs.All) if (c.IsRegionHero && c.Region == regionIndex) return c;
+            foreach (CharacterSpec c in CharacterDefs.All) if (c.RegionStarter && c.Region == regionIndex) return c;
             return null;
         }
 
@@ -533,9 +533,9 @@ namespace BoingUpSkyTower.Economy
                     }
                 }
             }
-            if (e.HeroRegion != 0)
+            if (e.HeroRegion != 0 || !string.IsNullOrEmpty(e.HeroId))
             {
-                CharacterSpec hero = e.HeroRegion > 0 ? CommonHeroOf(e.HeroRegion) : RandomOpenCommonHero();
+                CharacterSpec hero = !string.IsNullOrEmpty(e.HeroId) ? CharacterDefs.Get(e.HeroId) : e.HeroRegion > 0 ? CommonHeroOf(e.HeroRegion) : RandomOpenCommonHero();
                 if (hero != null) outcome.HeroIds.Add(hero.Id);   // granted by FinishClaim
             }
             if (tab == RewardTab.Main) r.GoalsClaimed.Add(e.Id);

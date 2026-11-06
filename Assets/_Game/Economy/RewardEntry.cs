@@ -24,10 +24,12 @@ namespace BoingUpSkyTower.Economy
         public int Gems, Coins, PowerUps;
         /// <summary>Hero reward (1 copy via ProgressService.AddCopies): 0 none, a region index = that region's Common hero, -1 = one random Common hero of an OPEN region (deterministic, per-account seed).</summary>
         public int HeroRegion;
+        /// <summary>Hero reward of ONE named hero (1 copy), for example the Region 1 goals that hand out Bumble, Ribbi, Dandy and Pip (docs/39 section 1 rule 7). Null = none. Wins over <see cref="HeroRegion"/>.</summary>
+        public string HeroId;
 
         public const int RandomOpenRegionHero = -1;
 
-        public bool GivesHero { get { return HeroRegion != 0; } }
+        public bool GivesHero { get { return HeroRegion != 0 || !string.IsNullOrEmpty(HeroId); } }
 
         public RewardGrant Grant { get { return new RewardGrant { Gems = Gems, Coins = Coins, PowerUps = PowerUps }; } }
     }

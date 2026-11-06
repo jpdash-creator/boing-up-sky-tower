@@ -100,6 +100,14 @@ namespace BoingUpSkyTower.Tests
                 { "beachotter", "beachotter_u", "Tidecrest Otto" },
                 { "candygirl", "candygirl_u", "Sugarplate Bonbon" },
                 { "monk", "monk_u", "Ironbamboo Bao" },
+                { "bumble", "bumble_u", "Honeycloak Bumble" },
+                { "ribbi", "ribbi_u", "Leafcrown Ribbi" },
+                { "dandy", "dandy_u", "Seedling Dandy" },
+                { "pip", "pip_u", "Redcape Pip" },
+                { "nib", "nib_u", "Leafscarf Nib" },
+                { "spike", "spike_u", "Logplate Spike" },
+                { "moss", "moss_u", "Vinebelt Moss" },
+                { "fenn", "fenn_u", "Scoutvest Fenn" },
             };
             for (int i = 0; i < expect.GetLength(0); i++)
             {
@@ -115,7 +123,8 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(expect[i, 1], next.ArtId, "own art slot");
                 Assert.AreEqual(expect[i, 0], next.FallbackArtId, "placeholder art is the Common hero");
                 Assert.AreSame(next, CharacterDefs.Get(next.Id));
-                Assert.IsNull(MergeRules.NextTier(next), "no Rare tier yet");
+                bool full = common.Region <= 2;
+                Assert.AreEqual(full, MergeRules.NextTier(next) != null, expect[i, 0] + ": Region 1 and 2 lines continue to Rare, the others stop at Uncommon (F4.3 to F4.5)");
                 Assert.AreSame(common, MergeRules.PreviousTier(next));
             }
         }
@@ -133,6 +142,7 @@ namespace BoingUpSkyTower.Tests
             double[] V(ShownStats x) { return new[] { x.Jump, x.Speed, x.Control, x.WallBounce }; }
             foreach (TierRow row in MergeTierDefs.Rows)
             {
+                if (row.Rarity != CharacterRarity.Uncommon) continue;   // Rare, Elite and Legendary rows chain over the previous tier: RegionOneTierRowsFollowTheChain in Region1HeroTests
                 Assert.IsNull(TierRules.Validate(row), row.Id);   // exactly 2 stats of 10..25 percent, run coins 50..100 (step 10), run gems 1..5
                 CharacterSpec spec = CharacterDefs.Get(row.Id);
                 CharacterSpec common = CharacterDefs.Get(row.LineId);
@@ -163,13 +173,17 @@ namespace BoingUpSkyTower.Tests
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
-                List<string> lines = MergeRules.ShownGainLines(CharacterDefs.Get(row.LineId).ShownValues(), CharacterDefs.Get(row.Id).ShownValues());
+                CharacterSpec below = MergeRules.PreviousTier(CharacterDefs.Get(row.Id));   // the merge text compares with the tier below
+                List<string> lines = MergeRules.ShownGainLines(below.ShownValues(), CharacterDefs.Get(row.Id).ShownValues());
                 if (row.JumpPct > 0) CollectionAssert.Contains(lines, "Jump +" + row.JumpPct + "%", row.Id);
                 if (row.SpeedPct > 0) CollectionAssert.Contains(lines, "Speed +" + row.SpeedPct + "%", row.Id);
                 if (row.ControlPct > 0) CollectionAssert.Contains(lines, "Control +" + row.ControlPct + "%", row.Id);
                 if (row.WallPct > 0) CollectionAssert.Contains(lines, "Wall Bounce +" + row.WallPct + "%", row.Id);
-                CollectionAssert.Contains(lines, "Run coins +" + row.RunCoinsAdd);
-                CollectionAssert.Contains(lines, "Run gems +" + row.RunGemsAdd);
+                // the run bonus lines show the difference to the tier below (each tier's add is its OWN total on top of the Common hero)
+                int dCoins = CharacterDefs.Get(row.Id).ShownValues().RunBonusCoins - below.ShownValues().RunBonusCoins;
+                int dGems = CharacterDefs.Get(row.Id).ShownValues().RunBonusGems - below.ShownValues().RunBonusGems;
+                if (dCoins > 0) CollectionAssert.Contains(lines, "Run coins +" + dCoins, row.Id);
+                if (dGems > 0) CollectionAssert.Contains(lines, "Run gems +" + dGems, row.Id);
             }
             Assert.AreEqual(0, MergeRules.ShownGainLines(null, CharacterDefs.Momo.ShownValues()).Count);
         }
@@ -254,9 +268,12 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(2, svc.Copies("momo"));
             Assert.AreEqual(0, svc.Copies("momo_u"));
 
-            svc.AddCopies("momo_u", 5);
-            Assert.AreEqual(MergeResult.MaxTier, svc.TryMerge("momo_u").Result);
-            Assert.AreEqual(5, svc.Copies("momo_u"));
+            svc.AddCopies("monk_u", 5);   // Region 5 stops at Uncommon for now
+            Assert.AreEqual(MergeResult.MaxTier, svc.TryMerge("monk_u").Result);
+            Assert.AreEqual(5, svc.Copies("monk_u"));
+            svc.AddCopies("momo_l", 5);   // Legendary is the top of a Region 1 line
+            Assert.AreEqual(MergeResult.MaxTier, svc.TryMerge("momo_l").Result);
+            Assert.AreEqual(5, svc.Copies("momo_l"));
             Assert.AreEqual(MergeResult.Unknown, svc.TryMerge("nobody").Result);
             Assert.AreEqual(0, svc.AddCopies("nobody", 3));
             Assert.AreEqual(2, svc.AddCopies("momo", 0), "adding nothing changes nothing");

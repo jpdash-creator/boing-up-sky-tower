@@ -19,7 +19,7 @@ namespace BoingUpSkyTower.Economy
         {
             if (c == null) return false;
             if (Data.Characters.Contains(c.Id)) return true;
-            if (c.Rarity != CharacterRarity.Common || c.Region <= 0) return false;
+            if (c.Rarity != CharacterRarity.Common || c.Region <= 0 || !c.RegionStarter) return false;   // only the region's starter hero comes with the region; the other Commons need a copy
             if (c.Region == 1) return true;
             BoingUpSkyTower.Content.RegionDef r = repo.TryGetRegionByIndex(c.Region);
             return r != null && IsRegionUnlocked(r);

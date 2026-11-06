@@ -193,6 +193,23 @@ namespace BoingUpSkyTower.Economy
             }
         }
 
+        /// <summary>
+        /// Regions 1 and 2 hand out their four extra Common heroes (F4.1 and F4.2, docs/39 and docs/40) as one copy each from Region 1 progress: Bumble for clearing 6 levels, Ribbi for 9, Dandy for 12 and Pip for earning 45 stars
+        /// (all stars of the region). Momo comes with the "clear all 15 levels" goal as before. Null for every other goal.
+        /// </summary>
+        public static string HeroGoalId(int region, RegionGoalType type, int tier)
+        {
+            string[] extra = region == 1 ? Region1Extra : region == 2 ? Region2Extra : null;
+            if (extra == null) return null;
+            if (type == RegionGoalType.Levels) return tier >= 2 && tier <= 4 ? extra[tier - 2] : null;
+            if (type == RegionGoalType.Stars && tier == 5) return extra[3];
+            return null;
+        }
+
+        /// <summary>The extra Common heroes of Region 1 and Region 2 in goal order (clear 6, 9, 12 levels, earn 45 stars).</summary>
+        static readonly string[] Region1Extra = { "bumble", "ribbi", "dandy", "pip" };
+        static readonly string[] Region2Extra = { "nib", "spike", "moss", "fenn" };
+
         /// <summary>The goals of a region in listing order (empty for a Coming Soon region or an invalid index).</summary>
         public static List<RegionGoal> Build(int region)
         {
@@ -209,7 +226,7 @@ namespace BoingUpSkyTower.Economy
                     {
                         Id = GoalId(region, type, i + 1), Title = TitleOf(type, target), Stat = Token(type), Target = target,
                         Gems = tiers[i].Gems, Coins = ScaledCoins(tiers[i].Coins, region), PowerUps = tiers[i].PowerUps,
-                        HeroRegion = last ? region : 0, Region = region, Type = type, Tier = i + 1
+                        HeroRegion = last ? region : 0, HeroId = HeroGoalId(region, type, i + 1), Region = region, Type = type, Tier = i + 1
                     });
                 }
             }

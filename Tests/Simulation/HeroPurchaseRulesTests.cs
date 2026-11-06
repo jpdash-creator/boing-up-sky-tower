@@ -52,12 +52,11 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void TodayOnlyUncommonHasAHeroInRegionOne()
+        public void RegionOneHasFiveHeroesOfEveryTierAndNothingElseIsOpenYet()
         {
-            // Rare, Elite and Legendary heroes do not exist yet in the real table: a buy must say "No ... heroes yet" (the shop test relies on this)
-            foreach (CharacterRarity r in new[] { CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary })
-                Assert.Empty(BundleCards.Pool(r, CharacterDefs.All, region => region <= 1));
-            Assert.Single(BundleCards.Pool(CharacterRarity.Uncommon, CharacterDefs.All, region => region <= 1));
+            // F4.1: Region 1 has Momo, Bumble, Ribbi, Dandy and Pip at every tier; the other regions still have Uncommon only (closed regions never count)
+            foreach (CharacterRarity r in HeroPurchase.Tiers)
+                Assert.Equal(new[] { "bumble", "dandy", "momo", "pip", "ribbi" }, BundleCards.Pool(r, CharacterDefs.All, region => region <= 1).Select(c => c.LineId).OrderBy(x => x, System.StringComparer.Ordinal).ToArray());
         }
 
         [Fact]

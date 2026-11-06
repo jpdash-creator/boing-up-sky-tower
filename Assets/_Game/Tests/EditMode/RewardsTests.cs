@@ -483,14 +483,23 @@ namespace BoingUpSkyTower.Tests
             svc.RecordLevelStarted(3);
             ClearLevels(svc, 1, 5);   // five hard clears
             Assert.AreEqual(5, Weekly(svc, RewardStat.HardClear));
-            int before = svc.Copies("momo");
+            var region1 = new[] { "momo", "bumble", "ribbi", "dandy", "pip" };
+            int before = 0;
+            foreach (string id in region1) before += svc.Copies(id);
             RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_hard5");
             Assert.AreEqual(RewardClaimResult.Ok, res.Result);
             Assert.AreEqual(1, res.HeroIds.Count);
-            Assert.AreEqual("momo", res.HeroIds[0], "only region 1 is open: its Common hero is the only candidate");
-            Assert.AreEqual(before + 1, svc.Copies("momo"));
+            CollectionAssert.Contains(region1, res.HeroIds[0], "only region 1 is open: one of its five Common heroes");
+            Assert.AreEqual(before + 1, TotalOf(svc, region1));
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Weekly, "w_hard5").Result);
-            Assert.AreEqual(before + 1, svc.Copies("momo"), "no second copy");
+            Assert.AreEqual(before + 1, TotalOf(svc, region1), "no second copy");
+        }
+
+        static int TotalOf(ProgressService svc, string[] ids)
+        {
+            int n = 0;
+            foreach (string id in ids) n += svc.Copies(id);
+            return n;
         }
 
         [Test]
@@ -511,7 +520,7 @@ namespace BoingUpSkyTower.Tests
                 RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_hard5");
                 Assert.AreEqual(RewardClaimResult.Ok, res.Result);
                 picks[run] = res.HeroIds[0];
-                CollectionAssert.Contains(new[] { "momo", "forestgirl", "beachotter" }, picks[run], "regions 4 and 5 are closed");
+                CollectionAssert.Contains(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter" }, picks[run], "regions 4 and 5 are closed");
             }
             Assert.AreEqual(picks[0], picks[1], "same seed and claim count, same hero");
         }
@@ -915,7 +924,8 @@ namespace BoingUpSkyTower.Tests
                 Transform face = s.ListContent.Find("Row_g_1_levels_5/Card/RewardPlate/Hero");
                 Assert.IsNotNull(face, "'clear all levels' gives the region hero: its face is on the plate");
                 StringAssert.Contains("hero", face.GetComponent<A11yLabel>().Text);
-                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_4/Card/RewardPlate/Hero"), "other goals have no hero");
+                Assert.IsNotNull(s.ListContent.Find("Row_g_1_levels_4/Card/RewardPlate/Hero"), "'clear 12 levels' hands out Dandy: its face is on the plate");
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1/Card/RewardPlate/Hero"), "other goals have no hero");
                 s.SelectTab(RewardTab.Weekly);
                 Transform weekly = s.ListContent.Find("Row_w_hard5/Card/RewardPlate/Hero");
                 Assert.IsNotNull(weekly, "the weekly top reward shows a hero chip");

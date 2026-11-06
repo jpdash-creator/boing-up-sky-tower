@@ -107,13 +107,23 @@ namespace BoingUpSkyTower.Tests
             double expectedShare = 1.0 / types.Count;   // about 14.3 percent
             foreach (PowerUpDef d in types)
                 Assert.AreEqual(expectedShare, perType[d.Id] / (double)totalUnits, 0.007, d.Id + " should drop about 14.3 percent of the time");
-            // today's character list has Common and Uncommon only, so the Rare and Elite hits fall back to the next lower tier; the pure odds are tested in ChestCardTests
+            // Region 1 has Common to Legendary heroes, so every drawn tier exists and is used as drawn (the fallback only matters for closed regions; the pure odds are in ChestCardTests)
             foreach (CharacterRarity r in rarities.Keys)
-                Assert.That(r == CharacterRarity.Common || r == CharacterRarity.Uncommon, "only tiers that exist: " + r);
+                Assert.That(r != CharacterRarity.Legendary, "a chest never gives a Legendary hero: " + r);
             if (kind == ChestKind.Iron)
+            {
                 Assert.AreEqual(0.70, rarities[CharacterRarity.Common] / (double)Runs, 0.01, "Iron: 70 percent Common");
+                Assert.AreEqual(0.20, rarities[CharacterRarity.Uncommon] / (double)Runs, 0.01, "Iron: 20 percent Uncommon");
+                Assert.AreEqual(0.10, rarities[CharacterRarity.Rare] / (double)Runs, 0.01, "Iron: 10 percent Rare");
+                Assert.IsFalse(rarities.ContainsKey(CharacterRarity.Epic), "Iron never gives Elite");
+            }
             else
+            {
                 Assert.IsFalse(rarities.ContainsKey(CharacterRarity.Common), "Gold never gives a Common hero");
+                Assert.AreEqual(0.50, rarities[CharacterRarity.Uncommon] / (double)Runs, 0.01, "Gold: 50 percent Uncommon");
+                Assert.AreEqual(0.40, rarities[CharacterRarity.Rare] / (double)Runs, 0.01, "Gold: 40 percent Rare");
+                Assert.AreEqual(0.10, rarities[CharacterRarity.Epic] / (double)Runs, 0.01, "Gold: 10 percent Elite");
+            }
         }
 
         [Test]

@@ -37,8 +37,11 @@ namespace BoingUpSkyTower.Economy
         /// <summary>The seed the five Uncommon rows were drawn with is BaseSeed + the line's index in <see cref="Lines"/> (docs/34 section 2b).</summary>
         public const int BaseSeed = 20261104;
 
-        /// <summary>The five hero lines in region order (Meadow Springs, Mushroom Grove, Sunny Beach, Candy Canyon, Bamboo Temple).</summary>
-        public static readonly string[] Lines = { "momo", "forestgirl", "beachotter", "candygirl", "monk" };
+        /// <summary>
+        /// The hero lines: the five original heroes in region order (Meadow Springs, Mushroom Grove, Sunny Beach, Candy Canyon, Bamboo Temple) FIRST (their positions are part of the Uncommon seeds), then the
+        /// four extra Region 1 heroes (Bumble, Ribbi, Dandy, Pip). The order of the new lines is the order of their rows in <see cref="MergeTierDefs.Rows"/>.
+        /// </summary>
+        public static readonly string[] Lines = { "momo", "forestgirl", "beachotter", "candygirl", "monk", "bumble", "ribbi", "dandy", "pip", "nib", "spike", "moss", "fenn" };
 
         public static readonly TierRule[] Rules =
         {
@@ -65,6 +68,24 @@ namespace BoingUpSkyTower.Economy
             { "candygirl", new[] { PowerUp.DoubleJump, PowerUp.SlowTime, PowerUp.Magnet, PowerUp.Rocket } },
             // Bamboo Temple (R5): calm focus, wall mastery, guardian
             { "monk", new[] { PowerUp.WallStick, PowerUp.SlowTime, PowerUp.Shield, PowerUp.Flight } },
+            // Meadow Springs extra heroes (F4.1): the first power is the hero's identity, the rest follow the theme
+            // Bumble the bee (mage): speed + Flight, then sweet pickups and a spell shield
+            { "bumble", new[] { PowerUp.Flight, PowerUp.Magnet, PowerUp.SlowTime, PowerUp.Shield } },
+            // Ribbi the frog: jump + Double Jump, then clinging and leaping
+            { "ribbi", new[] { PowerUp.DoubleJump, PowerUp.WallStick, PowerUp.Magnet, PowerUp.Rocket } },
+            // Dandy the dandelion puff: slow fall + Slow Time, then soft landings
+            { "dandy", new[] { PowerUp.SlowTime, PowerUp.Shield, PowerUp.Magnet, PowerUp.DoubleJump } },
+            // Pip the ladybug: wall bounce + Shield, then wall mastery
+            { "pip", new[] { PowerUp.Shield, PowerUp.WallStick, PowerUp.SlowTime, PowerUp.Magnet } },
+            // Mushroom Grove extra heroes (F4.2): the first power is the hero's identity
+            // Nib the squirrel: Magnet (plus a flat coin find stat), then leaps and a rocket for far coins
+            { "nib", new[] { PowerUp.Magnet, PowerUp.DoubleJump, PowerUp.SlowTime, PowerUp.Rocket } },
+            // Spike the hedgehog: Shield, then pickups and calm
+            { "spike", new[] { PowerUp.Shield, PowerUp.Magnet, PowerUp.SlowTime, PowerUp.Rocket } },
+            // Moss the snail kid: Wall Stick, then a shield shell
+            { "moss", new[] { PowerUp.WallStick, PowerUp.Shield, PowerUp.SlowTime, PowerUp.DoubleJump } },
+            // Fenn the fox kit: the run bonus is the identity; quick power-ups to pick coins up
+            { "fenn", new[] { PowerUp.Rocket, PowerUp.Magnet, PowerUp.DoubleJump, PowerUp.Shield } },
         };
 
         /// <summary>The rule of a tier, or null for Common.</summary>

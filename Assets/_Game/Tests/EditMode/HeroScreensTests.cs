@@ -172,9 +172,33 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void ATopTierTypeIsNeverListedEvenWithManyCopies()
         {
-            Give("momo_u", 6);
+            Give("momo_l", 6);
             MergeScreen m = NewMerge();
-            Assert.AreEqual(0, m.Cards.Count, "no Rare exists yet");
+            Assert.AreEqual(0, m.Cards.Count, "Legendary has no next tier");
+        }
+
+        [Test]
+        public void EveryRegion1UncommonRareAndEliteMergesUpTheWholeChain()
+        {
+            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn" })
+            {
+                string[] chain = { line, line + "_u", line + "_r", line + "_e", line + "_l" };
+                for (int i = 0; i < chain.Length - 1; i++)
+                {
+                    int need = 3 - P.Copies(chain[i]);   // the previous merge left 1 copy of this tier (Momo starts with 1)
+                    if (need > 0) Give(chain[i], need);
+                    MergeScreen m = NewMerge();
+                    Assert.AreEqual(3, m.Cards.Count, chain[i] + ": three copies are listed");
+                    m.SelectType(chain[i]);
+                    Assert.IsTrue(m.CanMerge, chain[i]);
+                    Assert.AreEqual(MergeResult.Ok, m.TapMerge().Result, chain[i]);
+                    Assert.AreEqual(1, P.Copies(chain[i + 1]), chain[i] + " merges into " + chain[i + 1]);
+                    Object.DestroyImmediate(go);
+                    go = new GameObject("Canvas", typeof(RectTransform));
+                    canvas = (RectTransform)go.transform;
+                    canvas.sizeDelta = new Vector2(1080f, 1920f);
+                }
+            }
         }
 
         // ---------------------------------------------------------------- All Heroes
@@ -199,11 +223,17 @@ namespace BoingUpSkyTower.Tests
         {
             AllHeroesScreen s = NewAll();
             Assert.AreEqual(5, s.Groups.Count, "regions 1 to 5");
-            Assert.AreEqual(25, HeroCardsOn(canvas).Count, "5 heroes x 5 tiers");
+            Assert.AreEqual(25, s.Groups[0].Entries.Count, "Region 1: Momo, Bumble, Ribbi, Dandy, Pip x 5 tiers");
+            Assert.AreEqual(25, s.Groups[1].Entries.Count, "Region 2: Capi, Nib, Spike, Moss, Fenn x 5 tiers");
+            for (int i = 2; i < s.Groups.Count; i++) Assert.AreEqual(5, s.Groups[i].Entries.Count, "regions 3 to 5: one hero x 5 tiers");
+            Assert.AreEqual(65, HeroCardsOn(canvas).Count, "13 heroes x 5 tiers");
             for (int i = 0; i < s.Groups.Count; i++) Assert.AreEqual(i + 1, s.Groups[i].Region);
             var cols = new HashSet<float>();
             foreach (RectTransform card in HeroCardsOn(canvas)) cols.Add(Mathf.Round(card.anchorMin.x * 3f));
             Assert.AreEqual(3, cols.Count, "three columns");
+            // every hero line starts on its own row in the first column (Common), so a ladder is never split across other heroes
+            foreach (CharacterSpec c in CharacterInventory.All)
+                if (!c.IsMergeTier) Assert.AreEqual(0f, Mathf.Round(((RectTransform)FindDeep(canvas, "Hero_" + c.Id)).anchorMin.x * 3f), c.Id + ": Common card in column 1");
             int banners = 0;
             foreach (Transform t in canvas.GetComponentsInChildren<Transform>(true)) if (t.name.StartsWith("Banner_")) banners++;
             Assert.AreEqual(5, banners, "a banner per region");
@@ -256,9 +286,9 @@ namespace BoingUpSkyTower.Tests
             StringAssert.Contains("Powers:", FindDeep(pop, "Powers").GetComponent<Text>().text);
 
             Object.DestroyImmediate(FindDeep(canvas, "Popup").gameObject);
-            Assert.IsTrue(s.OpenInfo("momo_rare"));   // placeholder tier
+            Assert.IsTrue(s.OpenInfo("beachotter_rare"));   // placeholder tier (Region 3 has no Rare yet)
             pop = FindDeep(canvas, AllHeroesScreen.InfoPopupName);
-            StringAssert.Contains("Merge 3 Uncommon Momo", FindDeep(pop, "HowToGet").GetComponent<Text>().text);
+            StringAssert.Contains("Merge 3 Uncommon Otto", FindDeep(pop, "HowToGet").GetComponent<Text>().text);
             StringAssert.Contains("Not made yet", FindDeep(pop, "StatLines").GetComponent<Text>().text);
 
             Object.DestroyImmediate(FindDeep(canvas, "Popup").gameObject);

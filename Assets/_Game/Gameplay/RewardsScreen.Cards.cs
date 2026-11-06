@@ -171,7 +171,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Id of the Common hero of a region (the hero a region goal gives), null when the region has none.</summary>
         static string RegionHeroId(int region)
         {
-            foreach (CharacterSpec c in CharacterDefs.All) if (c.IsRegionHero && c.Region == region) return c.Id;
+            foreach (CharacterSpec c in CharacterDefs.All) if (c.RegionStarter && c.Region == region) return c.Id;
             return null;
         }
 
@@ -183,7 +183,7 @@ namespace BoingUpSkyTower.Gameplay
             if (e.Coins > 0) l.Add(new RItem { Icon = CoinSprite, Text = Compact(e.Coins) });
             if (e.PowerUps > 0) l.Add(new RItem { Icon = BoltSprite, Text = "x" + e.PowerUps });
             // a hero reward shows the hero's face; the random weekly hero (HeroRegion -1) is not known before the claim and shows the generic heroes icon
-            if (e.GivesHero) l.Add(new RItem { IsHero = true, HeroId = e.HeroRegion > 0 ? RegionHeroId(e.HeroRegion) : null, Icon = ToyKit.Get("icon_heroes"), Text = "" });
+            if (e.GivesHero) l.Add(new RItem { IsHero = true, HeroId = !string.IsNullOrEmpty(e.HeroId) ? e.HeroId : e.HeroRegion > 0 ? RegionHeroId(e.HeroRegion) : null, Icon = ToyKit.Get("icon_heroes"), Text = "" });
             return l;
         }
 

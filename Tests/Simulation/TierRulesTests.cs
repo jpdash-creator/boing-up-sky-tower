@@ -67,7 +67,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         [Fact]
         public void EveryDefinedTierRowObeysItsRule()
         {
-            Assert.Equal(5, MergeTierDefs.Rows.Length);
+            Assert.Equal(5 + 19 + 19, MergeTierDefs.Rows.Length);   // 5 Uncommon heroes + Region 1 and Region 2 (Momo/Capi Rare/Elite/Legendary, 4 new heroes x 4 tiers each)
             foreach (TierRow row in MergeTierDefs.Rows)
             {
                 Assert.Null(TierRules.Validate(row));
@@ -160,7 +160,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void TheFiveUncommonRowsAreTheFixedSeedDrawAndNeverChange()
         {
             // The constants in MergeTierDefs.Rows are what Generate gave for BaseSeed (20261104) + line index over the Common hero. Changing the generator or the rule changes this test on purpose.
-            for (int i = 0; i < MergeTierDefs.Rows.Length; i++)
+            for (int i = 0; i < 5; i++)   // the first five rows are the original Uncommon heroes; the Region 1 rows use their own seeds (Tools/tier_rows.py)
             {
                 TierRow row = MergeTierDefs.Rows[i];
                 Assert.Equal(TierRules.Lines[i], row.LineId);
@@ -174,6 +174,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
+                if (row.Rarity != CharacterRarity.Uncommon) continue;
                 CharacterSpec spec = CharacterDefs.Get(row.Id);
                 ShownStats common = CharacterDefs.Get(row.LineId).ShownValues();
                 ShownStats shown = spec.ShownValues();
@@ -196,6 +197,28 @@ namespace BoingUpSkyTower.Simulation.Tests
                 expect.Add("Run coins +" + row.RunCoinsAdd);
                 expect.Add("Run gems +" + row.RunGemsAdd);
                 Assert.Equal(expect, lines);
+            }
+        }
+
+        [Fact]
+        public void EveryRegion1RowIsExactOverThePreviousTierAndCarriesTheHeroIdentity()
+        {
+            // identity stat of the four new heroes: boosted at EVERY tier (Jump, Speed, Control, Wall Bounce)
+            var identity = new Dictionary<string, int> { { "ribbi", 0 }, { "bumble", 1 }, { "dandy", 2 }, { "pip", 3 }, { "moss", 3 } };
+            foreach (TierRow row in MergeTierDefs.Rows)
+            {
+                CharacterSpec common = CharacterDefs.Get(row.LineId);
+                ShownStats prev = common.ShownValues();
+                for (int r = 1; r < (int)row.Rarity; r++)
+                {
+                    TierRow t = null;
+                    foreach (TierRow x in MergeTierDefs.Rows) if (x.LineId == row.LineId && (int)x.Rarity == r) t = x;
+                    Assert.NotNull(t);
+                    prev = TierRules.Apply(prev, common.ShownValues(), t);
+                }
+                Assert.Null(TierRules.ValidateChain(prev, row));
+                int id;
+                if (identity.TryGetValue(row.LineId, out id)) Assert.True(Pcts(row)[id] > 0, row.Id + " boosts its identity stat");
             }
         }
 

@@ -121,17 +121,26 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void OnlyTheLastLevelsGoalGivesTheRegionsCommonHeroAndThereIsNoSeparateRegionBonus()
+        public void TheLastLevelsGoalGivesTheRegionsStarterHeroRegion1AlsoHandsOutItsFourOtherCommonsAndThereIsNoSeparateRegionBonus()
         {
             ProgressService svc = NewService();
+            var region1Extra = new Dictionary<string, string>
+            {
+                { "g_1_levels_2", "bumble" }, { "g_1_levels_3", "ribbi" }, { "g_1_levels_4", "dandy" }, { "g_1_stars_5", "pip" },
+                { "g_2_levels_2", "nib" }, { "g_2_levels_3", "spike" }, { "g_2_levels_4", "moss" }, { "g_2_stars_5", "fenn" }
+            };
             for (int r = 1; r <= 5; r++)
             {
                 int heroes = 0;
                 foreach (RegionGoal g in svc.RegionGoals(r))
                 {
-                    if (g.HeroRegion != 0) { heroes++; Assert.AreEqual("g_" + r + "_levels_5", g.Id); Assert.AreEqual(r, g.HeroRegion); Assert.AreEqual(15, g.Target); }
+                    if (!g.GivesHero) continue;
+                    heroes++;
+                    string named;
+                    if (g.HeroId != null) { Assert.IsTrue(r <= 2); Assert.IsTrue(region1Extra.TryGetValue(g.Id, out named), g.Id); Assert.AreEqual(named, g.HeroId); Assert.AreEqual(0, g.HeroRegion, g.Id); }
+                    else { Assert.AreEqual("g_" + r + "_levels_5", g.Id); Assert.AreEqual(r, g.HeroRegion); Assert.AreEqual(15, g.Target); }
                 }
-                Assert.AreEqual(1, heroes, "region " + r);
+                Assert.AreEqual(r <= 2 ? 5 : 1, heroes, "region " + r);
             }
             Assert.AreEqual(0, svc.RewardDefs.RegionRewards.Count);
         }
@@ -277,9 +286,9 @@ namespace BoingUpSkyTower.Tests
         public void ClaimAllRegionPaysEverythingReadyOfThatRegionOnlyInOneSave()
         {
             ProgressService svc = SeededService();
-            int expectGems = 0, expectCoins = 0, expectUnits = 0;
+            int expectGems = 0, expectCoins = 0, expectUnits = 0, expectHeroes = 0;
             foreach (RegionGoal g in svc.RegionGoals(1))
-                if (svc.IsRegionGoalReady(g)) { expectGems += g.Gems; expectCoins += g.Coins; expectUnits += g.PowerUps; }
+                if (svc.IsRegionGoalReady(g)) { expectGems += g.Gems; expectCoins += g.Coins; expectUnits += g.PowerUps; if (g.GivesHero) expectHeroes++; }
             int gems = svc.Gems, coins = svc.Coins, saves = 0;
             svc.Changed += () => saves++;
             RewardClaimOutcome res = svc.ClaimAllRegion(1);
@@ -289,7 +298,8 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(expectUnits, res.PowerUpIds.Count);
             Assert.AreEqual(gems + expectGems, svc.Gems);
             Assert.AreEqual(coins + expectCoins, svc.Coins);
-            Assert.AreEqual(1, res.HeroIds.Count, "the clear-all goal is ready, so the region hero comes with it");
+            Assert.AreEqual(expectHeroes, res.HeroIds.Count, "every ready hero goal gives its hero");
+            CollectionAssert.Contains(res.HeroIds, "momo", "the clear-all goal is ready, so the region hero comes with it");
             Assert.IsFalse(svc.HasClaimableInRegion(1));
             Assert.AreEqual(RewardClaimResult.NotReady, svc.ClaimAllRegion(1).Result, "nothing left");
             Assert.AreEqual(RewardClaimResult.NotReady, svc.ClaimAllRegion(2).Result);
@@ -315,10 +325,19 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(otto, svc.Copies("beachotter"));
             svc.TryClaimRegionGoal("g_1_levels_5");   // already claimed: no second copy
             Assert.AreEqual(momo + 1, svc.Copies("momo"));
-            // lower Levels goals give no hero
-            RewardClaimOutcome low = svc.TryClaimRegionGoal("g_1_levels_4");
+            // lower Levels goals give no starter hero
+            RewardClaimOutcome low = svc.TryClaimRegionGoal("g_1_levels_1");
             Assert.AreEqual(0, low.HeroIds.Count);
             Assert.AreEqual(momo + 1, svc.Copies("momo"));
+            // Region 1 progress hands out the four other Common heroes, one copy each; they are not owned before (docs/40)
+            foreach (string id in new[] { "bumble", "ribbi", "dandy", "pip" }) Assert.AreEqual(0, svc.Copies(id), id + " is not free");
+            CollectionAssert.AreEqual(new[] { "bumble" }, svc.TryClaimRegionGoal("g_1_levels_2").HeroIds);
+            CollectionAssert.AreEqual(new[] { "ribbi" }, svc.TryClaimRegionGoal("g_1_levels_3").HeroIds);
+            CollectionAssert.AreEqual(new[] { "dandy" }, svc.TryClaimRegionGoal("g_1_levels_4").HeroIds);
+            CollectionAssert.AreEqual(new[] { "pip" }, svc.TryClaimRegionGoal("g_1_stars_5").HeroIds);
+            foreach (string id in new[] { "bumble", "ribbi", "dandy", "pip" }) { Assert.AreEqual(1, svc.Copies(id), id); Assert.IsTrue(svc.OwnsCharacter(id), id); Assert.IsTrue(svc.IsCharacterVisible(id), id + " needs no reveal"); }
+            Assert.AreEqual(0, svc.TryClaimRegionGoal("g_1_levels_2").HeroIds.Count, "claimed once");
+            Assert.AreEqual(1, svc.Copies("bumble"));
         }
 
         [Test]

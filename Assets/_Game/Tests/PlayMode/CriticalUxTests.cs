@@ -160,6 +160,20 @@ namespace BoingUpSkyTower.Tests
                     items[n].Box = new Rect(x0, y0, x1 - x0, y1 - y0);
                 }
 
+                // Content under a Mask (a hero face: the doll is much bigger than the round window it shows through) is only visible inside the mask: audit just that part.
+                for (int n = items.Count - 1; n >= 0; n--)
+                {
+                    Transform host = items[n].Rt.parent;
+                    Mask mk = host != null ? host.GetComponentInParent<Mask>() : null;
+                    if (mk == null || !mk.isActiveAndEnabled || mk.GetComponentInParent<Canvas>() != canvas) continue;
+                    Rect mb = ToCanvasUnits(mk.rectTransform, cam, scale);
+                    Rect ib = items[n].Box;
+                    float x0 = Mathf.Max(ib.xMin, mb.xMin), x1 = Mathf.Min(ib.xMax, mb.xMax);
+                    float y0 = Mathf.Max(ib.yMin, mb.yMin), y1 = Mathf.Min(ib.yMax, mb.yMax);
+                    if (x1 <= x0 || y1 <= y0) { items.RemoveAt(n); continue; }
+                    items[n].Box = new Rect(x0, y0, x1 - x0, y1 - y0);
+                }
+
                 // A modal popup or overlay hides everything behind it: only the modal is audited.
                 if (items.Exists(i => i.Name.StartsWith("Popup/") || i.Name.StartsWith("Overlay/")))
                     items.RemoveAll(i => !(i.Name.StartsWith("Popup/") || i.Name.StartsWith("Overlay/")));
@@ -1450,6 +1464,18 @@ namespace BoingUpSkyTower.Tests
             }
         }
 
+        /// <summary>F4.1 and F4.2: every Region 1 and Region 2 hero owned (3 copies of each type below Legendary, 1 Legendary): the biggest hero lists the game can have (40 mergeable types x 3 cards = 120 merge cards, 50 hero types in All Heroes).</summary>
+        static void Region1Full()
+        {
+            GameSession.Progress.ResetAll();
+            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn" })
+                foreach (string suffix in new[] { "", "_u", "_r", "_e", "_l" })
+                {
+                    GameSession.Progress.AddCopies(line + suffix, suffix == "_l" ? 1 : 3);
+                    GameSession.Progress.MarkHeroRevealed(line + suffix);
+                }
+        }
+
         IEnumerator MergeAudit(int textPercent)
         {
             GameSettings.TextPercent = textPercent;
@@ -1460,6 +1486,9 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("merge-list", () => { MergeState(false); meta.ShowMerge(); }, problems);
             yield return CheckScreen("merge-full-grid", () => { MergeState(true); meta.ShowMerge(); }, problems);
             yield return CheckScreen("merge-not-enough", () => { GameSession.Progress.ResetAll(); meta.ShowMerge(); }, problems);   // Momo with his one starting copy: an empty list
+            // F4.1: all 25 Region 1 heroes owned: 20 mergeable types, 60 cards (a long scrolling grid), top and scrolled, plus a selected Rare type
+            yield return CheckScreen("merge-region1-all", () => { Region1Full(); meta.ShowMerge(); }, problems);
+            yield return CheckScreen("merge-region1-selected-rare", () => { Region1Full(); meta.ShowMerge(); meta.CurrentMerge.SelectType("pip_r"); }, problems);
             // selection: three of one type (green ticks, three filled slots, Merge enabled), a wrong mix (Merge disabled with the hint)
             yield return CheckScreen("merge-selected-3", () => { MergeState(true); meta.ShowMerge(); meta.CurrentMerge.SelectType("momo"); }, problems);
             yield return CheckScreen("merge-selected-capi", () => { MergeState(true); meta.ShowMerge(); meta.CurrentMerge.SelectType("forestgirl"); }, problems);
@@ -1491,6 +1520,10 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("all-heroes-scrolled", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(0.5f); }, problems);
             yield return CheckScreen("all-heroes-bottom", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(1f); }, problems);
             yield return CheckScreen("all-heroes-owned", () => { MergeState(true); GameSession.Progress.AddCopies("momo_u", 1); meta.ShowAllHeroes(); }, problems);
+            // F4.1: all 25 Region 1 heroes owned (full colour cards, nine rows), top, a quarter and the bottom, and the details of a new hero
+            yield return CheckScreen("all-heroes-region1-owned", () => { Region1Full(); meta.ShowAllHeroes(); }, problems);
+            yield return CheckScreen("all-heroes-region1-scrolled", () => { Region1Full(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(0.2f); }, problems);
+            yield return CheckScreen("all-heroes-region1-info", () => { Region1Full(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("dandy_l"); }, problems);
             // details popups: a real locked hero, a not-yet-made tier, and an owned hero
             yield return CheckScreen("all-heroes-info", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("momo_u"); }, problems);
             yield return CheckScreen("all-heroes-info-legendary", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("monk_legendary"); }, problems);

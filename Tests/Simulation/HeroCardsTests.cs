@@ -52,8 +52,9 @@ namespace BoingUpSkyTower.Simulation.Tests
         [Fact]
         public void TopTierHeroesNeverAppearInTheMergeList()
         {
-            // no Rare exists yet, so even 5 Uncommon copies cannot merge
-            Assert.Empty(HeroCards.Mergeable(new[] { S("momo_u") }, Copies("momo_u", 5)));
+            // Legendary has no next tier, so even 5 copies cannot merge (a Region 1 Uncommon can: Rare exists now)
+            Assert.Empty(HeroCards.Mergeable(new[] { S("momo_l") }, Copies("momo_l", 5)));
+            Assert.Equal(5, HeroCards.Mergeable(new[] { S("momo_u") }, Copies("momo_u", 5)).Count);
         }
 
         [Fact]
@@ -111,12 +112,16 @@ namespace BoingUpSkyTower.Simulation.Tests
             List<AllHeroGroup> g = Groups("momo");
             Assert.Equal(new[] { 1, 2, 3, 4, 5 }, g.Select(x => x.Region).ToArray());
             Assert.Equal("Region name 1", g[0].RegionName);
-            foreach (AllHeroGroup grp in g)
+            var ladder = new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary };
+            Assert.Equal(25, g[0].Entries.Count);   // Region 1: Momo, Bumble, Ribbi, Dandy, Pip, each with the whole ladder
+            Assert.Equal(25, g[1].Entries.Count);   // Region 2: Capi, Nib, Spike, Moss, Fenn
+            for (int i = 0; i < 5; i++) Assert.Equal(ladder, g[0].Entries.Skip(i * 5).Take(5).Select(e => e.Rarity).ToArray());
+            for (int i = 2; i < g.Count; i++)
             {
-                Assert.Equal(5, grp.Entries.Count);
-                Assert.Equal(new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary }, grp.Entries.Select(e => e.Rarity).ToArray());
+                Assert.Equal(5, g[i].Entries.Count);
+                Assert.Equal(ladder, g[i].Entries.Select(e => e.Rarity).ToArray());
             }
-            Assert.Equal(25, AllHeroes.Flatten(g).Count);
+            Assert.Equal(65, AllHeroes.Flatten(g).Count);
         }
 
         [Fact]
@@ -127,23 +132,30 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void LockedStateFollowsOwnershipAndRareEliteLegendaryAreAlwaysLockedPlaceholders()
+        public void LockedStateFollowsOwnershipAndRegions2To5RareEliteLegendaryAreLockedPlaceholders()
         {
             List<AllHeroEntry> all = AllHeroes.Flatten(Groups("momo", "forestgirl"));
             Assert.False(all.First(e => e.Id == "momo").Locked);
             Assert.False(all.First(e => e.Id == "forestgirl").Locked);
             Assert.True(all.First(e => e.Id == "momo_u").Locked);
+            Assert.True(all.First(e => e.Id == "bumble").Locked);   // the extra Region 1 Commons are not free: they need a copy
             Assert.True(all.First(e => e.Id == "beachotter").Locked);
-            foreach (AllHeroEntry e in all.Where(x => x.Rarity >= CharacterRarity.Rare))
+            // Regions 1 and 2 have real heroes at every tier (locked until owned); regions 3 to 5 have placeholders from Rare up
+            foreach (AllHeroEntry e in all.Where(x => x.Region <= 2))
+            {
+                Assert.False(e.Placeholder, e.Id);
+                Assert.NotNull(e.Spec);
+            }
+            foreach (AllHeroEntry e in all.Where(x => x.Region > 2 && x.Rarity >= CharacterRarity.Rare))
             {
                 Assert.True(e.Locked, e.Id);
                 Assert.True(e.Placeholder, e.Id);
                 Assert.Null(e.Spec);
                 Assert.NotNull(e.BaseSpec);
             }
-            AllHeroEntry rare = all.First(e => e.Id == "momo_rare");
-            Assert.Equal("Rare Momo", rare.Name);
-            Assert.Equal("Merge 3 Uncommon Momo", rare.HowToGet);
+            AllHeroEntry rare = all.First(e => e.Id == "beachotter_rare");
+            Assert.Equal("Rare Otto", rare.Name);
+            Assert.Equal("Merge 3 Uncommon Otto", rare.HowToGet);
         }
 
         [Fact]
@@ -151,6 +163,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             List<AllHeroEntry> all = AllHeroes.Flatten(Groups());
             Assert.Equal("Merge 3 Common Momo", all.First(e => e.Id == "momo_u").HowToGet);
+            Assert.Equal("Merge 3 Uncommon Pip", all.First(e => e.Id == "pip_r").HowToGet);
             Assert.Equal("Merge 3 Elite Bao", all.First(e => e.Id == "monk_legendary").HowToGet);
             Assert.Contains("Region name 3", all.First(e => e.Id == "beachotter").HowToGet);
             Assert.Contains("Bundles / Chests / Rewards", all.First(e => e.Id == "beachotter").HowToGet);

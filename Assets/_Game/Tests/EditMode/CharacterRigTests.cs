@@ -45,9 +45,16 @@ namespace BoingUpSkyTower.Tests
         public void TheRosterHasMomoAndTheRegionHeroes()
         {
             var all = CharacterCatalog.All;
-            Assert.AreEqual(10, all.Length, "5 Common heroes + their 5 Uncommon merge tiers (docs/34)");
-            // order is hero then tier (docs/36): each Common hero is followed by its Uncommon tier
-            string[] expected = { "momo", "momo_u", "forestgirl", "forestgirl_u", "beachotter", "beachotter_u", "candygirl", "candygirl_u", "monk", "monk_u" };
+            Assert.AreEqual(56, all.Length, "13 Common heroes + 43 merge tiers (Regions 1 and 2: 5 heroes x 4 tiers each, Regions 3 to 5: Uncommon only), docs/34 and docs/40");
+            // order is hero then tier (docs/36): each Common hero is followed by its tiers; Region 1 first
+            string[] expected =
+            {
+                "momo", "momo_u", "momo_r", "momo_e", "momo_l", "bumble", "bumble_u", "bumble_r", "bumble_e", "bumble_l", "ribbi", "ribbi_u", "ribbi_r", "ribbi_e", "ribbi_l",
+                "dandy", "dandy_u", "dandy_r", "dandy_e", "dandy_l", "pip", "pip_u", "pip_r", "pip_e", "pip_l",
+                "forestgirl", "forestgirl_u", "forestgirl_r", "forestgirl_e", "forestgirl_l", "nib", "nib_u", "nib_r", "nib_e", "nib_l", "spike", "spike_u", "spike_r", "spike_e", "spike_l",
+                "moss", "moss_u", "moss_r", "moss_e", "moss_l", "fenn", "fenn_u", "fenn_r", "fenn_e", "fenn_l",
+                "beachotter", "beachotter_u", "candygirl", "candygirl_u", "monk", "monk_u"
+            };
             for (int i = 0; i < expected.Length; i++) Assert.AreEqual(expected[i], all[i].Id);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get("nobody"), "an unknown id falls back to Momo");
         }

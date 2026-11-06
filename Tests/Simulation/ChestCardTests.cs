@@ -90,19 +90,19 @@ namespace BoingUpSkyTower.Simulation.Tests
             List<CharacterSpec> some = ChestRolls.Pool(CharacterRarity.Common, Full, r => false);
             Assert.Equal(new[] { "base1" }, some.Select(c => c.Id).ToArray());   // region 1 is always open
             // the real game: five region heroes, no merge tier is ever a Common card
-            Assert.Equal(new[] { "beachotter", "candygirl", "forestgirl", "momo", "monk" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, null).Select(c => c.Id).ToArray());
-            Assert.Equal(new[] { "momo" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, r => false).Select(c => c.Id).ToArray());
+            Assert.Equal(new[] { "beachotter", "bumble", "candygirl", "dandy", "fenn", "forestgirl", "momo", "monk", "moss", "nib", "pip", "ribbi", "spike" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, null).Select(c => c.Id).ToArray());
+            Assert.Equal(new[] { "bumble", "dandy", "momo", "pip", "ribbi" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, r => false).Select(c => c.Id).ToArray());
         }
 
         [Fact]
         public void AnEmptyTierFallsBackToTheNextLowerTierThatHasAHero()
         {
-            // today's real game: Uncommon exists (merge tiers), Rare and Elite do not yet
-            foreach (CharacterRarity drawn in new[] { CharacterRarity.Rare, CharacterRarity.Epic })
+            // today's real game (F4.1): Region 1 has Common to Legendary heroes, so a drawn tier is used as it is while region 1 is the only open region
+            foreach (CharacterRarity drawn in new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic })
             {
                 CharacterRarity got;
-                Assert.True(ChestRolls.TryResolveTier(drawn, CharacterDefs.All, null, out got));
-                Assert.Equal(CharacterRarity.Uncommon, got);
+                Assert.True(ChestRolls.TryResolveTier(drawn, CharacterDefs.All, r => false, out got));
+                Assert.Equal(drawn, got);
             }
             // Uncommon and Rare exist: Elite gives Rare; Rare only in a closed region: Rare falls to Uncommon
             var upToRare = new[] { Hero("b", CharacterRarity.Common, 1), Hero("u1", CharacterRarity.Uncommon, 0, "b"), Hero("r1", CharacterRarity.Rare, 0, "b") };
@@ -128,7 +128,9 @@ namespace BoingUpSkyTower.Simulation.Tests
             for (int i = 0; i < 20000; i++)
                 foreach (ChestKind kind in new[] { ChestKind.Iron, ChestKind.Golden })
                     seen.Add(ChestRolls.DrawHero(kind, Mix(ref s), Mix(ref s), CharacterDefs.All, null).Rarity);
-            Assert.All(seen, t => Assert.True(t == CharacterRarity.Common || t == CharacterRarity.Uncommon, t.ToString()));
+            // F4: Regions 1 and 2 now have Common to Legendary heroes, so every drawn tier must be a tier that really has a hero
+            Assert.All(seen, t => Assert.Contains(CharacterDefs.All, c => c.Rarity == t));
+            Assert.Contains(CharacterRarity.Rare, seen);
         }
 
         [Fact]

@@ -151,8 +151,7 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void EveryRosterHeroIsInRangeAndHasADistinctRunBonus()
         {
-            var coins = new System.Collections.Generic.HashSet<int>();
-            var gems = new System.Collections.Generic.HashSet<int>();
+            var pairs = new System.Collections.Generic.HashSet<string>();   // nine Common heroes, only six coin steps (50..100): the PAIR (coins, gems) is distinct
             foreach (CharacterSpec c in CharacterDefs.All)
             {
                 if (c.IsMergeTier) continue;   // tiers add their bonus on top of the Common one (docs/34 2b); they are checked in MergeTests and TierRulesTests
@@ -160,8 +159,7 @@ namespace BoingUpSkyTower.Tests
                 Assert.That(c.Stats.RunBonusCoins, Is.InRange(50, 100), c.Id);
                 Assert.AreEqual(0, c.Stats.RunBonusCoins % 10, c.Id);
                 Assert.That(c.Stats.RunBonusGems, Is.InRange(1, 5), c.Id);
-                Assert.IsTrue(coins.Add(c.Stats.RunBonusCoins), c.Id + " coin bonus is not distinct");
-                Assert.IsTrue(gems.Add(c.Stats.RunBonusGems), c.Id + " gem bonus is not distinct");
+                Assert.IsTrue(pairs.Add(c.Stats.RunBonusCoins + "/" + c.Stats.RunBonusGems), c.Id + " run bonus (coins/gems) is not distinct");
             }
         }
 
