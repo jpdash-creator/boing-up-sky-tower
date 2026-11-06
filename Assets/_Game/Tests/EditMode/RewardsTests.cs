@@ -520,7 +520,7 @@ namespace BoingUpSkyTower.Tests
                 RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_hard5");
                 Assert.AreEqual(RewardClaimResult.Ok, res.Result);
                 picks[run] = res.HeroIds[0];
-                CollectionAssert.Contains(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter" }, picks[run], "regions 4 and 5 are closed");
+                CollectionAssert.Contains(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" }, picks[run], "regions 4 and 5 are closed");
             }
             Assert.AreEqual(picks[0], picks[1], "same seed and claim count, same hero");
         }

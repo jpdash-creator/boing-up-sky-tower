@@ -86,6 +86,12 @@ namespace BoingUpSkyTower.Economy
         public static readonly CharacterSpec Spike = new CharacterSpec { Id = "spike", Name = "Spike", Rarity = CharacterRarity.Common, Region = 2, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 8, Control = 28, WallBoostHundredths = 80, RunBonusCoins = 50, RunBonusGems = 3 } };
         public static readonly CharacterSpec Moss = new CharacterSpec { Id = "moss", Name = "Moss", Rarity = CharacterRarity.Common, Region = 2, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 8, Control = 31, WallBoostHundredths = 85, RunBonusCoins = 90, RunBonusGems = 3 } };
         public static readonly CharacterSpec Fenn = new CharacterSpec { Id = "fenn", Name = "Fenn", Rarity = CharacterRarity.Common, Region = 2, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 10, Control = 31, WallBoostHundredths = 74, RunBonusCoins = 100, RunBonusGems = 5 } };
+        // Region 3 (Sunny Beach) extra Common heroes (F4.3): Otto is the starter, these four come as hero cards. Pinch the crab = Shield, Shelly the sea turtle = Slow Time (calm control), Bloop the pufferfish kid = Double Jump (jump),
+        // Coco the monkey = Magnet and a coin find stat (no coins in his art).
+        public static readonly CharacterSpec Pinch = new CharacterSpec { Id = "pinch", Name = "Pinch", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 8, Control = 29, WallBoostHundredths = 82, RunBonusCoins = 60, RunBonusGems = 3 } };
+        public static readonly CharacterSpec Shelly = new CharacterSpec { Id = "shelly", Name = "Shelly", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 18, MaxSpeed = 8, Control = 33, WallBoostHundredths = 74, RunBonusCoins = 70, RunBonusGems = 2 } };
+        public static readonly CharacterSpec Bloop = new CharacterSpec { Id = "bloop", Name = "Bloop", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 9, Control = 28, WallBoostHundredths = 73, RunBonusCoins = 90, RunBonusGems = 2 } };
+        public static readonly CharacterSpec Coco = new CharacterSpec { Id = "coco", Name = "Coco", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 10, Control = 30, WallBoostHundredths = 75, CoinFind = 30, RunBonusCoins = 80, RunBonusGems = 1 } };
 
         // region heroes (T66, owner-approved paintings): R2 forest girl Capi, R3 beach sea otter Otto, R4 candy girl Bonbon, R5 Shaolin monk Bao. (The old Sporeling was deleted 2026-11-01; Capi replaced it. Old saves that name "sporeling" are cleaned in ProgressService.EnsureChestFields and fall back to Momo.)
         public static readonly CharacterSpec ForestGirl = new CharacterSpec { Id = "forestgirl", Name = "Capi", Rarity = CharacterRarity.Common, Region = 2, RegionStarter = true, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 10, Control = 29, WallBoostHundredths = 79, RunBonusCoins = 90, RunBonusGems = 1 } };
@@ -94,7 +100,7 @@ namespace BoingUpSkyTower.Economy
         public static readonly CharacterSpec Monk = new CharacterSpec { Id = "monk", Name = "Bao", Rarity = CharacterRarity.Common, Region = 5, RegionStarter = true, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 10, Control = 31, WallBoostHundredths = 80, RunBonusCoins = 60, RunBonusGems = 5 } };
 
         /// <summary>The Common heroes in list order: Region 1 first (Momo, then Bumble, Ribbi, Dandy, Pip), then one hero per further region.</summary>
-        static readonly CharacterSpec[] Bases = { Momo, Bumble, Ribbi, Dandy, Pip, ForestGirl, Nib, Spike, Moss, Fenn, BeachOtter, CandyGirl, Monk };
+        static readonly CharacterSpec[] Bases = { Momo, Bumble, Ribbi, Dandy, Pip, ForestGirl, Nib, Spike, Moss, Fenn, BeachOtter, Pinch, Shelly, Bloop, Coco, CandyGirl, Monk };
 
         /// <summary>Every character that exists (has art). More are added here as they are made.</summary>
         public static readonly CharacterSpec[] All = Concat(Bases, MergeTierDefs.Create(Bases));

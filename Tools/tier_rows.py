@@ -11,12 +11,14 @@ from decimal import Decimal, ROUND_HALF_UP
 import math
 
 BASE_SEED = 20261104
-LINES = ["momo", "forestgirl", "beachotter", "candygirl", "monk", "bumble", "ribbi", "dandy", "pip", "nib", "spike", "moss", "fenn"]
+LINES = ["momo", "forestgirl", "beachotter", "candygirl", "monk", "bumble", "ribbi", "dandy", "pip", "nib", "spike", "moss", "fenn", "pinch", "shelly", "bloop", "coco"]
 # Common stats (launch, speed, control, wall hundredths) of the Region 1 heroes (Characters.cs)
 COMMON = {"momo": (19, 9, 30, 77), "bumble": (19, 10, 31, 76), "ribbi": (21, 9, 28, 74), "dandy": (19, 8, 33, 72), "pip": (19, 9, 30, 84),
-          "forestgirl": (19, 10, 29, 79), "nib": (19, 10, 29, 75), "spike": (20, 8, 28, 80), "moss": (19, 8, 31, 85), "fenn": (20, 10, 31, 74)}
-IDENTITY = {"momo": None, "forestgirl": None, "bumble": 1, "ribbi": 0, "dandy": 2, "pip": 3, "nib": None, "spike": None, "moss": 3, "fenn": None}
-BIG_RUN = {"nib", "fenn"}   # identity is the run bonus / coin find: the best of two draws for the run coins and gems   # index into (Jump, Speed, Control, Wall)
+          "forestgirl": (19, 10, 29, 79), "nib": (19, 10, 29, 75), "spike": (20, 8, 28, 80), "moss": (19, 8, 31, 85), "fenn": (20, 10, 31, 74),
+          "beachotter": (18, 8, 32, 72), "pinch": (19, 8, 29, 82), "shelly": (18, 8, 33, 74), "bloop": (21, 9, 28, 73), "coco": (19, 10, 30, 75)}
+IDENTITY = {"momo": None, "forestgirl": None, "bumble": 1, "ribbi": 0, "dandy": 2, "pip": 3, "nib": None, "spike": None, "moss": 3, "fenn": None,
+            "beachotter": None, "pinch": 3, "shelly": 2, "bloop": 0, "coco": None}
+BIG_RUN = {"nib", "fenn", "coco"}   # identity is the run bonus / coin find: the best of two draws for the run coins and gems   # index into (Jump, Speed, Control, Wall)
 RULES = {  # rarity: (boosted stats, coins min, coins max, gems min, gems max)
     1: (2, 50, 100, 1, 5),
     2: (3, 200, 500, 5, 10),
@@ -35,14 +37,19 @@ NAMES = {
     ("spike", 1): "Logplate Spike", ("spike", 2): "Thornguard Spike", ("spike", 3): "Oakbrace Spike", ("spike", 4): "Quillking Spike",
     ("moss", 1): "Vinebelt Moss", ("moss", 2): "Shellplate Moss", ("moss", 3): "Ferncrown Moss", ("moss", 4): "Shellking Moss",
     ("fenn", 1): "Scoutvest Fenn", ("fenn", 2): "Coinguard Fenn", ("fenn", 3): "Goldcape Fenn", ("fenn", 4): "Foxking Fenn",
+    ("beachotter", 2): "Shellplate Otto", ("beachotter", 3): "Wavecloak Otto", ("beachotter", 4): "Pearlking Otto",
+    ("pinch", 1): "Shellvest Pinch", ("pinch", 2): "Clawguard Pinch", ("pinch", 3): "Tidecrown Pinch", ("pinch", 4): "Reefking Pinch",
+    ("shelly", 1): "Coralstrap Shelly", ("shelly", 2): "Reefplate Shelly", ("shelly", 3): "Pearltiara Shelly", ("shelly", 4): "Coralqueen Shelly",
+    ("bloop", 1): "Coralband Bloop", ("bloop", 2): "Reefmail Bloop", ("bloop", 3): "Bubblecrown Bloop", ("bloop", 4): "Bubbleking Bloop",
+    ("coco", 1): "Palmwrap Coco", ("coco", 2): "Leafmail Coco", ("coco", 3): "Junglecape Coco", ("coco", 4): "Palmking Coco",
     ("pip", 1): "Redcape Pip", ("pip", 2): "Crownguard Pip", ("pip", 3): "Thornplate Pip", ("pip", 4): "Goldshell Pip",
 }
 SUFFIX = {1: "u", 2: "r", 3: "e", 4: "l"}
 
 
 def r1(v):
-    """One decimal, half away from zero on the exact binary value (what .NET prints for "0.0")."""
-    return float(Decimal(v).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+    """One decimal, half away from zero on the value rounded to 15 significant digits (what .NET prints for "0.0")."""
+    return float(Decimal(format(v, ".14e")).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))   # .NET "0.0" formats from 15 significant digits (4.05 prints 4.1)
 
 
 def boosted(prev, pct):
@@ -121,7 +128,7 @@ def apply(prev, pcts):
     return [boosted(prev[i], pcts[i]) for i in range(4)]
 
 
-EXISTING_U = {"momo": ([0, 17, 0, 13], 80, 4), "forestgirl": ([20, 0, 13, 0], 90, 1)}   # constants already in MergeTierDefs.Rows
+EXISTING_U = {"momo": ([0, 17, 0, 13], 80, 4), "forestgirl": ([20, 0, 13, 0], 90, 1), "beachotter": ([15, 0, 0, 12], 50, 2)}   # constants already in MergeTierDefs.Rows
 
 
 def main():

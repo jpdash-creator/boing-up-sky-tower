@@ -350,3 +350,46 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-06,T162,choco_common_v2,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 style-only refs=momo common + candygirl_ref (lighter colors),none,UNRwJwqYAUKM4gn6jTuo,,30,Content/assets/approvals/T161-163 (AskUserQuestion approval),pending owner pick
 2026-11-06,T163,bonbon_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=bonbon rare R-2,none,3QSjpiqHxXbDJxF6uOhT,,30,Content/assets/approvals/T161-163 (AskUserQuestion approval),pending owner pick
 2026-11-06,NOTE,picks,,,,,,,,,T162 Choco Common v2 picked C-4; T163 Bonbon Elite picked E-2; T161 Gummi v2 REJECTED: multi-colour patch look, rethink from scratch (single clear gummy colour, one translucent body)
+2026-11-06,T164,gummi_pink,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 style-only refs=momo common + candygirl_ref (single jelly colour pink),none,sb4JSbGtO8nq5mZYxNQh,,15,Content/assets/approvals/T164-170 (AskUserQuestion approval),pending owner pick
+2026-11-06,T165,gummi_orange,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 style-only refs=momo common + candygirl_ref (single jelly colour orange),none,vl8EXYrZcI7NgIiXwXZZ,,15,Content/assets/approvals/T164-170 (AskUserQuestion approval),pending owner pick
+2026-11-06,T166,gummi_green,byte-plus-seedream-5-lite,image2image,2K 3:4 x1 style-only refs=momo common + candygirl_ref (single jelly colour green),none,hUyKhcpVNtxvDiVwrC2k,,15,Content/assets/approvals/T164-170 (AskUserQuestion approval),pending owner pick
+2026-11-06,T167,choco_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=choco common C-4,none,A8Cwb7YWM9wg8AZcW3EC,,30,Content/assets/approvals/T164-170 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,pending,,,,,,,,,T168 Marsh Uncommon, T169 Cookie Uncommon, T170 Bonbon Legendary approved; waiting for free OpenArt slots (4 at a time)
+2026-11-06,T168,marsh_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=marsh common C-2,none,0CGet06mTpMhWhTBZymx,,30,Content/assets/approvals/T164-170 (AskUserQuestion approval),pending owner pick
+2026-11-06,T169,cookie_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=cookie common C-2,none,MZjb3rwjzipAdfYfGJzp,,30,Content/assets/approvals/T164-170 (AskUserQuestion approval),pending owner pick
+2026-11-06,T170,bonbon_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=bonbon elite E-2,none,mVt5iifdDIFUToAYSBnI,,30,Content/assets/approvals/T164-170 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,picks,,,,,,,,,T164 Gummi Common picked PINK (gummi_pink.png); T167 Choco Uncommon picked U-2
+2026-11-06,NOTE,picks,,,,,,,,,T168 Marsh Uncommon picked U-1; T169 Cookie Uncommon picked U-1
+2026-11-06,NOTE,picks,,,,,,,,,T170 Bonbon Legendary picked L-2 (Bonbon complete)
+2026-11-06,T171,gummi_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=gummi pink common,none,KL9SW12eyG5vMEpD7ju7,,30,Content/assets/approvals/T171-174 (AskUserQuestion approval),pending owner pick
+2026-11-06,T172,choco_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=choco uncommon U-2,none,R6cfNLh1ujLS9eI55Nzy,,30,Content/assets/approvals/T171-174 (AskUserQuestion approval),pending owner pick
+2026-11-06,T173,marsh_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=marsh uncommon U-1,none,AKQoQZ2i0DDwvfrlqUct,,30,Content/assets/approvals/T171-174 (AskUserQuestion approval),pending owner pick
+2026-11-06,T174,cookie_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=cookie uncommon U-1,none,l4KFJJcJiccHYmrrPPne,,30,Content/assets/approvals/T171-174 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,picks,,,,,,,,,T171 Gummi Uncommon picked U-1; T172 Choco Rare picked R-1; T173 Marsh Rare picked R-1; T174 Cookie Rare picked R-2
+2026-11-06,T175,gummi_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=gummi uncommon U-1,none,8JHWdQilk85ULCktl5r1,,30,Content/assets/approvals/T175-178 (AskUserQuestion approval),pending owner pick
+2026-11-06,T176,choco_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=choco rare R-1,none,PwIlBdxa0TmbAw22losD,,30,Content/assets/approvals/T175-178 (AskUserQuestion approval),pending owner pick
+2026-11-06,T177,marsh_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=marsh rare R-1,none,i2tN8LPGPq3mTsAUHsiT,,30,Content/assets/approvals/T175-178 (AskUserQuestion approval),pending owner pick
+2026-11-06,T178,cookie_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=cookie rare R-2,none,fuZbh3nwlgk8bOW7NNti,,30,Content/assets/approvals/T175-178 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,picks,,,,,,,,,T175 Gummi Rare picked R-2; T176 Choco Elite picked E-2; T177 Marsh Elite picked E-2; T178 Cookie Elite picked E-2
+2026-11-06,T179,gummi_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=gummi rare R-2,none,uNiRAoOKpuWt1eZYh0ya,,30,Content/assets/approvals/T179-182 (AskUserQuestion approval),pending owner pick
+2026-11-06,T180,choco_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=choco elite E-2,none,wDNY6KELc9D25LnTNfSC,,30,Content/assets/approvals/T179-182 (AskUserQuestion approval),pending owner pick
+2026-11-06,T181,marsh_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=marsh elite E-2,none,YXOcD6Z8mJRpIlKe66cB,,30,Content/assets/approvals/T179-182 (AskUserQuestion approval),pending owner pick
+2026-11-06,T182,cookie_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=cookie elite E-2,none,rj8Gzvzt6NNWFq7GmT0g,,30,Content/assets/approvals/T179-182 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,picks,,,,,,,,,T179 Gummi Elite picked E-2; T180 Choco Legendary picked L-2 (Choco complete); T181 Marsh Legendary picked L-2 (Marsh complete); T182 Cookie Legendary picked L-2 (Cookie complete)
+2026-11-06,T183,gummi_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=gummi elite E-2,none,qlBbNzkccnfF7jCMl7qy,,30,Content/assets/approvals/T183-188 (AskUserQuestion approval),pending owner pick
+2026-11-06,T184,bao_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=bao uncommon,none,O8AXpx6jXhvzBOnhFVLN,,30,Content/assets/approvals/T183-188 (AskUserQuestion approval),pending owner pick
+2026-11-06,T185,sprout_common,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 style-only refs=momo common + candygirl_ref (bonbon),none,lLgQY6iCwcULyoU3sFUp,,30,Content/assets/approvals/T183-188 (AskUserQuestion approval),pending owner pick
+2026-11-06,T186,tora_common,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 style-only refs=momo common + candygirl_ref (bonbon),none,AoLtJOOQOHnMuFROOD7s,,30,Content/assets/approvals/T183-188 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,pending,,,,,,,,,T187 Rusu and T188 Ryu approved; waiting for free OpenArt slots
+2026-11-06,T187,rusu_common,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 style-only refs=momo common + candygirl_ref (bonbon),none,9X7D1uXkSTcIiTak5CuV,,30,Content/assets/approvals/T183-188 (AskUserQuestion approval),pending owner pick
+2026-11-06,T188,ryu_common,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 style-only refs=momo common + candygirl_ref (bonbon),none,ze2lgSyiacylLVjB4u1S,,30,Content/assets/approvals/T183-188 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,picks,,,,,,,,,T183 Gummi Legendary picked L-1 (Gummi complete; Region 4 art complete); T184 Bao Rare picked R-2
+2026-11-06,NOTE,picks,,,,,,,,,T185 Sprout Common picked C-1; T186 Tora Common picked C-2; T187 Rusu Common picked C-2; T188 Ryu Common picked C-2
+2026-11-06,T189,bao_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=bao rare R-2,none,erBSAhZxSxa8BcN1gFCO,,30,Content/assets/approvals/T189-193 (AskUserQuestion approval),pending owner pick
+2026-11-06,T190,sprout_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=sprout common C-1,none,cWRGvT6Zjj5AwKaWTaRU,,30,Content/assets/approvals/T189-193 (AskUserQuestion approval),pending owner pick
+2026-11-06,T191,tora_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=tora common C-2,none,9CGWKi7U2mDtNH7JRuB3,,30,Content/assets/approvals/T189-193 (AskUserQuestion approval),pending owner pick
+2026-11-06,T192,rusu_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=rusu common C-2,none,jNxG9AaSkwJp7QW5lWT2,,30,Content/assets/approvals/T189-193 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,pending,,,,,,,,,T193 Ryu Uncommon approved; waiting for a free OpenArt slot
+2026-11-06,T193,ryu_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=ryu common C-2,none,BquKDaQdpCSvND4fY4y9,,30,Content/assets/approvals/T189-193 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,picks,,,,,,,,,T189 Bao Elite picked E-1; T190 Sprout Uncommon picked U-1; T191 Tora Uncommon picked U-1; T192 Rusu Uncommon picked U-1
+2026-11-06,NOTE,picks,,,,,,,,,T193 Ryu Uncommon picked U-1

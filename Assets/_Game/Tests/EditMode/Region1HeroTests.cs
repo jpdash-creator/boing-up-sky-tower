@@ -170,7 +170,7 @@ namespace BoingUpSkyTower.Tests
                     Assert.AreEqual(prev.Jump, spec.ShownValues().Jump, row.Id);
                 }
             }
-            Assert.AreEqual(5 + 19 + 19, MergeTierDefs.Rows.Length, "5 original Uncommon rows + 19 Region 1 rows + 19 Region 2 rows");
+            Assert.AreEqual(5 + 19 + 19 + 19, MergeTierDefs.Rows.Length, "5 original Uncommon rows + 19 Region 1 rows + 19 Region 2 rows + 19 Region 3 rows");
             Assert.AreEqual(20, rows, "Momo's Uncommon row is the original; 4 tiers x 5 lines are checked");
         }
 
@@ -218,7 +218,7 @@ namespace BoingUpSkyTower.Tests
             var wider = new HashSet<string>();
             ulong w = 9;
             for (int i = 0; i < 8000; i++) wider.Add(BundleCards.Draw(Mix(ref w), Mix(ref w), CharacterDefs.All, region => region <= 3).LineId);
-            CollectionAssert.AreEquivalent(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter" }, wider);
+            CollectionAssert.AreEquivalent(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" }, wider);
         }
 
         [Test]

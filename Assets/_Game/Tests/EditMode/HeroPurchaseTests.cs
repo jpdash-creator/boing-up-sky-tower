@@ -161,7 +161,7 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(5, svc.HeroBuyPool(r).Count, r + ": five heroes in Region 1, none from the closed regions");
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(2).Id);
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(3).Id);
-            var allowed = new HashSet<string>(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u", "forestgirl_u", "nib_u", "spike_u", "moss_u", "fenn_u", "beachotter_u" });
+            var allowed = new HashSet<string>(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u", "forestgirl_u", "nib_u", "spike_u", "moss_u", "fenn_u", "beachotter_u", "pinch_u", "shelly_u", "bloop_u", "coco_u" });
             Assert.IsTrue(allowed.SetEquals(svc.HeroBuyPool(CharacterRarity.Uncommon).Select(c => c.Id)));
             var got = new HashSet<string>();
             for (int i = 0; i < 40; i++)

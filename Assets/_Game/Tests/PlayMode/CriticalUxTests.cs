@@ -1468,7 +1468,7 @@ namespace BoingUpSkyTower.Tests
         static void Region1Full()
         {
             GameSession.Progress.ResetAll();
-            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn" })
+            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" })
                 foreach (string suffix in new[] { "", "_u", "_r", "_e", "_l" })
                 {
                     GameSession.Progress.AddCopies(line + suffix, suffix == "_l" ? 1 : 3);

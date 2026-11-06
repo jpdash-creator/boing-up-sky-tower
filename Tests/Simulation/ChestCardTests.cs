@@ -89,8 +89,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(new[] { "base1", "base2", "base3" }, all.Select(c => c.Id).ToArray());
             List<CharacterSpec> some = ChestRolls.Pool(CharacterRarity.Common, Full, r => false);
             Assert.Equal(new[] { "base1" }, some.Select(c => c.Id).ToArray());   // region 1 is always open
-            // the real game: five region heroes, no merge tier is ever a Common card
-            Assert.Equal(new[] { "beachotter", "bumble", "candygirl", "dandy", "fenn", "forestgirl", "momo", "monk", "moss", "nib", "pip", "ribbi", "spike" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, null).Select(c => c.Id).ToArray());
+            // the real game: seventeen Common heroes, no merge tier is ever a Common card
+            Assert.Equal(new[] { "beachotter", "bloop", "bumble", "candygirl", "coco", "dandy", "fenn", "forestgirl", "momo", "monk", "moss", "nib", "pinch", "pip", "ribbi", "shelly", "spike" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, null).Select(c => c.Id).ToArray());
             Assert.Equal(new[] { "bumble", "dandy", "momo", "pip", "ribbi" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, r => false).Select(c => c.Id).ToArray());
         }
 

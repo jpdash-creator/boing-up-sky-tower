@@ -240,7 +240,7 @@ namespace BoingUpSkyTower.Tests
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(2).Id);
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(3).Id);
             Assert.AreEqual(3, svc.BundleOpenRegionCount());
-            CollectionAssert.AreEquivalent(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u", "forestgirl_u", "nib_u", "spike_u", "moss_u", "fenn_u", "beachotter_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
+            CollectionAssert.AreEquivalent(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u", "forestgirl_u", "nib_u", "spike_u", "moss_u", "fenn_u", "beachotter_u", "pinch_u", "shelly_u", "bloop_u", "coco_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
             svc.AddGems(600 * 60);
             var seen = new HashSet<string>();
             for (int i = 0; i < 60; i++)
@@ -250,7 +250,7 @@ namespace BoingUpSkyTower.Tests
                 seen.Add(card.Id);
             }
             var lines = new HashSet<string>(seen.Select(id => CharacterDefs.Get(id).LineId));
-            Assert.IsTrue(lines.IsSubsetOf(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter" }), string.Join(",", seen));   // regions 4 and 5 are closed
+            Assert.IsTrue(lines.IsSubsetOf(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" }), string.Join(",", seen));   // regions 4 and 5 are closed
             Assert.Greater(seen.Count, 1, "the pick varies");
         }
 

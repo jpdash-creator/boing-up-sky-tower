@@ -1,4 +1,4 @@
-"""Cuts the approved Region 1 hero paintings (F4.1) into the standard polygon-hero parts (docs/19, docs/34).
+"""Cuts the approved Region 1, 2 and 3 hero paintings (F4.1 to F4.3) into the standard polygon-hero parts (docs/19, docs/34).
 
     PYTHONPATH=E:/pylibs python Tools/art_pipeline/cut_region1_heroes.py [--only id,id] [--debug] [--out Assets/Resources/Characters]
 
@@ -72,6 +72,30 @@ HEROES = {
     "fenn_r": ("fenn/fenn_r1.png", "trim20", 900, 380, 985, 1330),
     "fenn_e": ("fenn/fenn_e2.png", "trim20", 900, 380, 985, 1330),
     "fenn_l": ("fenn/fenn_l1.png", "trim14h", 900, 380, 985, 1330),
+    # Region 3 (F4.3): Otto Rare / Elite / Legendary and Pinch, Shelly, Bloop, Coco
+    "beachotter_r": ("otto/otto_r1.png", "sticker", 900, 380, 985, 1330),
+    "beachotter_e": ("otto/otto_e2.png", "sticker", 900, 380, 985, 1330),
+    "beachotter_l": ("otto/otto_l1.png", "sticker", 900, 380, 985, 1330),
+    "pinch": ("pinch/pinch_c1.png", "sticker", 900, 380, 985, 1330),
+    "pinch_u": ("pinch/pinch_u1.png", "sticker", 900, 380, 985, 1330),
+    "pinch_r": ("pinch/pinch_r2.png", "sticker", 900, 380, 985, 1330),
+    "pinch_e": ("pinch/pinch_e2.png", "sticker", 900, 380, 985, 1330),
+    "pinch_l": ("pinch/pinch_l2.png", "trim40", 900, 380, 985, 1330),
+    "shelly": ("shelly/shelly_c2.png", "sticker", 900, 380, 985, 1330),
+    "shelly_u": ("shelly/shelly_u1.png", "sticker", 900, 380, 985, 1330),
+    "shelly_r": ("shelly/shelly_r2.png", "sticker", 900, 380, 985, 1330),
+    "shelly_e": ("shelly/shelly_e2.png", "sticker", 900, 380, 985, 1330),
+    "shelly_l": ("shelly/shelly_l2.png", "trim40", 900, 380, 985, 1330),
+    "bloop": ("bloop/bloop_c4.png", "sticker", 900, 380, 985, 1330),
+    "bloop_u": ("bloop/bloop_u1.png", "sticker", 900, 380, 985, 1330),
+    "bloop_r": ("bloop/bloop_r2.png", "sticker", 900, 380, 985, 1330),
+    "bloop_e": ("bloop/bloop_e2.png", "sticker", 900, 380, 985, 1330),
+    "bloop_l": ("bloop/bloop_l2.png", "sticker", 900, 380, 985, 1330),
+    "coco": ("coco/coco_c2.png", "sticker", 900, 380, 985, 1330),
+    "coco_u": ("coco/coco_u1.png", "sticker", 900, 380, 985, 1330),
+    "coco_r": ("coco/coco_r3.png", "sticker", 900, 380, 985, 1330),
+    "coco_e": ("coco/coco_e2.png", "sticker", 900, 380, 985, 1330),
+    "coco_l": ("coco/coco_l1.png", "trim50", 900, 380, 985, 1330),
 }
 PART_NAMES = ("back", "legL", "legR", "body", "handL", "handR", "head")
 ORDER = ["legL", "legR", "body", "handL", "handR", "head"]

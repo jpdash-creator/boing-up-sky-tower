@@ -45,7 +45,7 @@ namespace BoingUpSkyTower.Tests
         public void TheRosterHasMomoAndTheRegionHeroes()
         {
             var all = CharacterCatalog.All;
-            Assert.AreEqual(56, all.Length, "13 Common heroes + 43 merge tiers (Regions 1 and 2: 5 heroes x 4 tiers each, Regions 3 to 5: Uncommon only), docs/34 and docs/40");
+            Assert.AreEqual(79, all.Length, "17 Common heroes + 62 merge tiers (Regions 1 to 3: 5 heroes x 4 tiers each, Regions 4 and 5: Uncommon only), docs/34, docs/40 and docs/41");
             // order is hero then tier (docs/36): each Common hero is followed by its tiers; Region 1 first
             string[] expected =
             {
@@ -53,7 +53,9 @@ namespace BoingUpSkyTower.Tests
                 "dandy", "dandy_u", "dandy_r", "dandy_e", "dandy_l", "pip", "pip_u", "pip_r", "pip_e", "pip_l",
                 "forestgirl", "forestgirl_u", "forestgirl_r", "forestgirl_e", "forestgirl_l", "nib", "nib_u", "nib_r", "nib_e", "nib_l", "spike", "spike_u", "spike_r", "spike_e", "spike_l",
                 "moss", "moss_u", "moss_r", "moss_e", "moss_l", "fenn", "fenn_u", "fenn_r", "fenn_e", "fenn_l",
-                "beachotter", "beachotter_u", "candygirl", "candygirl_u", "monk", "monk_u"
+                "beachotter", "beachotter_u", "beachotter_r", "beachotter_e", "beachotter_l", "pinch", "pinch_u", "pinch_r", "pinch_e", "pinch_l",
+                "shelly", "shelly_u", "shelly_r", "shelly_e", "shelly_l", "bloop", "bloop_u", "bloop_r", "bloop_e", "bloop_l", "coco", "coco_u", "coco_r", "coco_e", "coco_l",
+                "candygirl", "candygirl_u", "monk", "monk_u"
             };
             for (int i = 0; i < expected.Length; i++) Assert.AreEqual(expected[i], all[i].Id);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get("nobody"), "an unknown id falls back to Momo");

@@ -194,12 +194,12 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>
-        /// Regions 1 and 2 hand out their four extra Common heroes (F4.1 and F4.2, docs/39 and docs/40) as one copy each from Region 1 progress: Bumble for clearing 6 levels, Ribbi for 9, Dandy for 12 and Pip for earning 45 stars
+        /// Regions 1, 2 and 3 hand out their four extra Common heroes (F4.1 to F4.3, docs/39 and docs/40) as one copy each from Region 1 progress: Bumble for clearing 6 levels, Ribbi for 9, Dandy for 12 and Pip for earning 45 stars
         /// (all stars of the region). Momo comes with the "clear all 15 levels" goal as before. Null for every other goal.
         /// </summary>
         public static string HeroGoalId(int region, RegionGoalType type, int tier)
         {
-            string[] extra = region == 1 ? Region1Extra : region == 2 ? Region2Extra : null;
+            string[] extra = region == 1 ? Region1Extra : region == 2 ? Region2Extra : region == 3 ? Region3Extra : null;
             if (extra == null) return null;
             if (type == RegionGoalType.Levels) return tier >= 2 && tier <= 4 ? extra[tier - 2] : null;
             if (type == RegionGoalType.Stars && tier == 5) return extra[3];
@@ -209,6 +209,7 @@ namespace BoingUpSkyTower.Economy
         /// <summary>The extra Common heroes of Region 1 and Region 2 in goal order (clear 6, 9, 12 levels, earn 45 stars).</summary>
         static readonly string[] Region1Extra = { "bumble", "ribbi", "dandy", "pip" };
         static readonly string[] Region2Extra = { "nib", "spike", "moss", "fenn" };
+        static readonly string[] Region3Extra = { "pinch", "shelly", "bloop", "coco" };
 
         /// <summary>The goals of a region in listing order (empty for a Coming Soon region or an invalid index).</summary>
         public static List<RegionGoal> Build(int region)

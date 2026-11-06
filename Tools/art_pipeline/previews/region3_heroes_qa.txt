@@ -1,0 +1,166 @@
+beachotter_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 3.63% of 7875 edge px
+   legL   area   68362  bbox x  408.. 683  y 1330..1606
+   legR   area   67039  bbox x  684.. 953  y 1330..1604
+   body   area  256599  bbox x  381.. 984  y  901..1329
+   handL  area   44293  bbox x  260.. 380  y  901..1321
+   handR  area   47633  bbox x  985..1113  y  901..1321
+   head   area  630628  bbox x  164..1211  y   59.. 900
+beachotter_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 5.92% of 9109 edge px
+   legL   area  121325  bbox x   85.. 683  y 1330..1606
+   legR   area  122292  bbox x  684..1296  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   75448  bbox x   85.. 380  y  901..1330
+   handR  area   81706  bbox x  985..1296  y  901..1330
+   head   area  642168  bbox x  174..1203  y   59.. 900
+beachotter_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 6.85% of 9565 edge px
+   legL   area  120216  bbox x   91.. 683  y 1330..1606
+   legR   area  121371  bbox x  684..1291  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   74613  bbox x   91.. 380  y  901..1330
+   handR  area   78209  bbox x  985..1291  y  901..1330
+   head   area  634803  bbox x  179..1199  y   59.. 900
+wrote previews/region3_qa_otto.png
+pinch: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.47% of 9805 edge px
+   legL   area   55044  bbox x  437.. 683  y 1330..1607
+   legR   area   65321  bbox x  684..1135  y 1330..1604
+   body   area  244439  bbox x  381.. 984  y  901..1329
+   handL  area   21602  bbox x  234.. 380  y 1014..1223
+   handR  area  105193  bbox x  985..1255  y  901..1330
+   head   area  476919  bbox x  302..1211  y   58.. 900
+pinch_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.34% of 9674 edge px
+   legL   area   54798  bbox x  443.. 683  y 1330..1607
+   legR   area   64901  bbox x  684..1136  y 1330..1604
+   body   area  251678  bbox x  381.. 984  y  901..1329
+   handL  area   36702  bbox x  195.. 380  y  901..1229
+   handR  area  105629  bbox x  985..1257  y  901..1330
+   head   area  478803  bbox x  300..1215  y   58.. 900
+pinch_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.22% of 9138 edge px
+   legL   area   76102  bbox x  273.. 683  y 1330..1607
+   legR   area   85786  bbox x  684..1134  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   48047  bbox x  194.. 380  y  901..1330
+   handR  area   82536  bbox x  985..1206  y  901..1330
+   head   area  507233  bbox x  274..1178  y   58.. 900
+pinch_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.38% of 10923 edge px
+   legL   area  128614  bbox x   48.. 683  y 1330..1607
+   legR   area  127337  bbox x  684..1269  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   76313  bbox x   97.. 380  y  901..1330
+   handR  area   64231  bbox x  985..1198  y  901..1330
+   head   area  503927  bbox x  232..1126  y   58.. 900
+pinch_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 2.87% of 8557 edge px
+   legL   area  117782  bbox x   79.. 683  y 1330..1607
+   legR   area  117140  bbox x  684..1235  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   90734  bbox x  117.. 380  y  901..1330
+   handR  area   66998  bbox x  985..1169  y  901..1330
+   head   area  526236  bbox x  177..1142  y   58.. 900
+wrote previews/region3_qa_pinch.png
+shelly: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.14% of 8420 edge px
+   legL   area   61102  bbox x  382.. 683  y 1330..1586
+   legR   area   73450  bbox x  684..1134  y 1330..1605
+   body   area  254514  bbox x  381.. 984  y  901..1329
+   handL  area   25981  bbox x  247.. 380  y  951..1231
+   handR  area  104660  bbox x  985..1277  y  901..1330
+   head   area  678157  bbox x  178..1236  y   60.. 900
+shelly_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.31% of 8492 edge px
+   legL   area   60505  bbox x  385.. 683  y 1330..1586
+   legR   area   72689  bbox x  684..1131  y 1330..1605
+   body   area  255862  bbox x  381.. 984  y  901..1329
+   handL  area   32511  bbox x  247.. 380  y  901..1230
+   handR  area  103364  bbox x  985..1273  y  901..1330
+   head   area  680761  bbox x  180..1234  y   60.. 900
+shelly_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.50% of 9184 edge px
+   legL   area   64566  bbox x  258.. 683  y 1330..1587
+   legR   area   79229  bbox x  684..1273  y 1330..1607
+   body   area  259100  bbox x  381.. 984  y  901..1329
+   handL  area   43462  bbox x  251.. 380  y  901..1330
+   handR  area  115802  bbox x  985..1282  y  901..1330
+   head   area  674768  bbox x  184..1230  y   60.. 900
+shelly_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.40% of 8907 edge px
+   legL   area   65158  bbox x  274.. 683  y 1330..1587
+   legR   area   79614  bbox x  684..1259  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   37467  bbox x  263.. 380  y  901..1330
+   handR  area  106023  bbox x  985..1263  y  901..1330
+   head   area  614273  bbox x  204..1202  y   58.. 900
+shelly_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 3.54% of 8697 edge px
+   legL   area   82439  bbox x  169.. 683  y 1330..1598
+   legR   area   85623  bbox x  684..1202  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   58284  bbox x  208.. 380  y  901..1330
+   handR  area   76337  bbox x  985..1194  y  901..1330
+   head   area  558529  bbox x  180..1123  y   58.. 900
+wrote previews/region3_qa_shelly.png
+bloop: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.58% of 8355 edge px
+   legL   area   72089  bbox x  360.. 683  y 1330..1605
+   legR   area   71059  bbox x  684..1006  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   82074  bbox x   79.. 380  y  901..1330
+   handR  area  127410  bbox x  985..1342  y  901..1330
+   head   area  608508  bbox x  127..1253  y  257.. 900
+bloop_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.73% of 8457 edge px
+   legL   area   66856  bbox x  389.. 683  y 1330..1607
+   legR   area   67371  bbox x  684..1052  y 1330..1604
+   body   area  258544  bbox x  381.. 984  y  901..1329
+   handL  area   90480  bbox x   42.. 380  y  901..1299
+   handR  area  120699  bbox x  985..1344  y  901..1330
+   head   area  476260  bbox x   42..1341  y  374.. 900
+bloop_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.88% of 9175 edge px
+   legL   area  120975  bbox x   86.. 683  y 1330..1607
+   legR   area  123590  bbox x  684..1300  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area  116134  bbox x   31.. 380  y  901..1330
+   handR  area  121444  bbox x  985..1344  y  901..1330
+   head   area  529179  bbox x   29..1340  y  324.. 900
+bloop_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.57% of 9193 edge px
+   legL   area  128519  bbox x   82.. 683  y 1330..1607
+   legR   area  130670  bbox x  684..1304  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area  114615  bbox x   37.. 380  y  901..1330
+   handR  area  119175  bbox x  985..1344  y  901..1330
+   head   area  547177  bbox x   28..1340  y  266.. 900
+bloop_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.01% of 10566 edge px
+   legL   area  153799  bbox x   30.. 683  y 1330..1607
+   legR   area  151849  bbox x  684..1343  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   86294  bbox x  106.. 380  y  901..1330
+   handR  area   89557  bbox x  985..1252  y  901..1330
+   head   area  556970  bbox x   75..1293  y   58.. 900
+wrote previews/region3_qa_bloop.png
+coco: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.97% of 11793 edge px
+   legL   area   57057  bbox x  426.. 683  y 1330..1607
+   legR   area   61962  bbox x  684..1065  y 1330..1604
+   body   area  240897  bbox x  381.. 984  y  901..1329
+   handL  area   12610  bbox x  306.. 380  y 1028..1288
+   handR  area   63428  bbox x  985..1299  y  901..1330
+   head   area  621126  bbox x  161..1270  y   58.. 900
+coco_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.90% of 12043 edge px
+   legL   area   57762  bbox x  412.. 683  y 1330..1607
+   legR   area   61832  bbox x  684..1056  y 1330..1604
+   body   area  246229  bbox x  381.. 984  y  901..1329
+   handL  area   12287  bbox x  310.. 380  y 1026..1282
+   handR  area   60454  bbox x  985..1290  y  901..1330
+   head   area  616162  bbox x  167..1265  y   58.. 900
+coco_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.81% of 12204 edge px
+   legL   area   58809  bbox x  401.. 683  y 1330..1607
+   legR   area   60643  bbox x  684..1052  y 1330..1604
+   body   area  255614  bbox x  381.. 984  y  901..1329
+   handL  area   17848  bbox x  310.. 380  y  901..1277
+   handR  area   60602  bbox x  985..1284  y  901..1330
+   head   area  613697  bbox x  175..1264  y   58.. 900
+coco_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.01% of 11097 edge px
+   legL   area   96116  bbox x  162.. 683  y 1330..1607
+   legR   area   99635  bbox x  684..1233  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   57691  bbox x  161.. 380  y  901..1330
+   handR  area   82116  bbox x  985..1279  y  901..1330
+   head   area  631946  bbox x  173..1262  y   58.. 900
+coco_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 12.67% of 8491 edge px
+   legL   area  118772  bbox x   36.. 683  y 1330..1607
+   legR   area  121873  bbox x  684..1343  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   79676  bbox x  115.. 380  y  901..1330
+   handR  area   85381  bbox x  985..1262  y  901..1330
+   head   area  487266  bbox x  207..1139  y  191.. 900
+wrote previews/region3_qa_coco.png

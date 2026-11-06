@@ -108,6 +108,10 @@ namespace BoingUpSkyTower.Tests
                 { "spike", "spike_u", "Logplate Spike" },
                 { "moss", "moss_u", "Vinebelt Moss" },
                 { "fenn", "fenn_u", "Scoutvest Fenn" },
+                { "pinch", "pinch_u", "Shellvest Pinch" },
+                { "shelly", "shelly_u", "Coralstrap Shelly" },
+                { "bloop", "bloop_u", "Coralband Bloop" },
+                { "coco", "coco_u", "Palmwrap Coco" },
             };
             for (int i = 0; i < expect.GetLength(0); i++)
             {
@@ -123,8 +127,8 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(expect[i, 1], next.ArtId, "own art slot");
                 Assert.AreEqual(expect[i, 0], next.FallbackArtId, "placeholder art is the Common hero");
                 Assert.AreSame(next, CharacterDefs.Get(next.Id));
-                bool full = common.Region <= 2;
-                Assert.AreEqual(full, MergeRules.NextTier(next) != null, expect[i, 0] + ": Region 1 and 2 lines continue to Rare, the others stop at Uncommon (F4.3 to F4.5)");
+                bool full = common.Region <= 3;
+                Assert.AreEqual(full, MergeRules.NextTier(next) != null, expect[i, 0] + ": Region 1 to 3 lines continue to Rare, the others stop at Uncommon (F4.4 and F4.5)");
                 Assert.AreSame(common, MergeRules.PreviousTier(next));
             }
         }
