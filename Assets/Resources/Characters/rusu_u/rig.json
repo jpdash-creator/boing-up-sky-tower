@@ -1,0 +1,15 @@
+{
+  "id": "rusu_u",
+  "canvas": [
+    1365,
+    1649
+  ],
+  "order": [
+    "legL",
+    "legR",
+    "body",
+    "handL",
+    "handR",
+    "head"
+  ]
+}

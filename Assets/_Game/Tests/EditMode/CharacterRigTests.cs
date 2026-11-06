@@ -45,7 +45,7 @@ namespace BoingUpSkyTower.Tests
         public void TheRosterHasMomoAndTheRegionHeroes()
         {
             var all = CharacterCatalog.All;
-            Assert.AreEqual(79, all.Length, "17 Common heroes + 62 merge tiers (Regions 1 to 3: 5 heroes x 4 tiers each, Regions 4 and 5: Uncommon only), docs/34, docs/40 and docs/41");
+            Assert.AreEqual(125, all.Length, "25 Common heroes + 100 merge tiers (every region: 5 heroes x 4 tiers each), docs/34 and docs/40 to docs/43");
             // order is hero then tier (docs/36): each Common hero is followed by its tiers; Region 1 first
             string[] expected =
             {
@@ -55,7 +55,10 @@ namespace BoingUpSkyTower.Tests
                 "moss", "moss_u", "moss_r", "moss_e", "moss_l", "fenn", "fenn_u", "fenn_r", "fenn_e", "fenn_l",
                 "beachotter", "beachotter_u", "beachotter_r", "beachotter_e", "beachotter_l", "pinch", "pinch_u", "pinch_r", "pinch_e", "pinch_l",
                 "shelly", "shelly_u", "shelly_r", "shelly_e", "shelly_l", "bloop", "bloop_u", "bloop_r", "bloop_e", "bloop_l", "coco", "coco_u", "coco_r", "coco_e", "coco_l",
-                "candygirl", "candygirl_u", "monk", "monk_u"
+                "candygirl", "candygirl_u", "candygirl_r", "candygirl_e", "candygirl_l", "gummi", "gummi_u", "gummi_r", "gummi_e", "gummi_l", "choco", "choco_u", "choco_r", "choco_e", "choco_l",
+                "marsh", "marsh_u", "marsh_r", "marsh_e", "marsh_l", "cookie", "cookie_u", "cookie_r", "cookie_e", "cookie_l",
+                "monk", "monk_u", "monk_r", "monk_e", "monk_l", "sprout", "sprout_u", "sprout_r", "sprout_e", "sprout_l", "tora", "tora_u", "tora_r", "tora_e", "tora_l",
+                "rusu", "rusu_u", "rusu_r", "rusu_e", "rusu_l", "ryu", "ryu_u", "ryu_r", "ryu_e", "ryu_l"
             };
             for (int i = 0; i < expected.Length; i++) Assert.AreEqual(expected[i], all[i].Id);
             Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get("nobody"), "an unknown id falls back to Momo");

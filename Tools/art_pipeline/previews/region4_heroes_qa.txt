@@ -1,0 +1,174 @@
+candygirl_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.67% of 13883 edge px
+   back   area   48991  bbox x  144.. 483  y  499.. 881
+   legL   area   54156  bbox x  432.. 671  y 1335..1605
+   legR   area   55147  bbox x  693.. 929  y 1335..1610
+   body   area  186468  bbox x  434.. 934  y  849..1334
+   handL  area   57108  bbox x  290.. 548  y  849..1273
+   handR  area   64822  bbox x  825..1097  y  849..1289
+   head   area  469024  bbox x  143..1238  y  237.. 848
+candygirl_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.31% of 10919 edge px
+   legL   area   53670  bbox x  403.. 683  y 1330..1601
+   legR   area   54583  bbox x  684.. 910  y 1330..1607
+   body   area  257559  bbox x  381.. 984  y  901..1329
+   handL  area   45969  bbox x  198.. 380  y  901..1322
+   handR  area   52673  bbox x  985..1183  y  901..1322
+   head   area  591530  bbox x  181..1191  y   58.. 900
+candygirl_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.38% of 11303 edge px
+   legL   area  135619  bbox x   69.. 683  y 1330..1601
+   legR   area  134627  bbox x  684..1291  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   54886  bbox x  157.. 380  y  901..1330
+   handR  area   50943  bbox x  985..1187  y  901..1330
+   head   area  601861  bbox x  187..1185  y   59.. 900
+candygirl_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 17.71% of 8138 edge px
+   legL   area  138084  bbox x   70.. 683  y 1330..1601
+   legR   area  138505  bbox x  684..1290  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   78577  bbox x  129.. 380  y  901..1330
+   handR  area   77114  bbox x  985..1233  y  901..1330
+   head   area  708842  bbox x  168..1202  y   59.. 900
+wrote Tools/art_pipeline/previews/region4_qa_bonbon.png
+gummi: overlap 0 px, touches canvas edge 0 px, grey edge pixels 50.47% of 8998 edge px
+   legL   area   77791  bbox x  348.. 683  y 1330..1606
+   legR   area   78606  bbox x  684..1013  y 1330..1607
+   body   area  259041  bbox x  381.. 984  y  901..1329
+   handL  area   41544  bbox x  217.. 380  y  901..1330
+   handR  area   38103  bbox x  985..1136  y  901..1330
+   head   area  689145  bbox x  207..1166  y   58.. 900
+gummi_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 47.15% of 9110 edge px
+   legL   area   78051  bbox x  300.. 683  y 1330..1606
+   legR   area   77670  bbox x  684..1068  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   71852  bbox x  167.. 380  y  901..1330
+   handR  area   72320  bbox x  985..1193  y  901..1330
+   head   area  696657  bbox x  215..1159  y   58.. 900
+gummi_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 50.53% of 9721 edge px
+   legL   area   99028  bbox x   77.. 673  y 1330..1607
+   legR   area  100174  bbox x  690..1292  y 1330..1606
+   body   area  258962  bbox x  381.. 984  y  901..1329
+   handL  area  117506  bbox x   57.. 380  y  901..1330
+   handR  area  118225  bbox x  985..1315  y  901..1330
+   head   area  725754  bbox x  157..1205  y   58.. 900
+gummi_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 52.12% of 10037 edge px
+   legL   area  145098  bbox x   20.. 683  y 1330..1607
+   legR   area  147202  bbox x  684..1342  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area  102254  bbox x   58.. 380  y  901..1330
+   handR  area   97936  bbox x  985..1300  y  901..1330
+   head   area  662395  bbox x  204..1149  y   65.. 900
+gummi_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 39.08% of 9042 edge px
+   legL   area  125510  bbox x   39.. 683  y 1330..1607
+   legR   area  123440  bbox x  684..1334  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area  107661  bbox x   29.. 380  y  901..1330
+   handR  area  111776  bbox x  985..1338  y  901..1330
+   head   area  693269  bbox x  139..1241  y   58.. 900
+wrote Tools/art_pipeline/previews/region4_qa_gummi.png
+choco: overlap 0 px, touches canvas edge 0 px, grey edge pixels 3.60% of 9049 edge px
+   legL   area   58325  bbox x  437.. 683  y 1330..1607
+   legR   area   57708  bbox x  684.. 956  y 1330..1604
+   body   area  233398  bbox x  381.. 984  y  901..1329
+   handL  area    9224  bbox x  317.. 380  y 1088..1306
+   handR  area   30682  bbox x  985..1128  y  901..1311
+   head   area  506999  bbox x  271..1082  y   58.. 900
+choco_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 13.70% of 10362 edge px
+   legL   area   67274  bbox x  291.. 683  y 1330..1606
+   legR   area   64208  bbox x  684..1056  y 1330..1607
+   body   area  252377  bbox x  381.. 984  y  901..1329
+   handL  area   28157  bbox x  273.. 380  y  939..1330
+   handR  area   46949  bbox x  985..1153  y  935..1330
+   head   area  511837  bbox x  269..1082  y   58.. 900
+choco_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.78% of 10271 edge px
+   legL   area   79664  bbox x  190.. 683  y 1330..1606
+   legR   area   79899  bbox x  684..1186  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   94467  bbox x  106.. 380  y  901..1330
+   handR  area  100890  bbox x  985..1278  y  901..1330
+   head   area  548639  bbox x  143..1248  y   58.. 900
+choco_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.84% of 9723 edge px
+   legL   area  107528  bbox x  177.. 683  y 1330..1606
+   legR   area  108843  bbox x  684..1177  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   97252  bbox x  100.. 380  y  901..1330
+   handR  area   94801  bbox x  985..1264  y  901..1330
+   head   area  543001  bbox x  147..1220  y   58.. 900
+choco_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 17.45% of 10367 edge px
+   legL   area  159020  bbox x   31.. 683  y 1330..1607
+   legR   area  161775  bbox x  684..1342  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area  114418  bbox x   31.. 380  y  901..1330
+   handR  area  104984  bbox x  985..1342  y  901..1330
+   head   area  581000  bbox x  114..1196  y   58.. 900
+wrote Tools/art_pipeline/previews/region4_qa_choco.png
+marsh: overlap 0 px, touches canvas edge 0 px, grey edge pixels 10.96% of 8790 edge px
+   legL   area   72206  bbox x  372.. 683  y 1330..1607
+   legR   area   71271  bbox x  684.. 996  y 1330..1603
+   body   area  258941  bbox x  381.. 984  y  901..1329
+   handL  area   42772  bbox x  197.. 380  y  901..1285
+   handR  area   48660  bbox x  985..1181  y  901..1330
+   head   area  685842  bbox x  220..1155  y   58.. 900
+marsh_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 29.04% of 9007 edge px
+   legL   area   73452  bbox x  369.. 683  y 1330..1607
+   legR   area   75174  bbox x  684.. 988  y 1330..1607
+   body   area  258894  bbox x  381.. 984  y  901..1329
+   handL  area   65329  bbox x  188.. 380  y  901..1330
+   handR  area   65395  bbox x  985..1179  y  901..1330
+   head   area  679987  bbox x  217..1149  y   58.. 900
+marsh_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 2.82% of 8559 edge px
+   legL   area   95403  bbox x   27.. 683  y 1330..1603
+   legR   area   96897  bbox x  684..1332  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   93605  bbox x   20.. 380  y  901..1330
+   handR  area   91419  bbox x  985..1340  y  901..1330
+   head   area  554723  bbox x  251..1106  y  151.. 900
+marsh_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 12.40% of 8828 edge px
+   legL   area  111854  bbox x   20.. 683  y 1330..1600
+   legR   area  112380  bbox x  684..1313  y 1330..1607
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   91684  bbox x   23.. 380  y  901..1330
+   handR  area   79932  bbox x  985..1313  y  901..1330
+   head   area  543712  bbox x  219..1117  y  154.. 900
+marsh_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 15.43% of 8607 edge px
+   legL   area  134717  bbox x   44.. 683  y 1330..1606
+   legR   area  134563  bbox x  684..1311  y 1330..1606
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   96342  bbox x   44.. 380  y  901..1330
+   handR  area   75900  bbox x  985..1293  y  901..1330
+   head   area  573917  bbox x  210..1140  y   58.. 900
+wrote Tools/art_pipeline/previews/region4_qa_marsh.png
+cookie: overlap 0 px, touches canvas edge 0 px, grey edge pixels 15.12% of 9264 edge px
+   legL   area   78303  bbox x  325.. 683  y 1330..1607
+   legR   area   74834  bbox x  684..1040  y 1330..1590
+   body   area  256648  bbox x  381.. 984  y  901..1329
+   handL  area   52621  bbox x  148.. 380  y  901..1330
+   handR  area   55218  bbox x  985..1230  y  901..1330
+   head   area  613188  bbox x  217..1121  y   58.. 900
+cookie_u: overlap 0 px, touches canvas edge 0 px, grey edge pixels 2.85% of 9224 edge px
+   legL   area   78340  bbox x  331.. 683  y 1330..1607
+   legR   area   77302  bbox x  684..1034  y 1330..1604
+   body   area  258918  bbox x  381.. 984  y  901..1329
+   handL  area   65361  bbox x  145.. 380  y  901..1330
+   handR  area   62051  bbox x  985..1226  y  901..1330
+   head   area  637770  bbox x  214..1149  y   58.. 900
+cookie_r: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.89% of 8459 edge px
+   legL   area   97247  bbox x  125.. 683  y 1330..1607
+   legR   area   98622  bbox x  684..1256  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   83992  bbox x  117.. 380  y  901..1330
+   handR  area   84411  bbox x  985..1257  y  901..1330
+   head   area  548833  bbox x  221..1134  y   58.. 900
+cookie_e: overlap 0 px, touches canvas edge 0 px, grey edge pixels 1.08% of 8273 edge px
+   legL   area   95463  bbox x  134.. 683  y 1330..1607
+   legR   area   96905  bbox x  684..1249  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   81982  bbox x  124.. 380  y  901..1330
+   handR  area   83065  bbox x  985..1252  y  901..1330
+   head   area  543912  bbox x  226..1127  y   58.. 900
+cookie_l: overlap 0 px, touches canvas edge 0 px, grey edge pixels 0.31% of 8908 edge px
+   legL   area  111416  bbox x  129.. 683  y 1330..1607
+   legR   area  111367  bbox x  684..1240  y 1330..1604
+   body   area  259116  bbox x  381.. 984  y  901..1329
+   handL  area   89183  bbox x  118.. 380  y  901..1330
+   handR  area   82962  bbox x  985..1246  y  901..1330
+   head   area  608683  bbox x  134..1191  y   58.. 900
+wrote Tools/art_pipeline/previews/region4_qa_cookie.png

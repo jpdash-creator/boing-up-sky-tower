@@ -128,7 +128,9 @@ namespace BoingUpSkyTower.Tests
             {
                 { "g_1_levels_2", "bumble" }, { "g_1_levels_3", "ribbi" }, { "g_1_levels_4", "dandy" }, { "g_1_stars_5", "pip" },
                 { "g_2_levels_2", "nib" }, { "g_2_levels_3", "spike" }, { "g_2_levels_4", "moss" }, { "g_2_stars_5", "fenn" },
-                { "g_3_levels_2", "pinch" }, { "g_3_levels_3", "shelly" }, { "g_3_levels_4", "bloop" }, { "g_3_stars_5", "coco" }
+                { "g_3_levels_2", "pinch" }, { "g_3_levels_3", "shelly" }, { "g_3_levels_4", "bloop" }, { "g_3_stars_5", "coco" },
+                { "g_4_levels_2", "gummi" }, { "g_4_levels_3", "choco" }, { "g_4_levels_4", "marsh" }, { "g_4_stars_5", "cookie" },
+                { "g_5_levels_2", "sprout" }, { "g_5_levels_3", "tora" }, { "g_5_levels_4", "rusu" }, { "g_5_stars_5", "ryu" }
             };
             for (int r = 1; r <= 5; r++)
             {
@@ -138,10 +140,10 @@ namespace BoingUpSkyTower.Tests
                     if (!g.GivesHero) continue;
                     heroes++;
                     string named;
-                    if (g.HeroId != null) { Assert.IsTrue(r <= 3); Assert.IsTrue(region1Extra.TryGetValue(g.Id, out named), g.Id); Assert.AreEqual(named, g.HeroId); Assert.AreEqual(0, g.HeroRegion, g.Id); }
+                    if (g.HeroId != null) { Assert.IsTrue(r <= 5); Assert.IsTrue(region1Extra.TryGetValue(g.Id, out named), g.Id); Assert.AreEqual(named, g.HeroId); Assert.AreEqual(0, g.HeroRegion, g.Id); }
                     else { Assert.AreEqual("g_" + r + "_levels_5", g.Id); Assert.AreEqual(r, g.HeroRegion); Assert.AreEqual(15, g.Target); }
                 }
-                Assert.AreEqual(r <= 3 ? 5 : 1, heroes, "region " + r);
+                Assert.AreEqual(5, heroes, "region " + r);
             }
             Assert.AreEqual(0, svc.RewardDefs.RegionRewards.Count);
         }

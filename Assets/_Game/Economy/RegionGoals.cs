@@ -194,12 +194,12 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>
-        /// Regions 1, 2 and 3 hand out their four extra Common heroes (F4.1 to F4.3, docs/39 and docs/40) as one copy each from Region 1 progress: Bumble for clearing 6 levels, Ribbi for 9, Dandy for 12 and Pip for earning 45 stars
+        /// Regions 1 to 5 hand out their four extra Common heroes (F4.1 to F4.5, docs/39 to docs/43) as one copy each from Region 1 progress: Bumble for clearing 6 levels, Ribbi for 9, Dandy for 12 and Pip for earning 45 stars
         /// (all stars of the region). Momo comes with the "clear all 15 levels" goal as before. Null for every other goal.
         /// </summary>
         public static string HeroGoalId(int region, RegionGoalType type, int tier)
         {
-            string[] extra = region == 1 ? Region1Extra : region == 2 ? Region2Extra : region == 3 ? Region3Extra : null;
+            string[] extra = region == 1 ? Region1Extra : region == 2 ? Region2Extra : region == 3 ? Region3Extra : region == 4 ? Region4Extra : region == 5 ? Region5Extra : null;
             if (extra == null) return null;
             if (type == RegionGoalType.Levels) return tier >= 2 && tier <= 4 ? extra[tier - 2] : null;
             if (type == RegionGoalType.Stars && tier == 5) return extra[3];
@@ -210,6 +210,8 @@ namespace BoingUpSkyTower.Economy
         static readonly string[] Region1Extra = { "bumble", "ribbi", "dandy", "pip" };
         static readonly string[] Region2Extra = { "nib", "spike", "moss", "fenn" };
         static readonly string[] Region3Extra = { "pinch", "shelly", "bloop", "coco" };
+        static readonly string[] Region4Extra = { "gummi", "choco", "marsh", "cookie" };
+        static readonly string[] Region5Extra = { "sprout", "tora", "rusu", "ryu" };
 
         /// <summary>The goals of a region in listing order (empty for a Coming Soon region or an invalid index).</summary>
         public static List<RegionGoal> Build(int region)

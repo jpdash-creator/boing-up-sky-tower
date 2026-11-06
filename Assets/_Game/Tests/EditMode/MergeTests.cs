@@ -109,6 +109,14 @@ namespace BoingUpSkyTower.Tests
                 { "moss", "moss_u", "Vinebelt Moss" },
                 { "fenn", "fenn_u", "Scoutvest Fenn" },
                 { "pinch", "pinch_u", "Shellvest Pinch" },
+                { "gummi", "gummi_u", "Starsash Gummi" },
+                { "choco", "choco_u", "Wafflewrap Choco" },
+                { "marsh", "marsh_u", "Grahambelt Marsh" },
+                { "cookie", "cookie_u", "Crumbscarf Cookie" },
+                { "sprout", "sprout_u", "Leafwrap Sprout" },
+                { "tora", "tora_u", "Stripeband Tora" },
+                { "rusu", "rusu_u", "Scoutwrap Rusu" },
+                { "ryu", "ryu_u", "Scalevest Ryu" },
                 { "shelly", "shelly_u", "Coralstrap Shelly" },
                 { "bloop", "bloop_u", "Coralband Bloop" },
                 { "coco", "coco_u", "Palmwrap Coco" },
@@ -127,8 +135,8 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(expect[i, 1], next.ArtId, "own art slot");
                 Assert.AreEqual(expect[i, 0], next.FallbackArtId, "placeholder art is the Common hero");
                 Assert.AreSame(next, CharacterDefs.Get(next.Id));
-                bool full = common.Region <= 3;
-                Assert.AreEqual(full, MergeRules.NextTier(next) != null, expect[i, 0] + ": Region 1 to 3 lines continue to Rare, the others stop at Uncommon (F4.4 and F4.5)");
+                bool full = common.Region <= 5;
+                Assert.AreEqual(full, MergeRules.NextTier(next) != null, expect[i, 0] + ": Region 1 to 3 lines continue to Rare, none stops at Uncommon any more (F4.4 and F4.5)");
                 Assert.AreSame(common, MergeRules.PreviousTier(next));
             }
         }
@@ -272,9 +280,9 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(2, svc.Copies("momo"));
             Assert.AreEqual(0, svc.Copies("momo_u"));
 
-            svc.AddCopies("monk_u", 5);   // Region 5 stops at Uncommon for now
-            Assert.AreEqual(MergeResult.MaxTier, svc.TryMerge("monk_u").Result);
-            Assert.AreEqual(5, svc.Copies("monk_u"));
+            svc.AddCopies("monk_l", 5);   // Legendary is the top of a Region 5 line
+            Assert.AreEqual(MergeResult.MaxTier, svc.TryMerge("monk_l").Result);
+            Assert.AreEqual(5, svc.Copies("monk_l"));
             svc.AddCopies("momo_l", 5);   // Legendary is the top of a Region 1 line
             Assert.AreEqual(MergeResult.MaxTier, svc.TryMerge("momo_l").Result);
             Assert.AreEqual(5, svc.Copies("momo_l"));

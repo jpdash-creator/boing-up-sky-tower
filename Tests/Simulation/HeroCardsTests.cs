@@ -119,10 +119,10 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(25, g[2].Entries.Count);   // Region 3: Otto, Pinch, Shelly, Bloop, Coco
             for (int i = 3; i < g.Count; i++)
             {
-                Assert.Equal(5, g[i].Entries.Count);
-                Assert.Equal(ladder, g[i].Entries.Select(e => e.Rarity).ToArray());
+                Assert.Equal(25, g[i].Entries.Count);   // Region 4: Bonbon, Gummi, Choco, Marsh, Cookie; Region 5: Bao, Sprout, Tora, Rusu, Ryu
+                for (int k = 0; k < 5; k++) Assert.Equal(ladder, g[i].Entries.Skip(k * 5).Take(5).Select(e => e.Rarity).ToArray());
             }
-            Assert.Equal(85, AllHeroes.Flatten(g).Count);
+            Assert.Equal(125, AllHeroes.Flatten(g).Count);
         }
 
         [Fact]
@@ -141,21 +141,14 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.True(all.First(e => e.Id == "momo_u").Locked);
             Assert.True(all.First(e => e.Id == "bumble").Locked);   // the extra Region 1 Commons are not free: they need a copy
             Assert.True(all.First(e => e.Id == "beachotter").Locked);
-            // Regions 1 to 3 have real heroes at every tier (locked until owned); regions 4 and 5 have placeholders from Rare up
-            foreach (AllHeroEntry e in all.Where(x => x.Region <= 3))
+            // every region has real heroes at every tier (locked until owned); no placeholder is left
+            foreach (AllHeroEntry e in all)
             {
                 Assert.False(e.Placeholder, e.Id);
                 Assert.NotNull(e.Spec);
             }
-            foreach (AllHeroEntry e in all.Where(x => x.Region > 3 && x.Rarity >= CharacterRarity.Rare))
-            {
-                Assert.True(e.Locked, e.Id);
-                Assert.True(e.Placeholder, e.Id);
-                Assert.Null(e.Spec);
-                Assert.NotNull(e.BaseSpec);
-            }
-            AllHeroEntry rare = all.First(e => e.Id == "candygirl_rare");
-            Assert.Equal("Rare Bonbon", rare.Name);
+            AllHeroEntry rare = all.First(e => e.Id == "candygirl_r");
+            Assert.True(rare.Locked);
             Assert.Equal("Merge 3 Uncommon Bonbon", rare.HowToGet);
         }
 
@@ -165,7 +158,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             List<AllHeroEntry> all = AllHeroes.Flatten(Groups());
             Assert.Equal("Merge 3 Common Momo", all.First(e => e.Id == "momo_u").HowToGet);
             Assert.Equal("Merge 3 Uncommon Pip", all.First(e => e.Id == "pip_r").HowToGet);
-            Assert.Equal("Merge 3 Elite Bao", all.First(e => e.Id == "monk_legendary").HowToGet);
+            Assert.Equal("Merge 3 Elite Bao", all.First(e => e.Id == "monk_l").HowToGet);
             Assert.Contains("Region name 3", all.First(e => e.Id == "beachotter").HowToGet);
             Assert.Contains("Bundles / Chests / Rewards", all.First(e => e.Id == "beachotter").HowToGet);
         }

@@ -170,7 +170,7 @@ namespace BoingUpSkyTower.Tests
                     Assert.AreEqual(prev.Jump, spec.ShownValues().Jump, row.Id);
                 }
             }
-            Assert.AreEqual(5 + 19 + 19 + 19, MergeTierDefs.Rows.Length, "5 original Uncommon rows + 19 Region 1 rows + 19 Region 2 rows + 19 Region 3 rows");
+            Assert.AreEqual(5 + 19 * 5, MergeTierDefs.Rows.Length, "5 original Uncommon rows + 19 rows for each of Regions 1 to 5");
             Assert.AreEqual(20, rows, "Momo's Uncommon row is the original; 4 tiers x 5 lines are checked");
         }
 

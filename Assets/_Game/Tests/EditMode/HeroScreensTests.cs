@@ -180,7 +180,7 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void EveryRegion1UncommonRareAndEliteMergesUpTheWholeChain()
         {
-            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" })
+            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco", "candygirl", "gummi", "choco", "marsh", "cookie", "monk", "sprout", "tora", "rusu", "ryu" })
             {
                 string[] chain = { line, line + "_u", line + "_r", line + "_e", line + "_l" };
                 for (int i = 0; i < chain.Length - 1; i++)
@@ -226,8 +226,9 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(25, s.Groups[0].Entries.Count, "Region 1: Momo, Bumble, Ribbi, Dandy, Pip x 5 tiers");
             Assert.AreEqual(25, s.Groups[1].Entries.Count, "Region 2: Capi, Nib, Spike, Moss, Fenn x 5 tiers");
             Assert.AreEqual(25, s.Groups[2].Entries.Count, "Region 3: Otto, Pinch, Shelly, Bloop, Coco x 5 tiers");
-            for (int i = 3; i < s.Groups.Count; i++) Assert.AreEqual(5, s.Groups[i].Entries.Count, "regions 4 and 5: one hero x 5 tiers");
-            Assert.AreEqual(85, HeroCardsOn(canvas).Count, "17 heroes x 5 tiers");
+            Assert.AreEqual(25, s.Groups[3].Entries.Count, "Region 4: Bonbon, Gummi, Choco, Marsh, Cookie x 5 tiers");
+            Assert.AreEqual(25, s.Groups[4].Entries.Count, "Region 5: Bao, Sprout, Tora, Rusu, Ryu x 5 tiers");
+            Assert.AreEqual(125, HeroCardsOn(canvas).Count, "25 heroes x 5 tiers");
             for (int i = 0; i < s.Groups.Count; i++) Assert.AreEqual(i + 1, s.Groups[i].Region);
             var cols = new HashSet<float>();
             foreach (RectTransform card in HeroCardsOn(canvas)) cols.Add(Mathf.Round(card.anchorMin.x * 3f));
@@ -287,10 +288,10 @@ namespace BoingUpSkyTower.Tests
             StringAssert.Contains("Powers:", FindDeep(pop, "Powers").GetComponent<Text>().text);
 
             Object.DestroyImmediate(FindDeep(canvas, "Popup").gameObject);
-            Assert.IsTrue(s.OpenInfo("candygirl_rare"));   // placeholder tier (Region 4 has no Rare yet)
+            Assert.IsTrue(s.OpenInfo("candygirl_r"));   // a real Rare tier, locked
             pop = FindDeep(canvas, AllHeroesScreen.InfoPopupName);
             StringAssert.Contains("Merge 3 Uncommon Bonbon", FindDeep(pop, "HowToGet").GetComponent<Text>().text);
-            StringAssert.Contains("Not made yet", FindDeep(pop, "StatLines").GetComponent<Text>().text);
+            StringAssert.Contains("Jump", FindDeep(pop, "StatLines").GetComponent<Text>().text);
 
             Object.DestroyImmediate(FindDeep(canvas, "Popup").gameObject);
             Assert.IsTrue(s.OpenInfo("momo"));   // owned

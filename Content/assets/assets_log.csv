@@ -405,3 +405,9 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-06,T200,tora_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=tora rare R-2,none,9GdFg6WeLb238rmOj1hz,,30,Content/assets/approvals/T199-202 (AskUserQuestion approval),pending owner pick
 2026-11-06,T201,rusu_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=rusu rare R-2,none,5fFd4urDSimRlfKT6fCw,,30,Content/assets/approvals/T199-202 (AskUserQuestion approval),pending owner pick
 2026-11-06,T202,ryu_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=ryu rare R-2,none,66Pm8eLp6JxDIJpWJtXp,,30,Content/assets/approvals/T199-202 (AskUserQuestion approval),pending owner pick
+NOTE,Region 5 Elite picks: sprout_e1 tora_e1 rusu_e1 ryu_e2 (owner)
+2026-11-06,T203,sprout_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=sprout_e1,none,cmng0fze4hSqKwQbjluq,,30,Content/assets/approvals/T203-206 (AskUserQuestion approval),downloaded _l1 _l2; pending owner pick
+2026-11-06,T204,tora_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=tora_e1,none,GF7EPT1i39szhyPjHqAd,,30,Content/assets/approvals/T203-206 (AskUserQuestion approval),downloaded _l1 _l2; pending owner pick
+2026-11-06,T205,rusu_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=rusu_e1,none,fmSGt6OZnbodYbOgJmX1,,30,Content/assets/approvals/T203-206 (AskUserQuestion approval),downloaded _l1 _l2; pending owner pick
+2026-11-06,T206,ryu_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=ryu_e2,none,Fj6e80VqWI9I8xjVbZts,,30,Content/assets/approvals/T203-206 (AskUserQuestion approval),downloaded _l1 _l2; pending owner pick
+NOTE,Region 5 Legendary picks: sprout_l1 tora_l1 rusu_l1 ryu_l1 (owner); Region 4/5 art complete

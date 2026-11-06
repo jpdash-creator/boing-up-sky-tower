@@ -1,4 +1,4 @@
-"""Cuts the approved Region 1, 2 and 3 hero paintings (F4.1 to F4.3) into the standard polygon-hero parts (docs/19, docs/34).
+"""Cuts the approved Region 1 to 5 hero paintings (F4.1 to F4.5) into the standard polygon-hero parts (docs/19, docs/34).
 
     PYTHONPATH=E:/pylibs python Tools/art_pipeline/cut_region1_heroes.py [--only id,id] [--debug] [--out Assets/Resources/Characters]
 
@@ -96,6 +96,54 @@ HEROES = {
     "coco_r": ("coco/coco_r3.png", "sticker", 900, 380, 985, 1330),
     "coco_e": ("coco/coco_e2.png", "sticker", 900, 380, 985, 1330),
     "coco_l": ("coco/coco_l1.png", "trim50", 900, 380, 985, 1330),
+    # Region 4 (F4.4): Bonbon Rare / Elite / Legendary and Gummi, Choco, Marsh, Cookie
+    "candygirl_r": ("bonbon/bonbon_r2.png", "sticker", 900, 380, 985, 1330),
+    "candygirl_e": ("bonbon/bonbon_e2.png", "sticker", 900, 380, 985, 1330),
+    "candygirl_l": ("bonbon/bonbon_l2.png", "sticker", 900, 380, 985, 1330),
+    "gummi": ("gummi/gummi_pink.png", "sticker", 900, 380, 985, 1330),
+    "gummi_u": ("gummi/gummi_u1.png", "sticker", 900, 380, 985, 1330),
+    "gummi_r": ("gummi/gummi_r2.png", "sticker", 900, 380, 985, 1330),
+    "gummi_e": ("gummi/gummi_e2.png", "sticker", 900, 380, 985, 1330),
+    "gummi_l": ("gummi/gummi_l1.png", "sticker", 900, 380, 985, 1330),
+    "choco": ("choco/choco_c4.png", "sticker", 900, 380, 985, 1330),
+    "choco_u": ("choco/choco_u2.png", "sticker", 900, 380, 985, 1330),
+    "choco_r": ("choco/choco_r1.png", "sticker", 900, 380, 985, 1330),
+    "choco_e": ("choco/choco_e2.png", "sticker", 900, 380, 985, 1330),
+    "choco_l": ("choco/choco_l2.png", "sticker", 900, 380, 985, 1330),
+    "marsh": ("marsh/marsh_c2.png", "sticker", 900, 380, 985, 1330),
+    "marsh_u": ("marsh/marsh_u1.png", "sticker", 900, 380, 985, 1330),
+    "marsh_r": ("marsh/marsh_r1.png", "sticker", 900, 380, 985, 1330),
+    "marsh_e": ("marsh/marsh_e2.png", "sticker", 900, 380, 985, 1330),
+    "marsh_l": ("marsh/marsh_l2.png", "sticker", 900, 380, 985, 1330),
+    "cookie": ("cookie/cookie_c2.png", "sticker", 900, 380, 985, 1330),
+    "cookie_u": ("cookie/cookie_u1.png", "sticker", 900, 380, 985, 1330),
+    "cookie_r": ("cookie/cookie_r2.png", "sticker", 900, 380, 985, 1330),
+    "cookie_e": ("cookie/cookie_e2.png", "sticker", 900, 380, 985, 1330),
+    "cookie_l": ("cookie/cookie_l2.png", "sticker", 900, 380, 985, 1330),
+    # Region 5 (F4.5): Bao Rare / Elite / Legendary and Sprout, Tora, Rusu, Ryu
+    "monk_r": ("bao/bao_r2.png", "sticker", 900, 380, 985, 1330),
+    "monk_e": ("bao/bao_e1.png", "sticker", 900, 380, 985, 1330),
+    "monk_l": ("bao/bao_l2.png", "sticker", 900, 380, 985, 1330),
+    "sprout": ("sprout/sprout_c1.png", "sticker", 900, 380, 985, 1330),
+    "sprout_u": ("sprout/sprout_u1.png", "sticker", 900, 380, 985, 1330),
+    "sprout_r": ("sprout/sprout_r2.png", "sticker", 900, 380, 985, 1330),
+    "sprout_e": ("sprout/sprout_e1.png", "sticker", 900, 380, 985, 1330),
+    "sprout_l": ("sprout/sprout_l1.png", "sticker", 900, 380, 985, 1330),
+    "tora": ("tora/tora_c2.png", "sticker", 900, 380, 985, 1330),
+    "tora_u": ("tora/tora_u1.png", "sticker", 900, 380, 985, 1330),
+    "tora_r": ("tora/tora_r2.png", "sticker", 900, 380, 985, 1330),
+    "tora_e": ("tora/tora_e1.png", "sticker", 900, 380, 985, 1330),
+    "tora_l": ("tora/tora_l1.png", "sticker", 900, 380, 985, 1330),
+    "rusu": ("rusu/rusu_c2.png", "sticker", 900, 380, 985, 1330),
+    "rusu_u": ("rusu/rusu_u1.png", "sticker", 900, 380, 985, 1330),
+    "rusu_r": ("rusu/rusu_r2.png", "sticker", 900, 380, 985, 1330),
+    "rusu_e": ("rusu/rusu_e1.png", "sticker", 900, 380, 985, 1330),
+    "rusu_l": ("rusu/rusu_l1.png", "sticker", 900, 380, 985, 1330),
+    "ryu": ("ryu/ryu_c2.png", "sticker", 900, 380, 985, 1330),
+    "ryu_u": ("ryu/ryu_u1.png", "sticker", 900, 380, 985, 1330),
+    "ryu_r": ("ryu/ryu_r2.png", "sticker", 900, 380, 985, 1330),
+    "ryu_e": ("ryu/ryu_e2.png", "sticker", 900, 380, 985, 1330),
+    "ryu_l": ("ryu/ryu_l1.png", "sticker", 900, 380, 985, 1330),
 }
 PART_NAMES = ("back", "legL", "legR", "body", "handL", "handR", "head")
 ORDER = ["legL", "legR", "body", "handL", "handR", "head"]

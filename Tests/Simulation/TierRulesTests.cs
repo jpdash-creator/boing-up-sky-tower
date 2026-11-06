@@ -67,7 +67,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         [Fact]
         public void EveryDefinedTierRowObeysItsRule()
         {
-            Assert.Equal(5 + 19 + 19 + 19, MergeTierDefs.Rows.Length);   // 5 Uncommon heroes + Regions 1 to 3 (Momo/Capi/Otto Rare/Elite/Legendary, 4 new heroes x 4 tiers each per region)
+            Assert.Equal(5 + 19 * 5, MergeTierDefs.Rows.Length);   // 5 Uncommon heroes + Regions 1 to 5 (Momo/Capi/Otto/Bonbon/Bao Rare/Elite/Legendary, 4 new heroes x 4 tiers each per region)
             foreach (TierRow row in MergeTierDefs.Rows)
             {
                 Assert.Null(TierRules.Validate(row));

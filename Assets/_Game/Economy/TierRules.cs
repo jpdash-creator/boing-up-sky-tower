@@ -41,7 +41,7 @@ namespace BoingUpSkyTower.Economy
         /// The hero lines: the five original heroes in region order (Meadow Springs, Mushroom Grove, Sunny Beach, Candy Canyon, Bamboo Temple) FIRST (their positions are part of the Uncommon seeds), then the
         /// four extra Region 1 heroes (Bumble, Ribbi, Dandy, Pip). The order of the new lines is the order of their rows in <see cref="MergeTierDefs.Rows"/>.
         /// </summary>
-        public static readonly string[] Lines = { "momo", "forestgirl", "beachotter", "candygirl", "monk", "bumble", "ribbi", "dandy", "pip", "nib", "spike", "moss", "fenn", "pinch", "shelly", "bloop", "coco" };
+        public static readonly string[] Lines = { "momo", "forestgirl", "beachotter", "candygirl", "monk", "bumble", "ribbi", "dandy", "pip", "nib", "spike", "moss", "fenn", "pinch", "shelly", "bloop", "coco", "gummi", "choco", "marsh", "cookie", "sprout", "tora", "rusu", "ryu" };
 
         public static readonly TierRule[] Rules =
         {
@@ -95,6 +95,24 @@ namespace BoingUpSkyTower.Economy
             { "bloop", new[] { PowerUp.DoubleJump, PowerUp.SlowTime, PowerUp.Rocket, PowerUp.Shield } },
             // Coco the monkey: Magnet and a coin find stat, then leaps and a rocket
             { "coco", new[] { PowerUp.Magnet, PowerUp.DoubleJump, PowerUp.Rocket, PowerUp.SlowTime } },
+            // Candy Canyon extra heroes (F4.4): the first power is the hero's identity (Bonbon keeps her pool above)
+            // Gummi the gummy bear: Shield (a bouncy gummy hide), then sticky wall grip, calm and pickups
+            { "gummi", new[] { PowerUp.Shield, PowerUp.WallStick, PowerUp.SlowTime, PowerUp.Magnet } },
+            // Choco the chocolate bunny: Double Jump (hops), then a rocket pop
+            { "choco", new[] { PowerUp.DoubleJump, PowerUp.Rocket, PowerUp.Shield, PowerUp.SlowTime } },
+            // Marsh the marshmallow kid: Slow Time (soft and floaty), then a toasty shield
+            { "marsh", new[] { PowerUp.SlowTime, PowerUp.Shield, PowerUp.DoubleJump, PowerUp.Magnet } },
+            // Cookie the cookie kid: Magnet and a coin find stat, then leaps and a rocket
+            { "cookie", new[] { PowerUp.Magnet, PowerUp.DoubleJump, PowerUp.Rocket, PowerUp.Shield } },
+            // Bamboo Temple extra heroes (F4.5): the first power is the hero's identity (Bao keeps his pool above)
+            // Sprout the bamboo sprout: Shield (a leafy guard), then wall grip and calm
+            { "sprout", new[] { PowerUp.Shield, PowerUp.WallStick, PowerUp.SlowTime, PowerUp.DoubleJump } },
+            // Tora the tiger cub: Double Jump (pounce), then a wall claw grip and a rocket
+            { "tora", new[] { PowerUp.DoubleJump, PowerUp.WallStick, PowerUp.Rocket, PowerUp.Shield } },
+            // Rusu the red panda: Magnet and a coin find stat, then leaps and calm
+            { "rusu", new[] { PowerUp.Magnet, PowerUp.DoubleJump, PowerUp.SlowTime, PowerUp.Rocket } },
+            // Ryu the wingless dragon pup: Rocket (a fiery dash, no wings), then a scale shield
+            { "ryu", new[] { PowerUp.Rocket, PowerUp.Shield, PowerUp.Magnet, PowerUp.DoubleJump } },
         };
 
         /// <summary>The rule of a tier, or null for Common.</summary>
