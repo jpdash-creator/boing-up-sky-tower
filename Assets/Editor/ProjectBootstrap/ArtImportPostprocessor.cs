@@ -51,7 +51,7 @@ namespace ProjectBootstrap
             }
         }
 
-        public override uint GetVersion() { return 12; }   // bump to re-import the art when the import rules change
+        public override uint GetVersion() { return 13; }   // bump to re-import the art when the import rules change
 
         /// <summary>Small square icons (power-ups): a single sprite, no mipmaps, 256 px, compressed.</summary>
         static void ApplyIcon(TextureImporter ti)
@@ -83,6 +83,20 @@ namespace ProjectBootstrap
             ti.ReadTextureSettings(st);
             st.spriteMeshType = SpriteMeshType.FullRect;
             ti.SetTextureSettings(st);
+        }
+
+        /// <summary>Hero rig parts: like a picture, but ASTC 6x6 on mobile and capped at 1024 px (a hero is never drawn taller than that).</summary>
+        static void ApplyCharacterPart(TextureImporter ti)
+        {
+            ApplyPicture(ti, 1024);
+            foreach (var platform in new[] { "Android", "iPhone" })
+            {
+                var ps = ti.GetPlatformTextureSettings(platform);
+                ps.overridden = true;
+                ps.maxTextureSize = 1024;
+                ps.format = TextureImporterFormat.ASTC_6x6;
+                ti.SetPlatformTextureSettings(ps);
+            }
         }
 
         /// <summary>Chest pictures: transparent sprites, no mipmaps, compressed.</summary>
@@ -135,7 +149,7 @@ namespace ProjectBootstrap
             if (assetPath.StartsWith("Assets/Resources/Map/")) { ApplyWorldMap((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/Power/")) { ApplyPicture((TextureImporter)assetImporter, 1024); return; }   // the Flight wing pair: one transparent 1024 px sprite
             if (assetPath.StartsWith("Assets/Resources/Art/Chests/")) { ApplyPicture((TextureImporter)assetImporter, 1024); return; }
-            if (assetPath.StartsWith("Assets/Resources/Characters/")) { ApplyPicture((TextureImporter)assetImporter, 2048); return; }
+            if (assetPath.StartsWith("Assets/Resources/Characters/")) { ApplyCharacterPart((TextureImporter)assetImporter); return; }   // 125 hero rigs x 6 full-canvas parts: ASTC 6x6 at 1024 px keeps the install small (was uncompressed 8.6 MB per part, APK 548 MB)
             if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/HeroSheet/")) { ApplyRewards((TextureImporter)assetImporter); return; }   // hero sheet plates (slices.json): plain FullRect sprites, the game sets the 9-slice borders by code
             if (assetPath.StartsWith("Assets/Resources/Art/Rewards/")) { ApplyRewards((TextureImporter)assetImporter); return; }
