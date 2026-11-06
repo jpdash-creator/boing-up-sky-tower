@@ -1755,9 +1755,9 @@ namespace BoingUpSkyTower.Tests
                         if (txt != null && txt.resizeTextMinSize < Mathf.RoundToInt(UiKit.MinBodyTextPx)) problems.Add(tag + ": name min font below 16 sp");
                         if (txt != null)
                         {
-                            // the wrapped name must fit its row (so it cannot reach the chips below), in canvas pixels like the layout audit
-                            float ppu = Mathf.Max(0.01f, txt.pixelsPerUnit);
-                            float needed = txt.preferredHeight / ppu * (nb.height / Mathf.Max(0.01f, name.rect.height));
+                            // the wrapped name must fit its row (so it cannot reach the chips below), in canvas pixels like the layout audit.
+                            // Text.preferredHeight is already in rect units (it divides by pixelsPerUnit itself), so only the rect-to-canvas ratio is applied.
+                            float needed = txt.preferredHeight * (nb.height / Mathf.Max(0.01f, name.rect.height));
                             if (needed > nb.height * 1.15f + 1f) problems.Add(tag + ": " + card.name + " name text (" + needed + " px) is taller than its row (" + nb.height + " px)");   // 15 percent tolerance: the real overlap audit is the authority, this is a sanity check
                         }
                     }

@@ -393,3 +393,15 @@ date,batch,asset_id,model,mode,settings,seed,creation_id,resource_id,credits,pro
 2026-11-06,T193,ryu_uncommon,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=ryu common C-2,none,BquKDaQdpCSvND4fY4y9,,30,Content/assets/approvals/T189-193 (AskUserQuestion approval),pending owner pick
 2026-11-06,NOTE,picks,,,,,,,,,T189 Bao Elite picked E-1; T190 Sprout Uncommon picked U-1; T191 Tora Uncommon picked U-1; T192 Rusu Uncommon picked U-1
 2026-11-06,NOTE,picks,,,,,,,,,T193 Ryu Uncommon picked U-1
+2026-11-06,T194,bao_legendary,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=bao elite E-1,none,oDks1OTfTA1l2moVb4AY,,30,Content/assets/approvals/T194-198 (AskUserQuestion approval),pending owner pick
+2026-11-06,T195,sprout_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=sprout uncommon U-1,none,MDgfwVJjMrm00Ccvszy8,,30,Content/assets/approvals/T194-198 (AskUserQuestion approval),pending owner pick
+2026-11-06,T196,tora_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=tora uncommon U-1,none,s1Mp1oP9bqvz7Jtug27K,,30,Content/assets/approvals/T194-198 (AskUserQuestion approval),pending owner pick
+2026-11-06,T197,rusu_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=rusu uncommon U-1,none,S3jKSoNzfLox8DUrxs9m,,30,Content/assets/approvals/T194-198 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,pending,,,,,,,,,T198 Ryu Rare approved; waiting for a free OpenArt slot
+2026-11-06,T198,ryu_rare,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=ryu uncommon U-1,none,HvvHFtFpNIUwB0309t0g,,30,Content/assets/approvals/T194-198 (AskUserQuestion approval),pending owner pick
+2026-11-06,NOTE,picks,,,,,,,,,T194 Bao Legendary picked L-2 (Bao complete); T195 Sprout Rare picked R-2; T196 Tora Rare picked R-2; T197 Rusu Rare picked R-2
+2026-11-06,NOTE,picks,,,,,,,,,T198 Ryu Rare picked R-2
+2026-11-06,T199,sprout_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=sprout rare R-2,none,HXkheBER1OyzzSKWMTpr,,30,Content/assets/approvals/T199-202 (AskUserQuestion approval),pending owner pick
+2026-11-06,T200,tora_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=tora rare R-2,none,9GdFg6WeLb238rmOj1hz,,30,Content/assets/approvals/T199-202 (AskUserQuestion approval),pending owner pick
+2026-11-06,T201,rusu_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=rusu rare R-2,none,5fFd4urDSimRlfKT6fCw,,30,Content/assets/approvals/T199-202 (AskUserQuestion approval),pending owner pick
+2026-11-06,T202,ryu_elite,byte-plus-seedream-5-lite,image2image,2K 3:4 x2 ref=ryu rare R-2,none,66Pm8eLp6JxDIJpWJtXp,,30,Content/assets/approvals/T199-202 (AskUserQuestion approval),pending owner pick
