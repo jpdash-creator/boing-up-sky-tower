@@ -30,9 +30,9 @@ Order from the owner: F1, F2 and F3 first; F4 (new heroes) last, one region and 
 ## F4 New heroes (last, one region and one character at a time)
 | Id | Request | Status |
 |---|---|---|
-| F4.1 | Region 1 Meadow Springs, Momo: has Common and Uncommon; add Rare, Elite, Legendary. Plus 4 more new characters for region 1: once Common is finalised, add Uncommon, Rare, Elite and Legendary for each. | Open |
-| F4.2 | Region 2 Mushroom Grove, Capi: same (Rare, Elite, Legendary + 4 more characters with all tiers). | Open |
-| F4.3 | Region 3 Sunny Beach, Otto: same. | Open |
+| F4.1 | Region 1 Meadow Springs, Momo: has Common and Uncommon; add Rare, Elite, Legendary. Plus 4 more new characters for region 1: once Common is finalised, add Uncommon, Rare, Elite and Legendary for each. | Done (code, tests written, run in Unity). See `40-region1-heroes.md`. |
+| F4.2 | Region 2 Mushroom Grove, Capi: same (Rare, Elite, Legendary + 4 more characters with all tiers). | Done (code, tests written, run in Unity). See `40-region1-heroes.md` section 7. |
+| F4.3 | Region 3 Sunny Beach, Otto: same. | Done (code, tests written, run in Unity) - docs/41-region3-heroes.md |
 | F4.4 | Region 4 Candy Canyon, Bonbon: same. | Open |
 | F4.5 | Region 5 Bamboo Temple, Bao: same. | Open |
 | F4.x | In the shop all heroes are tied to Bundles, Chests and Rewards so open regions can drop them. | Open |

@@ -167,9 +167,7 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(common.Stats.RunBonusCoins + row.RunCoinsAdd, spec.Stats.RunBonusCoins, "run bonus is added on top of the Common hero's");
                 Assert.AreEqual(common.Stats.RunBonusGems + row.RunGemsAdd, spec.Stats.RunBonusGems);
                 Assert.LessOrEqual(MergeRules.ShownGainLines(common.ShownValues(), spec.ShownValues()).Count, 6, row.Id + " gain lines fit the result card");
-                Assert.GreaterOrEqual(spec.Stats.LaunchTenths, common.Stats.LaunchTenths);
-                Assert.GreaterOrEqual(spec.Stats.MaxSpeed, common.Stats.MaxSpeed);
-                Assert.GreaterOrEqual(spec.Stats.Control, common.Stats.Control);
+                Assert.GreaterOrEqual(spec.Stats.LaunchTenths, common.Stats.LaunchTenths);   // Jump rises with the rarity; Speed and Control are independent draws balanced by the Forgiveness Index (docs/44)
                 Assert.AreEqual(1, spec.Powers.Length, "Uncommon has 1 hero power");
                 Assert.IsNull(TierRules.ValidatePowers(row.LineId, row.Rarity, spec.Powers), row.Id);
             }

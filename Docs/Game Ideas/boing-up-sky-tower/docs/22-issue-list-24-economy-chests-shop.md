@@ -97,7 +97,7 @@ Source: the owner's pasted "Boing Tower: full requirements for issue-list points
 - Ads: Unity LevelPlay, test ads only (owner gives the app key later); one rewarded-ad interface, a test implementation for editor/dev, LevelPlay for device.
 
 ## Cross-cutting
-- Characters (Coming Soon, specified): rarities Common/Uncommon/Rare/Epic/Legendary; Momo (region 1) and Sporeling (region 2) Common; card colours as docs/21 plus the rarity name on each card; powers: Uncommon 1 power with 1 free use per run; Rare 1 power with 2 uses; Epic 2 powers with recharge; Legendary 3 powers including Flight or Rocket with faster recharge; chest weights when live Iron Uncommon 67 / Rare 33, Golden Rare 57 / Epic 29 / Legendary 14.
+- Characters (Coming Soon, specified): rarities Common/Uncommon/Rare/Epic/Legendary; Momo (region 1) and Sporeling (region 2) Common; card colours as docs/21 plus the rarity name on each card; powers: Uncommon 1 power, Rare 2, Elite 3 (Elite is the shown name of the code enum Epic), Legendary 4, with cooldowns of 30 / 22 / 15 / 10 s (hero physics and tiers: docs/44); chest weights when live Iron Uncommon 67 / Rare 33, Golden Rare 57 / Epic 29 / Legendary 14.
 - Analytics events to add: chest_open (type, count, gems spent, contents), chest_odds_viewed, revive_offer, revive_taken (type, price), gem_pack_bought (pack, first purchase flag), coin_pack_bought, bundle_view, daily_reward_view, name_tag_audit (CI only).
 - Build order suggested by the owner: 1) name tags + badge restyle, 2) chest screen + economics tables + 50-gem pack, 3) gem share + coin payout + revive prices, 4) home buttons.
 

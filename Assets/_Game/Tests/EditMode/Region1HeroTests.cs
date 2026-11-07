@@ -172,13 +172,15 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void TheCommonIdentityStatsAreTheBestOfTheFiveInRegion1()
+        public void TheRegion1CommonHeroesFollowTheForgivenessIndexRules()
         {
-            Assert.GreaterOrEqual(CharacterDefs.Get("bumble").Stats.MaxSpeed, CharacterDefs.Get("momo").Stats.MaxSpeed + 1, "Bumble is the fast one");
-            Assert.GreaterOrEqual(CharacterDefs.Get("ribbi").Stats.LaunchTenths, CharacterDefs.Get("momo").Stats.LaunchTenths + 20, "Ribbi jumps highest");
-            Assert.GreaterOrEqual(CharacterDefs.Get("dandy").Stats.Control, CharacterDefs.Get("momo").Stats.Control + 3, "Dandy is the floaty one");
-            Assert.GreaterOrEqual(CharacterDefs.Get("pip").Stats.WallBoostHundredths, CharacterDefs.Get("momo").Stats.WallBoostHundredths + 7, "Pip bounces off walls best");
-            foreach (string line in Lines) Assert.IsNull(CharacterDefs.Get(line).Stats.Validate(), line);
+            // docs/44: the identity stats of the old hand-tuned heroes are gone; every Common hero is a generated, measured draw inside the Common band (Jump 0 to 5 percent over 19.0)
+            foreach (string line in Lines)
+            {
+                CharacterStats s = CharacterDefs.Get(line).Stats;
+                Assert.IsNull(s.Validate(), line);
+                Assert.IsNull(HeroIndex.Validate(0, new HeroPhysics(s.LaunchTenths, s.MaxSpeed, s.Control, s.WallBoostHundredths)), line);
+            }
         }
 
         [Test]

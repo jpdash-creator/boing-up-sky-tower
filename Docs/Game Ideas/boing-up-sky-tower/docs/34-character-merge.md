@@ -27,7 +27,7 @@ Common -> Uncommon -> Rare -> Elite -> Legendary (the fourth step is **Elite** i
 
 Hero physics and the rarity rules: see docs/44-power-mechanics-bible.md (the numbers of every hero are in its sections 3 and 8; the run bonus is in section 7b). Powers follow the pools in section 2b below. The five Uncommon rows are fixed constants in `MergeTierDefs.Rows`. They are not in any chest pool and belong to no region.
 
-**Adding Rare, Elite or Legendary later is data only:** one `TierRow` per hero in `MergeTierDefs.Rows` (line id, new id, name, rarity, art id, run coins and gems added; hero physics come from the generated hero table, doc 44 section 6; powers come from the line's pool automatically) and the art folder `Resources/Characters/{id}/` (parts and `rig.json` like the Common hero). No code changes: `MergeRules.NextTier` finds the row by line and rarity + 1.
+**Adding Rare, Elite or Legendary is data only (done for Region 1, see docs/40):** one `TierRow` per hero in `MergeTierDefs.Rows` (line id, new id, name, rarity, art id, run coins and gems added; hero physics come from the generated hero table, doc 44 section 6; powers come from the line's pool automatically) and the art folder `Resources/Characters/{id}/` (parts and `rig.json` like the Common hero). No code changes: `MergeRules.NextTier` finds the row by line and rarity + 1.
 
 ## 2b. Tier rules (moved to doc 44, 2026-11-08)
 
@@ -151,3 +151,7 @@ Code: `Economy/HeroCards.cs` (pure: `HeroCard`, owned and merge card lists, sele
 - A merge consumes exactly 3 copies of that type (the save keeps counts), clears the selection and rebuilds the list from the save: the type vanishes when fewer than 3 copies remain, and the new tier (for example Uncommon Momo) appears on the Heroes screen as another card.
 
 CUX: all new controls at least 48 dp with 8 dp gaps, text at least 16 sp from the real text scale (130 percent), layout from real text heights, scroll areas, no Update and no per-frame work (screens are rebuilt on change only), tick and padlock are shapes, not only colour, accessibility labels on every card and button.
+
+## 11. Region 1 full ladder (2026-11-06, Bug List 5 F4.1)
+
+Region 1 (Meadow Springs) has 5 characters x 5 tiers = 25 heroes: Momo (Rare, Elite, Legendary added) and Bumble, Ribbi, Dandy, Pip (all five tiers). Rows, powers, art pipeline, ownership rules, drops and open points are in `40-region1-heroes.md`; every hero's numbers are in docs/44-power-mechanics-bible.md section 8. Impacts here: the merge chain Common x3 -> Uncommon x3 -> Rare x3 -> Elite x3 -> Legendary now runs end to end for Region 1; Legendary is the top (no merge). `CharacterSpec.RegionStarter` marks the one Common hero a region gives by itself (the other Region 1 Commons come as cards); `OwnedWithoutCopyCount` and the reveal use it. The All Heroes list puts every hero line (5 cards) on its own rows (3 + 2).

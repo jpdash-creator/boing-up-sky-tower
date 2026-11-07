@@ -231,12 +231,13 @@ Check on VIP: the top tier's 25 gems a day is 750 gems a month, worth $22.50 at 
 | Value | Number |
 |---|---|
 | `JumpBase` | 19 u/s (history: 14, then 21, then 19) |
-| `JumpSpeedFactor` | 0.41 (was 0.85, then 0.58; docs aligned to the code 2026-11-01) |
+| `JumpSpeedFactor` | 0.41 (history: 0.85, then 0.58; docs aligned to the code 2026-11-01) |
 | Standing jump peak | 4.51 u = **1.3 median row gaps** (median normal gap 3.48 u) |
 | Half-speed jump peak | 5.43 u |
 | Full-speed jump peak (22.69 u/s launch) | 6.44 u = **1.85 median row gaps** |
 | Normal vertical gap cap (`NormalGapMax`) | 4.2 u, so a standing jump always reaches the next platform with 0.3 u margin |
 
+- Hero physics and the rarity rules: see docs/44-power-mechanics-bible.md in the boing-up-sky-tower docs folder (section 3). The jump numbers above are the default hero (Momo Common).
 - Layouts are sized from a separate reference jump (`LayoutJumpBase` 14 u/s, `LayoutJumpSpeedFactor` 0.85) whose reach is never larger than the real one; see `Assets/_Game/Simulation/NOTES.md` for the contract and its tests.
 - Narrow-platform caps, sticky platforms (next gap at most 2.2 u), bounce pads and the combo ladder keep their own caps.
 
