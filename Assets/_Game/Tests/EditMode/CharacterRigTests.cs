@@ -19,8 +19,8 @@ namespace BoingUpSkyTower.Tests
                 {
                     Assert.AreEqual(Vector2.zero, d.Min);
                     Assert.AreEqual(Vector2.one, d.Max);
-                    Assert.AreEqual(1365, d.Sprite.texture.width, c.Id + " " + d.Name);
-                    Assert.AreEqual(1649, d.Sprite.texture.height, c.Id + " " + d.Name);
+                    // The parts are drawn by normalised size, so the pixel size may be scaled down (hero parts are capped at 1024 px, APK size): the canvas SHAPE must still match.
+                    Assert.AreEqual(1365f / 1649f, (float)d.Sprite.texture.width / d.Sprite.texture.height, 0.005f, c.Id + " " + d.Name);
                 }
             }
         }

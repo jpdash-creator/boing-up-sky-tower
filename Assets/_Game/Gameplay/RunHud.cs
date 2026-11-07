@@ -269,6 +269,11 @@ namespace BoingUpSkyTower.Gameplay
             HeroPowers.OnPress = type => { if (OnHeroPower != null) OnHeroPower(type); };
             HeroPowers.Build(root, session, Powers.ButtonCount, P);
             HeroPowers.SetVisible(false);
+            // The three pad buttons are the last children of the HUD: nothing built above (banners, intro, strips, bars) can sit on top of them or swallow a touch (owner 2026-11-07).
+            // Pause and result pop-ups are created later, so they still cover the pads on purpose.
+            Pad.Left.transform.SetAsLastSibling();
+            Pad.Right.transform.SetAsLastSibling();
+            Pad.Jump.transform.SetAsLastSibling();
             introTimer = 3.2f;
         }
 

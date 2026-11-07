@@ -48,7 +48,11 @@ namespace BoingUpSkyTower.Gameplay
             return pad;
         }
 
-        public const float ButtonAlpha = 0.5f;
+        /// <summary>Run-button opacity: 0.75 = 50 percent more visible than the old 0.5 (owner 2026-11-07: the see-through pads were easy to miss). Shared by the pads, pause, bought and hero power buttons.</summary>
+        public const float ButtonAlpha = 0.75f;
+
+        /// <summary>Extra touch area around every pad button (reference px, each side): a thumb that drifts a little off the plate keeps the move/jump held. Kept under half the 24 px gap so neighbours never overlap.</summary>
+        public const float HitSlop = 11f;
 
         static HoldButton Make(RectTransform parent, string name, string a11y, Sprite sprite, Sprite glyph, bool flip, Vector2 anchor, Vector2 pos, float size, float width = -1f)
         {
@@ -57,8 +61,10 @@ namespace BoingUpSkyTower.Gameplay
             ToyKit.AddGlyph(b.transform, glyph, 0.6f, flip);
             UiKit.Place((RectTransform)b.transform, anchor, pos, new Vector2(width, size));
             b.GetComponent<A11yLabel>().Text = a11y;
-            b.GetComponent<Image>().raycastTarget = true;
-            b.gameObject.AddComponent<CanvasGroup>().alpha = ButtonAlpha;   // half see-through (owner 2026-11-02): the play field stays visible
+            Image plateImage = b.GetComponent<Image>();
+            plateImage.raycastTarget = true;
+            plateImage.raycastPadding = new Vector4(-HitSlop, -HitSlop, -HitSlop, -HitSlop);   // bigger touch area than the drawn plate
+            b.gameObject.AddComponent<CanvasGroup>().alpha = ButtonAlpha;   // 25 percent see-through (owner 2026-11-07, was 50): the play field is still visible, the pads are not missed
             return b.gameObject.AddComponent<HoldButton>();
         }
     }
