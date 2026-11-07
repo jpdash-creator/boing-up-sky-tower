@@ -136,38 +136,35 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void RegionOneTierRowsFollowTheChainTheIdentityAndThePowerPools()
+        public void RegionOneTierRowsFollowTheTableTheIdentityAndThePowerPools()
         {
-            var identity = new Dictionary<string, int> { { "ribbi", 0 }, { "bumble", 1 }, { "dandy", 2 }, { "pip", 3 } };   // Jump, Speed, Control, Wall Bounce
             var firstPower = new Dictionary<string, PowerUp> { { "bumble", PowerUp.Flight }, { "ribbi", PowerUp.DoubleJump }, { "dandy", PowerUp.SlowTime }, { "pip", PowerUp.Shield } };
             int rows = 0;
             foreach (string line in Lines)
             {
                 CharacterSpec common = CharacterDefs.Get(line);
-                ShownStats prev = common.ShownValues();
                 for (int i = 1; i < 5; i++)
                 {
                     TierRow row = MergeTierDefs.Rows.First(r => r.Id == line + Suffix[i]);
+                    HeroRow hr = HeroTable.Find(row.Id);
                     rows++;
                     Assert.AreEqual(Ladder[i], row.Rarity);
                     Assert.IsNull(TierRules.Validate(row), row.Id);
-                    Assert.IsNull(TierRules.ValidateChain(prev, row), row.Id + " prints exactly its percent over the tier below");
+                    Assert.IsNotNull(hr, row.Id + " has an absolute row in the hero table");
                     CharacterSpec spec = CharacterDefs.Get(row.Id);
                     Assert.IsNull(TierRules.ValidatePowers(line, row.Rarity, spec.Powers), row.Id);
                     Assert.AreEqual(CharacterDefs.CooldownSeconds[i], TierRules.RuleFor(row.Rarity).CooldownSeconds);
                     Assert.IsNull(spec.Stats.ValidatePhysics(), row.Id + " plays inside the limits");
+                    Assert.AreEqual(hr.LaunchTenths, spec.Stats.LaunchTenths, row.Id);
+                    Assert.AreEqual(hr.Speed, spec.Stats.MaxSpeed, row.Id);
+                    Assert.AreEqual(hr.Control, spec.Stats.Control, row.Id);
+                    Assert.AreEqual(hr.Wall, spec.Stats.WallBoostHundredths, row.Id);
                     Assert.AreEqual(common.Stats.RunBonusCoins + row.RunCoinsAdd, spec.Stats.RunBonusCoins, row.Id);
                     Assert.AreEqual(common.Stats.RunBonusGems + row.RunGemsAdd, spec.Stats.RunBonusGems, row.Id);
-                    int id;
-                    if (identity.TryGetValue(line, out id))
-                    {
-                        int[] pct = { row.JumpPct, row.SpeedPct, row.ControlPct, row.WallPct };
-                        Assert.Greater(pct[id], 0, row.Id + " boosts the hero's identity stat");
-                        Assert.AreEqual(firstPower[line], spec.Powers[0], row.Id + " keeps the identity power first");
-                    }
-                    prev = TierRules.Apply(prev, common.ShownValues(), row);
-                    Assert.AreEqual(prev.Speed, spec.ShownValues().Speed, row.Id + " shown speed is the chain result");
-                    Assert.AreEqual(prev.Jump, spec.ShownValues().Jump, row.Id);
+                    if (firstPower.ContainsKey(line)) Assert.AreEqual(firstPower[line], spec.Powers[0], row.Id + " keeps the identity power first");
+                    ShownStats shown = ShownStats.From(spec.Stats, new SimConfig());
+                    Assert.AreEqual(shown.Speed, spec.ShownValues().Speed, row.Id + " shows its own absolute speed");
+                    Assert.AreEqual(shown.Jump, spec.ShownValues().Jump, row.Id);
                 }
             }
             Assert.AreEqual(5 + 19 * 5, MergeTierDefs.Rows.Length, "5 original Uncommon rows + 19 rows for each of Regions 1 to 5");
@@ -178,7 +175,7 @@ namespace BoingUpSkyTower.Tests
         public void TheCommonIdentityStatsAreTheBestOfTheFiveInRegion1()
         {
             Assert.GreaterOrEqual(CharacterDefs.Get("bumble").Stats.MaxSpeed, CharacterDefs.Get("momo").Stats.MaxSpeed + 1, "Bumble is the fast one");
-            Assert.GreaterOrEqual(CharacterDefs.Get("ribbi").Stats.JumpLaunch, CharacterDefs.Get("momo").Stats.JumpLaunch + 2, "Ribbi jumps highest");
+            Assert.GreaterOrEqual(CharacterDefs.Get("ribbi").Stats.LaunchTenths, CharacterDefs.Get("momo").Stats.LaunchTenths + 20, "Ribbi jumps highest");
             Assert.GreaterOrEqual(CharacterDefs.Get("dandy").Stats.Control, CharacterDefs.Get("momo").Stats.Control + 3, "Dandy is the floaty one");
             Assert.GreaterOrEqual(CharacterDefs.Get("pip").Stats.WallBoostHundredths, CharacterDefs.Get("momo").Stats.WallBoostHundredths + 7, "Pip bounces off walls best");
             foreach (string line in Lines) Assert.IsNull(CharacterDefs.Get(line).Stats.Validate(), line);

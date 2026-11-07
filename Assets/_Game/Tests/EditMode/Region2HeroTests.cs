@@ -94,26 +94,23 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void RegionTwoTierRowsFollowTheChainAndThePowerPools()
+        public void RegionTwoTierRowsFollowTheTableAndThePowerPools()
         {
             var firstPower = new Dictionary<string, PowerUp> { { "nib", PowerUp.Magnet }, { "spike", PowerUp.Shield }, { "moss", PowerUp.WallStick } };
             foreach (string line in Lines)
             {
                 CharacterSpec common = CharacterDefs.Get(line);
-                ShownStats prev = common.ShownValues();
                 for (int i = 1; i < 5; i++)
                 {
                     TierRow row = MergeTierDefs.Rows.First(r => r.Id == line + Suffix[i]);
                     Assert.IsNull(TierRules.Validate(row), row.Id);
-                    Assert.IsNull(TierRules.ValidateChain(prev, row), row.Id);
+                    Assert.AreEqual(HeroTable.Find(row.Id).LaunchTenths, CharacterDefs.Get(row.Id).Stats.LaunchTenths, row.Id + " plays its hero table row");
                     CharacterSpec spec = CharacterDefs.Get(row.Id);
                     Assert.IsNull(TierRules.ValidatePowers(line, row.Rarity, spec.Powers), row.Id);
                     Assert.IsNull(spec.Stats.ValidatePhysics(), row.Id);
                     PowerUp fp;
                     if (firstPower.TryGetValue(line, out fp)) Assert.AreEqual(fp, spec.Powers[0], row.Id);
-                    if (line == "moss") Assert.Greater(row.WallPct, 0, row.Id + " boosts wall bounce");
                     Assert.AreEqual(common.Stats.CoinFind, spec.Stats.CoinFind, row.Id + " keeps the coin find");
-                    prev = TierRules.Apply(prev, common.ShownValues(), row);
                 }
             }
         }

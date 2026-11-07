@@ -149,30 +149,25 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void UncommonRowsFollowTheOwnerRuleOnTheShownStatsAndPlayWithinTheLimits()
+        public void UncommonRowsTakeTheirTableStatsAndPlayWithinTheLimits()
         {
-            double[] V(ShownStats x) { return new[] { x.Jump, x.Speed, x.Control, x.WallBounce }; }
             foreach (TierRow row in MergeTierDefs.Rows)
             {
-                if (row.Rarity != CharacterRarity.Uncommon) continue;   // Rare, Elite and Legendary rows chain over the previous tier: RegionOneTierRowsFollowTheChain in Region1HeroTests
-                Assert.IsNull(TierRules.Validate(row), row.Id);   // exactly 2 stats of 10..25 percent, run coins 50..100 (step 10), run gems 1..5
+                if (row.Rarity != CharacterRarity.Uncommon) continue;
+                Assert.IsNull(TierRules.Validate(row), row.Id);   // run coins 50..100 (step 10), run gems 1..5
                 CharacterSpec spec = CharacterDefs.Get(row.Id);
                 CharacterSpec common = CharacterDefs.Get(row.LineId);
+                HeroRow hr = HeroTable.Find(row.Id);
+                Assert.IsNotNull(hr, row.Id);
                 Assert.IsNull(spec.Stats.ValidateTier(), row.Id);        // effective stats (what the simulation plays)
-                double[] c = V(common.ShownValues()), u = V(spec.ShownValues());
-                int changed = 0;
-                for (int i = 0; i < 4; i++)
-                {
-                    int pct = ShownStats.Percent(c[i], u[i]);
-                    if (pct == 0) { Assert.AreEqual(c[i], u[i], row.Id); continue; }
-                    changed++;
-                    Assert.That(pct, Is.InRange(10, 25), row.Id + " shown percent");
-                }
-                Assert.AreEqual(2, changed, row.Id + " boosts exactly 2 of the 4 shown stats");
+                Assert.AreEqual(hr.LaunchTenths, spec.Stats.LaunchTenths, row.Id);
+                Assert.AreEqual(hr.Speed, spec.Stats.MaxSpeed, row.Id);
+                Assert.AreEqual(hr.Control, spec.Stats.Control, row.Id);
+                Assert.AreEqual(hr.Wall, spec.Stats.WallBoostHundredths, row.Id);
                 Assert.AreEqual(common.Stats.RunBonusCoins + row.RunCoinsAdd, spec.Stats.RunBonusCoins, "run bonus is added on top of the Common hero's");
                 Assert.AreEqual(common.Stats.RunBonusGems + row.RunGemsAdd, spec.Stats.RunBonusGems);
-                Assert.LessOrEqual(MergeRules.ShownGainLines(common.ShownValues(), spec.ShownValues()).Count, 5, row.Id + " gain lines fit the result card");
-                Assert.GreaterOrEqual(spec.Stats.JumpLaunch, common.Stats.JumpLaunch);
+                Assert.LessOrEqual(MergeRules.ShownGainLines(common.ShownValues(), spec.ShownValues()).Count, 6, row.Id + " gain lines fit the result card");
+                Assert.GreaterOrEqual(spec.Stats.LaunchTenths, common.Stats.LaunchTenths);
                 Assert.GreaterOrEqual(spec.Stats.MaxSpeed, common.Stats.MaxSpeed);
                 Assert.GreaterOrEqual(spec.Stats.Control, common.Stats.Control);
                 Assert.AreEqual(1, spec.Powers.Length, "Uncommon has 1 hero power");
@@ -181,19 +176,26 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void GainTextShowsTheStoredPercentExactly()
+        public void GainTextShowsOnlyPositiveChangesBetweenTheTwoShownTiers()
         {
+            string[] names = { "Jump", "Speed", "Control", "Wall Bounce" };
+            double[] V(ShownStats x) { return new[] { x.Jump, x.Speed, x.Control, x.WallBounce }; }
             foreach (TierRow row in MergeTierDefs.Rows)
             {
                 CharacterSpec below = MergeRules.PreviousTier(CharacterDefs.Get(row.Id));   // the merge text compares with the tier below
-                List<string> lines = MergeRules.ShownGainLines(below.ShownValues(), CharacterDefs.Get(row.Id).ShownValues());
-                if (row.JumpPct > 0) CollectionAssert.Contains(lines, "Jump +" + row.JumpPct + "%", row.Id);
-                if (row.SpeedPct > 0) CollectionAssert.Contains(lines, "Speed +" + row.SpeedPct + "%", row.Id);
-                if (row.ControlPct > 0) CollectionAssert.Contains(lines, "Control +" + row.ControlPct + "%", row.Id);
-                if (row.WallPct > 0) CollectionAssert.Contains(lines, "Wall Bounce +" + row.WallPct + "%", row.Id);
+                ShownStats from = below.ShownValues(), to = CharacterDefs.Get(row.Id).ShownValues();
+                List<string> lines = MergeRules.ShownGainLines(from, to);
+                double[] a = V(from), b = V(to);
+                for (int i = 0; i < 4; i++)
+                {
+                    int pct = ShownStats.Percent(a[i], b[i]);
+                    string line = names[i] + " +" + pct + "%";
+                    if (pct > 0) CollectionAssert.Contains(lines, line, row.Id);
+                    else Assert.IsFalse(lines.Exists(l => l.StartsWith(names[i] + " ")), row.Id + " " + names[i] + " did not rise");
+                }
                 // the run bonus lines show the difference to the tier below (each tier's add is its OWN total on top of the Common hero)
-                int dCoins = CharacterDefs.Get(row.Id).ShownValues().RunBonusCoins - below.ShownValues().RunBonusCoins;
-                int dGems = CharacterDefs.Get(row.Id).ShownValues().RunBonusGems - below.ShownValues().RunBonusGems;
+                int dCoins = to.RunBonusCoins - from.RunBonusCoins;
+                int dGems = to.RunBonusGems - from.RunBonusGems;
                 if (dCoins > 0) CollectionAssert.Contains(lines, "Run coins +" + dCoins, row.Id);
                 if (dGems > 0) CollectionAssert.Contains(lines, "Run gems +" + dGems, row.Id);
             }

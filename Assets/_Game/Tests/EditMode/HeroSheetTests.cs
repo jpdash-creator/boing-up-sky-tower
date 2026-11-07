@@ -167,12 +167,12 @@ namespace BoingUpSkyTower.Tests
         public void MomoKeepsTheBaselineMainStatsAndOthersStayWithinTenPercent()
         {
             CharacterStats m = CharacterDefs.Momo.Stats;
-            Assert.AreEqual(19, m.JumpLaunch); Assert.AreEqual(9, m.MaxSpeed); Assert.AreEqual(30, m.Control); Assert.AreEqual(77, m.WallBoostHundredths);
+            Assert.AreEqual(190, m.LaunchTenths); Assert.AreEqual(9, m.MaxSpeed); Assert.AreEqual(30, m.Control); Assert.AreEqual(77, m.WallBoostHundredths);
             foreach (CharacterSpec c in CharacterDefs.All)
             {
                 if (c.IsMergeTier) continue;   // tiers are boosted on purpose; their effective stats are checked in TierRulesTests
                 // whole-number storage: within 10 percent plus half a step of rounding
-                Assert.LessOrEqual(Mathf.Abs(c.Stats.JumpLaunch - 19), 19 * 0.1f + 0.5f, c.Id);
+                Assert.LessOrEqual(Mathf.Abs(c.Stats.LaunchTenths - 190), 190 * 0.1f + 5f, c.Id);
                 Assert.LessOrEqual(Mathf.Abs(c.Stats.MaxSpeed - 9), 9 * 0.1f + 0.5f + 0.5f, c.Id);   // 8, 9 or 10
                 Assert.LessOrEqual(Mathf.Abs(c.Stats.Control - 30), 30 * 0.1f + 0.5f, c.Id);
                 Assert.LessOrEqual(Mathf.Abs(c.Stats.WallBoostHundredths - 77), 77 * 0.1f + 0.5f, c.Id);

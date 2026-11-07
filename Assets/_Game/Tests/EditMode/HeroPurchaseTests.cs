@@ -68,8 +68,7 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(3, lines.Count);
                 StringAssert.Contains(rule.PowerCount.ToString(), lines[0]);
                 StringAssert.Contains(rule.CooldownSeconds + " s", lines[0]);
-                StringAssert.Contains(rule.BoostedStats + " of 4", lines[1]);
-                StringAssert.Contains(rule.PctMin + " to " + rule.PctMax + "%", lines[1]);
+                StringAssert.Contains(TierRules.JumpBandText(r), lines[1]);
                 StringAssert.Contains(rule.RunCoinsMin + " to " + rule.RunCoinsMax + " coins", lines[2]);
                 StringAssert.Contains(rule.RunGemsMin + " to " + rule.RunGemsMax + " gems", lines[2]);
             }

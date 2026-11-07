@@ -158,7 +158,135 @@ Momo's five tiers are not drawn: they are the reference.
 ## 8. Roster of all 125 heroes (25 lines x 5 tiers)
 
 <!-- HERO TABLE START -->
-generated after the run
+All 125 heroes (Momo's five tiers are fixed from Ladder Final; the other 120 were generated and measured on 2026-11-07 with the fast probe). FI level 15 = Region 1 level 15; FI mean = mean over all 75 levels; largest level gap = the biggest distance from Momo's FI of the same tier on any single level.
+
+| Region | Hero | Rarity | Launch | Jump over default | Speed | Control | Wall | FI level 15 | FI mean (75 levels) | Largest level gap |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Momo | Common | 19.0 | +0.0% | 9 | 30 | 77 | 1.000 | 1.000 | reference |
+| 1 | Cloudguard Momo | Uncommon | 20.9 | +10.0% | 9 | 34 | 82 | 0.987 | 1.010 | reference |
+| 1 | Cloudknight Momo | Rare | 21.6 | +13.7% | 9 | 38 | 88 | 1.018 | 1.051 | reference |
+| 1 | Skyplate Momo | Elite | 21.9 | +15.3% | 10 | 41 | 94 | 1.022 | 1.049 | reference |
+| 1 | Sunlord Momo | Legendary | 22.8 | +20.0% | 11 | 41 | 100 | 1.100 | 1.096 | reference |
+| 1 | Bumble | Common | 19.4 | +2.1% | 9 | 27 | 73 | 1.015 | 1.012 | 0.022 |
+| 1 | Honeycloak Bumble | Uncommon | 20.7 | +8.9% | 9 | 35 | 83 | 0.969 | 1.001 | 0.024 |
+| 1 | Hivemage Bumble | Rare | 21.6 | +13.7% | 9 | 39 | 78 | 1.021 | 1.052 | 0.008 |
+| 1 | Combweaver Bumble | Elite | 21.9 | +15.3% | 12 | 39 | 94 | 1.033 | 1.037 | 0.039 |
+| 1 | Archmage Bumble | Legendary | 22.8 | +20.0% | 11 | 41 | 95 | 1.099 | 1.095 | 0.003 |
+| 1 | Ribbi | Common | 19.4 | +2.1% | 10 | 30 | 85 | 1.003 | 0.981 | 0.047 |
+| 1 | Leafcrown Ribbi | Uncommon | 20.8 | +9.5% | 9 | 35 | 84 | 0.971 | 1.005 | 0.017 |
+| 1 | Barkplate Ribbi | Rare | 21.5 | +13.2% | 9 | 32 | 78 | 1.014 | 1.037 | 0.036 |
+| 1 | Mossknight Ribbi | Elite | 22.0 | +15.8% | 11 | 40 | 92 | 1.041 | 1.050 | 0.025 |
+| 1 | Jadecrown Ribbi | Legendary | 22.8 | +20.0% | 11 | 42 | 86 | 1.100 | 1.097 | 0.008 |
+| 1 | Dandy | Common | 19.1 | +0.5% | 9 | 27 | 84 | 0.998 | 1.002 | 0.013 |
+| 1 | Seedling Dandy | Uncommon | 20.8 | +9.5% | 9 | 33 | 75 | 0.968 | 0.996 | 0.035 |
+| 1 | Blossom Dandy | Rare | 21.2 | +11.6% | 8 | 38 | 80 | 1.001 | 1.032 | 0.042 |
+| 1 | Petalcloak Dandy | Elite | 21.9 | +15.3% | 12 | 39 | 83 | 1.037 | 1.036 | 0.041 |
+| 1 | Bloomqueen Dandy | Legendary | 22.8 | +20.0% | 11 | 42 | 86 | 1.100 | 1.097 | 0.008 |
+| 1 | Pip | Common | 19.2 | +1.1% | 12 | 27 | 72 | 1.005 | 1.005 | 0.022 |
+| 1 | Redcape Pip | Uncommon | 20.8 | +9.5% | 9 | 35 | 76 | 0.972 | 1.005 | 0.017 |
+| 1 | Crownguard Pip | Rare | 21.7 | +14.2% | 8 | 42 | 94 | 1.015 | 1.063 | 0.033 |
+| 1 | Thornplate Pip | Elite | 21.9 | +15.3% | 9 | 42 | 83 | 1.033 | 1.065 | 0.031 |
+| 1 | Goldshell Pip | Legendary | 22.8 | +20.0% | 11 | 42 | 86 | 1.100 | 1.097 | 0.008 |
+| 2 | Capi | Common | 19.7 | +3.7% | 10 | 30 | 84 | 1.019 | 0.992 | 0.036 |
+| 2 | Thornveil Capi | Uncommon | 20.9 | +10.0% | 9 | 31 | 86 | 0.970 | 0.999 | 0.030 |
+| 2 | Acornplate Capi | Rare | 21.6 | +13.7% | 9 | 38 | 76 | 1.020 | 1.051 | 0.006 |
+| 2 | Oakmantle Capi | Elite | 22.0 | +15.8% | 10 | 38 | 92 | 1.041 | 1.064 | 0.034 |
+| 2 | Grovequeen Capi | Legendary | 22.8 | +20.0% | 10 | 42 | 87 | 1.105 | 1.103 | 0.028 |
+| 2 | Nib | Common | 19.7 | +3.7% | 12 | 28 | 71 | 1.017 | 0.990 | 0.037 |
+| 2 | Leafscarf Nib | Uncommon | 20.8 | +9.5% | 9 | 36 | 80 | 0.971 | 1.005 | 0.021 |
+| 2 | Barkguard Nib | Rare | 21.4 | +12.6% | 9 | 35 | 76 | 1.002 | 1.036 | 0.036 |
+| 2 | Oakknight Nib | Elite | 21.9 | +15.3% | 10 | 38 | 84 | 1.041 | 1.059 | 0.025 |
+| 2 | Acornking Nib | Legendary | 22.8 | +20.0% | 12 | 42 | 99 | 1.099 | 1.089 | 0.028 |
+| 2 | Spike | Common | 19.6 | +3.2% | 11 | 30 | 69 | 1.018 | 0.988 | 0.033 |
+| 2 | Logplate Spike | Uncommon | 20.9 | +10.0% | 9 | 37 | 81 | 0.972 | 1.009 | 0.015 |
+| 2 | Thornguard Spike | Rare | 21.5 | +13.2% | 9 | 41 | 87 | 1.005 | 1.038 | 0.033 |
+| 2 | Oakbrace Spike | Elite | 21.9 | +15.3% | 10 | 38 | 90 | 1.035 | 1.058 | 0.023 |
+| 2 | Quillking Spike | Legendary | 22.8 | +20.0% | 11 | 42 | 86 | 1.100 | 1.097 | 0.008 |
+| 2 | Moss | Common | 19.2 | +1.1% | 12 | 27 | 70 | 1.005 | 1.005 | 0.021 |
+| 2 | Vinebelt Moss | Uncommon | 20.9 | +10.0% | 9 | 37 | 84 | 0.972 | 1.010 | 0.015 |
+| 2 | Shellplate Moss | Rare | 21.8 | +14.7% | 9 | 39 | 89 | 1.030 | 1.063 | 0.020 |
+| 2 | Ferncrown Moss | Elite | 21.9 | +15.3% | 12 | 41 | 87 | 1.028 | 1.038 | 0.041 |
+| 2 | Shellking Moss | Legendary | 22.8 | +20.0% | 11 | 41 | 93 | 1.102 | 1.096 | 0.003 |
+| 2 | Fenn | Common | 19.6 | +3.2% | 10 | 29 | 74 | 1.017 | 0.988 | 0.043 |
+| 2 | Scoutvest Fenn | Uncommon | 20.9 | +10.0% | 9 | 37 | 74 | 0.968 | 1.009 | 0.020 |
+| 2 | Coinguard Fenn | Rare | 21.5 | +13.2% | 9 | 39 | 78 | 1.016 | 1.047 | 0.013 |
+| 2 | Goldcape Fenn | Elite | 22.0 | +15.8% | 11 | 39 | 95 | 1.040 | 1.049 | 0.024 |
+| 2 | Foxking Fenn | Legendary | 22.8 | +20.0% | 11 | 42 | 95 | 1.098 | 1.096 | 0.005 |
+| 3 | Otto | Common | 19.6 | +3.2% | 10 | 29 | 75 | 1.017 | 0.988 | 0.041 |
+| 3 | Tidecrest Otto | Uncommon | 20.7 | +8.9% | 9 | 35 | 77 | 0.969 | 1.001 | 0.024 |
+| 3 | Shellplate Otto | Rare | 21.4 | +12.6% | 9 | 35 | 89 | 1.001 | 1.036 | 0.038 |
+| 3 | Wavecloak Otto | Elite | 21.9 | +15.3% | 10 | 37 | 89 | 1.038 | 1.057 | 0.022 |
+| 3 | Pearlking Otto | Legendary | 22.8 | +20.0% | 11 | 42 | 89 | 1.100 | 1.096 | 0.005 |
+| 3 | Pinch | Common | 19.0 | +0.0% | 9 | 28 | 81 | 0.995 | 0.997 | 0.013 |
+| 3 | Shellvest Pinch | Uncommon | 20.9 | +10.0% | 9 | 31 | 72 | 0.968 | 0.998 | 0.033 |
+| 3 | Clawguard Pinch | Rare | 21.4 | +12.6% | 9 | 41 | 93 | 1.003 | 1.033 | 0.037 |
+| 3 | Tidecrown Pinch | Elite | 22.0 | +15.8% | 10 | 42 | 89 | 1.040 | 1.057 | 0.020 |
+| 3 | Reefking Pinch | Legendary | 22.8 | +20.0% | 12 | 42 | 88 | 1.097 | 1.088 | 0.029 |
+| 3 | Shelly | Common | 19.2 | +1.1% | 9 | 27 | 85 | 1.006 | 1.006 | 0.016 |
+| 3 | Coralstrap Shelly | Uncommon | 20.8 | +9.5% | 9 | 36 | 85 | 0.971 | 1.005 | 0.020 |
+| 3 | Reefplate Shelly | Rare | 21.3 | +12.1% | 8 | 37 | 91 | 1.010 | 1.036 | 0.039 |
+| 3 | Pearltiara Shelly | Elite | 21.9 | +15.3% | 10 | 38 | 87 | 1.036 | 1.058 | 0.022 |
+| 3 | Coralqueen Shelly | Legendary | 22.8 | +20.0% | 12 | 41 | 88 | 1.101 | 1.088 | 0.026 |
+| 3 | Bloop | Common | 19.0 | +0.0% | 10 | 27 | 72 | 0.997 | 0.998 | 0.012 |
+| 3 | Coralband Bloop | Uncommon | 20.8 | +9.5% | 9 | 33 | 78 | 0.967 | 0.996 | 0.035 |
+| 3 | Reefmail Bloop | Rare | 21.4 | +12.6% | 8 | 42 | 85 | 0.998 | 1.045 | 0.034 |
+| 3 | Bubblecrown Bloop | Elite | 21.9 | +15.3% | 10 | 39 | 87 | 1.037 | 1.060 | 0.024 |
+| 3 | Bubbleking Bloop | Legendary | 22.8 | +20.0% | 11 | 41 | 95 | 1.099 | 1.095 | 0.003 |
+| 3 | Coco | Common | 19.7 | +3.7% | 12 | 29 | 75 | 1.019 | 0.991 | 0.035 |
+| 3 | Palmwrap Coco | Uncommon | 20.8 | +9.5% | 9 | 35 | 76 | 0.972 | 1.005 | 0.017 |
+| 3 | Leafmail Coco | Rare | 21.4 | +12.6% | 9 | 37 | 82 | 1.019 | 1.043 | 0.019 |
+| 3 | Junglecape Coco | Elite | 22.0 | +15.8% | 12 | 41 | 89 | 1.041 | 1.044 | 0.036 |
+| 3 | Palmking Coco | Legendary | 22.8 | +20.0% | 12 | 42 | 88 | 1.097 | 1.088 | 0.029 |
+| 4 | Bonbon | Common | 19.2 | +1.1% | 9 | 29 | 71 | 1.011 | 1.006 | 0.011 |
+| 4 | Sugarplate Bonbon | Uncommon | 20.8 | +9.5% | 9 | 32 | 88 | 0.967 | 0.996 | 0.033 |
+| 4 | Caramelplate Bonbon | Rare | 21.4 | +12.6% | 9 | 32 | 81 | 1.012 | 1.032 | 0.044 |
+| 4 | Sprinklecloak Bonbon | Elite | 21.9 | +15.3% | 9 | 42 | 86 | 1.033 | 1.065 | 0.033 |
+| 4 | Sugarqueen Bonbon | Legendary | 22.8 | +20.0% | 12 | 41 | 91 | 1.099 | 1.088 | 0.026 |
+| 4 | Gummi | Common | 19.0 | +0.0% | 12 | 27 | 70 | 0.992 | 0.997 | 0.021 |
+| 4 | Starsash Gummi | Uncommon | 20.9 | +10.0% | 9 | 36 | 84 | 0.977 | 1.010 | 0.013 |
+| 4 | Gemguard Gummi | Rare | 21.5 | +13.2% | 9 | 35 | 84 | 1.025 | 1.048 | 0.022 |
+| 4 | Heartplate Gummi | Elite | 22.0 | +15.8% | 11 | 40 | 92 | 1.041 | 1.050 | 0.025 |
+| 4 | Gummyking Gummi | Legendary | 22.8 | +20.0% | 12 | 42 | 91 | 1.098 | 1.088 | 0.028 |
+| 4 | Choco | Common | 19.7 | +3.7% | 11 | 30 | 85 | 1.020 | 0.992 | 0.032 |
+| 4 | Wafflewrap Choco | Uncommon | 20.9 | +10.0% | 9 | 33 | 81 | 0.970 | 1.002 | 0.028 |
+| 4 | Fudgeplate Choco | Rare | 21.5 | +13.2% | 8 | 42 | 89 | 1.002 | 1.050 | 0.028 |
+| 4 | Cocoacape Choco | Elite | 22.0 | +15.8% | 12 | 40 | 92 | 1.041 | 1.043 | 0.036 |
+| 4 | Chocoking Choco | Legendary | 22.8 | +20.0% | 12 | 41 | 94 | 1.099 | 1.088 | 0.026 |
+| 4 | Marsh | Common | 19.4 | +2.1% | 10 | 29 | 70 | 1.006 | 0.980 | 0.045 |
+| 4 | Grahambelt Marsh | Uncommon | 20.8 | +9.5% | 9 | 35 | 90 | 0.971 | 1.005 | 0.018 |
+| 4 | Toastplate Marsh | Rare | 21.5 | +13.2% | 9 | 38 | 76 | 1.015 | 1.046 | 0.012 |
+| 4 | Crackerplate Marsh | Elite | 21.9 | +15.3% | 12 | 39 | 83 | 1.037 | 1.036 | 0.041 |
+| 4 | Roastking Marsh | Legendary | 22.8 | +20.0% | 11 | 42 | 97 | 1.098 | 1.096 | 0.004 |
+| 4 | Cookie | Common | 19.0 | +0.0% | 12 | 27 | 78 | 0.991 | 0.997 | 0.022 |
+| 4 | Crumbscarf Cookie | Uncommon | 20.9 | +10.0% | 9 | 38 | 84 | 0.970 | 1.009 | 0.028 |
+| 4 | Chipguard Cookie | Rare | 21.5 | +13.2% | 9 | 33 | 87 | 1.019 | 1.040 | 0.033 |
+| 4 | Doughcape Cookie | Elite | 21.9 | +15.3% | 10 | 40 | 83 | 1.039 | 1.061 | 0.026 |
+| 4 | Bakeking Cookie | Legendary | 22.8 | +20.0% | 12 | 42 | 95 | 1.099 | 1.088 | 0.028 |
+| 5 | Bao | Common | 19.6 | +3.2% | 11 | 29 | 85 | 1.013 | 0.988 | 0.035 |
+| 5 | Ironbamboo Bao | Uncommon | 20.8 | +9.5% | 9 | 34 | 89 | 0.967 | 0.999 | 0.032 |
+| 5 | Lotusrobe Bao | Rare | 21.4 | +12.6% | 9 | 37 | 76 | 1.015 | 1.042 | 0.022 |
+| 5 | Dragonsash Bao | Elite | 21.9 | +15.3% | 9 | 43 | 81 | 1.034 | 1.067 | 0.034 |
+| 5 | Sunmonk Bao | Legendary | 22.8 | +20.0% | 11 | 42 | 89 | 1.100 | 1.096 | 0.005 |
+| 5 | Sprout | Common | 19.5 | +2.6% | 10 | 30 | 76 | 1.015 | 0.986 | 0.042 |
+| 5 | Leafwrap Sprout | Uncommon | 20.9 | +10.0% | 9 | 37 | 73 | 0.968 | 1.009 | 0.019 |
+| 5 | Bamboomail Sprout | Rare | 21.6 | +13.7% | 9 | 31 | 77 | 1.017 | 1.040 | 0.033 |
+| 5 | Jadecloak Sprout | Elite | 22.1 | +16.3% | 10 | 42 | 91 | 1.042 | 1.062 | 0.025 |
+| 5 | Groveking Sprout | Legendary | 22.8 | +20.0% | 12 | 42 | 98 | 1.099 | 1.089 | 0.029 |
+| 5 | Tora | Common | 19.6 | +3.2% | 12 | 29 | 80 | 1.015 | 0.988 | 0.037 |
+| 5 | Stripeband Tora | Uncommon | 20.9 | +10.0% | 9 | 34 | 75 | 0.988 | 1.010 | 0.001 |
+| 5 | Clawguard Tora | Rare | 21.4 | +12.6% | 9 | 33 | 84 | 1.016 | 1.035 | 0.039 |
+| 5 | Tigercape Tora | Elite | 22.0 | +15.8% | 12 | 41 | 84 | 1.042 | 1.044 | 0.037 |
+| 5 | Tigerlord Tora | Legendary | 22.8 | +20.0% | 12 | 42 | 92 | 1.098 | 1.088 | 0.028 |
+| 5 | Rusu | Common | 19.4 | +2.1% | 11 | 29 | 79 | 1.005 | 0.981 | 0.043 |
+| 5 | Scoutwrap Rusu | Uncommon | 20.9 | +10.0% | 9 | 33 | 83 | 0.970 | 1.002 | 0.028 |
+| 5 | Goldfur Rusu | Rare | 21.4 | +12.6% | 8 | 39 | 87 | 1.007 | 1.044 | 0.029 |
+| 5 | Coinmantle Rusu | Elite | 22.0 | +15.8% | 12 | 40 | 93 | 1.041 | 1.043 | 0.036 |
+| 5 | Treasurelord Rusu | Legendary | 22.8 | +20.0% | 12 | 41 | 97 | 1.100 | 1.088 | 0.026 |
+| 5 | Ryu | Common | 19.1 | +0.5% | 9 | 28 | 73 | 1.004 | 1.002 | 0.007 |
+| 5 | Scalevest Ryu | Uncommon | 20.9 | +10.0% | 9 | 33 | 87 | 0.970 | 1.002 | 0.028 |
+| 5 | Jadeguard Ryu | Rare | 21.7 | +14.2% | 9 | 38 | 88 | 1.028 | 1.058 | 0.016 |
+| 5 | Dragonplate Ryu | Elite | 21.9 | +15.3% | 12 | 40 | 88 | 1.034 | 1.037 | 0.041 |
+| 5 | Skylord Ryu | Legendary | 22.8 | +20.0% | 12 | 42 | 93 | 1.098 | 1.088 | 0.028 |
 <!-- HERO TABLE END -->
 
 ## 9. Test plan
@@ -169,7 +297,23 @@ generated after the run
 4. Fast probe run commands: `HERO_REF=1` builds the Momo reference (`Tests/Simulation/FI_REFERENCE_FAST.csv`); `HERO_GEN=1` runs the generator.
 
 <!-- RESULTS START -->
-not yet run
+Run of 2026-11-07 to 2026-11-08.
+
+**1. Generation (FI gate).** 120 heroes (24 lines x 5 tiers; Momo's five tiers are fixed) were generated and verified: 120 accepted, 0 failed, with 892 logged attempts after the screening fix (`Tests/Simulation/hero_gen/attempts.csv`). Per tier:
+
+| Tier | Heroes | Attempts min / median / max | FI level 15 range | FI 75-level mean range | Largest level gap (max) |
+|---|---|---|---|---|---|
+| Common | 24 | 1 / 3 / 16 | 0.991 to 1.020 | 0.980 to 1.012 | 0.047 |
+| Uncommon | 24 | 1 / 9 / 58 | 0.967 to 0.988 | 0.996 to 1.010 | 0.035 |
+| Rare | 24 | 1 / 2 / 5 | 0.998 to 1.030 | 1.032 to 1.063 | 0.044 |
+| Elite | 24 | 1 / 4 / 39 | 1.028 to 1.042 | 1.036 to 1.067 | 0.041 |
+| Legendary | 24 | 1 / 4 / 21 | 1.097 to 1.105 | 1.088 to 1.103 | 0.029 |
+
+The level 15 target is Momo's own value of the tier measured with the same fast probe (1.000, 0.987, 1.018, 1.022, 1.100), because the approved values (1.000, 1.002, 1.040, 1.012, 1.048) came from the slower full probe. The FI ceiling 1.10 is enforced with 0.005 of slack, so Legendary heroes sit at about 1.10 (Momo's own Legendary reads 1.100 on level 15).
+
+**2. Bot proof of every hero on every level.** 125 heroes x 75 levels (5 regions x 15) = 9,375 runs: 9,375 solved, 0 failed (`Tests/Simulation/HERO_BOT_REPORT.csv`, `HERO_BOT_SUMMARY.md`). The first pass used a 3,000-node budget per solve and left 21 runs unsolved, all Common heroes (including Momo) on Region 5 level 10, a complex combo-chain level that needs about 7,500 nodes even for the default hero (SOLVABILITY_REPORT.md); those 21 were rerun with the full budget and all solved (`HERO_BOT_RERUN_SUMMARY.md`).
+
+**3. Unit tests.** 94 Simulation unit tests pass (tier rules, character stats, golden hashes, hero cards, inventory, bundles, chests, hero powers). The Unity EditMode tests were edited but not run in Unity.
 <!-- RESULTS END -->
 
 ## 10. Changelog

@@ -139,6 +139,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Assert.NotNull(HeroTable.Find(id));
                 Assert.False(id.StartsWith("momo"), "Momo's five tiers are fixed (HeroIndex.LadderFinal), never legacy");
             }
+            Assert.Empty(HeroTable.Legacy);   // every hero has been generated and measured (the whole roster, 25 lines x 5 tiers)
         }
 
         [Fact]
@@ -274,7 +275,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void EffectiveStatsOfEveryTierAreInsideTheLimitsAndNotWorseThanCommon()
+        public void EffectiveStatsOfEveryTierAreInsideTheLimitsAndJumpRisesWithRarity()
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
@@ -283,7 +284,8 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Assert.Null(spec.Stats.ValidateTier());
                 Assert.Null(spec.Stats.ValidatePhysics());
                 CharacterStats e = spec.Stats, c = common.Stats;
-                Assert.True(e.LaunchTenths >= c.LaunchTenths && e.MaxSpeed >= c.MaxSpeed && e.Control >= c.Control, row.Id);
+                // the bible's rule: Jump rises with the rarity (the bands do not overlap upwards); Speed and Control are independent draws (the FI gate balances them), so they may be lower than the Common hero's
+                Assert.True(e.LaunchTenths >= c.LaunchTenths, row.Id);
                 SimConfig cfg = new SimConfig();
                 Assert.True(e.Sheet(cfg).FullSpeedJump > cfg.NormalGapMax.Raw / 65536.0, row.Id);
             }

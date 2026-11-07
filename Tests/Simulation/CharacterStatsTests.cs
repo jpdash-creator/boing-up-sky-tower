@@ -74,13 +74,13 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void ValidationHoldsTenPercentUnderTheBaselineAsTheFloor()
         {
             Assert.Null(new CharacterStats().Validate());
-            // floors are the baseline minus 10 percent (owner 2026-11-02), rounded to whole numbers
-            Assert.Null(new CharacterStats { JumpLaunch = 17, MaxSpeed = 8, Control = 27, WallBoostHundredths = 69 }.Validate());
-            Assert.NotNull(new CharacterStats { JumpLaunch = 16 }.Validate());
+            // the launch floor is the default itself (19.0, the Common Jump band starts at 0 percent); speed, control and wall bounce keep their legal floors
+            Assert.Null(new CharacterStats { JumpLaunch = 19, MaxSpeed = 8, Control = 27, WallBoostHundredths = 69 }.Validate());
+            Assert.NotNull(new CharacterStats { JumpLaunch = 18 }.Validate());
             Assert.NotNull(new CharacterStats { MaxSpeed = 7 }.Validate());
             Assert.NotNull(new CharacterStats { Control = 26 }.Validate());
             Assert.NotNull(new CharacterStats { WallBoostHundredths = 68 }.Validate());
-            Assert.NotNull(new CharacterStats { JumpLaunch = 24 }.Validate());
+            Assert.NotNull(new CharacterStats { JumpLaunchTenths = HeroIndex.LaunchMaxTenths + 1 }.Validate());
             Assert.NotNull(new CharacterStats { CoinFind = -1 }.Validate());
             Assert.NotNull(new CharacterStats { GemFind = 6 }.Validate());
         }

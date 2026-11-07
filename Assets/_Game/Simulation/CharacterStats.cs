@@ -34,7 +34,7 @@ namespace BoingUpSkyTower.Simulation
 
         // Limits (docs/29 section 7). The minimums are 10 percent under Momo's baseline (owner 2026-11-02: Capi, Otto, Bonbon and Bao vary by -10..+10 percent). Maximums are proposals pending owner sign-off.
         // Launch limits are in tenths of u/s. The top is the HeroIndex limit (23.8); the bottom stays at the old 17.0 while the hand-tuned (Legacy) hero rows exist (Otto and Shelly launch at 18.0): HeroIndex.Validate holds the generated heroes to 19.0.
-        public const int JumpLaunchMinTenths = 170, JumpLaunchMaxTenths = HeroIndex.LaunchMaxTenths;
+        public const int JumpLaunchMinTenths = HeroIndex.LaunchMinTenths, JumpLaunchMaxTenths = HeroIndex.LaunchMaxTenths;
         public const int MaxSpeedMin = 8, MaxSpeedMax = 12;
         public const int ControlMin = 27, ControlMax = 45;
         public const int WallBoostMin = 69, WallBoostMax = 100;

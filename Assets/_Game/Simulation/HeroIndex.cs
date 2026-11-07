@@ -42,6 +42,12 @@ namespace BoingUpSkyTower.Simulation
 
         /// <summary>The approved FI per tier (Ladder Final, measured on level 15 of Region 1 with the full probe).</summary>
         public static readonly double[] ApprovedFi = { 1.000, 1.002, 1.040, 1.012, 1.048 };
+        /// <summary>
+        /// Where the prediction model has to point so that the MEASURED level-15 FI (fast probe) lands on Momo's value of the tier: Momo's fast reading minus the model's bias per tier
+        /// (measured minus predicted, from the first 8 hero lines of the generator log: +0.027, -0.027, -0.011, +0.044, +0.059). Screening only; the measured gate decides.
+        /// </summary>
+        public static readonly double[] ScreenCenter = { 0.973, 1.014, 1.029, 0.978, 1.041 };
+
         /// <summary>A hero's FI must be within this of the approved value on level 15 of Region 1 and of Momo's own 75-level mean for its tier.</summary>
         public const double GateTolerance = 0.02;
         /// <summary>No single level may be further than this from Momo's FI of the same tier on that level.</summary>
@@ -157,7 +163,7 @@ namespace BoingUpSkyTower.Simulation
             for (int i = 0; i < 4000; i++)
             {
                 var p = new HeroPhysics(rng.Range(lo, hi), rng.Range(SpeedMin, SpeedMax), rng.Range(ControlMin, ControlMax), rng.Range(WallRangeMin[tier], WallRangeMax[tier]));
-                double err = Math.Abs(PredictFi(p) - ApprovedFi[tier]);
+                double err = Math.Abs(PredictFi(p) - ScreenCenter[tier]);
                 if (err <= screen) return p;
                 if (err < bestErr) { bestErr = err; best = p; }
             }
