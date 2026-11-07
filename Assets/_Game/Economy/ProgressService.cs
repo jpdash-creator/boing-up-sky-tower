@@ -381,10 +381,10 @@ namespace BoingUpSkyTower.Economy
 
             LevelProgress before = GetProgress(levelId);
             RewardResult reward = RewardCalculator.Compute(level, region, run, before);
-            BoingUpSkyTower.Simulation.CharacterStats finds = CharacterDefs.ActiveStats();   // docs/29: flat per cleared level, 0 for every current hero
+            BoingUpSkyTower.Simulation.CharacterStats finds = CharacterDefs.ActiveStats();   // docs/44: flat per cleared level, 0 for every current hero
             if (finds.CoinFind > 0) reward.PayoutCoins += finds.CoinFind;
             if (finds.GemFind > 0) reward.RewardGems += finds.GemFind;
-            // docs/29: the hero's "Run bonus", paid at the end of every completed run (meta reward only, the sim never sees it)
+            // docs/44: the hero's "Run bonus", paid at the end of every completed run (meta reward only, the sim never sees it)
             if (finds.RunBonusCoins > 0) reward.PayoutCoins += finds.RunBonusCoins;
             if (finds.RunBonusGems > 0) reward.RewardGems += finds.RunBonusGems;
 

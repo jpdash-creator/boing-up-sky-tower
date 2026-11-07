@@ -138,7 +138,7 @@ namespace BoingUpSkyTower.Gameplay
     {
         const string SelectedKey = "settings.character";
 
-        /// <summary>Lets the Economy layer read the chosen character's stats (flat coin and gem finds, docs/29) without knowing about PlayerPrefs.</summary>
+        /// <summary>Lets the Economy layer read the chosen character's stats (flat coin and gem finds, docs/44) without knowing about PlayerPrefs.</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void HookActiveStats()
         {

@@ -146,7 +146,7 @@ namespace BoingUpSkyTower.Tests
             finally { Object.DestroyImmediate(go); }
         }
 
-        // ---- docs/29 roster, run bonus ----
+        // ---- docs/44 roster, run bonus ----
 
         [Test]
         public void EveryRosterHeroIsInRangeAndHasADistinctRunBonus()

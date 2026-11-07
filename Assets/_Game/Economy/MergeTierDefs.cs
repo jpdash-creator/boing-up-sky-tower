@@ -18,7 +18,7 @@ namespace BoingUpSkyTower.Economy
         /// line's Common hero instead, tinted, so the tier is visible as a placeholder. Dropping the real art into the folder swaps it with no code change.
         /// </summary>
         public string ArtId;
-        /// <summary>Added to the Common hero's own end-of-run bonus (docs/29): coins in multiples of 10, gems in ones, inside the tier rule's range.</summary>
+        /// <summary>Added to the Common hero's own end-of-run bonus (docs/44): coins in multiples of 10, gems in ones, inside the tier rule's range.</summary>
         public int RunCoinsAdd, RunGemsAdd;
     }
 
@@ -179,7 +179,7 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>
-        /// The effective stats: the four physics stats clamped to the documented safe limits (docs/29 section 7, launch in tenths) as a safety net so every level stays solvable. The generated table rows are
+        /// The effective stats: the four physics stats clamped to the documented safe limits (docs/44 section 4, launch in tenths) as a safety net so every level stays solvable. The generated table rows are
         /// inside the limits already (a test checks it), so this changes nothing for them. The run bonus (meta only, never in the simulation) is kept in full.
         /// </summary>
         public static CharacterStats Cap(CharacterStats d)

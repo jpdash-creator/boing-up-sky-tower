@@ -1,6 +1,6 @@
 # 44. Power mechanics bible: hero physics, the Forgiveness Index and the rarity rules (2026-11-07)
 
-**Replaces:** this bible replaces docs 29 (character stats), 34 section 2b (merge tier percent rules, the old "+10 to +25 percent chain") and the stat numbers in docs 02, 08 and 21 (`JumpSpeedFactor` 0.58 and the old hero stat lines) as the ONLY description of hero physics and tier rules. Doc 34 still owns merging itself (3 copies make the next tier), the Merge screen, hero powers in a run (section 2c) and the power pools; doc 29 sections about run bonus and finds stay valid until they are moved here.
+**Replaces:** this bible replaces docs 29 (character stats), 34 section 2b (merge tier percent rules, the old "+10 to +25 percent chain") and the stat numbers in docs 02, 08 and 21 (`JumpSpeedFactor` 0.58 and the old hero stat lines) as the ONLY description of hero physics and tier rules. Doc 34 still owns merging itself (3 copies make the next tier), the Merge screen, hero powers in a run (section 2c) and the power pools; the run bonus and finds rules of doc 29 now live in section 7b of this bible.
 
 **Source of truth: the code.** Where this file and the code differ, the code wins and this file is updated in the same change. The numbers come from `Assets/_Game/Simulation/HeroIndex.cs` (the engine: limits, bands, Ladder Final, the model, the seeded draw), `Simulation/CharacterStats.cs` (what a hero stores and how the sheet is derived), `Tests/Simulation/HeroFiHarness.cs` (the FI measurement) and `Tests/Simulation/HeroGeneratorTests.cs` (the generator and its gates).
 
@@ -154,6 +154,19 @@ Momo's five tiers are not drawn: they are the reference.
 |---|---|---|
 | **Hero powers** (Double Jump, Wall Stick, Magnet, Shield, Rocket, Slow Time, Flight; doc 34 section 2c) | Not measured. FI headroom is reserved for them: the gap from the approved Ladder Final FI to the 1.10 ceiling is 0.060 for Rare (1.040) and 0.052 for Legendary (1.048) (an earlier note said about 0.10 and 0.04; that was wrong). Measured with the fast probe, Legendary on level 15 of Region 1 reads 1.100 and the 75-level mean is 1.096, so the real headroom there is close to zero and must be settled before powers are measured. | The next phase measures each power on the same probe and sets how much of the headroom it may use. |
 | **Run bonuses and finds** (run bonus coins and gems, flat coin and gem finds) | Neutral: paid after the run, never seen by the simulation. | Stay outside the index. |
+
+## 7b. Run bonus and finds (moved here from doc 29)
+
+These are meta rewards. The simulation never sees them, so they are not part of the FI.
+
+| Stat | What it does | Range |
+|---|---|---|
+| Coin find | Flat extra coins added to the payout of every cleared level, applied when the level result is saved | 0 to 50; 0 for most heroes (Nib, Coco, Cookie and Rusu carry one) |
+| Gem find | Flat extra gems added to the reward of every cleared level | 0 to 5; 0 for every current hero |
+| Run bonus coins | Paid at the end of every completed level run, on top of the level reward (`ProgressService.ApplyRun`) | Common hero: a multiple of 10 from 50 to 100. Each higher tier ADDS to the Common hero's own bonus: Uncommon 50 to 100, Rare 200 to 500, Elite 500 to 1000, Legendary 1000 to 2000 (multiples of 10) |
+| Run bonus gems | Paid at the end of every completed level run | Common hero: 1 to 5. Tier add-on: Uncommon 1 to 5, Rare 5 to 10, Elite 5 to 10, Legendary 5 to 10 |
+
+A failed run and an endless run pay no run bonus (it would reward failing on purpose); change that only on the owner's word. Momo's default run bonus is 80 coins and 2 gems. The tier add-ons are the existing `TierRules` ranges and are unchanged by the Forgiveness Index.
 
 ## 8. Roster of all 125 heroes (25 lines x 5 tiers)
 

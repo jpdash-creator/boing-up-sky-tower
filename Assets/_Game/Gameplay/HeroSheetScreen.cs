@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace BoingUpSkyTower.Gameplay
 {
-    /// <summary>What the hero sheet shows (plain numbers, docs/29). Built from a character's spec, or from a fake one in tests.</summary>
+    /// <summary>What the hero sheet shows (plain numbers, docs/44). Built from a character's spec, or from a fake one in tests.</summary>
     public sealed class HeroSheetData
     {
         public string Name, RarityName, Region, PowerText;
@@ -20,7 +20,7 @@ namespace BoingUpSkyTower.Gameplay
         public string[,] Stats = new string[6, 2];
         /// <summary>Three derived numbers (label, value).</summary>
         public string[,] Derived = new string[3, 2];
-        /// <summary>The "Run bonus" paid at the end of every run (docs/29): coins and gems.</summary>
+        /// <summary>The "Run bonus" paid at the end of every run (docs/44): coins and gems.</summary>
         public int RunBonusCoins, RunBonusGems;
 
         static string F(double v) { return v.ToString("0.#", CultureInfo.InvariantCulture); }

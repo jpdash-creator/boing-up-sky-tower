@@ -28,7 +28,7 @@ namespace BoingUpSkyTower.Simulation
         public Fx Gravity = Fx.FromRatio(40, 3600);          // 40 u/s^2
         public Fx Accel = Fx.FromRatio(30, 3600);            // 30 u/s^2
         public Fx AirControl = Fx.FromRatio(3, 5);           // air acceleration share
-        /// <summary>Ground braking with no input = Accel x BrakeFactor (45 u/s2 for Momo; docs/29). Replaced the fixed Friction value.</summary>
+        /// <summary>Ground braking with no input = Accel x BrakeFactor (45 u/s2 for Momo; docs/44). Replaced the fixed Friction value.</summary>
         public Fx BrakeFactor = Fx.FromRatio(3, 2);
         public Fx MaxSpeed = Fx.FromRatio(9, 60);            // 9 u/s
         /// <summary>

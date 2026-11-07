@@ -4,7 +4,7 @@ using System.Globalization;
 namespace BoingUpSkyTower.Simulation
 {
     /// <summary>
-    /// The four main stats exactly as the player SEES them on the hero sheet (docs/29 section 2): Jump as a height (launch squared over 2g), Speed, Control, Wall Bounce (speed times wall share),
+    /// The four main stats exactly as the player SEES them on the hero sheet (docs/44 section 3): Jump as a height (launch squared over 2g), Speed, Control, Wall Bounce (speed times wall share),
     /// each rounded to ONE decimal. Merge-tier boosts are defined on these numbers (owner 2026-11-03), so "+17 percent" reads +17 percent on the sheet and in the merge text.
     /// The physics integers (<see cref="CharacterStats"/>) are derived from them with <see cref="ToPhysics"/> and then capped. Pure, no engine types.
     /// </summary>
@@ -57,7 +57,7 @@ namespace BoingUpSkyTower.Simulation
 
         /// <summary>
         /// The whole-number physics that matches these shown values, NOT yet limited: launch (whole and in tenths) from the Jump height (v = sqrt(2 g h)), speed and control rounded, the wall share
-        /// from Wall Bounce over Speed. Rounding to whole units can differ from the shown value by half a unit; the cap (MergeTierDefs.Cap) then applies the docs/29 section 7 limits.
+        /// from Wall Bounce over Speed. Rounding to whole units can differ from the shown value by half a unit; the cap (MergeTierDefs.Cap) then applies the docs/44 section 4 limits.
         /// </summary>
         public CharacterStats ToPhysics(SimConfig cfg)
         {

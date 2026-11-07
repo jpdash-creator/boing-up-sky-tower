@@ -3,7 +3,7 @@ using System;
 namespace BoingUpSkyTower.Simulation
 {
     /// <summary>
-    /// The six stats stored per character (docs/29). Everything else a character does is derived from these and the global <see cref="SimConfig"/>.
+    /// The six stats stored per character (docs/44). Everything else a character does is derived from these and the global <see cref="SimConfig"/>.
     /// The defaults are Momo's baseline and equal the SimConfig defaults exactly, so a character without its own stats plays like Momo (golden hashes and bot proofs unchanged).
     /// No percent anywhere: plain numbers, speeds in units per second, accelerations in units per second squared.
     /// </summary>
@@ -32,7 +32,7 @@ namespace BoingUpSkyTower.Simulation
 
         public static readonly CharacterStats Default = new CharacterStats();
 
-        // Limits (docs/29 section 7). The minimums are 10 percent under Momo's baseline (owner 2026-11-02: Capi, Otto, Bonbon and Bao vary by -10..+10 percent). Maximums are proposals pending owner sign-off.
+        // Limits (docs/44 section 4): the legal limits of the rule engine (HeroIndex). The launch floor is the default itself (19.0), the Jump band of each rarity sits inside it.
         // Launch limits are in tenths of u/s. The top is the HeroIndex limit (23.8); the bottom stays at the old 17.0 while the hand-tuned (Legacy) hero rows exist (Otto and Shelly launch at 18.0): HeroIndex.Validate holds the generated heroes to 19.0.
         public const int JumpLaunchMinTenths = HeroIndex.LaunchMinTenths, JumpLaunchMaxTenths = HeroIndex.LaunchMaxTenths;
         public const int MaxSpeedMin = 8, MaxSpeedMax = 12;
@@ -125,7 +125,7 @@ namespace BoingUpSkyTower.Simulation
         static double Sq(double v) { return v * v; }
     }
 
-    /// <summary>Main stats first (what the card shows), then the derived advanced values (docs/29 sections 2 and 3). Display only; the sim uses fixed-point.</summary>
+    /// <summary>Main stats first (what the card shows), then the derived advanced values (docs/44 section 3). Display only; the sim uses fixed-point.</summary>
     public struct StatSheet
     {
         public double Jump, Speed, Control, WallBounce;
