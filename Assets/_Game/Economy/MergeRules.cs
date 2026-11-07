@@ -92,7 +92,7 @@ namespace BoingUpSkyTower.Economy
         {
             var lines = new List<string>(6);
             if (from == null || to == null) return lines;
-            AddPercent(lines, "Jump", (double)to.JumpLaunch * to.JumpLaunch, (double)from.JumpLaunch * from.JumpLaunch);   // the card shows the height, which grows with the square of the launch
+            AddPercent(lines, "Jump", (double)to.LaunchTenths * to.LaunchTenths, (double)from.LaunchTenths * from.LaunchTenths);   // the card shows the height, which grows with the square of the launch
             AddPercent(lines, "Speed", to.MaxSpeed, from.MaxSpeed);
             AddPercent(lines, "Control", to.Control, from.Control);
             AddPercent(lines, "Wall Bounce", (double)to.MaxSpeed * to.WallBoostHundredths, (double)from.MaxSpeed * from.WallBoostHundredths);   // the card shows speed x wall share
@@ -104,8 +104,8 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>
-        /// Gain lines from the SHOWN stats (hero sheet numbers, tier chain): one line per stat that rose, as the exact whole percent between the two printed numbers
-        /// ("Jump +17%"), then the two run bonuses as flat numbers. A boost of +17 percent reads +17 percent here and on the sheet.
+        /// Gain lines from the SHOWN stats (hero sheet numbers of two heroes): one line per stat that rose, as the exact whole percent between the two printed numbers
+        /// ("Jump +17%"), then the two run bonuses as flat numbers. The percent is read between the two printed numbers.
         /// </summary>
         public static List<string> ShownGainLines(ShownStats from, ShownStats to) { return TierRules.GainLines(from, to); }
 

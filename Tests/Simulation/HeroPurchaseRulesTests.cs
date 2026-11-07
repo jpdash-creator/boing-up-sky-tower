@@ -69,7 +69,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Assert.Equal(3, lines.Count);
                 Assert.Contains(rule.PowerCount.ToString(), lines[0]);
                 Assert.Contains(rule.CooldownSeconds + " s", lines[0]);
-                Assert.Contains(rule.BoostedStats + " of 4", lines[1]);
+                Assert.Contains(TierRules.JumpBandText(r), lines[1]);
                 Assert.Contains(rule.RunCoinsMin + " to " + rule.RunCoinsMax + " coins", lines[2]);
             }
             Assert.Empty(HeroPurchase.InfoLines(CharacterRarity.Common));

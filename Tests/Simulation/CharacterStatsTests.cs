@@ -101,9 +101,43 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void AFullSpeedJumpAtTheFloorStillClearsTheLargestNormalGap()
         {
             // the floor is below Momo now, so a standing jump alone may fall short of the 4.2 u gap cap; moving at the floor speed must still clear it
-            var floor = new CharacterStats { JumpLaunch = CharacterStats.JumpLaunchMin, MaxSpeed = CharacterStats.MaxSpeedMin };
+            var floor = new CharacterStats { JumpLaunchTenths = CharacterStats.JumpLaunchMinTenths, MaxSpeed = CharacterStats.MaxSpeedMin };
             SimConfig cfg = new SimConfig();
             Assert.True(floor.Sheet(cfg).FullSpeedJump > cfg.NormalGapMax.Raw / 65536.0);
+        }
+
+        [Fact]
+        public void TenthsLaunchOf190IsRawIdenticalToTheOldWholeNumberRatio()
+        {
+            Assert.Equal(Fx.FromRatio(19, 60).Raw, Fx.FromRatio(190, 600).Raw);
+            var viaTenths = new CharacterStats { JumpLaunchTenths = 190 };
+            SimConfig cfg = new SimConfig();
+            cfg.JumpBase = Fx.Zero;
+            viaTenths.ApplyTo(cfg);
+            Assert.Equal(new SimConfig().JumpBase.Raw, cfg.JumpBase.Raw);
+            Assert.Equal(190, CharacterStats.Default.LaunchTenths);
+        }
+
+        [Fact]
+        public void LaunchInTenthsOverridesTheWholeNumberAndDrivesThePhysics()
+        {
+            var c = new CharacterStats { JumpLaunch = 19, JumpLaunchTenths = 209 };
+            Assert.Equal(209, c.LaunchTenths);
+            Assert.Null(c.Validate());
+            SimConfig cfg = new SimConfig();
+            c.ApplyTo(cfg);
+            Assert.Equal(Fx.FromRatio(209, 600).Raw, cfg.JumpBase.Raw);
+            Assert.InRange(c.Sheet(new SimConfig()).Jump, 5.45, 5.47);   // 20.9^2 / 80
+            Assert.Equal(210, new CharacterStats { JumpLaunch = 21 }.LaunchTenths);   // 0 tenths means whole number x 10
+        }
+
+        [Fact]
+        public void LaunchLimitsAreInTenthsAndTheTopIsTheHeroIndexLimit()
+        {
+            Assert.Equal(HeroIndex.LaunchMaxTenths, CharacterStats.JumpLaunchMaxTenths);
+            Assert.Null(new CharacterStats { JumpLaunchTenths = HeroIndex.LaunchMaxTenths }.Validate());
+            Assert.NotNull(new CharacterStats { JumpLaunchTenths = HeroIndex.LaunchMaxTenths + 1 }.Validate());
+            Assert.NotNull(new CharacterStats { JumpLaunchTenths = CharacterStats.JumpLaunchMinTenths - 1 }.Validate());
         }
     }
 }

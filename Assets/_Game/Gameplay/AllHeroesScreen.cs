@@ -301,8 +301,8 @@ namespace BoingUpSkyTower.Gameplay
             sb.Append("Not made yet\n");
             if (rule != null)
             {
-                sb.Append("Boosts ").Append(rule.BoostedStats).Append(" stats\n");
-                sb.Append('+').Append(rule.PctMin).Append('-').Append(rule.PctMax).Append("% each\n");
+                sb.Append(TierRules.JumpBandText(e.Rarity)).Append('\n');
+                sb.Append("Speed, Control, Wall: set by limits\n");
                 sb.Append("Coins +").Append(rule.RunCoinsMin).Append('-').Append(rule.RunCoinsMax).Append('\n');
                 sb.Append("Gems +").Append(rule.RunGemsMin).Append('-').Append(rule.RunGemsMax);
             }

@@ -70,47 +70,67 @@ namespace BoingUpSkyTower.Economy
         /// <summary>How many powers a character of this rarity has.</summary>
         public static readonly int[] PowerCount = { 0, 1, 2, 3, 4 };
 
-        public static readonly CharacterSpec Momo = new CharacterSpec { Id = "momo", Name = "Momo", Rarity = CharacterRarity.Common, Region = 1, RegionStarter = true, Stats = new CharacterStats { RunBonusCoins = 80, RunBonusGems = 2 } };
+        /// <summary>
+        /// The stats of a Common hero: the four physics numbers come from its row in <see cref="HeroTable"/> (docs/44; the table is the one place the numbers live), the flat finds and the run bonus are the hero's own.
+        /// The default hero (Momo, 19.0 / 9 / 30 / 77) stays bit-identical to <see cref="CharacterStats.Default"/>.
+        /// </summary>
+        static CharacterStats FromTable(string id, int coinFind, int runBonusCoins, int runBonusGems)
+        {
+            HeroRow r = HeroTable.Find(id);
+            return new CharacterStats
+            {
+                JumpLaunch = r.LaunchTenths / 10,
+                JumpLaunchTenths = r.LaunchTenths,
+                MaxSpeed = r.Speed,
+                Control = r.Control,
+                WallBoostHundredths = r.Wall,
+                CoinFind = coinFind,
+                RunBonusCoins = runBonusCoins,
+                RunBonusGems = runBonusGems,
+            };
+        }
+
+        public static readonly CharacterSpec Momo = new CharacterSpec { Id = "momo", Name = "Momo", Rarity = CharacterRarity.Common, Region = 1, RegionStarter = true, Stats = FromTable("momo", 0, 80, 2) };
 
         // Region 1 (Meadow Springs) extra Common heroes (F4.1, owner 2026-11-06). Each has ONE identity: Bumble the bee = speed (Flight power), Ribbi the frog = jump (Double Jump),
         // Dandy the dandelion puff = floaty air control (Slow Time; there is no gravity stat, so "slow fall" is the highest Control and the lowest Speed), Pip the ladybug = wall bounce (Shield).
         // All stats are inside the docs/29 limits, within -10..+10 percent of Momo. They belong to Region 1 but are NOT starters: they come as hero cards (Region 1 goals, weekly, chests, bundles).
-        public static readonly CharacterSpec Bumble = new CharacterSpec { Id = "bumble", Name = "Bumble", Rarity = CharacterRarity.Common, Region = 1, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 10, Control = 31, WallBoostHundredths = 76, RunBonusCoins = 70, RunBonusGems = 3 } };
-        public static readonly CharacterSpec Ribbi = new CharacterSpec { Id = "ribbi", Name = "Ribbi", Rarity = CharacterRarity.Common, Region = 1, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 9, Control = 28, WallBoostHundredths = 74, RunBonusCoins = 60, RunBonusGems = 2 } };
-        public static readonly CharacterSpec Dandy = new CharacterSpec { Id = "dandy", Name = "Dandy", Rarity = CharacterRarity.Common, Region = 1, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 8, Control = 33, WallBoostHundredths = 72, RunBonusCoins = 100, RunBonusGems = 4 } };
-        public static readonly CharacterSpec Pip = new CharacterSpec { Id = "pip", Name = "Pip", Rarity = CharacterRarity.Common, Region = 1, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 9, Control = 30, WallBoostHundredths = 84, RunBonusCoins = 50, RunBonusGems = 1 } };
+        public static readonly CharacterSpec Bumble = new CharacterSpec { Id = "bumble", Name = "Bumble", Rarity = CharacterRarity.Common, Region = 1, Stats = FromTable("bumble", 0, 70, 3) };
+        public static readonly CharacterSpec Ribbi = new CharacterSpec { Id = "ribbi", Name = "Ribbi", Rarity = CharacterRarity.Common, Region = 1, Stats = FromTable("ribbi", 0, 60, 2) };
+        public static readonly CharacterSpec Dandy = new CharacterSpec { Id = "dandy", Name = "Dandy", Rarity = CharacterRarity.Common, Region = 1, Stats = FromTable("dandy", 0, 100, 4) };
+        public static readonly CharacterSpec Pip = new CharacterSpec { Id = "pip", Name = "Pip", Rarity = CharacterRarity.Common, Region = 1, Stats = FromTable("pip", 0, 50, 1) };
 
         // Region 2 (Mushroom Grove) extra Common heroes (F4.2): Capi is the starter, these four come as hero cards. Nib the squirrel = coin finder (Magnet, CoinFind), Spike the hedgehog = Shield,
         // Moss the snail kid = Wall Stick (best wall bounce), Fenn the fox kit = extra run coins and gems.
-        public static readonly CharacterSpec Nib = new CharacterSpec { Id = "nib", Name = "Nib", Rarity = CharacterRarity.Common, Region = 2, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 10, Control = 29, WallBoostHundredths = 75, CoinFind = 20, RunBonusCoins = 100, RunBonusGems = 2 } };
-        public static readonly CharacterSpec Spike = new CharacterSpec { Id = "spike", Name = "Spike", Rarity = CharacterRarity.Common, Region = 2, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 8, Control = 28, WallBoostHundredths = 80, RunBonusCoins = 50, RunBonusGems = 3 } };
-        public static readonly CharacterSpec Moss = new CharacterSpec { Id = "moss", Name = "Moss", Rarity = CharacterRarity.Common, Region = 2, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 8, Control = 31, WallBoostHundredths = 85, RunBonusCoins = 90, RunBonusGems = 3 } };
-        public static readonly CharacterSpec Fenn = new CharacterSpec { Id = "fenn", Name = "Fenn", Rarity = CharacterRarity.Common, Region = 2, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 10, Control = 31, WallBoostHundredths = 74, RunBonusCoins = 100, RunBonusGems = 5 } };
+        public static readonly CharacterSpec Nib = new CharacterSpec { Id = "nib", Name = "Nib", Rarity = CharacterRarity.Common, Region = 2, Stats = FromTable("nib", 20, 100, 2) };
+        public static readonly CharacterSpec Spike = new CharacterSpec { Id = "spike", Name = "Spike", Rarity = CharacterRarity.Common, Region = 2, Stats = FromTable("spike", 0, 50, 3) };
+        public static readonly CharacterSpec Moss = new CharacterSpec { Id = "moss", Name = "Moss", Rarity = CharacterRarity.Common, Region = 2, Stats = FromTable("moss", 0, 90, 3) };
+        public static readonly CharacterSpec Fenn = new CharacterSpec { Id = "fenn", Name = "Fenn", Rarity = CharacterRarity.Common, Region = 2, Stats = FromTable("fenn", 0, 100, 5) };
         // Region 3 (Sunny Beach) extra Common heroes (F4.3): Otto is the starter, these four come as hero cards. Pinch the crab = Shield, Shelly the sea turtle = Slow Time (calm control), Bloop the pufferfish kid = Double Jump (jump),
         // Coco the monkey = Magnet and a coin find stat (no coins in his art).
-        public static readonly CharacterSpec Pinch = new CharacterSpec { Id = "pinch", Name = "Pinch", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 8, Control = 29, WallBoostHundredths = 82, RunBonusCoins = 60, RunBonusGems = 3 } };
-        public static readonly CharacterSpec Shelly = new CharacterSpec { Id = "shelly", Name = "Shelly", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 18, MaxSpeed = 8, Control = 33, WallBoostHundredths = 74, RunBonusCoins = 70, RunBonusGems = 2 } };
-        public static readonly CharacterSpec Bloop = new CharacterSpec { Id = "bloop", Name = "Bloop", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 9, Control = 28, WallBoostHundredths = 73, RunBonusCoins = 90, RunBonusGems = 2 } };
-        public static readonly CharacterSpec Coco = new CharacterSpec { Id = "coco", Name = "Coco", Rarity = CharacterRarity.Common, Region = 3, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 10, Control = 30, WallBoostHundredths = 75, CoinFind = 30, RunBonusCoins = 80, RunBonusGems = 1 } };
+        public static readonly CharacterSpec Pinch = new CharacterSpec { Id = "pinch", Name = "Pinch", Rarity = CharacterRarity.Common, Region = 3, Stats = FromTable("pinch", 0, 60, 3) };
+        public static readonly CharacterSpec Shelly = new CharacterSpec { Id = "shelly", Name = "Shelly", Rarity = CharacterRarity.Common, Region = 3, Stats = FromTable("shelly", 0, 70, 2) };
+        public static readonly CharacterSpec Bloop = new CharacterSpec { Id = "bloop", Name = "Bloop", Rarity = CharacterRarity.Common, Region = 3, Stats = FromTable("bloop", 0, 90, 2) };
+        public static readonly CharacterSpec Coco = new CharacterSpec { Id = "coco", Name = "Coco", Rarity = CharacterRarity.Common, Region = 3, Stats = FromTable("coco", 30, 80, 1) };
 
         // Region 4 (Candy Canyon) extra Common heroes (F4.4): Bonbon is the starter, these four come as hero cards. Gummi the gummy bear = Shield (best wall bounce), Choco the chocolate bunny = Double Jump (jump),
         // Marsh the marshmallow kid = Slow Time (calm control), Cookie the cookie kid = Magnet and a coin find stat. Region 4 stats sit slightly above Region 3, inside the Momo +-10 percent band (docs/42).
-        public static readonly CharacterSpec Gummi = new CharacterSpec { Id = "gummi", Name = "Gummi", Rarity = CharacterRarity.Common, Region = 4, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 9, Control = 31, WallBoostHundredths = 84, RunBonusCoins = 80, RunBonusGems = 3 } };
-        public static readonly CharacterSpec Choco = new CharacterSpec { Id = "choco", Name = "Choco", Rarity = CharacterRarity.Common, Region = 4, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 9, Control = 29, WallBoostHundredths = 77, RunBonusCoins = 100, RunBonusGems = 1 } };
-        public static readonly CharacterSpec Marsh = new CharacterSpec { Id = "marsh", Name = "Marsh", Rarity = CharacterRarity.Common, Region = 4, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 8, Control = 33, WallBoostHundredths = 78, RunBonusCoins = 90, RunBonusGems = 4 } };
-        public static readonly CharacterSpec Cookie = new CharacterSpec { Id = "cookie", Name = "Cookie", Rarity = CharacterRarity.Common, Region = 4, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 10, Control = 32, WallBoostHundredths = 79, CoinFind = 35, RunBonusCoins = 80, RunBonusGems = 4 } };
+        public static readonly CharacterSpec Gummi = new CharacterSpec { Id = "gummi", Name = "Gummi", Rarity = CharacterRarity.Common, Region = 4, Stats = FromTable("gummi", 0, 80, 3) };
+        public static readonly CharacterSpec Choco = new CharacterSpec { Id = "choco", Name = "Choco", Rarity = CharacterRarity.Common, Region = 4, Stats = FromTable("choco", 0, 100, 1) };
+        public static readonly CharacterSpec Marsh = new CharacterSpec { Id = "marsh", Name = "Marsh", Rarity = CharacterRarity.Common, Region = 4, Stats = FromTable("marsh", 0, 90, 4) };
+        public static readonly CharacterSpec Cookie = new CharacterSpec { Id = "cookie", Name = "Cookie", Rarity = CharacterRarity.Common, Region = 4, Stats = FromTable("cookie", 35, 80, 4) };
         // Region 5 (Bamboo Temple) extra Common heroes (F4.5): Bao is the starter, these four come as hero cards. Sprout the bamboo sprout = Shield, Tora the tiger cub = Double Jump (jump),
         // Rusu the red panda = Magnet and a coin find stat, Ryu the wingless dragon pup = Rocket (speed). Region 5 stats sit above Region 4, inside the Momo +-10 percent band (docs/43).
-        public static readonly CharacterSpec Sprout = new CharacterSpec { Id = "sprout", Name = "Sprout", Rarity = CharacterRarity.Common, Region = 5, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 9, Control = 32, WallBoostHundredths = 84, RunBonusCoins = 70, RunBonusGems = 5 } };
-        public static readonly CharacterSpec Tora = new CharacterSpec { Id = "tora", Name = "Tora", Rarity = CharacterRarity.Common, Region = 5, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 10, Control = 31, WallBoostHundredths = 80, RunBonusCoins = 60, RunBonusGems = 4 } };
-        public static readonly CharacterSpec Rusu = new CharacterSpec { Id = "rusu", Name = "Rusu", Rarity = CharacterRarity.Common, Region = 5, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 10, Control = 33, WallBoostHundredths = 82, CoinFind = 40, RunBonusCoins = 80, RunBonusGems = 5 } };
-        public static readonly CharacterSpec Ryu = new CharacterSpec { Id = "ryu", Name = "Ryu", Rarity = CharacterRarity.Common, Region = 5, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 10, Control = 32, WallBoostHundredths = 80, RunBonusCoins = 90, RunBonusGems = 5 } };
+        public static readonly CharacterSpec Sprout = new CharacterSpec { Id = "sprout", Name = "Sprout", Rarity = CharacterRarity.Common, Region = 5, Stats = FromTable("sprout", 0, 70, 5) };
+        public static readonly CharacterSpec Tora = new CharacterSpec { Id = "tora", Name = "Tora", Rarity = CharacterRarity.Common, Region = 5, Stats = FromTable("tora", 0, 60, 4) };
+        public static readonly CharacterSpec Rusu = new CharacterSpec { Id = "rusu", Name = "Rusu", Rarity = CharacterRarity.Common, Region = 5, Stats = FromTable("rusu", 40, 80, 5) };
+        public static readonly CharacterSpec Ryu = new CharacterSpec { Id = "ryu", Name = "Ryu", Rarity = CharacterRarity.Common, Region = 5, Stats = FromTable("ryu", 0, 90, 5) };
 
         // region heroes (T66, owner-approved paintings): R2 forest girl Capi, R3 beach sea otter Otto, R4 candy girl Bonbon, R5 Shaolin monk Bao. (The old Sporeling was deleted 2026-11-01; Capi replaced it. Old saves that name "sporeling" are cleaned in ProgressService.EnsureChestFields and fall back to Momo.)
-        public static readonly CharacterSpec ForestGirl = new CharacterSpec { Id = "forestgirl", Name = "Capi", Rarity = CharacterRarity.Common, Region = 2, RegionStarter = true, Stats = new CharacterStats { JumpLaunch = 19, MaxSpeed = 10, Control = 29, WallBoostHundredths = 79, RunBonusCoins = 90, RunBonusGems = 1 } };
-        public static readonly CharacterSpec BeachOtter = new CharacterSpec { Id = "beachotter", Name = "Otto", Rarity = CharacterRarity.Common, Region = 3, RegionStarter = true, Stats = new CharacterStats { JumpLaunch = 18, MaxSpeed = 8, Control = 32, WallBoostHundredths = 72, RunBonusCoins = 100, RunBonusGems = 3 } };
-        public static readonly CharacterSpec CandyGirl = new CharacterSpec { Id = "candygirl", Name = "Bonbon", Rarity = CharacterRarity.Common, Region = 4, RegionStarter = true, Stats = new CharacterStats { JumpLaunch = 21, MaxSpeed = 10, Control = 31, WallBoostHundredths = 84, RunBonusCoins = 70, RunBonusGems = 4 } };
-        public static readonly CharacterSpec Monk = new CharacterSpec { Id = "monk", Name = "Bao", Rarity = CharacterRarity.Common, Region = 5, RegionStarter = true, Stats = new CharacterStats { JumpLaunch = 20, MaxSpeed = 10, Control = 31, WallBoostHundredths = 80, RunBonusCoins = 60, RunBonusGems = 5 } };
+        public static readonly CharacterSpec ForestGirl = new CharacterSpec { Id = "forestgirl", Name = "Capi", Rarity = CharacterRarity.Common, Region = 2, RegionStarter = true, Stats = FromTable("forestgirl", 0, 90, 1) };
+        public static readonly CharacterSpec BeachOtter = new CharacterSpec { Id = "beachotter", Name = "Otto", Rarity = CharacterRarity.Common, Region = 3, RegionStarter = true, Stats = FromTable("beachotter", 0, 100, 3) };
+        public static readonly CharacterSpec CandyGirl = new CharacterSpec { Id = "candygirl", Name = "Bonbon", Rarity = CharacterRarity.Common, Region = 4, RegionStarter = true, Stats = FromTable("candygirl", 0, 70, 4) };
+        public static readonly CharacterSpec Monk = new CharacterSpec { Id = "monk", Name = "Bao", Rarity = CharacterRarity.Common, Region = 5, RegionStarter = true, Stats = FromTable("monk", 0, 60, 5) };
 
         /// <summary>The Common heroes in list order: Region 1 first (Momo, then Bumble, Ribbi, Dandy, Pip), then one hero per further region.</summary>
         static readonly CharacterSpec[] Bases = { Momo, Bumble, Ribbi, Dandy, Pip, ForestGirl, Nib, Spike, Moss, Fenn, BeachOtter, Pinch, Shelly, Bloop, Coco, CandyGirl, Gummi, Choco, Marsh, Cookie, Monk, Sprout, Tora, Rusu, Ryu };

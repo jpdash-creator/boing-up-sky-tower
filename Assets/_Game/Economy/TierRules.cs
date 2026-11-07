@@ -4,19 +4,12 @@ using BoingUpSkyTower.Simulation;
 namespace BoingUpSkyTower.Economy
 {
     /// <summary>
-    /// The owner's rule for one merge tier (docs/34 section 2b), as plain data: how many of the four stats get a boost, the percent band, the run-bonus
-    /// ranges and the number of hero powers. The percent is a CHAIN (owner 2026-11-03): each tier is +10 to +25 percent over the SHOWN stats of the previous tier of the same hero (Uncommon over Common, Rare over Uncommon, Elite over Rare, Legendary over Elite). Re-randomising a character later means calling
-    /// <see cref="TierRules.Generate"/> with a new seed and pasting the result into <see cref="MergeTierDefs.Rows"/>.
+    /// The owner's rule for one merge tier (docs/34 section 2b, docs/44), as plain data: the run-bonus ranges and the number and cooldown of the hero powers. The PHYSICS of a tier hero are no longer a percent
+    /// chain: every hero has an absolute row in <see cref="HeroTable"/> and <see cref="HeroIndex"/> holds the rules (Jump band per rarity, legal limits, measured FI gate).
     /// </summary>
     public sealed class TierRule
     {
         public CharacterRarity Rarity;
-        /// <summary>How many of {Jump, Speed, Control, Wall Bounce} are boosted (the rest stay at the Common value).</summary>
-        public int BoostedStats;
-        /// <summary>Whole percent added to each boosted stat over the PREVIOUS tier's shown value, inclusive (10..25 for every tier).</summary>
-        public int PctMin, PctMax;
-        /// <summary>True: the percent is over the previous tier of the same hero (always true; Uncommon's previous tier is the Common hero).</summary>
-        public bool OverPreviousTier;
         /// <summary>Run bonus coins ADDED on top of the Common hero's own run bonus: inclusive range, multiples of <see cref="TierRules.CoinStep"/> only.</summary>
         public int RunCoinsMin, RunCoinsMax;
         /// <summary>Run bonus gems added on top of the Common hero's own run bonus, inclusive.</summary>
@@ -28,28 +21,28 @@ namespace BoingUpSkyTower.Economy
     }
 
     /// <summary>
-    /// Rule tables for Uncommon, Rare, Elite (code enum: Epic) and Legendary, the region power pools, a pure validator of a <see cref="TierRow"/> against its rule
-    /// and a seeded generator for future characters. No Unity types; compiled by the Simulation test project as well.
+    /// Rule tables for Uncommon, Rare, Elite (code enum: Epic) and Legendary, the region power pools and pure validators of a <see cref="TierRow"/> (run bonus) and of a
+    /// <see cref="HeroRow"/> (physics, by <see cref="HeroIndex"/>). No Unity types; compiled by the Simulation test project as well.
     /// </summary>
     public static class TierRules
     {
         public const int CoinStep = 10;
-        /// <summary>The seed the five Uncommon rows were drawn with is BaseSeed + the line's index in <see cref="Lines"/> (docs/34 section 2b).</summary>
+        /// <summary>The seed the run bonuses of the first rows were drawn with (kept for the record; nothing is random at run time).</summary>
         public const int BaseSeed = 20261104;
 
         /// <summary>
         /// The hero lines: the five original heroes in region order (Meadow Springs, Mushroom Grove, Sunny Beach, Candy Canyon, Bamboo Temple) FIRST (their positions are part of the Uncommon seeds), then the
-        /// four extra Region 1 heroes (Bumble, Ribbi, Dandy, Pip). The order of the new lines is the order of their rows in <see cref="MergeTierDefs.Rows"/>.
+        /// four extra Region 1 heroes (Bumble, Ribbi, Dandy, Pip). The order of the lines is the order of their rows in <see cref="HeroTable.Rows"/>.
         /// </summary>
         public static readonly string[] Lines = { "momo", "forestgirl", "beachotter", "candygirl", "monk", "bumble", "ribbi", "dandy", "pip", "nib", "spike", "moss", "fenn", "pinch", "shelly", "bloop", "coco", "gummi", "choco", "marsh", "cookie", "sprout", "tora", "rusu", "ryu" };
 
         public static readonly TierRule[] Rules =
         {
             null,   // Common: no tier rule
-            new TierRule { Rarity = CharacterRarity.Uncommon, BoostedStats = 2, PctMin = 10, PctMax = 25, OverPreviousTier = true, RunCoinsMin = 50, RunCoinsMax = 100, RunGemsMin = 1, RunGemsMax = 5, PowerCount = 1, CooldownSeconds = 30 },
-            new TierRule { Rarity = CharacterRarity.Rare, BoostedStats = 3, PctMin = 10, PctMax = 25, OverPreviousTier = true, RunCoinsMin = 200, RunCoinsMax = 500, RunGemsMin = 5, RunGemsMax = 10, PowerCount = 2, CooldownSeconds = 22 },
-            new TierRule { Rarity = CharacterRarity.Epic, BoostedStats = 3, PctMin = 10, PctMax = 25, OverPreviousTier = true, RunCoinsMin = 500, RunCoinsMax = 1000, RunGemsMin = 5, RunGemsMax = 10, PowerCount = 3, CooldownSeconds = 15 },
-            new TierRule { Rarity = CharacterRarity.Legendary, BoostedStats = 4, PctMin = 10, PctMax = 25, OverPreviousTier = true, RunCoinsMin = 1000, RunCoinsMax = 2000, RunGemsMin = 5, RunGemsMax = 10, PowerCount = 4, CooldownSeconds = 10 },
+            new TierRule { Rarity = CharacterRarity.Uncommon, RunCoinsMin = 50, RunCoinsMax = 100, RunGemsMin = 1, RunGemsMax = 5, PowerCount = 1, CooldownSeconds = 30 },
+            new TierRule { Rarity = CharacterRarity.Rare, RunCoinsMin = 200, RunCoinsMax = 500, RunGemsMin = 5, RunGemsMax = 10, PowerCount = 2, CooldownSeconds = 22 },
+            new TierRule { Rarity = CharacterRarity.Epic, RunCoinsMin = 500, RunCoinsMax = 1000, RunGemsMin = 5, RunGemsMax = 10, PowerCount = 3, CooldownSeconds = 15 },
+            new TierRule { Rarity = CharacterRarity.Legendary, RunCoinsMin = 1000, RunCoinsMax = 2000, RunGemsMin = 5, RunGemsMax = 10, PowerCount = 4, CooldownSeconds = 10 },
         };
 
         /// <summary>
@@ -134,47 +127,39 @@ namespace BoingUpSkyTower.Economy
             return list;
         }
 
-        /// <summary>Number of boosted stats in a row (percent above zero).</summary>
-        public static int BoostedCount(TierRow r)
-        {
-            return (r.JumpPct > 0 ? 1 : 0) + (r.SpeedPct > 0 ? 1 : 0) + (r.ControlPct > 0 ? 1 : 0) + (r.WallPct > 0 ? 1 : 0);
-        }
-
-        /// <summary>Null when the row obeys its tier rule (stat count, percent band, run bonus ranges and steps), else a short reason. Pure; used by the tests.</summary>
+        /// <summary>Null when the row obeys its tier rule (run bonus ranges and steps), else a short reason. The physics are checked by <see cref="ValidatePhysics"/>. Pure; used by the tests.</summary>
         public static string Validate(TierRow r)
         {
             if (r == null) return "no row";
             TierRule rule = RuleFor(r.Rarity);
             if (rule == null) return r.Id + ": " + r.Rarity + " has no tier rule";
-            int[] pcts = { r.JumpPct, r.SpeedPct, r.ControlPct, r.WallPct };
-            foreach (int p in pcts)
-                if (p != 0 && (p < rule.PctMin || p > rule.PctMax)) return r.Id + ": percent " + p + " outside " + rule.PctMin + ".." + rule.PctMax;
-            if (BoostedCount(r) != rule.BoostedStats) return r.Id + ": " + BoostedCount(r) + " boosted stats, rule says " + rule.BoostedStats;
             if (r.RunCoinsAdd < rule.RunCoinsMin || r.RunCoinsAdd > rule.RunCoinsMax || r.RunCoinsAdd % CoinStep != 0) return r.Id + ": run coins " + r.RunCoinsAdd + " outside " + rule.RunCoinsMin + ".." + rule.RunCoinsMax + " in steps of " + CoinStep;
             if (r.RunGemsAdd < rule.RunGemsMin || r.RunGemsAdd > rule.RunGemsMax) return r.Id + ": run gems " + r.RunGemsAdd + " outside " + rule.RunGemsMin + ".." + rule.RunGemsMax;
             return null;
         }
 
-        /// <summary>
-        /// Shown stats of a tier: the previous tier's SHOWN values (Common for Uncommon) with the row's percent on each boosted stat, one decimal; unboosted stats stay exactly as they were.
-        /// Run bonus = the Common hero's own bonus plus the row's add (each tier's range is its own total, not cumulative on lower tiers).
-        /// </summary>
-        public static ShownStats Apply(ShownStats prev, ShownStats common, TierRow r)
+        /// <summary>Null when the hero row obeys the index rules (<see cref="HeroIndex.Validate"/>: legal limits, the tier's Jump band and wall range), else a short reason with the id. Pure; used by the tests.</summary>
+        public static string ValidatePhysics(HeroRow r)
         {
-            return new ShownStats
-            {
-                Jump = ShownStats.Boosted(prev.Jump, r.JumpPct),
-                Speed = ShownStats.Boosted(prev.Speed, r.SpeedPct),
-                Control = ShownStats.Boosted(prev.Control, r.ControlPct),
-                WallBounce = ShownStats.Boosted(prev.WallBounce, r.WallPct),
-                CoinFind = prev.CoinFind,
-                GemFind = prev.GemFind,
-                RunBonusCoins = common.RunBonusCoins + r.RunCoinsAdd,
-                RunBonusGems = common.RunBonusGems + r.RunGemsAdd,
-            };
+            if (r == null) return "no row";
+            if (r.Tier < 0 || r.Tier >= HeroIndex.Tiers) return r.Id + ": tier " + r.Tier + " outside 0.." + (HeroIndex.Tiers - 1);
+            string why = HeroIndex.Validate(r.Tier, new HeroPhysics(r.LaunchTenths, r.Speed, r.Control, r.Wall));
+            return why == null ? null : r.Id + ": " + why;
         }
 
-        /// <summary>Gain lines between two shown stat blocks ("Jump +17%", "Run coins +60"); the percent is the whole percent between the printed numbers. Used by the merge screen (MergeRules.ShownGainLines).</summary>
+        /// <summary>
+        /// The Jump band of a tier as the "i" popup and the hero list print it: "+6 to +10% Jump" (launch speed over the default 19.0, <see cref="HeroIndex.JumpPctMin"/> / <see cref="HeroIndex.JumpPctMax"/>).
+        /// Common is "0 to +5% Jump".
+        /// </summary>
+        public static string JumpBandText(CharacterRarity r)
+        {
+            int t = (int)r;
+            if (t < 0 || t >= HeroIndex.Tiers) return "";
+            int lo = HeroIndex.JumpPctMin[t];
+            return (lo == 0 ? "0" : "+" + lo) + " to +" + HeroIndex.JumpPctMax[t] + "% Jump";
+        }
+
+        /// <summary>Gain lines between two shown stat blocks ("Jump +17%", "Run coins +60"); the percent is the whole percent between the printed numbers, a line only when the stat rose. Used by the merge screen (MergeRules.ShownGainLines).</summary>
         public static List<string> GainLines(ShownStats from, ShownStats to)
         {
             var lines = new List<string>(6);
@@ -196,17 +181,6 @@ namespace BoingUpSkyTower.Economy
             if (pct > 0) lines.Add(label + " +" + pct + "%");
         }
 
-        /// <summary>Null when every boosted stat of the row prints as EXACTLY its percent over <paramref name="prev"/> (the shown, one-decimal numbers), else a reason. Used by the tests and the generator.</summary>
-        public static string ValidateChain(ShownStats prev, TierRow r)
-        {
-            if (prev == null || r == null) return "no data";
-            if (r.JumpPct != 0 && !ShownStats.IsExact(prev.Jump, r.JumpPct)) return r.Id + ": Jump +" + r.JumpPct + "% over " + prev.Jump + " prints as +" + ShownStats.Percent(prev.Jump, ShownStats.Boosted(prev.Jump, r.JumpPct)) + "%";
-            if (r.SpeedPct != 0 && !ShownStats.IsExact(prev.Speed, r.SpeedPct)) return r.Id + ": Speed +" + r.SpeedPct + "% over " + prev.Speed + " is not exact";
-            if (r.ControlPct != 0 && !ShownStats.IsExact(prev.Control, r.ControlPct)) return r.Id + ": Control +" + r.ControlPct + "% over " + prev.Control + " is not exact";
-            if (r.WallPct != 0 && !ShownStats.IsExact(prev.WallBounce, r.WallPct)) return r.Id + ": Wall Bounce +" + r.WallPct + "% over " + prev.WallBounce + " is not exact";
-            return null;
-        }
-
         /// <summary>Null when <paramref name="powers"/> is exactly the pool prefix of the line for that tier (right count, right order, each power in the pool), else a reason.</summary>
         public static string ValidatePowers(string lineId, CharacterRarity r, PowerUp[] powers)
         {
@@ -216,60 +190,6 @@ namespace BoingUpSkyTower.Economy
             for (int i = 0; i < want.Length; i++)
                 if (powers[i] != want[i]) return lineId + " " + r + ": power " + i + " is " + powers[i] + ", pool says " + want[i];
             return null;
-        }
-
-        /// <summary>
-        /// Draws a new row for a character from a seed (deterministic, no System.Random): picks the boosted stats, the percent of each, the run coins and gems,
-        /// all inside the rule of <paramref name="rarity"/>. <paramref name="prev"/> is the SHOWN stats of the previous tier of the same hero (the Common hero for Uncommon, the
-        /// Uncommon row's result for Rare, and so on): a percent is only accepted when it prints as exactly that percent on the one-decimal sheet. Paste the numbers into
-        /// <see cref="MergeTierDefs.Rows"/> as constants; nothing is random at run time. Chain: generate Uncommon from Common, Rare from <see cref="Apply"/>(Uncommon), and so on.
-        /// </summary>
-        public static TierRow Generate(string lineId, string id, string name, string artId, CharacterRarity rarity, int seed, ShownStats prev)
-        {
-            TierRule rule = RuleFor(rarity);
-            if (rule == null) return null;
-            var rng = new Rng(seed);
-            int[] order = { 0, 1, 2, 3 };
-            for (int i = 0; i < rule.BoostedStats; i++)
-            {
-                int j = i + rng.Range(0, order.Length - 1 - i);
-                int t = order[i]; order[i] = order[j]; order[j] = t;
-            }
-            var chosen = new bool[4];
-            for (int i = 0; i < rule.BoostedStats; i++) chosen[order[i]] = true;
-            var row = new TierRow { LineId = lineId, Id = id, Name = name, ArtId = artId, Rarity = rarity };
-            for (int s = 0; s < 4; s++)
-            {
-                if (!chosen[s]) continue;
-                double before = s == 0 ? prev.Jump : s == 1 ? prev.Speed : s == 2 ? prev.Control : prev.WallBounce;
-                int pct = rng.Range(rule.PctMin, rule.PctMax);
-                for (int tries = 0; tries < 64 && !ShownStats.IsExact(before, pct); tries++) pct = rng.Range(rule.PctMin, rule.PctMax);
-                for (int p = rule.PctMin; !ShownStats.IsExact(before, pct) && p <= rule.PctMax; p++) pct = p;   // fallback scan: always finds one (step 0.1 is under 2.5 percent of any stat)
-                if (s == 0) row.JumpPct = pct; else if (s == 1) row.SpeedPct = pct; else if (s == 2) row.ControlPct = pct; else row.WallPct = pct;
-            }
-            row.RunCoinsAdd = rng.Range(rule.RunCoinsMin / CoinStep, rule.RunCoinsMax / CoinStep) * CoinStep;
-            row.RunGemsAdd = rng.Range(rule.RunGemsMin, rule.RunGemsMax);
-            return row;
-        }
-
-        /// <summary>Tiny deterministic generator (SplitMix32 style) so a seed gives the same numbers on every runtime.</summary>
-        sealed class Rng
-        {
-            uint state;
-            public Rng(int seed) { state = (uint)seed; }
-            uint Next()
-            {
-                unchecked
-                {
-                    state += 0x9E3779B9u;
-                    uint z = state;
-                    z = (z ^ (z >> 16)) * 0x85EBCA6Bu;
-                    z = (z ^ (z >> 13)) * 0xC2B2AE35u;
-                    return z ^ (z >> 16);
-                }
-            }
-            /// <summary>Uniform whole number in lo..hi inclusive.</summary>
-            public int Range(int lo, int hi) { return lo + (int)(Next() % (uint)(hi - lo + 1)); }
         }
     }
 }

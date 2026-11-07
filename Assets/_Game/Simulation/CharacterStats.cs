@@ -11,6 +11,10 @@ namespace BoingUpSkyTower.Simulation
     {
         /// <summary>Upward launch speed of a standing jump, u/s.</summary>
         public int JumpLaunch = 19;
+        /// <summary>Launch speed in TENTHS of u/s (190 = 19.0), the precise form the hero table and <see cref="HeroIndex"/> use. 0 = use <see cref="JumpLaunch"/> x 10.</summary>
+        public int JumpLaunchTenths;
+        /// <summary>The effective launch in tenths of u/s: <see cref="JumpLaunchTenths"/> when set, else <see cref="JumpLaunch"/> x 10.</summary>
+        public int LaunchTenths { get { return JumpLaunchTenths != 0 ? JumpLaunchTenths : JumpLaunch * 10; } }
         /// <summary>Top sideways speed, u/s.</summary>
         public int MaxSpeed = 9;
         /// <summary>Ground acceleration, u/s2. Air steering, braking and turn-around follow it.</summary>
@@ -29,7 +33,8 @@ namespace BoingUpSkyTower.Simulation
         public static readonly CharacterStats Default = new CharacterStats();
 
         // Limits (docs/29 section 7). The minimums are 10 percent under Momo's baseline (owner 2026-11-02: Capi, Otto, Bonbon and Bao vary by -10..+10 percent). Maximums are proposals pending owner sign-off.
-        public const int JumpLaunchMin = 17, JumpLaunchMax = 23;
+        // Launch limits are in tenths of u/s. The top is the HeroIndex limit (23.8); the bottom stays at the old 17.0 while the hand-tuned (Legacy) hero rows exist (Otto and Shelly launch at 18.0): HeroIndex.Validate holds the generated heroes to 19.0.
+        public const int JumpLaunchMinTenths = 170, JumpLaunchMaxTenths = HeroIndex.LaunchMaxTenths;
         public const int MaxSpeedMin = 8, MaxSpeedMax = 12;
         public const int ControlMin = 27, ControlMax = 45;
         public const int WallBoostMin = 69, WallBoostMax = 100;
@@ -62,7 +67,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Null when the four physics stats and the flat finds are inside the limits (the part that keeps every level solvable), else a short reason.</summary>
         public string ValidatePhysics()
         {
-            if (JumpLaunch < JumpLaunchMin || JumpLaunch > JumpLaunchMax) return "JumpLaunch " + JumpLaunch + " outside " + JumpLaunchMin + ".." + JumpLaunchMax;
+            if (LaunchTenths < JumpLaunchMinTenths || LaunchTenths > JumpLaunchMaxTenths) return "Launch " + LaunchTenths + " tenths outside " + JumpLaunchMinTenths + ".." + JumpLaunchMaxTenths;
             if (MaxSpeed < MaxSpeedMin || MaxSpeed > MaxSpeedMax) return "MaxSpeed " + MaxSpeed + " outside " + MaxSpeedMin + ".." + MaxSpeedMax;
             if (Control < ControlMin || Control > ControlMax) return "Control " + Control + " outside " + ControlMin + ".." + ControlMax;
             if (WallBoostHundredths < WallBoostMin || WallBoostHundredths > WallBoostMax) return "WallBoostHundredths " + WallBoostHundredths + " outside " + WallBoostMin + ".." + WallBoostMax;
@@ -74,7 +79,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Writes the character's physics into a (cloned) run config. Fixed-point ratios keep the baseline bit-identical to the SimConfig defaults.</summary>
         public void ApplyTo(SimConfig cfg)
         {
-            cfg.JumpBase = Fx.FromRatio(JumpLaunch, 60);
+            cfg.JumpBase = Fx.FromRatio(LaunchTenths, 600);   // 190/600 and 19/60 are the same rational, so the default stays raw-identical
             cfg.MaxSpeed = Fx.FromRatio(MaxSpeed, 60);
             cfg.Accel = Fx.FromRatio(Control, 3600);
             cfg.WallBoost = Fx.FromRatio(WallBoostHundredths, 100);

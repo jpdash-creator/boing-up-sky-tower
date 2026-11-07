@@ -56,7 +56,7 @@ namespace BoingUpSkyTower.Simulation
         }
 
         /// <summary>
-        /// The whole-number physics that matches these shown values, NOT yet limited: launch from the Jump height (v = sqrt(2 g h)), speed and control rounded, the wall share
+        /// The whole-number physics that matches these shown values, NOT yet limited: launch (whole and in tenths) from the Jump height (v = sqrt(2 g h)), speed and control rounded, the wall share
         /// from Wall Bounce over Speed. Rounding to whole units can differ from the shown value by half a unit; the cap (MergeTierDefs.Cap) then applies the docs/29 section 7 limits.
         /// </summary>
         public CharacterStats ToPhysics(SimConfig cfg)
@@ -66,6 +66,7 @@ namespace BoingUpSkyTower.Simulation
             return new CharacterStats
             {
                 JumpLaunch = (int)Math.Round(Math.Sqrt(2.0 * g * Jump), MidpointRounding.AwayFromZero),
+                JumpLaunchTenths = (int)Math.Round(Math.Sqrt(2.0 * g * Jump) * 10.0, MidpointRounding.AwayFromZero),
                 MaxSpeed = (int)Math.Round(Speed, MidpointRounding.AwayFromZero),
                 Control = (int)Math.Round(Control, MidpointRounding.AwayFromZero),
                 WallBoostHundredths = (int)Math.Round(WallBounce / speed * 100.0, MidpointRounding.AwayFromZero),

@@ -70,7 +70,7 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>
-        /// Short property lines of a tier for the "i" popup, read from <see cref="TierRules"/> (docs/34 section 2b): powers and cooldown, boosted stats and the percent band,
+        /// Short property lines of a tier for the "i" popup, read from <see cref="TierRules"/> (docs/34 section 2b): powers and cooldown, the Jump band of the rarity (HeroIndex),
         /// the run bonus ranges. Three lines, empty list for an unknown tier.
         /// </summary>
         public static List<string> InfoLines(CharacterRarity rarity)
@@ -79,7 +79,7 @@ namespace BoingUpSkyTower.Economy
             TierRule r = TierRules.RuleFor(rarity);
             if (r == null) return lines;
             lines.Add(r.PowerCount + (r.PowerCount == 1 ? " hero power" : " hero powers") + ", ready again after " + r.CooldownSeconds + " s");
-            lines.Add(r.BoostedStats + " of 4 stats +" + r.PctMin + " to " + r.PctMax + "% over the tier below");
+            lines.Add(TierRules.JumpBandText(rarity) + " over the default hero, Speed, Control and Wall Bounce set by limits");
             lines.Add("Run bonus +" + r.RunCoinsMin + " to " + r.RunCoinsMax + " coins, +" + r.RunGemsMin + " to " + r.RunGemsMax + " gems");
             return lines;
         }
