@@ -25,42 +25,17 @@ Common -> Uncommon -> Rare -> Elite -> Legendary (the fourth step is **Elite** i
 | candygirl (Bonbon) | candygirl_u | Sugarplate Bonbon |
 | monk (Bao) | monk_u | Ironbamboo Bao |
 
-Stats, powers and run bonus follow the tier rule in section 2b. The five Uncommon rows are fixed constants in `MergeTierDefs.Rows` (drawn once with `TierRules.Generate`, seed 20261104 + line index 0..4); the numbers are in docs/29 section 6b. They are not in any chest pool and belong to no region.
+Hero physics and the rarity rules: see docs/44-power-mechanics-bible.md (the numbers of every hero are in its sections 3 and 8; the run bonus is in section 7b). Powers follow the pools in section 2b below. The five Uncommon rows are fixed constants in `MergeTierDefs.Rows`. They are not in any chest pool and belong to no region.
 
-**Adding Rare, Elite or Legendary later is data only:** one `TierRow` per hero in `MergeTierDefs.Rows` (line id, new id, name, rarity, art id, percent boosts, run coins and gems added; powers come from the line's pool automatically) and the art folder `Resources/Characters/{id}/` (parts and `rig.json` like the Common hero). No code changes: `MergeRules.NextTier` finds the row by line and rarity + 1.
+**Adding Rare, Elite or Legendary later is data only:** one `TierRow` per hero in `MergeTierDefs.Rows` (line id, new id, name, rarity, art id, run coins and gems added; hero physics come from the generated hero table, doc 44 section 6; powers come from the line's pool automatically) and the art folder `Resources/Characters/{id}/` (parts and `rig.json` like the Common hero). No code changes: `MergeRules.NextTier` finds the row by line and rarity + 1.
 
-## 2b. Tier rules (owner 2026-11-03, data in `Economy/TierRules.cs`)
+## 2b. Tier rules (moved to doc 44, 2026-11-08)
 
-**The boosts are a chain on the numbers the player SEES.** Each tier is +10 to +25 percent over the SHOWN stats of the previous tier of the same hero: Uncommon over the Common hero, Rare over the Uncommon version, Elite over the Rare version, Legendary over the Elite version. The four shown stats are exactly the hero sheet's: Jump (a height, launch squared over 2g), Speed, Control and Wall Bounce (speed times wall share), each printed with ONE decimal (`ShownStats`, `Simulation/ShownStats.cs`). A stored +17 percent prints as +17 percent on the sheet and in the merge text. Because the numbers have one decimal, a percent is only valid when the printed result reads back as that exact percent (`TierRules.ValidateChain`; the generator only draws such percents).
+Hero physics and the rarity rules: see docs/44-power-mechanics-bible.md. Tier heroes are independent stat sets (Jump, Speed, Control, Wall Bounce) measured by the Forgiveness Index; there is no percent chain over the previous tier any more.
 
-| Tier (code enum) | Stats boosted | Boost per stat (over previous tier, shown) | Run bonus coins (own total on top of the Common hero's bonus, steps of 10) | Run bonus gems (own total) | Hero powers | Power cooldown |
-|---|---|---|---|---|---|---|
-| Uncommon | exactly 2 of 4 | +10% to +25% | +50 to +100 | +1 to +5 | 1 | 30 s |
-| Rare | exactly 3 of 4 | +10% to +25% | +200 to +500 | +5 to +10 | 2 | 22 s |
-| Elite (`Epic`) | exactly 3 of 4 | +10% to +25% | +500 to +1000 | +5 to +10 | 3 | 15 s |
-| Legendary | all 4 | +10% to +25% | +1000 to +2000 | +5 to +10 | 4 | 10 s |
+Run bonus add-on of each tier (coins and gems on top of the Common hero's own bonus): see docs/44-power-mechanics-bible.md section 7b.
 
-Unboosted stats stay exactly as they were on the previous tier. The run bonus of a tier is its OWN total added to the Common hero's own bonus, NOT cumulative on lower tiers (a Rare Momo pays Momo's 80 plus 200..500, not plus the Uncommon add). `CharacterDefs.PowerCount` is `{0, 1, 2, 3, 4}`. Only Uncommon rows exist; **Rare, Elite and Legendary heroes are NOT created** (no art yet). Their rules are data in `TierRules.Rules` (percent band, boosted count, `OverPreviousTier`, run ranges, powers, cooldown):
-
-- `TierRules.Validate(TierRow)`: pure check of a row against its rule (stat count, percent band, coins band and step, gems band). `TierRules.ValidateChain(prevShown, row)`: every boosted stat prints as exactly its percent. `TierRules.ValidatePowers(line, rarity, powers)`: the power list.
-- `TierRules.Apply(prevShown, commonShown, row)`: the shown stats of a tier from the previous tier. `MergeTierDefs.ShownOf` walks the whole chain of a hero.
-- `TierRules.Generate(lineId, id, name, artId, rarity, seed, prevShown)`: draws a row from a seed with a built-in generator (deterministic on every runtime, no `System.Random`). Workflow for a new or re-randomised tier: take the previous tier's shown stats (`ShownStats.From` of the Common hero for Uncommon, `TierRules.Apply` of the Uncommon row for Rare, and so on), call Generate once, paste the numbers into `MergeTierDefs.Rows` as constants. Nothing is random at run time. The five Uncommon rows were drawn with seed **20261104** + line index (momo 0, forestgirl 1, beachotter 2, candygirl 3, monk 4) over the Common hero; the test `TheFiveUncommonRowsAreTheFixedSeedDrawAndNeverChange` pins this and `TheGeneratorIsDeterministicAndEveryTierRowObeysCountBandAndChainExactness` checks generated Rare, Elite and Legendary chains for 5 heroes x 150 seeds.
-
-### Safety: shown stats and effective stats
-
-`CharacterSpec.Shown` holds the shown stats (not limited); the hero sheet (`HeroSheetData.From(..., shown)`) and the merge result card (`MergeRules.ShownGainLines`) read them. `CharacterSpec.Stats` holds the **effective** stats the simulation plays: `ShownStats.ToPhysics` turns the shown numbers into whole-number physics (launch = sqrt(2 g x Jump height), Speed and Control rounded, wall share = Wall Bounce / Speed) and `MergeTierDefs.Cap` clamps the four physics stats to the validated limits of docs/29 section 7 (Jump launch 17..23, Speed 8..12, Control 27..45, Wall share 69..100 hundredths). Only the effective stats reach the simulation, so a shown value past a limit is still shown but plays at the limit, and every level stays solvable and not trivialised. Rounding to whole units can move a played stat by up to half a unit from the shown one (for example a wall share derived from a one-decimal Wall Bounce). The run bonus is meta only (paid after the run, never in the simulation) and is not capped by the physics limits; `CharacterStats.ValidateTier()` allows it up to the Common maximum plus the Legendary add (2100 coins, 15 gems). Levels, bot proofs and golden hashes are built with the baseline Momo config and do not change.
-
-**The chain passes the caps.** Four tiers at +25 percent are 1.25^4 = 2.4x. The cap in shown units (what the sheet number must reach before the physics stops growing) and how many full +25 percent steps that is:
-
-| Hero | Common Jump | Jump cap 6.6 | Common Speed | Speed cap 12 | Common Control | Control cap 45 |
-|---|---|---|---|---|---|---|
-| Momo | 4.5 | x1.47 (about 2 steps) | 9 | x1.33 (2) | 30 | x1.50 (2) |
-| Capi | 4.5 | x1.47 (2) | 10 | x1.20 (1) | 28.9 | x1.56 (2) |
-| Otto | 4.1 | x1.61 (3) | 8 | x1.50 (2) | 32 | x1.41 (2) |
-| Bonbon | 5.5 | x1.20 (1) | 10 | x1.20 (1) | 31 | x1.45 (2) |
-| Bao | 5 | x1.32 (2) | 10 | x1.20 (1) | 31 | x1.45 (2) |
-
-Consequence: Uncommon rows can already touch a cap (Bonbon's Jump 6.8 plays at the 6.6 cap), and Rare, Elite and Legendary rows will usually show numbers above what they play. The sheet always shows the owner's chained number; a hero that is capped still gets better from its other stats, its run bonus and its powers. If the owner wants the sheet to show the played value instead, change `HeroSheetData.From` to ignore `shown` (one line); the caps then become visible as smaller gains.
+Hero powers per tier: Uncommon 1, Rare 2, Elite 3, Legendary 4 (`CharacterDefs.PowerCount` is `{0, 1, 2, 3, 4}`), cooldown 30 s, 22 s, 15 s and 10 s (section 2c). Powers are not measured in the Forgiveness Index yet (doc 44 section 7).
 
 ### Hero power pools (region themed)
 
@@ -111,9 +86,9 @@ Powers use only the power-ups that exist in the simulation (Flight, Rocket, Doub
 
 ## 5. Merge screen (`MergeScreen`, screen name `Merge`) (the hero list and selection below are replaced by section 10, 2026-11-05)
 
-Top to bottom: back button and title `MERGE` (with the icon slot); the big result slot (next-tier hero in a glowing circle, name, `Common > Uncommon`, stat gains); a green arrow; three input slots (filled with the chosen hero for each copy held, up to 3; empty ones dim); the gold `MERGE` button (disabled with the reason below it when it cannot work); the grid of heroes with copies (5 columns, scrolls) with `x2/3` counters (`x5` for a top-tier hero). Tap a tile to choose which hero to merge.
+Top to bottom: back button and title `MERGE` (with the icon slot); the big result slot (next-tier hero in a glowing circle, name, `Common > Uncommon`, the new hero's numbers with only the increases listed as gains); a green arrow; three input slots (filled with the chosen hero for each copy held, up to 3; empty ones dim); the gold `MERGE` button (disabled with the reason below it when it cannot work); the grid of heroes with copies (5 columns, scrolls) with `x2/3` counters (`x5` for a top-tier hero). Tap a tile to choose which hero to merge.
 
-On success: save, sound and haptic, then a card `New hero:` with the new hero's picture, name, rarity change and stat gains and one OK button. Entry: the `Merge` icon on the Heroes screen (above the (i) icon, `CharactersScreen.Host.OpenMerge` -> `MetaController.ShowMerge`); Back returns to the Heroes screen. The system-test build has `Add 2 copies` on the Heroes screen (`CharacterCatalog.DebugAddCopies`).
+On success: save, sound and haptic, then a card `New hero:` with the new hero's picture, name, rarity change and the new hero's numbers (only increases, such as Jump and the run bonus, are listed as gains; a Speed, Control or Wall Bounce that is lower or equal is not listed as a gain) and one OK button. Entry: the `Merge` icon on the Heroes screen (above the (i) icon, `CharactersScreen.Host.OpenMerge` -> `MetaController.ShowMerge`); Back returns to the Heroes screen. The system-test build has `Add 2 copies` on the Heroes screen (`CharacterCatalog.DebugAddCopies`).
 
 CUX: touch targets at least 48 dp with 8 dp gaps, text at least 16 sp and sized from the real text scale (survives 130 percent), laid out inside the safe area at 9:16, 9:19.5, 9:21 and 3:4, no per-frame work (the screen is built on change only; no Update, no allocation per frame), no motion at all (reduced motion safe), the MERGE state and the ready stack are also written in words (not colour alone), accessibility labels on every control. Audited by `CriticalUxTests.MergeScreenHasNoOverlapAndFitsEveryAspect` and `MergeScreenSurvives130PercentText` (ready, full grid, not enough copies, top tier, other hero, result card).
 
@@ -135,10 +110,11 @@ Chests now give a hero card as a copy (Bug List 5 F3); the old duplicate gem ref
 ## 7. Open points
 
 - Hero powers work in a run (section 2c). Open: the hero column is on the move-pad side; a thumb on the jump side may prefer it there (flip `HeroPowerBar.OnJumpSide`, then the combo and speed-up banners need to move). Not tried on a device yet.
-- The merge result card lists at most 5 gain lines (checked for Uncommon); a Legendary row can need 6 (4 stats + run coins + run gems) and must be checked on a device when that tier is added.
+- The merge result card lists at most 5 gain lines (checked for Uncommon); a Legendary hero can need up to 6 (Jump, Speed, Control, Wall Bounce, run coins, run gems; only increases are listed) and must be checked on a device when that tier is added.
 - The hero sheet region line says "Merged" for a merge tier (fixed 2026-11-05, `HeroSheetData.For`).
 - Changelog: 2026-11-02 document created with phase 1.
-- 2026-11-02: Uncommon rows redone to the owner rule (2 stats, run bonus added, 1 region power), tier rules for Rare / Elite / Legendary as data, power pools, shown versus effective stats, Elite name.
+- 2026-11-02: Uncommon rows redone to the owner rule (2 stats, run bonus added, 1 region power), tier rules for Rare / Elite / Legendary as data, power pools, shown versus effective stats, Elite name. (The stat and percent rules of this entry are retired, see docs/44.)
+- 2026-11-08: section 2b stat rules (percent chain, tier table, shown versus effective, cap table) and the old Uncommon stat rows removed; hero physics and the rarity rules moved to docs/44-power-mechanics-bible.md. Merge result text corrected: tier heroes are independent stat sets, the result card shows the new hero's numbers and lists only increases as gains.
 
 ## 8. Installed art (2026-11-02)
 
@@ -152,8 +128,8 @@ Owner-approved OpenArt results, cut and installed (no code change needed; the ga
 
 ## 9. Inventories (2026-11-03)
 The copies table is the player's hero inventory; the master list is the hidden character inventory. See `36-inventories.md`. (Bug List 5 F2, 2026-11-05: the copy badge is gone; the Heroes screen shows one card per owned copy, see section 10.)
-- 2026-11-03: owner correction: boosts are a chain of +10 to +25 percent per tier over the previous tier's SHOWN stats (2/3/3/4 stats), defined on the hero-sheet numbers with one decimal; Uncommon rows redrawn (seed 20261104); shown versus effective stats and the cap table.
-- 2026-11-05 (Bug List 4 E2): the Shop sells one random hero per card: Uncommon 150, Rare 300, Elite 700, Legendary 1,500 gems (`HeroPurchase`), from heroes of OPEN regions only; the tier (i) popup reads the tier rule numbers above. See `26-shop-bundles-subscription-rewards.md` section 8c.
+- 2026-11-03: owner correction: boosts were a chain of +10 to +25 percent per tier over the previous tier's SHOWN stats (2/3/3/4 stats); Uncommon rows redrawn (seed 20261104); shown versus effective stats and the cap table. All of this is retired and replaced by docs/44.
+- 2026-11-05 (Bug List 4 E2): the Shop sells one random hero per card: Uncommon 150, Rare 300, Elite 700, Legendary 1,500 gems (`HeroPurchase`), from heroes of OPEN regions only; the tier (i) popup reads the tier rule numbers of docs/44 sections 4 and 7b. See `26-shop-bundles-subscription-rewards.md` section 8c.
 
 ## 10. Hero screens (Bug List 5 F2, 2026-11-05)
 

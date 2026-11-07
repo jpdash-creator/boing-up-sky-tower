@@ -245,12 +245,13 @@ Not in the game: gear (hats, shirts, pants, boots, outfits), Bronze/Silver chest
 | Value | Number |
 |---|---|
 | `JumpBase` | 19 u/s (history: 14, then 21, then 19) |
-| `JumpSpeedFactor` | 0.58 (was 0.85) |
+| `JumpSpeedFactor` | 0.41 (history: 0.85, then 0.58) |
 | Standing jump peak | 4.51 u = **1.3 median row gaps** (median normal gap 3.48 u) |
-| Half-speed jump peak | 5.84 u |
-| Full-speed jump peak (24.2 u/s launch) | 7.33 u = **2.1 median row gaps** |
+| Half-speed jump peak | 5.43 u |
+| Full-speed jump peak (22.69 u/s launch) | 6.44 u |
 | Normal vertical gap cap (`NormalGapMax`) | 4.2 u, so a standing jump always reaches the next platform with 0.3 u margin |
 
+- Hero physics and the rarity rules: see docs/44-power-mechanics-bible.md. The jump numbers above are the default hero (Momo Common), see doc 44 section 3.
 - Layouts are sized from a separate reference jump (`LayoutJumpBase` 14 u/s, `LayoutJumpSpeedFactor` 0.85) whose reach is never larger than the real one; see `Assets/_Game/Simulation/NOTES.md` for the contract and its tests.
 - Narrow-platform caps, sticky platforms (next gap at most 2.2 u), bounce pads and the combo ladder keep their own caps.
 
