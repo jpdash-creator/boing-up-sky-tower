@@ -116,8 +116,8 @@ namespace BoingUpSkyTower.Gameplay
             set { PlayerPrefs.SetInt(FirstPurchaseKey, value ? 1 : 0); PlayerPrefs.Save(); }
         }
 
-        /// <summary>Game difficulty (owner, 2026-10-19): scroll speed grows by this percent every 5 seconds.</summary>
-        public static readonly int[] DifficultyStepPercent = { 20, 40, 60, 80, 100 };
+        /// <summary>Game difficulty (owner, Bug List 6 item 6): scroll speed grows by this percent every 5 seconds: 20, 22, 25, 28, 30 (SimConfig holds the integer table; chosen on the level screen).</summary>
+        public static readonly int[] DifficultyStepPercent = BoingUpSkyTower.Simulation.SimConfig.DifficultyStepPercent;
         /// <summary>Chance in per mille that a gem spot (one per level row) holds a gem (owner 2026-10-25: halved; tuned values live in SimConfig).</summary>
         public static readonly int[] DifficultyGemPermille = BoingUpSkyTower.Simulation.SimConfig.DifficultyGemPermille;
         public static readonly string[] DifficultyNames = { "Relaxed", "Easy", "Normal", "Hard", "Insane" };

@@ -124,7 +124,7 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void AWallBounceEndsANoWallBounceRunAtOnceAndCannotBeRevived()
         {
-            var s = new RunSession(repo, new SimConfig(), "lvl_001_07");
+            var s = new RunSession(repo, new SimConfig(), "lvl_001_10");
             Assert.AreEqual(GoalType.NoWallBounce, s.Spec.Goal.Type);
             s.Step(0);
             Assert.IsFalse(s.Over);
@@ -176,7 +176,7 @@ namespace BoingUpSkyTower.Tests
             var s = new RunSession(repo, new SimConfig(), "lvl_001_01");
             Assert.AreEqual("Reach floor 60", RunSession.DescribeGoal(s.Spec));
             Assert.IsNull(RunSession.GoalRule(s.Spec));
-            Assert.AreEqual("Don't touch the walls.", RunSession.GoalRule(new RunSession(repo, new SimConfig(), "lvl_001_07").Spec));
+            Assert.AreEqual("Don't touch the walls.", RunSession.GoalRule(new RunSession(repo, new SimConfig(), "lvl_001_10").Spec));
             Assert.AreEqual("Clear the level", RunSession.DescribeStar(s.Spec.Stars[0]));
             Assert.AreEqual("Do not revive", RunSession.DescribeStar(s.Spec.Stars[2]));
         }
@@ -199,7 +199,7 @@ namespace BoingUpSkyTower.Tests
             GameSession.InitForTests(new MemorySaveStore());
             LevelDef l1 = GameSession.Repo.GetLevel("lvl_001_01");
             Assert.AreEqual("lvl_001_02", GameSession.NextLevel(l1).Id);
-            LevelDef last = GameSession.Repo.GetLevel("lvl_005_15");
+            LevelDef last = GameSession.Repo.GetLevel("lvl_005_25");
             Assert.IsNull(GameSession.NextLevel(last), "region 6 is not playable in the five-region build");
             GameSession.Reset();
         }

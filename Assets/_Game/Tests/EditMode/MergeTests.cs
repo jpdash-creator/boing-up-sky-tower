@@ -100,26 +100,6 @@ namespace BoingUpSkyTower.Tests
                 { "beachotter", "beachotter_u", "Tidecrest Otto" },
                 { "candygirl", "candygirl_u", "Sugarplate Bonbon" },
                 { "monk", "monk_u", "Ironbamboo Bao" },
-                { "bumble", "bumble_u", "Honeycloak Bumble" },
-                { "ribbi", "ribbi_u", "Leafcrown Ribbi" },
-                { "dandy", "dandy_u", "Seedling Dandy" },
-                { "pip", "pip_u", "Redcape Pip" },
-                { "nib", "nib_u", "Leafscarf Nib" },
-                { "spike", "spike_u", "Logplate Spike" },
-                { "moss", "moss_u", "Vinebelt Moss" },
-                { "fenn", "fenn_u", "Scoutvest Fenn" },
-                { "pinch", "pinch_u", "Shellvest Pinch" },
-                { "gummi", "gummi_u", "Starsash Gummi" },
-                { "choco", "choco_u", "Wafflewrap Choco" },
-                { "marsh", "marsh_u", "Grahambelt Marsh" },
-                { "cookie", "cookie_u", "Crumbscarf Cookie" },
-                { "sprout", "sprout_u", "Leafwrap Sprout" },
-                { "tora", "tora_u", "Stripeband Tora" },
-                { "rusu", "rusu_u", "Scoutwrap Rusu" },
-                { "ryu", "ryu_u", "Scalevest Ryu" },
-                { "shelly", "shelly_u", "Coralstrap Shelly" },
-                { "bloop", "bloop_u", "Coralband Bloop" },
-                { "coco", "coco_u", "Palmwrap Coco" },
             };
             for (int i = 0; i < expect.GetLength(0); i++)
             {
@@ -153,6 +133,7 @@ namespace BoingUpSkyTower.Tests
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
+                if (CharacterDefs.Get(row.Id) == null) continue;   // the tiers of the inactive lines are data only (owner 2026-11-09)
                 if (row.Rarity != CharacterRarity.Uncommon) continue;
                 Assert.IsNull(TierRules.Validate(row), row.Id);   // run coins 50..100 (step 10), run gems 1..5
                 CharacterSpec spec = CharacterDefs.Get(row.Id);
@@ -180,6 +161,7 @@ namespace BoingUpSkyTower.Tests
             double[] V(ShownStats x) { return new[] { x.Jump, x.Speed, x.Control, x.WallBounce }; }
             foreach (TierRow row in MergeTierDefs.Rows)
             {
+                if (CharacterDefs.Get(row.Id) == null) continue;   // the tiers of the inactive lines are data only (owner 2026-11-09)
                 CharacterSpec below = MergeRules.PreviousTier(CharacterDefs.Get(row.Id));   // the merge text compares with the tier below
                 ShownStats from = below.ShownValues(), to = CharacterDefs.Get(row.Id).ShownValues();
                 List<string> lines = MergeRules.ShownGainLines(from, to);
@@ -205,6 +187,7 @@ namespace BoingUpSkyTower.Tests
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
+                if (CharacterDefs.Get(row.Id) == null) continue;   // the tiers of the inactive lines are data only (owner 2026-11-09)
                 CharacterSpec spec = CharacterDefs.Get(row.Id);
                 HeroSheetData d = HeroSheetData.From(spec.Name, spec.Rarity, "x", spec.Stats, spec.Powers, spec.Shown);
                 var inv = System.Globalization.CultureInfo.InvariantCulture;

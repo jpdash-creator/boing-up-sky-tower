@@ -8,12 +8,14 @@ using NUnit.Framework;
 namespace BoingUpSkyTower.Tests
 {
     /// <summary>
-    /// Bug List 5 F4.1 (docs/40): Region 1 has 5 characters x 5 rarity tiers = 25 heroes. The data (ids, rarity, merge chain, region), the art that loads, the tier rows (rule, chain,
-    /// identity stat, powers), and that chests, bundles and shop draws can give them ONLY from open regions.
+    /// Region 1 has ONE ACTIVE hero line, Momo, at all five rarity tiers (owner Bug List 6, 2026-11-09). Bumble, Ribbi, Dandy and Pip and their tiers are INACTIVE ALWAYS: their physics rows stay as data
+    /// (HeroTable, Active = false) and their art lives in Art/_inactive_heroes, but they never exist at runtime. The data (ids, rarity, merge chain, region), the art that loads, the tier rows (rule, table,
+    /// powers), and that chests, bundles and shop draws can give them ONLY from open regions.
     /// </summary>
     public class Region1HeroTests
     {
-        static readonly string[] Lines = { "momo", "bumble", "ribbi", "dandy", "pip" };
+        static readonly string[] Lines = { "momo" };
+        static readonly string[] Inactive = { "bumble", "ribbi", "dandy", "pip" };
         static readonly string[] Suffix = { "", "_u", "_r", "_e", "_l" };
         static readonly CharacterRarity[] Ladder = { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary };
 
@@ -35,9 +37,9 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void AllTwentyFiveRegion1HeroesExistWithTheRightRarityLineAndRegion()
+        public void AllFiveRegion1HeroesExistWithTheRightRarityLineAndRegion()
         {
-            Assert.AreEqual(25, AllIds().Count());
+            Assert.AreEqual(5, AllIds().Count());
             foreach (string line in Lines)
                 for (int i = 0; i < 5; i++)
                 {
@@ -54,14 +56,27 @@ namespace BoingUpSkyTower.Tests
                     Assert.IsFalse(string.IsNullOrEmpty(c.Name), id);
                 }
             Assert.AreEqual("Momo", CharacterDefs.Get("momo").Name);
-            Assert.AreEqual("Bumble", CharacterDefs.Get("bumble").Name);
-            Assert.AreEqual("Ribbi", CharacterDefs.Get("ribbi").Name);
-            Assert.AreEqual("Dandy", CharacterDefs.Get("dandy").Name);
-            Assert.AreEqual("Pip", CharacterDefs.Get("pip").Name);
-            // all ids and names are different
+            // all ids and names are different, and exactly the 25 active heroes exist
+            Assert.AreEqual(25, CharacterDefs.All.Length);
             Assert.AreEqual(CharacterDefs.All.Length, CharacterDefs.All.Select(c => c.Id).Distinct().Count());
             Assert.AreEqual(CharacterDefs.All.Length, CharacterDefs.All.Select(c => c.Name).Distinct().Count());
             foreach (CharacterSpec c in CharacterDefs.All) StringAssert.DoesNotContain("wing", c.Name.ToLowerInvariant(), "no wings on any hero");
+        }
+
+        [Test]
+        public void TheFourExtraRegion1CommonsAndTheirTiersAreInactiveAlways()
+        {
+            foreach (string line in Inactive)
+                foreach (string s in Suffix)
+                {
+                    Assert.IsNull(CharacterDefs.Get(line + s), line + s + " is inactive always and never exists at runtime");
+                    HeroRow row = HeroTable.Find(line + s);
+                    Assert.IsNotNull(row, line + s + " keeps its generated physics row as data");
+                    Assert.IsFalse(row.Active, line + s);
+                    Assert.IsNotNull(CharacterDefs.GetIncludingInactive(line + s), line + s + " is reachable by the data accessor");
+                    Assert.IsFalse(CharacterInventory.Exists(line + s), line + s);
+                    Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get(line + s), line + s + " falls back to Momo in the catalog");
+                }
         }
 
         [Test]
@@ -103,42 +118,54 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void TheFourNewCommonsAreRegion1HeroesButNotStartersAndNeedNoReveal()
+        public void MomoIsTheRegion1StarterAndNeedsNoReveal()
         {
-            foreach (string id in new[] { "bumble", "ribbi", "dandy", "pip" })
-            {
-                CharacterSpec c = CharacterDefs.Get(id);
-                Assert.IsTrue(c.IsRegionHero, id);
-                Assert.IsFalse(c.RegionStarter, id);
-                Assert.IsFalse(c.NeedsReveal, id);
-                Assert.AreEqual(1, c.Region, id);
-            }
             Assert.IsTrue(CharacterDefs.Momo.RegionStarter);
             Assert.IsFalse(CharacterDefs.Momo.NeedsReveal);
+            Assert.IsTrue(CharacterDefs.Momo.IsRegionHero);
             Assert.IsTrue(CharacterDefs.ForestGirl.NeedsReveal, "regions 2 to 5 keep their reveal");
             CharacterDefs.OfRarity(CharacterRarity.Common).ForEach(c => Assert.Fail("a Common hero is never in a chest pool list: " + c.Id));
         }
 
         [Test]
-        public void ANewSaveOwnsMomoOnlyAndACopyMakesTheOthersOwnedAndVisible()
+        public void ANewSaveOwnsMomoOnlyAndASaveNamingAnInactiveHeroDropsItWithoutCrashing()
         {
             var svc = new ProgressService(BoingUpSkyTower.Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
             Assert.IsTrue(svc.OwnsCharacter("momo"));
             foreach (string id in AllIds().Where(i => i != "momo")) Assert.IsFalse(svc.OwnsCharacter(id), id + " is not free");
-            foreach (string id in new[] { "bumble", "ribbi", "dandy", "pip" })
+            foreach (string id in Inactive)
             {
-                svc.AddCopies(id, 1);
-                Assert.IsTrue(svc.OwnsCharacter(id), id);
-                Assert.IsTrue(svc.IsCharacterVisible(id), id + ": no reveal pop-up needed");
+                Assert.AreEqual(0, svc.AddCopies(id, 1), id + ": an inactive hero can never be granted");
+                Assert.IsFalse(svc.OwnsCharacter(id), id);
+                Assert.IsFalse(svc.IsCharacterVisible(id), id);
             }
-            Assert.AreEqual(5, CharacterCatalog.OwnedCards(svc).Count, "one card per owned copy");
+            Assert.AreEqual(1, CharacterCatalog.OwnedCards(svc).Count, "one card: Momo");
             CollectionAssert.IsEmpty(svc.PendingHeroReveals());
         }
 
         [Test]
-        public void RegionOneTierRowsFollowTheTableTheIdentityAndThePowerPools()
+        public void LoadingASaveThatNamesAnInactiveHeroDropsItAndFallsBackToMomo()
         {
-            var firstPower = new Dictionary<string, PowerUp> { { "bumble", PowerUp.Flight }, { "ribbi", PowerUp.DoubleJump }, { "dandy", PowerUp.SlowTime }, { "pip", PowerUp.Shield } };
+            var store = new MemorySaveStore();
+            var old = new SaveData();
+            old.Characters.Add("bumble"); old.Characters.Add("momo");
+            old.Copies["bumble_u"] = 3; old.Copies["ryu"] = 2; old.Copies["momo"] = 1;
+            old.HeroesRevealed.Add("pip");
+            store.Save(old);
+            var svc = new ProgressService(BoingUpSkyTower.Content.ContentRepository.LoadFromResources(), store, 5);   // must not throw
+            CollectionAssert.DoesNotContain(svc.Data.Characters, "bumble");
+            CollectionAssert.DoesNotContain(svc.Data.Copies.Keys, "bumble_u");
+            CollectionAssert.DoesNotContain(svc.Data.Copies.Keys, "ryu");
+            CollectionAssert.DoesNotContain(svc.Data.HeroesRevealed, "pip");
+            Assert.IsFalse(svc.OwnsCharacter("bumble"));
+            Assert.AreEqual(0, svc.Copies("ryu"));
+            Assert.IsTrue(svc.OwnsCharacter("momo"));
+            Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get("bumble"), "a hero id that is not active falls back to Momo");
+        }
+
+        [Test]
+        public void RegionOneTierRowsFollowTheTableAndThePowerPools()
+        {
             int rows = 0;
             foreach (string line in Lines)
             {
@@ -151,6 +178,7 @@ namespace BoingUpSkyTower.Tests
                     Assert.AreEqual(Ladder[i], row.Rarity);
                     Assert.IsNull(TierRules.Validate(row), row.Id);
                     Assert.IsNotNull(hr, row.Id + " has an absolute row in the hero table");
+                    Assert.IsTrue(hr.Active, row.Id);
                     CharacterSpec spec = CharacterDefs.Get(row.Id);
                     Assert.IsNull(TierRules.ValidatePowers(line, row.Rarity, spec.Powers), row.Id);
                     Assert.AreEqual(CharacterDefs.CooldownSeconds[i], TierRules.RuleFor(row.Rarity).CooldownSeconds);
@@ -161,20 +189,20 @@ namespace BoingUpSkyTower.Tests
                     Assert.AreEqual(hr.Wall, spec.Stats.WallBoostHundredths, row.Id);
                     Assert.AreEqual(common.Stats.RunBonusCoins + row.RunCoinsAdd, spec.Stats.RunBonusCoins, row.Id);
                     Assert.AreEqual(common.Stats.RunBonusGems + row.RunGemsAdd, spec.Stats.RunBonusGems, row.Id);
-                    if (firstPower.ContainsKey(line)) Assert.AreEqual(firstPower[line], spec.Powers[0], row.Id + " keeps the identity power first");
                     ShownStats shown = ShownStats.From(spec.Stats, new SimConfig());
                     Assert.AreEqual(shown.Speed, spec.ShownValues().Speed, row.Id + " shows its own absolute speed");
                     Assert.AreEqual(shown.Jump, spec.ShownValues().Jump, row.Id);
                 }
             }
-            Assert.AreEqual(5 + 19 * 5, MergeTierDefs.Rows.Length, "5 original Uncommon rows + 19 rows for each of Regions 1 to 5");
-            Assert.AreEqual(20, rows, "Momo's Uncommon row is the original; 4 tiers x 5 lines are checked");
+            Assert.AreEqual(5 + 19 * 5, MergeTierDefs.Rows.Length, "the 100 tier rows of the inactive lines stay as data: 5 original Uncommon rows + 19 rows for each of Regions 1 to 5");
+            Assert.AreEqual(4, rows, "Momo's four tiers above Common are checked");
+            Assert.AreEqual(20, CharacterDefs.All.Count(c => c.IsMergeTier), "5 lines x 4 tiers are real characters");
         }
 
         [Test]
-        public void TheRegion1CommonHeroesFollowTheForgivenessIndexRules()
+        public void TheRegion1CommonHeroFollowsTheForgivenessIndexRules()
         {
-            // docs/44: the identity stats of the old hand-tuned heroes are gone; every Common hero is a generated, measured draw inside the Common band (Jump 0 to 5 percent over 19.0)
+            // docs/44: every Common hero is a generated, measured draw inside the Common band (Jump 0 to 5 percent over 19.0)
             foreach (string line in Lines)
             {
                 CharacterStats s = CharacterDefs.Get(line).Stats;
@@ -184,7 +212,7 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void ChestsAndDrawsGiveRegion1HeroesOnlyFromOpenRegionsAndReachEveryOne()
+        public void ChestsAndDrawsGiveOnlyActiveHeroesFromOpenRegionsAndReachEveryMomoTier()
         {
             var region1Lines = new HashSet<string>(Lines);
             foreach (ChestKind kind in new[] { ChestKind.Iron, ChestKind.Golden })
@@ -213,11 +241,11 @@ namespace BoingUpSkyTower.Tests
                 cards.Add(c.Id);
             }
             foreach (string line in Lines) foreach (int i in new[] { 1, 2, 3 }) CollectionAssert.Contains(cards, line + Suffix[i]);
-            // with regions 2 and 3 open the pool grows by their Uncommon heroes, never by regions 4 and 5
+            // with regions 2 and 3 open the pool grows by their ACTIVE lines only, never by regions 4 and 5 or by an inactive hero
             var wider = new HashSet<string>();
             ulong w = 9;
             for (int i = 0; i < 8000; i++) wider.Add(BundleCards.Draw(Mix(ref w), Mix(ref w), CharacterDefs.All, region => region <= 3).LineId);
-            CollectionAssert.AreEquivalent(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" }, wider);
+            CollectionAssert.AreEquivalent(new[] { "momo", "forestgirl", "beachotter" }, wider);
         }
 
         [Test]
@@ -233,12 +261,12 @@ namespace BoingUpSkyTower.Tests
                     Assert.AreEqual(r, c.Rarity);
                     got.Add(c.Id);
                 }
-                Assert.AreEqual(5, got.Count, r + ": all five Region 1 heroes of the tier can be bought");
+                Assert.AreEqual(1, got.Count, r + ": only Momo's tier hero is active in Region 1");
             }
         }
 
         [Test]
-        public void CharacterTestOwnsTheThirteenCommonsAndNoTier()
+        public void CharacterTestOwnsTheFiveCommonsAndNoTier()
         {
             bool old = ProgressService.TestAllCharacters;
             try

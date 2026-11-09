@@ -113,16 +113,13 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(new[] { 1, 2, 3, 4, 5 }, g.Select(x => x.Region).ToArray());
             Assert.Equal("Region name 1", g[0].RegionName);
             var ladder = new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary };
-            Assert.Equal(25, g[0].Entries.Count);   // Region 1: Momo, Bumble, Ribbi, Dandy, Pip, each with the whole ladder
-            Assert.Equal(25, g[1].Entries.Count);   // Region 2: Capi, Nib, Spike, Moss, Fenn
-            for (int i = 0; i < 5; i++) Assert.Equal(ladder, g[0].Entries.Skip(i * 5).Take(5).Select(e => e.Rarity).ToArray());
-            Assert.Equal(25, g[2].Entries.Count);   // Region 3: Otto, Pinch, Shelly, Bloop, Coco
-            for (int i = 3; i < g.Count; i++)
+            // owner 2026-11-09: ACTIVE heroes only, one line per region (Momo, Capi, Otto, Bonbon, Bao), each with the whole ladder
+            for (int i = 0; i < g.Count; i++)
             {
-                Assert.Equal(25, g[i].Entries.Count);   // Region 4: Bonbon, Gummi, Choco, Marsh, Cookie; Region 5: Bao, Sprout, Tora, Rusu, Ryu
-                for (int k = 0; k < 5; k++) Assert.Equal(ladder, g[i].Entries.Skip(k * 5).Take(5).Select(e => e.Rarity).ToArray());
+                Assert.Equal(5, g[i].Entries.Count);
+                Assert.Equal(ladder, g[i].Entries.Select(e => e.Rarity).ToArray());
             }
-            Assert.Equal(125, AllHeroes.Flatten(g).Count);
+            Assert.Equal(25, AllHeroes.Flatten(g).Count);
         }
 
         [Fact]
@@ -139,7 +136,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.False(all.First(e => e.Id == "momo").Locked);
             Assert.False(all.First(e => e.Id == "forestgirl").Locked);
             Assert.True(all.First(e => e.Id == "momo_u").Locked);
-            Assert.True(all.First(e => e.Id == "bumble").Locked);   // the extra Region 1 Commons are not free: they need a copy
+            Assert.DoesNotContain(all, e => e.Id == "bumble");   // inactive heroes are not listed at all
             Assert.True(all.First(e => e.Id == "beachotter").Locked);
             // every region has real heroes at every tier (locked until owned); no placeholder is left
             foreach (AllHeroEntry e in all)
@@ -157,7 +154,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             List<AllHeroEntry> all = AllHeroes.Flatten(Groups());
             Assert.Equal("Merge 3 Common Momo", all.First(e => e.Id == "momo_u").HowToGet);
-            Assert.Equal("Merge 3 Uncommon Pip", all.First(e => e.Id == "pip_r").HowToGet);
+            Assert.Equal("Merge 3 Uncommon Capi", all.First(e => e.Id == "forestgirl_r").HowToGet);
             Assert.Equal("Merge 3 Elite Bao", all.First(e => e.Id == "monk_l").HowToGet);
             Assert.Contains("Region name 3", all.First(e => e.Id == "beachotter").HowToGet);
             Assert.Contains("Bundles / Chests / Rewards", all.First(e => e.Id == "beachotter").HowToGet);

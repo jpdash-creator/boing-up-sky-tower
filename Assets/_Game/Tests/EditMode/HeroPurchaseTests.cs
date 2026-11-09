@@ -115,12 +115,12 @@ namespace BoingUpSkyTower.Tests
         public void BuyingPaysTheGemsAndAddsExactlyOneCopyOfAnOpenUncommonHero()
         {
             ProgressService svc = NewService(1000);
-            int before = svc.Copies("momo_u") + svc.Copies("bumble_u") + svc.Copies("ribbi_u") + svc.Copies("dandy_u") + svc.Copies("pip_u");
+            int before = svc.Copies("momo_u");
             CharacterSpec hero;
             Assert.AreEqual(HeroBuyResult.Ok, svc.TryBuyHero(CharacterRarity.Uncommon, out hero));
-            CollectionAssert.Contains(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u" }, hero.Id, "only region 1 is open: one of its five Uncommon heroes");
+            CollectionAssert.Contains(new[] { "momo_u" }, hero.Id, "only region 1 is open: Momo is its only active line, never an inactive hero");
             Assert.AreEqual(1000 - 150, svc.Gems);
-            Assert.AreEqual(before + 1, svc.Copies("momo_u") + svc.Copies("bumble_u") + svc.Copies("ribbi_u") + svc.Copies("dandy_u") + svc.Copies("pip_u"), "exactly one copy");
+            Assert.AreEqual(before + 1, svc.Copies("momo_u"), "exactly one copy");
             Assert.AreEqual(1, svc.Data.Bundles.HeroBuys);
         }
 
@@ -155,12 +155,12 @@ namespace BoingUpSkyTower.Tests
         public void OnlyHeroesOfOpenRegionsCanBeBought()
         {
             ProgressService svc = NewService(100000);
-            Assert.AreEqual(5, svc.HeroBuyPool(CharacterRarity.Uncommon).Count, "Region 1: Momo, Bumble, Ribbi, Dandy, Pip");
+            Assert.AreEqual(1, svc.HeroBuyPool(CharacterRarity.Uncommon).Count, "Region 1: Momo only (the other lines are inactive)");
             foreach (CharacterRarity r in new[] { CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary })
-                Assert.AreEqual(5, svc.HeroBuyPool(r).Count, r + ": five heroes in Region 1, none from the closed regions");
+                Assert.AreEqual(1, svc.HeroBuyPool(r).Count, r + ": one active hero in Region 1, none from the closed regions");
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(2).Id);
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(3).Id);
-            var allowed = new HashSet<string>(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u", "forestgirl_u", "nib_u", "spike_u", "moss_u", "fenn_u", "beachotter_u", "pinch_u", "shelly_u", "bloop_u", "coco_u" });
+            var allowed = new HashSet<string>(new[] { "momo_u", "forestgirl_u", "beachotter_u" });
             Assert.IsTrue(allowed.SetEquals(svc.HeroBuyPool(CharacterRarity.Uncommon).Select(c => c.Id)));
             var got = new HashSet<string>();
             for (int i = 0; i < 40; i++)

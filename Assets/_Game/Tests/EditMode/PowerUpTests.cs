@@ -362,24 +362,24 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void TheBarPlacesSevenButtonsInTwoColumnsWithGapsAndAboveTheJumpButton()
+        public void TheBarPlacesTwoTypeGroupsWithGapsAndAbovePads()
         {
-            Assert.AreEqual(1, PowerUpBar.ColumnsFor(1));
-            Assert.AreEqual(1, PowerUpBar.ColumnsFor(3));
-            Assert.AreEqual(2, PowerUpBar.ColumnsFor(4));
-            Assert.AreEqual(2, PowerUpBar.ColumnsFor(7));
+            Assert.AreEqual(3, PowerGroups.MaxLeft, "left: Flight, Rocket, Double Jump");
+            Assert.AreEqual(4, PowerGroups.MaxRight, "right: Magnet, Shield, Slow Time, Wall Stick");
             Assert.GreaterOrEqual(PowerUpBar.ButtonSize, UiKit.MinTouchPx, "at least 48 dp");
             Assert.GreaterOrEqual(PowerUpBar.Gap, UiKit.MinSpacingPx, "at least 8 dp between neighbours");
             Assert.GreaterOrEqual(PowerUpBar.BottomOffset, RunLayout.BottomPadRef + UiKit.MinSpacingPx, "above the jump pad (floating over the field, no bottom strip) with a gap");
-            for (int i = 0; i < 7; i++)
+            foreach (bool leftGroup in new[] { true, false })
             {
-                Vector2 a = PowerUpBar.PositionFor(i, 7);
-                for (int j = i + 1; j < 7; j++)
+                int max = leftGroup ? PowerGroups.MaxLeft : PowerGroups.MaxRight;
+                for (int i = 0; i < max; i++)
                 {
-                    Vector2 b = PowerUpBar.PositionFor(j, 7);
-                    bool sepX = Mathf.Abs(a.x - b.x) >= PowerUpBar.ButtonSize + PowerUpBar.Gap - 0.01f;
-                    bool sepY = Mathf.Abs(a.y - b.y) >= PowerUpBar.ButtonSize + PowerUpBar.Gap - 0.01f;
-                    Assert.IsTrue(sepX || sepY, "buttons " + i + " and " + j);
+                    Vector2 a = PowerUpBar.PositionFor(i, leftGroup);
+                    for (int j = i + 1; j < max; j++)
+                    {
+                        Vector2 b = PowerUpBar.PositionFor(j, leftGroup);
+                        Assert.GreaterOrEqual(Mathf.Abs(a.y - b.y), PowerUpBar.ButtonSize + PowerUpBar.Gap - 0.01f, "buttons " + i + " and " + j);
+                    }
                 }
             }
             Assert.AreEqual("x7", PowerUpBar.FormatCount(7));

@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
-    /// Meta scene: main menu, world map, level select (15 levels per region, stars, locks), level info popup,
+    /// Meta scene: main menu, world map, level select (25 levels per region in regions 1 to 5, 15 in the others for now; stars, locks), level info popup,
     /// region gem-skip popup and settings. Built in code from the sliced art (no prefabs yet).
     /// </summary>
     public sealed partial class MetaController : MonoBehaviour
@@ -589,10 +589,9 @@ namespace BoingUpSkyTower.Gameplay
         {
             NewScreen("Characters");
             Stage stage = StageScene.Build(screenRoot, art, progress, StageScene.CharacterLayout());
-            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters), OpenMerge = ShowMerge, OpenAllHeroes = ShowAllHeroes });
+            characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters), OpenMerge = ShowMerge, OpenAllHeroes = ShowAllHeroes, OpenPowers = ShowPowers });
             characters.Build();
-            AddBack("Back", ShowMenu);
-            AddTabBar(ToyKit.TabHeroes);
+            AddBack("Back", ShowMenu);   // no bottom tab bar on the Heroes screen (Bug List 6 item 3b): the three tabs are the row under the stage
             coinText = characters.CoinText;
             gemText = characters.GemText;
             RefreshWallet();
@@ -613,9 +612,25 @@ namespace BoingUpSkyTower.Gameplay
                 NewOverlay = NewOverlay,
                 CloseOverlay = ClosePopup,
                 Back = ShowCharacters,
+                OpenMerge = ShowMerge,
+                OpenPowers = ShowPowers,
                 RegionName = i => { RegionDef r = repo != null ? repo.TryGetRegionByIndex(i) : null; return r != null ? r.Name : null; },
             });
             allHeroes.Build();
+        }
+
+        // ---------------- powers (Bug List 6 item 3a: the third tab of the Heroes screen) ----------------
+
+        PowersScreen powers;
+
+        public PowersScreen CurrentPowers { get { return CurrentScreen == PowersScreen.ScreenName ? powers : null; } }
+
+        /// <summary>Powers: the 7 power-ups with the number the player owns at the bottom right of each card; nothing to buy. Opened from the Powers tab; Back returns to the Heroes screen.</summary>
+        public void ShowPowers()
+        {
+            NewScreen(PowersScreen.ScreenName);
+            powers = new PowersScreen(screen, screenRoot, progress, new PowersScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup, Back = ShowCharacters, OpenAllHeroes = ShowAllHeroes, OpenMerge = ShowMerge });
+            powers.Build();
         }
 
         // ---------------- character merge (docs/34) ----------------
@@ -630,7 +645,7 @@ namespace BoingUpSkyTower.Gameplay
         public void ShowMerge(string preselectId)
         {
             NewScreen(MergeScreen.ScreenName);
-            merge = new MergeScreen(screen, screenRoot, progress, art, new MergeScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup, Back = ShowCharacters });
+            merge = new MergeScreen(screen, screenRoot, progress, art, new MergeScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup, Back = ShowCharacters, OpenAllHeroes = ShowAllHeroes, OpenPowers = ShowPowers });
             merge.Build(preselectId);
         }
 
@@ -1391,7 +1406,7 @@ namespace BoingUpSkyTower.Gameplay
             int price = progress.GemSkipPrice(region);
             RegionDef prev = repo.GetRegionByIndex(region.Index - 1);
             bool isNext = region.Index == progress.HighestUnlockedRegionIndex() + 1;
-            string body = "Clear level 15 of " + prev.Name + " to open " + region.Name + ".";
+            string body = "Clear level " + prev.Levels.Count + " of " + prev.Name + " to open " + region.Name + ".";
             if (isNext) body += "\nOr skip ahead for " + price + " gems (you have " + progress.Gems + ").";
             OpenPopup(region.Name + " is locked", body);
             if (isNext)
@@ -1439,11 +1454,13 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)endlessIcon.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(136f, 136f));
             endlessIcon.GetComponent<RectTransform>().pivot = new Vector2(1f, 0.5f);
 
+            float gameplayRowH = BuildGameplayRow(screen, 244f + 176f + 12f);   // five Gameplay buttons directly below the region name
+
             RectTransform vp = UiKit.Rect(screen, "PathViewport");
             vp.anchorMin = Vector2.zero;
             vp.anchorMax = Vector2.one;
             vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);
-            vp.offsetMax = new Vector2(0f, -430f);
+            vp.offsetMax = new Vector2(0f, -(430f + gameplayRowH));   // the path starts below the Gameplay row (Bug List 6 item 6)
             vp.gameObject.AddComponent<RectMask2D>();
             var vhit = vp.gameObject.AddComponent<Image>();
             vhit.color = new Color(0f, 0f, 0f, 0f);
@@ -1489,6 +1506,11 @@ namespace BoingUpSkyTower.Gameplay
         // The level path is a snake (owner's sketch, 2026-10-24): three levels run left to right along a row, the road makes a hairpin turn at the
         // right edge, three levels run right to left, a hairpin at the left edge, and so on up the screen. Level 1 is at the far left of the bottom row.
         const int PathPerRow = 3;
+        /// <summary>
+        /// Smallest vertical distance between path rows. Node centre to the bottom of its stars is 125 (75 + 4 + 46), and a level number at 130 percent text
+        /// is up to about 144 tall (72 above its centre), so the stars of level N+3 clear the number of level N from 197 up; 230 keeps a safe margin. Bug List 6 fix.
+        /// </summary>
+        const float MinPathRowPitch = 230f;
         static readonly float[] PathLanesLtr = { 0.16f, 0.50f, 0.84f };
 
         /// <summary>Horizontal position (0..1) of level node <paramref name="i"/> on the snake.</summary>
@@ -1609,7 +1631,7 @@ namespace BoingUpSkyTower.Gameplay
             float vpH = vpr.rect.height, w = vpr.rect.width;
             const float starRoom = 56f, edge = 24f;
             // level 10 is the first node of row 3: rows 0..3 span three row gaps; they plus one node and its stars fill the view
-            float rowPitch = Mathf.Clamp((vpH - nodeSize - starRoom - 2f * edge) / 3f, 190f, 600f);
+            float rowPitch = Mathf.Clamp((vpH - nodeSize - starRoom - 2f * edge) / 3f, MinPathRowPitch, 600f);   // never below MinPathRowPitch: the path scrolls, so a short view shows fewer levels instead of overlapping stars and numbers
             float yBase = edge + starRoom + nodeSize * 0.5f;
             int rows = (nodes.Length + PathPerRow - 1) / PathPerRow;
             float contentH = yBase * 2f + (rows - 1) * rowPitch;
@@ -1688,8 +1710,8 @@ namespace BoingUpSkyTower.Gameplay
                 DropOutline(num);
                 UiKit.Stretch((RectTransform)num.transform);
             }
-            // Doc 25: the gem icon marks the levels that hold gems to collect on the way (8 and 15); the combo levels (5 and 10) have none.
-            bool gemLevel = level.Index == 8 || level.Index == 15;
+            // Doc 25: the gem icon marks the levels that hold gems to collect on the way (8 and the top level, 25); the combo level (5) has none.
+            bool gemLevel = level.Index == 8 || level.LevelClass == LevelDef.ClassHighlyComplex;
             if (unlocked && gemLevel && art != null && art.GemIcon != null)
             {
                 Image gem = UiKit.AddImage(rt, "GemBadge", art.GemIcon, Color.white);
@@ -1777,25 +1799,7 @@ namespace BoingUpSkyTower.Gameplay
 
         // ShowSettings and its rows live in MetaController.Settings.cs
 
-        public void ShowDifficultyList()
-        {
-            OpenPopup("Difficulty", "How fast the screen speeds up. Harder levels also drop more gems.", 1300f);
-            Transform panel = popup.Find("Panel");
-            for (int i = 0; i < GameSettings.DifficultyNames.Length; i++)
-            {
-                int level = i;
-                bool current = level == GameSettings.Difficulty;
-                string label = GameSettings.DifficultyLabel(level) + "";
-                Button opt = UiKit.AddButton(panel, "Diff" + level, label, Btn(current ? 1 : 0), Color.white, new Vector2(700f, 132f), () =>
-                {
-                    GameSettings.Difficulty = level;
-                    GameSession.ApplyDifficulty();
-                    ClosePopup();
-                    ShowSettings();
-                }, 40);
-                UiKit.Place((RectTransform)opt.transform, new Vector2(0.5f, 0f), new Vector2(0f, 40f + (GameSettings.DifficultyNames.Length - 1 - i) * 145f), new Vector2(700f, 132f));
-            }
-        }
+        // The difficulty list popup was removed (Bug List 6 item 6): the Gameplay row on the level screen replaced it (MetaController.Gameplay.cs).
 
         // ---------------- popups ----------------
 

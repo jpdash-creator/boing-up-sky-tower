@@ -38,6 +38,7 @@ namespace BoingUpSkyTower.Content
             spec.LevelIndex = level.Index;
             spec.Class = ClassFromName(level.LevelClass);
             spec.Signature = SignatureKinds.FromModuleId(region.Rules.SignatureModule);
+            spec.LevelsInRegion = region.Levels.Count;
 
             var goal = new GoalSpec();
             goal.Type = GoalTypes.FromId(level.Goal.Type);
@@ -70,7 +71,7 @@ namespace BoingUpSkyTower.Content
         {
             if (region == null) throw new ContentException("(null)", "RegionDef is null.");
             Fx offset = Fx.FromRatio((int)System.Math.Round(region.Rules.DifficultyOffset * 10000), 10000);
-            return EndlessTower.MakeSpec(seed, offset, SignatureKinds.FromModuleId(region.Rules.SignatureModule), difficultyFloors);
+            return EndlessTower.MakeSpec(seed, offset, SignatureKinds.FromModuleId(region.Rules.SignatureModule), difficultyFloors, region.Levels.Count);
         }
 
         /// <summary>Convenience: spec for a level id using a loaded repository.</summary>

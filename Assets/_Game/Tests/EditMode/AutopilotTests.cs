@@ -244,9 +244,9 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(3, o.seeds);
 
             AutoplayOptions d = AutoplayOptions.Parse("{}");
-            Assert.AreEqual(15, d.levels.Length);
+            Assert.AreEqual(25, d.levels.Length);
             Assert.AreEqual(1, d.levels[0]);
-            Assert.AreEqual(15, d.levels[14]);
+            Assert.AreEqual(25, d.levels[24]);
             Assert.AreEqual(1, d.seeds);
             Assert.AreEqual(1f, d.speed);
 

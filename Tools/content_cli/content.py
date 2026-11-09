@@ -95,6 +95,23 @@ D_BY_LEVEL = {1: 0.05, 2: 0.10, 3: 0.15, 4: 0.22, 5: 0.40, 6: 0.35, 7: 0.42, 8: 
               10: 0.70, 11: 0.62, 12: 0.70, 13: 0.78, 14: 0.86, 15: 1.00}
 
 
+# Bug List 6 item 4: regions 1..MIGRATED_REGIONS have 25 levels, the others still 15 (TODO regions 6-30 migration: raise to 30 and drop the legacy tables).
+MIGRATED_REGIONS = 5
+TARGET_SCORE = [5, 20, 26.7, 33.3, 40, 44, 48, 52, 56, 60, 63, 66, 69, 72, 75, 77.5, 80, 82.5, 85, 87.5, 90, 92.5, 95, 97.5, 100]
+SPECIAL_LEVELS_25 = (5, 10, 15, 20)
+
+
+def class_25(i):
+    if i == 25:
+        return "highly_complex"
+    s = TARGET_SCORE[i - 1]
+    return "simple" if s < 30 else "medium" if s < 55 else "hard" if s < 75 else "complex"
+
+
+def levels_in_region(n):
+    return 25 if n <= MIGRATED_REGIONS else 15
+
+
 # Owner decision 2026-10-19 (T14): Speedrun keeps normal gaps, the time goal is relaxed. Regions 1-5 were verified by the bot
 # (slowest bot time 61.0 s, timeSec = ceil(1.2 * 61.0 to 5 s) = 75). Any change must be re-verified with the Simulation tests.
 SPEEDRUN_VALUE = 90
@@ -174,8 +191,14 @@ def validate():
                 errors.append("%s: level %s not defined" % (r["id"], lid))
             elif lv["region"] != r["id"]:
                 errors.append("%s: belongs to %s, listed by %s" % (lid, lv["region"], r["id"]))
-    if len(levels) != 450:
-        errors.append("expected 450 levels, found %d" % len(levels))
+    want_levels = sum(levels_in_region(n) for n in range(1, 31))
+    if len(levels) != want_levels:
+        errors.append("expected %d levels, found %d" % (want_levels, len(levels)))
+    for r in regions.values():
+        if len(r.get("levels", [])) != levels_in_region(r.get("index", 0)):
+            errors.append("%s: expected %d levels, found %d" % (r["id"], levels_in_region(r.get("index", 0)), len(r.get("levels", []))))
+    curve_path = os.path.join(CONTENT, "config", "difficulty_curve.json")
+    curve = load_abs(curve_path).get("d", {}) if os.path.exists(curve_path) else {}
     listed = {lid for r in regions.values() for lid in r.get("levels", [])}
     for lid in levels:
         if lid not in listed:
@@ -198,23 +221,38 @@ def validate():
     seeds = {}
     for lid, lv in levels.items():
         i = lv["index"]
+        n = int(lid.split("_")[1])
+        top = levels_in_region(n)
         if lid != "lvl_%s_%02d" % (lv["region"].split("_")[1], i):
             errors.append("%s: id does not match region/index" % lid)
-        if lv["class"] != CLASS_BY_LEVEL[i]:
-            errors.append("%s: class should be %s" % (lid, CLASS_BY_LEVEL[i]))
-        if abs(lv["difficulty"] - D_BY_LEVEL[i]) > 1e-9:
-            errors.append("%s: base difficulty should be %s" % (lid, D_BY_LEVEL[i]))
-        if i in (5, 10) and lv["rewards"]["coinPayout"] != 300:
-            errors.append("%s: complex level payout must be 300" % lid)
-        if i == 15 and lv["rewards"]["coinPayout"] != 900:
+        if n <= MIGRATED_REGIONS:
+            if lv["class"] != class_25(i):
+                errors.append("%s: class should be %s" % (lid, class_25(i)))
+            if lid not in curve or abs(lv["difficulty"] - curve[lid]) > 1e-9:
+                errors.append("%s: base difficulty should be %s (config/difficulty_curve.json)" % (lid, curve.get(lid)))
+            specials = SPECIAL_LEVELS_25
+            if i in specials:
+                gt = lv["goal"]["type"]
+                if gt not in ("comboChain", "noWallBounce", "findHiddenGem", "speedrun"):
+                    errors.append("%s: special level goal %s" % (lid, gt))
+            elif lv["goal"]["type"] != "reachFloor":
+                errors.append("%s: goal should be reachFloor" % lid)
+        else:
+            if lv["class"] != CLASS_BY_LEVEL[i]:
+                errors.append("%s: class should be %s" % (lid, CLASS_BY_LEVEL[i]))
+            if abs(lv["difficulty"] - D_BY_LEVEL[i]) > 1e-9:
+                errors.append("%s: base difficulty should be %s" % (lid, D_BY_LEVEL[i]))
+            specials = (5, 10)
+        if i in specials and lv["rewards"]["coinPayout"] != 300:
+            errors.append("%s: special level payout must be 300" % lid)
+        if i == top and lv["rewards"]["coinPayout"] != 900:
             errors.append("%s: finale payout must be 900" % lid)
-        if i not in (5, 10, 15) and not 60 <= lv["rewards"]["coinPayout"] <= 140:
+        if i not in specials and i != top and not 60 <= lv["rewards"]["coinPayout"] <= 140:
             errors.append("%s: normal payout must be 60-140" % lid)
         if lv["rewards"]["gems"]["min"] > lv["rewards"]["gems"]["max"]:
             errors.append("%s: gems min > max" % lid)
-        if i == 15 and lv["rewards"]["gems"].get("firstClearGuaranteed") != 5:
-            errors.append("%s: L15 must guarantee 5 gems on first clear" % lid)
-        n = int(lid.split("_")[1])
+        if i == top and lv["rewards"]["gems"].get("firstClearGuaranteed") != 5:
+            errors.append("%s: the last level must guarantee 5 gems on first clear" % lid)
         coin_stars = [st for st in lv["stars"] if st["type"] == "coins"]
         if len(coin_stars) != 1 or lv["stars"][1]["type"] != "coins":
             errors.append("%s: star 2 must be a coins star" % lid)

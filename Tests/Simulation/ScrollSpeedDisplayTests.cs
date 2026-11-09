@@ -15,7 +15,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         private readonly ITestOutputHelper output;
         public ScrollSpeedDisplayTests(ITestOutputHelper output) { this.output = output; }
 
-        private static readonly int[] StepPercentByDifficulty = { 20, 40, 60, 80, 100 };   // GameSettings.DifficultyStepPercent
+        private static readonly int[] StepPercentByDifficulty = SimConfig.DifficultyStepPercent;   // GameSettings.DifficultyStepPercent
         private const int GameSessionCapPercent = 150;                                      // GameSession.ApplyDifficulty
 
         private static SimConfig CfgFor(int difficultySetting)

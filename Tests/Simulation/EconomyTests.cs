@@ -113,7 +113,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                     bool ok;
                     JsonElement rw = Rewards(root, ll, out ok);
                     JsonElement gems;
-                    if (ok && ll.Spec.Class >= 3 && rw.TryGetProperty("gems", out gems))
+                    if (ok && ll.Spec.LevelIndex % 5 == 0 && rw.TryGetProperty("gems", out gems))   // RewardCalculator.IsMilestone: levels 5, 10, 15, 20, 25
                         lr.MilestoneFirst = Milestone(gems, ll.Spec.Seed, 3);
 
                     // Bot: near-optimal line; gives a lower bound on play time and the gems/combo it picks up on the way.

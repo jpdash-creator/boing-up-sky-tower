@@ -161,23 +161,23 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void TodaysFiveUncommonHeroesFollowTheOpenRegions()
+        public void TodaysActiveHeroesFollowTheOpenRegions()
         {
             var ids = new HashSet<string>();
             ulong s = 7;
-            // F4.1: bundles draw Uncommon, Rare and Elite cards; Region 1 now holds five heroes per tier, the other regions Uncommon only
+            // Bug List 6 (owner 2026-11-09): only the five active lines exist (Momo, Capi, Otto, Bonbon, Bao); the 20 inactive lines are never drawn
             var lines = new HashSet<string>();
             for (int i = 0; i < 6000; i++) { CharacterSpec c = BundleCards.Draw(Mix(ref s), Mix(ref s), CharacterDefs.All); ids.Add(c.Id); lines.Add(c.LineId); }
-            Assert.True(lines.SetEquals(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco", "candygirl", "gummi", "choco", "marsh", "cookie", "monk", "sprout", "tora", "rusu", "ryu" }), string.Join(",", lines));
+            Assert.True(lines.SetEquals(new[] { "momo", "forestgirl", "beachotter", "candygirl", "monk" }), string.Join(",", lines));
             ids.Clear(); lines.Clear();
             for (int i = 0; i < 3000; i++) { CharacterSpec c = BundleCards.Draw(Mix(ref s), Mix(ref s), CharacterDefs.All, region => false); ids.Add(c.Id); lines.Add(c.LineId); }
-            Assert.True(lines.SetEquals(new[] { "momo", "bumble", "ribbi", "dandy", "pip" }), string.Join(",", lines));   // new account: Region 1 lines only
+            Assert.True(lines.SetEquals(new[] { "momo" }), string.Join(",", lines));   // new account: Momo's line only
             Assert.Contains("momo_u", ids);
-            Assert.Contains("pip_r", ids);
-            Assert.Contains("bumble_e", ids);
+            Assert.Contains("momo_r", ids);
+            Assert.Contains("momo_e", ids);
             ids.Clear(); lines.Clear();
             for (int i = 0; i < 3000; i++) { CharacterSpec c = BundleCards.Draw(Mix(ref s), Mix(ref s), CharacterDefs.All, region => region <= 3); ids.Add(c.Id); lines.Add(c.LineId); }
-            Assert.True(lines.SetEquals(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" }), string.Join(",", lines));
+            Assert.True(lines.SetEquals(new[] { "momo", "forestgirl", "beachotter" }), string.Join(",", lines));
         }
 
         [Fact]

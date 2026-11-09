@@ -34,6 +34,8 @@ namespace BoingUpSkyTower.Gameplay
             public Action CloseOverlay;
             /// <summary>Back returns to the Heroes screen.</summary>
             public Action Back;
+            /// <summary>The other two tabs of the top row (Bug List 6 item 3a): Merge and Powers. A tab without an action is inert.</summary>
+            public Action OpenMerge, OpenPowers;
             /// <summary>Name of a region by index (null = "Region n").</summary>
             public Func<int, string> RegionName;
         }
@@ -90,12 +92,7 @@ namespace BoingUpSkyTower.Gameplay
             if (body != null) UnityEngine.Object.Destroy(body.gameObject);
             if (bg == null)
             {
-                bg = UiKit.Rect(root, "AllHeroesBackground");
-                UiKit.Stretch(bg);
-                bg.SetAsFirstSibling();
-                Image g = UiKit.AddImage(bg, "Bg", MergeArt.BackgroundGradient, Color.white);
-                g.preserveAspect = false;
-                UiKit.Stretch(g.rectTransform);
+                bg = MergeArt.AddBackground(root, "AllHeroesBackground");   // the Merge screen's background (Bug List 6 item 3a): same painted slot, gradient and glows
             }
             Groups = AllHeroes.Build(host != null ? host.RegionName : null, id => CharacterCatalog.Owns(progress, CharacterCatalog.Get(id)));
 
@@ -113,7 +110,9 @@ namespace BoingUpSkyTower.Gameplay
             tr.offsetMin = new Vector2(bs + 40f, -(16f + bs));
             tr.offsetMax = new Vector2(-(bs + 40f), -16f);
 
-            BuildList(16f + bs + 8f);
+            float tabsTop = 16f + bs + 8f;
+            HeroTabs.Build(body, tabsTop, HeroTabs.AllHeroes, null, host != null ? host.OpenMerge : null, host != null ? host.OpenPowers : null);
+            BuildList(tabsTop + HeroTabs.RowH + 8f);
         }
 
         void BuildList(float top)

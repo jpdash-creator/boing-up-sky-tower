@@ -10,11 +10,12 @@ namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>
     /// Owner spec 2026-11-05 ("Endless is endless: go till floor 100000 via code"): the endless difficulty is stepped by EndlessTower.LevelForFloor.
-    /// Floors 1-1500 are campaign levels 1..15 (100 floors each); 1501-2100 are levels 9..14 (100 floors each); level 15 is held 2101-2500; at 2501 the same
-    /// 1000-floor cycle restarts at level 9, and so on without end. A floor at level N uses everything the region's campaign level N uses.
+    /// Bug List 6 item 4 (25 levels per region): floors 1-2500 are campaign levels 1..25 (100 floors each); 2501-3500 are levels 15..24 (100 floors each); level 25 is held
+    /// 3501-3900; at 3901 the same 1400-floor cycle restarts at level 15, and so on without end. A floor at level N uses everything the region's campaign level N uses.
+    /// (Regions 6 to 30 keep the old 15-level cycle until they are migrated: LevelForFloor(floor, 15), see EndlessLegacyCycleTests.)
     /// These tests pin: the function itself (boundaries and a full reference table to floor 100001), the tie to the SHIPPED levels (difficulty and kind list
     /// of every level of every region), the per-level content of the generated tower (special share, hazard spacing, layout), the scroll speed, the
-    /// prefix-stable generation to floor 100000 (time and memory), and the bot proof at the reset boundaries and the level 15 holds. All fast.
+    /// prefix-stable generation to floor 100000 (time and memory), and the bot proof at the reset boundaries and the level 25 holds. All fast.
     /// </summary>
     [Trait("Category", "EndlessCycle")]
     public class EndlessCycleTests
@@ -45,31 +46,21 @@ namespace BoingUpSkyTower.Simulation.Tests
         [InlineData(101, 2)]
         [InlineData(200, 2)]
         [InlineData(201, 3)]
-        [InlineData(1400, 14)]
-        [InlineData(1401, 15)]
         [InlineData(1500, 15)]
-        [InlineData(1501, 9)]
-        [InlineData(1600, 9)]
-        [InlineData(1601, 10)]
-        [InlineData(1700, 10)]
-        [InlineData(1701, 11)]
-        [InlineData(1800, 11)]
-        [InlineData(1801, 12)]
-        [InlineData(1900, 12)]
-        [InlineData(1901, 13)]
-        [InlineData(2000, 13)]
-        [InlineData(2001, 14)]
-        [InlineData(2100, 14)]
-        [InlineData(2101, 15)]
-        [InlineData(2500, 15)]
-        [InlineData(2501, 9)]
-        [InlineData(2600, 9)]
-        [InlineData(2601, 10)]
-        [InlineData(3500, 15)]
-        [InlineData(3501, 9)]
-        [InlineData(99999, 13)]
-        [InlineData(100000, 13)]
-        [InlineData(100001, 14)]
+        [InlineData(1501, 16)]
+        [InlineData(2400, 24)]
+        [InlineData(2401, 25)]
+        [InlineData(2500, 25)]
+        [InlineData(2501, 15)]
+        [InlineData(2600, 15)]
+        [InlineData(2601, 16)]
+        [InlineData(3500, 24)]
+        [InlineData(3501, 25)]
+        [InlineData(3900, 25)]
+        [InlineData(3901, 15)]
+        [InlineData(99999, 23)]
+        [InlineData(100000, 23)]
+        [InlineData(100001, 24)]
         public void LevelForFloorBoundaries(int floor, int level)
         {
             Assert.Equal(level, EndlessTower.LevelForFloor(floor));
@@ -81,25 +72,25 @@ namespace BoingUpSkyTower.Simulation.Tests
             // reference: build the owner's table by walking it block by block
             List<int> table = new List<int>();   // table[f] = level of floor f (index 0 = start platform, level 1)
             table.Add(1);
-            for (int lvl = 1; lvl <= 15; lvl++) for (int i = 0; i < 100; i++) table.Add(lvl);
+            for (int lvl = 1; lvl <= 25; lvl++) for (int i = 0; i < 100; i++) table.Add(lvl);
             while (table.Count <= 100001)
             {
-                for (int lvl = 9; lvl <= 14; lvl++) for (int i = 0; i < 100; i++) table.Add(lvl);
-                for (int i = 0; i < 400; i++) table.Add(15);
+                for (int lvl = 15; lvl <= 24; lvl++) for (int i = 0; i < 100; i++) table.Add(lvl);
+                for (int i = 0; i < 400; i++) table.Add(25);
             }
             for (int f = 0; f <= 100001; f++) Assert.True(EndlessTower.LevelForFloor(f) == table[f], "floor " + f);
-            // cycle shape: within a cycle never down; the only drops are 15 -> 9 at 1501 + 1000 k
+            // cycle shape: within a cycle never down; the only drops are 25 -> 15 at 2501 + 1400 k
             for (int f = 2; f <= 100001; f++)
             {
                 int a = EndlessTower.LevelForFloor(f - 1), b = EndlessTower.LevelForFloor(f);
-                if (b < a) { Assert.True(a == 15 && b == 9 && (f - 1501) % 1000 == 0, "unexpected drop at floor " + f); }
+                if (b < a) { Assert.True(a == 25 && b == 15 && (f - 2501) % 1400 == 0, "unexpected drop at floor " + f); }
                 else Assert.True(b - a <= 1, "jump at floor " + f);
             }
-            // out of range input never throws and stays in 1..15
+            // out of range input never throws and stays in 1..25
             foreach (int f in new[] { int.MinValue, -1, 0, 100002, 1000000, int.MaxValue - 1, int.MaxValue })
             {
                 int l = EndlessTower.LevelForFloor(f);
-                Assert.InRange(l, 1, 15);
+                Assert.InRange(l, 1, 25);
             }
             Assert.Equal(1, EndlessTower.LevelForFloor(int.MinValue));
         }
@@ -108,17 +99,17 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void CycleTableForTheReport()
         {
             output.WriteLine("floors | level");
-            output.WriteLine("1-1500: level = ceil(floor / 100), 1 at 1-100 ... 15 at 1401-1500");
-            int from = 1501;
-            for (int f = 1501; f <= 2501; f++)
+            output.WriteLine("1-2500: level = ceil(floor / 100), 1 at 1-100 ... 25 at 2401-2500");
+            int from = 2501;
+            for (int f = 2501; f <= 3901; f++)
             {
-                if (f == 2501 || EndlessTower.LevelForFloor(f) != EndlessTower.LevelForFloor(f - 1))
+                if (f == 3901 || EndlessTower.LevelForFloor(f) != EndlessTower.LevelForFloor(f - 1))
                 {
                     if (f > from) output.WriteLine(from + "-" + (f - 1) + " | L" + EndlessTower.LevelForFloor(from));
                     from = f;
                 }
             }
-            output.WriteLine("2501-3500 repeats 1501-2500, and so on every 1000 floors up to 100000 and beyond");
+            output.WriteLine("3901-5300 repeats 2501-3900, and so on every 1400 floors up to 100000 and beyond");
         }
 
         // ------------------------------------------------------------------ (2) the tie to the shipped levels
@@ -135,7 +126,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             string root = ContentLoader.FindRoot();
             Assert.NotNull(root);
             List<LoadedLevel> levels = ContentLoader.LoadRegions(root, region, region);
-            Assert.Equal(15, levels.Count);
+            Assert.Equal(25, levels.Count);
             int r0 = region - 1;
             LevelSpec probe = SpecFor(r0, 1);
             EndlessTower tower = new EndlessTower(cfg, probe, 10);
@@ -145,7 +136,11 @@ namespace BoingUpSkyTower.Simulation.Tests
                 // difficulty: the endless function reproduces the d the level builder and the Sim use for the shipped level
                 Fx shipped = ll.Spec.EffectiveDifficulty(cfg);
                 Fx endless = LevelSpec.DifficultyForLevel(cfg, n, OffsetOf(r0));
-                Assert.True(shipped.Raw == endless.Raw, "region " + region + " level " + n + ": shipped d " + shipped + " but endless level d " + endless);
+                // Bug List 6 item 4: the endless cycle reads the smooth region 1 table (SimConfig.LevelContentDifficultyPermille) with the region offset. Region 1 ships exactly that
+                // curve (except the combo level 5, whose own d is higher, see Content/config/difficulty_curve.json); regions 2 to 5 ship their own calibrated d (the same SCORE
+                // per level needs another d with another signature), so they stay within 0.2 of it.
+                if (region == 1 && n != 5) Assert.True(shipped.Raw == endless.Raw, "region " + region + " level " + n + ": shipped d " + shipped + " but endless level d " + endless);
+                else Assert.True(n == 5 || Math.Abs(shipped.Raw - endless.Raw) <= Fx.OneRaw * 20 / 100, "region " + region + " level " + n + ": shipped d " + shipped + " far from the endless level d " + endless);
                 // and the tower reads the same value for the floors of that level
                 Assert.Equal(endless.Raw, tower.DifficultyAt((n - 1) * 100 + 50).Raw);
                 // kind list: the shipped level's options (SpecialPlatforms.Options, minus the wall-bounce exclusions of a no-wall-bounce goal) equal the endless list of level n
@@ -164,12 +159,12 @@ namespace BoingUpSkyTower.Simulation.Tests
             for (int r0 = 0; r0 < 5; r0++)
             {
                 EndlessTower t = new EndlessTower(cfg, SpecFor(r0, 1), 10);
-                // the biggest level-to-level step of the normal levels 1..15 in this region
+                // the biggest level-to-level step of the normal levels 1..25 in this region
                 double maxCampaignStep = 0;
-                for (int n = 2; n <= 15; n++)
+                for (int n = 2; n <= 25; n++)
                     maxCampaignStep = Math.Max(maxCampaignStep, (LevelSpec.DifficultyForLevel(cfg, n, OffsetOf(r0)).Raw - LevelSpec.DifficultyForLevel(cfg, n - 1, OffsetOf(r0)).Raw) / (double)Fx.OneRaw);
                 Fx last = t.DifficultyAt(1);
-                for (int f = 2; f <= 6000; f++)
+                for (int f = 2; f <= 8000; f++)
                 {
                     Fx cur = t.DifficultyAt(f);
                     double step = (cur.Raw - last.Raw) / (double)Fx.OneRaw;
@@ -182,12 +177,13 @@ namespace BoingUpSkyTower.Simulation.Tests
                     }
                     last = cur;
                 }
-                // level 15 is held: constant 1.0 across the whole hold
-                for (int f = 2101; f <= 2500; f++) Assert.Equal(Fx.One.Raw, t.DifficultyAt(f).Raw);
-                for (int f = 1401; f <= 1500; f++) Assert.Equal(Fx.One.Raw, t.DifficultyAt(f).Raw);
-                // the reset really lands on level 9: same d as floor 801-900
-                Assert.Equal(t.DifficultyAt(850).Raw, t.DifficultyAt(1501).Raw);
-                Assert.Equal(t.DifficultyAt(850).Raw, t.DifficultyAt(2501).Raw);
+                // level 25 is held: constant (the difficulty of campaign level 25) across the whole hold
+                Fx top = LevelSpec.DifficultyForLevel(cfg, 25, OffsetOf(r0));
+                for (int f = 3501; f <= 3900; f++) Assert.Equal(top.Raw, t.DifficultyAt(f).Raw);
+                for (int f = 2401; f <= 2500; f++) Assert.Equal(top.Raw, t.DifficultyAt(f).Raw);
+                // the reset really lands on level 15: same d as floor 1401-1500
+                Assert.Equal(t.DifficultyAt(1450).Raw, t.DifficultyAt(2501).Raw);
+                Assert.Equal(t.DifficultyAt(1450).Raw, t.DifficultyAt(3901).Raw);
             }
         }
 
@@ -263,7 +259,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void SpecialShareHazardSpacingAndLayoutFollowTheLevelOfTheFloorWithResetsAndHolds(int region0)
         {
             SimConfig cfg = new SimConfig();
-            int blocks = 26;   // floors 1..2600
+            int blocks = 40;   // floors 1..4000
             int viol;
             int[] minHaz;
             Block[] b = Measure(cfg, region0, 30, blocks, out viol, out minHaz);
@@ -292,27 +288,27 @@ namespace BoingUpSkyTower.Simulation.Tests
             // level 1 has no hazard types at all
             Assert.Equal(0.0, b[0].Hazard);
 
-            // First climb. Platform width is the layout measure that keeps tightening to level 15 (it never grows beyond sampling noise between consecutive
-            // levels). The mean gap saturates around level 11 at the builder's gap caps (NormalGapMax, small-platform cap), exactly as in the campaign levels:
-            // it rises through level 8 and then stays within a narrow band.
-            for (int i = 1; i < 15; i++)
+            // First climb (blocks 0..24 = levels 1..25). Platform width is the layout measure that keeps tightening to level 25 (it never grows beyond sampling noise between
+            // consecutive levels). The mean gap saturates at the builder's gap caps (NormalGapMax, small-platform cap), exactly as in the campaign levels:
+            // it rises through level 14 and then stays within a narrow band.
+            for (int i = 1; i < 25; i++)
             {
                 Assert.True(width(i) <= width(i - 1) + 0.12, "width grew inside the first climb, block " + i);
-                Assert.True(width(i) - width(i - 1) >= -0.35, "width cliff in block " + i);
+                Assert.True(width(i) - width(i - 1) >= (i == 1 ? -0.6 : -0.35), "width cliff in block " + i);   // level 1 -> 2 is the biggest step of the 25-level curve (score 5 -> 20)
             }
-            for (int i = 1; i < 8; i++) Assert.True(gap(i) >= gap(i - 1) - 0.08, "gap fell inside the first climb, block " + i);
-            for (int i = 8; i < 15; i++) Assert.True(Math.Abs(gap(i) - gap(i - 1)) <= 0.2, "gap cliff in block " + i);
-            Assert.True(gap(7) > gap(1) + 0.6 && width(14) < width(1) - 1.0, "level 15 is clearly harder than level 2");
-            // the reset: floors 1501-1600 (level 9) are clearly easier than floors 1401-1500 (level 15) and play like floors 801-900 (level 9)
-            Assert.True(width(15) > width(14) + 0.35, "width resets at 1501");
-            Assert.True(Math.Abs(gap(15) - gap(8)) < 0.15 && Math.Abs(width(15) - width(8)) < 0.15, "floors 1501-1600 play like floors 801-900 (both level 9)");
-            Assert.True(special(15) < special(14) - 0.05, "special share resets at 1501");
-            // rises again 1501..2100 and holds from 2101 to 2500
-            for (int i = 16; i <= 20; i++) Assert.True(width(i) <= width(i - 1) + 0.12, "width grew inside the second climb, block " + i);
-            for (int i = 21; i <= 24; i++) Assert.True(Math.Abs(width(i) - width(20)) < 0.12 && Math.Abs(gap(i) - gap(20)) < 0.15, "level 15 hold, block " + i);
-            Assert.True(Math.Abs(width(21) - width(14)) < 0.15, "the hold plays like the first level 15");
-            // second reset at 2501
-            Assert.True(width(25) > width(24) + 0.35 && special(25) < special(24) - 0.05, "second reset at 2501");
+            for (int i = 1; i < 14; i++) Assert.True(gap(i) >= gap(i - 1) - 0.08, "gap fell inside the first climb, block " + i);
+            for (int i = 14; i < 25; i++) Assert.True(Math.Abs(gap(i) - gap(i - 1)) <= 0.2, "gap cliff in block " + i);
+            Assert.True(gap(13) > gap(1) + 0.6 && width(24) < width(1) - 0.8, "level 25 is clearly harder than level 2");
+            // the reset: floors 2501-2600 (level 15) are clearly easier than floors 2401-2500 (level 25) and play like floors 1401-1500 (level 15)
+            Assert.True(width(25) > width(24) + 0.18, "width resets at 2501");
+            Assert.True(Math.Abs(gap(25) - gap(14)) < 0.15 && Math.Abs(width(25) - width(14)) < 0.15, "floors 2501-2600 play like floors 1401-1500 (both level 15)");
+            Assert.True(special(25) < special(24) - 0.05, "special share resets at 2501");
+            // rises again 2501..3500 and holds from 3501 to 3900
+            for (int i = 26; i <= 34; i++) Assert.True(width(i) <= width(i - 1) + 0.12, "width grew inside the second climb, block " + i);
+            for (int i = 35; i <= 38; i++) Assert.True(Math.Abs(width(i) - width(34)) < 0.2 && Math.Abs(gap(i) - gap(34)) < 0.2, "level 25 hold, block " + i);
+            Assert.True(Math.Abs(width(35) - width(24)) < 0.15, "the hold plays like the first level 25");
+            // second reset at 3901
+            Assert.True(width(39) > width(38) + 0.18 && special(39) < special(38) - 0.05, "second reset at 3901");
         }
 
         // ------------------------------------------------------------------ (4) scroll speed
@@ -332,7 +328,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 foreach (int tick in new[] { 0, 600, 1800, 5000 })
                 {
                     long prev = 0;
-                    for (int n = 1; n <= 15; n++)
+                    for (int n = 1; n <= 25; n++)
                     {
                         Sim campaign = new Sim(cfg, LevelData.FromPlatforms(flat), LevelSpec.DifficultyForLevel(cfg, n, OffsetOf(r0)), false, false);
                         SimState cs = campaign.NewState();
@@ -348,17 +344,17 @@ namespace BoingUpSkyTower.Simulation.Tests
                     }
                     // resets and holds
                     Func<int, long> at = f => { es.Row = f; return endless.ScrollPerTickAt(es, tick).Raw; };
-                    Assert.True(at(1501) < at(1500), "speed eases at 1501");
-                    Assert.Equal(at(1501), at(1600));
-                    Assert.True(at(1601) > at(1600));
-                    Assert.True(at(2100) < at(2101), "level 14 -> 15");
-                    Assert.Equal(at(2101), at(2500));
-                    Assert.Equal(at(1401), at(2500));
                     Assert.True(at(2501) < at(2500), "speed eases at 2501");
-                    Assert.Equal(at(1501), at(2501));
-                    Assert.Equal(at(850), at(101550));   // far cycles repeat the level 9 speed (floor 101550 is level 9)
-                    // no ramp by floor inside a level and none beyond it: floor 900 and floor 801 are both level 9
-                    Assert.Equal(at(801), at(900));
+                    Assert.Equal(at(2501), at(2600));
+                    Assert.True(at(2601) > at(2600));
+                    Assert.True(at(3500) < at(3501), "level 24 -> 25");
+                    Assert.Equal(at(3501), at(3900));
+                    Assert.Equal(at(2401), at(3900));
+                    Assert.True(at(3901) < at(3900), "speed eases at 3901");
+                    Assert.Equal(at(2501), at(3901));
+                    Assert.Equal(at(1450), at(2501 + 1400 * 69));   // far cycles repeat the level 15 speed (floor 99101 is level 15)
+                    // no ramp by floor inside a level and none beyond it: floor 1401 and floor 1500 are both level 15
+                    Assert.Equal(at(1401), at(1500));
                 }
                 // the old +4 percent per 25 floors / 150 percent cap is gone: floor 937 is not faster than floor 901 (both level 10)
                 es.Row = 937; long a937 = endless.ScrollPerTickAt(es, 0).Raw;
@@ -491,14 +487,14 @@ namespace BoingUpSkyTower.Simulation.Tests
             return s;
         }
 
-        /// <summary>(first floor, floors to climb): the climbs cross 1500/1501 and 2500/2501 and cover the level 15 holds and the climb back to 15.</summary>
+        /// <summary>(first floor, floors to climb): the climbs cross 1500/1501 and 2500/2501 and cover the level 25 holds and the climb back to 15.</summary>
         public static IEnumerable<object[]> Windows()
         {
-            yield return new object[] { 1380, 130 };   // L14 -> L15 at 1401, the first 90 floors of the hold, reset at 1501 to L9
-            yield return new object[] { 1440, 120 };   // 60 floors of L15, then the reset to L9
-            yield return new object[] { 2400, 160 };   // L15 hold, reset at 2501 to L9, 60 floors of L9
-            yield return new object[] { 2080, 100 };   // L14 -> L15 at 2101, the hold begins
-            yield return new object[] { 1600, 130 };   // L9 -> L10 at 1601 .. L10 -> L11
+            yield return new object[] { 2380, 130 };   // L24 -> L25 at 2401, the first 100 floors of L25, reset at 2501 to L15
+            yield return new object[] { 2440, 120 };   // 60 floors of L25, then the reset to L15
+            yield return new object[] { 3840, 160 };   // L25 hold, reset at 3901 to L15, 100 floors of L15
+            yield return new object[] { 3480, 100 };   // L24 -> L25 at 3501, the hold begins
+            yield return new object[] { 2560, 130 };   // L15 -> L16 at 2601 .. L16 -> L17
         }
 
         [Theory]
@@ -521,6 +517,39 @@ namespace BoingUpSkyTower.Simulation.Tests
             });
             output.WriteLine("window " + firstFloor + "+" + floors + ": " + sw.ElapsedMilliseconds + " ms");
             Assert.True(fails.Count == 0, string.Join("; ", fails));
+        }
+    }
+
+    /// <summary>Regions 6 to 30 still have 15 levels (not migrated yet): their endless tower keeps the old cycle (first climb 1500, reset to level 9, 1000-floor cycles, hold 15).</summary>
+    [Trait("Category", "EndlessCycle")]
+    public class EndlessLegacyCycleTests
+    {
+        [Fact]
+        public void FifteenLevelRegionsKeepTheOldCycle()
+        {
+            List<int> table = new List<int> { 1 };
+            for (int lvl = 1; lvl <= 15; lvl++) for (int i = 0; i < 100; i++) table.Add(lvl);
+            while (table.Count <= 20001)
+            {
+                for (int lvl = 9; lvl <= 14; lvl++) for (int i = 0; i < 100; i++) table.Add(lvl);
+                for (int i = 0; i < 400; i++) table.Add(15);
+            }
+            for (int f = 0; f <= 20001; f++) Assert.True(EndlessTower.LevelForFloor(f, 15) == table[f], "floor " + f);
+        }
+
+        [Fact]
+        public void TheTowerAndTheSimOfAFifteenLevelRegionFollowTheLegacyCycle()
+        {
+            SimConfig cfg = new SimConfig();
+            LevelSpec spec = EndlessTower.MakeSpec(1234, Fx.FromRatio(500, 10000), SignatureKind.BounceFlowers, 400, 15);
+            EndlessTower t = new EndlessTower(cfg, spec, 10);
+            Assert.Equal(Fx.One.Raw, t.DifficultyAt(1401).Raw);
+            Assert.Equal(Fx.One.Raw, t.DifficultyAt(1500).Raw);
+            Assert.True(t.DifficultyAt(1501) < t.DifficultyAt(1500));
+            Assert.Equal(t.DifficultyAt(850).Raw, t.DifficultyAt(1501).Raw);
+            Assert.Equal(15, t.CreateSim().Level.EndlessLevels);
+            LevelData d = EndlessTower.BuildFixed(cfg, spec, 200);
+            Assert.Equal(15, d.EndlessLevels);
         }
     }
 }

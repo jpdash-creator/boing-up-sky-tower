@@ -7,9 +7,10 @@ namespace BoingUpSkyTower.Gameplay
 {
     /// <summary>
     /// The Settings screen (Bug List 1 B2, docs/35 and docs/38): one compact popup on the sky background, sized from its content. Icon cells with a green
-    /// switch (Sound, Music, Haptics, Reduced motion, Left-handed), the text size and difficulty value buttons, then two big buttons (the Google button and
+    /// switch (Sound, Music, Haptics, Reduced motion, Left-handed), the text size value button, then two big buttons (the Google button and
     /// Save Progress), a small row with Reset and Restore, and the footer with the Admin icon (left) and the version (right). Only Google Play is offered
     /// as an account (no mail, social or language links). Rows grow with the screen density so every target stays at least 48 dp with 8 dp between them.
+    /// Bug List 6 item 7: the screen never scrolls (no ScrollRect). The Gameplay (difficulty) setting moved to the level screen (item 6), which freed a row; nothing needed the "More" popup.
     /// </summary>
     public sealed partial class MetaController
     {
@@ -40,16 +41,16 @@ namespace BoingUpSkyTower.Gameplay
             float gap = Mathf.Ceil(UiKit.MinSpacingPx);
 
             RectTransform panel = UiKit.BuildPopupFrame(screen, "Settings", art, new Vector2(SettingsW, SettingsMaxH), ShowMenu);
-            RectTransform c = PopupBodyBegin(panel, "SettingsViewport", SettingsTop, SettingsPad);
+            RectTransform c = PopupBodyBegin(panel, "SettingsViewport", SettingsTop, SettingsPad, false);   // no ScrollRect: everything fits (Bug List 6 item 7)
 
-            // ---- the light inner panel: 4 rows of icon cells ----
+            // ---- the light inner panel: 3 rows of icon cells ----
             const float innerPad = 20f, colGap = 24f;
-            float innerH = 2f * innerPad + 4f * rowH + 3f * gap;
+            float innerH = 2f * innerPad + 3f * rowH + 2f * gap;
             Image inner = SoftPanel(c, "Inner", new Color(0.88f, 0.92f, 1f, 1f), 36f);
             UiKit.Place(inner.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(contentW, innerH));
             float cellW = (contentW - 2f * innerPad - colGap) * 0.5f;
             float x0 = innerPad, x1 = innerPad + cellW + colGap, pitch = rowH + gap;
-            float r0 = innerPad, r1 = r0 + pitch, r2 = r1 + pitch, r3 = r2 + pitch;
+            float r0 = innerPad, r1 = r0 + pitch, r2 = r1 + pitch;
             SettingsSwitchAt(c, "Sound", "icon_sound", x0, r0, cellW, rowH, () => GameSettings.Sound, v => GameSettings.Sound = v);
             SettingsSwitchAt(c, "Music", "icon_music", x1, r0, cellW, rowH, () => GameSettings.Music, v => GameSettings.Music = v);
             SettingsSwitchAt(c, "Haptics", "icon_vibrate", x0, r1, cellW, rowH, () => GameSettings.Haptics, v => GameSettings.Haptics = v);
@@ -60,7 +61,6 @@ namespace BoingUpSkyTower.Gameplay
                 GameSettings.NextTextPercent();
                 ShowSettings();   // rebuild so the new size applies to every label
             });
-            SettingsValueAt(c, "Difficulty", "icon_dial", x0, r3, contentW - 2f * innerPad, rowH, 460f, GameSettings.DifficultyNames[GameSettings.Difficulty], ShowDifficultyList);
 
             float y = innerH + 28f;
 
@@ -75,7 +75,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             else
             {
-                float googleH = Mathf.Max(170f, UiKit.MinTouchRef);
+                float googleH = Mathf.Max(150f, UiKit.MinTouchRef);
                 Button g = LoginScreen.BuildGoogleButton(c, AccountPopup.SettingsButtonLabel(st), () =>
                 {
                     AccountPopup.RunPrimary(st, (ok, text) =>
@@ -89,17 +89,17 @@ namespace BoingUpSkyTower.Gameplay
             }
 
             // ---- big button 2: Save Progress (Google Saved Games when signed in, this phone when guest) ----
-            float saveH = Mathf.Max(140f, UiKit.MinTouchRef);
+            float saveH = Mathf.Max(132f, UiKit.MinTouchRef);
             saveButton = UiKit.AddButton(c, "SaveProgress", AccountPopup.SaveLabel, ToyKit.Button(0), Color.white, new Vector2(contentW, saveH), OnSaveProgress, 46);
             saveLabel = saveButton.transform.Find("Label").GetComponent<Text>();
             UiKit.Place((RectTransform)saveButton.transform, new Vector2(0f, 1f), new Vector2(0f, -y), new Vector2(contentW, saveH));
-            y += saveH + gap + 8f;
+            y += saveH + gap;
 
             // ---- one small row: Reset (restart icon, confirm step) and Restore purchases (shop bag) ----
             float halfW = (contentW - gap) * 0.5f;
             Button reset = SettingsIconButton(c, "Reset", "Reset", "icon_restart", 3, "Reset progress", x: 0f, y: y, w: halfW, h: rowH, onClick: ConfirmReset);
             Button restore = SettingsIconButton(c, "RestorePurchases", "Restore", "icon_shop", 0, "Restore purchases", x: halfW + gap, y: y, w: halfW, h: rowH, onClick: RestorePurchases);
-            y += rowH + gap + 8f;
+            y += rowH + gap;
 
             // ---- footer: small Admin icon at the left, version at the right ----
             AddSettingsFooter(c, y, rowH, admin, contentW);
@@ -114,7 +114,7 @@ namespace BoingUpSkyTower.Gameplay
         /// Adds the clipped viewport under the title area and returns its content rect (anchored top, as wide as the viewport). Call
         /// <see cref="PopupBodyEnd"/> after the content is placed: it sets the real heights and turns scrolling on only when the content is taller than the cap.
         /// </summary>
-        RectTransform PopupBodyBegin(RectTransform panel, string viewportName, float top, float pad)
+        RectTransform PopupBodyBegin(RectTransform panel, string viewportName, float top, float pad, bool scrollable = true)
         {
             RectTransform vp = UiKit.Rect(panel, viewportName);
             vp.anchorMin = Vector2.zero;
@@ -129,6 +129,7 @@ namespace BoingUpSkyTower.Gameplay
             content.anchorMax = new Vector2(1f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
             content.anchoredPosition = Vector2.zero;
+            if (!scrollable) return content;   // Settings: a fixed popup, never a ScrollRect
             var sr = vp.gameObject.AddComponent<ScrollRect>();
             sr.viewport = vp;
             sr.content = content;
@@ -203,7 +204,7 @@ namespace BoingUpSkyTower.Gameplay
             });
         }
 
-        /// <summary>A value cell: the icon at the left and a yellow value button at the right (text size, difficulty).</summary>
+        /// <summary>A value cell: the icon at the left and a yellow value button at the right (text size).</summary>
         void SettingsValueAt(RectTransform c, string label, string icon, float x, float y, float cellW, float rowH, float valueW, string value, Action onClick)
         {
             const float inset = 14f;

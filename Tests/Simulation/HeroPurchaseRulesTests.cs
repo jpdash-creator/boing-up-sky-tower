@@ -52,11 +52,11 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void RegionOneHasFiveHeroesOfEveryTierAndNothingElseIsOpenYet()
+        public void RegionOneHasOnlyMomosLineAtEveryTierWhileNothingElseIsOpen()
         {
-            // F4.1: Region 1 has Momo, Bumble, Ribbi, Dandy and Pip at every tier; the other regions still have Uncommon only (closed regions never count)
+            // owner 2026-11-09: only the five active lines exist; Region 1 is Momo's line at every tier (closed regions never count, inactive heroes never exist)
             foreach (CharacterRarity r in HeroPurchase.Tiers)
-                Assert.Equal(new[] { "bumble", "dandy", "momo", "pip", "ribbi" }, BundleCards.Pool(r, CharacterDefs.All, region => region <= 1).Select(c => c.LineId).OrderBy(x => x, System.StringComparer.Ordinal).ToArray());
+                Assert.Equal(new[] { "momo" }, BundleCards.Pool(r, CharacterDefs.All, region => region <= 1).Select(c => c.LineId).OrderBy(x => x, System.StringComparer.Ordinal).ToArray());
         }
 
         [Fact]

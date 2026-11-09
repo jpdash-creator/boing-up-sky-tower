@@ -28,7 +28,7 @@ namespace BoingUpSkyTower.Tests
                 var parts = line.Split(' ');
                 golden[parts[0]] = parts[1];
             }
-            Assert.AreEqual(75, golden.Count);
+            Assert.AreEqual(125, golden.Count);
 
             int checkedLevels = 0;
             for (int r = 1; r <= 5; r++)
@@ -42,15 +42,15 @@ namespace BoingUpSkyTower.Tests
                     checkedLevels++;
                 }
             }
-            Assert.AreEqual(75, checkedLevels);
+            Assert.AreEqual(125, checkedLevels);
         }
 
         [Test]
         public void SpecMappingKeepsGoalStarsSignatureAndOverrides()
         {
             var repo = ContentRepository.LoadFromResources();
-            var l15 = LevelSpecFactory.Build(repo, "lvl_005_15");
-            Assert.AreEqual(GoalType.ReachFloor, l15.Goal.Type);   // doc 25: level 15 reaches the last platform (150 rows), no boss chase
+            var l15 = LevelSpecFactory.Build(repo, "lvl_005_25");
+            Assert.AreEqual(GoalType.ReachFloor, l15.Goal.Type);   // doc 25: the last level (25) reaches the last platform (150 rows), no boss chase
             Assert.AreEqual(150, l15.Goal.Value);
             Assert.AreEqual(4, l15.Class);
             Assert.IsFalse(l15.Ramp);

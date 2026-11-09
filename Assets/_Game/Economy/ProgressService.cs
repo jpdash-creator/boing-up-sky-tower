@@ -22,7 +22,7 @@ namespace BoingUpSkyTower.Economy
     /// <summary>
     /// Owns the player's local progress: wallet, per-level results, region unlocks. Every mutation saves immediately.
     /// Rules (doc 01 FR-P5, FR-P6; doc 08):
-    ///  - Region 1 is always unlocked. Clearing level 15 of a region unlocks the next region (if it is playable).
+    ///  - Region 1 is always unlocked. Clearing the last level of a region unlocks the next region (if it is playable).
     ///  - Or pay the region's gem skip price to unlock the NEXT locked region without clearing the previous one.
     ///  - Teaser regions can never be entered. Only regions with index &lt;= PlayableRegionLimit are playable in this build
     ///    (launch scope is 5 regions; the content still marks 6-20 live, so the limit lives here until the content is updated).
@@ -48,6 +48,7 @@ namespace BoingUpSkyTower.Economy
             EnsureEndlessFields();
             EnsurePowerUpFields();
             EnsureChestFields();
+            EnsureTimedFields();   // ProgressService.Records.cs
         }
 
         /// <summary>Saves written before endless mode (or with null fields) get safe defaults.</summary>
@@ -369,7 +370,7 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>
-        /// Applies a finished run: pays rewards, records the best result, unlocks the next region after level 15.
+        /// Applies a finished run: pays rewards, records the best result, unlocks the next region after the last level.
         /// A run that did not complete changes nothing. Throws if the level is locked (callers must not start locked levels).
         /// </summary>
         public RewardResult ApplyRun(string levelId, RunOutcome run)

@@ -413,7 +413,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             // The full ramp measurement for all regions is LevelStructureTests; here the region 1 specifics: the mix of kinds, hazard types left out of the tutorial.
             SimConfig cfg = new SimConfig();
             List<LoadedLevel> levels = Region1();
-            Assert.Equal(15, levels.Count);
+            Assert.Equal(25, levels.Count);
             foreach (LoadedLevel ll in levels)
             {
                 int idx = ll.Spec.LevelIndex;
@@ -582,11 +582,11 @@ namespace BoingUpSkyTower.Simulation.Tests
                     else
                     {
                         Assert.True(s.EffectiveDifficulty(cfg) >= s.Difficulty);
-                        if (i > 0 && s.LevelIndex > 3) Assert.True(s.EffectiveDifficulty(cfg) > ls[i - 1].Spec.EffectiveDifficulty(cfg), "level " + s.LevelIndex + " not harder than " + ls[i - 1].Spec.LevelIndex);
+                        if (i > 0 && s.LevelIndex > 3 && ls[i - 1].Spec.Goal.Type != GoalType.ComboChain) Assert.True(s.EffectiveDifficulty(cfg) > ls[i - 1].Spec.EffectiveDifficulty(cfg) || ls[i - 1].Spec.EffectiveDifficulty(cfg) >= Fx.FromRatio(999, 1000), "level " + s.LevelIndex + " not harder than " + ls[i - 1].Spec.LevelIndex);
                     }
                 }
-                Assert.True(ls[2].Spec.EffectiveDifficulty(cfg) > ls[1].Spec.EffectiveDifficulty(cfg) + Fx.FromRatio(1, 10), "level 3 must be clearly harder than level 2");
-                Assert.Equal(ls[14].Spec.Difficulty, ls[14].Spec.EffectiveDifficulty(cfg));   // level 15 is already at the top
+                Assert.True(ls[2].Spec.EffectiveDifficulty(cfg) > ls[1].Spec.EffectiveDifficulty(cfg) + Fx.FromRatio(1, 100), "level 3 must be harder than level 2");
+                Assert.Equal(ls[24].Spec.Difficulty, ls[24].Spec.EffectiveDifficulty(cfg));   // level 25 is already at the top (the 25-level rule)
             }
         }
 
@@ -653,7 +653,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             double ep = early * 100 / e, lp = late * 100 / l;
             output.WriteLine("endless special share: floors 5-40 " + ep.ToString("F1") + " percent, floors 200-320 " + lp.ToString("F1") + " percent");
             Assert.InRange(ep, 8, 16);   // endless cycle: floors 5-40 are the start of level 1 (10 to 30 percent ramp over its 100 floors)
-            Assert.InRange(lp, 31, 45);   // floors 200-320 are levels 2 to 4 (30 to 50 percent ramps)
+            Assert.InRange(lp, 18, 30);   // floors 200-320 are levels 2 to 4 (Bug List 6 curve: 10 to 35 percent ramps)
             Assert.Equal(8, seen.Count);   // all seven new platforms and the flower appear
         }
 

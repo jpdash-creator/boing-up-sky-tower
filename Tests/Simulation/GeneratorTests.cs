@@ -181,7 +181,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             output.WriteLine("levels checked: " + count + ", failures: " + failures.Count);
             foreach (string f in failures) output.WriteLine(f);
             Assert.Empty(failures);
-            Assert.Equal(450, count);
+            Assert.Equal(500, count);
         }
 
         [Fact]

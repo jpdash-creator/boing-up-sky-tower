@@ -10,7 +10,7 @@ namespace BoingUpSkyTower.Tests
 {
     /// <summary>
     /// Hero powers in a run (owner 2026-11-02, docs/34): the cooldown clock (HeroPowerCooldown), one button per power by tier, the duration factor,
-    /// the free use (no inventory unit), the layout numbers of the second column. Category HeroPowers.
+    /// the free use (no inventory unit, full bought duration since Bug List 6), the merged button rule (free first, then bought), the layout numbers of the two groups. Category HeroPowers.
     /// </summary>
     [Category("HeroPowers")]
     public class HeroPowerEditTests
@@ -88,7 +88,7 @@ namespace BoingUpSkyTower.Tests
         // ---- free use through the run session ----
 
         [Test]
-        public void AHeroPowerIsFree_ItTakesNoInventoryUnitAndLastsSixtyPercent()
+        public void AHeroPowerIsFree_ItTakesNoInventoryUnitAndLastsTheFullBoughtDuration()
         {
             var cfg = new SimConfig();
             var run = new RunSession(repo, cfg, "lvl_001_01");
@@ -103,7 +103,7 @@ namespace BoingUpSkyTower.Tests
 
             run.Step(PowerUps.HeroInputBit(p));
             Assert.IsTrue(PowerUps.IsActive(in run.State, p));
-            Assert.AreEqual(cfg.HeroTicks(PowerUps.TotalTicks(cfg, p)) - 1, PowerUps.ActiveTicks(in run.State, p));
+            Assert.AreEqual(PowerUps.TotalTicks(cfg, p) - 1, PowerUps.ActiveTicks(in run.State, p), "Bug List 6: same duration as the bought power-up, no 60 percent");
             int[] after = Enumerable.Range(0, PowerUps.MaxType + 1).Select(i => run.PowerStock((PowerUp)i)).ToArray();
             Assert.AreEqual(before, after, "no unit was taken");
             Assert.AreEqual(0, run.SettlePowerUps(null), "nothing to settle");
@@ -139,32 +139,93 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(0, run.State.PwUsed);
         }
 
+        // ---- merged buttons (Bug List 6, 2026-11-09): free hero powers share the button of their type; free first, then bought ----
+
+        [Test]
+        public void AMergedPress_UsesTheFreeHeroPowerFirstAndThenABoughtUnit()
+        {
+            var cfg = new SimConfig();
+            var run = new RunSession(repo, cfg, "lvl_001_01");
+            CharacterSpec hero = HeroOf(CharacterRarity.Uncommon);
+            PowerUp p = hero.Powers[0];
+            var stock = new int[PowerUps.MaxType + 1];
+            stock[(int)p] = 2;
+            run.ApplyStock(stock);
+            run.ApplyHeroPowers(hero);
+            int idx = run.Hero.IndexOf(p);
+
+            run.Step(PowerUps.InputBit(p));   // the normal button press of the type
+            Assert.AreEqual(2, run.PowerStock(p), "free first: no unit taken");
+            Assert.IsFalse(run.Hero.IsReady(idx), "the hero cooldown started");
+            Assert.AreEqual(PowerUps.TotalTicks(cfg, p) - 1, PowerUps.ActiveTicks(in run.State, p), "same duration as a bought unit");
+            Assert.AreEqual(0, run.BuildOutcome().PowerUpsUsed, "a free use is not a used unit");
+
+            run.Step(PowerUps.InputBit(p));   // second press: the free power is cooling down, so a bought unit is used (stacking)
+            Assert.AreEqual(1, run.PowerStock(p), "then bought");
+            Assert.Greater(PowerUps.ActiveTicks(in run.State, p), PowerUps.TotalTicks(cfg, p), "the bought unit stacked onto the running effect");
+            Assert.AreEqual(1, run.BuildOutcome().PowerUpsUsed);
+        }
+
+        [Test]
+        public void AHeroOnlyTypeWorksWithoutAnyBoughtUnit_AndThenWaitsForItsCooldown()
+        {
+            var cfg = new SimConfig();
+            var run = new RunSession(repo, cfg, "lvl_001_01");
+            CharacterSpec hero = HeroOf(CharacterRarity.Uncommon);
+            PowerUp p = hero.Powers[0];
+            run.ApplyStock(new int[PowerUps.MaxType + 1]);
+            run.ApplyHeroPowers(hero);
+            Assert.IsFalse(run.OwnedAtStart(p), "nothing bought");
+            run.Step(PowerUps.InputBit(p));
+            Assert.AreEqual(1, run.State.PwUsed, "the free power works with no stock");
+            int ticks = PowerUps.ActiveTicks(in run.State, p);
+            run.Step(PowerUps.InputBit(p));
+            Assert.AreEqual(1, run.State.PwUsed, "no stock and the free power is cooling down: the press is dropped");
+            Assert.AreEqual(ticks - 1, PowerUps.ActiveTicks(in run.State, p));
+        }
+
+        [Test]
+        public void TheRarityCooldownStillAppliesToAFreePowerUsedThroughTheMergedButton()
+        {
+            var cfg = new SimConfig();
+            var run = new RunSession(repo, cfg, "lvl_001_01");
+            CharacterSpec hero = HeroOf(CharacterRarity.Legendary);
+            PowerUp p = hero.Powers[0];
+            run.ApplyStock(new int[PowerUps.MaxType + 1]);
+            run.ApplyHeroPowers(hero);
+            int idx = run.Hero.IndexOf(p);
+            run.Step(PowerUps.InputBit(p));
+            Assert.AreEqual(CharacterDefs.CooldownSeconds[(int)CharacterRarity.Legendary] * SimConfig.TicksPerSecond - 1, run.Hero.RemainingTicks(idx));
+        }
+
         // ---- layout numbers (CUX-3/4) ----
 
         [Test]
-        public void HeroColumnClearsTheBoughtBlockAndStaysAboveThePad()
+        public void TheTwoGroupsSitOnTheirOwnEdgesAboveThePadWithGaps()
         {
-            Assert.GreaterOrEqual(HeroPowerBar.ButtonSize, UiKit.MinTouchPx, "at least 48 dp");
-            Assert.GreaterOrEqual(HeroPowerBar.Gap, UiKit.MinSpacingPx, "at least 8 dp between buttons");
-            for (int bought = 0; bought <= 7; bought++)
+            Assert.GreaterOrEqual(PowerUpBar.ButtonSize, UiKit.MinTouchPx, "at least 48 dp");
+            Assert.GreaterOrEqual(PowerUpBar.Gap, UiKit.MinSpacingPx, "at least 8 dp between buttons");
+            Assert.AreEqual(PowerUps.TypeCount, PowerUpBar.MaxButtons);
+            Assert.AreEqual(PowerUpBar.MaxButtons, PowerGroups.MaxLeft + PowerGroups.MaxRight);
+            foreach (bool leftGroup in new[] { true, false })
             {
-                for (int k = 0; k < HeroPowerBar.MaxButtons; k++)
+                int max = leftGroup ? PowerGroups.MaxLeft : PowerGroups.MaxRight;
+                for (int k = 0; k < max; k++)
                 {
-                    Vector2 h = HeroPowerBar.PositionFor(k, bought);
-                    Assert.GreaterOrEqual(h.y, PowerUpBar.BottomOffset, "above the jump pad");
-                    if (!HeroPowerBar.OnJumpSide) continue;   // the column is on the other side of the screen: no bought button can touch it
-                    for (int b = 0; b < bought; b++)
+                    Vector2 a = PowerUpBar.PositionFor(k, leftGroup);
+                    Assert.GreaterOrEqual(a.y, PowerUpBar.BottomOffset, "above the pads");
+                    Assert.AreEqual(leftGroup ? PowerUpBar.SideOffset : -PowerUpBar.SideOffset, a.x, "its own edge");
+                    for (int j = k + 1; j < max; j++)
                     {
-                        Vector2 p = PowerUpBar.PositionFor(b, bought);
-                        bool sepX = Mathf.Abs(h.x - p.x) >= HeroPowerBar.ButtonSize + HeroPowerBar.Gap - 0.01f;
-                        bool sepY = Mathf.Abs(h.y - p.y) >= HeroPowerBar.ButtonSize + HeroPowerBar.Gap - 0.01f;
-                        Assert.IsTrue(sepX || sepY, "hero " + k + " touches bought " + b + " (" + bought + " bought)");
+                        Vector2 b = PowerUpBar.PositionFor(j, leftGroup);
+                        Assert.GreaterOrEqual(Mathf.Abs(a.y - b.y), PowerUpBar.ButtonSize + PowerUpBar.Gap - 0.01f, "buttons " + k + " and " + j);
                     }
                 }
             }
-            Assert.AreEqual(PowerUpBar.SideOffset, Mathf.Abs(HeroPowerBar.PositionFor(0, 0).x), "no bought block: the hero column takes the edge spot");
-            Assert.AreEqual(0, HeroPowerBar.BoughtColumns(0));
-            Assert.AreEqual(2, HeroPowerBar.BoughtColumns(7));
+            Assert.AreEqual(0f, PowerUpBar.AnchorX(true));
+            Assert.AreEqual(1f, PowerUpBar.AnchorX(false));
+            // one narrow column per group: well clear of the centred banners (BannerW 380) on the narrowest canvas (about 942 px wide at 9:21)
+            Assert.Less(PowerUpBar.ReachFromEdge + UiKit.MinSpacingPx, (942f - RunHud.BannerW) * 0.5f);
         }
     }
 }

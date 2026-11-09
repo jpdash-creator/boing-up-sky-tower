@@ -16,7 +16,15 @@ namespace BoingUpSkyTower.Content
     {
         public const string ResourcePath = "Content/content_manifest";
         public const int ExpectedRegions = 30;
-        public const int ExpectedLevelsPerRegion = 15;
+        /// <summary>Levels per region by the Bug List 6 item 4 rule (25).</summary>
+        public const int ExpectedLevelsPerRegion = 25;
+        /// <summary>
+        /// TODO(regions 6-30 migration): regions 1 to <see cref="MigratedRegions"/> have <see cref="ExpectedLevelsPerRegion"/> levels, the others still have
+        /// <see cref="LegacyLevelsPerRegion"/> until they are migrated. When all regions are on 25, delete the legacy constants and make this 30.
+        /// </summary>
+        public const int MigratedRegions = 5;
+        public const int LegacyLevelsPerRegion = 15;
+        public static int ExpectedLevelsFor(int regionIndex) { return regionIndex <= MigratedRegions ? ExpectedLevelsPerRegion : LegacyLevelsPerRegion; }
 
         readonly Dictionary<string, RegionDef> _regionsById = new Dictionary<string, RegionDef>();
         readonly Dictionary<int, RegionDef> _regionsByIndex = new Dictionary<int, RegionDef>();
@@ -125,8 +133,8 @@ namespace BoingUpSkyTower.Content
             foreach (RegionDef r in _regions)
             {
                 if (r.Status != "live" && r.Status != "teaser") throw new ContentException(r.Id, "unknown region status '" + r.Status + "'");
-                if (r.Levels.Count != ExpectedLevelsPerRegion)
-                    throw new ContentException(r.Id, "expected " + ExpectedLevelsPerRegion + " levels, found " + r.Levels.Count);
+                if (r.Levels.Count != ExpectedLevelsFor(r.Index))
+                    throw new ContentException(r.Id, "expected " + ExpectedLevelsFor(r.Index) + " levels, found " + r.Levels.Count);
                 if (r.Unlock.Requires != null && !_regionsById.ContainsKey(r.Unlock.Requires))
                     throw new ContentException(r.Id, "unlock.requires references unknown region '" + r.Unlock.Requires + "'");
                 for (int i = 0; i < r.Levels.Count; i++)

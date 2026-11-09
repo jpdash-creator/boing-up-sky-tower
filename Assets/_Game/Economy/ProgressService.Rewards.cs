@@ -318,7 +318,7 @@ namespace BoingUpSkyTower.Economy
                 if (regionIndex > 0) { RegionStats hs = RegionStatsFor(regionIndex, true); if (hs != null) hs.HardClears = SaturatingAdd(hs.HardClears, 1); }
             }
             if (level.Index == RegionGoalTable.NoWallLevelIndex) AddBoth(RewardStat.NoWall, 1);
-            if (level.Index == 8 || level.Index == 15) AddBoth(RewardStat.GemLevel, 1);
+            if (level.Index == 8 || level.LevelClass == LevelDef.ClassHighlyComplex) AddBoth(RewardStat.GemLevel, 1);
             int stars = run.Stars;   // star pickups are never stripped on replays, so these two counters work on every level
             if (stars >= 2) AddBoth(RewardStat.Stars2, 1);
             if (stars > 0) AddBoth(RewardStat.StarsEarned, stars);

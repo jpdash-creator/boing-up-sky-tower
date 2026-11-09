@@ -180,7 +180,7 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void EveryRegion1UncommonRareAndEliteMergesUpTheWholeChain()
         {
-            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco", "candygirl", "gummi", "choco", "marsh", "cookie", "monk", "sprout", "tora", "rusu", "ryu" })
+            foreach (string line in new[] { "momo", "forestgirl", "beachotter", "candygirl", "monk" })
             {
                 string[] chain = { line, line + "_u", line + "_r", line + "_e", line + "_l" };
                 for (int i = 0; i < chain.Length - 1; i++)
@@ -223,12 +223,8 @@ namespace BoingUpSkyTower.Tests
         {
             AllHeroesScreen s = NewAll();
             Assert.AreEqual(5, s.Groups.Count, "regions 1 to 5");
-            Assert.AreEqual(25, s.Groups[0].Entries.Count, "Region 1: Momo, Bumble, Ribbi, Dandy, Pip x 5 tiers");
-            Assert.AreEqual(25, s.Groups[1].Entries.Count, "Region 2: Capi, Nib, Spike, Moss, Fenn x 5 tiers");
-            Assert.AreEqual(25, s.Groups[2].Entries.Count, "Region 3: Otto, Pinch, Shelly, Bloop, Coco x 5 tiers");
-            Assert.AreEqual(25, s.Groups[3].Entries.Count, "Region 4: Bonbon, Gummi, Choco, Marsh, Cookie x 5 tiers");
-            Assert.AreEqual(25, s.Groups[4].Entries.Count, "Region 5: Bao, Sprout, Tora, Rusu, Ryu x 5 tiers");
-            Assert.AreEqual(125, HeroCardsOn(canvas).Count, "25 heroes x 5 tiers");
+            for (int g = 0; g < 5; g++) Assert.AreEqual(5, s.Groups[g].Entries.Count, "Region " + (g + 1) + ": one ACTIVE hero line x 5 tiers (Momo, Capi, Otto, Bonbon, Bao)");
+            Assert.AreEqual(25, HeroCardsOn(canvas).Count, "All Heroes lists the 25 active heroes only (5 lines x 5 tiers)");
             for (int i = 0; i < s.Groups.Count; i++) Assert.AreEqual(i + 1, s.Groups[i].Region);
             var cols = new HashSet<float>();
             foreach (RectTransform card in HeroCardsOn(canvas)) cols.Add(Mathf.Round(card.anchorMin.x * 3f));
@@ -310,6 +306,99 @@ namespace BoingUpSkyTower.Tests
                 int n;
                 Assert.IsFalse(int.TryParse(t.text, out n), "a number on the All Heroes screen: " + t.text);
             }
+        }
+
+        // ---------------------------------------------------------------- Heroes tabs and Powers (Bug List 6 item 3a)
+
+        PowersScreen NewPowers()
+        {
+            var host = new PowersScreen.Host { NewOverlay = () => UiKit.Rect(canvas, "Popup"), CloseOverlay = () => { } };
+            var s = new PowersScreen(canvas, canvas, P, host);
+            s.Build();
+            return s;
+        }
+
+        [Test]
+        public void PowersListsAllSevenPowerUpsWithTheOwnedNumberAtTheBottomRightAndNothingToBuy()
+        {
+            P.GrantPowerUp("pw_flight", 3);
+            P.GrantPowerUp("pw_slowtime", 40);
+            PowersScreen s = NewPowers();
+            Assert.AreEqual(7, s.Cards.Count);
+            string[] ids = { "pw_flight", "pw_rocket", "pw_doublejump", "pw_magnet", "pw_shield", "pw_slowtime", "pw_wallstick" };
+            for (int i = 0; i < ids.Length; i++)
+            {
+                Assert.AreEqual(ids[i], s.Cards[i].Id, "owner order");
+                Transform card = FindDeep(canvas, "Power_" + ids[i]);
+                Assert.IsNotNull(card, ids[i]);
+                Text owned = FindDeep(card, PowersScreen.OwnedName).GetComponent<Text>();
+                Assert.AreEqual(P.PowerUpCount(ids[i]).ToString(), owned.text, ids[i] + ": the number owned");
+                RectTransform badge = (RectTransform)owned.transform.parent;
+                Assert.AreEqual(new Vector2(1f, 0f), badge.anchorMin, "bottom right anchor");
+                Assert.AreEqual(new Vector2(1f, 0f), badge.anchorMax, "bottom right anchor");
+            }
+            Assert.AreEqual("3", FindDeep(FindDeep(canvas, "Power_pw_flight"), PowersScreen.OwnedName).GetComponent<Text>().text);
+            Assert.AreEqual("40", FindDeep(FindDeep(canvas, "Power_pw_slowtime"), PowersScreen.OwnedName).GetComponent<Text>().text);
+            foreach (Button b in canvas.GetComponentsInChildren<Button>(true)) Assert.IsFalse(b.name.StartsWith("Buy"), "no buy button: " + b.name);
+        }
+
+        [Test]
+        public void PowersTapShowsOnlyNameAndDescription()
+        {
+            PowersScreen s = NewPowers();
+            Assert.IsTrue(s.OpenInfo("pw_flight"));
+            Transform pop = FindDeep(canvas, PowersScreen.InfoPopupName);
+            Assert.IsNotNull(pop);
+            var texts = new List<string>();
+            foreach (Text t in pop.GetComponentsInChildren<Text>(true)) texts.Add(t.text);
+            CollectionAssert.AreEquivalent(new[] { "Flight", P.PowerUpDefs.Get("pw_flight").Description }, texts);
+            Assert.IsFalse(s.OpenInfo("pw_not_there"));
+        }
+
+        [Test]
+        public void EveryHeroPageHasTheThreeTabsAndTheOwnTabIsSelected()
+        {
+            var seen = new List<string>();
+            var all = NewAll();
+            Assert.IsNotNull(all);
+            AssertTabs(canvas, HeroTabs.AllHeroes);
+            Object.DestroyImmediate(FindDeep(canvas, "AllHeroesBody").gameObject);
+            Object.DestroyImmediate(FindDeep(canvas, "AllHeroesBackground").gameObject);
+            NewMerge();
+            AssertTabs(canvas, HeroTabs.Merge);
+            Object.DestroyImmediate(FindDeep(canvas, "MergeBody").gameObject);
+            Object.DestroyImmediate(FindDeep(canvas, "MergeBackground").gameObject);
+            NewPowers();
+            AssertTabs(canvas, HeroTabs.Powers);
+            seen.Add("ok");
+            Assert.AreEqual(1, seen.Count);
+        }
+
+        static void AssertTabs(Transform root, int selected)
+        {
+            Assert.AreEqual("All Heroes", HeroTabs.Captions[0]);
+            Assert.AreEqual("Merge", HeroTabs.Captions[1]);
+            Assert.AreEqual("Powers", HeroTabs.Captions[2]);
+            for (int i = 0; i < 3; i++)
+            {
+                Transform tab = FindDeep(root, HeroTabs.ButtonNames[i]);
+                Assert.IsNotNull(tab, HeroTabs.ButtonNames[i]);
+                Assert.IsNotNull(tab.GetComponent<Button>());
+                Assert.GreaterOrEqual(((RectTransform)tab).rect.height, 0f);
+                Assert.AreEqual(HeroTabs.Captions[i], FindDeep(tab, "Label").GetComponent<Text>().text);
+                Assert.AreEqual(i == selected, tab.GetComponent<A11yLabel>().Text.Contains("selected"), "tab " + i);
+            }
+            Assert.IsNull(FindDeep(root, "TabBar"), "no bottom bar");
+        }
+
+        [Test]
+        public void HeroPagesUseTheMergeBackgroundArt()
+        {
+            NewMerge();
+            Sprite merge = FindDeep(FindDeep(canvas, "MergeBackground"), "Bg").GetComponent<Image>().sprite;
+            Object.DestroyImmediate(FindDeep(canvas, "MergeBackground").gameObject);
+            NewAll();
+            Assert.AreSame(merge, FindDeep(FindDeep(canvas, "AllHeroesBackground"), "Bg").GetComponent<Image>().sprite);
         }
 
         static Transform FindDeep(Transform root, string name)

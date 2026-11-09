@@ -726,8 +726,8 @@ namespace BoingUpSkyTower.Simulation
                 System.Array.Sort(gemRows);
                 gemTiers = new int[count];
                 for (int gi = 0; gi < count; gi++) gemTiers[gi] = GemTierAt(cfg, spec.LevelIndex * 16 + gi);
-                // Doc 25: on the gem levels (8 and 15) round(25 percent) of the gems are double gems (Tag 4, worth DoubleGemValue), picked by a seeded shuffle.
-                if (!spec.Endless && (spec.LevelIndex == 8 || spec.LevelIndex == 15) && count > 0)
+                // Doc 25: on the gem levels (8 and the top level: 25, or 15 in the regions not migrated) round(25 percent) of the gems are double gems (Tag 4, worth DoubleGemValue), picked by a seeded shuffle.
+                if (!spec.Endless && (spec.LevelIndex == 8 || spec.IsTopLevel) && count > 0)
                 {
                     int doubles = (count * cfg.DoubleGemPercent + 50) / 100;
                     int[] order = new int[count];

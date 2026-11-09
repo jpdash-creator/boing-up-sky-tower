@@ -85,7 +85,8 @@ namespace BoingUpSkyTower.Economy
     {
         public static bool IsMilestone(LevelDef level)
         {
-            return level.LevelClass == LevelDef.ClassComplex || level.LevelClass == LevelDef.ClassHighlyComplex;
+            // Bug List 6 item 4: the class follows the difficulty score now (complex = 75+), so the gem milestones are the special levels 5, 10, 15, 20 and 25 (levels 5, 10, 15 in the 15-level regions).
+            return level.Index > 0 && level.Index % 5 == 0;
         }
 
         static int Percent(double chance)
@@ -132,7 +133,7 @@ namespace BoingUpSkyTower.Economy
                 GemRewardDef g = level.Rewards.Gems;
                 result.RewardGems = CoinPayoutRules.MilestoneGems(level.Seed, g.Chance, g.Min, g.Max, g.FirstClearGuaranteed ?? 0);
             }
-            if (firstClear && level.Index == 15) result.RewardGems += EconomyRules.Level15DoubleGemBonus;
+            if (firstClear && level.LevelClass == LevelDef.ClassHighlyComplex) result.RewardGems += EconomyRules.Level15DoubleGemBonus;
             if (firstClear && level.Index == 8) result.HiddenGemReward = Math.Min(Math.Max(run.HiddenGems, 0), EconomyRules.Level8HiddenGemMax);
             return result;
         }

@@ -200,7 +200,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             int seeds = int.Parse(Environment.GetEnvironmentVariable("HERO_SEEDS") ?? "8");
             string[] ids = Heroes();
             Result[] res = new Result[ids.Length];
-            Parallel.For(0, ids.Length, i => { res[i] = MeasureHero(CharacterDefs.Get(ids[i]), l15, seeds); });
+            Parallel.For(0, ids.Length, i => { res[i] = MeasureHero(CharacterDefs.GetIncludingInactive(ids[i]), l15, seeds); });
 
             var md = new StringBuilder();
             md.AppendLine("# Hero tier measurement, Region 1 level 15 (" + seeds + " random attempt layouts per hero)");

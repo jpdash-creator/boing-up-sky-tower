@@ -74,7 +74,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Base scroll speed as a percent of the difficulty-blended speed (owner, 2026-10-19: +20 percent).</summary>
         public int ScrollBasePercent = 120;
         /// <summary>Chance, in per mille, that a gem spot (one per row of a campaign level) holds a gem. See <see cref="DifficultyGemPermille"/>.</summary>
-        public int GemSpotPermille = 27;
+        public int GemSpotPermille = 14;
         /// <summary>
         /// GemSpotPermille per difficulty (Relaxed, Easy, Normal, Hard, Insane). The owner asked for 2.5, 2.5, 3.5, 4.5, 5 percent (issue list 24 point 5).
         /// Measured with one spot per row: 2.5 percent places only about 62 gems per region (target 70 to 110) and 4.5 / 5 percent place 112 / 130,
@@ -84,8 +84,22 @@ namespace BoingUpSkyTower.Simulation
         /// (about 55 to 75 placed gems per region on every difficulty).
         /// Doc 25 (owner list 27: levels of 60 to 150 rows, no gems on the combo levels 5 and 10, double gems on levels 8 and 15) re-tuned the shares, not the rarity
         /// weights, to 2.7, 2.7, 2.9, 3.0 and 3.2 percent: 56 to 73 placed gem value per region on every difficulty (target 55 to 75).
+        /// Owner 2026-11-09: 25 levels per region about doubled the gem income, so the shares are scaled by about 0.55 to 1.4, 1.4, 1.5, 1.5 and 1.5 percent
+        /// (59 to 70 placed gem value per region on every difficulty, the old 55 to 75 band; the band cannot hold more spread than that).
         /// </summary>
-        public static readonly int[] DifficultyGemPermille = { 27, 27, 29, 30, 32 };
+        public static readonly int[] DifficultyGemPermille = { 14, 14, 15, 15, 15 };
+        /// <summary>Base size of one scroll speed-up step in percent: the old Relaxed step (Bug List 6 item 6). Every difficulty multiplies it.</summary>
+        public const int ScrollStepBasePercent = 20;
+        /// <summary>Step size multiplier per difficulty in percent of the base (Relaxed x1.00, Easy x1.10, Normal x1.25, Hard x1.40, Insane x1.50).</summary>
+        public static readonly int[] DifficultyStepMultiplierPercent = { 100, 110, 125, 140, 150 };
+        /// <summary>Scroll step size in percent per difficulty (integer maths): 20, 22, 25, 28, 30 percent every ScrollStepSeconds.</summary>
+        public static readonly int[] DifficultyStepPercent = BuildDifficultyStepPercent();
+        static int[] BuildDifficultyStepPercent()
+        {
+            int[] r = new int[DifficultyStepMultiplierPercent.Length];
+            for (int i = 0; i < r.Length; i++) r[i] = ScrollStepBasePercent * DifficultyStepMultiplierPercent[i] / 100;
+            return r;
+        }
         public int ScrollStepSeconds = 5;
         public int ScrollStepPercent = 4;
         public int ScrollStepCapPercent = 50;
@@ -392,15 +406,16 @@ namespace BoingUpSkyTower.Simulation
         public int LogInvulnTicks = 60;
 
         // ---- Generator: how many rows carry a new special platform (percent of free rows), by campaign level ----
-        /// <summary>Share of rows with a new special platform: SpecialShareLevel3Percent at level 3 rising linearly to SpecialShareLevel15Percent at level 15.</summary>
+        /// <summary>Share of rows with a new special platform: SpecialShareLevel3Percent at level 3 rising linearly to SpecialShareLevel25Percent at level 25 (the top level of the 25-level rule).</summary>
         public int SpecialShareLevel3Percent = 15;
-        public int SpecialShareLevel15Percent = 55;
+        public int SpecialShareLevel25Percent = 55;
         /// <summary>
         /// Doc 25 (owner list 27): share of rows with a special platform, ramping INSIDE each level from the low value at the first rows to the high value at the
-        /// last rows. Index = level 1..15 (index 0 unused): L1 10 to 30, L2 to 5 30 to 50, L6 to 14 40 to 60, L15 50 to 70 percent.
+        /// last rows. Index = level 1..25 (index 0 unused): a straight line in steps of 5 from L1 10 to 30 up to L24 and L25 50 to 70 percent
+        /// (Bug List 6 item 4: 25 levels per region; the top level 25 keeps the old level 15 numbers, the smooth ramp keeps the difficulty value monotone).
         /// </summary>
-        public int[] RampLowPercent = { 0, 10, 30, 30, 30, 30, 40, 40, 40, 40, 40, 40, 40, 40, 40, 50 };
-        public int[] RampHighPercent = { 0, 30, 50, 50, 50, 50, 60, 60, 60, 60, 60, 60, 60, 60, 60, 70 };
+        public int[] RampLowPercent = { 0, 10, 10, 15, 15, 15, 20, 20, 20, 25, 25, 25, 30, 30, 30, 35, 35, 35, 40, 40, 40, 45, 45, 45, 50, 50 };
+        public int[] RampHighPercent = { 0, 30, 30, 35, 35, 35, 40, 40, 40, 45, 45, 45, 50, 50, 50, 55, 55, 55, 60, 60, 60, 65, 65, 65, 70, 70 };
         /// <summary>Doc 25: platforms per row (percent): 130 platforms per 100 rows, the spine platform of each row plus planned row mates.</summary>
         public int PlatformsPerRowPercent = 130;
         /// <summary>Doc 25: levels with gems (8 and 15) make this percent of the gems double gems (worth DoubleGemValue). Tag 4 of a Gem pickup.</summary>
@@ -414,22 +429,47 @@ namespace BoingUpSkyTower.Simulation
         public int HazardEarlyRowsPerHazard = 6;
         public int HazardEarlyLastLevel = 6;
         /// <summary>
-        /// Content difficulty (permille) of campaign level N (index 1..15), the same numbers the shipped level files carry (region 1; the other regions
-        /// match). The endless cycle (EndlessTower.LevelForFloor) reads the level's difficulty through LevelSpec.DifficultyForLevel, a test pins this table
+        /// Content difficulty (permille) of campaign level N (index 1..25), the smooth monotone curve of region 1 (Content/config/difficulty_curve.json; the special levels 5, 10, 15, 20 carry their own
+        /// higher or lower d in the files because their goal changes what the score probe measures, this table keeps the endless cycle monotone). The endless cycle (EndlessTower.LevelForFloor) reads the level's difficulty through LevelSpec.DifficultyForLevel, a test pins this table
         /// to the shipped content.
         /// </summary>
-        public int[] LevelContentDifficultyPermille = { 0, 50, 100, 150, 220, 400, 350, 420, 500, 580, 700, 620, 700, 780, 860, 1000 };
+        public int[] LevelContentDifficultyPermille = { 0, 50, 202, 233, 280, 372, 375, 398, 420, 491, 518, 550, 565, 574, 642, 645, 694, 701, 746, 772, 801, 815, 854, 897, 905, 937 };
 
         // ---- Difficulty ramp (all regions): from level 3 the layout difficulty never falls below a floor that rises from level 3 to 15 ----
-        public int RampFloorLevel3Permille = 300;
-        public int RampFloorLevel15Permille = 1000;
+        // TODO(regions 6-30 migration): the regions not migrated to 25 levels yet keep these 15-level tables (LevelSpec.LevelsInRegion == 15); delete them with the migration.
+        public int[] LegacyRampLowPercent = { 0, 10, 30, 30, 30, 30, 40, 40, 40, 40, 40, 40, 40, 40, 40, 50 };
+        public int[] LegacyRampHighPercent = { 0, 30, 50, 50, 50, 50, 60, 60, 60, 60, 60, 60, 60, 60, 60, 70 };
+        public int[] LegacyLevelContentDifficultyPermille = { 0, 50, 100, 150, 220, 400, 350, 420, 500, 580, 700, 620, 700, 780, 860, 1000 };
+        public int LegacyRampFloorLevel3Permille = 300;
+        public int LegacyRampFloorLevel15Permille = 1000;
 
-        /// <summary>The difficulty floor (permille) of campaign level <paramref name="idx"/>: 0 below level 3, then linear from RampFloorLevel3Permille (level 3) to RampFloorLevel15Permille (level 15).</summary>
+        /// <summary>Ramp low / high percent and content difficulty of level <paramref name="idx"/> in a region of <paramref name="levels"/> levels (25, or the legacy 15).</summary>
+        public int RampLow(int idx, int levels) { return levels <= 15 ? LegacyRampLowPercent[idx > 15 ? 15 : idx] : RampLowPercent[idx > 25 ? 25 : idx]; }
+        public int RampHigh(int idx, int levels) { return levels <= 15 ? LegacyRampHighPercent[idx > 15 ? 15 : idx] : RampHighPercent[idx > 25 ? 25 : idx]; }
+        public int ContentDifficultyPermille(int idx, int levels) { return levels <= 15 ? LegacyLevelContentDifficultyPermille[idx > 15 ? 15 : idx] : LevelContentDifficultyPermille[idx > 25 ? 25 : idx]; }
+
+        public int RampFloorLevel3Permille = 100;
+        public int RampFloorLevel25Permille = 900;
+        /// <summary>Levels per region (Bug List 6 item 4): the top level of every ramp and of the endless cycle.</summary>
+        public const int LevelsPerRegion = 25;
+
+        /// <summary>The difficulty floor (permille) of campaign level <paramref name="idx"/>: 0 below level 3, then linear from RampFloorLevel3Permille (level 3) to RampFloorLevel25Permille (level 25).</summary>
+        public int RampFloorPermille(int idx, int levels)
+        {
+            if (levels <= 15)
+            {
+                if (idx < 3) return 0;
+                if (idx > 15) idx = 15;
+                return LegacyRampFloorLevel3Permille + (LegacyRampFloorLevel15Permille - LegacyRampFloorLevel3Permille) * (idx - 3) / 12;
+            }
+            return RampFloorPermille(idx);
+        }
+
         public int RampFloorPermille(int idx)
         {
             if (idx < 3) return 0;
-            if (idx > 15) idx = 15;
-            return RampFloorLevel3Permille + (RampFloorLevel15Permille - RampFloorLevel3Permille) * (idx - 3) / 12;
+            if (idx > LevelsPerRegion) idx = LevelsPerRegion;
+            return RampFloorLevel3Permille + (RampFloorLevel25Permille - RampFloorLevel3Permille) * (idx - 3) / (LevelsPerRegion - 3);
         }
 
         // Campaign scroll ramp (BossChase, LevelSpec.Ramp): same step formula as the endless ramp, clamped.

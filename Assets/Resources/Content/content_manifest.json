@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contentHash": "38031dab5af71ce68e334f426a0c5ca5a9a114c283491429bfb17f386c5aa78f",
+  "contentHash": "6298c88958aace06a432d00b8c3a2c7a129e9a3dbafbfcd5e29a60c8cefaa95d",
   "regions": [
     {
       "id": "region_001_meadow_springs",
@@ -45,7 +45,17 @@
         "lvl_001_12",
         "lvl_001_13",
         "lvl_001_14",
-        "lvl_001_15"
+        "lvl_001_15",
+        "lvl_001_16",
+        "lvl_001_17",
+        "lvl_001_18",
+        "lvl_001_19",
+        "lvl_001_20",
+        "lvl_001_21",
+        "lvl_001_22",
+        "lvl_001_23",
+        "lvl_001_24",
+        "lvl_001_25"
       ],
       "availableFrom": null
     },
@@ -92,7 +102,17 @@
         "lvl_002_12",
         "lvl_002_13",
         "lvl_002_14",
-        "lvl_002_15"
+        "lvl_002_15",
+        "lvl_002_16",
+        "lvl_002_17",
+        "lvl_002_18",
+        "lvl_002_19",
+        "lvl_002_20",
+        "lvl_002_21",
+        "lvl_002_22",
+        "lvl_002_23",
+        "lvl_002_24",
+        "lvl_002_25"
       ],
       "availableFrom": null
     },
@@ -139,7 +159,17 @@
         "lvl_003_12",
         "lvl_003_13",
         "lvl_003_14",
-        "lvl_003_15"
+        "lvl_003_15",
+        "lvl_003_16",
+        "lvl_003_17",
+        "lvl_003_18",
+        "lvl_003_19",
+        "lvl_003_20",
+        "lvl_003_21",
+        "lvl_003_22",
+        "lvl_003_23",
+        "lvl_003_24",
+        "lvl_003_25"
       ],
       "availableFrom": null
     },
@@ -186,7 +216,17 @@
         "lvl_004_12",
         "lvl_004_13",
         "lvl_004_14",
-        "lvl_004_15"
+        "lvl_004_15",
+        "lvl_004_16",
+        "lvl_004_17",
+        "lvl_004_18",
+        "lvl_004_19",
+        "lvl_004_20",
+        "lvl_004_21",
+        "lvl_004_22",
+        "lvl_004_23",
+        "lvl_004_24",
+        "lvl_004_25"
       ],
       "availableFrom": null
     },
@@ -233,7 +273,17 @@
         "lvl_005_12",
         "lvl_005_13",
         "lvl_005_14",
-        "lvl_005_15"
+        "lvl_005_15",
+        "lvl_005_16",
+        "lvl_005_17",
+        "lvl_005_18",
+        "lvl_005_19",
+        "lvl_005_20",
+        "lvl_005_21",
+        "lvl_005_22",
+        "lvl_005_23",
+        "lvl_005_24",
+        "lvl_005_25"
       ],
       "availableFrom": null
     },
@@ -1453,7 +1503,7 @@
       "index": 2,
       "seed": 229722,
       "class": "simple",
-      "difficulty": 0.1,
+      "difficulty": 0.202,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -1485,7 +1535,7 @@
       "index": 3,
       "seed": 334451,
       "class": "simple",
-      "difficulty": 0.15,
+      "difficulty": 0.233,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -1503,7 +1553,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 75,
+        "coinPayout": 70,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1516,8 +1566,8 @@
       "region": "region_001_meadow_springs",
       "index": 4,
       "seed": 439180,
-      "class": "simple",
-      "difficulty": 0.22,
+      "class": "medium",
+      "difficulty": 0.28,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -1535,7 +1585,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 80,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1548,8 +1598,8 @@
       "region": "region_001_meadow_springs",
       "index": 5,
       "seed": 543909,
-      "class": "complex",
-      "difficulty": 0.4,
+      "class": "medium",
+      "difficulty": 0.49,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -1582,7 +1632,7 @@
       "index": 6,
       "seed": 648638,
       "class": "medium",
-      "difficulty": 0.35,
+      "difficulty": 0.375,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -1600,7 +1650,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 90,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1614,9 +1664,9 @@
       "index": 7,
       "seed": 753367,
       "class": "medium",
-      "difficulty": 0.42,
+      "difficulty": 0.398,
       "goal": {
-        "type": "noWallBounce",
+        "type": "reachFloor",
         "value": 120
       },
       "stars": [
@@ -1632,7 +1682,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 95,
+        "coinPayout": 80,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1646,7 +1696,7 @@
       "index": 8,
       "seed": 858096,
       "class": "medium",
-      "difficulty": 0.5,
+      "difficulty": 0.42,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -1664,7 +1714,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 105,
+        "coinPayout": 85,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1677,8 +1727,8 @@
       "region": "region_001_meadow_springs",
       "index": 9,
       "seed": 962825,
-      "class": "medium",
-      "difficulty": 0.58,
+      "class": "hard",
+      "difficulty": 0.491,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -1696,7 +1746,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 110,
+        "coinPayout": 90,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1709,12 +1759,11 @@
       "region": "region_001_meadow_springs",
       "index": 10,
       "seed": 1067554,
-      "class": "complex",
-      "difficulty": 0.7,
+      "class": "hard",
+      "difficulty": 0.518,
       "goal": {
-        "type": "comboChain",
-        "value": 4,
-        "count": 3
+        "type": "noWallBounce",
+        "value": 150
       },
       "stars": [
         {
@@ -1744,7 +1793,7 @@
       "index": 11,
       "seed": 1172283,
       "class": "hard",
-      "difficulty": 0.62,
+      "difficulty": 0.55,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -1762,7 +1811,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 120,
+        "coinPayout": 95,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1776,7 +1825,7 @@
       "index": 12,
       "seed": 1277012,
       "class": "hard",
-      "difficulty": 0.7,
+      "difficulty": 0.565,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -1794,7 +1843,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 125,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1808,7 +1857,7 @@
       "index": 13,
       "seed": 1381741,
       "class": "hard",
-      "difficulty": 0.78,
+      "difficulty": 0.574,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -1826,7 +1875,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 135,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1840,7 +1889,7 @@
       "index": 14,
       "seed": 1486470,
       "class": "hard",
-      "difficulty": 0.86,
+      "difficulty": 0.642,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -1858,7 +1907,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 140,
+        "coinPayout": 105,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -1871,10 +1920,10 @@
       "region": "region_001_meadow_springs",
       "index": 15,
       "seed": 1591199,
-      "class": "highly_complex",
-      "difficulty": 1,
+      "class": "complex",
+      "difficulty": 0.645,
       "goal": {
-        "type": "reachFloor",
+        "type": "findHiddenGem",
         "value": 150
       },
       "stars": [
@@ -1890,9 +1939,331 @@
         }
       ],
       "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3
+        }
+      }
+    },
+    {
+      "id": "lvl_001_16",
+      "region": "region_001_meadow_springs",
+      "index": 16,
+      "seed": 1695928,
+      "class": "complex",
+      "difficulty": 0.694,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 100
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 110,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_17",
+      "region": "region_001_meadow_springs",
+      "index": 17,
+      "seed": 1800657,
+      "class": "complex",
+      "difficulty": 0.701,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 105
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 115,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_18",
+      "region": "region_001_meadow_springs",
+      "index": 18,
+      "seed": 1905386,
+      "class": "complex",
+      "difficulty": 0.746,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 110
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 120,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_19",
+      "region": "region_001_meadow_springs",
+      "index": 19,
+      "seed": 2010115,
+      "class": "complex",
+      "difficulty": 0.772,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 115
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_20",
+      "region": "region_001_meadow_springs",
+      "index": 20,
+      "seed": 2114844,
+      "class": "complex",
+      "difficulty": 0.801,
+      "goal": {
+        "type": "speedrun",
+        "value": 90,
+        "timeSec": 75
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 120
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3,
+          "firstClearGuaranteed": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_21",
+      "region": "region_001_meadow_springs",
+      "index": 21,
+      "seed": 2219573,
+      "class": "complex",
+      "difficulty": 0.815,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 125
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_22",
+      "region": "region_001_meadow_springs",
+      "index": 22,
+      "seed": 2324302,
+      "class": "complex",
+      "difficulty": 0.854,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 130
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 130,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_23",
+      "region": "region_001_meadow_springs",
+      "index": 23,
+      "seed": 2429031,
+      "class": "complex",
+      "difficulty": 0.897,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 135
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 135,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_24",
+      "region": "region_001_meadow_springs",
+      "index": 24,
+      "seed": 2533760,
+      "class": "complex",
+      "difficulty": 0.905,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 140
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 140,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_001_25",
+      "region": "region_001_meadow_springs",
+      "index": 25,
+      "seed": 2638489,
+      "class": "highly_complex",
+      "difficulty": 0.937,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 145
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
         "coinPayout": 900,
         "gems": {
-          "chance": 1,
+          "chance": 1.0,
           "min": 5,
           "max": 5,
           "firstClearGuaranteed": 5,
@@ -1908,7 +2279,7 @@
       "index": 1,
       "seed": 132912,
       "class": "simple",
-      "difficulty": 0.05,
+      "difficulty": 0.079,
       "goal": {
         "type": "reachFloor",
         "value": 60
@@ -1940,7 +2311,7 @@
       "index": 2,
       "seed": 237641,
       "class": "simple",
-      "difficulty": 0.1,
+      "difficulty": 0.195,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -1972,7 +2343,7 @@
       "index": 3,
       "seed": 342370,
       "class": "simple",
-      "difficulty": 0.15,
+      "difficulty": 0.225,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -1990,7 +2361,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 75,
+        "coinPayout": 70,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2003,8 +2374,8 @@
       "region": "region_002_mushroom_grove",
       "index": 4,
       "seed": 447099,
-      "class": "simple",
-      "difficulty": 0.22,
+      "class": "medium",
+      "difficulty": 0.306,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -2022,7 +2393,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 80,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2035,8 +2406,8 @@
       "region": "region_002_mushroom_grove",
       "index": 5,
       "seed": 551828,
-      "class": "complex",
-      "difficulty": 0.4,
+      "class": "medium",
+      "difficulty": 0.52,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -2069,7 +2440,7 @@
       "index": 6,
       "seed": 656557,
       "class": "medium",
-      "difficulty": 0.35,
+      "difficulty": 0.378,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -2087,7 +2458,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 90,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2101,9 +2472,9 @@
       "index": 7,
       "seed": 761286,
       "class": "medium",
-      "difficulty": 0.42,
+      "difficulty": 0.41,
       "goal": {
-        "type": "noWallBounce",
+        "type": "reachFloor",
         "value": 120
       },
       "stars": [
@@ -2119,7 +2490,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 95,
+        "coinPayout": 80,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2133,7 +2504,7 @@
       "index": 8,
       "seed": 866015,
       "class": "medium",
-      "difficulty": 0.5,
+      "difficulty": 0.459,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -2151,7 +2522,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 105,
+        "coinPayout": 85,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2164,8 +2535,8 @@
       "region": "region_002_mushroom_grove",
       "index": 9,
       "seed": 970744,
-      "class": "medium",
-      "difficulty": 0.58,
+      "class": "hard",
+      "difficulty": 0.492,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -2183,7 +2554,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 110,
+        "coinPayout": 90,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2196,12 +2567,11 @@
       "region": "region_002_mushroom_grove",
       "index": 10,
       "seed": 1075473,
-      "class": "complex",
-      "difficulty": 0.7,
+      "class": "hard",
+      "difficulty": 0.565,
       "goal": {
-        "type": "comboChain",
-        "value": 4,
-        "count": 3
+        "type": "noWallBounce",
+        "value": 150
       },
       "stars": [
         {
@@ -2231,7 +2601,7 @@
       "index": 11,
       "seed": 1180202,
       "class": "hard",
-      "difficulty": 0.62,
+      "difficulty": 0.575,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2249,7 +2619,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 120,
+        "coinPayout": 95,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2263,7 +2633,7 @@
       "index": 12,
       "seed": 1284931,
       "class": "hard",
-      "difficulty": 0.7,
+      "difficulty": 0.594,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2281,7 +2651,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 125,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2295,7 +2665,7 @@
       "index": 13,
       "seed": 1389660,
       "class": "hard",
-      "difficulty": 0.78,
+      "difficulty": 0.653,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2313,7 +2683,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 135,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2327,7 +2697,7 @@
       "index": 14,
       "seed": 1494389,
       "class": "hard",
-      "difficulty": 0.86,
+      "difficulty": 0.671,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2345,7 +2715,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 140,
+        "coinPayout": 105,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2358,10 +2728,10 @@
       "region": "region_002_mushroom_grove",
       "index": 15,
       "seed": 1599118,
-      "class": "highly_complex",
-      "difficulty": 1,
+      "class": "complex",
+      "difficulty": 0.699,
       "goal": {
-        "type": "reachFloor",
+        "type": "findHiddenGem",
         "value": 150
       },
       "stars": [
@@ -2377,9 +2747,331 @@
         }
       ],
       "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3
+        }
+      }
+    },
+    {
+      "id": "lvl_002_16",
+      "region": "region_002_mushroom_grove",
+      "index": 16,
+      "seed": 1703847,
+      "class": "complex",
+      "difficulty": 0.713,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 100
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 110,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_17",
+      "region": "region_002_mushroom_grove",
+      "index": 17,
+      "seed": 1808576,
+      "class": "complex",
+      "difficulty": 0.76,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 105
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 115,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_18",
+      "region": "region_002_mushroom_grove",
+      "index": 18,
+      "seed": 1913305,
+      "class": "complex",
+      "difficulty": 0.767,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 110
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 120,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_19",
+      "region": "region_002_mushroom_grove",
+      "index": 19,
+      "seed": 2018034,
+      "class": "complex",
+      "difficulty": 0.796,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 115
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_20",
+      "region": "region_002_mushroom_grove",
+      "index": 20,
+      "seed": 2122763,
+      "class": "complex",
+      "difficulty": 0.84,
+      "goal": {
+        "type": "speedrun",
+        "value": 90,
+        "timeSec": 75
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 120
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3,
+          "firstClearGuaranteed": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_21",
+      "region": "region_002_mushroom_grove",
+      "index": 21,
+      "seed": 2227492,
+      "class": "complex",
+      "difficulty": 0.844,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 125
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_22",
+      "region": "region_002_mushroom_grove",
+      "index": 22,
+      "seed": 2332221,
+      "class": "complex",
+      "difficulty": 0.915,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 130
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 130,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_23",
+      "region": "region_002_mushroom_grove",
+      "index": 23,
+      "seed": 2436950,
+      "class": "complex",
+      "difficulty": 0.935,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 135
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 135,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_24",
+      "region": "region_002_mushroom_grove",
+      "index": 24,
+      "seed": 2541679,
+      "class": "complex",
+      "difficulty": 0.961,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 140
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 140,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_002_25",
+      "region": "region_002_mushroom_grove",
+      "index": 25,
+      "seed": 2646408,
+      "class": "highly_complex",
+      "difficulty": 1.0,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 145
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
         "coinPayout": 900,
         "gems": {
-          "chance": 1,
+          "chance": 1.0,
           "min": 5,
           "max": 5,
           "firstClearGuaranteed": 5,
@@ -2395,7 +3087,7 @@
       "index": 1,
       "seed": 140831,
       "class": "simple",
-      "difficulty": 0.05,
+      "difficulty": 0.055,
       "goal": {
         "type": "reachFloor",
         "value": 60
@@ -2427,7 +3119,7 @@
       "index": 2,
       "seed": 245560,
       "class": "simple",
-      "difficulty": 0.1,
+      "difficulty": 0.213,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -2459,7 +3151,7 @@
       "index": 3,
       "seed": 350289,
       "class": "simple",
-      "difficulty": 0.15,
+      "difficulty": 0.229,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -2477,7 +3169,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 75,
+        "coinPayout": 70,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2490,8 +3182,8 @@
       "region": "region_003_sunny_beach",
       "index": 4,
       "seed": 455018,
-      "class": "simple",
-      "difficulty": 0.22,
+      "class": "medium",
+      "difficulty": 0.275,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -2509,7 +3201,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 80,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2522,8 +3214,8 @@
       "region": "region_003_sunny_beach",
       "index": 5,
       "seed": 559747,
-      "class": "complex",
-      "difficulty": 0.4,
+      "class": "medium",
+      "difficulty": 0.49,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -2556,7 +3248,7 @@
       "index": 6,
       "seed": 664476,
       "class": "medium",
-      "difficulty": 0.35,
+      "difficulty": 0.366,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -2574,7 +3266,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 90,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2588,9 +3280,9 @@
       "index": 7,
       "seed": 769205,
       "class": "medium",
-      "difficulty": 0.42,
+      "difficulty": 0.438,
       "goal": {
-        "type": "noWallBounce",
+        "type": "reachFloor",
         "value": 120
       },
       "stars": [
@@ -2606,7 +3298,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 95,
+        "coinPayout": 80,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2620,7 +3312,7 @@
       "index": 8,
       "seed": 873935,
       "class": "medium",
-      "difficulty": 0.5,
+      "difficulty": 0.454,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -2638,7 +3330,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 105,
+        "coinPayout": 85,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2651,8 +3343,8 @@
       "region": "region_003_sunny_beach",
       "index": 9,
       "seed": 978663,
-      "class": "medium",
-      "difficulty": 0.58,
+      "class": "hard",
+      "difficulty": 0.465,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -2670,7 +3362,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 110,
+        "coinPayout": 90,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2683,12 +3375,11 @@
       "region": "region_003_sunny_beach",
       "index": 10,
       "seed": 1083392,
-      "class": "complex",
-      "difficulty": 0.7,
+      "class": "hard",
+      "difficulty": 0.541,
       "goal": {
-        "type": "comboChain",
-        "value": 4,
-        "count": 3
+        "type": "noWallBounce",
+        "value": 150
       },
       "stars": [
         {
@@ -2718,7 +3409,7 @@
       "index": 11,
       "seed": 1188121,
       "class": "hard",
-      "difficulty": 0.62,
+      "difficulty": 0.564,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2736,7 +3427,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 120,
+        "coinPayout": 95,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2750,7 +3441,7 @@
       "index": 12,
       "seed": 1292850,
       "class": "hard",
-      "difficulty": 0.7,
+      "difficulty": 0.567,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2768,7 +3459,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 125,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2782,7 +3473,7 @@
       "index": 13,
       "seed": 1397579,
       "class": "hard",
-      "difficulty": 0.78,
+      "difficulty": 0.632,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2800,7 +3491,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 135,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2814,7 +3505,7 @@
       "index": 14,
       "seed": 1502308,
       "class": "hard",
-      "difficulty": 0.86,
+      "difficulty": 0.679,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -2832,7 +3523,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 140,
+        "coinPayout": 105,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2845,10 +3536,10 @@
       "region": "region_003_sunny_beach",
       "index": 15,
       "seed": 1607037,
-      "class": "highly_complex",
-      "difficulty": 1,
+      "class": "complex",
+      "difficulty": 0.708,
       "goal": {
-        "type": "reachFloor",
+        "type": "findHiddenGem",
         "value": 150
       },
       "stars": [
@@ -2864,9 +3555,331 @@
         }
       ],
       "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3
+        }
+      }
+    },
+    {
+      "id": "lvl_003_16",
+      "region": "region_003_sunny_beach",
+      "index": 16,
+      "seed": 1711766,
+      "class": "complex",
+      "difficulty": 0.711,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 100
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 110,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_17",
+      "region": "region_003_sunny_beach",
+      "index": 17,
+      "seed": 1816495,
+      "class": "complex",
+      "difficulty": 0.75,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 105
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 115,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_18",
+      "region": "region_003_sunny_beach",
+      "index": 18,
+      "seed": 1921224,
+      "class": "complex",
+      "difficulty": 0.756,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 110
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 120,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_19",
+      "region": "region_003_sunny_beach",
+      "index": 19,
+      "seed": 2025953,
+      "class": "complex",
+      "difficulty": 0.779,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 115
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_20",
+      "region": "region_003_sunny_beach",
+      "index": 20,
+      "seed": 2130682,
+      "class": "complex",
+      "difficulty": 0.822,
+      "goal": {
+        "type": "speedrun",
+        "value": 90,
+        "timeSec": 75
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 120
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3,
+          "firstClearGuaranteed": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_21",
+      "region": "region_003_sunny_beach",
+      "index": 21,
+      "seed": 2235411,
+      "class": "complex",
+      "difficulty": 0.831,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 125
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_22",
+      "region": "region_003_sunny_beach",
+      "index": 22,
+      "seed": 2340140,
+      "class": "complex",
+      "difficulty": 0.89,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 130
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 130,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_23",
+      "region": "region_003_sunny_beach",
+      "index": 23,
+      "seed": 2444869,
+      "class": "complex",
+      "difficulty": 0.951,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 135
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 135,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_24",
+      "region": "region_003_sunny_beach",
+      "index": 24,
+      "seed": 2549598,
+      "class": "complex",
+      "difficulty": 1.0,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 140
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 140,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_003_25",
+      "region": "region_003_sunny_beach",
+      "index": 25,
+      "seed": 2654327,
+      "class": "highly_complex",
+      "difficulty": 1.0,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 145
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
         "coinPayout": 900,
         "gems": {
-          "chance": 1,
+          "chance": 1.0,
           "min": 5,
           "max": 5,
           "firstClearGuaranteed": 5,
@@ -2882,7 +3895,7 @@
       "index": 1,
       "seed": 148750,
       "class": "simple",
-      "difficulty": 0.05,
+      "difficulty": 0.059,
       "goal": {
         "type": "reachFloor",
         "value": 60
@@ -2914,7 +3927,7 @@
       "index": 2,
       "seed": 253479,
       "class": "simple",
-      "difficulty": 0.1,
+      "difficulty": 0.218,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -2946,7 +3959,7 @@
       "index": 3,
       "seed": 358208,
       "class": "simple",
-      "difficulty": 0.15,
+      "difficulty": 0.259,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -2964,7 +3977,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 75,
+        "coinPayout": 70,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -2977,8 +3990,8 @@
       "region": "region_004_candy_canyon",
       "index": 4,
       "seed": 462937,
-      "class": "simple",
-      "difficulty": 0.22,
+      "class": "medium",
+      "difficulty": 0.301,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -2996,7 +4009,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 80,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3009,8 +4022,8 @@
       "region": "region_004_candy_canyon",
       "index": 5,
       "seed": 567666,
-      "class": "complex",
-      "difficulty": 0.4,
+      "class": "medium",
+      "difficulty": 0.511,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -3043,7 +4056,7 @@
       "index": 6,
       "seed": 672395,
       "class": "medium",
-      "difficulty": 0.35,
+      "difficulty": 0.382,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -3061,7 +4074,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 90,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3075,9 +4088,9 @@
       "index": 7,
       "seed": 777124,
       "class": "medium",
-      "difficulty": 0.42,
+      "difficulty": 0.454,
       "goal": {
-        "type": "noWallBounce",
+        "type": "reachFloor",
         "value": 120
       },
       "stars": [
@@ -3093,7 +4106,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 95,
+        "coinPayout": 80,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3107,7 +4120,7 @@
       "index": 8,
       "seed": 881853,
       "class": "medium",
-      "difficulty": 0.5,
+      "difficulty": 0.457,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -3125,7 +4138,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 105,
+        "coinPayout": 85,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3138,8 +4151,8 @@
       "region": "region_004_candy_canyon",
       "index": 9,
       "seed": 986582,
-      "class": "medium",
-      "difficulty": 0.58,
+      "class": "hard",
+      "difficulty": 0.51,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -3157,7 +4170,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 110,
+        "coinPayout": 90,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3170,12 +4183,11 @@
       "region": "region_004_candy_canyon",
       "index": 10,
       "seed": 1091311,
-      "class": "complex",
-      "difficulty": 0.7,
+      "class": "hard",
+      "difficulty": 0.548,
       "goal": {
-        "type": "comboChain",
-        "value": 4,
-        "count": 3
+        "type": "noWallBounce",
+        "value": 150
       },
       "stars": [
         {
@@ -3205,7 +4217,7 @@
       "index": 11,
       "seed": 1196040,
       "class": "hard",
-      "difficulty": 0.62,
+      "difficulty": 0.588,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3223,7 +4235,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 120,
+        "coinPayout": 95,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3237,7 +4249,7 @@
       "index": 12,
       "seed": 1300769,
       "class": "hard",
-      "difficulty": 0.7,
+      "difficulty": 0.617,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3255,7 +4267,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 125,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3269,7 +4281,7 @@
       "index": 13,
       "seed": 1405498,
       "class": "hard",
-      "difficulty": 0.78,
+      "difficulty": 0.646,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3287,7 +4299,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 135,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3301,7 +4313,7 @@
       "index": 14,
       "seed": 1510227,
       "class": "hard",
-      "difficulty": 0.86,
+      "difficulty": 0.693,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3313,6 +4325,328 @@
         {
           "type": "coins",
           "value": 500
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 105,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_15",
+      "region": "region_004_candy_canyon",
+      "index": 15,
+      "seed": 1614956,
+      "class": "complex",
+      "difficulty": 0.711,
+      "goal": {
+        "type": "findHiddenGem",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 500
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3
+        }
+      }
+    },
+    {
+      "id": "lvl_004_16",
+      "region": "region_004_candy_canyon",
+      "index": 16,
+      "seed": 1719685,
+      "class": "complex",
+      "difficulty": 0.75,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 100
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 110,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_17",
+      "region": "region_004_candy_canyon",
+      "index": 17,
+      "seed": 1824414,
+      "class": "complex",
+      "difficulty": 0.783,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 105
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 115,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_18",
+      "region": "region_004_candy_canyon",
+      "index": 18,
+      "seed": 1929143,
+      "class": "complex",
+      "difficulty": 0.806,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 110
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 120,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_19",
+      "region": "region_004_candy_canyon",
+      "index": 19,
+      "seed": 2033872,
+      "class": "complex",
+      "difficulty": 0.882,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 115
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_20",
+      "region": "region_004_candy_canyon",
+      "index": 20,
+      "seed": 2138601,
+      "class": "complex",
+      "difficulty": 0.908,
+      "goal": {
+        "type": "speedrun",
+        "value": 90,
+        "timeSec": 75
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 120
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3,
+          "firstClearGuaranteed": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_21",
+      "region": "region_004_candy_canyon",
+      "index": 21,
+      "seed": 2243330,
+      "class": "complex",
+      "difficulty": 0.97,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 125
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_22",
+      "region": "region_004_candy_canyon",
+      "index": 22,
+      "seed": 2348059,
+      "class": "complex",
+      "difficulty": 0.996,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 130
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 130,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_23",
+      "region": "region_004_candy_canyon",
+      "index": 23,
+      "seed": 2452788,
+      "class": "complex",
+      "difficulty": 0.999,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 135
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 135,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_004_24",
+      "region": "region_004_candy_canyon",
+      "index": 24,
+      "seed": 2557517,
+      "class": "complex",
+      "difficulty": 1.0,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 140
         },
         {
           "type": "noRevive"
@@ -3328,12 +4662,12 @@
       }
     },
     {
-      "id": "lvl_004_15",
+      "id": "lvl_004_25",
       "region": "region_004_candy_canyon",
-      "index": 15,
-      "seed": 1614956,
+      "index": 25,
+      "seed": 2662246,
       "class": "highly_complex",
-      "difficulty": 1,
+      "difficulty": 1.0,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3344,7 +4678,7 @@
         },
         {
           "type": "coins",
-          "value": 500
+          "value": 145
         },
         {
           "type": "noRevive"
@@ -3353,7 +4687,7 @@
       "rewards": {
         "coinPayout": 900,
         "gems": {
-          "chance": 1,
+          "chance": 1.0,
           "min": 5,
           "max": 5,
           "firstClearGuaranteed": 5,
@@ -3369,7 +4703,7 @@
       "index": 1,
       "seed": 156669,
       "class": "simple",
-      "difficulty": 0.05,
+      "difficulty": 0.003,
       "goal": {
         "type": "reachFloor",
         "value": 60
@@ -3401,7 +4735,7 @@
       "index": 2,
       "seed": 261398,
       "class": "simple",
-      "difficulty": 0.1,
+      "difficulty": 0.195,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -3433,7 +4767,7 @@
       "index": 3,
       "seed": 366127,
       "class": "simple",
-      "difficulty": 0.15,
+      "difficulty": 0.22,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -3451,7 +4785,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 75,
+        "coinPayout": 70,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3464,8 +4798,8 @@
       "region": "region_005_bamboo_temple",
       "index": 4,
       "seed": 470856,
-      "class": "simple",
-      "difficulty": 0.22,
+      "class": "medium",
+      "difficulty": 0.254,
       "goal": {
         "type": "reachFloor",
         "value": 90
@@ -3483,7 +4817,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 80,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3496,8 +4830,8 @@
       "region": "region_005_bamboo_temple",
       "index": 5,
       "seed": 575585,
-      "class": "complex",
-      "difficulty": 0.4,
+      "class": "medium",
+      "difficulty": 0.474,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -3530,7 +4864,7 @@
       "index": 6,
       "seed": 680314,
       "class": "medium",
-      "difficulty": 0.35,
+      "difficulty": 0.323,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -3548,7 +4882,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 90,
+        "coinPayout": 75,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3562,9 +4896,9 @@
       "index": 7,
       "seed": 785043,
       "class": "medium",
-      "difficulty": 0.42,
+      "difficulty": 0.375,
       "goal": {
-        "type": "noWallBounce",
+        "type": "reachFloor",
         "value": 120
       },
       "stars": [
@@ -3580,7 +4914,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 95,
+        "coinPayout": 80,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3594,7 +4928,7 @@
       "index": 8,
       "seed": 889772,
       "class": "medium",
-      "difficulty": 0.5,
+      "difficulty": 0.397,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -3612,7 +4946,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 105,
+        "coinPayout": 85,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3625,8 +4959,8 @@
       "region": "region_005_bamboo_temple",
       "index": 9,
       "seed": 994501,
-      "class": "medium",
-      "difficulty": 0.58,
+      "class": "hard",
+      "difficulty": 0.442,
       "goal": {
         "type": "reachFloor",
         "value": 120
@@ -3644,7 +4978,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 110,
+        "coinPayout": 90,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3657,12 +4991,11 @@
       "region": "region_005_bamboo_temple",
       "index": 10,
       "seed": 1099230,
-      "class": "complex",
-      "difficulty": 0.7,
+      "class": "hard",
+      "difficulty": 0.473,
       "goal": {
-        "type": "comboChain",
-        "value": 4,
-        "count": 3
+        "type": "noWallBounce",
+        "value": 150
       },
       "stars": [
         {
@@ -3692,7 +5025,7 @@
       "index": 11,
       "seed": 1203959,
       "class": "hard",
-      "difficulty": 0.62,
+      "difficulty": 0.516,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3710,7 +5043,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 120,
+        "coinPayout": 95,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3724,7 +5057,7 @@
       "index": 12,
       "seed": 1308688,
       "class": "hard",
-      "difficulty": 0.7,
+      "difficulty": 0.531,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3742,7 +5075,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 125,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3756,7 +5089,7 @@
       "index": 13,
       "seed": 1413417,
       "class": "hard",
-      "difficulty": 0.78,
+      "difficulty": 0.594,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3774,7 +5107,7 @@
         }
       ],
       "rewards": {
-        "coinPayout": 135,
+        "coinPayout": 100,
         "gems": {
           "chance": 0.03,
           "min": 1,
@@ -3788,7 +5121,7 @@
       "index": 14,
       "seed": 1518146,
       "class": "hard",
-      "difficulty": 0.86,
+      "difficulty": 0.614,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3800,6 +5133,328 @@
         {
           "type": "coins",
           "value": 500
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 105,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_15",
+      "region": "region_005_bamboo_temple",
+      "index": 15,
+      "seed": 1622875,
+      "class": "complex",
+      "difficulty": 0.635,
+      "goal": {
+        "type": "findHiddenGem",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 500
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3
+        }
+      }
+    },
+    {
+      "id": "lvl_005_16",
+      "region": "region_005_bamboo_temple",
+      "index": 16,
+      "seed": 1727604,
+      "class": "complex",
+      "difficulty": 0.682,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 100
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 110,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_17",
+      "region": "region_005_bamboo_temple",
+      "index": 17,
+      "seed": 1832333,
+      "class": "complex",
+      "difficulty": 0.699,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 105
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 115,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_18",
+      "region": "region_005_bamboo_temple",
+      "index": 18,
+      "seed": 1937062,
+      "class": "complex",
+      "difficulty": 0.717,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 110
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 120,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_19",
+      "region": "region_005_bamboo_temple",
+      "index": 19,
+      "seed": 2041791,
+      "class": "complex",
+      "difficulty": 0.742,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 115
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_20",
+      "region": "region_005_bamboo_temple",
+      "index": 20,
+      "seed": 2146520,
+      "class": "complex",
+      "difficulty": 0.807,
+      "goal": {
+        "type": "speedrun",
+        "value": 90,
+        "timeSec": 75
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 120
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 300,
+        "gems": {
+          "chance": 0.25,
+          "min": 1,
+          "max": 3,
+          "firstClearGuaranteed": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_21",
+      "region": "region_005_bamboo_temple",
+      "index": 21,
+      "seed": 2251249,
+      "class": "complex",
+      "difficulty": 0.823,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 125
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 125,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_22",
+      "region": "region_005_bamboo_temple",
+      "index": 22,
+      "seed": 2355978,
+      "class": "complex",
+      "difficulty": 0.858,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 130
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 130,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_23",
+      "region": "region_005_bamboo_temple",
+      "index": 23,
+      "seed": 2460707,
+      "class": "complex",
+      "difficulty": 0.896,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 135
+        },
+        {
+          "type": "noRevive"
+        }
+      ],
+      "rewards": {
+        "coinPayout": 135,
+        "gems": {
+          "chance": 0.03,
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": "lvl_005_24",
+      "region": "region_005_bamboo_temple",
+      "index": 24,
+      "seed": 2565436,
+      "class": "complex",
+      "difficulty": 0.899,
+      "goal": {
+        "type": "reachFloor",
+        "value": 150
+      },
+      "stars": [
+        {
+          "type": "clear"
+        },
+        {
+          "type": "coins",
+          "value": 140
         },
         {
           "type": "noRevive"
@@ -3815,12 +5470,12 @@
       }
     },
     {
-      "id": "lvl_005_15",
+      "id": "lvl_005_25",
       "region": "region_005_bamboo_temple",
-      "index": 15,
-      "seed": 1622875,
+      "index": 25,
+      "seed": 2670165,
       "class": "highly_complex",
-      "difficulty": 1,
+      "difficulty": 0.977,
       "goal": {
         "type": "reachFloor",
         "value": 150
@@ -3831,7 +5486,7 @@
         },
         {
           "type": "coins",
-          "value": 500
+          "value": 145
         },
         {
           "type": "noRevive"
@@ -3840,7 +5495,7 @@
       "rewards": {
         "coinPayout": 900,
         "gems": {
-          "chance": 1,
+          "chance": 1.0,
           "min": 5,
           "max": 5,
           "firstClearGuaranteed": 5,

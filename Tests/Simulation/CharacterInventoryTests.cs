@@ -10,6 +10,9 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void HoldsEveryCharacterExactlyOnce()
         {
             Assert.Equal(CharacterDefs.All.Length, CharacterInventory.Count);
+            Assert.Equal(25, CharacterInventory.Count);   // 5 active lines x 5 tiers (owner 2026-11-09); the 100 inactive heroes are not in the inventory
+            Assert.False(CharacterInventory.Exists("bumble"));
+            Assert.False(CharacterInventory.Exists("ryu_l"));
             var seen = new System.Collections.Generic.HashSet<string>();
             foreach (CharacterSpec c in CharacterInventory.All) Assert.True(seen.Add(c.Id), c.Id);
         }

@@ -19,6 +19,14 @@ namespace BoingUpSkyTower.Gameplay
         public string RegionId;
         public int Floors;
         public EndlessReward EndlessReward;
+        /// <summary>Timed records (doc 46): the run clock in ticks (60 per second; first jump to the end, pauses excluded). Floors above is the floors reached (levels and endless).</summary>
+        public int Ticks;
+        /// <summary>Pace as the exact ratio PaceNumerator floors in PaceDenominator ticks (plat/s = numerator x 60 / denominator; use TimeRecords.FormatPace(PaceNumerator, PaceDenominator)).</summary>
+        public int PaceNumerator, PaceDenominator;
+        /// <summary>The run used a revive (no record, no medal).</summary>
+        public bool Revived;
+        /// <summary>What RecordRun reported: new bests, deltas against the previous bests, medal. Null when records were not applied (failed level).</summary>
+        public RecordResult Record;
     }
 
     /// <summary>

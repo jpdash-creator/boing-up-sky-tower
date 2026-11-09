@@ -17,6 +17,7 @@ namespace BoingUpSkyTower.Simulation.Tests
     /// <summary>
     /// The end-to-end proof of the rebuilt roster: EVERY hero (25 lines x 5 tiers, Common to Legendary) is played by the solvability bot on EVERY shipped level (5 regions x 15 levels = 75),
     /// each with its own physics exactly as GameSession.BuildRunCfg applies them (the hero's CharacterStats on a clone of the default SimConfig). The bot must win the 1-star goal.
+    /// Proves ALL 125 hero rows through the data accessor (CharacterDefs.AllIncludingInactive: the 100 inactive heroes never exist at runtime but their rows stay proven as data; HERO_BOT_HEROES restricts).
     /// Writes Tests/Simulation/HERO_BOT_REPORT.csv (one row per hero and level) and HERO_BOT_SUMMARY.md. Set HERO_BOT=1 (optional HERO_BOT_HEROES=id1,id2 to restrict).
     /// </summary>
     [Trait("Category", "HeroBot")]
@@ -33,7 +34,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             if (Environment.GetEnvironmentVariable("HERO_BOT") != "1") return;
             string root = ContentLoader.FindRoot();
             string only = Environment.GetEnvironmentVariable("HERO_BOT_HEROES");
-            CharacterSpec[] heroes = CharacterDefs.All.Where(h => string.IsNullOrEmpty(only) || only.Split(',').Contains(h.Id)).ToArray();
+            CharacterSpec[] heroes = CharacterDefs.AllIncludingInactive.Where(h => string.IsNullOrEmpty(only) || only.Split(',').Contains(h.Id)).ToArray();
             List<LoadedLevel> levels = ContentLoader.LoadRegions(root, 1, 5);
             string onlyLevels = Environment.GetEnvironmentVariable("HERO_BOT_LEVELS");   // optional: restrict to some level ids, e.g. lvl_005_10
             if (!string.IsNullOrEmpty(onlyLevels)) levels = levels.Where(l => onlyLevels.Split(',').Contains(l.Id)).ToList();
@@ -82,7 +83,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             md.AppendLine("| rarity | runs | solved | failed |");
             md.AppendLine("|---|---|---|---|");
             string[] names = { "Common", "Uncommon", "Rare", "Elite", "Legendary" };
-            foreach (var g in all.GroupBy(r => (int)CharacterDefs.Get(r.Hero).Rarity).OrderBy(g => g.Key)) md.AppendLine("| " + names[g.Key] + " | " + g.Count() + " | " + g.Count(r => r.Solved) + " | " + g.Count(r => !r.Solved) + " |");
+            foreach (var g in all.GroupBy(r => (int)CharacterDefs.GetIncludingInactive(r.Hero).Rarity).OrderBy(g => g.Key)) md.AppendLine("| " + names[g.Key] + " | " + g.Count() + " | " + g.Count(r => r.Solved) + " | " + g.Count(r => !r.Solved) + " |");
             if (failed.Length > 0)
             {
                 md.AppendLine();

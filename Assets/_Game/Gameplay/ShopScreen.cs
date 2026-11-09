@@ -224,7 +224,8 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- tab 2: power-ups (docs/15 section 3, docs/14 Tab 2) ----------------
 
-        string lastBoughtId;
+        /// <summary>The fixed text of a power-up card's quantity line: one purchase gives one unit. Never the owned count.</summary>
+        public const string PerPurchaseText = "x1";
 
         /// <summary>The power-up cards (and, in test builds, the "add 3 of each" button) as layout children of the Character page list.</summary>
         void BuildPowerUps(RectTransform pageList)
@@ -284,9 +285,8 @@ namespace BoingUpSkyTower.Gameplay
             name.rectTransform.offsetMin = new Vector2(6f, -(128f + nameH));
             name.rectTransform.offsetMax = new Vector2(-6f, -128f);
 
-            int owned = progress.PowerUpCount(def.Id);
-            bool justBought = def.Id == lastBoughtId;
-            Text own = UiKit.AddText(card, "Owned", (justBought ? "Bought! " : "x") + owned, 36, justBought ? PromoPriceColor : Theme.Ink, TextAnchor.MiddleCenter, true);
+            // Bug List 6 item 8: the card ALWAYS says "x1" (what one purchase gives) and never changes after a purchase; the owned count lives only in Heroes > Powers.
+            Text own = UiKit.AddText(card, "Owned", PerPurchaseText, 36, Theme.Ink, TextAnchor.MiddleCenter, true);
             DropOutline(own);
             own.horizontalOverflow = HorizontalWrapMode.Overflow;
             own.rectTransform.anchorMin = new Vector2(0f, 1f);
@@ -346,7 +346,6 @@ namespace BoingUpSkyTower.Gameplay
         {
             if (!TestPurchasesEnabled) return;
             foreach (PowerUpDef d in progress.PowerUpDefs.Implemented) progress.GrantPowerUp(d.Id, 3);
-            lastBoughtId = null;
             RebuildKeepScroll();
         }
 
@@ -386,9 +385,8 @@ namespace BoingUpSkyTower.Gameplay
             switch (result)
             {
                 case PowerUpBuyResult.Ok:
-                    lastBoughtId = def.Id;
                     AudioManager.Play(Sfx.PowerUp);
-                    RebuildKeepScroll();   // the card shows the new count and a "Bought!" mark; the wallet follows through the host
+                    RebuildKeepScroll();   // the card text stays "x1"; the wallet follows through the host
                     break;
                 case PowerUpBuyResult.NotEnoughCoins:
                     Info("Not enough coins", "You do not have enough coins for " + def.Name + ".");

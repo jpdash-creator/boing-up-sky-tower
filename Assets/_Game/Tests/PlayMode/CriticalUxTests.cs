@@ -375,7 +375,7 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("settings-code-box", () => { meta.ShowSettings(); meta.ShowAdminCodeBox(); }, problems);
             GameSession.Progress.SetAccount("guest", "");
 
-            // Characters: the chosen character on the land stage, the action row (All Heroes + Merge) and the list of OWNED hero cards (one card per copy, no counts)
+            // Characters: the chosen character on the land stage, the row of 3 icon tabs (All Heroes, Merge, Powers; no bottom bar) and the list of OWNED hero cards (one card per copy, no counts)
             yield return CheckScreen("characters", () => meta.ShowCharacters(), problems);
             ProgressService.TestAllCharacters = true;   // Character Test: only the five Common heroes are owned (Uncommon and above stay locked)
             yield return CheckScreen("characters-test", () => meta.ShowCharacters(), problems);
@@ -439,6 +439,10 @@ namespace BoingUpSkyTower.Tests
                 Assert.IsFalse(bt.name == "HeroInfo" || bt.name == "HeroTap", bt.name + " must not exist on the home screen");
             meta.ShowCharacters();
             yield return null;
+            // Bug List 6 item 3a/3b: three icon tabs on top, no bottom bar (no Shop / Play / Character buttons, no tab bar behind them)
+            foreach (string tab in HeroTabs.ButtonNames) Assert.IsNotNull(FindRt(tab), tab + " is missing on the Heroes screen");
+            foreach (string gone in new[] { "TabBar", "TabShop", "TabPlay", "TabCharacters", "TabPower-ups", "AllHeroesButton", "MergeButton" })
+                Assert.IsNull(FindRt(gone), gone + " must not exist on the Heroes screen any more");
             Button found = null;
             foreach (Button bt in Object.FindObjectsByType<Button>(FindObjectsSortMode.None)) if (bt.name == "HeroInfo") found = bt;
             Assert.IsNotNull(found, "HeroInfo is missing on the Heroes screen");
@@ -495,7 +499,7 @@ namespace BoingUpSkyTower.Tests
             GameSettings.ShowDevRowsForTests = true;
             AccountScenario("guest");
             var holder = new RenderTexture[1];
-            string[] names = { "SoundToggle", "MusicToggle", "HapticsToggle", "Reduced motionToggle", "Left-handedToggle", "TextsizeButton", "DifficultyButton", "Google", "SaveProgress", "Reset", "RestorePurchases", "Admin", "VersionTap" };
+            string[] names = { "SoundToggle", "MusicToggle", "HapticsToggle", "Reduced motionToggle", "Left-handedToggle", "TextsizeButton", "Google", "SaveProgress", "Reset", "RestorePurchases", "Admin", "VersionTap" };
             foreach (Aspect a in Aspects)
             {
                 UiKit.SafeAreaNormalized = () => FullSafe;
@@ -508,7 +512,9 @@ namespace BoingUpSkyTower.Tests
                 Rect pb = CanvasBox(panel);
                 if (pb.height > 1500f) problems.Add(a.Name + ": the settings popup is " + Mathf.RoundToInt(pb.height) + " tall, it must stay compact (under 1500)");
                 ScrollRect sr = content.GetComponentInParent<ScrollRect>();
-                bool scrolls = sr != null && sr.vertical;
+                if (sr != null) problems.Add(a.Name + ": Settings must not scroll (Bug List 6 item 7) but has a ScrollRect");
+                if (FindRt("DifficultyButton", panel) != null) problems.Add(a.Name + ": the Difficulty row moved to the level screen (Bug List 6 item 6)");
+                bool scrolls = false;   // never: the screen has no scroll view, so every item must sit inside the panel
                 var boxes = new List<KeyValuePair<string, Rect>>();
                 foreach (string n in names)
                 {
@@ -529,7 +535,6 @@ namespace BoingUpSkyTower.Tests
                 if (FindRt("Back") != null) problems.Add(a.Name + ": Settings has no Back button any more (the X closes it)");
                 if (FindRt("RestorePurchases", panel) != null && FindRt("Reset", panel) != null && !(CanvasBox(FindRt("Reset", panel)).center.x < CanvasBox(FindRt("RestorePurchases", panel)).center.x))
                     problems.Add(a.Name + ": Reset and Restore are one row: Reset left, Restore right");
-                if (scrolls && pb.height < 1400f) problems.Add(a.Name + ": scrolls although the popup is only " + Mathf.RoundToInt(pb.height) + " tall");
             }
             GameSettings.ShowDevRowsForTests = false;
             Restore(holder);
@@ -829,6 +834,110 @@ namespace BoingUpSkyTower.Tests
             }
             Restore(holder);
             Report(problems);
+        }
+
+        /// <summary>Settings (Bug List 6 item 7): no ScrollRect anywhere, every row inside the popup, at 100 and 130 percent text on every aspect and with a notch.</summary>
+        [UnityTest]
+        public IEnumerator SettingsHasNoScrollViewAndFitsAt130Percent()
+        {
+            foreach (int percent in new[] { 100, 130 })
+            {
+                GameSettings.TextPercent = percent;
+                yield return Load("Meta");
+                var meta = Object.FindFirstObjectByType<MetaController>();
+                var problems = new List<string>();
+                GameSettings.ShowDevRowsForTests = true;
+                AccountScenario("guest");
+                yield return CheckScreen("settings-" + percent, () => meta.ShowSettings(), problems);
+                meta.ShowSettings();
+                yield return null;
+                RectTransform panel = FindRt("Panel");
+                Assert.IsNotNull(panel);
+                Assert.AreEqual(0, panel.GetComponentsInChildren<ScrollRect>(true).Length, "Settings has no ScrollRect at " + percent + " percent");
+                Assert.IsNull(panel.GetComponentInParent<ScrollRect>(), "Settings sits in no scroll view");
+                Assert.IsNull(FindRt("DifficultyButton", panel), "no Difficulty row in Settings");
+                GameSettings.ShowDevRowsForTests = false;
+                AccountCleanup();
+                Report(problems);
+            }
+        }
+
+        /// <summary>
+        /// Level screen (Bug List 6 item 6): the Gameplay row has five buttons (Relaxed, Easy, Normal, Hard, Insane), sits directly below the region name, centred,
+        /// above the level path, every button is at least 48 dp with 8 dp between them, its label is never wider than its button, and exactly one is marked selected
+        /// (check mark and "selected" label). Picking a button stores the setting and moves the mark.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator LevelScreenHasGameplayRowBelowRegionName()
+        {
+            foreach (int percent in new[] { 100, 130 })
+            {
+                GameSettings.TextPercent = percent;
+                yield return Load("Meta");
+                var meta = Object.FindFirstObjectByType<MetaController>();
+                RegionDef r1 = GameSession.Repo.GetRegionByIndex(1);
+                var problems = new List<string>();
+                var holder = new RenderTexture[1];
+                string[] names = GameSettings.DifficultyNames;
+                foreach (Aspect a in Aspects)
+                {
+                    UiKit.SafeAreaNormalized = () => FullSafe;
+                    GameSettings.Difficulty = 0;
+                    meta.ShowLevels(r1);
+                    yield return ApplyAspect(a, holder);
+                    yield return null;
+                    string tag = a.Name + "@" + percent + ": ";
+                    RectTransform row = FindRt(MetaController.GameplayRowName), header = FindRt("Header"), path = FindRt("PathViewport");
+                    if (row == null || header == null || path == null) { problems.Add(tag + "Gameplay row, region name or path missing"); continue; }
+                    Rect rb = CanvasBox(row), hb = CanvasBox(header), pb = CanvasBox(path);
+                    if (rb.yMax > hb.yMin + 1f) problems.Add(tag + "the Gameplay row must be below the region name");
+                    if (hb.yMin - rb.yMax > 60f) problems.Add(tag + "the Gameplay row is not directly below the region name (" + Mathf.RoundToInt(hb.yMin - rb.yMax) + " gap)");
+                    if (pb.yMax > rb.yMin + 1f) problems.Add(tag + "the level path must start after the Gameplay row");
+                    var boxes = new List<Rect>();
+                    float left = float.MaxValue, right = float.MinValue;
+                    int marked = 0;
+                    for (int i = 0; i < names.Length; i++)
+                    {
+                        RectTransform b = FindRt("Gameplay" + names[i], row);
+                        if (b == null) { problems.Add(tag + "button " + names[i] + " missing"); continue; }
+                        Rect bb = CanvasBox(b);
+                        boxes.Add(bb);
+                        left = Mathf.Min(left, bb.xMin);
+                        right = Mathf.Max(right, bb.xMax);
+                        if (bb.width < UiKit.MinTouchPx - 1f || bb.height < UiKit.MinTouchPx - 1f) problems.Add(tag + names[i] + " below 48 dp");
+                        if (bb.xMin < rb.xMin - 1f || bb.xMax > rb.xMax + 1f) problems.Add(tag + names[i] + " leaves the row");
+                        Text label = b.Find("Label").GetComponent<Text>();
+                        float scale = b.GetComponentInParent<Canvas>().rootCanvas.scaleFactor;
+                        if (label.fontSize < UiKit.MinBodyTextPx - 1f) problems.Add(tag + names[i] + " label below 16 sp");
+                        if (label.preferredWidth > bb.width + 0.5f) problems.Add(tag + names[i] + " label (" + Mathf.RoundToInt(label.preferredWidth) + ") is wider than its button (" + Mathf.RoundToInt(bb.width) + ")");
+                        if (b.Find("Icon") == null || b.Find("Icon").GetComponent<Image>().sprite == null) problems.Add(tag + names[i] + " has no icon (fallback glyph missing)");
+                        Transform tick = b.Find("Check");
+                        bool on = tick != null && tick.gameObject.activeSelf;
+                        if (on) marked++;
+                        if (on != (i == GameSettings.Difficulty)) problems.Add(tag + names[i] + " selected mark does not match the setting");
+                        if (b.GetComponent<A11yLabel>() == null || !b.GetComponent<A11yLabel>().Text.Contains(names[i])) problems.Add(tag + names[i] + " needs an accessibility label");
+                    }
+                    if (boxes.Count == names.Length)
+                    {
+                        for (int i = 1; i < boxes.Count; i++)
+                        {
+                            if (boxes[i].xMin < boxes[i - 1].xMax + UiKit.MinSpacingPx - 1f) problems.Add(tag + names[i - 1] + " and " + names[i] + " are closer than 8 dp");
+                            if (boxes[i].center.x <= boxes[i - 1].center.x) problems.Add(tag + "buttons are not in the order Relaxed to Insane");
+                        }
+                        float rowCentre = rb.center.x, used = (left + right) * 0.5f;
+                        if (Mathf.Abs(rowCentre - used) > 4f) problems.Add(tag + "the buttons are not centred in the row");
+                    }
+                    if (marked != 1) problems.Add(tag + marked + " buttons are marked selected, expected 1");
+                    FindRt("GameplayHard", row).GetComponent<Button>().onClick.Invoke();
+                    if (GameSettings.Difficulty != 3) problems.Add(tag + "tapping Hard did not store the setting");
+                    if (!FindRt("GameplayHard", row).Find("Check").gameObject.activeSelf || FindRt("GameplayRelaxed", row).Find("Check").gameObject.activeSelf) problems.Add(tag + "the selected mark did not move to Hard");
+                    if (GameSession.Cfg.ScrollStepPercent != 28) problems.Add(tag + "Hard must set a speed-up step of 28 percent, got " + GameSession.Cfg.ScrollStepPercent);
+                }
+                GameSettings.Difficulty = 0;
+                GameSession.ApplyDifficulty();
+                Restore(holder);
+                Report(problems);
+            }
         }
 
         /// <summary>Rewards: a region name never breaks inside a word, and the list ends above the tab row with room to scroll the last card fully into view.</summary>
@@ -1132,13 +1241,69 @@ namespace BoingUpSkyTower.Tests
             Report(problems);
         }
 
-        // ---- hero powers (owner 2026-11-02, docs/34): up to 4 round buttons in a second column next to the bought power-up block ----
+        // ---- hero powers (owner Bug List 6, 2026-11-09): NOT a separate bar any more. A free hero power is merged into the power button of its own type, marked FREE;
+        // the buttons sit in two side groups by type: left = Flight, Rocket, Double Jump (max 3), right = Magnet, Shield, Slow Time, Wall Stick (max 4). ----
 
         [UnityTest]
         public IEnumerator HeroPowerButtonsFitEveryAspectNextToSevenBoughtPowerUps() { return HeroPowerRunAudit(100, false); }
 
         [UnityTest]
         public IEnumerator HeroPowerButtonsSurvive130PercentTextAndLeftHandedLayout() { return HeroPowerRunAudit(130, true); }
+
+        /// <summary>Hero with powers and NO bought power-up: the free powers alone make the buttons, in their type groups, marked FREE.</summary>
+        [UnityTest]
+        public IEnumerator FreeHeroPowersAloneFormTheTypeGroups() { return HeroOnlyAudit(100, false); }
+
+        [UnityTest]
+        public IEnumerator FreeHeroPowersAloneSurvive130PercentTextAndLeftHandedLayout() { return HeroOnlyAudit(130, true); }
+
+        static CharacterSpec LegendaryTestHero()
+        {
+            // a Legendary hero with the 4 powers its tier rule gives (no Legendary row exists yet, so it is built from the rule)
+            return new CharacterSpec { Id = "test_legendary", Name = "Test Legendary", Rarity = CharacterRarity.Legendary, Powers = TierRules.PowersFor("momo", CharacterRarity.Legendary) };
+        }
+
+        /// <summary>The merged run buttons: at least 48 dp, labelled, same alpha, at least 8 dp from each other and from the pads, inside the safe area, on the side of their type
+        /// group (mirrored by the left-handed option) and clear of the centred banners (CUX-3/4).</summary>
+        static void AssertPowerGroupsLayout(RunController rc, bool leftHanded)
+        {
+            PowerUpBar bar = rc.Hud.Powers;
+            Assert.LessOrEqual(bar.LeftCount, PowerGroups.MaxLeft);
+            Assert.LessOrEqual(bar.RightCount, PowerGroups.MaxRight);
+            Assert.AreEqual(bar.ButtonCount, bar.LeftCount + bar.RightCount);
+            var rects = new List<Rect>();
+            for (int i = 0; i < bar.ButtonCount; i++)
+            {
+                RectTransform b = bar.ButtonRect(i);
+                Assert.IsNotNull(b, "button " + i);
+                Assert.GreaterOrEqual(b.rect.width, UiKit.MinTouchPx - 1f);
+                Assert.GreaterOrEqual(b.rect.height, UiKit.MinTouchPx - 1f);
+                Assert.IsNotNull(b.GetComponent<A11yLabel>());
+                Assert.AreEqual(ControlPad.ButtonAlpha, b.GetComponent<CanvasGroup>().alpha, 0.001f);
+                Assert.AreEqual(PowerGroups.IsLeft(bar.ButtonType(i)), bar.ButtonIsLeft(i), "group of " + bar.ButtonType(i));
+                Rect r = LayoutRect(b);
+                Vector2 parent = ((RectTransform)b.parent).rect.size;
+                Assert.GreaterOrEqual(r.xMin, 0f, "button " + i + " inside the safe area (left)");
+                Assert.LessOrEqual(r.xMax, parent.x, "button " + i + " inside the safe area (right)");
+                Assert.GreaterOrEqual(r.yMin, 0f, "button " + i + " inside the safe area (bottom)");
+                Assert.LessOrEqual(r.yMax, parent.y, "button " + i + " inside the safe area (top)");
+                bool onLeftEdge = r.center.x < parent.x * 0.5f;
+                Assert.AreEqual(bar.ButtonIsLeft(i) != leftHanded, onLeftEdge, "the left group sits on the left edge (right edge when left-handed): " + bar.ButtonType(i));
+                float mid = parent.x * 0.5f, halfBanner = RunHud.BannerW * 0.5f + UiKit.MinSpacingPx;
+                if (onLeftEdge) Assert.LessOrEqual(r.xMax, mid - halfBanner, "button " + i + " clear of the centred banners");
+                else Assert.GreaterOrEqual(r.xMin, mid + halfBanner, "button " + i + " clear of the centred banners");
+                rects.Add(r);
+            }
+            var pads = new List<Rect>();
+            foreach (HoldButton pad in new[] { rc.Hud.Pad.Left, rc.Hud.Pad.Right, rc.Hud.Pad.Jump }) pads.Add(LayoutRect((RectTransform)pad.transform));
+            for (int i = 0; i < rects.Count; i++)
+            {
+                for (int j = i + 1; j < rects.Count; j++)
+                    Assert.GreaterOrEqual(RectDistance(rects[i], rects[j]), UiKit.MinSpacingPx, "buttons " + i + " and " + j + " are closer than 8 dp");
+                for (int j = 0; j < pads.Count; j++)
+                    Assert.GreaterOrEqual(RectDistance(rects[i], pads[j]), UiKit.MinSpacingPx, "button " + i + " is too close to pad " + j);
+            }
+        }
 
         IEnumerator HeroPowerRunAudit(int textPercent, bool leftHanded)
         {
@@ -1148,57 +1313,87 @@ namespace BoingUpSkyTower.Tests
             for (int i = 1; i <= 2; i++)
                 GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
             GrantAllPowerUps(3);
-            // a Legendary hero with the 4 powers its tier rule gives (no Legendary row exists yet, so it is built from the rule)
-            RunController.HeroOverride = new CharacterSpec { Id = "test_legendary", Name = "Test Legendary", Rarity = CharacterRarity.Legendary, Powers = TierRules.PowersFor("momo", CharacterRarity.Legendary) };
+            RunController.HeroOverride = LegendaryTestHero();
             GameSession.CurrentLevelId = "lvl_001_03";
             yield return Load("Run");
             var rc = Object.FindFirstObjectByType<RunController>();
             var problems = new List<string>();
-            Assert.AreEqual(7, rc.Hud.Powers.ButtonCount, "seven bought power-up buttons stacked");
-            Assert.AreEqual(4, rc.Hud.HeroPowers.ButtonCount, "a Legendary hero has four hero power buttons");
-            Assert.IsFalse(rc.Hud.HeroPowers.Visible, "hidden during the intro, like the bought buttons");
+            PowerUpBar bar = rc.Hud.Powers;
+            Assert.AreEqual(7, bar.ButtonCount, "all seven types are bought: one merged button each, no separate hero buttons");
+            Assert.AreEqual(3, bar.LeftCount, "left group: Flight, Rocket, Double Jump");
+            Assert.AreEqual(4, bar.RightCount, "right group: Magnet, Shield, Slow Time, Wall Stick");
+            Assert.AreEqual(4, rc.Session.Hero.Count, "a Legendary hero has four free hero powers");
+            int free = 0;
+            for (int i = 0; i < bar.ButtonCount; i++)
+            {
+                Assert.IsTrue(bar.ButtonHasBought(i), "bought count shown on " + bar.ButtonType(i));
+                Assert.AreEqual(rc.Session.Hero.IndexOf(bar.ButtonType(i)) >= 0, bar.ButtonHasFree(i), "FREE only on the hero's own types");
+                if (bar.ButtonHasFree(i)) free++;
+            }
+            Assert.AreEqual(4, free, "the four hero powers are merged into four of the seven buttons");
+            Assert.IsFalse(bar.Visible, "hidden during the intro");
             rc.Hud.SkipIntro();
             int frame = 0;
             rc.Input.ScriptedMove = () => SimInput.Right;
             rc.Input.ScriptedJump = () => frame % 45 == 0;
             for (frame = 1; frame <= 60; frame++) yield return null;
-            Assert.IsTrue(rc.Hud.HeroPowers.Visible);
-
-            // every hero button: at least 48 dp, labelled, at least 8 dp from every other button (bought, hero and the pad), same alpha as the other run buttons
-            var heroRects = new List<Rect>();
-            var otherRects = new List<Rect>();
-            for (int i = 0; i < 4; i++)
+            Assert.IsTrue(bar.Visible);
+            AssertPowerGroupsLayout(rc, leftHanded);
+            for (int i = 0; i < bar.ButtonCount; i++)
             {
-                RectTransform b = rc.Hud.HeroPowers.ButtonRect(i);
-                Assert.IsNotNull(b, "hero button " + i);
-                Assert.GreaterOrEqual(b.rect.width, UiKit.MinTouchPx - 1f);
-                Assert.GreaterOrEqual(b.rect.height, UiKit.MinTouchPx - 1f);
-                Assert.IsNotNull(b.GetComponent<A11yLabel>());
-                StringAssert.Contains("hero power", b.GetComponent<A11yLabel>().Text);
-                Assert.AreEqual(ControlPad.ButtonAlpha, b.GetComponent<CanvasGroup>().alpha, 0.001f);
-                heroRects.Add(LayoutRect(b));
-            }
-            for (int i = 0; i < 7; i++) otherRects.Add(LayoutRect(rc.Hud.Powers.ButtonRect(i)));
-            foreach (HoldButton pad in new[] { rc.Hud.Pad.Left, rc.Hud.Pad.Right, rc.Hud.Pad.Jump }) otherRects.Add(LayoutRect((RectTransform)pad.transform));
-            for (int i = 0; i < heroRects.Count; i++)
-            {
-                for (int j = i + 1; j < heroRects.Count; j++)
-                    Assert.GreaterOrEqual(RectDistance(heroRects[i], heroRects[j]), UiKit.MinSpacingPx, "hero buttons " + i + " and " + j + " are closer than 8 dp");
-                for (int j = 0; j < otherRects.Count; j++)
-                    Assert.GreaterOrEqual(RectDistance(heroRects[i], otherRects[j]), UiKit.MinSpacingPx, "hero button " + i + " is too close to bought button or pad " + j);
+                if (bar.ButtonHasFree(i)) Assert.AreEqual("FREE", bar.ButtonTopText(i), "ready free hero power carries the FREE word (not colour only): " + bar.ButtonType(i));
+                else Assert.AreEqual("", bar.ButtonTopText(i), "no FREE tag without a hero power: " + bar.ButtonType(i));
+                StringAssert.Contains(bar.ButtonHasFree(i) ? "free hero power" : "left", bar.ButtonRect(i).GetComponent<A11yLabel>().Text);
             }
             yield return CheckScreen("run-heropowers", () => { }, problems);   // every aspect (9:16, 9:19.5, 9:21, 3:4), full and notched safe area
 
-            // a hero power through the input path: free (no unit taken), cooldown starts, the button turns to "cooling down"
-            PowerUp first = rc.Hud.HeroPowers.ButtonType(0);
+            // free first, then bought: the first tap on a type that has a free hero power takes no unit and starts its cooldown; the second tap takes one bought unit
+            int idx = -1;
+            for (int i = 0; i < bar.ButtonCount; i++) if (bar.ButtonHasFree(i)) { idx = i; break; }
+            PowerUp first = bar.ButtonType(idx);
+            int heroIdx = rc.Session.Hero.IndexOf(first);
+            Assert.GreaterOrEqual(heroIdx, 0);
             int stockBefore = rc.Session.PowerStock(first);
-            rc.Input.LatchHeroPower(first);
+            rc.Input.LatchPower(first);
             for (frame = 61; frame <= 75; frame++) yield return null;
             Assert.IsTrue(PowerUps.IsActive(in rc.Session.State, first));
-            Assert.AreEqual(stockBefore, rc.Session.PowerStock(first), "a hero power takes no inventory unit");
-            Assert.IsFalse(rc.Session.Hero.IsReady(0));
-            Assert.IsTrue(rc.Session.Hero.IsReady(1), "each hero button has its own cooldown");
+            Assert.AreEqual(stockBefore, rc.Session.PowerStock(first), "the free hero power takes no inventory unit");
+            Assert.IsFalse(rc.Session.Hero.IsReady(heroIdx), "its rarity cooldown started");
+            for (int k = 0; k < rc.Session.Hero.Count; k++) if (k != heroIdx) Assert.IsTrue(rc.Session.Hero.IsReady(k), "each hero power has its own cooldown");
+            rc.Input.LatchPower(first);
+            for (frame = 76; frame <= 90; frame++) yield return null;
+            Assert.AreEqual(stockBefore - 1, rc.Session.PowerStock(first), "the second tap uses a bought unit");
             yield return CheckScreen("run-heropowers-cooldown", () => { }, problems);
+            Report(problems);
+        }
+
+        IEnumerator HeroOnlyAudit(int textPercent, bool leftHanded)
+        {
+            GameSettings.TextPercent = textPercent;
+            GameSettings.LeftHanded = leftHanded;
+            GameSettings.ReducedMotion = leftHanded;
+            for (int i = 1; i <= 2; i++)
+                GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
+            RunController.HeroOverride = LegendaryTestHero();
+            GameSession.CurrentLevelId = "lvl_001_03";
+            yield return Load("Run");
+            var rc = Object.FindFirstObjectByType<RunController>();
+            var problems = new List<string>();
+            PowerUpBar bar = rc.Hud.Powers;
+            int want = 0;
+            for (int i = (int)PowerUp.Flight; i <= (int)PowerUp.SlowTime; i++)
+                if (rc.Session.Hero.IndexOf((PowerUp)i) >= 0 || rc.Session.OwnedAtStart((PowerUp)i)) want++;
+            Assert.GreaterOrEqual(want, 4, "the four hero powers each have a button");
+            Assert.AreEqual(want, bar.ButtonCount, "one button per type: bought or free");
+            for (int i = 0; i < bar.ButtonCount; i++)
+                Assert.AreEqual(rc.Session.OwnedAtStart(bar.ButtonType(i)), bar.ButtonHasBought(i), "the bought count only on bought types: " + bar.ButtonType(i));
+            rc.Hud.SkipIntro();
+            int frame = 0;
+            rc.Input.ScriptedMove = () => SimInput.Right;
+            rc.Input.ScriptedJump = () => frame % 45 == 0;
+            for (frame = 1; frame <= 60; frame++) yield return null;
+            AssertPowerGroupsLayout(rc, leftHanded);
+            yield return CheckScreen("run-heropowers-only", () => { }, problems);
             Report(problems);
         }
 
@@ -1464,11 +1659,11 @@ namespace BoingUpSkyTower.Tests
             }
         }
 
-        /// <summary>F4.1 and F4.2: every Region 1 and Region 2 hero owned (3 copies of each type below Legendary, 1 Legendary): the biggest hero lists the game can have (40 mergeable types x 3 cards = 120 merge cards, 50 hero types in All Heroes).</summary>
+        /// <summary>Owner 2026-11-09: all 25 ACTIVE heroes owned (3 copies of each type below Legendary, 1 Legendary): the biggest hero lists the game can have (20 mergeable types x 3 cards = 60 merge cards, 25 hero types in All Heroes).</summary>
         static void Region1Full()
         {
             GameSession.Progress.ResetAll();
-            foreach (string line in new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" })
+            foreach (string line in new[] { "momo", "forestgirl", "beachotter", "candygirl", "monk" })
                 foreach (string suffix in new[] { "", "_u", "_r", "_e", "_l" })
                 {
                     GameSession.Progress.AddCopies(line + suffix, suffix == "_l" ? 1 : 3);
@@ -1486,9 +1681,9 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("merge-list", () => { MergeState(false); meta.ShowMerge(); }, problems);
             yield return CheckScreen("merge-full-grid", () => { MergeState(true); meta.ShowMerge(); }, problems);
             yield return CheckScreen("merge-not-enough", () => { GameSession.Progress.ResetAll(); meta.ShowMerge(); }, problems);   // Momo with his one starting copy: an empty list
-            // F4.1: all 25 Region 1 heroes owned: 20 mergeable types, 60 cards (a long scrolling grid), top and scrolled, plus a selected Rare type
+            // All 25 active heroes owned: 20 mergeable types, 60 cards (a long scrolling grid), top and scrolled, plus a selected Rare type
             yield return CheckScreen("merge-region1-all", () => { Region1Full(); meta.ShowMerge(); }, problems);
-            yield return CheckScreen("merge-region1-selected-rare", () => { Region1Full(); meta.ShowMerge(); meta.CurrentMerge.SelectType("pip_r"); }, problems);
+            yield return CheckScreen("merge-region1-selected-rare", () => { Region1Full(); meta.ShowMerge(); meta.CurrentMerge.SelectType("forestgirl_r"); }, problems);
             // selection: three of one type (green ticks, three filled slots, Merge enabled), a wrong mix (Merge disabled with the hint)
             yield return CheckScreen("merge-selected-3", () => { MergeState(true); meta.ShowMerge(); meta.CurrentMerge.SelectType("momo"); }, problems);
             yield return CheckScreen("merge-selected-capi", () => { MergeState(true); meta.ShowMerge(); meta.CurrentMerge.SelectType("forestgirl"); }, problems);
@@ -1520,10 +1715,10 @@ namespace BoingUpSkyTower.Tests
             yield return CheckScreen("all-heroes-scrolled", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(0.5f); }, problems);
             yield return CheckScreen("all-heroes-bottom", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(1f); }, problems);
             yield return CheckScreen("all-heroes-owned", () => { MergeState(true); GameSession.Progress.AddCopies("momo_u", 1); meta.ShowAllHeroes(); }, problems);
-            // F4.1: all 25 Region 1 heroes owned (full colour cards, nine rows), top, a quarter and the bottom, and the details of a new hero
+            // All 25 active heroes owned (full colour cards), top, a quarter and the bottom, and the details of a new hero
             yield return CheckScreen("all-heroes-region1-owned", () => { Region1Full(); meta.ShowAllHeroes(); }, problems);
             yield return CheckScreen("all-heroes-region1-scrolled", () => { Region1Full(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.ScrollTo(0.2f); }, problems);
-            yield return CheckScreen("all-heroes-region1-info", () => { Region1Full(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("dandy_l"); }, problems);
+            yield return CheckScreen("all-heroes-region1-info", () => { Region1Full(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("forestgirl_l"); }, problems);
             // details popups: a real locked hero, a not-yet-made tier, and an owned hero
             yield return CheckScreen("all-heroes-info", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("momo_u"); }, problems);
             yield return CheckScreen("all-heroes-info-legendary", () => { GameSession.Progress.ResetAll(); meta.ShowAllHeroes(); meta.CurrentAllHeroes.OpenInfo("monk_legendary"); }, problems);
@@ -1537,6 +1732,189 @@ namespace BoingUpSkyTower.Tests
             back.onClick.Invoke();
             Assert.AreEqual("Characters", meta.CurrentScreen, "Back returns to the Hero screen");
             Report(problems);
+        }
+
+        // ---- Heroes screen, Bug List 6 item 3: the three tabs (All Heroes, Merge, Powers), no bottom bar, one background ----
+
+        [UnityTest]
+        public IEnumerator PowersScreenHasNoOverlapAndFitsEveryAspect() { return PowersAudit(100); }
+
+        /// <summary>CUX-5: the Powers screen survives the 130 percent text size too.</summary>
+        [UnityTest]
+        public IEnumerator PowersScreenSurvives130PercentText() { return PowersAudit(130); }
+
+        static void GivePowers()
+        {
+            GameSession.Progress.ResetAll();
+            GameSession.Progress.GrantPowerUp("pw_flight", 3);
+            GameSession.Progress.GrantPowerUp("pw_magnet", 12);
+            GameSession.Progress.GrantPowerUp("pw_wallstick", 99);
+        }
+
+        IEnumerator PowersAudit(int textPercent)
+        {
+            GameSettings.TextPercent = textPercent;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            yield return CheckScreen("powers", () => { GameSession.Progress.ResetAll(); meta.ShowPowers(); }, problems);
+            yield return CheckScreen("powers-owned", () => { GivePowers(); meta.ShowPowers(); }, problems);
+            yield return CheckScreen("powers-scrolled", () => { GivePowers(); meta.ShowPowers(); meta.CurrentPowers.ScrollTo(1f); }, problems);
+            yield return CheckScreen("powers-info", () => { GivePowers(); meta.ShowPowers(); meta.CurrentPowers.OpenInfo("pw_rocket"); }, problems);   // the longest description
+            Report(problems);
+        }
+
+        static Button FindButtonNamed(string name)
+        {
+            foreach (Button bt in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
+                if (bt.name == name && bt.gameObject.activeInHierarchy) return bt;
+            return null;
+        }
+
+        /// <summary>Bug List 6 item 3a: the Powers tab lists all 7 power-ups, each with the number owned at the BOTTOM RIGHT of its card; no buy button; a tap shows only name and description.</summary>
+        [UnityTest]
+        public IEnumerator PowersTabListsSevenPowerUpsWithOwnedCountAtBottomRight()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            GivePowers();
+            meta.ShowPowers();
+            yield return null;
+            yield return null;
+            Assert.AreEqual("Powers", meta.CurrentScreen);
+            Assert.AreEqual(7, meta.CurrentPowers.Cards.Count, "all 7 power-ups");
+            var expected = new Dictionary<string, int> { { "pw_flight", 3 }, { "pw_rocket", 0 }, { "pw_doublejump", 0 }, { "pw_magnet", 12 }, { "pw_shield", 0 }, { "pw_slowtime", 0 }, { "pw_wallstick", 99 } };
+            Assert.AreEqual(7, expected.Count);
+            foreach (KeyValuePair<string, int> kv in expected)
+            {
+                RectTransform card = FindRt("Power_" + kv.Key);
+                Assert.IsNotNull(card, "card of " + kv.Key);
+                Text owned = null;
+                foreach (Text t in card.GetComponentsInChildren<Text>()) if (t.name == PowersScreen.OwnedName) owned = t;
+                Assert.IsNotNull(owned, "owned number on " + kv.Key);
+                Assert.AreEqual(kv.Value.ToString(), owned.text, "owned count of " + kv.Key);
+                var cc = new Vector3[4];
+                card.GetWorldCorners(cc);
+                Vector3 mid = (cc[0] + cc[2]) * 0.5f, at = owned.rectTransform.position;
+                Assert.Greater(at.x, mid.x, kv.Key + ": the number is on the right half of the card");
+                Assert.Less(at.y, mid.y, kv.Key + ": the number is on the bottom half of the card");
+            }
+            foreach (Button bt in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
+                Assert.IsFalse(bt.name.StartsWith("Buy"), bt.name + ": the Powers tab has no buy button");
+            // a tap on a card opens only the name and the description
+            Assert.IsTrue(meta.CurrentPowers.OpenInfo("pw_shield"));
+            yield return null;
+            Assert.AreEqual("pw_shield", meta.CurrentPowers.OpenInfoFor.Id);
+            RectTransform pop = FindRt(PowersScreen.InfoPopupName);
+            Assert.IsNotNull(pop, "the details popup");
+            var shown = new List<string>();
+            foreach (Text t in pop.GetComponentsInChildren<Text>()) shown.Add(t.text);
+            CollectionAssert.AreEquivalent(new[] { "Shield", GameSession.Progress.PowerUpDefs.Get("pw_shield").Description }, shown, "only the name and the description");
+            meta.CurrentPowers.CloseInfo();
+            // a unit gained elsewhere (the shop) shows here
+            GameSession.Progress.GrantPowerUp("pw_flight", 1);
+            meta.ShowPowers();
+            yield return null;
+            Assert.AreEqual(4, GameSession.Progress.PowerUpCount("pw_flight"));
+            foreach (Text t in FindRt("Power_pw_flight").GetComponentsInChildren<Text>()) if (t.name == PowersScreen.OwnedName) Assert.AreEqual("4", t.text);
+        }
+
+        /// <summary>Bug List 6 item 3a: the three tabs switch between All Heroes, Merge and Powers, the tab of the page showing is selected, Back returns to the Heroes screen, and none of the pages has the old yellow button or a bottom bar.</summary>
+        [UnityTest]
+        public IEnumerator HeroTabsSwitchPagesAndShowTheSelectedTab()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            meta.ShowCharacters();
+            yield return null;
+            Assert.AreEqual("Characters", meta.CurrentScreen);
+            for (int i = 0; i < 3; i++) StringAssert.DoesNotContain("selected", FindButtonNamed(HeroTabs.ButtonNames[i]).GetComponent<A11yLabel>().Text, "no tab is selected on the Heroes landing screen");
+            string[] screens = { AllHeroesScreen.ScreenName, MergeScreen.ScreenName, PowersScreen.ScreenName };
+            for (int target = 0; target < 3; target++)
+            {
+                meta.ShowCharacters();
+                yield return null;
+                FindButtonNamed(HeroTabs.ButtonNames[target]).onClick.Invoke();   // from the landing screen
+                yield return null;
+                Assert.AreEqual(screens[target], meta.CurrentScreen, "tab " + target + " opens its page");
+                for (int i = 0; i < 3; i++)
+                {
+                    Button tab = FindButtonNamed(HeroTabs.ButtonNames[i]);
+                    Assert.IsNotNull(tab, HeroTabs.ButtonNames[i] + " on the " + screens[target] + " page");
+                    Assert.AreEqual(i == target, tab.GetComponent<A11yLabel>().Text.Contains("selected"), "selected state of tab " + i + " on page " + target);
+                }
+                Assert.IsNull(FindRt("TabBar"), "no bottom bar on the " + screens[target] + " page");
+                Assert.IsNull(FindRt("AllHeroesButton"), "no old yellow All Heroes button");
+                // from this page to the next one
+                int next = (target + 1) % 3;
+                FindButtonNamed(HeroTabs.ButtonNames[next]).onClick.Invoke();
+                yield return null;
+                Assert.AreEqual(screens[next], meta.CurrentScreen, "tab " + next + " from page " + target);
+                FindButtonNamed("Back").onClick.Invoke();
+                yield return null;
+                Assert.AreEqual("Characters", meta.CurrentScreen, "Back returns to the Heroes screen");
+            }
+        }
+
+        /// <summary>Bug List 6 item 3a: the All Heroes and Powers pages take the Merge screen's background (same painted slot or gradient, no yellow).</summary>
+        [UnityTest]
+        public IEnumerator HeroPagesShareTheMergeBackground()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            meta.ShowMerge();
+            yield return null;
+            Sprite mergeBg = BackgroundSprite("MergeBackground");
+            Assert.IsNotNull(mergeBg, "the Merge background");
+            meta.ShowAllHeroes();
+            yield return null;
+            Assert.AreSame(mergeBg, BackgroundSprite("AllHeroesBackground"), "All Heroes uses the Merge background");
+            meta.ShowPowers();
+            yield return null;
+            Assert.AreSame(mergeBg, BackgroundSprite("PowersBackground"), "Powers uses the Merge background");
+        }
+
+        static Sprite BackgroundSprite(string root)
+        {
+            RectTransform bg = FindRt(root);
+            if (bg == null) return null;
+            foreach (Image im in bg.GetComponentsInChildren<Image>()) if (im.name == "Bg") return im.sprite;
+            return null;
+        }
+
+        /// <summary>Bug List 6 item 8: a shop power-up card ALWAYS says "x1" (what one purchase gives) and never changes after a purchase; the owned count is only in Heroes > Powers.</summary>
+        [UnityTest]
+        public IEnumerator ShopPowerUpCardsAlwaysSayX1AndNeverChangeAfterAPurchase()
+        {
+            ShopScreen.TestPurchasesOverride = null;
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            GameSession.Progress.ResetAll();
+            GameSession.Progress.AddCoins(50000);
+            GameSession.Progress.GrantPowerUp("pw_magnet", 5);   // owning some must not change the card either
+            meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.PowerupsSection);
+            yield return null;
+            yield return null;
+            AssertShopCardsSayX1(7);
+            int before = GameSession.Progress.PowerUpCount("pw_flight");
+            meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(before + 1, GameSession.Progress.PowerUpCount("pw_flight"), "the purchase went through");
+            AssertShopCardsSayX1(7);
+        }
+
+        static void AssertShopCardsSayX1(int cards)
+        {
+            int n = 0;
+            foreach (Text t in Object.FindObjectsByType<Text>(FindObjectsSortMode.None))
+            {
+                if (t.name != "Owned" || !t.gameObject.activeInHierarchy) continue;
+                n++;
+                Assert.AreEqual(ShopScreen.PerPurchaseText, t.text, "a shop power-up card always says x1");
+            }
+            Assert.AreEqual("x1", ShopScreen.PerPurchaseText);
+            Assert.AreEqual(cards, n, "one x1 line per power-up card");
         }
 
         // ---- VIP page (docs/26 section 2, renamed from Subscription): release and test layouts, an active plan with Claim, the claimed state with countdown, the popups ----

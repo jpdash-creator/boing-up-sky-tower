@@ -244,32 +244,32 @@ namespace BoingUpSkyTower.Simulation
 
         /// <summary>
         /// Difficulty the builder and the scroll use (doc 24, all regions): levels 1 and 2 and endless keep <see cref="Difficulty"/>; from level 3 it never
-        /// falls below a floor that rises linearly from SimConfig.RampFloorLevel3Permille (level 3) to RampFloorLevel15Permille (level 15), so every
+        /// falls below a floor that rises linearly from SimConfig.RampFloorLevel3Permille (level 3) to RampFloorLevel25Permille (level 25), so every
         /// level from 3 on is clearly harder than the one before, whatever its content value is.
         /// </summary>
         public Fx EffectiveDifficulty(SimConfig cfg)
         {
             if (Endless || LevelIndex < 3) return Difficulty;
-            int idx = LevelIndex > 15 ? 15 : LevelIndex;
-            Fx floor = Fx.FromRatio(cfg.RampFloorPermille(idx), 1000);
+            int idx = LevelIndex > LevelsInRegion ? LevelsInRegion : LevelIndex;
+            Fx floor = Fx.FromRatio(cfg.RampFloorPermille(idx, LevelsInRegion), 1000);
             return Difficulty > floor ? Difficulty : floor;
         }
 
         /// <summary>
-        /// The effective difficulty of campaign level <paramref name="levelIndex"/> (1..15) in a region with difficulty offset <paramref name="regionOffset"/>,
-        /// computed the way the shipped levels get it (content difficulty with the offset applied, then the level 3..15 ramp floor). The endless cycle
+        /// The effective difficulty of campaign level <paramref name="levelIndex"/> (1..25) in a region with difficulty offset <paramref name="regionOffset"/>,
+        /// computed the way the shipped levels get it (content difficulty with the offset applied, then the level 3..25 ramp floor). The endless cycle
         /// uses it for every floor, so a floor at level N has the layout difficulty of the region level N.
         /// </summary>
-        public static Fx DifficultyForLevel(SimConfig cfg, int levelIndex, Fx regionOffset)
+        public static Fx DifficultyForLevel(SimConfig cfg, int levelIndex, Fx regionOffset, int levelsInRegion = SimConfig.LevelsPerRegion)
         {
-            int idx = levelIndex < 1 ? 1 : (levelIndex > 15 ? 15 : levelIndex);
-            Fx eff = LevelGenerator.EffectiveDifficulty(Fx.FromRatio(cfg.LevelContentDifficultyPermille[idx], 1000), regionOffset);
+            int idx = levelIndex < 1 ? 1 : (levelIndex > levelsInRegion ? levelsInRegion : levelIndex);
+            Fx eff = LevelGenerator.EffectiveDifficulty(Fx.FromRatio(cfg.ContentDifficultyPermille(idx, levelsInRegion), 1000), regionOffset);
             if (idx < 3) return eff;
-            Fx floor = Fx.FromRatio(cfg.RampFloorPermille(idx), 1000);
+            Fx floor = Fx.FromRatio(cfg.RampFloorPermille(idx, levelsInRegion), 1000);
             return eff > floor ? eff : floor;
         }
 
-        /// <summary>Level number inside the region, 1..15. Drives the signature template (1-2 none, 3 gentle, 4+ normal).</summary>
+        /// <summary>Level number inside the region, 1..25 (regions 6 to 30 still have 15 until they are migrated). Drives the signature template (1-2 none, 3 gentle, 4+ normal).</summary>
         public int LevelIndex = 1;
         /// <summary>0 simple, 1 medium, 2 hard, 3 complex, 4 highly complex.</summary>
         public int Class;
@@ -287,6 +287,9 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Endless only: the region's difficulty offset (0..0.25) and the floor where difficulty reaches 1 (remote config, 400).</summary>
         public Fx RegionOffset;
         public int EndlessDifficultyFloors = 400;
+        /// <summary>Levels of the region this spec belongs to: 25 by the Bug List 6 rule (regions 1 to 5), 15 for the regions 6 to 30 until they are migrated (LevelSpecFactory sets it from the region's level count). It decides the top level (gem level, ramp anchors) and the endless cycle.</summary>
+        public int LevelsInRegion = SimConfig.LevelsPerRegion;
+        public bool IsTopLevel { get { return LevelIndex == LevelsInRegion; } }
 
         /// <summary>
         /// Number of platform rows (top row index). Rule: an explicit Rows wins; ReachFloor, Speedrun and BossChase
@@ -303,11 +306,12 @@ namespace BoingUpSkyTower.Simulation
                     case GoalType.Speedrun:
                     case GoalType.BossChase:
                     case GoalType.NoWallBounce:
+                    case GoalType.FindHiddenGem:   // Bug List 6 item 4: a hidden gem level has Goal.Value rows (the gem sits half way, the level ends on its row)
                         rows = Goal.Value > 0 ? Goal.Value : DefaultRows;
                         break;
                     case GoalType.ComboChain:
                         // Doc 25: the combo levels are level 5 (90 rows) and level 10 (150 rows); other combo specs keep the default
-                        rows = LevelIndex == 5 ? 90 : (LevelIndex == 10 ? 150 : DefaultRows);
+                        rows = LevelIndex == 5 ? 90 : DefaultRows;
                         break;
                     default:
                         rows = DefaultRows;

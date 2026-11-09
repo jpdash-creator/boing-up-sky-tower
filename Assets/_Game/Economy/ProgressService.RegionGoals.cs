@@ -59,7 +59,7 @@ namespace BoingUpSkyTower.Economy
             return n;
         }
 
-        /// <summary>Clears of the region's no-wall level (level 7), as stored in the level progress (replays count).</summary>
+        /// <summary>Clears of the region's no-wall level (level 10), as stored in the level progress (replays count).</summary>
         public int RegionNoWallClears(int region)
         {
             RegionDef def = repo.TryGetRegionByIndex(region);

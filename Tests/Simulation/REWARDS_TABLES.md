@@ -17,19 +17,19 @@ Generated from `RegionGoalTable` (Assets/_Game/Economy/RegionGoals.cs). GE = gem
 
 | Id | Goal | Target | Gems | Coins | PU | Hero |
 |---|---|---|---|---|---|---|
-| g_1_stars_1 | Earn 9 stars | 9 | 0 | 200 | 0 |  |
-| g_1_stars_2 | Earn 18 stars | 18 | 3 | 0 | 0 |  |
-| g_1_stars_3 | Earn 27 stars | 27 | 0 | 400 | 0 |  |
-| g_1_stars_4 | Earn 36 stars | 36 | 4 | 0 | 0 |  |
-| g_1_stars_5 | Earn 45 stars | 45 | 6 | 0 | 1 |  |
-| g_1_levels_1 | Clear 3 levels | 3 | 0 | 150 | 0 |  |
-| g_1_levels_2 | Clear 6 levels | 6 | 2 | 0 | 0 |  |
-| g_1_levels_3 | Clear 9 levels | 9 | 0 | 300 | 0 |  |
-| g_1_levels_4 | Clear 12 levels | 12 | 4 | 0 | 0 |  |
-| g_1_levels_5 | Clear all 15 levels | 15 | 8 | 500 | 0 | Common hero |
-| g_1_stars3_1 | Get 3 stars on 3 levels | 3 | 0 | 200 | 0 |  |
-| g_1_stars3_2 | Get 3 stars on 8 levels | 8 | 4 | 0 | 0 |  |
-| g_1_stars3_3 | Get 3 stars on 15 levels | 15 | 8 | 300 | 0 |  |
+| g_1_stars_1 | Earn 15 stars | 15 | 0 | 200 | 0 |  |
+| g_1_stars_2 | Earn 30 stars | 30 | 3 | 0 | 0 |  |
+| g_1_stars_3 | Earn 45 stars | 45 | 0 | 400 | 0 |  |
+| g_1_stars_4 | Earn 60 stars | 60 | 4 | 0 | 0 |  |
+| g_1_stars_5 | Earn 75 stars | 75 | 6 | 0 | 1 | Common hero |
+| g_1_levels_1 | Clear 5 levels | 5 | 0 | 150 | 0 |  |
+| g_1_levels_2 | Clear 10 levels | 10 | 2 | 0 | 0 | Common hero |
+| g_1_levels_3 | Clear 15 levels | 15 | 0 | 300 | 0 | Common hero |
+| g_1_levels_4 | Clear 20 levels | 20 | 4 | 0 | 0 | Common hero |
+| g_1_levels_5 | Clear all 25 levels | 25 | 8 | 500 | 0 | Common hero |
+| g_1_stars3_1 | Get 3 stars on 5 levels | 5 | 0 | 200 | 0 |  |
+| g_1_stars3_2 | Get 3 stars on 13 levels | 13 | 4 | 0 | 0 |  |
+| g_1_stars3_3 | Get 3 stars on 25 levels | 25 | 8 | 300 | 0 |  |
 | g_1_jumps_1 | Make 400 jumps | 400 | 0 | 150 | 0 |  |
 | g_1_jumps_2 | Make 1200 jumps | 1200 | 2 | 200 | 0 |  |
 | g_1_jumps_3 | Make 3000 jumps | 3000 | 4 | 0 | 0 |  |
@@ -66,19 +66,19 @@ Generated from `RegionGoalTable` (Assets/_Game/Economy/RegionGoals.cs). GE = gem
 
 | Id | Goal | Target | Gems | Coins | PU | Hero |
 |---|---|---|---|---|---|---|
-| g_5_stars_1 | Earn 9 stars | 9 | 0 | 260 | 0 |  |
-| g_5_stars_2 | Earn 18 stars | 18 | 3 | 0 | 0 |  |
-| g_5_stars_3 | Earn 27 stars | 27 | 0 | 530 | 0 |  |
-| g_5_stars_4 | Earn 36 stars | 36 | 4 | 0 | 0 |  |
-| g_5_stars_5 | Earn 45 stars | 45 | 6 | 0 | 1 |  |
-| g_5_levels_1 | Clear 3 levels | 3 | 0 | 200 | 0 |  |
-| g_5_levels_2 | Clear 6 levels | 6 | 2 | 0 | 0 |  |
-| g_5_levels_3 | Clear 9 levels | 9 | 0 | 400 | 0 |  |
-| g_5_levels_4 | Clear 12 levels | 12 | 4 | 0 | 0 |  |
-| g_5_levels_5 | Clear all 15 levels | 15 | 8 | 660 | 0 | Common hero |
-| g_5_stars3_1 | Get 3 stars on 3 levels | 3 | 0 | 260 | 0 |  |
-| g_5_stars3_2 | Get 3 stars on 8 levels | 8 | 4 | 0 | 0 |  |
-| g_5_stars3_3 | Get 3 stars on 15 levels | 15 | 8 | 400 | 0 |  |
+| g_5_stars_1 | Earn 15 stars | 15 | 0 | 260 | 0 |  |
+| g_5_stars_2 | Earn 30 stars | 30 | 3 | 0 | 0 |  |
+| g_5_stars_3 | Earn 45 stars | 45 | 0 | 530 | 0 |  |
+| g_5_stars_4 | Earn 60 stars | 60 | 4 | 0 | 0 |  |
+| g_5_stars_5 | Earn 75 stars | 75 | 6 | 0 | 1 | Common hero |
+| g_5_levels_1 | Clear 5 levels | 5 | 0 | 200 | 0 |  |
+| g_5_levels_2 | Clear 10 levels | 10 | 2 | 0 | 0 | Common hero |
+| g_5_levels_3 | Clear 15 levels | 15 | 0 | 400 | 0 | Common hero |
+| g_5_levels_4 | Clear 20 levels | 20 | 4 | 0 | 0 | Common hero |
+| g_5_levels_5 | Clear all 25 levels | 25 | 8 | 660 | 0 | Common hero |
+| g_5_stars3_1 | Get 3 stars on 5 levels | 5 | 0 | 260 | 0 |  |
+| g_5_stars3_2 | Get 3 stars on 13 levels | 13 | 4 | 0 | 0 |  |
+| g_5_stars3_3 | Get 3 stars on 25 levels | 25 | 8 | 400 | 0 |  |
 | g_5_jumps_1 | Make 880 jumps | 880 | 0 | 200 | 0 |  |
 | g_5_jumps_2 | Make 2600 jumps | 2600 | 2 | 260 | 0 |  |
 | g_5_jumps_3 | Make 6600 jumps | 6600 | 4 | 0 | 0 |  |

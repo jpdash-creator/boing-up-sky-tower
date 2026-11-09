@@ -16,6 +16,8 @@ namespace BoingUpSkyTower.Simulation.Tests
     {
         const int Regions = 5;
         // Owner issue list 26 (2026-10-31): 30 percent fewer gems in game, so the bands are the old ones x0.7 (70..110 became about 55..75, hard cap 130 became 91).
+        // Bug List 6 item 4 moved to 25 levels per region; the owner then decided (2026-11-09) to scale the gem share down by about 0.55 so the income per region stays
+        // at the old bands: 55..75 placed gem value per region, hard cap 91 (placed plus milestone gems).
         const int TargetMin = 55, TargetMax = 75, HardCap = 91;
         static readonly double[] RegionFactor = { 1.0, 1.03, 1.06, 1.09, 1.12 };
 
@@ -28,7 +30,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         static readonly Dictionary<int, int[][]> cache = new Dictionary<int, int[][]>();
         static readonly object gate = new object();
 
-        /// <summary>[region 1..5] = { pickups, value } of every gem the real LevelBuilder places in the 15 levels of the region.</summary>
+        /// <summary>[region 1..5] = { pickups, value } of every gem the real LevelBuilder places in the 25 levels of the region.</summary>
         static int[][] PlacedPerRegion(int permille)
         {
             lock (gate)
@@ -55,7 +57,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             }
         }
 
-        // Milestone gems a first clear can pay in a region (L5, L10, L15), same arithmetic as RewardCalculator.Compute.
+        // Milestone gems a first clear can pay in a region (L5, L10, L15, L20, L25), same arithmetic as RewardCalculator.Compute.
         static int MilestoneGems(int region)
         {
             string root = ContentLoader.FindRoot();
@@ -64,8 +66,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             using (JsonDocument doc = JsonDocument.Parse(File.ReadAllText(file)))
                 foreach (JsonElement lv in doc.RootElement.EnumerateArray())
                 {
-                    string cls = lv.GetProperty("class").GetString();
-                    if (cls != "complex" && cls != "highly_complex") continue;
+                    if (lv.GetProperty("index").GetInt32() % 5 != 0) continue;   // RewardCalculator.IsMilestone: the special levels 5, 10, 15, 20 and the last level 25
                     JsonElement gems;
                     if (!lv.GetProperty("rewards").TryGetProperty("gems", out gems)) continue;
                     JsonElement v;
@@ -115,16 +116,15 @@ namespace BoingUpSkyTower.Simulation.Tests
         [Trait("Category", "Economy")]
         public void TheRetunedSharesPlaceFewerGemsThanTheOldOnes()
         {
-            // Issue list 26 cut the shares by 30 percent (32 / 32 / 35 / 38 / 41 to 22 / 22 / 25 / 27 / 29); doc 25 changed the level lengths, so they were
-            // re-tuned (not the rarity weights) to 27 / 27 / 29 / 30 / 32. The 70 percent cut still holds against the old shares on the OLD level lengths of
-            // about 1980 rows per region: here the placed value of the new campaign is compared with the old shares on the new levels.
-            int[] old = { 32, 32, 35, 38, 41 };
-            Assert.Equal(new[] { 27, 27, 29, 30, 32 }, SimConfig.DifficultyGemPermille);
+            // Owner 2026-11-09: with 25 levels per region the shares were scaled down by about 0.55 (27 / 27 / 29 / 30 / 32 to 14 / 14 / 15 / 15 / 15; the 55..75 band
+            // does not allow more) so the income per region stays at the old level. Compared here on the same 25-level campaign against the previous shares.
+            int[] old = { 27, 27, 29, 30, 32 };
+            Assert.Equal(new[] { 14, 14, 15, 15, 15 }, SimConfig.DifficultyGemPermille);
             double before = 0, after = 0;
             for (int d = 0; d < old.Length; d++)
                 for (int g = 1; g <= Regions; g++) { before += PlacedPerRegion(old[d])[g][1]; after += PlacedPerRegion(SimConfig.DifficultyGemPermille[d])[g][1]; }
             output.WriteLine("placed gem value over 5 difficulties x 5 regions: old shares " + before + ", new shares " + after + " = " + (after / before * 100).ToString("F1") + " percent");
-            Assert.InRange(after / before, 0.70, 0.90);
+            Assert.InRange(after / before, 0.45, 0.60);
         }
 
         [Fact]
@@ -155,7 +155,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             int n = 0;
             foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, Regions))
                 foreach (Pickup p in LevelBuilder.Build(cfg, ll.Spec).Pickups)
-                    if (p.Kind == PickupKind.Gem && p.Tag < 4) { tier[p.Tag]++; n++; }   // double gems (Tag 4, levels 8 and 15) are not a rarity tier
+                    if (p.Kind == PickupKind.Gem && p.Tag < 4) { tier[p.Tag]++; n++; }   // double gems (Tag 4, levels 8 and 25) are not a rarity tier
             output.WriteLine("placed gems " + n + ": " + tier[0] + "/" + tier[1] + "/" + tier[2] + "/" + tier[3]);
             Assert.True(n > 200, "enough gems placed to judge: " + n);
             Assert.InRange(tier[0] * 100.0 / n, 62, 78);
@@ -184,7 +184,7 @@ namespace BoingUpSkyTower.Simulation.Tests
 
         [Fact]
         [Trait("Category", "Economy")]
-        public void TheFirstClearOfLevel15AlwaysPaysAtLeastFiveGems()
+        public void TheFirstClearOfTheLastLevelAlwaysPaysAtLeastFiveGems()
         {
             string root = ContentLoader.FindRoot();
             for (int g = 1; g <= Regions; g++)
@@ -193,11 +193,11 @@ namespace BoingUpSkyTower.Simulation.Tests
                 using (JsonDocument doc = JsonDocument.Parse(File.ReadAllText(file)))
                     foreach (JsonElement lv in doc.RootElement.EnumerateArray())
                     {
-                        if (lv.GetProperty("index").GetInt32() != 15) continue;
+                        if (lv.GetProperty("index").GetInt32() != 25) continue;
                         JsonElement gems = lv.GetProperty("rewards").GetProperty("gems");
                         int amount = CoinPayoutRules.MilestoneGems(lv.GetProperty("seed").GetInt32(), gems.GetProperty("chance").GetDouble(),
                             gems.GetProperty("min").GetInt32(), gems.GetProperty("max").GetInt32(), gems.GetProperty("firstClearGuaranteed").GetInt32());
-                        Assert.True(amount >= 5, "region " + g + " level 15 pays " + amount);
+                        Assert.True(amount >= 5, "region " + g + " level 25 pays " + amount);
                     }
             }
         }
@@ -287,7 +287,7 @@ namespace BoingUpSkyTower.Simulation.Tests
 
         [Fact]
         [Trait("Category", "Economy")]
-        public void PerfectPlayerEarnsAbout3750CoinsPerRegion()
+        public void PerfectPlayerEarnsAbout6250CoinsPerRegion()
         {
             string root = ContentLoader.FindRoot();
             SimConfig cfg = new SimConfig();
@@ -306,8 +306,8 @@ namespace BoingUpSkyTower.Simulation.Tests
                 }
                 double normalised = total / factor;
                 output.WriteLine("region " + g + ": " + levels + " levels, " + total + " coins (" + noCombo + " without combo), " + normalised.ToString("F0") + " at factor 1.00");
-                Assert.Equal(15, levels);
-                Assert.InRange(normalised, 3750 * 0.9, 3750 * 1.1);
+                Assert.Equal(25, levels);
+                Assert.InRange(normalised, 6250 * 0.9, 6250 * 1.1);   // 25 levels x about 250 coins (was 15 x 250 = 3750)
             }
         }
     }

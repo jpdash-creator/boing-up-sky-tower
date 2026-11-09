@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>
-    /// H7 (owner 2026-10-31): in Candy Canyon level 7 touching the wall ended the run ("Wall bounce!", twice). Level 7 of every region
+    /// H7 (owner 2026-10-31): in Candy Canyon level 7 touching the wall ended the run ("Wall bounce!", twice). The no-wall level (7, now 10) of every region
     /// had the NoWallBounce goal, whose rule ended the run at the first wall touch. Touching a wall must NEVER end or fail a run.
     /// </summary>
     public class WallSafetyTests
@@ -20,7 +20,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             return root == null ? new List<LoadedLevel>() : ContentLoader.LoadRegions(root, 1, 5);
         }
 
-        /// <summary>Presses into one wall (jumping all the time) on all 75 levels: the run must never be ended by the wall.</summary>
+        /// <summary>Presses into one wall (jumping all the time) on all 125 levels: the run must never be ended by the wall.</summary>
         [Theory]
         [InlineData(SimInput.Left)]
         [InlineData(SimInput.Right)]
@@ -48,9 +48,9 @@ namespace BoingUpSkyTower.Simulation.Tests
             }
             output.WriteLine(levels + " levels, " + wallTicks + " ticks on a wall, " + bad.Count + " problems");
             foreach (string b in bad) output.WriteLine(b);
-            Assert.Equal(75, levels);
+            Assert.Equal(125, levels);
             Assert.True(wallTicks > 0, "the scripted run must really touch the wall");
-            Assert.Equal(5, noWallFails);   // exactly lvl_00X_07 fail on a wall touch, with the explicit reason (GoalLost)
+            Assert.Equal(5, noWallFails);   // exactly lvl_00X_10 fail (the no-wall level moved from 7 to 10, Bug List 6 item 4) on a wall touch, with the explicit reason (GoalLost)
             Assert.Empty(bad);
         }
 
@@ -64,7 +64,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 SimState s = new SimState();
                 s.WallBounces = 5;
                 Assert.Equal(ll.Spec.Goal.Type == GoalType.NoWallBounce, GoalEvaluator.IsFailed(ll.Spec, s));
-                Assert.True(ll.Id.EndsWith("_07") == (ll.Spec.Goal.Type == GoalType.NoWallBounce), ll.Id);
+                Assert.True(ll.Id.EndsWith("_10") == (ll.Spec.Goal.Type == GoalType.NoWallBounce), ll.Id);
                 s.Row = ll.Spec.RowsFor() + 5;
                 s.Coins = 100000;
                 s.WallBounces = 0;

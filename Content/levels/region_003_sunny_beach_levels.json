@@ -5,7 +5,7 @@
     "index": 1,
     "seed": 140831,
     "class": "simple",
-    "difficulty": 0.05,
+    "difficulty": 0.055,
     "goal": {
       "type": "reachFloor",
       "value": 60
@@ -37,7 +37,7 @@
     "index": 2,
     "seed": 245560,
     "class": "simple",
-    "difficulty": 0.1,
+    "difficulty": 0.213,
     "goal": {
       "type": "reachFloor",
       "value": 90
@@ -69,7 +69,7 @@
     "index": 3,
     "seed": 350289,
     "class": "simple",
-    "difficulty": 0.15,
+    "difficulty": 0.229,
     "goal": {
       "type": "reachFloor",
       "value": 90
@@ -87,7 +87,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 75,
+      "coinPayout": 70,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -100,8 +100,8 @@
     "region": "region_003_sunny_beach",
     "index": 4,
     "seed": 455018,
-    "class": "simple",
-    "difficulty": 0.22,
+    "class": "medium",
+    "difficulty": 0.275,
     "goal": {
       "type": "reachFloor",
       "value": 90
@@ -119,7 +119,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 80,
+      "coinPayout": 75,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -132,8 +132,8 @@
     "region": "region_003_sunny_beach",
     "index": 5,
     "seed": 559747,
-    "class": "complex",
-    "difficulty": 0.4,
+    "class": "medium",
+    "difficulty": 0.49,
     "goal": {
       "type": "comboChain",
       "value": 3,
@@ -166,7 +166,7 @@
     "index": 6,
     "seed": 664476,
     "class": "medium",
-    "difficulty": 0.35,
+    "difficulty": 0.366,
     "goal": {
       "type": "reachFloor",
       "value": 120
@@ -184,7 +184,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 90,
+      "coinPayout": 75,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -198,9 +198,9 @@
     "index": 7,
     "seed": 769205,
     "class": "medium",
-    "difficulty": 0.42,
+    "difficulty": 0.438,
     "goal": {
-      "type": "noWallBounce",
+      "type": "reachFloor",
       "value": 120
     },
     "stars": [
@@ -216,7 +216,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 95,
+      "coinPayout": 80,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -230,7 +230,7 @@
     "index": 8,
     "seed": 873935,
     "class": "medium",
-    "difficulty": 0.5,
+    "difficulty": 0.454,
     "goal": {
       "type": "reachFloor",
       "value": 120
@@ -248,7 +248,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 105,
+      "coinPayout": 85,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -261,8 +261,8 @@
     "region": "region_003_sunny_beach",
     "index": 9,
     "seed": 978663,
-    "class": "medium",
-    "difficulty": 0.58,
+    "class": "hard",
+    "difficulty": 0.465,
     "goal": {
       "type": "reachFloor",
       "value": 120
@@ -280,7 +280,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 110,
+      "coinPayout": 90,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -293,12 +293,11 @@
     "region": "region_003_sunny_beach",
     "index": 10,
     "seed": 1083392,
-    "class": "complex",
-    "difficulty": 0.7,
+    "class": "hard",
+    "difficulty": 0.541,
     "goal": {
-      "type": "comboChain",
-      "value": 4,
-      "count": 3
+      "type": "noWallBounce",
+      "value": 150
     },
     "stars": [
       {
@@ -328,7 +327,7 @@
     "index": 11,
     "seed": 1188121,
     "class": "hard",
-    "difficulty": 0.62,
+    "difficulty": 0.564,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -346,7 +345,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 120,
+      "coinPayout": 95,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -360,7 +359,7 @@
     "index": 12,
     "seed": 1292850,
     "class": "hard",
-    "difficulty": 0.7,
+    "difficulty": 0.567,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -378,7 +377,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 125,
+      "coinPayout": 100,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -392,7 +391,7 @@
     "index": 13,
     "seed": 1397579,
     "class": "hard",
-    "difficulty": 0.78,
+    "difficulty": 0.632,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -410,7 +409,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 135,
+      "coinPayout": 100,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -424,7 +423,7 @@
     "index": 14,
     "seed": 1502308,
     "class": "hard",
-    "difficulty": 0.86,
+    "difficulty": 0.679,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -442,7 +441,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 140,
+      "coinPayout": 105,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -455,10 +454,10 @@
     "region": "region_003_sunny_beach",
     "index": 15,
     "seed": 1607037,
-    "class": "highly_complex",
-    "difficulty": 1,
+    "class": "complex",
+    "difficulty": 0.708,
     "goal": {
-      "type": "reachFloor",
+      "type": "findHiddenGem",
       "value": 150
     },
     "stars": [
@@ -474,9 +473,331 @@
       }
     ],
     "rewards": {
+      "coinPayout": 300,
+      "gems": {
+        "chance": 0.25,
+        "min": 1,
+        "max": 3
+      }
+    }
+  },
+  {
+    "id": "lvl_003_16",
+    "region": "region_003_sunny_beach",
+    "index": 16,
+    "seed": 1711766,
+    "class": "complex",
+    "difficulty": 0.711,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 100
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 110,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_17",
+    "region": "region_003_sunny_beach",
+    "index": 17,
+    "seed": 1816495,
+    "class": "complex",
+    "difficulty": 0.75,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 105
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 115,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_18",
+    "region": "region_003_sunny_beach",
+    "index": 18,
+    "seed": 1921224,
+    "class": "complex",
+    "difficulty": 0.756,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 110
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 120,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_19",
+    "region": "region_003_sunny_beach",
+    "index": 19,
+    "seed": 2025953,
+    "class": "complex",
+    "difficulty": 0.779,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 115
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 125,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_20",
+    "region": "region_003_sunny_beach",
+    "index": 20,
+    "seed": 2130682,
+    "class": "complex",
+    "difficulty": 0.822,
+    "goal": {
+      "type": "speedrun",
+      "value": 90,
+      "timeSec": 75
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 120
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 300,
+      "gems": {
+        "chance": 0.25,
+        "min": 1,
+        "max": 3,
+        "firstClearGuaranteed": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_21",
+    "region": "region_003_sunny_beach",
+    "index": 21,
+    "seed": 2235411,
+    "class": "complex",
+    "difficulty": 0.831,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 125
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 125,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_22",
+    "region": "region_003_sunny_beach",
+    "index": 22,
+    "seed": 2340140,
+    "class": "complex",
+    "difficulty": 0.89,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 130
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 130,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_23",
+    "region": "region_003_sunny_beach",
+    "index": 23,
+    "seed": 2444869,
+    "class": "complex",
+    "difficulty": 0.951,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 135
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 135,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_24",
+    "region": "region_003_sunny_beach",
+    "index": 24,
+    "seed": 2549598,
+    "class": "complex",
+    "difficulty": 1.0,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 140
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 140,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_003_25",
+    "region": "region_003_sunny_beach",
+    "index": 25,
+    "seed": 2654327,
+    "class": "highly_complex",
+    "difficulty": 1.0,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 145
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
       "coinPayout": 900,
       "gems": {
-        "chance": 1,
+        "chance": 1.0,
         "min": 5,
         "max": 5,
         "firstClearGuaranteed": 5,

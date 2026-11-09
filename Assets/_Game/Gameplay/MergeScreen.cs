@@ -89,6 +89,49 @@ namespace BoingUpSkyTower.Gameplay
                 return icon;
             }
         }
+
+        /// <summary>The Merge look (painted MergeBackground or the purple gradient with glows), shared by every page of the Heroes screen (Bug List 6 item 3a). Returns the full-screen background, already the first sibling of <paramref name="root"/>.</summary>
+        public static RectTransform AddBackground(RectTransform root, string name)
+        {
+            RectTransform bg = UiKit.Rect(root, name);
+            UiKit.Stretch(bg);
+            bg.SetAsFirstSibling();
+            Sprite custom = Resources.Load<Sprite>(MergeArt.BackgroundResource);
+            Image baseImg = UiKit.AddImage(bg, "Bg", custom ?? MergeArt.BackgroundGradient, Color.white);
+            baseImg.preserveAspect = false;
+            UiKit.Stretch(baseImg.rectTransform);
+            if (custom != null)
+            {
+                var fit = baseImg.gameObject.AddComponent<AspectRatioFitter>();   // cover-fit like every painted background
+                fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fit.aspectRatio = custom.rect.width / custom.rect.height;
+                return bg;
+            }
+
+            // the glowing circle behind the result slot, a faint outer ring, and still sparkles; nothing moves or flashes (CUX-6)
+            Image halo = UiKit.AddImage(bg, "Bg", MergeArt.Glow, new Color(0.56f, 0.30f, 1f, 0.55f));
+            UiKit.Place(halo.rectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(1300f, 1300f));
+            halo.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            Image halo2 = UiKit.AddImage(bg, "Bg", MergeArt.Glow, new Color(0.25f, 0.55f, 1f, 0.28f));
+            UiKit.Place(halo2.rectTransform, new Vector2(0.5f, 0.22f), Vector2.zero, new Vector2(1100f, 1100f));
+            halo2.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            Image ring = UiKit.AddImage(bg, "Bg", Glyphs.Ring, new Color(0.80f, 0.62f, 1f, 0.22f));
+            UiKit.Place(ring.rectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(1000f, 1000f));
+            ring.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            uint seed = 12345u;
+            for (int i = 0; i < 22; i++)
+            {
+                seed = seed * 1664525u + 1013904223u;
+                float fx = (seed >> 8 & 0xFFFF) / 65535f;
+                seed = seed * 1664525u + 1013904223u;
+                float fy = (seed >> 8 & 0xFFFF) / 65535f;
+                float size = 14f + (i % 4) * 7f;
+                Image dot = UiKit.AddImage(bg, "Bg", MergeArt.Glow, new Color(1f, 0.92f, 0.70f, 0.55f));
+                UiKit.Place(dot.rectTransform, new Vector2(fx, fy), Vector2.zero, new Vector2(size, size));
+                dot.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            }
+            return bg;
+        }
     }
 
     /// <summary>
@@ -112,6 +155,8 @@ namespace BoingUpSkyTower.Gameplay
             public Action CloseOverlay;
             /// <summary>Back returns to the Heroes screen.</summary>
             public Action Back;
+            /// <summary>The other two tabs of the top row (Bug List 6 item 3a): All Heroes and Powers. A tab without an action is inert.</summary>
+            public Action OpenAllHeroes, OpenPowers;
         }
 
         readonly RectTransform screen, root;
@@ -119,6 +164,13 @@ namespace BoingUpSkyTower.Gameplay
         readonly ArtCatalog art;
         readonly Host host;
         RectTransform body, bg, content;
+        // Adaptive layout (Bug List 6 item 3a): the 3-tab row made the top block taller, so on a short safe area (3:4 with a notch at 130 percent text) the pieces are compacted in a fixed order
+        // until the button and the hint fit with room for the grid. See PlanLayout. A Sizer rebuilds the body when the safe area changes size (aspect or text size).
+        Sizer sizer;
+        float slotH = SlotH, headerBs = 140f;
+        bool compactTabs, showArrow = true;
+        int gainLinesUsed = GainLines;
+        const float MinGridReserve = 150f, CompactSlotH = 130f;
         /// <summary>The cards of the Merge list: every copy of every hero type that can merge (3 or more copies and a next tier).</summary>
         List<HeroCard> cards = new List<HeroCard>();
         /// <summary>The selected cards, in the order they were tapped (the three slots show them).</summary>
@@ -147,6 +199,58 @@ namespace BoingUpSkyTower.Gameplay
 
         static float Line(int font) { return Mathf.Ceil(Mathf.Max(font, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.3f); }
 
+        /// <summary>Lives under the safe-area rect for the life of the screen; when its height changes it rebuilds the Merge body once (next LateUpdate). No per-frame work besides one flag test.</summary>
+        sealed class Sizer : UnityEngine.EventSystems.UIBehaviour
+        {
+            public Action Rebuild;
+            public float BuiltFor;
+            bool dirty;
+            public float Height { get { return ((RectTransform)transform).rect.height; } }
+
+            protected override void OnRectTransformDimensionsChange()
+            {
+                if (Mathf.Abs(Height - BuiltFor) > 1f) dirty = true;
+            }
+
+            void LateUpdate()
+            {
+                if (!dirty) return;
+                dirty = false;
+                if (Rebuild != null) Rebuild();
+            }
+        }
+
+        float Need()
+        {
+            float lName = Line(NameFont), lBody = Line(BodyFont);
+            float resultH = Pad + 2f * lName + 6f + RarityLines * lBody + 6f + gainLinesUsed * lBody + Pad + 8f;
+            return 16f + headerBs + 8f + HeroTabs.RowHFor(compactTabs) + 8f + resultH + (showArrow ? ArrowH + 8f : 0f) + slotH + 14f + 140f + 6f + lBody + 12f + 12f;
+        }
+
+        /// <summary>
+        /// Chooses the layout variant for the safe-area height. Order: the gain rows shrink to the real number of lines, the slots get shorter, the tab row goes compact, the header button
+        /// is trimmed to the touch minimum, and last the green arrow goes. Each step is skipped when the grid already has at least <see cref="MinGridReserve"/> left.
+        /// </summary>
+        void PlanLayout(int gainCount)
+        {
+            slotH = SlotH;
+            headerBs = Mathf.Max(140f, UiKit.MinTouchRef);
+            compactTabs = false;
+            showArrow = true;
+            gainLinesUsed = GainLines;
+            float avail = sizer != null ? sizer.Height : 0f;
+            if (avail <= 1f || Need() + MinGridReserve <= avail) return;
+            gainLinesUsed = Mathf.Clamp(gainCount, 1, GainLines);
+            if (Need() + MinGridReserve <= avail) return;
+            slotH = Mathf.Max(CompactSlotH, UiKit.MinTouchRef);
+            if (Need() + MinGridReserve <= avail) return;
+            compactTabs = true;
+            if (Need() + MinGridReserve <= avail) return;
+            headerBs = Mathf.Max(UiKit.MinTouchRef, 126f);
+            if (Need() + MinGridReserve <= avail) return;
+            showArrow = false;
+        }
+
         // ------------------------------------------------------------ build
 
         /// <summary>Builds (or rebuilds) the screen. <paramref name="preselectId"/> (tests and shortcuts) selects the first three copies of that hero type; null keeps the current selection.</summary>
@@ -174,6 +278,14 @@ namespace BoingUpSkyTower.Gameplay
                 body = null;
             }
             if (bg == null) BuildBackground();
+            if (sizer == null)
+            {
+                RectTransform sr = UiKit.Rect(screen, "MergeSizer");
+                UiKit.Stretch(sr);
+                sizer = sr.gameObject.AddComponent<Sizer>();
+                sizer.Rebuild = BuildNow;
+            }
+            sizer.BuiltFor = sizer.Height;
 
             cards = CharacterCatalog.MergeCards(progress);
             List<HeroCard> kept = HeroCards.Prune(picked, cards);   // copies that were merged away are gone from the selection
@@ -183,10 +295,11 @@ namespace BoingUpSkyTower.Gameplay
             body = UiKit.Rect(screen, "MergeBody");
             UiKit.Stretch(body);
 
-            float y = BuildTopBar();
             CharacterSpec spec = picked.Count > 0 ? picked[0].Spec : null;
             CharacterSpec next = spec != null ? MergeRules.NextTier(spec) : null;
             Preview = next != null ? CharacterCatalog.Get(next.Id) : null;
+            PlanLayout(next != null ? MergeRules.ShownGainLines(spec.ShownValues(), next.ShownValues()).Count : (spec != null ? 1 : 0));
+            float y = BuildTopBar();
 
             y = BuildResultCard(y, spec, next);
             y = BuildSlots(y);
@@ -198,50 +311,14 @@ namespace BoingUpSkyTower.Gameplay
 
         void BuildBackground()
         {
-            bg = UiKit.Rect(root, "MergeBackground");
-            UiKit.Stretch(bg);
-            bg.SetAsFirstSibling();
-            Sprite custom = Resources.Load<Sprite>(MergeArt.BackgroundResource);
-            Image baseImg = UiKit.AddImage(bg, "Bg", custom ?? MergeArt.BackgroundGradient, Color.white);
-            baseImg.preserveAspect = false;
-            UiKit.Stretch(baseImg.rectTransform);
-            if (custom != null)
-            {
-                var fit = baseImg.gameObject.AddComponent<AspectRatioFitter>();   // cover-fit like every painted background
-                fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
-                fit.aspectRatio = custom.rect.width / custom.rect.height;
-                return;
-            }
-
-            // the glowing circle behind the result slot, a faint outer ring, and still sparkles; nothing moves or flashes (CUX-6)
-            Image halo = UiKit.AddImage(bg, "Bg", MergeArt.Glow, new Color(0.56f, 0.30f, 1f, 0.55f));
-            UiKit.Place(halo.rectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(1300f, 1300f));
-            halo.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            Image halo2 = UiKit.AddImage(bg, "Bg", MergeArt.Glow, new Color(0.25f, 0.55f, 1f, 0.28f));
-            UiKit.Place(halo2.rectTransform, new Vector2(0.5f, 0.22f), Vector2.zero, new Vector2(1100f, 1100f));
-            halo2.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            Image ring = UiKit.AddImage(bg, "Bg", Glyphs.Ring, new Color(0.80f, 0.62f, 1f, 0.22f));
-            UiKit.Place(ring.rectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(1000f, 1000f));
-            ring.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            uint seed = 12345u;
-            for (int i = 0; i < 22; i++)
-            {
-                seed = seed * 1664525u + 1013904223u;
-                float fx = (seed >> 8 & 0xFFFF) / 65535f;
-                seed = seed * 1664525u + 1013904223u;
-                float fy = (seed >> 8 & 0xFFFF) / 65535f;
-                float size = 14f + (i % 4) * 7f;
-                Image dot = UiKit.AddImage(bg, "Bg", MergeArt.Glow, new Color(1f, 0.92f, 0.70f, 0.55f));
-                UiKit.Place(dot.rectTransform, new Vector2(fx, fy), Vector2.zero, new Vector2(size, size));
-                dot.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            }
+            bg = MergeArt.AddBackground(root, "MergeBackground");
         }
 
         // ------------------------------------------------------------ top bar
 
         float BuildTopBar()
         {
-            float bs = Mathf.Max(140f, UiKit.MinTouchRef);
+            float bs = headerBs;
             Button back = ToyKit.GlyphButton(body, "Back", "Back", 2, Glyphs.Left, new Vector2(bs, bs), () => { if (host != null && host.Back != null) host.Back(); });
             UiKit.Place((RectTransform)back.transform, new Vector2(0f, 1f), new Vector2(20f, -16f), new Vector2(bs, bs));
 
@@ -256,7 +333,9 @@ namespace BoingUpSkyTower.Gameplay
             Image icon = UiKit.AddImage(body, "MergeIcon", MergeArt.Icon, Color.white);
             float isz = Mathf.Min(bs, 112f);
             UiKit.Place(icon.rectTransform, new Vector2(1f, 1f), new Vector2(-24f - (bs - isz) * 0.5f, -16f - (bs - isz) * 0.5f), new Vector2(isz, isz));
-            return 16f + bs + 8f;
+            float top = 16f + bs + 8f;
+            HeroTabs.Build(body, top, HeroTabs.Merge, host != null ? host.OpenAllHeroes : null, null, host != null ? host.OpenPowers : null, compactTabs);
+            return top + HeroTabs.RowHFor(compactTabs) + 8f;
         }
 
         // ------------------------------------------------------------ result slot
@@ -276,7 +355,7 @@ namespace BoingUpSkyTower.Gameplay
         float BuildResultCard(float y, CharacterSpec spec, CharacterSpec next)
         {
             float lName = Line(NameFont), lBody = Line(BodyFont);
-            float cardH = Pad + 2f * lName + 6f + RarityLines * lBody + 6f + GainLines * lBody + Pad;   // fixed: 2 name lines, 2 rarity lines (may wrap), up to 6 gain lines, so the screen never jumps
+            float cardH = Pad + 2f * lName + 6f + RarityLines * lBody + 6f + gainLinesUsed * lBody + Pad;   // fixed: 2 name lines, 2 rarity lines (may wrap), up to 6 gain lines, so the screen never jumps
             RectTransform card = TopRow(body, "ResultCard", y, cardH, Margin);
             Image panel = UiKit.AddImage(card, "Panel", Theme.RoundSprite, new Color(0.10f, 0.08f, 0.26f, 0.88f));
             panel.type = Image.Type.Sliced;
@@ -344,7 +423,7 @@ namespace BoingUpSkyTower.Gameplay
             Text rt = UiKit.AddText(TopRow(info, "RarityRow", cy, RarityLines * lBody, 0f), "ResultRarity", rarityText, BodyFont, Gold, TextAnchor.UpperLeft);
             UiKit.Stretch(rt.rectTransform);
             cy += RarityLines * lBody + 6f;
-            Text gn = UiKit.AddText(TopRow(info, "GainsRow", cy, GainLines * lBody, 0f), "ResultGains", gains, BodyFont, new Color(0.62f, 1f, 0.72f, 1f), TextAnchor.UpperLeft);
+            Text gn = UiKit.AddText(TopRow(info, "GainsRow", cy, gainLinesUsed * lBody, 0f), "ResultGains", gains, BodyFont, new Color(0.62f, 1f, 0.72f, 1f), TextAnchor.UpperLeft);
             UiKit.Stretch(gn.rectTransform);
             gn.lineSpacing = 1f;
             card.gameObject.AddComponent<A11yLabel>().Text = "Result: " + nameText + ", " + rarityText + (gains.Length > 0 ? ", " + gains.Replace("\n", ", ") : "");
@@ -357,11 +436,14 @@ namespace BoingUpSkyTower.Gameplay
         float BuildSlots(float y)
         {
             // green arrow pointing from the slots up to the result
-            Image arrow = UiKit.AddImage(body, "Arrow", Glyphs.Up, ArrowGreen);
-            UiKit.Place(arrow.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(ArrowH, ArrowH));
-            y += ArrowH + 8f;
+            if (showArrow)
+            {
+                Image arrow = UiKit.AddImage(body, "Arrow", Glyphs.Up, ArrowGreen);
+                UiKit.Place(arrow.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(ArrowH, ArrowH));
+                y += ArrowH + 8f;
+            }
 
-            RectTransform row = TopRow(body, "Slots", y, SlotH, Margin);
+            RectTransform row = TopRow(body, "Slots", y, slotH, Margin);
             for (int i = 0; i < MergeRules.CopiesNeeded; i++)
             {
                 bool filled = i < picked.Count;
@@ -394,7 +476,7 @@ namespace BoingUpSkyTower.Gameplay
                 }
                 outer.gameObject.AddComponent<A11yLabel>().Text = "Merge slot " + (i + 1) + (filled ? ", " + CharacterCatalog.Get(card.Id).Name + ", tap to remove" : ", empty");
             }
-            return y + SlotH + 14f;
+            return y + slotH + 14f;
         }
 
         // ------------------------------------------------------------ MERGE button
@@ -534,6 +616,7 @@ namespace BoingUpSkyTower.Gameplay
                 b.onClick.AddListener(() => { AudioManager.Play(Sfx.Tap); Toggle(pick); });
                 outer.gameObject.AddComponent<A11yLabel>().Text = who.Name + ", " + CharacterDefs.RarityNames[(int)s.Rarity] + (isPicked ? ", selected" : "");
             }
+            if (sizer != null && sizer.Height > 1f && sizer.Height - y - 12f < UiKit.MinTouchPx) vp.gameObject.SetActive(false);   // no room left at all: never a negative-size area
             if (scroll > 0f) content.anchoredPosition = new Vector2(0f, scroll);
             sr.onValueChanged.AddListener(_ => scroll = content.anchoredPosition.y);
         }

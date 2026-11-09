@@ -181,8 +181,7 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(6, Daily(svc, RewardStat.StarsEarned), "6 first clears with 1 star each");
             Assert.AreEqual(0, Daily(svc, RewardStat.Stars2));
             svc.ApplyRun("lvl_001_07", Won());
-            Assert.AreEqual(1, Daily(svc, RewardStat.NoWall), "level 7 is the no-wall-touch level");
-            Assert.AreEqual(1, Weekly(svc, RewardStat.NoWall));
+            Assert.AreEqual(0, Daily(svc, RewardStat.NoWall), "level 7 is a plain level (the no-wall-touch level is level 10 since Bug List 6 item 4)");
             Assert.AreEqual(0, Daily(svc, RewardStat.GemLevel));
 
             svc.ApplyRun("lvl_001_08", new RunOutcome { Completed = true, StarMask = 7, GemsCollected = 5, HiddenGems = 2 });
@@ -198,6 +197,8 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(12, Weekly(svc, RewardStat.StarsEarned));
             svc.ApplyRun("lvl_001_10", new RunOutcome { Completed = true, StarMask = 1 });
             Assert.AreEqual(2, Daily(svc, RewardStat.Stars2), "1 star is not 2 stars");
+            Assert.AreEqual(1, Daily(svc, RewardStat.NoWall), "level 10 is the no-wall-touch level");
+            Assert.AreEqual(1, Weekly(svc, RewardStat.NoWall));
         }
 
         [Test]
@@ -216,28 +217,28 @@ namespace BoingUpSkyTower.Tests
         public void ReplaysOfClearedLevelsCountAtMostThreePerDayInTotal()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 7);   // 7 first clears
-            Assert.AreEqual(7, Daily(svc, RewardStat.Levels));
-            for (int i = 0; i < 5; i++) svc.ApplyRun("lvl_001_07", Won(7));   // replays of the no-wall level
-            Assert.AreEqual(10, Daily(svc, RewardStat.Levels), "only 3 of the 5 replays count");
+            ClearLevels(svc, 1, 10);   // 10 first clears
+            Assert.AreEqual(10, Daily(svc, RewardStat.Levels));
+            for (int i = 0; i < 5; i++) svc.ApplyRun("lvl_001_10", Won(7));   // replays of the no-wall level
+            Assert.AreEqual(13, Daily(svc, RewardStat.Levels), "only 3 of the 5 replays count");
             Assert.AreEqual(4, Daily(svc, RewardStat.NoWall), "1 first clear + 3 counted replays");
             Assert.AreEqual(3, Daily(svc, RewardStat.Stars3), "3 counted replays with 3 stars");
             svc.ApplyRun("lvl_001_01", Won());   // a replay of another level: still over the daily limit
-            Assert.AreEqual(10, Daily(svc, RewardStat.Levels));
-            ClearLevels(svc, 1, 8);              // level 8 is a first clear: always counts
-            Assert.AreEqual(11, Daily(svc, RewardStat.Levels));
-            Assert.AreEqual(11, Weekly(svc, RewardStat.Levels));
+            Assert.AreEqual(13, Daily(svc, RewardStat.Levels));
+            ClearLevels(svc, 1, 11);             // level 11 is a first clear: always counts
+            Assert.AreEqual(14, Daily(svc, RewardStat.Levels));
+            Assert.AreEqual(14, Weekly(svc, RewardStat.Levels));
             now = now.AddDays(1);                // next day: replays count again
             svc.ApplyRun("lvl_001_01", Won());
             Assert.AreEqual(1, Daily(svc, RewardStat.Levels));
         }
 
         [Test]
-        public void Level15CountsAsAGemLevelToo()
+        public void TheLastLevelCountsAsAGemLevelToo()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 15);
-            Assert.AreEqual(2, Daily(svc, RewardStat.GemLevel), "levels 8 and 15");
+            ClearLevels(svc, 1, 25);
+            Assert.AreEqual(2, Daily(svc, RewardStat.GemLevel), "levels 8 and 25");
         }
 
         [Test]
@@ -483,13 +484,13 @@ namespace BoingUpSkyTower.Tests
             svc.RecordLevelStarted(3);
             ClearLevels(svc, 1, 5);   // five hard clears
             Assert.AreEqual(5, Weekly(svc, RewardStat.HardClear));
-            var region1 = new[] { "momo", "bumble", "ribbi", "dandy", "pip" };
+            var region1 = new[] { "momo" };
             int before = 0;
             foreach (string id in region1) before += svc.Copies(id);
             RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_hard5");
             Assert.AreEqual(RewardClaimResult.Ok, res.Result);
             Assert.AreEqual(1, res.HeroIds.Count);
-            CollectionAssert.Contains(region1, res.HeroIds[0], "only region 1 is open: one of its five Common heroes");
+            CollectionAssert.Contains(region1, res.HeroIds[0], "only region 1 is open: Momo, its one ACTIVE Common hero");
             Assert.AreEqual(before + 1, TotalOf(svc, region1));
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Weekly, "w_hard5").Result);
             Assert.AreEqual(before + 1, TotalOf(svc, region1), "no second copy");
@@ -520,7 +521,7 @@ namespace BoingUpSkyTower.Tests
                 RewardClaimOutcome res = svc.TryClaimReward(RewardTab.Weekly, "w_hard5");
                 Assert.AreEqual(RewardClaimResult.Ok, res.Result);
                 picks[run] = res.HeroIds[0];
-                CollectionAssert.Contains(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" }, picks[run], "regions 4 and 5 are closed");
+                CollectionAssert.Contains(new[] { "momo", "forestgirl", "beachotter" }, picks[run], "regions 4 and 5 are closed");
             }
             Assert.AreEqual(picks[0], picks[1], "same seed and claim count, same hero");
         }
@@ -563,7 +564,7 @@ namespace BoingUpSkyTower.Tests
             svc.RecordLogin();
             svc.AddPlaySeconds(300);
             svc.RecordRunStats(new RunOutcome { ComboChains = 4, BestCombo = 6 });
-            ClearLevels(svc, 1, 9, 7);   // 27 stars
+            ClearLevels(svc, 1, 10, 7);   // 30 stars (g_1_stars_2)
             svc.TryClaimReward(RewardTab.Daily, "dp_20");
             svc.TryClaimReward(RewardTab.Main, "g_1_stars_2");
             svc.FlushPlayTime();
@@ -572,7 +573,7 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(1, Daily(again, RewardStat.Login));
             Assert.AreEqual(300, Daily(again, RewardStat.PlaySeconds));
             Assert.AreEqual(4, Daily(again, RewardStat.Combos));
-            Assert.AreEqual(9, Daily(again, RewardStat.Levels));
+            Assert.AreEqual(10, Daily(again, RewardStat.Levels));
             Assert.AreEqual(6, again.BestComboEver);
             Assert.AreEqual(1, Weekly(again, RewardStat.LoginDays));
             Assert.IsTrue(again.IsRewardClaimed(RewardTab.Daily, again.RewardDefs.Find(RewardTab.Daily, "dp_20")));
@@ -633,7 +634,7 @@ namespace BoingUpSkyTower.Tests
         public void ReadyCardsAreButtonsWithAGreenClaimButtonAndClaimAllFollowsTheSelectedRegion()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 3);   // g_1_levels_1 (clear 3 levels) is ready, nothing else
+            ClearLevels(svc, 1, 5);   // g_1_levels_1 (clear 5 levels) is ready, nothing else
             GameObject root;
             RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
             try
@@ -678,7 +679,7 @@ namespace BoingUpSkyTower.Tests
         public void ReadyGoalCardHasAClaimButtonOfAtLeast48DpThatClaimsExactlyThatGoal()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 3);   // g_1_levels_1 = 150 coins; nothing else is complete
+            ClearLevels(svc, 1, 5);   // g_1_levels_1 = 150 coins; nothing else is complete
             int gems = svc.Gems, coins = svc.Coins;
             GameObject root;
             RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
@@ -887,8 +888,8 @@ namespace BoingUpSkyTower.Tests
         public void ClaimAllOnMainClaimsOnlyTheSelectedRegion()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 15, 7);   // region 1: stars, levels, 3-star goals ready (and region 2 opens)
-            ClearLevels(svc, 2, 3);        // region 2: g_2_levels_1 ready
+            ClearLevels(svc, 1, 25, 7);   // region 1: stars, levels, 3-star goals ready (and region 2 opens)
+            ClearLevels(svc, 2, 5);        // region 2: g_2_levels_1 ready
             Assert.IsTrue(svc.HasClaimableInRegion(1));
             Assert.IsTrue(svc.HasClaimableInRegion(2));
             int readyOne = svc.RegionGoalsReadyCount(1);
@@ -924,7 +925,7 @@ namespace BoingUpSkyTower.Tests
                 Transform face = s.ListContent.Find("Row_g_1_levels_5/Card/RewardPlate/Hero");
                 Assert.IsNotNull(face, "'clear all levels' gives the region hero: its face is on the plate");
                 StringAssert.Contains("hero", face.GetComponent<A11yLabel>().Text);
-                Assert.IsNotNull(s.ListContent.Find("Row_g_1_levels_4/Card/RewardPlate/Hero"), "'clear 12 levels' hands out Dandy: its face is on the plate");
+                Assert.IsNotNull(s.ListContent.Find("Row_g_1_levels_4/Card/RewardPlate/Hero"), "'clear 20 levels' hands out a random ACTIVE Common hero: the hero chip is on the plate");
                 Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1/Card/RewardPlate/Hero"), "other goals have no hero");
                 s.SelectTab(RewardTab.Weekly);
                 Transform weekly = s.ListContent.Find("Row_w_hard5/Card/RewardPlate/Hero");
@@ -1031,7 +1032,7 @@ namespace BoingUpSkyTower.Tests
         public void ClaimingAGoalShowsTheSmallCardWithItsRewardChips()
         {
             ProgressService svc = NewService();
-            ClearLevels(svc, 1, 3);
+            ClearLevels(svc, 1, 5);
             GameObject root;
             RewardsScreen s = BuildScreenWithHost(svc, RewardTab.Main, out root);
             try

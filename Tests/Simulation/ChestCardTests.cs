@@ -89,15 +89,15 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(new[] { "base1", "base2", "base3" }, all.Select(c => c.Id).ToArray());
             List<CharacterSpec> some = ChestRolls.Pool(CharacterRarity.Common, Full, r => false);
             Assert.Equal(new[] { "base1" }, some.Select(c => c.Id).ToArray());   // region 1 is always open
-            // the real game: twenty-five Common heroes, no merge tier is ever a Common card
-            Assert.Equal(new[] { "beachotter", "bloop", "bumble", "candygirl", "choco", "coco", "cookie", "dandy", "fenn", "forestgirl", "gummi", "marsh", "momo", "monk", "moss", "nib", "pinch", "pip", "ribbi", "rusu", "ryu", "shelly", "spike", "sprout", "tora" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, null).Select(c => c.Id).ToArray());
-            Assert.Equal(new[] { "bumble", "dandy", "momo", "pip", "ribbi" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, r => false).Select(c => c.Id).ToArray());
+            // the real game (owner 2026-11-09): five ACTIVE Common heroes, no merge tier is ever a Common card, no inactive hero
+            Assert.Equal(new[] { "beachotter", "candygirl", "forestgirl", "momo", "monk" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, null).Select(c => c.Id).ToArray());
+            Assert.Equal(new[] { "momo" }, ChestRolls.Pool(CharacterRarity.Common, CharacterDefs.All, r => false).Select(c => c.Id).ToArray());
         }
 
         [Fact]
         public void AnEmptyTierFallsBackToTheNextLowerTierThatHasAHero()
         {
-            // today's real game (F4.1): Region 1 has Common to Legendary heroes, so a drawn tier is used as it is while region 1 is the only open region
+            // today's real game: Region 1 (Momo) has Common to Legendary heroes, so a drawn tier is used as it is while region 1 is the only open region
             foreach (CharacterRarity drawn in new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic })
             {
                 CharacterRarity got;
@@ -128,7 +128,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             for (int i = 0; i < 20000; i++)
                 foreach (ChestKind kind in new[] { ChestKind.Iron, ChestKind.Golden })
                     seen.Add(ChestRolls.DrawHero(kind, Mix(ref s), Mix(ref s), CharacterDefs.All, null).Rarity);
-            // F4: Regions 1 and 2 now have Common to Legendary heroes, so every drawn tier must be a tier that really has a hero
+            // every active line has Common to Legendary heroes, so every drawn tier must be a tier that really has a hero
             Assert.All(seen, t => Assert.Contains(CharacterDefs.All, c => c.Rarity == t));
             Assert.Contains(CharacterRarity.Rare, seen);
         }

@@ -5,7 +5,7 @@
     "index": 1,
     "seed": 156669,
     "class": "simple",
-    "difficulty": 0.05,
+    "difficulty": 0.003,
     "goal": {
       "type": "reachFloor",
       "value": 60
@@ -37,7 +37,7 @@
     "index": 2,
     "seed": 261398,
     "class": "simple",
-    "difficulty": 0.1,
+    "difficulty": 0.195,
     "goal": {
       "type": "reachFloor",
       "value": 90
@@ -69,7 +69,7 @@
     "index": 3,
     "seed": 366127,
     "class": "simple",
-    "difficulty": 0.15,
+    "difficulty": 0.22,
     "goal": {
       "type": "reachFloor",
       "value": 90
@@ -87,7 +87,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 75,
+      "coinPayout": 70,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -100,8 +100,8 @@
     "region": "region_005_bamboo_temple",
     "index": 4,
     "seed": 470856,
-    "class": "simple",
-    "difficulty": 0.22,
+    "class": "medium",
+    "difficulty": 0.254,
     "goal": {
       "type": "reachFloor",
       "value": 90
@@ -119,7 +119,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 80,
+      "coinPayout": 75,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -132,8 +132,8 @@
     "region": "region_005_bamboo_temple",
     "index": 5,
     "seed": 575585,
-    "class": "complex",
-    "difficulty": 0.4,
+    "class": "medium",
+    "difficulty": 0.474,
     "goal": {
       "type": "comboChain",
       "value": 3,
@@ -166,7 +166,7 @@
     "index": 6,
     "seed": 680314,
     "class": "medium",
-    "difficulty": 0.35,
+    "difficulty": 0.323,
     "goal": {
       "type": "reachFloor",
       "value": 120
@@ -184,7 +184,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 90,
+      "coinPayout": 75,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -198,9 +198,9 @@
     "index": 7,
     "seed": 785043,
     "class": "medium",
-    "difficulty": 0.42,
+    "difficulty": 0.375,
     "goal": {
-      "type": "noWallBounce",
+      "type": "reachFloor",
       "value": 120
     },
     "stars": [
@@ -216,7 +216,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 95,
+      "coinPayout": 80,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -230,7 +230,7 @@
     "index": 8,
     "seed": 889772,
     "class": "medium",
-    "difficulty": 0.5,
+    "difficulty": 0.397,
     "goal": {
       "type": "reachFloor",
       "value": 120
@@ -248,7 +248,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 105,
+      "coinPayout": 85,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -261,8 +261,8 @@
     "region": "region_005_bamboo_temple",
     "index": 9,
     "seed": 994501,
-    "class": "medium",
-    "difficulty": 0.58,
+    "class": "hard",
+    "difficulty": 0.442,
     "goal": {
       "type": "reachFloor",
       "value": 120
@@ -280,7 +280,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 110,
+      "coinPayout": 90,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -293,12 +293,11 @@
     "region": "region_005_bamboo_temple",
     "index": 10,
     "seed": 1099230,
-    "class": "complex",
-    "difficulty": 0.7,
+    "class": "hard",
+    "difficulty": 0.473,
     "goal": {
-      "type": "comboChain",
-      "value": 4,
-      "count": 3
+      "type": "noWallBounce",
+      "value": 150
     },
     "stars": [
       {
@@ -328,7 +327,7 @@
     "index": 11,
     "seed": 1203959,
     "class": "hard",
-    "difficulty": 0.62,
+    "difficulty": 0.516,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -346,7 +345,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 120,
+      "coinPayout": 95,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -360,7 +359,7 @@
     "index": 12,
     "seed": 1308688,
     "class": "hard",
-    "difficulty": 0.7,
+    "difficulty": 0.531,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -378,7 +377,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 125,
+      "coinPayout": 100,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -392,7 +391,7 @@
     "index": 13,
     "seed": 1413417,
     "class": "hard",
-    "difficulty": 0.78,
+    "difficulty": 0.594,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -410,7 +409,7 @@
       }
     ],
     "rewards": {
-      "coinPayout": 135,
+      "coinPayout": 100,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -424,7 +423,7 @@
     "index": 14,
     "seed": 1518146,
     "class": "hard",
-    "difficulty": 0.86,
+    "difficulty": 0.614,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -436,6 +435,328 @@
       {
         "type": "coins",
         "value": 500
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 105,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_15",
+    "region": "region_005_bamboo_temple",
+    "index": 15,
+    "seed": 1622875,
+    "class": "complex",
+    "difficulty": 0.635,
+    "goal": {
+      "type": "findHiddenGem",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 500
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 300,
+      "gems": {
+        "chance": 0.25,
+        "min": 1,
+        "max": 3
+      }
+    }
+  },
+  {
+    "id": "lvl_005_16",
+    "region": "region_005_bamboo_temple",
+    "index": 16,
+    "seed": 1727604,
+    "class": "complex",
+    "difficulty": 0.682,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 100
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 110,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_17",
+    "region": "region_005_bamboo_temple",
+    "index": 17,
+    "seed": 1832333,
+    "class": "complex",
+    "difficulty": 0.699,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 105
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 115,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_18",
+    "region": "region_005_bamboo_temple",
+    "index": 18,
+    "seed": 1937062,
+    "class": "complex",
+    "difficulty": 0.717,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 110
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 120,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_19",
+    "region": "region_005_bamboo_temple",
+    "index": 19,
+    "seed": 2041791,
+    "class": "complex",
+    "difficulty": 0.742,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 115
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 125,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_20",
+    "region": "region_005_bamboo_temple",
+    "index": 20,
+    "seed": 2146520,
+    "class": "complex",
+    "difficulty": 0.807,
+    "goal": {
+      "type": "speedrun",
+      "value": 90,
+      "timeSec": 75
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 120
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 300,
+      "gems": {
+        "chance": 0.25,
+        "min": 1,
+        "max": 3,
+        "firstClearGuaranteed": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_21",
+    "region": "region_005_bamboo_temple",
+    "index": 21,
+    "seed": 2251249,
+    "class": "complex",
+    "difficulty": 0.823,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 125
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 125,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_22",
+    "region": "region_005_bamboo_temple",
+    "index": 22,
+    "seed": 2355978,
+    "class": "complex",
+    "difficulty": 0.858,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 130
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 130,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_23",
+    "region": "region_005_bamboo_temple",
+    "index": 23,
+    "seed": 2460707,
+    "class": "complex",
+    "difficulty": 0.896,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 135
+      },
+      {
+        "type": "noRevive"
+      }
+    ],
+    "rewards": {
+      "coinPayout": 135,
+      "gems": {
+        "chance": 0.03,
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  {
+    "id": "lvl_005_24",
+    "region": "region_005_bamboo_temple",
+    "index": 24,
+    "seed": 2565436,
+    "class": "complex",
+    "difficulty": 0.899,
+    "goal": {
+      "type": "reachFloor",
+      "value": 150
+    },
+    "stars": [
+      {
+        "type": "clear"
+      },
+      {
+        "type": "coins",
+        "value": 140
       },
       {
         "type": "noRevive"
@@ -451,12 +772,12 @@
     }
   },
   {
-    "id": "lvl_005_15",
+    "id": "lvl_005_25",
     "region": "region_005_bamboo_temple",
-    "index": 15,
-    "seed": 1622875,
+    "index": 25,
+    "seed": 2670165,
     "class": "highly_complex",
-    "difficulty": 1,
+    "difficulty": 0.977,
     "goal": {
       "type": "reachFloor",
       "value": 150
@@ -467,7 +788,7 @@
       },
       {
         "type": "coins",
-        "value": 500
+        "value": 145
       },
       {
         "type": "noRevive"
@@ -476,7 +797,7 @@
     "rewards": {
       "coinPayout": 900,
       "gems": {
-        "chance": 1,
+        "chance": 1.0,
         "min": 5,
         "max": 5,
         "firstClearGuaranteed": 5,

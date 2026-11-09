@@ -361,11 +361,11 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(5, svc.ApplyRun("lvl_001_01", Won(gems: 5)).PickupGems, "many gems per level now (about 5 on a long level)");
             Assert.AreEqual(0, svc.ApplyRun("lvl_001_02", Won(gems: 0)).RewardGems);
             var l15 = NewService();
-            for (int i = 1; i <= 14; i++) l15.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
-            RewardResult first = l15.ApplyRun("lvl_001_15", Won(gems: 3));
-            Assert.GreaterOrEqual(first.RewardGems, 5 + EconomyRules.Level15DoubleGemBonus, "the first clear of level 15 guarantees 5 gems plus the double-gem bonus (doc 25)");
+            for (int i = 1; i <= 24; i++) l15.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
+            RewardResult first = l15.ApplyRun("lvl_001_25", Won(gems: 3));
+            Assert.GreaterOrEqual(first.RewardGems, 5 + EconomyRules.Level15DoubleGemBonus, "the first clear of the last level (25) guarantees 5 gems plus the double-gem bonus (doc 25)");
             Assert.AreEqual(3, first.PickupGems);
-            RewardResult again = l15.ApplyRun("lvl_001_15", Won(gems: 3));
+            RewardResult again = l15.ApplyRun("lvl_001_25", Won(gems: 3));
             Assert.AreEqual(0, again.RewardGems, "milestone gems pay on the first clear only");
         }
 

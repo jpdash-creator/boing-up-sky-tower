@@ -77,8 +77,6 @@ namespace BoingUpSkyTower.Gameplay
         public Action OnPause, OnResume, OnRetry, OnNext, OnMenu, OnRevive, OnReviveAd;
         /// <summary>A power-up button was pressed (the PowerUp type id). The run controller latches it into the next tick's input.</summary>
         public Action<int> OnPower;
-        /// <summary>A HERO power button was pressed (the PowerUp type id). The run controller latches it into the next tick's input as a free hero activation.</summary>
-        public Action<int> OnHeroPower;
         /// <summary>The close mark of the current overlay (pause: resume, end screens: back to the level select).</summary>
         Action OnClose;
 
@@ -104,10 +102,8 @@ namespace BoingUpSkyTower.Gameplay
         bool endless;         // endless mode: Floor N / Best N, no goal text and no stars
         int bestBefore;       // best floor of the region when the run started
         public ControlPad Pad { get; private set; }
-        /// <summary>The power-up buttons above the jump pad (docs/15 FR-PWR-3); empty when the player owns no power-up.</summary>
+        /// <summary>The power buttons in two side groups (docs/15 FR-PWR-3; left = Flight, Rocket, Double Jump, right = Magnet, Shield, Slow Time, Wall Stick), bought AND free hero powers merged; empty when the player owns no power-up and the hero has no power.</summary>
         public PowerUpBar Powers { get; private set; }
-        /// <summary>The hero power buttons in the second column next to the bought ones (owner 2026-11-02); empty for a hero without powers.</summary>
-        public HeroPowerBar HeroPowers { get; private set; }
 
         /// <summary>Places an element, mirrored horizontally for the left-handed layout.</summary>
         void P(RectTransform rt, Vector2 anchor, Vector2 pos, Vector2 size)
@@ -264,11 +260,7 @@ namespace BoingUpSkyTower.Gameplay
             Powers = new PowerUpBar();
             Powers.OnPress = slot => { if (OnPower != null) OnPower(slot); };
             Powers.Build(root, session, P);
-            Powers.SetVisible(false);   // shown when the intro text is gone
-            HeroPowers = new HeroPowerBar();
-            HeroPowers.OnPress = type => { if (OnHeroPower != null) OnHeroPower(type); };
-            HeroPowers.Build(root, session, Powers.ButtonCount, P);
-            HeroPowers.SetVisible(false);
+            Powers.SetVisible(false);   // shown when the intro text is gone (free hero powers are merged into these buttons, Bug List 6)
             // The three pad buttons are the last children of the HUD: nothing built above (banners, intro, strips, bars) can sit on top of them or swallow a touch (owner 2026-11-07).
             // Pause and result pop-ups are created later, so they still cover the pads on purpose.
             Pad.Left.transform.SetAsLastSibling();
@@ -360,11 +352,6 @@ namespace BoingUpSkyTower.Gameplay
                 if (introTimer <= 0f && !Powers.Visible) Powers.SetVisible(true);
                 Powers.Refresh(in st, s.Cfg);
             }
-            if (HeroPowers != null && HeroPowers.ButtonCount > 0)
-            {
-                if (introTimer <= 0f && !HeroPowers.Visible) HeroPowers.SetVisible(true);
-                HeroPowers.Refresh(in st, s);
-            }
             // Strings are rebuilt only when a value changes: no per-frame allocations (CUX-1).
             if (st.Row != lastRow)
             {
@@ -434,7 +421,7 @@ namespace BoingUpSkyTower.Gameplay
             if (introTimer > 0f)
             {
                 introTimer -= deltaTime;
-                if (introTimer <= 0f) { introRoot.gameObject.SetActive(false); if (Powers != null) Powers.SetVisible(true); if (HeroPowers != null) HeroPowers.SetVisible(true); }
+                if (introTimer <= 0f) { introRoot.gameObject.SetActive(false); if (Powers != null) Powers.SetVisible(true); }
             }
         }
 

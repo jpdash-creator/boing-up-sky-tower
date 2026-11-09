@@ -82,12 +82,20 @@ namespace BoingUpSkyTower.Simulation.Tests
         }
 
         [Fact]
-        public void NoShippedLevelHasATimedGoal()
+        public void OnlyLevel20HasATimedGoalAndItsTimeIsOneConstant()
         {
+            // Bug List 6 item 4: the speedrun is one of the four special goals (level 20); every other level has no timed goal (owner 2026-10-19 relaxed time: 75 s for 90 rows)
             string root = ContentLoader.FindRoot();
             if (root == null) return;
             foreach (LevelOutcome o in SolvabilityT4Tests.Outcomes())
-                Assert.NotEqual(GoalType.Speedrun, o.Level.Spec.Goal.Type);
+            {
+                if (o.Level.Spec.LevelIndex == 20)
+                {
+                    Assert.Equal(GoalType.Speedrun, o.Level.Spec.Goal.Type);
+                    Assert.Equal(75, o.Level.Spec.Goal.TimeSec);
+                }
+                else Assert.NotEqual(GoalType.Speedrun, o.Level.Spec.Goal.Type);
+            }
         }
     }
 }

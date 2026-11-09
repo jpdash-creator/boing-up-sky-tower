@@ -26,15 +26,15 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void Has30Regions450LevelsAndModelsPresent()
+        public void Has30RegionsAnd500LevelsAndModelsPresent()
         {
             Assert.AreEqual(30, Repo.Regions.Count);
-            Assert.AreEqual(450, Repo.LevelCount);
+            Assert.AreEqual(5 * ContentRepository.ExpectedLevelsPerRegion + 25 * ContentRepository.LegacyLevelsPerRegion, Repo.LevelCount);   // regions 1-5 have 25 levels, 6-30 still 15
             foreach (RegionDef reg in Repo.Regions)
             {
                 var lv = Repo.LevelsOf(reg.Id);
-                Assert.AreEqual(15, lv.Count, reg.Id);
-                for (int i = 0; i < 15; i++) Assert.AreEqual(i + 1, lv[i].Index, reg.Id);
+                Assert.AreEqual(ContentRepository.ExpectedLevelsFor(reg.Index), lv.Count, reg.Id);
+                for (int i = 0; i < lv.Count; i++) Assert.AreEqual(i + 1, lv[i].Index, reg.Id);
             }
             Assert.IsNotNull(Repo.Items); // gear dropped 2026-11-01: the item list is empty by design
             Assert.IsNotEmpty(Repo.GemPacks);
@@ -54,16 +54,16 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void Region5Level15IsHighlyComplexWithFormulaDifficulty()
+        public void Region5Level25IsHighlyComplexWithFormulaDifficulty()
         {
             RegionDef reg = Repo.GetRegionByIndex(5);
-            LevelDef l = Repo.GetLevel("lvl_005_15");
+            LevelDef l = Repo.GetLevel("lvl_005_25");
             Assert.AreEqual(reg.Id, l.Region);
             Assert.AreEqual(LevelDef.ClassHighlyComplex, l.LevelClass);
-            Assert.AreEqual(1.0, l.Difficulty, 1e-9);
-            Fx expected = LevelGenerator.EffectiveDifficulty(Fx.FromRatio(1000, 1000), Fx.FromRatio((int)Math.Round(reg.Rules.DifficultyOffset * 10000), 10000));
+            Assert.Greater(l.Difficulty, 0.85);   // the top level is as hard as the old level 15 by the difficulty score (content d from config/difficulty_curve.json)
+            Fx expected = LevelGenerator.EffectiveDifficulty(Fx.FromRatio((int)Math.Round(l.Difficulty * 1000), 1000), Fx.FromRatio((int)Math.Round(reg.Rules.DifficultyOffset * 10000), 10000));
             Assert.AreEqual(expected, ContentRepository.EffectiveDifficulty(l, reg));
-            Assert.AreEqual(Fx.One, ContentRepository.EffectiveDifficulty(l, reg));
+            Assert.Greater(ContentRepository.EffectiveDifficulty(l, reg).Raw / 65536.0, 0.95);   // calibrated top level: about 0.98 in Region 5 (the old fixed 1.0 was the old Level 15)
 
             // mid-ladder level: d + offset * (1 - d), checked in plain double within Fx resolution
             LevelDef l5 = Repo.GetLevel("lvl_005_05");
@@ -91,8 +91,8 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void CoinPayoutScalesWithRegionFactor()
         {
-            Assert.AreEqual(900, ContentRepository.CoinPayoutFor(Repo.GetLevel("lvl_001_15"), Repo.GetRegionByIndex(1)));
-            Assert.AreEqual(1008, ContentRepository.CoinPayoutFor(Repo.GetLevel("lvl_005_15"), Repo.GetRegionByIndex(5)));
+            Assert.AreEqual(900, ContentRepository.CoinPayoutFor(Repo.GetLevel("lvl_001_25"), Repo.GetRegionByIndex(1)));
+            Assert.AreEqual(1008, ContentRepository.CoinPayoutFor(Repo.GetLevel("lvl_005_25"), Repo.GetRegionByIndex(5)));
         }
 
         [Test]

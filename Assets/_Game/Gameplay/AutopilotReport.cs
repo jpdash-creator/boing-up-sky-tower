@@ -17,7 +17,7 @@ namespace BoingUpSkyTower.Gameplay
     public sealed class AutoplayOptions
     {
         public int region = 1;
-        /// <summary>Level numbers inside the region (1..15). Empty = all levels of the region.</summary>
+        /// <summary>Level numbers inside the region (1..25). Empty = all levels of the region.</summary>
         public int[] levels;
         /// <summary>0 perfect player, 1 human-like (reaction lag and timing jitter).</summary>
         public float skill = 0.5f;
@@ -50,7 +50,7 @@ namespace BoingUpSkyTower.Gameplay
             if (region < 1) region = 1;
             if (levels == null || levels.Length == 0)
             {
-                levels = new int[15];
+                levels = new int[25];
                 for (int i = 0; i < levels.Length; i++) levels[i] = i + 1;
             }
             skill = Mathf.Clamp01(skill);

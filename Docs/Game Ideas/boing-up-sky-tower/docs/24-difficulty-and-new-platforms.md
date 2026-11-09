@@ -1,3 +1,5 @@
+> **Replaced for Regions 1 to 5 (and for all future regions) by doc 45 (45-levels-and-difficulty-curve.md): the 15-level structure and the old difficulty numbers no longer apply.**
+
 # 24. Difficulty and new special platforms (owner issue list 26, 2026-10-31)
 
 Owner decisions so far (Q and A):

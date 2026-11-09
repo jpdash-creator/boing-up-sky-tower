@@ -123,7 +123,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService.TestAllCharacters = true;
             ProgressService svc = NewService();
             List<HeroCard> cards = CharacterCatalog.OwnedCards(svc);
-            Assert.AreEqual(25, cards.Count, "the twenty-five Common heroes (five per region), one card each");
+            Assert.AreEqual(5, cards.Count, "the five ACTIVE Common heroes (one per region), one card each");
             foreach (HeroCard c in cards) Assert.AreEqual(CharacterRarity.Common, c.Spec.Rarity, c.Id);
         }
 

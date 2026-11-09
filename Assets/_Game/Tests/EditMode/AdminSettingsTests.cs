@@ -311,7 +311,7 @@ namespace BoingUpSkyTower.Tests
             var svc = NewService();
             Assert.Greater(svc.AdminUnlockAllRegions(), 0);
             Assert.AreEqual(0, svc.AdminUnlockAllRegions(), "second call finds nothing to unlock");
-            Assert.AreEqual(75, svc.AdminCompleteAllLevels(), "5 playable regions x 15 levels");
+            Assert.AreEqual(125, svc.AdminCompleteAllLevels(), "5 playable regions x 25 levels");
             Assert.IsTrue(svc.IsLevelCleared("lvl_001_01"));
         }
 

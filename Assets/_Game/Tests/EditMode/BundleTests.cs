@@ -210,7 +210,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService svc = NewService();
             svc.AddGems(600 * 40);
             int copiesBefore = TotalCopies(svc);
-            var region1 = new HashSet<string>(new[] { "momo", "bumble", "ribbi", "dandy", "pip" });
+            var region1 = new HashSet<string>(new[] { "momo" });
             for (int i = 0; i < 40; i++)
             {
                 CharacterSpec card;
@@ -234,13 +234,13 @@ namespace BoingUpSkyTower.Tests
         {
             ProgressService svc = NewService();
             Assert.AreEqual(1, svc.BundleOpenRegionCount());
-            CollectionAssert.AreEquivalent(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
-            CollectionAssert.AreEquivalent(new[] { "momo_r", "bumble_r", "ribbi_r", "dandy_r", "pip_r" }, svc.BundleCardPool(CharacterRarity.Rare).Select(c => c.Id));
-            CollectionAssert.AreEquivalent(new[] { "momo_e", "bumble_e", "ribbi_e", "dandy_e", "pip_e" }, svc.BundleCardPool(CharacterRarity.Epic).Select(c => c.Id));
+            CollectionAssert.AreEquivalent(new[] { "momo_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
+            CollectionAssert.AreEquivalent(new[] { "momo_r" }, svc.BundleCardPool(CharacterRarity.Rare).Select(c => c.Id));
+            CollectionAssert.AreEquivalent(new[] { "momo_e" }, svc.BundleCardPool(CharacterRarity.Epic).Select(c => c.Id));
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(2).Id);
             svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(3).Id);
             Assert.AreEqual(3, svc.BundleOpenRegionCount());
-            CollectionAssert.AreEquivalent(new[] { "momo_u", "bumble_u", "ribbi_u", "dandy_u", "pip_u", "forestgirl_u", "nib_u", "spike_u", "moss_u", "fenn_u", "beachotter_u", "pinch_u", "shelly_u", "bloop_u", "coco_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
+            CollectionAssert.AreEquivalent(new[] { "momo_u", "forestgirl_u", "beachotter_u" }, svc.BundleCardPool(CharacterRarity.Uncommon).Select(c => c.Id));
             svc.AddGems(600 * 60);
             var seen = new HashSet<string>();
             for (int i = 0; i < 60; i++)
@@ -250,7 +250,7 @@ namespace BoingUpSkyTower.Tests
                 seen.Add(card.Id);
             }
             var lines = new HashSet<string>(seen.Select(id => CharacterDefs.Get(id).LineId));
-            Assert.IsTrue(lines.IsSubsetOf(new[] { "momo", "bumble", "ribbi", "dandy", "pip", "forestgirl", "nib", "spike", "moss", "fenn", "beachotter", "pinch", "shelly", "bloop", "coco" }), string.Join(",", seen));   // regions 4 and 5 are closed
+            Assert.IsTrue(lines.IsSubsetOf(new[] { "momo", "forestgirl", "beachotter" }), string.Join(",", seen));   // regions 4 and 5 are closed
             Assert.Greater(seen.Count, 1, "the pick varies");
         }
 

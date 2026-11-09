@@ -35,7 +35,7 @@ class ShippedContent(unittest.TestCase):
     def test_validates_clean(self):
         errors, regions, levels = content.validate()
         self.assertEqual(errors, [])
-        self.assertEqual((regions, levels), (30, 450))
+        self.assertEqual((regions, levels), (30, 5 * 25 + 25 * 15))
 
     def test_shop_tables_match_the_owner_brief(self):
         gems = [(p["gems"], p["usdList"], p["inrList"]) for p in content.load("economy/gem_packs.json")]

@@ -8,10 +8,14 @@ using NUnit.Framework;
 
 namespace BoingUpSkyTower.Tests
 {
-    /// <summary>Bug List 5 F4.5 (docs/43): Region 5 (Bamboo Temple) has Bao, Sprout, Tora, Rusu and Ryu at all five tiers: data, art, merge chain, tier rows, rewards and draws from open regions only.</summary>
+    /// <summary>
+    /// Region 5 (Bamboo Temple) has ONE ACTIVE hero line, Bao, at all five tiers (owner Bug List 6, 2026-11-09: the four extra Common lines of this region and their tiers are inactive always):
+    /// data, art, merge chain, tier rows and draws from open regions only.
+    /// </summary>
     public class Region5HeroTests
     {
-        static readonly string[] Lines = { "monk", "sprout", "tora", "rusu", "ryu" };
+        static readonly string[] Lines = { "monk" };
+        static readonly string[] Inactive = { "sprout", "tora", "rusu", "ryu" };
         static readonly string[] Suffix = { "", "_u", "_r", "_e", "_l" };
         static readonly CharacterRarity[] Ladder = { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary };
 
@@ -30,7 +34,7 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void AllTwentyFiveRegion5HeroesExistWithTheRightRarityLineAndRegion()
+        public void AllFiveRegion5HeroesExistWithTheRightRarityLineAndRegion()
         {
             foreach (string line in Lines)
                 for (int i = 0; i < 5; i++)
@@ -45,18 +49,23 @@ namespace BoingUpSkyTower.Tests
                     Assert.IsNull(c.Stats.ValidateTier(), id);
                 }
             Assert.AreEqual("Bao", CharacterDefs.Get("monk").Name);
-            foreach (string n in new[] { "Sprout", "Tora", "Rusu", "Ryu" }) Assert.IsTrue(CharacterDefs.All.Any(c => c.Name == n), n);
             Assert.IsTrue(CharacterDefs.Monk.RegionStarter);
             Assert.IsTrue(CharacterDefs.Monk.NeedsReveal, "Bao keeps the region reveal");
-            foreach (string id in new[] { "sprout", "tora", "rusu", "ryu" })
-            {
-                CharacterSpec c = CharacterDefs.Get(id);
-                Assert.IsFalse(c.RegionStarter, id);
-                Assert.IsFalse(c.NeedsReveal, id);
-                Assert.IsTrue(c.IsRegionHero, id);
-                Assert.IsNull(c.Stats.Validate(), id);
-            }
-            Assert.Greater(CharacterDefs.Get("rusu").Stats.CoinFind, 0, "Rusu finds extra coins");
+            Assert.IsTrue(CharacterDefs.Monk.IsRegionHero);
+            Assert.IsNull(CharacterDefs.Monk.Stats.Validate());
+        }
+
+        [Test]
+        public void TheExtraCommonHeroesOfRegion5AreInactiveAndNeverExistAtRuntime()
+        {
+            foreach (string line in Inactive)
+                foreach (string s in Suffix)
+                {
+                    Assert.IsNull(CharacterDefs.Get(line + s), line + s + " is inactive always");
+                    Assert.IsNotNull(HeroTable.Find(line + s), line + s + " keeps its physics row as data");
+                    Assert.IsFalse(HeroTable.Find(line + s).Active, line + s);
+                }
+            Assert.AreEqual(1, CharacterDefs.All.Count(c => c.Region == 5), "one Common hero per region");
         }
 
         [Test]
@@ -77,6 +86,12 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
+        public void InactiveHeroIdsFallBackToMomoInTheCatalog()
+        {
+            foreach (string line in Inactive) Assert.AreSame(CharacterCatalog.Momo, CharacterCatalog.Get(line), line + " has no catalog entry and falls back to Momo");
+        }
+
+        [Test]
         public void TheMergeChainIsCompleteAndRegion5MembersMergeUp()
         {
             foreach (string line in Lines)
@@ -94,9 +109,8 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void RegionFiveTierRowsFollowTheTableAndThePowerPools()
+        public void Region5TierRowsFollowTheTableAndThePowerPools()
         {
-            var firstPower = new Dictionary<string, PowerUp> { { "monk", PowerUp.WallStick }, { "sprout", PowerUp.Shield }, { "tora", PowerUp.DoubleJump }, { "rusu", PowerUp.Magnet }, { "ryu", PowerUp.Rocket } };
             foreach (string line in Lines)
             {
                 CharacterSpec common = CharacterDefs.Get(line);
@@ -108,31 +122,29 @@ namespace BoingUpSkyTower.Tests
                     CharacterSpec spec = CharacterDefs.Get(row.Id);
                     Assert.IsNull(TierRules.ValidatePowers(line, row.Rarity, spec.Powers), row.Id);
                     Assert.IsNull(spec.Stats.ValidatePhysics(), row.Id);
-                    PowerUp fp;
-                    if (firstPower.TryGetValue(line, out fp)) Assert.AreEqual(fp, spec.Powers[0], row.Id);
                     Assert.AreEqual(common.Stats.CoinFind, spec.Stats.CoinFind, row.Id + " keeps the coin find");
                 }
             }
         }
 
         [Test]
-        public void Region5CommonsComeFromRegion5GoalsAndAreNotFree()
+        public void Region5GoalsNameNoHeroAndDrawsOnlyGiveActiveHeroes()
         {
             var svc = new ProgressService(ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
-            foreach (string id in new[] { "sprout", "tora", "rusu", "ryu" }) Assert.IsFalse(svc.OwnsCharacter(id), id);
-            var map = new Dictionary<string, string> { { "g_5_levels_2", "sprout" }, { "g_5_levels_3", "tora" }, { "g_5_levels_4", "rusu" }, { "g_5_stars_5", "ryu" } };
-            foreach (KeyValuePair<string, string> kv in map)
+            foreach (string id in Inactive) Assert.IsFalse(svc.OwnsCharacter(id), id);
+            foreach (string goal in new[] { "g_5_levels_2", "g_5_levels_3", "g_5_levels_4", "g_5_stars_5" })
             {
-                RegionGoal g = svc.RewardDefs.FindGoal(kv.Key);
-                Assert.IsNotNull(g, kv.Key);
-                Assert.AreEqual(kv.Value, g.HeroId, kv.Key);
+                RegionGoal g = svc.RewardDefs.FindGoal(goal);
+                Assert.IsNotNull(g, goal);
+                Assert.IsTrue(string.IsNullOrEmpty(g.HeroId), goal + " names no hero any more");
+                Assert.AreEqual(RewardEntry.RandomOpenRegionHero, g.HeroRegion, goal + " gives one random ACTIVE Common hero of an open region");
             }
         }
 
         [Test]
         public void ChestsBundlesAndShopGiveRegion5HeroesOnlyWhenRegion5IsOpen()
         {
-            var rN = new HashSet<string>(Lines);
+            var own = new HashSet<string>(Lines);
             for (int pass = 0; pass < 2; pass++)
             {
                 bool open = pass == 1;
@@ -146,13 +158,15 @@ namespace BoingUpSkyTower.Tests
                     seenLines.Add(b.LineId);
                 }
                 foreach (string line in Lines) Assert.AreEqual(open, seenLines.Contains(line), line + " open=" + open);
-                if (!open) CollectionAssert.IsEmpty(seenLines.Intersect(rN));
+                if (!open) CollectionAssert.IsEmpty(seenLines.Intersect(own));
+                CollectionAssert.IsEmpty(seenLines.Intersect(Inactive), "no inactive hero is ever drawn");
             }
             foreach (CharacterRarity r in HeroPurchase.Tiers)
             {
                 var got = new HashSet<string>();
                 for (ulong roll = 0; roll < 400; roll++) got.Add(HeroPurchase.Pick(r, CharacterDefs.All, region => region == 5, roll).LineId);
-                Assert.IsTrue(Lines.All(got.Contains), r + ": all five Region 5 lines can be bought when Region 5 is open");
+                Assert.IsTrue(Lines.All(got.Contains), r + ": the Region 5 line can be bought when Region 5 is open");
+                CollectionAssert.IsEmpty(got.Intersect(Inactive));
             }
         }
     }

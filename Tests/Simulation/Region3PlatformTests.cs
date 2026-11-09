@@ -476,7 +476,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void SurfBoostWaveIsNeverOfferedInTheNoWallBounceLevel()
         {
             List<LoadedLevel> levels = Region3();
-            LoadedLevel lvl7 = levels.First(l => l.Spec.LevelIndex == 7);
+            LoadedLevel lvl7 = levels.First(l => l.Spec.LevelIndex == 10);   // the no-wall level moved from 7 to 10 (Bug List 6 item 4)
             Assert.Equal(GoalType.NoWallBounce, lvl7.Spec.Goal.Type);
             Assert.DoesNotContain(PlatformKind.SurfBoostWave, SpecialPlatforms.Options(lvl7.Spec, PlatformKind.Moving));
             SimConfig cfg = new SimConfig();
@@ -506,7 +506,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             SimConfig cfg = new SimConfig();
             List<LoadedLevel> levels = Region3();
-            Assert.Equal(15, levels.Count);
+            Assert.Equal(25, levels.Count);
             foreach (LoadedLevel ll in levels)
             {
                 int idx = ll.Spec.LevelIndex;
@@ -741,7 +741,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             double ep = early * 100 / e, lp = late * 100 / l;
             output.WriteLine("endless special share: floors 5-40 " + ep.ToString("F1") + " percent, floors 200-320 " + lp.ToString("F1") + " percent");
             Assert.InRange(ep, 8, 16);   // endless cycle: floors 5-40 are the start of level 1 (10 to 30 percent ramp over its 100 floors)
-            Assert.InRange(lp, 31, 45);   // floors 200-320 are levels 2 to 4 (30 to 50 percent ramps)
+            Assert.InRange(lp, 18, 30);   // floors 200-320 are levels 2 to 4 (Bug List 6 curve: 10 to 35 percent ramps)
             Assert.Equal(10, seen.Count);   // seven new platforms, the drifting platform and the two generics appear
         }
 

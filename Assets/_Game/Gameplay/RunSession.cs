@@ -117,7 +117,9 @@ namespace BoingUpSkyTower.Gameplay
             if ((input & SimInput.PowerMask) != 0) input = TakePowerUnits(input);
             if ((input & SimInput.HeroMask) != 0) input = TakeHeroPowers(input);
             bool wasGroundedForJumps = State.Grounded;
+            inputRec.Add(input);   // timed records (doc 46): the input that really reaches the simulation, run-length coded, no allocation per tick
             Sim.Step(ref State, input);
+            RecordClock();
             if (wasGroundedForJumps && !State.Grounded && State.Vy.Raw > 0) jumpsMade++;   // region statistics (Main goals): a take-off from a platform is a jump
             if (Hero != null) Hero.Tick();   // hero cooldowns run in simulation ticks
             if (State.Combo >= 3 && lastCombo < 3) comboChains++;   // reward statistics: a chain reached 3 landings
@@ -223,18 +225,24 @@ namespace BoingUpSkyTower.Gameplay
             {
                 PowerUp p = (PowerUp)i;
                 int bit = PowerUps.InputBit(p);
-                if ((input & bit) == 0 || stock[i] <= 0 || !PowerUps.CanActivate(in State, p)) continue;
+                if ((input & bit) == 0 || !PowerUps.CanActivate(in State, p)) continue;
+                // USING ORDER (Bug List 6): FREE first, then bought. The merged button of a type uses the free hero power when it is ready and its effect is not running
+                // (no unit taken, its rarity cooldown starts); otherwise it takes one bought unit (a tap on a running effect stacks a bought unit). Same effect and duration either way.
+                int heroIdx = Hero != null ? Hero.IndexOf(p) : -1;
+                bool free = heroIdx >= 0 && Hero.IsReady(heroIdx) && PowerUps.CanActivateHero(in State, p);
+                if (!free && stock[i] <= 0) continue;
                 // Flight and Rocket exclude each other inside one tick as well (the lower id wins, like the simulation)
                 if (p == PowerUp.Rocket && (result & PowerUps.InputBit(PowerUp.Flight)) != 0) continue;
-                stock[i]--;
-                powerUpsUsed++;
+                if (free) Hero.TryUse(heroIdx);
+                else { stock[i]--; powerUpsUsed++; }
                 result |= bit;
             }
             return result;
         }
 
         // ---- hero powers (owner 2026-11-02, docs/34): the chosen hero's Powers are free buttons, READY at the start of a run, each with its own cooldown.
-        // A use is a normal power-up activation (same effect, SimConfig.HeroPowerDurationFactor = 0.6 of the duration) that takes NO inventory unit. ----
+        // A use is a normal power-up activation (Bug List 6: the SAME effect, strength and duration as the bought one, no 60 percent) that takes NO inventory unit.
+        // The HUD merges the free power into the button of its type (PowerUpBar); a button press goes through TakePowerUnits (free first, then bought). ----
 
         /// <summary>The hero's powers and their cooldowns, or null when the hero has none (Common heroes).</summary>
         public HeroPowerCooldown Hero { get; private set; }
@@ -267,7 +275,7 @@ namespace BoingUpSkyTower.Gameplay
                 if (p == PowerUp.Rocket && ((result & (PowerUps.InputBit(PowerUp.Flight) | PowerUps.HeroInputBit(PowerUp.Flight))) != 0)) continue;
                 if (p == PowerUp.Flight && (result & PowerUps.InputBit(PowerUp.Rocket)) != 0) continue;
                 Hero.TryUse(k);
-                result |= bit;
+                result |= PowerUps.InputBit(p);   // Bug List 6: a free hero power is the bought effect at full strength and duration (no 60 percent), only without a unit
             }
             return result;
         }
@@ -288,6 +296,64 @@ namespace BoingUpSkyTower.Gameplay
                 used += n;
             }
             return used;
+        }
+
+        // ---- timed records (doc 46): the clock is the simulation itself, so a pause, an app switch or an interruption can never add time ----
+
+        readonly InputRecorder inputRec = new InputRecorder();
+        readonly GrowingInts curveRec = new GrowingInts();
+        readonly GrowingInts splitRec = new GrowingInts();
+
+        /// <summary>Gameplay mode of this run, 0..4 (GameSettings.Difficulty); set by the RunController when the run begins.</summary>
+        public int Mode;
+        /// <summary>Id of the hero that plays this run (verification only); set by the RunController.</summary>
+        public string HeroId = "";
+
+        /// <summary>Run clock in ticks: from the first jump (SimState.StartTick, set by the simulation) to now, or to the end once the run is over. 0 before the first jump.</summary>
+        public int RunTicks { get { return State.StartTick < 0 ? 0 : System.Math.Max(0, State.Tick - State.StartTick); } }
+
+        /// <summary>Floors reached so far: the highest platform row landed on (never decreases).</summary>
+        public int RunFloors { get { return State.Row; } }
+
+        /// <summary>True once a revive was used in this run: it can never set a best Time or Pace.</summary>
+        public bool RunRevived { get { return State.RevivesUsed > 0; } }
+
+        /// <summary>Per tick after the simulation step: the floors at the end of every second of the clock and (endless) the time to reach floor 100, 200 ... Allocates only when its lists double.</summary>
+        void RecordClock()
+        {
+            int start = State.StartTick;
+            if (start < 0) return;
+            int elapsed = State.Tick - start;
+            if (elapsed >= (curveRec.Count + 1) * TimeRecords.TicksPerSecond) curveRec.Add(State.Row);
+            if (IsEndless)
+                while ((splitRec.Count + 1) * TimeRecords.SplitFloors <= State.Row) splitRec.Add(elapsed);
+        }
+
+        /// <summary>
+        /// The finished (or running) run as a record for ProgressService.RecordRun: floors, clock ticks, seeds, hero, mode, version, revive flag, the coded
+        /// inputs, the floor-by-time curve and the endless splits. Call once at the end of the run (it allocates the arrays).
+        /// </summary>
+        public RunRecord BuildRunRecord(string gameVersion)
+        {
+            return new RunRecord
+            {
+                Kind = IsEndless ? RunKind.Endless : RunKind.Level,
+                LevelId = Level != null ? Level.Id : null,
+                RegionId = Region.Id,
+                Floors = State.Row,
+                Ticks = RunTicks,
+                LayoutSeed = IsEndless ? Seed : Spec.Seed,
+                AttemptSeed = AttemptSeed,
+                HeroId = HeroId ?? "",
+                Mode = Mode,
+                GameVersion = gameVersion ?? "",
+                Revived = RunRevived,
+                Inputs = inputRec.ToBytes(),
+                Curve = curveRec.ToArray(),
+                Splits = splitRec.ToArray(),
+                Coins = State.Coins,
+                Gems = State.Gems
+            };
         }
 
         public RunOutcome BuildOutcome()
@@ -350,7 +416,7 @@ namespace BoingUpSkyTower.Gameplay
             GoalSpec g = spec.Goal;
             switch (g.Type)
             {
-                case GoalType.ReachFloor: return spec.LevelIndex == 8 || spec.LevelIndex == 15 ? "Reach floor " + g.Value + " and grab the gems" : "Reach floor " + g.Value;
+                case GoalType.ReachFloor: return spec.LevelIndex == 8 || spec.IsTopLevel ? "Reach floor " + g.Value + " and grab the gems" : "Reach floor " + g.Value;
                 case GoalType.CollectCoins: return "Collect " + g.Count + " coins";
                 case GoalType.ComboChain: return "Chain " + g.Count + " jump" + (g.Count == 1 ? "" : "s") + " of " + g.Value + "+ floors";
                 case GoalType.NoWallBounce: return "Reach floor " + g.Value;

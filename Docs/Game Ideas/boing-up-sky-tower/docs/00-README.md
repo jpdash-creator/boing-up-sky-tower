@@ -55,6 +55,7 @@ All names (game, mascot, regions, items) are **placeholders** and can be changed
 29. ~~29-character-stats.md~~ - **removed (2026-11-08), replaced by doc 44**
 34. [34-character-merge.md](34-character-merge.md) - character merge (3 copies make the next tier), Merge screen, hero powers in a run; its stat and percent rules moved to doc 44
 44. [44-power-mechanics-bible.md](44-power-mechanics-bible.md) - **Power mechanics bible: hero physics, rarity tiers, the Forgiveness Index, generator, results** (single source of truth for hero physics; replaces doc 29 and the stat rules of doc 34)
+46. [46-timed-gameplay.md](46-timed-gameplay.md) - **Timed gameplay: Time, Pace, per-level records, medals, Pace Ghost, endless splits, Time Attack, time reward goals** (owner spec 2026-11-09)
 
 
 > **Critical:** user experience and accessibility are critical; gameplay must be seamless and never choppy, and screen items must never overlap improperly. See doc 11. Every doc and every release is bound by it.

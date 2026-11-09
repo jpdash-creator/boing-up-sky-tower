@@ -1,3 +1,5 @@
+> **Replaced for Regions 1 to 5 (and for all future regions) by doc 45 (45-levels-and-difficulty-curve.md): the 15-level structure and the old difficulty numbers no longer apply.**
+
 # 25. Level structure for all regions (owner issue list 27, 2026-10-31)
 
 Applies to regions 1 to 5 (and the rules every later region follows). Replaces the old goal layout of docs 08 for the campaign. Owner answers applied.

@@ -72,6 +72,9 @@ namespace BoingUpSkyTower.Gameplay
             if (Hud != null) Destroy(Hud.gameObject);
 
             Session = session;
+            Session.Mode = GameSettings.Difficulty;   // timed records are per Gameplay mode
+            CharacterSpec runHero = HeroOverride ?? CharacterCatalog.Selected.Info;
+            Session.HeroId = runHero != null && runHero.Id != null ? runHero.Id : "";
             if (GameSession.Progress != null) Session.ApplyStock(GameSession.Progress.BuildRunStock());   // before the HUD is built: it makes one button per owned type
             Session.ApplyHeroPowers(HeroOverride ?? CharacterCatalog.Selected.Info);   // the chosen hero's free powers (none for Common heroes); before the HUD is built too
             acc = 0f;
@@ -104,7 +107,6 @@ namespace BoingUpSkyTower.Gameplay
             Hud.OnReviveAd = ReviveByAd;
             AdService.Preload();
             Hud.OnPower = type => Input.LatchPower((PowerUp)type);
-            Hud.OnHeroPower = type => Input.LatchHeroPower((PowerUp)type);
         }
 
         /// <summary>Script time per frame (milliseconds), for the CUX-1 budget tests and on-device profiling.</summary>
@@ -185,7 +187,10 @@ namespace BoingUpSkyTower.Gameplay
                 Haptics.Pulse();
                 EndlessReward er = GameSession.Progress.ApplyEndlessRun(Session.Region.Id, Session.State.Row, EndlessRewards.DayKey(System.DateTime.UtcNow), Session.State.Coins);
                 ReportRunStats();
-                GameSession.LastResult = new RunResult { Endless = true, RegionId = Session.Region.Id, Floors = Session.State.Row, Score = Session.State.Score, EndlessReward = er };
+                RunRecord endlessRecord = Session.BuildRunRecord(Application.version);
+                endlessRecord.Coins = er.Coins;   // coins paid (per-minute capture); the gems collected in the run are already in the record
+                RecordResult endlessRecorded = GameSession.Progress.RecordRun(endlessRecord);   // doc 46: best Pace, survived Time, floors and splits per region and mode
+                GameSession.LastResult = new RunResult { Endless = true, RegionId = Session.Region.Id, Floors = Session.State.Row, Score = Session.State.Score, EndlessReward = er, Ticks = endlessRecord.Ticks, PaceNumerator = endlessRecord.Floors, PaceDenominator = endlessRecord.Ticks, Revived = endlessRecord.Revived, Record = endlessRecorded };
                 Hud.ShowEndlessFailed(Session, er);
                 return;
             }
@@ -195,7 +200,9 @@ namespace BoingUpSkyTower.Gameplay
                 Session.MarkStatsReported();   // the outcome carried the combo and power-up statistics
                 GameSession.Progress.FlushPlayTime();
                 LastReward = reward;
-                GameSession.LastResult = new RunResult { LevelId = Session.Level.Id, Completed = true, Reward = reward, Stars = reward.Stars, Score = Session.State.Score };
+                RunRecord levelRecord = Session.BuildRunRecord(Application.version);
+                RecordResult levelRecorded = GameSession.Progress.RecordRun(levelRecord);   // doc 46: best Pace and Time per level and mode, medal (a revived run sets nothing)
+                GameSession.LastResult = new RunResult { LevelId = Session.Level.Id, Completed = true, Reward = reward, Stars = reward.Stars, Score = Session.State.Score, Floors = levelRecord.Floors, Ticks = levelRecord.Ticks, PaceNumerator = levelRecord.Floors, PaceDenominator = levelRecord.Ticks, Revived = levelRecord.Revived, Record = levelRecorded };
                 Hud.ShowResults(Session, reward, GameSession.NextLevel(Session.Level) != null && GameSession.Progress.IsLevelUnlocked(GameSession.NextLevel(Session.Level)));
             }
             else

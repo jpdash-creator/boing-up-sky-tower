@@ -357,7 +357,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             List<string> all = failures.SelectMany(x => x).ToList();
             foreach (string s in all) output.WriteLine(s);
             output.WriteLine("levels x seeds checked: " + levels.Count + " x " + SeedsPerLevel + ", failures: " + all.Count);
-            Assert.Equal(75, levels.Count);
+            Assert.Equal(125, levels.Count);
             Assert.True(all.Count == 0, all.Count + " unsolved random layouts, first: " + (all.Count > 0 ? all[0] : ""));
         }
     }

@@ -32,14 +32,26 @@ namespace BoingUpSkyTower.Simulation
         // ---- the endless cycle (owner 2026-11-05) ----
         /// <summary>Floors per difficulty step.</summary>
         public const int FloorsPerLevel = 100;
-        /// <summary>The first climb: floors 1 to 1500 are levels 1 to 15.</summary>
-        public const int FirstCycleFloors = 1500;
-        /// <summary>Every later cycle is 1000 floors long: levels 9..14 for 100 floors each, then level 15 for 400 floors.</summary>
-        public const int CycleFloors = 1000;
-        /// <summary>The level a cycle restarts at.</summary>
-        public const int ResetLevel = 9;
-        /// <summary>The highest level (campaign level 15).</summary>
-        public const int MaxLevel = 15;
+        /// <summary>The first climb of a 25-level region: floors 1 to 2500 are levels 1 to 25 (Bug List 6 item 4).</summary>
+        public const int FirstCycleFloors = 2500;
+        /// <summary>Floors the top level is held in every cycle.</summary>
+        public const int HoldFloors = 400;
+        /// <summary>Every later cycle of a 25-level region: levels 15..24 for 100 floors each, then level 25 for 400 floors = 1400 floors.</summary>
+        public const int CycleFloors = 1400;
+        /// <summary>The level a cycle restarts at (25-level regions; level 15 is about as hard as the old level 9).</summary>
+        public const int ResetLevel = 15;
+        /// <summary>The highest level (campaign level 25).</summary>
+        public const int MaxLevel = 25;
+        // TODO(regions 6-30 migration): regions still on 15 levels keep the old cycle (first climb 1500, reset to level 9, cycle 1000); remove with the migration.
+        public const int LegacyLevels = 15;
+        public const int LegacyResetLevel = 9;
+
+        /// <summary>First climb length in floors for a region of <paramref name="levels"/> levels.</summary>
+        public static int FirstClimbFloors(int levels) { return levels * FloorsPerLevel; }
+        /// <summary>Level a cycle restarts at for a region of <paramref name="levels"/> levels.</summary>
+        public static int ResetLevelFor(int levels) { return levels <= LegacyLevels ? LegacyResetLevel : ResetLevel; }
+        /// <summary>Cycle length in floors: the levels from the reset level to the one below the top, 100 floors each, then HoldFloors on the top level.</summary>
+        public static int CycleFloorsFor(int levels) { return (levels - ResetLevelFor(levels)) * FloorsPerLevel + HoldFloors; }
         /// <summary>The owner's planned end of the scripted cycle; the rule simply goes on repeating beyond it.</summary>
         public const int PlannedLastFloor = 100000;
 
@@ -49,11 +61,18 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         public static int LevelForFloor(int floor)
         {
+            return LevelForFloor(floor, MaxLevel);
+        }
+
+        /// <summary>LevelForFloor for a region of <paramref name="levels"/> levels (25, or the legacy 15).</summary>
+        public static int LevelForFloor(int floor, int levels)
+        {
             if (floor <= 1) return 1;
-            if (floor <= FirstCycleFloors) return (floor + FloorsPerLevel - 1) / FloorsPerLevel;
-            int block = ((floor - FirstCycleFloors - 1) % CycleFloors) / FloorsPerLevel;
-            int level = ResetLevel + block;
-            return level > MaxLevel ? MaxLevel : level;
+            int first = FirstClimbFloors(levels);
+            if (floor <= first) return (floor + FloorsPerLevel - 1) / FloorsPerLevel;
+            int block = (int)(((long)floor - first - 1) % CycleFloorsFor(levels)) / FloorsPerLevel;
+            int level = ResetLevelFor(levels) + block;
+            return level > levels ? levels : level;
         }
 
         /// <summary>Position of a floor inside its 100-floor level step, 1..100 (floor 0 counts as 1).</summary>
@@ -86,6 +105,7 @@ namespace BoingUpSkyTower.Simulation
         private PlatformKind prevKind;
         private int pattern, patternLeft;
         private readonly SignatureKind signature;
+        private readonly int levels;
         private readonly PlatformKind sigKind;
         // Region special platforms (doc 24): own Rng stream, so the base geometry of the tower is independent of them; prefix stable like the rest.
         private Rng specRng;
@@ -148,13 +168,14 @@ namespace BoingUpSkyTower.Simulation
             this.cfg = cfg;
             this.spec = spec;
             signature = spec.Signature;
+            levels = spec.LevelsInRegion;
             sigKind = SignatureKinds.PlatformFor(spec.Signature);
             rng = new Rng(spec.Seed);
             hazRng = new Rng(spec.Seed ^ 0x5A3C9E17);
             specRng = new Rng(spec.Seed ^ 0x6A09E667);
-            for (int n = 1; n <= MaxLevel; n++)
+            for (int n = 1; n <= levels; n++)
             {
-                levelD[n] = LevelSpec.DifficultyForLevel(cfg, n, spec.RegionOffset);
+                levelD[n] = LevelSpec.DifficultyForLevel(cfg, n, spec.RegionOffset, levels);
                 levelOptions[n] = OptionsForLevel(spec, n);
             }
             plats = new List<Platform>(512);
@@ -180,11 +201,12 @@ namespace BoingUpSkyTower.Simulation
         /// level 1, 0.05); the layout difficulty per row comes from the offset and the level of the floor (LevelForFloor, DifficultyAt).
         /// <paramref name="difficultyFloors"/> is kept for the remote config but no longer used: the old 400-floor ramp is replaced by the endless cycle.
         /// </summary>
-        public static LevelSpec MakeSpec(int seed, Fx regionOffset, SignatureKind signature, int difficultyFloors)
+        public static LevelSpec MakeSpec(int seed, Fx regionOffset, SignatureKind signature, int difficultyFloors, int levelsInRegion = SimConfig.LevelsPerRegion)
         {
             LevelSpec spec = new LevelSpec();
             spec.Seed = seed;
             spec.Endless = true;
+            spec.LevelsInRegion = levelsInRegion;
             spec.RegionOffset = regionOffset;
             spec.EndlessDifficultyFloors = difficultyFloors < 1 ? 400 : difficultyFloors;
             spec.Difficulty = LevelGenerator.EffectiveDifficulty(StartBase, regionOffset);
@@ -209,13 +231,13 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>All kinds an endless row may carry in the region (the level 15 list, which is the union of the lists of all levels).</summary>
         public static PlatformKind[] EndlessOptions(LevelSpec spec, PlatformKind sig)
         {
-            return OptionsForLevel(spec, MaxLevel);
+            return OptionsForLevel(spec, spec.LevelsInRegion);
         }
 
         /// <summary>Floor from which <paramref name="kind"/> may appear in the endless tower of <paramref name="spec"/> (the start of the first level whose list has it), or -1 when the region does not use it.</summary>
         public static int KindUnlockFloor(SimConfig cfg, LevelSpec spec, PlatformKind kind)
         {
-            for (int n = 1; n <= MaxLevel; n++)
+            for (int n = 1; n <= spec.LevelsInRegion; n++)
             {
                 PlatformKind[] o = OptionsForLevel(spec, n);
                 for (int i = 0; i < o.Length; i++) if (o[i] == kind) return (n - 1) * FloorsPerLevel;
@@ -238,7 +260,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Layout difficulty of a row, 0..1: the difficulty of the campaign level LevelForFloor(r) in this region (offset applied).</summary>
         public Fx DifficultyAt(int r)
         {
-            return levelD[LevelForFloor(r)];
+            return levelD[LevelForFloor(r, levels)];
         }
 
         /// <summary>Grows the tower (in whole chunks) until it reaches <paramref name="playerRow"/> + LookaheadRows. True when it grew.</summary>
@@ -284,6 +306,9 @@ namespace BoingUpSkyTower.Simulation
             d.Platforms = plats.ToArray();
             d.Hazards = hazards.ToArray();
             d.Rows = row;
+            d.EndlessLevels = levels;
+            d.EndlessOffset = spec.RegionOffset;
+            d.HasEndlessOffset = true;
             Data = d;
             Version++;
         }
@@ -339,7 +364,7 @@ namespace BoingUpSkyTower.Simulation
             Fx screen = cfg.ScreenWidth;
             Fx half = cfg.PlayerHalfWidth;
             Fx maxGap = cfg.LayoutMaxJumpHeight() * 9 / 10;
-            int level = LevelForFloor(r);
+            int level = LevelForFloor(r, levels);
             Fx d = levelD[level];
 
             Fx widthEasyLo = Fx.FromInt(6), widthEasyHi = Fx.FromInt(8);
@@ -478,7 +503,7 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         private PlatformKind PickSpecial(int r, int level)
         {
-            int share = SpecialPlatforms.RowPercent(cfg, level, PositionInLevel(r), FloorsPerLevel);
+            int share = SpecialPlatforms.RowPercent(cfg, level, PositionInLevel(r), FloorsPerLevel, levels);
             if (specRng.Next(100) >= share) return PlatformKind.Normal;
             int spacing = SpecialPlatforms.HazardSpacing(cfg, level);
             PlatformKind[] opts = levelOptions[level];

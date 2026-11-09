@@ -75,6 +75,11 @@ LEVELS = {
 }
 NORMAL_LEVELS = [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14]
 
+# Bug List 6 item 4: regions 1..MIGRATED_REGIONS have 25 levels (new difficulty curve, goals and rewards); their region and level files are written by
+# Tools/content_cli/migrate_levels_25.py and are NOT regenerated here. The tables above stay the 15-level tables of the regions 6-30 until they are
+# migrated (TODO regions 6-30 migration: move them to migrate_levels_25.py by raising its MIGRATED_REGIONS, then delete this table).
+MIGRATED_REGIONS = 5
+
 
 def slug(text):
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
@@ -194,6 +199,8 @@ def main():
             "levels": ["lvl_%03d_%02d" % (n, i) for i in range(1, 16)],
             "availableFrom": None,
         }
+        if n <= MIGRATED_REGIONS:
+            continue
         write("regions/%s.json" % rid, region)
         write("levels/%s_levels.json" % rid, [make_level(n, rid, i) for i in range(1, 16)])
 
@@ -212,7 +219,7 @@ def main():
                     "endlessCoinDailyFullRateRuns": 3,
                     "endlessCoinOverCapMultiplier": 0.5},
     })
-    print("generated %d regions, %d levels" % (len(REGIONS), len(REGIONS) * 15))
+    print("generated %d regions (regions 1-%d are kept: migrate_levels_25.py)" % (len(REGIONS), MIGRATED_REGIONS))
 
 
 if __name__ == "__main__":

@@ -14,20 +14,20 @@ namespace BoingUpSkyTower.Simulation
     public static class SpecialPlatforms
     {
         /// <summary>Percent of rows that carry a special platform at <paramref name="row"/> of a campaign level: ramps from RampLowPercent at the bottom to RampHighPercent at the top (doc 25).</summary>
-        public static int RowPercent(SimConfig cfg, int levelIndex, int row, int rows)
+        public static int RowPercent(SimConfig cfg, int levelIndex, int row, int rows, int levelsInRegion = SimConfig.LevelsPerRegion)
         {
-            int idx = levelIndex < 1 ? 1 : (levelIndex > 15 ? 15 : levelIndex);
-            int lo = cfg.RampLowPercent[idx], hi = cfg.RampHighPercent[idx];
+            int idx = levelIndex < 1 ? 1 : (levelIndex > SimConfig.LevelsPerRegion ? SimConfig.LevelsPerRegion : levelIndex);
+            int lo = cfg.RampLow(idx, levelsInRegion), hi = cfg.RampHigh(idx, levelsInRegion);
             if (rows <= 1) return hi;
             int r = row < 1 ? 0 : (row > rows ? rows - 1 : row - 1);
             return lo + (hi - lo) * r / (rows - 1);
         }
 
         /// <summary>Overall share (percent) a level aims at: the mean of its ramp (reports and tests).</summary>
-        public static int SharePercent(SimConfig cfg, int levelIndex)
+        public static int SharePercent(SimConfig cfg, int levelIndex, int levelsInRegion = SimConfig.LevelsPerRegion)
         {
-            int idx = levelIndex < 1 ? 1 : (levelIndex > 15 ? 15 : levelIndex);
-            return (cfg.RampLowPercent[idx] + cfg.RampHighPercent[idx]) / 2;
+            int idx = levelIndex < 1 ? 1 : (levelIndex > SimConfig.LevelsPerRegion ? SimConfig.LevelsPerRegion : levelIndex);
+            return (cfg.RampLow(idx, levelsInRegion) + cfg.RampHigh(idx, levelsInRegion)) / 2;
         }
 
         /// <summary>Minimum row distance between two hazard-type specials at a level (2 = just not adjacent).</summary>
@@ -121,7 +121,7 @@ namespace BoingUpSkyTower.Simulation
             for (int r = first; r <= rows; r++)
             {
                 if (locked[r] || r == gemRow) continue;
-                int p = RowPercent(cfg, idx, r, rows);
+                int p = RowPercent(cfg, idx, r, rows, spec.LevelsInRegion);
                 cand.Add(r);
                 weight.Add(p < 1 ? 1 : p);
                 sumPercent += p;

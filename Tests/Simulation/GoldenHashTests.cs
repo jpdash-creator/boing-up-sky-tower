@@ -6,7 +6,7 @@ using Xunit;
 namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>
-    /// Pins the exact LevelData hash of all 75 levels of regions 1-5 in Content/golden/level_hashes_r1-5.txt.
+    /// Pins the exact LevelData hash of all 125 levels of regions 1-5 in Content/golden/level_hashes_r1-5.txt.
     /// The Unity EditMode test (LevelSpecFactoryTests) builds the same levels through ContentRepository + LevelSpecFactory
     /// and must produce the same hashes: this is the cross-toolchain determinism contract (dotnet vs Unity Mono).
     /// Regenerate deliberately with the environment variable UPDATE_GOLDEN=1 after an intended generator change.
@@ -27,7 +27,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 LevelData data = LevelBuilder.Build(cfg, ll.Spec);
                 lines.Add(ll.Id + " " + data.ComputeHash().ToString());
             }
-            Assert.Equal(75, lines.Count);
+            Assert.Equal(125, lines.Count);
 
             string actual = string.Join("\n", lines) + "\n";
             if (Environment.GetEnvironmentVariable("UPDATE_GOLDEN") == "1" || !File.Exists(golden))

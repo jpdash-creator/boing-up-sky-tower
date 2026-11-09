@@ -31,7 +31,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             {
                 if (!pick(g)) continue;
                 s.Gems += g.Gems; s.Coins += g.Coins; s.PowerUps += g.PowerUps; s.Goals++;
-                if (g.HeroRegion != 0) s.Heroes++;
+                if (g.HeroRegion > 0) s.Heroes++;   // the random-hero extras (HeroRegion -1) were never counted in the budgets
             }
             return s;
         }
@@ -109,11 +109,11 @@ namespace BoingUpSkyTower.Simulation.Tests
                     if (g.Type == RegionGoalType.Levels || g.Type == RegionGoalType.ThreeStarLevels) Assert.True(g.Target <= RegionGoalTable.LevelsPerRegion, g.Id);
                 }
             var stars = RegionGoalTable.Build(1).FindAll(g => g.Type == RegionGoalType.Stars);
-            Assert.Equal(45, stars[stars.Count - 1].Target);
+            Assert.Equal(75, stars[stars.Count - 1].Target);
             var levels = RegionGoalTable.Build(1).FindAll(g => g.Type == RegionGoalType.Levels);
-            Assert.Equal(new[] { 3, 6, 9, 12, 15 }, levels.ConvertAll(g => g.Target).ToArray());
+            Assert.Equal(new[] { 5, 10, 15, 20, 25 }, levels.ConvertAll(g => g.Target).ToArray());
             var three = RegionGoalTable.Build(1).FindAll(g => g.Type == RegionGoalType.ThreeStarLevels);
-            Assert.Equal(new[] { 3, 8, 15 }, three.ConvertAll(g => g.Target).ToArray());
+            Assert.Equal(new[] { 5, 13, 25 }, three.ConvertAll(g => g.Target).ToArray());
             var endless = RegionGoalTable.Build(2).FindAll(g => g.IsEndless);
             Assert.Equal(new[] { 100, 200, 500, 1000, 1500, 2000, 3000, 4000, 5000, 7500, 10000 }, endless.ConvertAll(g => g.Target).ToArray());
         }
@@ -125,11 +125,11 @@ namespace BoingUpSkyTower.Simulation.Tests
             {
                 int heroes = 0;
                 foreach (RegionGoal g in RegionGoalTable.Build(r))
-                    if (g.HeroRegion != 0)
+                    if (g.HeroRegion > 0)
                     {
                         heroes++;
                         Assert.Equal(RegionGoalType.Levels, g.Type);
-                        Assert.Equal(15, g.Target);
+                        Assert.Equal(25, g.Target);
                         Assert.Equal(r, g.HeroRegion);
                     }
                 Assert.Equal(1, heroes);

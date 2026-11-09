@@ -10,6 +10,8 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("starMask")] public int StarMask;
         [JsonProperty("bestScore")] public int BestScore;
         [JsonProperty("clears")] public int Clears;
+        /// <summary>Timed records (doc 46): index = Gameplay mode 0..4 (Relaxed .. Insane), null entries = no record. Null on old saves. Additive, no version bump. Use ProgressService.BestPace / BestTime / BestCurve / Medal.</summary>
+        [JsonProperty("records", NullValueHandling = NullValueHandling.Ignore)] public ModeRecord[] Records;
     }
 
     /// <summary>Owned stock (docs/15 section 8.1). Only power-ups.</summary>
@@ -72,5 +74,13 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("lastGooglePromptUtc")] public string LastGooglePromptUtc = "";
         /// <summary>Every real-money purchase (docs/38): product id, kind, transaction id, time. Kept when progress is reset; restore and cloud sync read it. Additive field, no version bump.</summary>
         [JsonProperty("purchases")] public List<PurchaseRecord> Purchases = new List<PurchaseRecord>();
+        /// <summary>Endless timed records (doc 46 section 7): region id to one record per Gameplay mode (index 0..4, null = none). Additive, no version bump.</summary>
+        [JsonProperty("endlessRec")] public Dictionary<string, EndlessModeRecord[]> EndlessRecords = new Dictionary<string, EndlessModeRecord[]>();
+        /// <summary>Time Attack (3:00) records: region id to one record per Gameplay mode. Additive, no version bump.</summary>
+        [JsonProperty("taRec")] public Dictionary<string, TimeAttackRecord[]> TimeAttackRecords = new Dictionary<string, TimeAttackRecord[]>();
+        /// <summary>Best coins and gems per minute of one run, per region id. Additive, no version bump.</summary>
+        [JsonProperty("timedRec")] public Dictionary<string, RegionTimedRecord> RegionTimed = new Dictionary<string, RegionTimedRecord>();
+        /// <summary>Day and week counters of the timed reward goals. Additive, no version bump.</summary>
+        [JsonProperty("timedCnt")] public TimedCounters TimedCounters = new TimedCounters();
     }
 }

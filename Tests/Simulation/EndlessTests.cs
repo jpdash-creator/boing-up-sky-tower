@@ -110,10 +110,12 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(LevelGenerator.EffectiveDifficulty(Fx.FromRatio(5, 100), offset).Raw, t.DifficultyAt(0).Raw);   // level 1: content 0.05 with the region offset
             Assert.Equal(t.DifficultyAt(1).Raw, t.DifficultyAt(100).Raw);                                                // one level for 100 floors
             Assert.True(t.DifficultyAt(101) > t.DifficultyAt(100));
-            Assert.Equal(Fx.One.Raw, t.DifficultyAt(1401).Raw);                                                          // level 15
-            Assert.Equal(Fx.One.Raw, t.DifficultyAt(1500).Raw);
-            Assert.True(t.DifficultyAt(1501) < t.DifficultyAt(1500));                                                    // reset to level 9
-            Assert.Equal(Fx.One.Raw, t.DifficultyAt(4500).Raw);                                                          // the hold of the cycle 3501-4500 is level 15 again
+            Fx top = LevelSpec.DifficultyForLevel(cfg, 25, offset);                                                      // level 25: the top of the 25-level rule
+            Assert.Equal(top.Raw, t.DifficultyAt(2401).Raw);
+            Assert.Equal(top.Raw, t.DifficultyAt(2500).Raw);
+            Assert.True(t.DifficultyAt(2501) < t.DifficultyAt(2500));                                                    // reset to level 15
+            Assert.Equal(t.DifficultyAt(1450).Raw, t.DifficultyAt(2501).Raw);
+            Assert.Equal(top.Raw, t.DifficultyAt(3500 + 400).Raw);                                                       // the hold of the cycle 2501-3900 is level 25 again
         }
 
         [Fact]

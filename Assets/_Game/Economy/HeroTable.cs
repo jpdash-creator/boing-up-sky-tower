@@ -10,9 +10,11 @@ namespace BoingUpSkyTower.Economy
     {
         public readonly string Id, Line;
         public readonly int Tier, LaunchTenths, Speed, Control, Wall;
-        public HeroRow(string id, string line, int tier, int launchTenths, int speed, int control, int wall)
+        /// <summary>True for the 25 heroes of the five active lines (<see cref="HeroTable.ActiveLines"/>). Inactive rows are data only: the hero never exists at runtime.</summary>
+        public readonly bool Active;
+        public HeroRow(string id, string line, int tier, int launchTenths, int speed, int control, int wall, bool active = true)
         {
-            Id = id; Line = line; Tier = tier; LaunchTenths = launchTenths; Speed = speed; Control = control; Wall = wall;
+            Id = id; Line = line; Tier = tier; LaunchTenths = launchTenths; Speed = speed; Control = control; Wall = wall; Active = active;
         }
     }
 
@@ -21,182 +23,192 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Id suffix per tier: the Common hero is the line id, the tiers add _u, _r, _e, _l.</summary>
         public static readonly string[] TierSuffix = { "", "_u", "_r", "_e", "_l" };
 
+        /// <summary>THE ONE LIST of active hero lines (from ACTIVE_LINES in Tools/hero_table_gen.py): only these five lines (25 heroes) exist at runtime. A permanent compile-time rule, no setting.</summary>
+        public static readonly string[] ActiveLines = { "momo", "forestgirl", "beachotter", "candygirl", "monk" };
+
+        /// <summary>True when the line is one of the five active lines.</summary>
+        public static bool IsActiveLine(string line)
+        {
+            return System.Array.IndexOf(ActiveLines, line) >= 0;
+        }
+
+        /// <summary>Every row (all 125, active and inactive): the DATA accessor for tools and the bot proof tests. Runtime code uses CharacterDefs.All (active heroes only).</summary>
         public static readonly HeroRow[] Rows =
         {
             // momo
-            new HeroRow("momo", "momo", 0, 190, 9, 30, 77),
-            new HeroRow("momo_u", "momo", 1, 209, 9, 34, 82),
-            new HeroRow("momo_r", "momo", 2, 216, 9, 38, 88),
-            new HeroRow("momo_e", "momo", 3, 219, 10, 41, 94),
-            new HeroRow("momo_l", "momo", 4, 228, 11, 41, 100),
+            new HeroRow("momo", "momo", 0, 190, 9, 30, 77, true),
+            new HeroRow("momo_u", "momo", 1, 209, 9, 34, 82, true),
+            new HeroRow("momo_r", "momo", 2, 216, 9, 38, 88, true),
+            new HeroRow("momo_e", "momo", 3, 219, 10, 41, 94, true),
+            new HeroRow("momo_l", "momo", 4, 228, 11, 41, 100, true),
 
             // forestgirl
-            new HeroRow("forestgirl", "forestgirl", 0, 197, 10, 30, 84),
-            new HeroRow("forestgirl_u", "forestgirl", 1, 209, 9, 31, 86),
-            new HeroRow("forestgirl_r", "forestgirl", 2, 216, 9, 38, 76),
-            new HeroRow("forestgirl_e", "forestgirl", 3, 220, 10, 38, 92),
-            new HeroRow("forestgirl_l", "forestgirl", 4, 228, 10, 42, 87),
+            new HeroRow("forestgirl", "forestgirl", 0, 197, 10, 30, 84, true),
+            new HeroRow("forestgirl_u", "forestgirl", 1, 209, 9, 31, 86, true),
+            new HeroRow("forestgirl_r", "forestgirl", 2, 216, 9, 38, 76, true),
+            new HeroRow("forestgirl_e", "forestgirl", 3, 220, 10, 38, 92, true),
+            new HeroRow("forestgirl_l", "forestgirl", 4, 228, 10, 42, 87, true),
 
             // beachotter
-            new HeroRow("beachotter", "beachotter", 0, 196, 10, 29, 75),
-            new HeroRow("beachotter_u", "beachotter", 1, 207, 9, 35, 77),
-            new HeroRow("beachotter_r", "beachotter", 2, 214, 9, 35, 89),
-            new HeroRow("beachotter_e", "beachotter", 3, 219, 10, 37, 89),
-            new HeroRow("beachotter_l", "beachotter", 4, 228, 11, 42, 89),
+            new HeroRow("beachotter", "beachotter", 0, 196, 10, 29, 75, true),
+            new HeroRow("beachotter_u", "beachotter", 1, 207, 9, 35, 77, true),
+            new HeroRow("beachotter_r", "beachotter", 2, 214, 9, 35, 89, true),
+            new HeroRow("beachotter_e", "beachotter", 3, 219, 10, 37, 89, true),
+            new HeroRow("beachotter_l", "beachotter", 4, 228, 11, 42, 89, true),
 
             // candygirl
-            new HeroRow("candygirl", "candygirl", 0, 192, 9, 29, 71),
-            new HeroRow("candygirl_u", "candygirl", 1, 208, 9, 32, 88),
-            new HeroRow("candygirl_r", "candygirl", 2, 214, 9, 32, 81),
-            new HeroRow("candygirl_e", "candygirl", 3, 219, 9, 42, 86),
-            new HeroRow("candygirl_l", "candygirl", 4, 228, 12, 41, 91),
+            new HeroRow("candygirl", "candygirl", 0, 192, 9, 29, 71, true),
+            new HeroRow("candygirl_u", "candygirl", 1, 208, 9, 32, 88, true),
+            new HeroRow("candygirl_r", "candygirl", 2, 214, 9, 32, 81, true),
+            new HeroRow("candygirl_e", "candygirl", 3, 219, 9, 42, 86, true),
+            new HeroRow("candygirl_l", "candygirl", 4, 228, 12, 41, 91, true),
 
             // monk
-            new HeroRow("monk", "monk", 0, 196, 11, 29, 85),
-            new HeroRow("monk_u", "monk", 1, 208, 9, 34, 89),
-            new HeroRow("monk_r", "monk", 2, 214, 9, 37, 76),
-            new HeroRow("monk_e", "monk", 3, 219, 9, 43, 81),
-            new HeroRow("monk_l", "monk", 4, 228, 11, 42, 89),
+            new HeroRow("monk", "monk", 0, 196, 11, 29, 85, true),
+            new HeroRow("monk_u", "monk", 1, 208, 9, 34, 89, true),
+            new HeroRow("monk_r", "monk", 2, 214, 9, 37, 76, true),
+            new HeroRow("monk_e", "monk", 3, 219, 9, 43, 81, true),
+            new HeroRow("monk_l", "monk", 4, 228, 11, 42, 89, true),
 
             // bumble
-            new HeroRow("bumble", "bumble", 0, 194, 9, 27, 73),
-            new HeroRow("bumble_u", "bumble", 1, 207, 9, 35, 83),
-            new HeroRow("bumble_r", "bumble", 2, 216, 9, 39, 78),
-            new HeroRow("bumble_e", "bumble", 3, 219, 12, 39, 94),
-            new HeroRow("bumble_l", "bumble", 4, 228, 11, 41, 95),
+            new HeroRow("bumble", "bumble", 0, 194, 9, 27, 73, false),
+            new HeroRow("bumble_u", "bumble", 1, 207, 9, 35, 83, false),
+            new HeroRow("bumble_r", "bumble", 2, 216, 9, 39, 78, false),
+            new HeroRow("bumble_e", "bumble", 3, 219, 12, 39, 94, false),
+            new HeroRow("bumble_l", "bumble", 4, 228, 11, 41, 95, false),
 
             // ribbi
-            new HeroRow("ribbi", "ribbi", 0, 194, 10, 30, 85),
-            new HeroRow("ribbi_u", "ribbi", 1, 208, 9, 35, 84),
-            new HeroRow("ribbi_r", "ribbi", 2, 215, 9, 32, 78),
-            new HeroRow("ribbi_e", "ribbi", 3, 220, 11, 40, 92),
-            new HeroRow("ribbi_l", "ribbi", 4, 228, 11, 42, 86),
+            new HeroRow("ribbi", "ribbi", 0, 194, 10, 30, 85, false),
+            new HeroRow("ribbi_u", "ribbi", 1, 208, 9, 35, 84, false),
+            new HeroRow("ribbi_r", "ribbi", 2, 215, 9, 32, 78, false),
+            new HeroRow("ribbi_e", "ribbi", 3, 220, 11, 40, 92, false),
+            new HeroRow("ribbi_l", "ribbi", 4, 228, 11, 42, 86, false),
 
             // dandy
-            new HeroRow("dandy", "dandy", 0, 191, 9, 27, 84),
-            new HeroRow("dandy_u", "dandy", 1, 208, 9, 33, 75),
-            new HeroRow("dandy_r", "dandy", 2, 212, 8, 38, 80),
-            new HeroRow("dandy_e", "dandy", 3, 219, 12, 39, 83),
-            new HeroRow("dandy_l", "dandy", 4, 228, 11, 42, 86),
+            new HeroRow("dandy", "dandy", 0, 191, 9, 27, 84, false),
+            new HeroRow("dandy_u", "dandy", 1, 208, 9, 33, 75, false),
+            new HeroRow("dandy_r", "dandy", 2, 212, 8, 38, 80, false),
+            new HeroRow("dandy_e", "dandy", 3, 219, 12, 39, 83, false),
+            new HeroRow("dandy_l", "dandy", 4, 228, 11, 42, 86, false),
 
             // pip
-            new HeroRow("pip", "pip", 0, 192, 12, 27, 72),
-            new HeroRow("pip_u", "pip", 1, 208, 9, 35, 76),
-            new HeroRow("pip_r", "pip", 2, 217, 8, 42, 94),
-            new HeroRow("pip_e", "pip", 3, 219, 9, 42, 83),
-            new HeroRow("pip_l", "pip", 4, 228, 11, 42, 86),
+            new HeroRow("pip", "pip", 0, 192, 12, 27, 72, false),
+            new HeroRow("pip_u", "pip", 1, 208, 9, 35, 76, false),
+            new HeroRow("pip_r", "pip", 2, 217, 8, 42, 94, false),
+            new HeroRow("pip_e", "pip", 3, 219, 9, 42, 83, false),
+            new HeroRow("pip_l", "pip", 4, 228, 11, 42, 86, false),
 
             // nib
-            new HeroRow("nib", "nib", 0, 197, 12, 28, 71),
-            new HeroRow("nib_u", "nib", 1, 208, 9, 36, 80),
-            new HeroRow("nib_r", "nib", 2, 214, 9, 35, 76),
-            new HeroRow("nib_e", "nib", 3, 219, 10, 38, 84),
-            new HeroRow("nib_l", "nib", 4, 228, 12, 42, 99),
+            new HeroRow("nib", "nib", 0, 197, 12, 28, 71, false),
+            new HeroRow("nib_u", "nib", 1, 208, 9, 36, 80, false),
+            new HeroRow("nib_r", "nib", 2, 214, 9, 35, 76, false),
+            new HeroRow("nib_e", "nib", 3, 219, 10, 38, 84, false),
+            new HeroRow("nib_l", "nib", 4, 228, 12, 42, 99, false),
 
             // spike
-            new HeroRow("spike", "spike", 0, 196, 11, 30, 69),
-            new HeroRow("spike_u", "spike", 1, 209, 9, 37, 81),
-            new HeroRow("spike_r", "spike", 2, 215, 9, 41, 87),
-            new HeroRow("spike_e", "spike", 3, 219, 10, 38, 90),
-            new HeroRow("spike_l", "spike", 4, 228, 11, 42, 86),
+            new HeroRow("spike", "spike", 0, 196, 11, 30, 69, false),
+            new HeroRow("spike_u", "spike", 1, 209, 9, 37, 81, false),
+            new HeroRow("spike_r", "spike", 2, 215, 9, 41, 87, false),
+            new HeroRow("spike_e", "spike", 3, 219, 10, 38, 90, false),
+            new HeroRow("spike_l", "spike", 4, 228, 11, 42, 86, false),
 
             // moss
-            new HeroRow("moss", "moss", 0, 192, 12, 27, 70),
-            new HeroRow("moss_u", "moss", 1, 209, 9, 37, 84),
-            new HeroRow("moss_r", "moss", 2, 218, 9, 39, 89),
-            new HeroRow("moss_e", "moss", 3, 219, 12, 41, 87),
-            new HeroRow("moss_l", "moss", 4, 228, 11, 41, 93),
+            new HeroRow("moss", "moss", 0, 192, 12, 27, 70, false),
+            new HeroRow("moss_u", "moss", 1, 209, 9, 37, 84, false),
+            new HeroRow("moss_r", "moss", 2, 218, 9, 39, 89, false),
+            new HeroRow("moss_e", "moss", 3, 219, 12, 41, 87, false),
+            new HeroRow("moss_l", "moss", 4, 228, 11, 41, 93, false),
 
             // fenn
-            new HeroRow("fenn", "fenn", 0, 196, 10, 29, 74),
-            new HeroRow("fenn_u", "fenn", 1, 209, 9, 37, 74),
-            new HeroRow("fenn_r", "fenn", 2, 215, 9, 39, 78),
-            new HeroRow("fenn_e", "fenn", 3, 220, 11, 39, 95),
-            new HeroRow("fenn_l", "fenn", 4, 228, 11, 42, 95),
+            new HeroRow("fenn", "fenn", 0, 196, 10, 29, 74, false),
+            new HeroRow("fenn_u", "fenn", 1, 209, 9, 37, 74, false),
+            new HeroRow("fenn_r", "fenn", 2, 215, 9, 39, 78, false),
+            new HeroRow("fenn_e", "fenn", 3, 220, 11, 39, 95, false),
+            new HeroRow("fenn_l", "fenn", 4, 228, 11, 42, 95, false),
 
             // pinch
-            new HeroRow("pinch", "pinch", 0, 190, 9, 28, 81),
-            new HeroRow("pinch_u", "pinch", 1, 209, 9, 31, 72),
-            new HeroRow("pinch_r", "pinch", 2, 214, 9, 41, 93),
-            new HeroRow("pinch_e", "pinch", 3, 220, 10, 42, 89),
-            new HeroRow("pinch_l", "pinch", 4, 228, 12, 42, 88),
+            new HeroRow("pinch", "pinch", 0, 190, 9, 28, 81, false),
+            new HeroRow("pinch_u", "pinch", 1, 209, 9, 31, 72, false),
+            new HeroRow("pinch_r", "pinch", 2, 214, 9, 41, 93, false),
+            new HeroRow("pinch_e", "pinch", 3, 220, 10, 42, 89, false),
+            new HeroRow("pinch_l", "pinch", 4, 228, 12, 42, 88, false),
 
             // shelly
-            new HeroRow("shelly", "shelly", 0, 192, 9, 27, 85),
-            new HeroRow("shelly_u", "shelly", 1, 208, 9, 36, 85),
-            new HeroRow("shelly_r", "shelly", 2, 213, 8, 37, 91),
-            new HeroRow("shelly_e", "shelly", 3, 219, 10, 38, 87),
-            new HeroRow("shelly_l", "shelly", 4, 228, 12, 41, 88),
+            new HeroRow("shelly", "shelly", 0, 192, 9, 27, 85, false),
+            new HeroRow("shelly_u", "shelly", 1, 208, 9, 36, 85, false),
+            new HeroRow("shelly_r", "shelly", 2, 213, 8, 37, 91, false),
+            new HeroRow("shelly_e", "shelly", 3, 219, 10, 38, 87, false),
+            new HeroRow("shelly_l", "shelly", 4, 228, 12, 41, 88, false),
 
             // bloop
-            new HeroRow("bloop", "bloop", 0, 190, 10, 27, 72),
-            new HeroRow("bloop_u", "bloop", 1, 208, 9, 33, 78),
-            new HeroRow("bloop_r", "bloop", 2, 214, 8, 42, 85),
-            new HeroRow("bloop_e", "bloop", 3, 219, 10, 39, 87),
-            new HeroRow("bloop_l", "bloop", 4, 228, 11, 41, 95),
+            new HeroRow("bloop", "bloop", 0, 190, 10, 27, 72, false),
+            new HeroRow("bloop_u", "bloop", 1, 208, 9, 33, 78, false),
+            new HeroRow("bloop_r", "bloop", 2, 214, 8, 42, 85, false),
+            new HeroRow("bloop_e", "bloop", 3, 219, 10, 39, 87, false),
+            new HeroRow("bloop_l", "bloop", 4, 228, 11, 41, 95, false),
 
             // coco
-            new HeroRow("coco", "coco", 0, 197, 12, 29, 75),
-            new HeroRow("coco_u", "coco", 1, 208, 9, 35, 76),
-            new HeroRow("coco_r", "coco", 2, 214, 9, 37, 82),
-            new HeroRow("coco_e", "coco", 3, 220, 12, 41, 89),
-            new HeroRow("coco_l", "coco", 4, 228, 12, 42, 88),
+            new HeroRow("coco", "coco", 0, 197, 12, 29, 75, false),
+            new HeroRow("coco_u", "coco", 1, 208, 9, 35, 76, false),
+            new HeroRow("coco_r", "coco", 2, 214, 9, 37, 82, false),
+            new HeroRow("coco_e", "coco", 3, 220, 12, 41, 89, false),
+            new HeroRow("coco_l", "coco", 4, 228, 12, 42, 88, false),
 
             // gummi
-            new HeroRow("gummi", "gummi", 0, 190, 12, 27, 70),
-            new HeroRow("gummi_u", "gummi", 1, 209, 9, 36, 84),
-            new HeroRow("gummi_r", "gummi", 2, 215, 9, 35, 84),
-            new HeroRow("gummi_e", "gummi", 3, 220, 11, 40, 92),
-            new HeroRow("gummi_l", "gummi", 4, 228, 12, 42, 91),
+            new HeroRow("gummi", "gummi", 0, 190, 12, 27, 70, false),
+            new HeroRow("gummi_u", "gummi", 1, 209, 9, 36, 84, false),
+            new HeroRow("gummi_r", "gummi", 2, 215, 9, 35, 84, false),
+            new HeroRow("gummi_e", "gummi", 3, 220, 11, 40, 92, false),
+            new HeroRow("gummi_l", "gummi", 4, 228, 12, 42, 91, false),
 
             // choco
-            new HeroRow("choco", "choco", 0, 197, 11, 30, 85),
-            new HeroRow("choco_u", "choco", 1, 209, 9, 33, 81),
-            new HeroRow("choco_r", "choco", 2, 215, 8, 42, 89),
-            new HeroRow("choco_e", "choco", 3, 220, 12, 40, 92),
-            new HeroRow("choco_l", "choco", 4, 228, 12, 41, 94),
+            new HeroRow("choco", "choco", 0, 197, 11, 30, 85, false),
+            new HeroRow("choco_u", "choco", 1, 209, 9, 33, 81, false),
+            new HeroRow("choco_r", "choco", 2, 215, 8, 42, 89, false),
+            new HeroRow("choco_e", "choco", 3, 220, 12, 40, 92, false),
+            new HeroRow("choco_l", "choco", 4, 228, 12, 41, 94, false),
 
             // marsh
-            new HeroRow("marsh", "marsh", 0, 194, 10, 29, 70),
-            new HeroRow("marsh_u", "marsh", 1, 208, 9, 35, 90),
-            new HeroRow("marsh_r", "marsh", 2, 215, 9, 38, 76),
-            new HeroRow("marsh_e", "marsh", 3, 219, 12, 39, 83),
-            new HeroRow("marsh_l", "marsh", 4, 228, 11, 42, 97),
+            new HeroRow("marsh", "marsh", 0, 194, 10, 29, 70, false),
+            new HeroRow("marsh_u", "marsh", 1, 208, 9, 35, 90, false),
+            new HeroRow("marsh_r", "marsh", 2, 215, 9, 38, 76, false),
+            new HeroRow("marsh_e", "marsh", 3, 219, 12, 39, 83, false),
+            new HeroRow("marsh_l", "marsh", 4, 228, 11, 42, 97, false),
 
             // cookie
-            new HeroRow("cookie", "cookie", 0, 190, 12, 27, 78),
-            new HeroRow("cookie_u", "cookie", 1, 209, 9, 38, 84),
-            new HeroRow("cookie_r", "cookie", 2, 215, 9, 33, 87),
-            new HeroRow("cookie_e", "cookie", 3, 219, 10, 40, 83),
-            new HeroRow("cookie_l", "cookie", 4, 228, 12, 42, 95),
+            new HeroRow("cookie", "cookie", 0, 190, 12, 27, 78, false),
+            new HeroRow("cookie_u", "cookie", 1, 209, 9, 38, 84, false),
+            new HeroRow("cookie_r", "cookie", 2, 215, 9, 33, 87, false),
+            new HeroRow("cookie_e", "cookie", 3, 219, 10, 40, 83, false),
+            new HeroRow("cookie_l", "cookie", 4, 228, 12, 42, 95, false),
 
             // sprout
-            new HeroRow("sprout", "sprout", 0, 195, 10, 30, 76),
-            new HeroRow("sprout_u", "sprout", 1, 209, 9, 37, 73),
-            new HeroRow("sprout_r", "sprout", 2, 216, 9, 31, 77),
-            new HeroRow("sprout_e", "sprout", 3, 221, 10, 42, 91),
-            new HeroRow("sprout_l", "sprout", 4, 228, 12, 42, 98),
+            new HeroRow("sprout", "sprout", 0, 195, 10, 30, 76, false),
+            new HeroRow("sprout_u", "sprout", 1, 209, 9, 37, 73, false),
+            new HeroRow("sprout_r", "sprout", 2, 216, 9, 31, 77, false),
+            new HeroRow("sprout_e", "sprout", 3, 221, 10, 42, 91, false),
+            new HeroRow("sprout_l", "sprout", 4, 228, 12, 42, 98, false),
 
             // tora
-            new HeroRow("tora", "tora", 0, 196, 12, 29, 80),
-            new HeroRow("tora_u", "tora", 1, 209, 9, 34, 75),
-            new HeroRow("tora_r", "tora", 2, 214, 9, 33, 84),
-            new HeroRow("tora_e", "tora", 3, 220, 12, 41, 84),
-            new HeroRow("tora_l", "tora", 4, 228, 12, 42, 92),
+            new HeroRow("tora", "tora", 0, 196, 12, 29, 80, false),
+            new HeroRow("tora_u", "tora", 1, 209, 9, 34, 75, false),
+            new HeroRow("tora_r", "tora", 2, 214, 9, 33, 84, false),
+            new HeroRow("tora_e", "tora", 3, 220, 12, 41, 84, false),
+            new HeroRow("tora_l", "tora", 4, 228, 12, 42, 92, false),
 
             // rusu
-            new HeroRow("rusu", "rusu", 0, 194, 11, 29, 79),
-            new HeroRow("rusu_u", "rusu", 1, 209, 9, 33, 83),
-            new HeroRow("rusu_r", "rusu", 2, 214, 8, 39, 87),
-            new HeroRow("rusu_e", "rusu", 3, 220, 12, 40, 93),
-            new HeroRow("rusu_l", "rusu", 4, 228, 12, 41, 97),
+            new HeroRow("rusu", "rusu", 0, 194, 11, 29, 79, false),
+            new HeroRow("rusu_u", "rusu", 1, 209, 9, 33, 83, false),
+            new HeroRow("rusu_r", "rusu", 2, 214, 8, 39, 87, false),
+            new HeroRow("rusu_e", "rusu", 3, 220, 12, 40, 93, false),
+            new HeroRow("rusu_l", "rusu", 4, 228, 12, 41, 97, false),
 
             // ryu
-            new HeroRow("ryu", "ryu", 0, 191, 9, 28, 73),
-            new HeroRow("ryu_u", "ryu", 1, 209, 9, 33, 87),
-            new HeroRow("ryu_r", "ryu", 2, 217, 9, 38, 88),
-            new HeroRow("ryu_e", "ryu", 3, 219, 12, 40, 88),
-            new HeroRow("ryu_l", "ryu", 4, 228, 12, 42, 93),
+            new HeroRow("ryu", "ryu", 0, 191, 9, 28, 73, false),
+            new HeroRow("ryu_u", "ryu", 1, 209, 9, 33, 87, false),
+            new HeroRow("ryu_r", "ryu", 2, 217, 9, 38, 88, false),
+            new HeroRow("ryu_e", "ryu", 3, 219, 12, 40, 88, false),
+            new HeroRow("ryu_l", "ryu", 4, 228, 12, 42, 93, false),
         };
 
         /// <summary>Hero ids that still carry the old hand-tuned stats (not yet generated and measured).</summary>

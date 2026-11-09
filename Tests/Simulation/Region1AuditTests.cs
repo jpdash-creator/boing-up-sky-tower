@@ -85,7 +85,7 @@ namespace BoingUpSkyTower.Simulation.Tests
     {
         /// <summary>Bot node budget per run (a tenth of the proof budget; the audit wants numbers, not proof). Env AUDIT_BUDGET overrides.</summary>
         public static readonly int AuditBudget = int.Parse(Environment.GetEnvironmentVariable("AUDIT_BUDGET") ?? "2000");
-        public static readonly int[] StepTable = { 20, 40, 60, 80, 100 };
+        public static readonly int[] StepTable = SimConfig.DifficultyStepPercent;
         private static readonly string[] StepNames = { "Relaxed", "Easy", "Normal", "Hard", "Insane" };
         private readonly ITestOutputHelper output;
         public Region1AuditTests(ITestOutputHelper output) { this.output = output; }
@@ -133,7 +133,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             string root = ContentLoader.FindRoot();
             if (root == null) { output.WriteLine("Content not found; skipped"); return; }
             List<LoadedLevel> levels = ContentLoader.LoadRegions(root, 1, 1);
-            Assert.Equal(15, levels.Count);
+            Assert.Equal(25, levels.Count);
 
             StringBuilder md = new StringBuilder();
             md.AppendLine("# Region 1 audit: stacks and scroll versus climb");

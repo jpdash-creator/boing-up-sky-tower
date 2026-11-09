@@ -198,8 +198,8 @@ namespace BoingUpSkyTower.Gameplay
         public const float DollH = 336f;   // was 420: 20 percent smaller (owner 2026-11-02)
         /// <summary>The (i) button right of the hero on the stage (at least 48 dp).</summary>
         public const float InfoSize = 132f;
-        /// <summary>Height of the action row (All Heroes and Merge) between the stage and the list: at least 150, and never below 48 dp on the real screen.</summary>
-        public static float ActionRowH { get { return Mathf.Max(150f, UiKit.MinTouchRef); } }
+        /// <summary>Height of the 3-tab row (All Heroes, Merge, Powers) between the stage and the list; see <see cref="HeroTabs.RowH"/>.</summary>
+        public static float ActionRowH { get { return HeroTabs.RowH; } }
         const float RowGap = 12f;
         /// <summary>The tick on the chosen hero's first card.</summary>
         public const string ChosenName = "Chosen";
@@ -210,10 +210,12 @@ namespace BoingUpSkyTower.Gameplay
             public Stage Stage;
             /// <summary>The (i) button opens the shown hero's sheet (docs/21); the sheet has the "Use this hero" button. Tapping a tile only selects it.</summary>
             public Action<CharacterDef> OpenHero;
-            /// <summary>The Merge button (painted MergeIcon plus the word "Merge") in the action row opens the Merge screen. No Merge button when null.</summary>
+            /// <summary>The "Merge" tab of the top row opens the Merge screen. Inert when null.</summary>
             public Action OpenMerge;
-            /// <summary>The "All Heroes" button in the action row opens the full list of every character (locked ones included). No button when null.</summary>
+            /// <summary>The "All Heroes" tab of the top row opens the full list of every character (locked ones included). Inert when null.</summary>
             public Action OpenAllHeroes;
+            /// <summary>The "Powers" tab of the top row opens the list of the 7 power-ups with the number owned. Inert when null.</summary>
+            public Action OpenPowers;
         }
 
         readonly RectTransform screen;
@@ -243,7 +245,7 @@ namespace BoingUpSkyTower.Gameplay
             // the dark panel under the stage holds the list
             // It is a child of the full-screen stage root (not of the safe-area body), so it starts exactly where the grass ends, whatever the notch:
             // no dark band between the stage and the roster, and it reaches the bottom edge.
-            Image panel = UiKit.AddImage(host.Stage.Root, "ListPanel", null, new Color(0.17f, 0.23f, 0.42f, 1f));
+            Image panel = UiKit.AddImage(host.Stage.Root, "ListPanel", null, new Color(0.10f, 0.08f, 0.26f, 1f));
             panel.preserveAspect = false;
             panel.raycastTarget = false;
             panel.rectTransform.anchorMin = Vector2.zero;
@@ -309,7 +311,7 @@ namespace BoingUpSkyTower.Gameplay
             nrt.anchoredPosition = new Vector2(0f, -nameBottomDist);
 
             float infoY = -(host.Stage.GroundBottom - UiKit.TopInsetRef() - InfoSize - 28f);
-            // The Merge button and the All Heroes button live in the action row under the stage (BuildActionRow). The test-only 'Add 2 copies' button is gone from this screen:
+            // The three tabs (All Heroes, Merge, Powers) live in the row under the stage (HeroTabs). The test-only 'Add 2 copies' button is gone from this screen:
             // the admin Character Test popup (Hero test page) adds copies.
 
             // (i) opens the shown hero's sheet (docs/21). It sits in the bottom right corner of the stage, clear of the hero and the dirt oval
@@ -328,10 +330,10 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform vp = UiKit.Rect(body, "ListViewport");
             vp.anchorMin = Vector2.zero;
             vp.anchorMax = Vector2.one;
-            vp.offsetMin = new Vector2(0f, ToyKit.TabBarReserve + 8f);
+            vp.offsetMin = new Vector2(0f, 8f);   // no bottom bar any more (Bug List 6 item 3b): the grid runs down to the bottom of the safe area
             float listTop = host.Stage.GroundBottom - UiKit.TopInsetRef() + 18f;   // body top is the safe-area top; the stage counts from the screen top
-            vp.offsetMax = new Vector2(0f, -(listTop + ActionRowH + RowGap));
-            BuildActionRow(listTop);
+            vp.offsetMax = new Vector2(0f, -(listTop + HeroTabs.RowH + RowGap));
+            HeroTabs.Build(body, listTop, -1, host.OpenAllHeroes, host.OpenMerge, host.OpenPowers);   // the 3 icon tabs sit between the stage and the grid
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
@@ -457,75 +459,6 @@ namespace BoingUpSkyTower.Gameplay
             tick.rectTransform.anchorMin = new Vector2(0.06f, 0.06f);
             tick.rectTransform.anchorMax = new Vector2(0.94f, 0.94f);
             tick.rectTransform.offsetMin = tick.rectTransform.offsetMax = Vector2.zero;
-        }
-
-        /// <summary>
-        /// The row between the stage and the list: "All Heroes" on the left (hero icon plus a short label), "Merge" on the right (the painted MergeIcon as the button, the word next to it).
-        /// Both are at least 48 dp high and wide, with a gap of at least 8 dp; the row is anchored by fractions so it fits every aspect and the label survives 130 percent text.
-        /// </summary>
-        void BuildActionRow(float top)
-        {
-            float h = ActionRowH;
-            RectTransform row = UiKit.Rect(body, "ActionRow");
-            row.anchorMin = new Vector2(0f, 1f);
-            row.anchorMax = new Vector2(1f, 1f);
-            row.pivot = new Vector2(0.5f, 1f);
-            row.offsetMin = new Vector2(SideMargin, -(top + h));
-            row.offsetMax = new Vector2(-SideMargin, -top);
-
-            if (host.OpenAllHeroes != null)
-            {
-                Button all = UiKit.AddButton(row, "AllHeroesButton", "", ToyKit.Button(0), Color.white, new Vector2(420f, h), () => host.OpenAllHeroes());
-                all.GetComponent<A11yLabel>().Text = "All Heroes";
-                RectTransform cell = (RectTransform)all.transform;
-                cell.anchorMin = Vector2.zero;
-                cell.anchorMax = new Vector2(0.485f, 1f);
-                cell.offsetMin = cell.offsetMax = Vector2.zero;
-                AddIconAndLabel(cell, ToyKit.Get("icon_heroes") ?? ShopIcons.CharacterPower, "All Heroes", UiKit.ButtonInk, false);
-            }
-
-            if (host.OpenMerge != null)
-            {
-                // the painted icon carries its own plate; the whole row cell is the touch target, the word sits next to the icon on the dark list panel
-                Button merge = UiKit.AddButton(row, "MergeButton", "", null, new Color(1f, 1f, 1f, 0f), new Vector2(420f, h), () => host.OpenMerge());
-                merge.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.001f);
-                merge.GetComponent<A11yLabel>().Text = "Merge";
-                RectTransform cell = (RectTransform)merge.transform;
-                cell.anchorMin = new Vector2(0.515f, 0f);
-                cell.anchorMax = Vector2.one;
-                cell.offsetMin = cell.offsetMax = Vector2.zero;
-                AddIconAndLabel(cell, MergeArt.Icon, "Merge", Color.white, true);
-            }
-        }
-
-        /// <summary>An icon square at the left of a row cell and a one-line label to its right (names "Icon" or "MergeIcon", and "Label"). A painted icon fills the cell height; a plain one is inset on the plate.</summary>
-        static void AddIconAndLabel(RectTransform cell, Sprite icon, string label, Color ink, bool paintedIcon)
-        {
-            float inset = paintedIcon ? 0f : 0.14f;
-            float left = paintedIcon ? 0f : 14f;
-            float side = ActionRowH * (1f - 2f * inset);
-            Image ic = UiKit.AddImage(cell, paintedIcon ? "MergeIcon" : "Icon", icon, Color.white);
-            ic.preserveAspect = true;
-            ic.raycastTarget = false;
-            RectTransform ir = ic.rectTransform;
-            ir.anchorMin = new Vector2(0f, 0.5f);
-            ir.anchorMax = new Vector2(0f, 0.5f);
-            ir.pivot = new Vector2(0f, 0.5f);
-            ir.anchoredPosition = new Vector2(left, 0f);
-            ir.sizeDelta = new Vector2(side, side);
-
-            Text t = UiKit.AddText(cell, "Label", label, 44, ink, TextAnchor.MiddleLeft, true);
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
-            if (!paintedIcon)
-            {
-                var o = t.GetComponent<Outline>();
-                if (o != null) o.enabled = false;
-            }
-            RectTransform tr = t.rectTransform;
-            tr.anchorMin = Vector2.zero;
-            tr.anchorMax = Vector2.one;
-            tr.offsetMin = new Vector2(left + side + 8f, 0f);
-            tr.offsetMax = new Vector2(-6f, 0f);
         }
 
         /// <summary>Picks a character as the tests do (the same as a tap on its tile).</summary>

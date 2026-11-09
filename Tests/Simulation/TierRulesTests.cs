@@ -71,7 +71,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             foreach (TierRow row in MergeTierDefs.Rows)
             {
                 Assert.Null(TierRules.Validate(row));
-                CharacterSpec spec = CharacterDefs.Get(row.Id);
+                CharacterSpec spec = CharacterDefs.GetIncludingInactive(row.Id);
                 Assert.NotNull(spec);
                 Assert.Null(TierRules.ValidatePowers(row.LineId, row.Rarity, spec.Powers));
                 Assert.Equal(CharacterDefs.PowerCount[(int)row.Rarity], spec.Powers.Length);
@@ -116,11 +116,14 @@ namespace BoingUpSkyTower.Simulation.Tests
         [Fact]
         public void EveryCommonAndTierIdExistsExactlyOnceInTheCharacterList()
         {
-            Assert.Equal(125, CharacterDefs.All.Length);
-            Assert.Equal(125, CharacterDefs.All.Select(c => c.Id).Distinct().Count());
+            // the data accessor still holds all 125 heroes; the runtime list holds the 25 ACTIVE ones only (owner 2026-11-09)
+            Assert.Equal(125, CharacterDefs.AllIncludingInactive.Length);
+            Assert.Equal(125, CharacterDefs.AllIncludingInactive.Select(c => c.Id).Distinct().Count());
+            Assert.Equal(25, CharacterDefs.All.Length);
+            Assert.Equal(25, CharacterDefs.All.Select(c => c.Id).Distinct().Count());
             foreach (HeroRow row in HeroTable.Rows)
             {
-                CharacterSpec spec = CharacterDefs.Get(row.Id);
+                CharacterSpec spec = CharacterDefs.GetIncludingInactive(row.Id);
                 Assert.NotNull(spec);
                 Assert.Equal(row.Tier, (int)spec.Rarity);
                 Assert.Equal(row.Line, spec.LineId);
@@ -181,7 +184,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Assert.Equal(want.Wall, row.Wall);
                 Assert.Null(TierRules.ValidatePhysics(row));
                 // and the hero the game plays has exactly these numbers
-                CharacterStats s = CharacterDefs.Get(row.Id).Stats;
+                CharacterStats s = CharacterDefs.GetIncludingInactive(row.Id).Stats;
                 Assert.Equal(want.LaunchTenths, s.LaunchTenths);
                 Assert.Equal(want.Speed, s.MaxSpeed);
                 Assert.Equal(want.Control, s.Control);
@@ -194,7 +197,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             foreach (HeroRow row in HeroTable.Rows)
             {
-                CharacterSpec spec = CharacterDefs.Get(row.Id);
+                CharacterSpec spec = CharacterDefs.GetIncludingInactive(row.Id);
                 CharacterStats s = spec.Stats;
                 Assert.Equal(row.LaunchTenths, s.LaunchTenths);
                 Assert.Equal(row.Speed, s.MaxSpeed);
@@ -209,7 +212,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
-                CharacterStats e = CharacterDefs.Get(row.Id).Stats, c = CharacterDefs.Get(row.LineId).Stats;
+                CharacterStats e = CharacterDefs.GetIncludingInactive(row.Id).Stats, c = CharacterDefs.GetIncludingInactive(row.LineId).Stats;
                 Assert.Equal(c.CoinFind, e.CoinFind);
                 Assert.Equal(c.GemFind, e.GemFind);
                 Assert.Equal(c.RunBonusCoins + row.RunCoinsAdd, e.RunBonusCoins);
@@ -223,7 +226,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
-                CharacterSpec spec = CharacterDefs.Get(row.Id);
+                CharacterSpec spec = CharacterDefs.GetIncludingInactive(row.Id);
                 ShownStats want = ShownStats.From(spec.Stats, new SimConfig());
                 ShownStats got = spec.ShownValues();
                 Assert.Equal(want.Jump, got.Jump);
@@ -243,8 +246,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             string[] names = { "Jump", "Speed", "Control", "Wall Bounce" };
             foreach (TierRow row in MergeTierDefs.Rows)
             {
-                ShownStats common = CharacterDefs.Get(row.LineId).ShownValues();
-                ShownStats shown = CharacterDefs.Get(row.Id).ShownValues();
+                ShownStats common = CharacterDefs.GetIncludingInactive(row.LineId).ShownValues();
+                ShownStats shown = CharacterDefs.GetIncludingInactive(row.Id).ShownValues();
                 double[] c = Vals(common), u = Vals(shown);
                 var expect = new List<string>();
                 for (int s = 0; s < 4; s++)
@@ -279,8 +282,8 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             foreach (TierRow row in MergeTierDefs.Rows)
             {
-                CharacterSpec spec = CharacterDefs.Get(row.Id);
-                CharacterSpec common = CharacterDefs.Get(row.LineId);
+                CharacterSpec spec = CharacterDefs.GetIncludingInactive(row.Id);
+                CharacterSpec common = CharacterDefs.GetIncludingInactive(row.LineId);
                 Assert.Null(spec.Stats.ValidateTier());
                 Assert.Null(spec.Stats.ValidatePhysics());
                 CharacterStats e = spec.Stats, c = common.Stats;
@@ -309,7 +312,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             foreach (string line in TierRules.Lines)
             {
-                CharacterStats s = CharacterDefs.Get(line).Stats;
+                CharacterStats s = CharacterDefs.GetIncludingInactive(line).Stats;
                 CharacterStats back = ShownStats.From(s, new SimConfig()).ToPhysics(new SimConfig());
                 Assert.InRange(back.LaunchTenths, s.LaunchTenths - 2, s.LaunchTenths + 2);   // Jump is shown with one decimal, which is about 1 tenth of launch speed
                 Assert.Equal(s.MaxSpeed, back.MaxSpeed);
@@ -335,7 +338,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(9, CharacterStats.Default.MaxSpeed);
             Assert.Equal(30, CharacterStats.Default.Control);
             Assert.Equal(77, CharacterStats.Default.WallBoostHundredths);
-            foreach (TierRow row in MergeTierDefs.Rows) Assert.NotSame(CharacterStats.Default, CharacterDefs.Get(row.Id).Stats);
+            foreach (TierRow row in MergeTierDefs.Rows) Assert.NotSame(CharacterStats.Default, CharacterDefs.GetIncludingInactive(row.Id).Stats);
         }
     }
 }

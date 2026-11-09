@@ -9,7 +9,7 @@ namespace BoingUpSkyTower.Simulation.Tests
 {
     /// <summary>
     /// Doc 25 (owner list 27): level structure of every campaign level of regions 1 to 5: rows, 1.3 platforms per row, the special platform share
-    /// ramping inside the level, the goals (no survive wave, hidden gem search or boss chase), combo levels without gems, double gems on levels 8 and 15
+    /// ramping inside the level, the goals (no survive wave, hidden gem search or boss chase), combo levels without gems, double gems on levels 8 and 25
     /// and the hidden bonus gem of level 8.
     /// </summary>
     [Trait("Category", "LevelStructure")]
@@ -21,6 +21,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         public static int ExpectedRows(int index)
         {
             if (index == 1) return 60;
+            if (index == 20) return 90;   // the speedrun level (goal value 90)
             if (index <= 5) return 90;
             if (index <= 9) return 120;
             return 150;
@@ -47,17 +48,20 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             SimConfig cfg = new SimConfig();
             List<LoadedLevel> levels = All();
-            Assert.Equal(75, levels.Count);
+            Assert.Equal(125, levels.Count);
             foreach (LoadedLevel ll in levels)
             {
                 int idx = ll.Spec.LevelIndex;
                 Assert.Equal(ExpectedRows(idx), ll.Spec.RowsFor());
                 GoalType g = ll.Spec.Goal.Type;
-                Assert.True(g != GoalType.SurviveWave && g != GoalType.BossChase && g != GoalType.FindHiddenGem && g != GoalType.Speedrun && g != GoalType.CollectCoins, ll.Id + " uses " + g);
-                if (idx == 5 || idx == 10) Assert.Equal(GoalType.ComboChain, g);
-                else if (idx == 7) Assert.Equal(GoalType.NoWallBounce, g);
+                Assert.True(g != GoalType.SurviveWave && g != GoalType.BossChase && g != GoalType.CollectCoins, ll.Id + " uses " + g);
+                // Bug List 6 item 4: special goals at 5 (combo), 10 (no wall bounce), 15 (hidden gem), 20 (speedrun); everything else reaches the top
+                if (idx == 5) Assert.Equal(GoalType.ComboChain, g);
+                else if (idx == 10) Assert.Equal(GoalType.NoWallBounce, g);
+                else if (idx == 15) Assert.Equal(GoalType.FindHiddenGem, g);
+                else if (idx == 20) Assert.Equal(GoalType.Speedrun, g);
                 else Assert.Equal(GoalType.ReachFloor, g);
-                if (g == GoalType.ReachFloor || g == GoalType.NoWallBounce) Assert.Equal(ExpectedRows(idx), ll.Spec.Goal.Value);
+                if (g != GoalType.ComboChain) Assert.Equal(ExpectedRows(idx), ll.Spec.Goal.Value);
                 Assert.Empty(ll.Spec.FixedChunks);
                 Assert.False(ll.Spec.Ramp);
                 LevelData d = LevelBuilder.Build(cfg, ll.Spec);
@@ -93,8 +97,8 @@ namespace BoingUpSkyTower.Simulation.Tests
         {
             SimConfig cfg = new SimConfig();
             List<string> bad = new List<string>();
-            double[] lowSum = new double[16], highSum = new double[16];
-            int[] cnt = new int[16];
+            double[] lowSum = new double[26], highSum = new double[26];
+            int[] cnt = new int[26];
             foreach (LoadedLevel ll in All())
             {
                 int idx = ll.Spec.LevelIndex;
@@ -121,9 +125,9 @@ namespace BoingUpSkyTower.Simulation.Tests
                     if (Math.Abs(allPct - mean) > 12 && ll.Spec.Goal.Type != GoalType.ComboChain) bad.Add(ll.Id + " seed " + i + ": overall " + allPct.ToString("F0") + "% vs " + mean + "%");
                 }
             }
-            for (int idx = 1; idx <= 15; idx++)
-                if (idx != 5 && idx != 10) Assert.True(highSum[idx] / cnt[idx] > lowSum[idx] / cnt[idx] + 6, "level " + idx + ": the top third must carry clearly more specials than the bottom third");
-            for (int idx = 1; idx <= 15; idx++)
+            for (int idx = 1; idx <= 25; idx++)
+                if (idx != 5) Assert.True(highSum[idx] / cnt[idx] > lowSum[idx] / cnt[idx] + 6, "level " + idx + ": the top third must carry clearly more specials than the bottom third");
+            for (int idx = 1; idx <= 25; idx++)
                 output.WriteLine("level " + idx + ": ramp " + cfg.RampLowPercent[idx] + " to " + cfg.RampHighPercent[idx] + " percent; measured bottom third " + (lowSum[idx] / cnt[idx]).ToString("F1") + ", top third " + (highSum[idx] / cnt[idx]).ToString("F1"));
             foreach (string b in bad.Take(20)) output.WriteLine(b);
             Assert.True(bad.Count == 0, bad.Count + " ramp problems, first: " + (bad.Count > 0 ? bad[0] : ""));
@@ -158,14 +162,14 @@ namespace BoingUpSkyTower.Simulation.Tests
                         if (p.Kind == PickupKind.Gem) { gems++; if (p.Tag == SimConfig.DoubleGemTag) doubles++; }
                         if (p.Kind == PickupKind.HiddenGem) { hidden++; if (p.Tag == 1) hiddenDouble++; }
                     }
-                    Assert.Equal(idx == 8 ? 1 : 0, d.Pickups.Count(p => p.Kind == PickupKind.HiddenGem));
+                    Assert.Equal(idx == 8 || ll.Spec.Goal.Type == GoalType.FindHiddenGem ? 1 : 0, d.Pickups.Count(p => p.Kind == PickupKind.HiddenGem));
                     Assert.Equal(3, d.Pickups.Count(p => p.Kind == PickupKind.Star));
                 }
-                if (idx == 5 || idx == 10) Assert.Equal(0, gems);
+                if (ll.Spec.Goal.Type == GoalType.ComboChain) Assert.Equal(0, gems);
                 else Assert.True(gems > 0, ll.Id + " has no gems");
-                if (idx == 8 || idx == 15) Assert.True(doubles > 0 && doubles < gems, ll.Id + " double gems " + doubles + " of " + gems);
+                if (idx == 8 || idx == 25) Assert.True(doubles > 0 && doubles < gems, ll.Id + " double gems " + doubles + " of " + gems);
                 else Assert.Equal(0, doubles);
-                if (idx == 8) Assert.True(hiddenDouble >= 0 && hidden == 10);
+                if (idx == 8 || ll.Spec.Goal.Type == GoalType.FindHiddenGem) Assert.True(hiddenDouble >= 0 && hidden == 10);
             }
         }
 
@@ -192,7 +196,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         public void BotSolvesTheComboAndTheGemLevelsOfEveryRegion()
         {
             SimConfig cfg = new SimConfig();
-            List<LoadedLevel> levels = All().Where(l => new[] { 5, 8, 10, 15 }.Contains(l.Spec.LevelIndex)).ToList();
+            List<LoadedLevel> levels = All().Where(l => new[] { 5, 8, 10, 15, 20, 25 }.Contains(l.Spec.LevelIndex)).ToList();
             string[][] failures = new string[levels.Count][];
             Parallel.For(0, levels.Count, li =>
             {

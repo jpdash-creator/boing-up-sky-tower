@@ -5,11 +5,11 @@ namespace BoingUpSkyTower.Economy
     /// <summary>The kinds of per-region Main goals (Bug List 5 F1.a, docs/39). Every goal counts ONLY play inside its region.</summary>
     public enum RegionGoalType
     {
-        /// <summary>Stars earned in the region (best per level, max 45).</summary>
+        /// <summary>Stars earned in the region (best per level, max 75).</summary>
         Stars = 0,
-        /// <summary>Different levels of the region cleared (max 15); the last tier is "clear all levels".</summary>
+        /// <summary>Different levels of the region cleared (max 25); the last tier is "clear all levels".</summary>
         Levels,
-        /// <summary>Levels of the region with 3 stars (max 15).</summary>
+        /// <summary>Levels of the region with 3 stars (max 25).</summary>
         ThreeStarLevels,
         /// <summary>Jumps made in the region (campaign and endless).</summary>
         Jumps,
@@ -23,7 +23,7 @@ namespace BoingUpSkyTower.Economy
         PowerUps,
         /// <summary>Levels of the region cleared on Hard or Insane.</summary>
         HardClears,
-        /// <summary>Clears of the region's no-wall-bounce level (level 7).</summary>
+        /// <summary>Clears of the region's no-wall-bounce level (level 10).</summary>
         NoWallClears,
         /// <summary>Best floor reached in the region's Endless tower.</summary>
         EndlessFloors
@@ -50,10 +50,11 @@ namespace BoingUpSkyTower.Economy
         public const int TotalRegions = 30;
         /// <summary>Regions 1 to 5 are playable and have goals; 6 to 30 are Coming Soon.</summary>
         public const int PlayableRegions = 5;
-        public const int LevelsPerRegion = 15;
+        /// <summary>Levels per region (Bug List 6 item 4: 25; regions 1 to 5 are the playable ones and have goals, so this is the count the goals use).</summary>
+        public const int LevelsPerRegion = 25;
         public const int StarsPerRegion = LevelsPerRegion * 3;
         /// <summary>The level that is the no-wall-bounce challenge in every region.</summary>
-        public const int NoWallLevelIndex = 7;
+        public const int NoWallLevelIndex = 10;
 
         /// <summary>Targets of jumps, combos, play minutes and coins grow by region: percent of the base target for regions 1..5.</summary>
         public static readonly int[] TargetPercent = { 100, 125, 150, 180, 220 };
@@ -71,14 +72,14 @@ namespace BoingUpSkyTower.Economy
 
         public static readonly Tier[] StarsTiers =
         {
-            new Tier(9, 0, 200, 0), new Tier(18, 3, 0, 0), new Tier(27, 0, 400, 0), new Tier(36, 4, 0, 0), new Tier(45, 6, 0, 1)
+            new Tier(15, 0, 200, 0), new Tier(30, 3, 0, 0), new Tier(45, 0, 400, 0), new Tier(60, 4, 0, 0), new Tier(75, 6, 0, 1)
         };
-        /// <summary>The last tier (clear all 15 levels) also gives the region's Common hero (1 copy): there is NO separate "region cleared" bonus any more.</summary>
+        /// <summary>The last tier (clear all 25 levels) also gives the region's Common hero (1 copy): there is NO separate "region cleared" bonus any more.</summary>
         public static readonly Tier[] LevelsTiers =
         {
-            new Tier(3, 0, 150, 0), new Tier(6, 2, 0, 0), new Tier(9, 0, 300, 0), new Tier(12, 4, 0, 0), new Tier(15, 8, 500, 0)
+            new Tier(5, 0, 150, 0), new Tier(10, 2, 0, 0), new Tier(15, 0, 300, 0), new Tier(20, 4, 0, 0), new Tier(25, 8, 500, 0)
         };
-        public static readonly Tier[] ThreeStarTiers = { new Tier(3, 0, 200, 0), new Tier(8, 4, 0, 0), new Tier(15, 8, 300, 0) };
+        public static readonly Tier[] ThreeStarTiers = { new Tier(5, 0, 200, 0), new Tier(13, 4, 0, 0), new Tier(25, 8, 300, 0) };
         public static readonly Tier[] JumpsTiers = { new Tier(400, 0, 150, 0), new Tier(1200, 2, 200, 0), new Tier(3000, 4, 0, 0) };
         public static readonly Tier[] CombosTiers = { new Tier(10, 0, 150, 0), new Tier(40, 2, 200, 0), new Tier(100, 4, 0, 0) };
         public static readonly Tier[] PlayMinutesTiers = { new Tier(15, 0, 150, 0), new Tier(45, 2, 200, 0), new Tier(120, 4, 0, 0) };
@@ -194,24 +195,15 @@ namespace BoingUpSkyTower.Economy
         }
 
         /// <summary>
-        /// Regions 1 to 5 hand out their four extra Common heroes (F4.1 to F4.5, docs/39 to docs/43) as one copy each from Region 1 progress: Bumble for clearing 6 levels, Ribbi for 9, Dandy for 12 and Pip for earning 45 stars
-        /// (all stars of the region). Momo comes with the "clear all 15 levels" goal as before. Null for every other goal.
+        /// The four "extra hero" goals of every region (clear 10, 15 and 20 levels, earn 75 stars) used to hand out one NAMED extra Common hero (Bumble, Ribbi, Dandy, Pip and the Region 2 to 5 extras).
+        /// Those heroes are inactive ALWAYS (owner 2026-11-09, Bug List 6), so these goals now hand out one random ACTIVE Common hero of an open region (<see cref="RewardEntry.RandomOpenRegionHero"/>,
+        /// deterministic from the per-account seed). Nothing in RegionGoals names a hero id any more.
         /// </summary>
-        public static string HeroGoalId(int region, RegionGoalType type, int tier)
+        public static bool GivesRandomHero(RegionGoalType type, int tier)
         {
-            string[] extra = region == 1 ? Region1Extra : region == 2 ? Region2Extra : region == 3 ? Region3Extra : region == 4 ? Region4Extra : region == 5 ? Region5Extra : null;
-            if (extra == null) return null;
-            if (type == RegionGoalType.Levels) return tier >= 2 && tier <= 4 ? extra[tier - 2] : null;
-            if (type == RegionGoalType.Stars && tier == 5) return extra[3];
-            return null;
+            if (type == RegionGoalType.Levels) return tier >= 2 && tier <= 4;
+            return type == RegionGoalType.Stars && tier == 5;
         }
-
-        /// <summary>The extra Common heroes of Region 1 and Region 2 in goal order (clear 6, 9, 12 levels, earn 45 stars).</summary>
-        static readonly string[] Region1Extra = { "bumble", "ribbi", "dandy", "pip" };
-        static readonly string[] Region2Extra = { "nib", "spike", "moss", "fenn" };
-        static readonly string[] Region3Extra = { "pinch", "shelly", "bloop", "coco" };
-        static readonly string[] Region4Extra = { "gummi", "choco", "marsh", "cookie" };
-        static readonly string[] Region5Extra = { "sprout", "tora", "rusu", "ryu" };
 
         /// <summary>The goals of a region in listing order (empty for a Coming Soon region or an invalid index).</summary>
         public static List<RegionGoal> Build(int region)
@@ -229,7 +221,7 @@ namespace BoingUpSkyTower.Economy
                     {
                         Id = GoalId(region, type, i + 1), Title = TitleOf(type, target), Stat = Token(type), Target = target,
                         Gems = tiers[i].Gems, Coins = ScaledCoins(tiers[i].Coins, region), PowerUps = tiers[i].PowerUps,
-                        HeroRegion = last ? region : 0, HeroId = HeroGoalId(region, type, i + 1), Region = region, Type = type, Tier = i + 1
+                        HeroRegion = last ? region : GivesRandomHero(type, i + 1) ? RewardEntry.RandomOpenRegionHero : 0, Region = region, Type = type, Tier = i + 1
                     });
                 }
             }

@@ -86,7 +86,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                     checkedStars++;
                 }
             }
-            Assert.True(checkedStars >= 75 * 3);
+            Assert.True(checkedStars >= 125 * 3);
         }
 
         [Fact]

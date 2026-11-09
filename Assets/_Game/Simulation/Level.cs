@@ -55,6 +55,11 @@ namespace BoingUpSkyTower.Simulation
         public Pickup[] Pickups = new Pickup[0];
         /// <summary>Number of platform rows above the start platform (top row index).</summary>
         public int Rows;
+        /// <summary>Endless towers only: levels of the region the cycle follows (EndlessTower.LevelForFloor); not part of the hash.</summary>
+        public int EndlessLevels = SimConfig.LevelsPerRegion;
+        /// <summary>Endless towers only: the exact region difficulty offset of the tower (the Sim would otherwise recover it from its start difficulty with a rounding error of a raw unit); not part of the hash.</summary>
+        public Fx EndlessOffset;
+        public bool HasEndlessOffset;
 
         // Hints for bots and UI (not used by the Sim). -1 = not present.
         public int HiddenGemRow = -1;
