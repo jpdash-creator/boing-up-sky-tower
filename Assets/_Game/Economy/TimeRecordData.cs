@@ -52,14 +52,28 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("hero")] public string HeroId = "";
         [JsonProperty("ver")] public string GameVersion = "";
         [JsonProperty("c")] public int[] Curve = new int[0];
+        /// <summary>Gameplay mode (key of the record) and run-length coded per-tick inputs of the best-Pace run (<see cref="InputCodec"/>), for the later server check. Empty when not recorded or over <see cref="RecordRules.MaxLongInputBytes"/>.</summary>
+        [JsonProperty("mode")] public int Mode;
+        [JsonProperty("in")] public byte[] Inputs = new byte[0];
 
         public PaceValue Pace { get { return new PaceValue(PaceFloors, PaceTicks); } }
     }
 
-    /// <summary>Time Attack (3:00) record of one region in one Gameplay mode.</summary>
+    /// <summary>
+    /// Time Attack (3:00) record of one region in one Gameplay mode. The score is the floors reached in 3:00; seed, hero, version, inputs and the
+    /// floor-by-time curve belong to the run that set <see cref="BestFloors"/> (server check, Pace Ghost).
+    /// </summary>
     public sealed class TimeAttackRecord
     {
         [JsonProperty("bf")] public int BestFloors;
+        /// <summary>Clock ticks of the best run (10800 for a full run; fewer when the player fell before 3:00).</summary>
+        [JsonProperty("t")] public int Ticks;
+        [JsonProperty("seed")] public int LayoutSeed;
+        [JsonProperty("hero")] public string HeroId = "";
+        [JsonProperty("mode")] public int Mode;
+        [JsonProperty("ver")] public string GameVersion = "";
+        [JsonProperty("in")] public byte[] Inputs = new byte[0];
+        [JsonProperty("c")] public int[] Curve = new int[0];
     }
 
     /// <summary>Best single-run captures per region (not per mode): coins and gems per minute, both x 100 (hundredths).</summary>
@@ -132,6 +146,8 @@ namespace BoingUpSkyTower.Economy
     {
         /// <summary>Stored inputs above this many bytes are dropped (the record itself still counts). A normal level run is 1 to 3 KB.</summary>
         public const int MaxInputBytes = 12000;
+        /// <summary>Stored inputs of an endless or Time Attack best run: a longer cap than a level run (an endless run can last many minutes). Over it the inputs are dropped, the record still counts.</summary>
+        public const int MaxLongInputBytes = 30000;
         /// <summary>Longest endless curve kept (seconds).</summary>
         public const int MaxEndlessCurve = 900;
 
@@ -223,6 +239,8 @@ namespace BoingUpSkyTower.Economy
                 rec.LayoutSeed = run.LayoutSeed;
                 rec.HeroId = run.HeroId ?? "";
                 rec.GameVersion = run.GameVersion ?? "";
+                rec.Mode = run.Mode;
+                rec.Inputs = run.Inputs != null && run.Inputs.Length <= MaxLongInputBytes ? run.Inputs : new byte[0];
                 int[] c = run.Curve ?? new int[0];
                 if (c.Length > MaxEndlessCurve) { var cut = new int[MaxEndlessCurve]; Array.Copy(c, cut, MaxEndlessCurve); c = cut; }
                 rec.Curve = c;
@@ -251,7 +269,18 @@ namespace BoingUpSkyTower.Economy
             r.FirstRecord = rec.BestFloors <= 0;
             r.Counted = !run.Revived && run.Floors > 0;
             if (!r.Counted) return r;
-            if (run.Floors > rec.BestFloors) { rec.BestFloors = run.Floors; r.NewBestFloors = true; }
+            if (run.Floors > rec.BestFloors)
+            {
+                rec.BestFloors = run.Floors;
+                rec.Ticks = run.Ticks;
+                rec.LayoutSeed = run.LayoutSeed;
+                rec.HeroId = run.HeroId ?? "";
+                rec.Mode = run.Mode;
+                rec.GameVersion = run.GameVersion ?? "";
+                rec.Inputs = run.Inputs != null && run.Inputs.Length <= MaxLongInputBytes ? run.Inputs : new byte[0];
+                rec.Curve = run.Curve ?? new int[0];
+                r.NewBestFloors = true;
+            }
             return r;
         }
 

@@ -333,7 +333,7 @@ namespace BoingUpSkyTower.Gameplay
             vp.offsetMin = new Vector2(0f, 8f);   // no bottom bar any more (Bug List 6 item 3b): the grid runs down to the bottom of the safe area
             float listTop = host.Stage.GroundBottom - UiKit.TopInsetRef() + 18f;   // body top is the safe-area top; the stage counts from the screen top
             vp.offsetMax = new Vector2(0f, -(listTop + HeroTabs.RowH + RowGap));
-            HeroTabs.Build(body, listTop, -1, host.OpenAllHeroes, host.OpenMerge, host.OpenPowers);   // the 3 icon tabs sit between the stage and the grid
+            HeroTabs.Build(body, listTop, -1, host.OpenAllHeroes, host.OpenMerge, host.OpenPowers, false, HeroTabs.Counts(progress));   // the 3 icon tabs sit between the stage and the grid
             vp.gameObject.AddComponent<RectMask2D>();
             var hit = vp.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);

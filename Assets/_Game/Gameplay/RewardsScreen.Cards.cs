@@ -128,6 +128,10 @@ namespace BoingUpSkyTower.Gameplay
                 case "w_endless100": icon = null; kit = "icon_tower"; break;                                                    // endless floor: tower
                 case "w_combos150": slot = "task_flame"; icon = "flame"; kit = "icon_flame"; break;
                 case "w_hard5": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;
+                case "d_pace2": case "w_pace3": icon = "clock"; kit = "icon_speed"; break;                                      // pace goals: clock
+                case "d_floor100": icon = null; kit = "icon_tower"; break;                                                      // endless floor 100 in 3:00: tower
+                case "w_ta100": icon = "clock"; kit = "icon_tower"; break;                                                      // Time Attack floors: clock
+                case "w_gold5": icon = "medal"; kit = "icon_crown"; break;                                                      // gold medals: gold medal (TaskIcon draws MedalIcons gold)
                 default:
                     if (id != null && id.StartsWith("g_", StringComparison.Ordinal)) GoalSources(id, out slot, out icon, out kit);
                     break;
@@ -153,11 +157,23 @@ namespace BoingUpSkyTower.Gameplay
                 case "hard": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;                // hard levels: boss skull
                 case "nowall": icon = "wall"; kit = "icon_hand"; break;                                           // no-wall: wall
                 case "endless": icon = null; kit = "icon_tower"; break;                                           // endless floors: tower
+                case "gold": icon = "medal"; kit = "icon_crown"; break;                                           // gold medal levels: gold medal (TaskIcon draws MedalIcons gold)
             }
+        }
+
+        /// <summary>True for the tasks that count gold medals (w_gold5 and the region goals g_*_gold_*): they show the code-drawn gold medal.</summary>
+        public static bool IsGoldMedalTask(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return false;
+            if (id == "w_gold5") return true;
+            if (!id.StartsWith("g_", StringComparison.Ordinal)) return false;
+            string[] parts = id.Split('_');
+            return parts.Length > 2 && parts[2] == "gold";
         }
 
         static Sprite TaskIcon(string id)
         {
+            if (IsGoldMedalTask(id)) { Sprite gold = MedalIcons.For(MedalLevel.Gold, true); if (gold != null) return gold; }
             string slot, icon, kit;
             TaskSources(id, out slot, out icon, out kit);
             Sprite s = RewardArt.Slot(slot) ?? RewardArt.Task(id) ?? RewardArt.Icon(icon) ?? ToyKit.Get(kit);

@@ -18,6 +18,8 @@ namespace BoingUpSkyTower.Gameplay
         public static float RowH { get { return Mathf.Max(96f, UiKit.MinTouchRef); } }
         /// <summary>Row 2 (gauge and stars) height.</summary>
         public const float Row2H = 76f;
+        /// <summary>Row 3 (timer, best pace, live delta; doc 46 section 5) height.</summary>
+        public const float Row3H = 80f;
         public const float ChipH = 84f;
         /// <summary>Space of the bottom strip above the safe-area bottom: 20 + jump pad (230) + 20.</summary>
         public const float BottomPadRef = ControlPad.PadBottom + ControlPad.JumpSize;
@@ -45,7 +47,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             float cw = CanvasW(aspect), ch = cw / Mathf.Max(0.3f, aspect);
             Rect sa = UiKit.SafeAreaNormalized();
-            top = Mathf.Max(0f, 1f - sa.yMax) * ch + 16f + RowH + 12f + Row2H + 12f;
+            top = Mathf.Max(0f, 1f - sa.yMax) * ch + 16f + RowH + 12f + Row2H + 12f + Row3H + 12f;
             bottom = 0f;   // owner decision 2026-11-02: no bottom strip and no red line; the play field runs to the real screen bottom, the pads float over it
             float unitsPerRef = worldWidth / cw;
             float room = ch * unitsPerRef - MinPlayUnits;
@@ -72,7 +74,7 @@ namespace BoingUpSkyTower.Gameplay
     /// painted icon and a number, a slim tower gauge instead of floor and goal sentences, icon banners for combo and speed-up, and round icon
     /// buttons with a one-word caption in the popups.
     /// </summary>
-    public sealed class RunHud : MonoBehaviour
+    public sealed partial class RunHud : MonoBehaviour
     {
         public Action OnPause, OnResume, OnRetry, OnNext, OnMenu, OnRevive, OnReviveAd;
         /// <summary>A power-up button was pressed (the PowerUp type id). The run controller latches it into the next tick's input.</summary>
@@ -154,7 +156,7 @@ namespace BoingUpSkyTower.Gameplay
 
             RectTransform root = UiKit.SafeArea(canvas.transform);
             endless = session.IsEndless;
-            bestBefore = endless && GameSession.Progress != null ? GameSession.Progress.EndlessBestFloor(session.Region.Id) : 0;
+            bestBefore = endless && GameSession.Progress != null ? (session.IsTimeAttack ? GameSession.Progress.TimeAttackBestFloors(session.Region.Id, session.Mode) : GameSession.Progress.EndlessBestFloor(session.Region.Id)) : 0;
 
             // CUX-3 layout: the play field is the screen between two reserved strips (RunLayout). The camera (RunView) shows the world between them, so no platform
             // is ever drawn under the top HUD or under the control pads; the top strip only reserves room. The physical screen bottom IS the danger edge (no bottom strip, no line).
@@ -255,6 +257,7 @@ namespace BoingUpSkyTower.Gameplay
             trt0.offsetMax = new Vector2(-rightSpan, ty + 56f);
             timeText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
+            BuildTiming(root, session, row2Y);   // doc 46: timer, best pace and live delta in the third strip row, plus the optional Pace Ghost
             BuildIntro(root, session);
             Pad = ControlPad.Build(root, art, mirror);
             Powers = new PowerUpBar();
@@ -307,10 +310,10 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place(back.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 130f), new Vector2(780f, 410f));
             back.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             introRoot = back.rectTransform;
-            string introTitle = endless ? "Endless" : "Level " + session.Level.Index;
+            string introTitle = session.IsTimeAttack ? "Time Attack" : endless ? "Endless" : "Level " + session.Level.Index;
             Text region = UiKit.AddText(introRoot, "Region", session.Region.Name, 48, new Color(0.85f, 0.93f, 1f), TextAnchor.MiddleCenter, true);
             UiKit.Place((RectTransform)region.transform, new Vector2(0.5f, 1f), new Vector2(0f, -28f), new Vector2(720f, 70f));
-            introText = UiKit.AddText(introRoot, "Level", introTitle, 88, Color.white, TextAnchor.MiddleCenter, true);
+            introText = UiKit.AddText(introRoot, "Level", introTitle, session.IsTimeAttack ? 72 : 88, Color.white, TextAnchor.MiddleCenter, true);
             UiKit.Place((RectTransform)introText.transform, new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(720f, 120f));
             // Goal: flag icon and the target floor.
             Image flag = UiKit.AddImage(introRoot, "GoalIcon", ToyKit.Get("icon_flag"), Color.white);
@@ -369,6 +372,7 @@ namespace BoingUpSkyTower.Gameplay
                     gaugeMarker.anchoredPosition = new Vector2(30f + (mirror ? 1f - f : f) * (gaugeW - 60f), 0f);
                 }
             }
+            RefreshTiming(s, st.Row);
             if (st.StarMask != lastStarMask)
             {
                 lastStarMask = st.StarMask;
@@ -703,10 +707,18 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
-        /// <summary>Endless game over: floor, best (or NEW BEST), score and coins paid; no revive in endless. Try again starts a new tower.</summary>
+        /// <summary>
+        /// Endless game over (and the end of a 3:00 Time Attack): floor, best (or NEW BEST), score and coins paid; then (doc 46) the run Time (the time survived, or the full 3:00), the Pace
+        /// and the difference to the previous best, and the NEW BEST badge. No revive in endless. Try again starts a new tower.
+        /// </summary>
         public void ShowEndlessFailed(RunSession s, EndlessReward r)
         {
-            OpenOverlay("You fell!", 900f);
+            RecordResult rec = LastRecord(true);
+            bool ta = s.IsTimeAttack;
+            ResultTiming timing = ResultTiming.For(s, rec, true, r.NewBest);
+            float contentEnd = 670f + timing.TailHeight;
+            float actionTop = ButtonY + ButtonSizeFor(150f);
+            OpenOverlay(ta ? (s.TimeUp ? "Time up!" : "You fell!") : "You fell!", contentEnd + 20f + actionTop);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
             Transform endTitle = panel.Find("Title");
@@ -717,7 +729,7 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform row2 = ToyKit.PillRow(panel, "Result2", 335f, 104f);
             ToyKit.InfoPill(row2, art != null ? art.StarFilled : null, s.State.Score.ToString(), Color.white, 270f, 104f);
             ToyKit.InfoPill(row2, art != null ? art.CoinIcon : null, "+" + r.Coins, new Color(1f, 0.92f, 0.5f), 270f, 104f);
-            if (r.NewBest) ToyKit.Ribbon(panel, "New best!", new Vector2(0.5f, 1f), new Vector2(0f, -450f), new Vector2(520f, 184f));
+            timing.Build(panel, 450f, 560f, 670f);
             OverlayRow(
                 MakeAct("Retry", "Try again", 1, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
                 MakeAct("Shop", "Shop", 0, ToyKit.Get("icon_shop"), 150f, OpenShop),
@@ -726,7 +738,15 @@ namespace BoingUpSkyTower.Gameplay
 
         public void ShowResults(RunSession s, RewardResult reward, bool hasNext)
         {
-            OpenOverlay("Level clear!", 980f);
+            RecordResult rec = LastRecord(false);
+            ResultTiming timing = ResultTiming.For(s, rec, false, false);
+            int mode = s.Mode;
+            bool medals = MedalStrip.HasTargets(s.Level.Id, mode);
+            float medalsH = medals ? MedalStrip.Height + 12f : 0f;
+            float yEarned = 400f + medalsH;
+            float yTime = yEarned + 240f, yTail = yTime + 220f;
+            float actionTopL = ButtonY + ButtonSizeFor(150f);
+            OpenOverlay("Level clear!", yTail + timing.TailHeight + 20f + actionTopL);
             AudioManager.Play(Sfx.Win);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -739,13 +759,19 @@ namespace BoingUpSkyTower.Gameplay
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
             // What you earned, as icon pills (no sentences): coins and gems, then the best combo.
-            RectTransform row1 = ToyKit.PillRow(panel, "Earned", 400f, 104f);
+            if (medals)
+            {
+                MedalLevel held = GameSession.Progress != null ? GameSession.Progress.Medal(s.Level.Id, mode) : MedalLevel.None;
+                MedalStrip.Build(panel, 380f, s.Level.Id, mode, held, rec != null && rec.MedalImproved ? rec.Medal : MedalLevel.None);
+            }
+            RectTransform row1 = ToyKit.PillRow(panel, "Earned", yEarned, 104f);
             ToyKit.InfoPill(row1, art != null ? art.CoinIcon : null, "+" + reward.TotalCoins, new Color(1f, 0.92f, 0.5f), 270f, 104f);
             ToyKit.InfoPill(row1, art != null ? art.GemIcon : null, "+" + reward.TotalGems, new Color(0.75f, 0.92f, 1f), 270f, 104f);
-            RectTransform row2 = ToyKit.PillRow(panel, "Earned2", 520f, 104f);
+            RectTransform row2 = ToyKit.PillRow(panel, "Earned2", yEarned + 120f, 104f);
             ToyKit.InfoPill(row2, ToyKit.Get("icon_flame"), "x" + s.State.BestCombo, new Color(1f, 0.78f, 0.35f), 270f, 104f);
             if (reward.FirstClear) ToyKit.InfoPill(row2, ToyKit.Get("icon_crown"), "First", new Color(1f, 0.9f, 0.4f), 270f, 104f);
             if (!string.IsNullOrEmpty(reward.UnlockedRegionId)) ToyKit.InfoPill(row2, ToyKit.Get("icon_flag"), "New", new Color(0.7f, 1f, 0.75f), 270f, 104f);
+            timing.Build(panel, yTime, yTime + 110f, yTail);
             // Three equal round buttons (owner issue 16.7).
             OverlayRow(
                 MakeAct("Next", "Next level", 1, ToyKit.Get("icon_play"), 150f, () => { if (OnNext != null) OnNext(); }, hasNext),

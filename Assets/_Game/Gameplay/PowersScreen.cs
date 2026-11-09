@@ -120,7 +120,7 @@ namespace BoingUpSkyTower.Gameplay
             tr.offsetMax = new Vector2(-(bs + 40f), -16f);
 
             float tabsTop = 16f + bs + 8f;
-            HeroTabs.Build(body, tabsTop, HeroTabs.Powers, host != null ? host.OpenAllHeroes : null, host != null ? host.OpenMerge : null, null);
+            HeroTabs.Build(body, tabsTop, HeroTabs.Powers, host != null ? host.OpenAllHeroes : null, host != null ? host.OpenMerge : null, null, false, HeroTabs.Counts(progress));
             BuildList(tabsTop + HeroTabs.RowH + 8f);
         }
 

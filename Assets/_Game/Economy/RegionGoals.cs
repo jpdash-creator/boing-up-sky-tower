@@ -26,7 +26,9 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Clears of the region's no-wall-bounce level (level 10).</summary>
         NoWallClears,
         /// <summary>Best floor reached in the region's Endless tower.</summary>
-        EndlessFloors
+        EndlessFloors,
+        /// <summary>Levels of the region with a Gold medal in at least one Gameplay mode (doc 46 section 8; max 25). Appended last: ids of the older goals never change.</summary>
+        GoldMedalLevels
     }
 
     /// <summary>One goal of one region: an id that never changes, a target, a reward. <see cref="RewardEntry.Stat"/> is the type token.</summary>
@@ -38,6 +40,8 @@ namespace BoingUpSkyTower.Economy
         public int Tier;
         /// <summary>True for the endless tiers (they may pay slightly more, see docs/39).</summary>
         public bool IsEndless { get { return Type == RegionGoalType.EndlessFloors; } }
+        /// <summary>True for the gold medal tiers (doc 46): they pay like the star tiers and are kept apart from the core gem budget.</summary>
+        public bool IsMedal { get { return Type == RegionGoalType.GoldMedalLevels; } }
     }
 
     /// <summary>
@@ -79,6 +83,15 @@ namespace BoingUpSkyTower.Economy
         {
             new Tier(5, 0, 150, 0), new Tier(10, 2, 0, 0), new Tier(15, 0, 300, 0), new Tier(20, 4, 0, 0), new Tier(25, 8, 500, 0)
         };
+        /// <summary>
+        /// Gold medal levels (doc 46 section 8, owner 2026-11-09): 5 / 10 / 15 / 20 / 25 levels; each tier pays the SAME as the star tier at the same position
+        /// (<see cref="StarsTiers"/>: 200 coins, 3 gems, 400 coins, 4 gems, 6 gems + 1 power-up). No new economy numbers. The star tier 5 also hands out a random
+        /// Common hero and so does the medal tier 5 (owner 2026-11-09: same as the star tier, see <see cref="GivesRandomHero"/>).
+        /// </summary>
+        public static readonly Tier[] GoldMedalTiers =
+        {
+            new Tier(5, 0, 200, 0), new Tier(10, 3, 0, 0), new Tier(15, 0, 400, 0), new Tier(20, 4, 0, 0), new Tier(25, 6, 0, 1)
+        };
         public static readonly Tier[] ThreeStarTiers = { new Tier(5, 0, 200, 0), new Tier(13, 4, 0, 0), new Tier(25, 8, 300, 0) };
         public static readonly Tier[] JumpsTiers = { new Tier(400, 0, 150, 0), new Tier(1200, 2, 200, 0), new Tier(3000, 4, 0, 0) };
         public static readonly Tier[] CombosTiers = { new Tier(10, 0, 150, 0), new Tier(40, 2, 200, 0), new Tier(100, 4, 0, 0) };
@@ -113,6 +126,7 @@ namespace BoingUpSkyTower.Economy
                 case RegionGoalType.PowerUps: return "powerups";
                 case RegionGoalType.HardClears: return "hard";
                 case RegionGoalType.NoWallClears: return "nowall";
+                case RegionGoalType.GoldMedalLevels: return "gold";
                 default: return "endless";
             }
         }
@@ -124,8 +138,8 @@ namespace BoingUpSkyTower.Economy
         {
             RegionGoalType.Stars, RegionGoalType.Levels, RegionGoalType.ThreeStarLevels, RegionGoalType.Jumps, RegionGoalType.Combos,
             RegionGoalType.PlayMinutes, RegionGoalType.Coins, RegionGoalType.PowerUps, RegionGoalType.HardClears, RegionGoalType.NoWallClears,
-            RegionGoalType.EndlessFloors
-        };
+            RegionGoalType.GoldMedalLevels, RegionGoalType.EndlessFloors
+        };   // the endless tiers stay last: the Rewards screen puts them under their own heading
 
         public static Tier[] TiersOf(RegionGoalType t)
         {
@@ -141,6 +155,7 @@ namespace BoingUpSkyTower.Economy
                 case RegionGoalType.PowerUps: return PowerUpsTiers;
                 case RegionGoalType.HardClears: return HardClearsTiers;
                 case RegionGoalType.NoWallClears: return NoWallTiers;
+                case RegionGoalType.GoldMedalLevels: return GoldMedalTiers;
                 default: return EndlessTiers;
             }
         }
@@ -190,19 +205,20 @@ namespace BoingUpSkyTower.Economy
                 case RegionGoalType.PowerUps: return "Use " + target + " power-ups";
                 case RegionGoalType.HardClears: return target == 1 ? "Clear a hard level" : "Clear " + target + " hard levels";
                 case RegionGoalType.NoWallClears: return target == 1 ? "Clear the no-wall level" : "Clear the no-wall level " + target + " times";
+                case RegionGoalType.GoldMedalLevels: return "Gold medals on " + target + " levels";
                 default: return "Reach floor " + target + " in Endless";
             }
         }
 
         /// <summary>
-        /// The four "extra hero" goals of every region (clear 10, 15 and 20 levels, earn 75 stars) used to hand out one NAMED extra Common hero (Bumble, Ribbi, Dandy, Pip and the Region 2 to 5 extras).
+        /// The five "extra hero" goals of every region (clear 10, 15 and 20 levels, earn 75 stars, gold medals on 25 levels) used to hand out one NAMED extra Common hero (Bumble, Ribbi, Dandy, Pip and the Region 2 to 5 extras).
         /// Those heroes are inactive ALWAYS (owner 2026-11-09, Bug List 6), so these goals now hand out one random ACTIVE Common hero of an open region (<see cref="RewardEntry.RandomOpenRegionHero"/>,
         /// deterministic from the per-account seed). Nothing in RegionGoals names a hero id any more.
         /// </summary>
         public static bool GivesRandomHero(RegionGoalType type, int tier)
         {
             if (type == RegionGoalType.Levels) return tier >= 2 && tier <= 4;
-            return type == RegionGoalType.Stars && tier == 5;
+            return (type == RegionGoalType.Stars || type == RegionGoalType.GoldMedalLevels) && tier == 5;
         }
 
         /// <summary>The goals of a region in listing order (empty for a Coming Soon region or an invalid index).</summary>

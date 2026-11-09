@@ -6,12 +6,12 @@ Generated from `RegionGoalTable` (Assets/_Game/Economy/RegionGoals.cs). GE = gem
 
 | Region | Goals | Gems core | Gems endless | Gems total | Coins core | Coins endless | PU core | PU endless | Hero | GE core | GE total |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 44 | 74 | 23 | 97 | 4100 | 7300 | 2 | 4 | 1 | 450 | 1081 |
-| 2 | 44 | 74 | 23 | 97 | 4430 | 7890 | 2 | 4 | 1 | 467 | 1127 |
-| 3 | 44 | 74 | 23 | 97 | 4730 | 8480 | 2 | 4 | 1 | 482 | 1172 |
-| 4 | 44 | 74 | 23 | 97 | 5110 | 9040 | 2 | 4 | 1 | 501 | 1219 |
-| 5 | 44 | 74 | 23 | 97 | 5410 | 9630 | 2 | 4 | 1 | 516 | 1263 |
-| **1-5 total** | 220 | 370 | 115 | 485 | 23780 | 42340 | 10 | 20 | 5 | 2416 | 5862 |
+| 1 | 49 | 74 | 23 | 110 | 4100 | 7300 | 2 | 4 | 1 | 450 | 1185 |
+| 2 | 49 | 74 | 23 | 110 | 4430 | 7890 | 2 | 4 | 1 | 467 | 1233 |
+| 3 | 49 | 74 | 23 | 110 | 4730 | 8480 | 2 | 4 | 1 | 482 | 1280 |
+| 4 | 49 | 74 | 23 | 110 | 5110 | 9040 | 2 | 4 | 1 | 501 | 1330 |
+| 5 | 49 | 74 | 23 | 110 | 5410 | 9630 | 2 | 4 | 1 | 516 | 1376 |
+| **1-5 total** | 245 | 370 | 180 | 550 | 23780 | 45820 | 10 | 25 | 5 | 2416 | 6405 |
 
 ## Region 1 goals
 
@@ -50,6 +50,11 @@ Generated from `RegionGoalTable` (Assets/_Game/Economy/RegionGoals.cs). GE = gem
 | g_1_hard_3 | Clear 6 hard levels | 6 | 4 | 0 | 0 |  |
 | g_1_nowall_1 | Clear the no-wall level | 1 | 2 | 100 | 0 |  |
 | g_1_nowall_2 | Clear the no-wall level 3 times | 3 | 3 | 0 | 0 |  |
+| g_1_gold_1 | Gold medals on 5 levels | 5 | 0 | 200 | 0 |  |
+| g_1_gold_2 | Gold medals on 10 levels | 10 | 3 | 0 | 0 |  |
+| g_1_gold_3 | Gold medals on 15 levels | 15 | 0 | 400 | 0 |  |
+| g_1_gold_4 | Gold medals on 20 levels | 20 | 4 | 0 | 0 |  |
+| g_1_gold_5 | Gold medals on 25 levels | 25 | 6 | 0 | 1 | Common hero |
 | g_1_endless_1 | Reach floor 100 in Endless | 100 | 1 | 100 | 0 |  |
 | g_1_endless_2 | Reach floor 200 in Endless | 200 | 1 | 150 | 0 |  |
 | g_1_endless_3 | Reach floor 500 in Endless | 500 | 2 | 250 | 0 |  |
@@ -99,6 +104,11 @@ Generated from `RegionGoalTable` (Assets/_Game/Economy/RegionGoals.cs). GE = gem
 | g_5_hard_3 | Clear 6 hard levels | 6 | 4 | 0 | 0 |  |
 | g_5_nowall_1 | Clear the no-wall level | 1 | 2 | 130 | 0 |  |
 | g_5_nowall_2 | Clear the no-wall level 3 times | 3 | 3 | 0 | 0 |  |
+| g_5_gold_1 | Gold medals on 5 levels | 5 | 0 | 260 | 0 |  |
+| g_5_gold_2 | Gold medals on 10 levels | 10 | 3 | 0 | 0 |  |
+| g_5_gold_3 | Gold medals on 15 levels | 15 | 0 | 530 | 0 |  |
+| g_5_gold_4 | Gold medals on 20 levels | 20 | 4 | 0 | 0 |  |
+| g_5_gold_5 | Gold medals on 25 levels | 25 | 6 | 0 | 1 | Common hero |
 | g_5_endless_1 | Reach floor 100 in Endless | 100 | 1 | 130 | 0 |  |
 | g_5_endless_2 | Reach floor 200 in Endless | 200 | 1 | 200 | 0 |  |
 | g_5_endless_3 | Reach floor 500 in Endless | 500 | 2 | 330 | 0 |  |

@@ -168,7 +168,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                     if (g.HeroRegion == RewardEntry.RandomOpenRegionHero) random++;
                     else if (g.HeroRegion != 0) { Assert.Equal(region, g.HeroRegion); starter++; }
                 }
-                Assert.Equal(4, random);    // clear 6, 9 and 12 levels, earn 45 stars: each one random ACTIVE Common hero of an open region
+                Assert.Equal(5, random);    // clear 6, 9 and 12 levels, earn 45 stars, 25 gold medal levels: each one random ACTIVE Common hero of an open region
                 Assert.Equal(1, starter);   // clear all levels: the region's starter (active)
             }
         }

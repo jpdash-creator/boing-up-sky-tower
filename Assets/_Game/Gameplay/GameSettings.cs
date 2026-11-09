@@ -18,6 +18,7 @@ namespace BoingUpSkyTower.Gameplay
         const string CharacterTestKey = "settings.charactertest";
         const string PromoKey = "settings.launchpromo";
         const string FirstPurchaseKey = "settings.firstpurchasedouble";
+        const string PaceGhostKey = "settings.paceghost";
 
         /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
         public static bool DevBuild { get { return (Debug.isDebugBuild && !Application.isEditor) || AdminAccess.Unlocked; } }
@@ -154,6 +155,12 @@ namespace BoingUpSkyTower.Gameplay
 
         /// <summary>Mirrors the run HUD so the pause button and wallet sit under the left thumb (CUX-4).</summary>
         public static bool LeftHanded { get { return PlayerPrefs.GetInt(LeftKey, 0) == 1; } set { PlayerPrefs.SetInt(LeftKey, value ? 1 : 0); PlayerPrefs.Save(); } }
+
+        /// <summary>
+        /// Pace Ghost (doc 46 section 5): a translucent marker at the floor height your best run had reached at this second of the clock. Default OFF (owner 2026-11-09);
+        /// the toggle lives in Settings. Read once when the Run HUD is built, never per frame.
+        /// </summary>
+        public static bool PaceGhost { get { return PlayerPrefs.GetInt(PaceGhostKey, 0) == 1; } set { PlayerPrefs.SetInt(PaceGhostKey, value ? 1 : 0); PlayerPrefs.Save(); } }
 
         /// <summary>Accessibility text size: 100, 115 or 130 percent. Applied to every text built afterwards.</summary>
         public static int TextPercent

@@ -42,7 +42,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             for (int r = 1; r <= RegionGoalTable.TotalRegions; r++)
             {
                 int n = RegionGoalTable.Build(r).Count;
-                if (r <= RegionGoalTable.PlayableRegions) Assert.Equal(44, n);
+                if (r <= RegionGoalTable.PlayableRegions) Assert.Equal(49, n);
                 else Assert.Equal(0, n);
             }
             Assert.Empty(RegionGoalTable.Build(0));
@@ -61,7 +61,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                     Assert.Equal("g_" + r + "_" + RegionGoalTable.Token(g.Type) + "_" + g.Tier, g.Id);
                     Assert.Equal(RegionGoalTable.Token(g.Type), g.Stat);
                 }
-            Assert.Equal(5 * 44, seen.Count);
+            Assert.Equal(5 * 49, seen.Count);
             Assert.Contains("g_1_stars_1", seen);
             Assert.Contains("g_3_endless_11", seen);
             Assert.Contains("g_5_levels_5", seen);
@@ -143,7 +143,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             for (int r = 1; r <= 5; r++)
             {
                 List<RegionGoal> goals = RegionGoalTable.Build(r);
-                Sum core = Total(goals, g => !g.IsEndless), endless = Total(goals, g => g.IsEndless), all = Total(goals, g => true);
+                // the gold medal tiers (doc 46) pay the star tiers again by owner decision and are checked on their own (GoldMedalTiersPayLikeTheStarTiers)
+                Sum core = Total(goals, g => !g.IsEndless && !g.IsMedal), endless = Total(goals, g => g.IsEndless), all = Total(goals, g => !g.IsMedal);
                 Assert.InRange(core.Gems, 65, 85);
                 Assert.True(endless.Gems <= 30, "endless gems " + endless.Gems);
                 Assert.True(all.Gems <= 105, "region " + r + " gems " + all.Gems);
@@ -153,6 +154,37 @@ namespace BoingUpSkyTower.Simulation.Tests
                 Assert.True(core.GeValue <= 560, "region " + r + " core value " + core.GeValue);
                 Assert.True(all.GeValue <= 1300, "region " + r + " total value " + all.GeValue);
                 Assert.True(endless.Gems > core.Gems * 0.2 && endless.Gems < core.Gems * 0.5, "endless pays slightly more than a pure tight policy, not a lot more");
+            }
+        }
+
+        [Fact]
+        public void GoldMedalTiersPayLikeTheStarTiersAndTargetFiveToTwentyFiveLevels()
+        {
+            // doc 46 section 8: "each medal tier pays the same as the star tier at the same position"; no new economy numbers; tier 5 gives the same random Common hero as the star tier 5 (owner 2026-11-09)
+            Assert.Equal(RegionGoalTable.StarsTiers.Length, RegionGoalTable.GoldMedalTiers.Length);
+            for (int i = 0; i < RegionGoalTable.StarsTiers.Length; i++)
+            {
+                Assert.Equal(RegionGoalTable.StarsTiers[i].Gems, RegionGoalTable.GoldMedalTiers[i].Gems);
+                Assert.Equal(RegionGoalTable.StarsTiers[i].Coins, RegionGoalTable.GoldMedalTiers[i].Coins);
+                Assert.Equal(RegionGoalTable.StarsTiers[i].PowerUps, RegionGoalTable.GoldMedalTiers[i].PowerUps);
+            }
+            for (int r = 1; r <= 5; r++)
+            {
+                List<RegionGoal> stars = RegionGoalTable.Build(r).FindAll(g => g.Type == RegionGoalType.Stars);
+                List<RegionGoal> gold = RegionGoalTable.Build(r).FindAll(g => g.IsMedal);
+                Assert.Equal(new[] { 5, 10, 15, 20, 25 }, gold.ConvertAll(g => g.Target).ToArray());
+                Assert.Equal(5, gold.Count);
+                for (int i = 0; i < 5; i++)
+                {
+                    Assert.Equal(stars[i].Gems, gold[i].Gems);
+                    Assert.Equal(stars[i].Coins, gold[i].Coins);
+                    Assert.Equal(stars[i].PowerUps, gold[i].PowerUps);
+                    Assert.Equal(stars[i].HeroRegion, gold[i].HeroRegion);   // 0, except tier 5: a random Common hero like the star tier 5
+                    Assert.Equal(i == 4 ? RewardEntry.RandomOpenRegionHero : 0, gold[i].HeroRegion);
+                    Assert.Equal("g_" + r + "_gold_" + (i + 1), gold[i].Id);
+                    Assert.Equal("gold", gold[i].Stat);
+                    Assert.True(gold[i].Target <= RegionGoalTable.LevelsPerRegion);
+                }
             }
         }
 
@@ -187,7 +219,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             for (int r = 1; r <= 5; r++)
             {
                 List<RegionGoal> goals = RegionGoalTable.Build(r);
-                Sum core = Total(goals, g => !g.IsEndless), end = Total(goals, g => g.IsEndless), all = Total(goals, g => true);
+                Sum core = Total(goals, g => !g.IsEndless && !g.IsMedal), end = Total(goals, g => g.IsEndless), all = Total(goals, g => true);
                 sb.AppendLine("| " + r + " | " + all.Goals + " | " + core.Gems + " | " + end.Gems + " | " + all.Gems + " | " + core.Coins + " | " + end.Coins + " | " + core.PowerUps + " | " + end.PowerUps + " | " + all.Heroes + " | " + core.GeValue.ToString("0") + " | " + all.GeValue.ToString("0") + " |");
                 grand.Gems += all.Gems; grand.Coins += all.Coins; grand.PowerUps += all.PowerUps; grand.Heroes += all.Heroes; grand.Goals += all.Goals;
                 grandCore.Gems += core.Gems; grandCore.Coins += core.Coins; grandCore.PowerUps += core.PowerUps; grandCore.Heroes += core.Heroes;

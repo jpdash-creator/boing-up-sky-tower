@@ -435,6 +435,21 @@ namespace BoingUpSkyTower.Economy
         /// </summary>
         public EndlessReward ApplyEndlessRun(string regionId, int floors, string dayKey, int comboCoins = 0)
         {
+            return PayEndlessRun(regionId, floors, dayKey, comboCoins, false);
+        }
+
+        /// <summary>
+        /// Applies a finished 3:00 Time Attack run (doc 46 section 7): pays the normal endless coin table and counts as ONE paying run of the
+        /// shared daily cap (past the cap it pays the reduced rate, 0 coins is fine; the record is set by RecordRun regardless). It does not touch
+        /// the endless best floor and not the endless "reach floor N" reward stat (Time Attack has its own weekly goal).
+        /// </summary>
+        public EndlessReward ApplyTimeAttackRun(string regionId, int floors, string dayKey, int comboCoins = 0)
+        {
+            return PayEndlessRun(regionId, floors, dayKey, comboCoins, true);
+        }
+
+        EndlessReward PayEndlessRun(string regionId, int floors, string dayKey, int comboCoins, bool timeAttack)
+        {
             RegionDef region = repo.GetRegion(regionId);
             if (!CanEnterRegion(region)) throw new InvalidOperationException("Region is locked: " + regionId);
             if (floors < 0) floors = 0;
@@ -443,7 +458,7 @@ namespace BoingUpSkyTower.Economy
             var result = new EndlessReward();
             result.Floors = floors;
             result.BestBefore = EndlessBestFloor(regionId);
-            result.NewBest = floors > result.BestBefore;
+            result.NewBest = !timeAttack && floors > result.BestBefore;
             if (result.NewBest) Data.EndlessBest[regionId] = floors;
 
             int full = EndlessRewards.FullRateCoins(floors, comboCoins, region.CoinFactor);
@@ -467,7 +482,7 @@ namespace BoingUpSkyTower.Economy
             {
                 result.RunsToday = EndlessRunsOn(dayKey);
             }
-            TrackEndlessRun(region, floors, result.Coins);   // Main goals: region coins, the daily and weekly endless floor (ProgressService.RegionGoals.cs)
+            TrackEndlessRun(region, timeAttack ? 0 : floors, result.Coins);   // Main goals: region coins, the daily and weekly endless floor (ProgressService.RegionGoals.cs)
             Commit();
             return result;
         }

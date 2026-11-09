@@ -132,7 +132,7 @@ namespace BoingUpSkyTower.Tests
         {
             var svc = new ProgressService(ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
             foreach (string id in Inactive) Assert.IsFalse(svc.OwnsCharacter(id), id);
-            foreach (string goal in new[] { "g_2_levels_2", "g_2_levels_3", "g_2_levels_4", "g_2_stars_5" })
+            foreach (string goal in new[] { "g_2_levels_2", "g_2_levels_3", "g_2_levels_4", "g_2_stars_5", "g_2_gold_5" })
             {
                 RegionGoal g = svc.RewardDefs.FindGoal(goal);
                 Assert.IsNotNull(g, goal);

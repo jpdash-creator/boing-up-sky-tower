@@ -10,6 +10,8 @@ namespace BoingUpSkyTower.Gameplay
     /// switch (Sound, Music, Haptics, Reduced motion, Left-handed), the text size value button, then two big buttons (the Google button and
     /// Save Progress), a small row with Reset and Restore, and the footer with the Admin icon (left) and the version (right). Only Google Play is offered
     /// as an account (no mail, social or language links). Rows grow with the screen density so every target stays at least 48 dp with 8 dp between them.
+    /// Doc 46 (timed gameplay): the Pace ghost switch sits in the fourth cell row at the left and the version label (7 quick taps open the admin code box) at its right; the
+    /// footer row is gone, so the popup grows by one gap only. The Admin icon (development builds and after the hidden code) moved to the top left of the popup frame.
     /// Bug List 6 item 7: the screen never scrolls (no ScrollRect). The Gameplay (difficulty) setting moved to the level screen (item 6), which freed a row; nothing needed the "More" popup.
     /// </summary>
     public sealed partial class MetaController
@@ -43,14 +45,14 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform panel = UiKit.BuildPopupFrame(screen, "Settings", art, new Vector2(SettingsW, SettingsMaxH), ShowMenu);
             RectTransform c = PopupBodyBegin(panel, "SettingsViewport", SettingsTop, SettingsPad, false);   // no ScrollRect: everything fits (Bug List 6 item 7)
 
-            // ---- the light inner panel: 3 rows of icon cells ----
+            // ---- the light inner panel: 4 rows of icon cells (the last one: Pace ghost switch and the version label) ----
             const float innerPad = 20f, colGap = 24f;
-            float innerH = 2f * innerPad + 3f * rowH + 2f * gap;
+            float innerH = 2f * innerPad + 4f * rowH + 3f * gap;
             Image inner = SoftPanel(c, "Inner", new Color(0.88f, 0.92f, 1f, 1f), 36f);
             UiKit.Place(inner.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(contentW, innerH));
             float cellW = (contentW - 2f * innerPad - colGap) * 0.5f;
             float x0 = innerPad, x1 = innerPad + cellW + colGap, pitch = rowH + gap;
-            float r0 = innerPad, r1 = r0 + pitch, r2 = r1 + pitch;
+            float r0 = innerPad, r1 = r0 + pitch, r2 = r1 + pitch, r3 = r2 + pitch;
             SettingsSwitchAt(c, "Sound", "icon_sound", x0, r0, cellW, rowH, () => GameSettings.Sound, v => GameSettings.Sound = v);
             SettingsSwitchAt(c, "Music", "icon_music", x1, r0, cellW, rowH, () => GameSettings.Music, v => GameSettings.Music = v);
             SettingsSwitchAt(c, "Haptics", "icon_vibrate", x0, r1, cellW, rowH, () => GameSettings.Haptics, v => GameSettings.Haptics = v);
@@ -61,6 +63,9 @@ namespace BoingUpSkyTower.Gameplay
                 GameSettings.NextTextPercent();
                 ShowSettings();   // rebuild so the new size applies to every label
             });
+
+            SettingsSwitchAt(c, "Pace ghost", "icon_speed", x0, r3, cellW, rowH, () => GameSettings.PaceGhost, v => GameSettings.PaceGhost = v);
+            AddSettingsFooter(panel, c, x1, r3, cellW, rowH, admin);   // version label (right cell of the last row) and the Admin icon (frame, top left)
 
             float y = innerH + 28f;
 
@@ -101,9 +106,7 @@ namespace BoingUpSkyTower.Gameplay
             Button restore = SettingsIconButton(c, "RestorePurchases", "Restore", "icon_shop", 0, "Restore purchases", x: halfW + gap, y: y, w: halfW, h: rowH, onClick: RestorePurchases);
             y += rowH + gap;
 
-            // ---- footer: small Admin icon at the left, version at the right ----
-            AddSettingsFooter(c, y, rowH, admin, contentW);
-            y += rowH;
+            y -= gap;   // no gap after the last row
 
             PopupBodyEnd(panel, c, y, SettingsTop, SettingsPad, SettingsMaxH);
         }

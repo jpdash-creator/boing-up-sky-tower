@@ -354,6 +354,59 @@ namespace BoingUpSkyTower.Economy
             return true;
         }
 
+        // ---- endless splits (every 100 floors) ----
+
+        /// <summary>The split stage a floor count has completed: floor 100 = stage 1, 250 = stage 2, 99 = 0. Stage i is the time to reach floor i x 100.</summary>
+        public static int SplitStageOf(int floors) { return floors <= 0 ? 0 : floors / SplitFloors; }
+
+        /// <summary>The floor a split stage ends at (stage 1 = 100, stage 3 = 300).</summary>
+        public static int SplitStageFloor(int stage) { return stage <= 0 ? 0 : stage * SplitFloors; }
+
+        /// <summary>
+        /// Live split delta: ticks now minus the best split of the stage (negative = faster). Stage 1 = floor 100. False (delta 0) when the best
+        /// record has no split for that stage yet. Use it when a run crosses floor 100, 200 ...
+        /// </summary>
+        public static bool TrySplitDelta(int[] bestSplits, int stage, int elapsedTicks, out int deltaTicks)
+        {
+            if (bestSplits == null || stage < 1 || stage > bestSplits.Length || bestSplits[stage - 1] <= 0) { deltaTicks = 0; return false; }
+            deltaTicks = elapsedTicks - bestSplits[stage - 1];
+            return true;
+        }
+
+        // ---- Time Attack (3:00) ----
+
+        /// <summary>Ticks left of the 3:00 countdown for a run clock (never below 0). A clock of 0 (before the first jump) has the full length left.</summary>
+        public static int TimeAttackTicksLeft(int runTicks)
+        {
+            int left = TimeAttackTicks - (runTicks < 0 ? 0 : runTicks);
+            return left < 0 ? 0 : left;
+        }
+
+        /// <summary>True once the 3:00 are used up: the Time Attack run ends on the tick the clock reaches 10800.</summary>
+        public static bool TimeAttackExpired(int runTicks) { return runTicks >= TimeAttackTicks; }
+
+        // ---- rates ----
+
+        /// <summary>
+        /// Coins (or gems) per minute x 100 for an amount over a clock: the live value for a HUD and the stored capture value.
+        /// 0 for no amount or no time. Exact integer maths, rounded half up. Same as <see cref="PerMinuteX100"/>.
+        /// </summary>
+        public static int RatePerMinute(int amount, int ticks) { return PerMinuteX100(amount, ticks); }
+
+        /// <summary>Appends a per minute value stored x 100 as "12.50/min" (two decimals, a dot, no culture).</summary>
+        public static void FormatPerMinute(StringBuilder sb, int x100)
+        {
+            AppendHundredths(sb, x100);
+            sb.Append("/min");
+        }
+
+        public static string FormatPerMinute(int x100)
+        {
+            var sb = new StringBuilder(14);
+            FormatPerMinute(sb, x100);
+            return sb.ToString();
+        }
+
         /// <summary>Per minute rate in hundredths (coins or gems per minute x 100), 0 for no time. Used for the timed captures.</summary>
         public static int PerMinuteX100(int amount, int ticks)
         {

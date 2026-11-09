@@ -85,7 +85,7 @@ namespace BoingUpSkyTower.Tests
                 IReadOnlyList<RegionGoal> goals = svc.RegionGoals(r);
                 if (r <= RegionGoalTable.PlayableRegions)
                 {
-                    Assert.AreEqual(44, goals.Count, "region " + r);
+                    Assert.AreEqual(49, goals.Count, "region " + r);
                     Assert.IsFalse(svc.IsRegionComingSoon(r));
                     foreach (RegionGoal g in goals)
                     {
@@ -107,7 +107,7 @@ namespace BoingUpSkyTower.Tests
             }
             Assert.AreEqual(0, svc.RegionGoals(0).Count);
             Assert.AreEqual(0, svc.RegionGoals(31).Count);
-            Assert.AreEqual(5 * 44, svc.RewardDefs.AllRegionGoals.Count);
+            Assert.AreEqual(5 * 49, svc.RewardDefs.AllRegionGoals.Count);
             Assert.AreEqual(RewardClaimResult.Invalid, svc.TryClaimRegionGoal("g_6_stars_1").Result);
         }
 
@@ -121,12 +121,12 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void TheLastLevelsGoalGivesTheRegionsStarterHeroAndFourExtraGoalsGiveARandomActiveCommonAndThereIsNoSeparateRegionBonus()
+        public void TheLastLevelsGoalGivesTheRegionsStarterHeroAndFiveExtraGoalsGiveARandomActiveCommonAndThereIsNoSeparateRegionBonus()
         {
             ProgressService svc = NewService();
             // owner 2026-11-09: the four extra Common heroes of every region are inactive always, so these goals give one random ACTIVE Common hero of an open region
             var randomHeroGoals = new HashSet<string>();
-            for (int rr = 1; rr <= 5; rr++) { randomHeroGoals.Add("g_" + rr + "_levels_2"); randomHeroGoals.Add("g_" + rr + "_levels_3"); randomHeroGoals.Add("g_" + rr + "_levels_4"); randomHeroGoals.Add("g_" + rr + "_stars_5"); }
+            for (int rr = 1; rr <= 5; rr++) { randomHeroGoals.Add("g_" + rr + "_levels_2"); randomHeroGoals.Add("g_" + rr + "_levels_3"); randomHeroGoals.Add("g_" + rr + "_levels_4"); randomHeroGoals.Add("g_" + rr + "_stars_5"); randomHeroGoals.Add("g_" + rr + "_gold_5"); }
             for (int r = 1; r <= 5; r++)
             {
                 int heroes = 0;
@@ -138,7 +138,7 @@ namespace BoingUpSkyTower.Tests
                     if (g.HeroRegion == RewardEntry.RandomOpenRegionHero) { Assert.IsTrue(randomHeroGoals.Contains(g.Id), g.Id); }
                     else { Assert.AreEqual("g_" + r + "_levels_5", g.Id); Assert.AreEqual(r, g.HeroRegion); Assert.AreEqual(25, g.Target); }
                 }
-                Assert.AreEqual(5, heroes, "region " + r);
+                Assert.AreEqual(6, heroes, "region " + r);   // levels 2-4 and 5 (starter), stars 5, gold medals 5
             }
             Assert.AreEqual(0, svc.RewardDefs.RegionRewards.Count);
         }
@@ -377,7 +377,7 @@ namespace BoingUpSkyTower.Tests
             ProgressService svc = SeededService();
             int n = 0;
             foreach (RewardEntry e in svc.ClaimableEntries(RewardTab.Main)) { n++; Assert.IsInstanceOf<RegionGoal>(e); }
-            Assert.AreEqual(5 * 44, n);
+            Assert.AreEqual(5 * 49, n);
             Assert.IsTrue(svc.HasClaimable(RewardTab.Main));
             RewardClaimOutcome all = svc.ClaimAll(RewardTab.Main);
             Assert.AreEqual(RewardClaimResult.Ok, all.Result);

@@ -47,7 +47,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>One-line description of the layout for logs and bug reports: level, attempt seed and the resulting layout seed.</summary>
         public string LayoutInfo
         {
-            get { return IsEndless ? "endless " + Region.Id + " seed " + Seed : Level.Id + " attempt " + AttemptSeed + " layoutSeed " + Spec.Seed; }
+            get { return IsTimeAttack ? "timeattack " + Region.Id + " seed " + Seed : IsEndless ? "endless " + Region.Id + " seed " + Seed : Level.Id + " attempt " + AttemptSeed + " layoutSeed " + Spec.Seed; }
         }
         /// <summary>Endless tower, null for campaign levels.</summary>
         public readonly EndlessTower Tower;
@@ -66,7 +66,17 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The goal became impossible while alive (NoWallBounce after a wall bounce): the run ends, a revive cannot undo it.</summary>
         public bool GoalLost { get; private set; }
         public bool Failed { get { return (State.Dead || GoalLost) && !GoalReached; } }
-        public bool Over { get { return GoalReached || State.Dead || GoalLost; } }
+        public bool Over { get { return GoalReached || State.Dead || GoalLost || TimeUp; } }
+
+        /// <summary>
+        /// Time Attack variant of endless (doc 46 section 7): the same endless tower with a 3:00 countdown from the first jump, no revive, the same hero and
+        /// powers. The score is the floors reached when the clock ends (or the player falls first). Open from the start.
+        /// </summary>
+        public readonly bool IsTimeAttack;
+        /// <summary>The 3:00 of a Time Attack run are used up (the run ended on the tick the clock hit 10800). Always false outside Time Attack.</summary>
+        public bool TimeUp { get; private set; }
+        /// <summary>Ticks left of the Time Attack countdown (the full 10800 before the first jump); 0 outside Time Attack.</summary>
+        public int TimeAttackTicksLeft { get { return IsTimeAttack ? TimeRecords.TimeAttackTicksLeft(RunTicks) : 0; } }
 
         /// <summary>
         /// Campaign attempt. <paramref name="attemptSeed"/> picks the layout: 0 = the level's base layout (tests), any other value a different layout of the
@@ -94,12 +104,13 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>Endless run in a region. <paramref name="seed"/> picks the tower; the same seed always gives the same tower.</summary>
-        public RunSession(ContentRepository repo, SimConfig cfg, RegionDef region, int seed)
+        public RunSession(ContentRepository repo, SimConfig cfg, RegionDef region, int seed, bool timeAttack = false)
         {
             Cfg = cfg;
             Level = null;
             Region = region;
             IsEndless = true;
+            IsTimeAttack = timeAttack;
             Seed = seed;
             Spec = LevelSpecFactory.BuildEndless(region, seed, repo.RemoteConfig.Generator.EndlessDifficultyFloors);
             World = new EndlessWorld(cfg, Spec);
@@ -125,6 +136,7 @@ namespace BoingUpSkyTower.Gameplay
             if (State.Combo >= 3 && lastCombo < 3) comboChains++;   // reward statistics: a chain reached 3 landings
             lastCombo = State.Combo;
             if (State.BestCombo > bestComboSeen) bestComboSeen = State.BestCombo;
+            if (IsTimeAttack && !TimeUp && TimeRecords.TimeAttackExpired(RunTicks)) TimeUp = true;   // the clock is the simulation: exactly 10800 ticks after the first jump
             if (IsEndless)
             {
                 // Keep the tower 60 rows above the player. Growth happens once per 40 rows (about every 15 s), never per frame.
@@ -337,7 +349,7 @@ namespace BoingUpSkyTower.Gameplay
         {
             return new RunRecord
             {
-                Kind = IsEndless ? RunKind.Endless : RunKind.Level,
+                Kind = IsTimeAttack ? RunKind.TimeAttack : IsEndless ? RunKind.Endless : RunKind.Level,
                 LevelId = Level != null ? Level.Id : null,
                 RegionId = Region.Id,
                 Floors = State.Row,

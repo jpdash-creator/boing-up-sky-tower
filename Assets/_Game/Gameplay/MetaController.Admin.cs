@@ -19,16 +19,21 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---------------- settings footer: Admin icon + version label ----------------
 
-        /// <summary>Last line of the settings popup: the small Admin icon button at the left (when allowed) and the version label at the right (7 quick taps open the code box).</summary>
-        void AddSettingsFooter(RectTransform c, float y, float h, bool showAdmin, float width)
+        /// <summary>
+        /// The version label in the right cell of the last Settings row (7 quick taps open the code box) and, when allowed, the small Admin icon button in the top left corner of
+        /// the popup frame (opposite the close X, left of the centred title). (x, y) and the cell width are in the content rect <paramref name="c"/>.
+        /// </summary>
+        void AddSettingsFooter(RectTransform panel, RectTransform c, float x, float y, float cellW, float h, bool showAdmin)
         {
-            Button v = UiKit.AddHitArea(c, "VersionTap", "Version " + Application.version, new Vector2(1f, 1f), new Vector2(0f, -y), new Vector2(380f, h), OnVersionTapped);
+            Button v = UiKit.AddHitArea(c, "VersionTap", "Version " + Application.version, new Vector2(0f, 1f), new Vector2(x, -y), new Vector2(cellW, h), OnVersionTapped);
             Text vt = UiKit.AddText(v.transform, "Label", "v" + Application.version, 34, Theme.InkSoft, TextAnchor.MiddleRight);
             DropOutline(vt);
+            vt.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiKit.Stretch((RectTransform)vt.transform);
             if (!showAdmin) return;
-            Button a = ToyKit.IconButton(c, "Admin", "Admin", 2, ToyKit.Get("icon_lock"), new Vector2(h, h), () => ShowAdmin(), 0.6f);
-            UiKit.Place((RectTransform)a.transform, new Vector2(0f, 1f), new Vector2(0f, -y), new Vector2(h, h));
+            float s = Mathf.Max(132f, UiKit.MinTouchRef);
+            Button a = ToyKit.IconButton(panel, "Admin", "Admin", 2, ToyKit.Get("icon_lock"), new Vector2(s, s), () => ShowAdmin(), 0.6f);
+            UiKit.Place((RectTransform)a.transform, new Vector2(0f, 1f), new Vector2(20f, -20f), new Vector2(s, s));
         }
 
         void OnVersionTapped()

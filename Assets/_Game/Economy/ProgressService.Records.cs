@@ -168,8 +168,31 @@ namespace BoingUpSkyTower.Economy
                 arr[run.Mode] = rec;
                 TimedCounters c = TimedNow();
                 if (run.Floors > c.TimeAttackFloorsWeek) c.TimeAttackFloorsWeek = run.Floors;
+                RegionTimedRecord t;   // coins and gems per minute count in Time Attack too (best single run of the region)
+                if (!Data.RegionTimed.TryGetValue(region.Id, out t) || t == null) t = new RegionTimedRecord();
+                RecordRules.ApplyCaptures(t, run, res);
+                Data.RegionTimed[region.Id] = t;
             }
             return res;
+        }
+
+        /// <summary>
+        /// One call for the end of an endless or Time Attack run (what the run controller should do; run.Coins arrives as the combo coins of RunSession.BuildRunRecord): pays the coins (endless or Time Attack table and the
+        /// shared daily cap), then records the run. <c>run.Kind</c> picks the mode; the capture rate uses the FULL RATE coins (before the over-cap
+        /// reduction, so a run past the cap still counts at its true pace of play) and the run's gems. Records are set even when the coins are reduced.
+        /// </summary>
+        public EndlessReward FinishEndlessRun(RunRecord run, string dayKey, out RecordResult recorded)
+        {
+            if (run == null) throw new ArgumentNullException("run");
+            if (run.Kind == RunKind.Level) throw new ArgumentException("Level runs use ApplyRun and RecordRun.", "run");
+            int floors = run.Floors < 0 ? 0 : run.Floors;
+            int comboCoins = run.Coins;   // RunSession.BuildRunRecord puts the run's combo coins (SimState.Coins) here
+            EndlessReward er = run.Kind == RunKind.TimeAttack
+                ? ApplyTimeAttackRun(run.RegionId, floors, dayKey, comboCoins)
+                : ApplyEndlessRun(run.RegionId, floors, dayKey, comboCoins);
+            run.Coins = er.FullRateCoins;
+            recorded = RecordRun(run);
+            return er;
         }
 
         /// <summary>The per-mode array of a region in a dictionary, created (and stored) when missing or of the wrong length.</summary>
@@ -227,6 +250,44 @@ namespace BoingUpSkyTower.Economy
             EndlessModeRecord r = EndlessRecord(regionId, mode);
             return r == null ? 0 : r.BestFloors;
         }
+
+        /// <summary>
+        /// All best splits of an endless record: [0] = ticks to reach floor 100, [1] = floor 200 ... 0 = never reached. Empty when none. Do not modify.
+        /// Format a split with TimeRecords.FormatTime; the live comparison is <see cref="EndlessSplitDelta"/>.
+        /// </summary>
+        public int[] EndlessSplits(string regionId, int mode)
+        {
+            EndlessModeRecord r = EndlessRecord(regionId, mode);
+            return r == null || r.Splits == null ? NoCurve : r.Splits;
+        }
+
+        /// <summary>
+        /// Live split delta for the run HUD: when the run has just reached floor <paramref name="stage"/> x 100 at <paramref name="elapsedTicks"/> on its clock,
+        /// the ticks ahead (negative = faster) or behind (positive) of the best split of that stage. False when there is no best split yet.
+        /// </summary>
+        public bool EndlessSplitDelta(string regionId, int mode, int stage, int elapsedTicks, out int deltaTicks)
+        {
+            return TimeRecords.TrySplitDelta(EndlessSplits(regionId, mode), stage, elapsedTicks, out deltaTicks);
+        }
+
+        /// <summary>The Time Attack record of a region and mode (best floors in 3:00, plus seed, hero, version, inputs and curve of that run), or null when none. Do not modify.</summary>
+        public TimeAttackRecord TimeAttackBest(string regionId, int mode)
+        {
+            TimeAttackRecord[] arr;
+            if (regionId == null || Data.TimeAttackRecords == null || !TimeRecords.ValidMode(mode) || !Data.TimeAttackRecords.TryGetValue(regionId, out arr) || arr == null || mode >= arr.Length) return null;
+            TimeAttackRecord rec = arr[mode];
+            return rec != null && rec.BestFloors > 0 ? rec : null;
+        }
+
+        /// <summary>Floor-by-time curve of the best Time Attack run (empty when none).</summary>
+        public int[] TimeAttackBestCurve(string regionId, int mode)
+        {
+            TimeAttackRecord r = TimeAttackBest(regionId, mode);
+            return r == null || r.Curve == null ? NoCurve : r.Curve;
+        }
+
+        /// <summary>Coins per minute x 100 of an amount over a run clock (live HUD value or a stat); see TimeRecords.RatePerMinute / FormatPerMinute.</summary>
+        public static int RatePerMinute(int amount, int ticks) { return TimeRecords.RatePerMinute(amount, ticks); }
 
         /// <summary>Best floors in a 3:00 Time Attack of a region and mode (0 = none).</summary>
         public int TimeAttackBestFloors(string regionId, int mode)

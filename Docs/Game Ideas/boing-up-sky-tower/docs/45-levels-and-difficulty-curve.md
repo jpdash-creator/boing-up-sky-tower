@@ -80,7 +80,9 @@ Stars per region: 25 levels x 3 = **75**. Star thresholds that unlock regions or
 
 ## 6. The endless tower
 
-The endless tower has **25 stages of 100 floors** (floors 1 to 2500). Stage N follows the difficulty of level N (stage 1 = level 1, up to stage 25 = level 25). After floor 2500 the tower **cycles** and holds the Level 25 difficulty from then on (no further rise). The endless generator stays separate from the level generator; only its difficulty input changes.
+The endless tower has **25 stages of 100 floors** (floors 1 to 2500). Stage N follows the difficulty of level N (stage 1 = level 1, up to stage 25 = level 25). After floor 2500 the tower **cycles** (`EndlessTower`, `FirstCycleFloors` 2500, `CycleFloors` 1400): levels **15 to 24** for 100 floors each, then **level 25 is held for 400 floors** (`HoldFloors`), and that 1400-floor cycle repeats without end (floors 2501 to 3900 are the first cycle, and so on). The difficulty never rises above level 25. The endless generator stays separate from the level generator; only its difficulty input changes.
+
+**Curve note.** The Region 4 (Candy Canyon) difficulty curve overshoots its target by 7.07 points on levels 23 to 25 (its sticky platforms limit how hard it measures); the owner accepted this for now (section 10).
 
 ## 7. The Gameplay setting (replaces the old Difficulty setting)
 

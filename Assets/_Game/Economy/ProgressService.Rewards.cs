@@ -340,6 +340,8 @@ namespace BoingUpSkyTower.Economy
                 return n;
             }
             if (stat == RewardStat.PlayMinutes) return StatOf(p, RewardStat.PlaySeconds) / 60;
+            int timed;
+            if (TryTimedGoalStat(stat, out timed)) return timed;
             return StatOf(p, stat);
         }
 

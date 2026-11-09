@@ -326,7 +326,9 @@ The level 15 target is Momo's own value of the tier measured with the same fast 
 
 **2. Bot proof of every hero on every level.** 125 heroes x 75 levels (5 regions x 15) = 9,375 runs: 9,375 solved, 0 failed (`Tests/Simulation/HERO_BOT_REPORT.csv`, `HERO_BOT_SUMMARY.md`). The first pass used a 3,000-node budget per solve and left 21 runs unsolved, all Common heroes (including Momo) on Region 5 level 10, a complex combo-chain level that needs about 7,500 nodes even for the default hero (SOLVABILITY_REPORT.md); those 21 were rerun with the full budget and all solved (`HERO_BOT_RERUN_SUMMARY.md`).
 
-**3. Unit tests.** 94 Simulation unit tests pass (tier rules, character stats, golden hashes, hero cards, inventory, bundles, chests, hero powers). The Unity EditMode tests were edited but not run in Unity.
+**3. Active heroes (owner Bug List 6, 2026-11-09).** Only five lines are ACTIVE: Momo, Capi (forestgirl), Otto (beachotter), Bonbon (candygirl) and Bao (monk), five tiers each = **25 active heroes**. The other 20 lines (100 heroes) are inactive ALWAYS, a permanent compile-time rule with no setting: their generated rows stay in `HeroTable` as data (all 125 rows, `Active` flag, `CharacterDefs.AllIncludingInactive` for tools and the bot proof) but they never exist at runtime. They are not in `CharacterDefs.All`, so no pool, shop, chest, bundle, reward, region goal, All Heroes screen or save ever sees them, and an old save naming one falls back to Momo. Region goals that used to name an extra hero (and the top weekly task) now give one random ACTIVE Common hero of an open region. The generation and bot proof above cover all 125 rows; the runtime roster is the 25.
+
+**4. Unit tests (counts of 2026-11-09).** Unity EditMode **605 tests** and PlayMode **77 tests**, plus the dotnet Simulation suite (tier rules, character stats, golden hashes, hero cards, inventory, bundles, chests, hero powers, the active hero rule). The Unity suites were edited but not run in the editor since the last additions.
 <!-- RESULTS END -->
 
 ## 10. Changelog

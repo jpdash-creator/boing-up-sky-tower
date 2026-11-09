@@ -31,6 +31,7 @@
     <!-- timed records (doc 46): pure maths and rules; the data classes use Newtonsoft attributes (testhost brings the package) -->
     <Compile Include="../../Assets/_Game/Economy/TimeRecords.cs" />
     <Compile Include="../../Assets/_Game/Economy/TimeRecordData.cs" />
+    <Compile Include="../../Assets/_Game/Economy/MedalTargetFile.cs" />
   </ItemGroup>
 
   <ItemGroup>

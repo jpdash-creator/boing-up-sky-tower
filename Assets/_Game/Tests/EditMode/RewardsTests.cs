@@ -91,20 +91,20 @@ namespace BoingUpSkyTower.Tests
         public void TablesFollowTheDocument()
         {
             RewardCatalog c = RewardCatalog.BuiltIn();
-            Assert.AreEqual(6, c.DailyActions.Count, "Daily: log in, play 5, play 15, complete 3 levels, 5 combos, clear a hard level");
-            Assert.AreEqual(100, c.DailyMaxPoints);
+            Assert.AreEqual(8, c.DailyActions.Count, "Daily: log in, play 5, play 15, complete 3 levels, 5 combos, clear a hard level, 2 pace clears, floor 100 in 3:00");
+            Assert.AreEqual(130, c.DailyMaxPoints, "the six old actions are 100 points, the two timed goals (doc 46) add 15 each");
             Assert.AreEqual(5, c.DailyMilestones.Count);
             int[] thresholds = { 20, 40, 60, 80, 100 };
             for (int i = 0; i < 5; i++) Assert.AreEqual(thresholds[i], c.DailyMilestones[i].Target);
-            Assert.AreEqual(9, c.WeeklyTasks.Count, "Weekly: login 5 days, play 100 min, 150 combos, 5 hard, 2 no-wall, 10 power-ups, 20 stars, 20 levels, endless floor 100");
-            Assert.AreEqual(RewardEntry.RandomOpenRegionHero, c.WeeklyTasks[8].HeroRegion, "the top weekly task gives a random Common hero of an open region");
-            for (int i = 0; i < 8; i++) Assert.AreEqual(0, c.WeeklyTasks[i].HeroRegion, c.WeeklyTasks[i].Id);
+            Assert.AreEqual(12, c.WeeklyTasks.Count, "Weekly: login 5 days, play 100 min, 150 combos, 5 hard, 2 no-wall, 10 power-ups, 20 stars, 20 levels, endless floor 100, pace on 3 levels, 5 gold medals, Time Attack 100 floors");
+            Assert.AreEqual(RewardEntry.RandomOpenRegionHero, c.WeeklyTasks[11].HeroRegion, "the top weekly task gives a random Common hero of an open region");
+            for (int i = 0; i < 11; i++) Assert.AreEqual(0, c.WeeklyTasks[i].HeroRegion, c.WeeklyTasks[i].Id);
             int dayGems = 0, dayCoins = 0, weekGems = 0;
             foreach (RewardEntry m in c.DailyMilestones) { dayGems += m.Gems; dayCoins += m.Coins; }
             foreach (RewardEntry w in c.WeeklyTasks) weekGems += w.Gems;
             Assert.AreEqual(10, dayGems, "a full day pays 10 gems");
             Assert.AreEqual(1500, dayCoins);
-            Assert.AreEqual(72, weekGems, "a full week of tasks pays 72 gems");
+            Assert.AreEqual(80, weekGems, "a full week of tasks pays 80 gems (72 + 8 of the pace goal, doc 46)");
             Assert.LessOrEqual(7 * dayGems + weekGems, 150, "perfect Daily + Weekly stays under the tight gem budget (docs/39)");
             Assert.AreEqual(0, c.StarMilestones.Count, "the 25..225 star cards are gone");
             Assert.AreEqual(0, c.RegionRewards.Count, "the five region rewards are gone (clear all levels is the last Levels goal)");
@@ -407,6 +407,7 @@ namespace BoingUpSkyTower.Tests
         {
             ProgressService svc = NewService();
             svc.RecordLogin();
+            svc.TimedTimeAttackFloorsThisWeek();   // the first read starts today's timed counters; snapshot after that
             string before = JsonConvert.SerializeObject(svc.Data);
             svc.TryClaimReward(RewardTab.Daily, "dp_20");   // not ready
             svc.TryClaimReward(RewardTab.Main, "g_1_stars_1");   // not ready
@@ -619,12 +620,12 @@ namespace BoingUpSkyTower.Tests
             try
             {
                 Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/Tabs"));
-                Assert.AreEqual(1 + 6, s.ListContent.childCount, "scene header + 6 actions");
+                Assert.AreEqual(1 + 8, s.ListContent.childCount, "scene header + 8 actions");
                 Assert.IsNotNull(s.ListContent.Find("Scene/TrackPanel/Cells/Cell20"), "the first chest of the points track");
                 s.SelectTab(RewardTab.Weekly);
-                Assert.AreEqual(1 + 9, s.ListContent.childCount, "scene header + 9 tasks");
+                Assert.AreEqual(1 + 12, s.ListContent.childCount, "scene header + 12 tasks");
                 s.SelectTab(RewardTab.Main);
-                Assert.AreEqual(44 + 1, s.ListContent.childCount, "region 1: 44 goal cards + the Endless divider");
+                Assert.AreEqual(49 + 1, s.ListContent.childCount, "region 1: 49 goal cards + the Endless divider");
                 Assert.IsNull(root.transform.Find("RewardsRoot/Body/MainHeader/Band"));
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
@@ -845,7 +846,7 @@ namespace BoingUpSkyTower.Tests
                         i++;
                     }
                     var goals = svc.RegionGoals(r);
-                    Assert.AreEqual(44, goals.Count);
+                    Assert.AreEqual(49, goals.Count);
                     Assert.AreEqual(goals.Count, rows.Count, "region " + r + ": one card per goal");
                     for (int k = 0; k < goals.Count; k++) Assert.AreEqual(goals[k].Id, rows[k], "region " + r + " card " + k + " follows the type-group order");
                     int firstEndless = 0;

@@ -33,6 +33,13 @@ namespace BoingUpSkyTower.Economy
         public const string HardClear = "hardClear";    // levels CLEARED on difficulty 3 (Hard) or more (Bug List 5 F1.b)
         public const string EndlessFloor = "endlessFloor"; // best endless floor reached (day and week keep the maximum)
 
+        // Timed goals (doc 46 section 8). They are read from the TimedCounters of the save (ProgressService.TimedGoals.cs), which restart with the local day and week.
+        public const string PaceClears = "paceClears";          // day: not revived level clears at 0.6 plat/s or more
+        public const string Floor100In3 = "floor100in3";        // day: 1 when endless reached floor 100 within 3:00 today
+        public const string BestPaceLevels = "bestPaceLevels";  // week: distinct levels with a new best Pace
+        public const string GoldMedals = "goldMedals";          // week: gold medals earned
+        public const string TimeAttackFloors = "taFloors";      // week: best Time Attack floors
+
         /// <summary>Hard starts at this difficulty setting (0 Relaxed, 1 Easy, 2 Normal, 3 Hard, 4 Insane).</summary>
         public const int HardDifficulty = 3;
 
@@ -53,7 +60,7 @@ namespace BoingUpSkyTower.Economy
         /// <summary>Removed (Bug List 5 F1.a): "clear all levels" is now the last Levels goal of each region. Always empty.</summary>
         [System.Obsolete("Replaced by RegionGoals(region)")]
         public IReadOnlyList<RewardEntry> RegionRewards { get { return empty; } }
-        /// <summary>The six daily actions (10 + 15 + 20 + 20 + 15 + 20 = 100 points).</summary>
+        /// <summary>The eight daily actions (10 + 15 + 20 + 20 + 15 + 20 + 15 + 15 = 130 points).</summary>
         public IReadOnlyList<RewardEntry> DailyActions { get { return dailyActions; } }
         /// <summary>The daily points milestones (Target = points).</summary>
         public IReadOnlyList<RewardEntry> DailyMilestones { get { return dailyMilestones; } }
@@ -115,6 +122,9 @@ namespace BoingUpSkyTower.Economy
             new object[] { "d_level3", "Complete 3 levels", RewardStat.Levels, 3, 20 },
             new object[] { "d_combo5", "Make 5 combos", RewardStat.Combos, 5, 15 },
             new object[] { "d_hard", "Clear a hard level", RewardStat.HardClear, 1, 20 },
+            // timed goals (doc 46): each takes a Daily slot and pays like the existing actions (15 points); a full day is now 130 points, the milestones stay at 20..100
+            new object[] { "d_pace2", "2 clears at 0.6 plat/s", RewardStat.PaceClears, 2, 15 },
+            new object[] { "d_floor100", "Endless floor 100 in 3:00", RewardStat.Floor100In3, 1, 15 },
         };
 
         // daily milestone: points, gems, coins, power-ups (a day of 100 points pays 10 gems + 1,500 coins)
@@ -134,6 +144,10 @@ namespace BoingUpSkyTower.Economy
             new object[] { "w_nowall2", "Clear the no-wall level 2 times", RewardStat.NoWall, 2, 8, 500, 0, 0 },
             new object[] { "w_endless100", "Reach floor 100 in Endless", RewardStat.EndlessFloor, 100, 8, 500, 0, 0 },
             new object[] { "w_combos150", "Make 150 combos", RewardStat.Combos, 150, 10, 800, 1, 0 },
+            // timed goals (doc 46): rewards reuse existing weekly packages; the gems add only 8 (the gem budget of docs/39 holds)
+            new object[] { "w_pace3", "Best pace on 3 levels", RewardStat.BestPaceLevels, 3, 8, 600, 0, 0 },
+            new object[] { "w_gold5", "Earn 5 gold medals", RewardStat.GoldMedals, 5, 0, 800, 1, 0 },
+            new object[] { "w_ta100", "Time Attack: 100 floors", RewardStat.TimeAttackFloors, 100, 0, 500, 0, 0 },
             new object[] { "w_hard5", "Clear 5 hard levels", RewardStat.HardClear, 5, 16, 1000, 0, RewardEntry.RandomOpenRegionHero },
         };
 

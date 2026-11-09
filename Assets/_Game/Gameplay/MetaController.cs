@@ -1657,8 +1657,16 @@ namespace BoingUpSkyTower.Gameplay
         public void OnEndlessTapped(RegionDef region)
         {
             int best = progress.EndlessBestFloor(region.Id);
-            // Content-sized: content ends at 521 (best-floor pill), then a gap, START (at least 48 dp) and a margin. One close: the X in the frame.
-            OpenPopup("Endless", "", 521f + 44f + Mathf.Max(150f, UiKit.MinTouchRef) + 56f);
+            // Content-sized: content ends at 521 (best-floor pill), then the best Pace / Time block (doc 46), the Time Attack line and button, START (at least 48 dp) and a margin. One close: the X in the frame.
+            int mode = GameSettings.Difficulty;
+            PaceValue bestPace = progress.EndlessBestPace(region.Id, mode);
+            int bestAlive = progress.EndlessBestSurvived(region.Id, mode);
+            float startSize = Mathf.Max(150f, UiKit.MinTouchRef);
+            float recordTop = 535f;
+            float taLineTop = recordTop + TimedUi.RecordBlockHeight(bestPace.IsValid || bestAlive > 0) + 10f;
+            float taBtnH = Mathf.Max(130f, UiKit.MinTouchRef);
+            TimeAttackRecord taRec = progress.TimeAttackBest(region.Id, mode);
+            OpenPopup("Endless", "", taLineTop + TimeAttackLineHeight(taRec) + 8f + taBtnH + 24f + startSize + 60f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
             Transform endTitle = panel.Find("Title");
@@ -1675,6 +1683,8 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.Place((RectTransform)rname.transform, new Vector2(0.5f, 1f), new Vector2(0f, -352f), new Vector2(760f, 80f));
             RectTransform bestRow = ToyKit.PillRow(panel, "BestFloor", 425f, 96f);
             ToyKit.InfoPill(bestRow, ToyKit.Get("icon_crown"), best > 0 ? best.ToString() : "-", new Color(1f, 0.9f, 0.4f), 300f, 96f);
+            TimedUi.RecordBlock(panel, recordTop, mode, bestPace, bestAlive, true);
+            AddTimeAttackEntry((RectTransform)panel, region, mode, taLineTop, taBtnH, 60f + startSize + 24f);
             ToyKit.PopupAction(popup.Find("Panel"), "START", Btn(1), Color.white, 60f, () => StartEndless(region), 0f);
         }
 
@@ -1686,6 +1696,41 @@ namespace BoingUpSkyTower.Gameplay
         {
             GameSession.SelectEndless(region.Id);
             SceneManager.LoadScene("Run");
+        }
+
+        /// <summary>Name of the medal badge on a level node.</summary>
+        public const string MedalBadgeName = "MedalBadge";
+
+        /// <summary>
+        /// Doc 46: the medal of the CURRENT Gameplay mode (not the best over all five) sits at the top left of the node (the gem badge is at the top right); nothing without medal data.
+        /// Replaces an earlier badge, so the level screen can refresh it when the Gameplay mode changes.
+        /// </summary>
+        void ApplyMedalBadge(RectTransform node, LevelDef level, bool unlocked)
+        {
+            Transform old = node.Find(MedalBadgeName);
+            if (old != null) { old.name = "MedalBadgeOld"; old.gameObject.SetActive(false); Destroy(old.gameObject); }
+            MedalLevel medal = unlocked ? progress.Medal(level.Id, GameSettings.Difficulty) : MedalLevel.None;
+            if (medal == MedalLevel.None) return;
+            Image mi = UiKit.AddImage(node, MedalBadgeName, MedalIcons.For(medal, true), Color.white);
+            mi.rectTransform.anchorMin = mi.rectTransform.anchorMax = new Vector2(0f, 1f);
+            mi.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            mi.rectTransform.anchoredPosition = new Vector2(14f, -14f);
+            mi.rectTransform.sizeDelta = new Vector2(64f, 64f);
+            mi.gameObject.AddComponent<A11yLabel>().Text = MedalIcons.Name(medal) + " medal, " + GameSettings.DifficultyNames[Mathf.Clamp(GameSettings.Difficulty, 0, GameSettings.DifficultyNames.Length - 1)];
+        }
+
+        /// <summary>Redraws the medal badges of the open level screen for the current Gameplay mode.</summary>
+        void RefreshMedalBadges()
+        {
+            if (screen == null || string.IsNullOrEmpty(currentRegionId)) return;
+            List<LevelDef> levels = repo.LevelsOf(currentRegionId);
+            foreach (Button b in screen.GetComponentsInChildren<Button>(true))
+            {
+                if (!b.name.StartsWith("Level", System.StringComparison.Ordinal)) continue;
+                int idx;
+                if (!int.TryParse(b.name.Substring(5), out idx)) continue;
+                foreach (LevelDef l in levels) if (l.Index == idx) { ApplyMedalBadge((RectTransform)b.transform, l, progress.IsLevelUnlocked(l)); break; }
+            }
         }
 
         // Sprite order of ui_level_nodes after slicing: 0 plain bubble, 1 gem bubble (garbled text), 2 crown, 3 padlock,
@@ -1720,6 +1765,7 @@ namespace BoingUpSkyTower.Gameplay
                 gem.rectTransform.anchoredPosition = new Vector2(-14f, -14f);
                 gem.rectTransform.sizeDelta = new Vector2(64f, 64f);
             }
+            ApplyMedalBadge(rt, level, unlocked);
             LevelProgress p = progress.GetProgress(level.Id);
             int stars = p != null ? p.Stars : 0;
             for (int s = 0; s < 3 && unlocked; s++)
@@ -1743,8 +1789,19 @@ namespace BoingUpSkyTower.Gameplay
             int starsHave = p != null ? p.Stars : 0;
             // Content-sized: the content ends at 536 (pills) or 646 (best score); then a gap, the PLAY button (at least 48 dp) and a bottom margin.
             float playSize = Mathf.Max(150f, UiKit.MinTouchRef);
-            float contentEnd = p != null && p.BestScore > 0 ? 646f : 536f;
-            OpenPopup("Level " + level.Index, "", contentEnd + 44f + playSize + 56f);
+            // Doc 46: medals under the stars (only when the level has medal targets) and the best Pace and Time of the chosen Gameplay mode after the pills.
+            int mode = GameSettings.Difficulty;
+            bool hasBestScore = p != null && p.BestScore > 0;
+            bool hasMedals = MedalStrip.HasTargets(level.Id, mode);
+            float medalsH = hasMedals ? MedalStrip.Height + 12f : 0f;
+            PaceValue bestPace = progress.BestPace(level.Id, mode);
+            int bestTicks = progress.BestTime(level.Id, mode);
+            bool hasRecord = bestPace.IsValid || bestTicks > 0;
+            float yPays = 440f + medalsH;
+            float yBest = yPays + 110f;
+            float yRecord = (hasBestScore ? yBest : yPays) + 110f;
+            float contentEnd = yRecord + TimedUi.RecordBlockHeight(hasRecord);
+            OpenPopup("Level " + level.Index, "", contentEnd + 30f + playSize + 56f);
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
 
@@ -1770,7 +1827,8 @@ namespace BoingUpSkyTower.Gameplay
                 UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 170f, -290f), new Vector2(130f, 130f));
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
-            RectTransform pays = ToyKit.PillRow(panel, "Pays", 440f, 96f);
+            if (hasMedals) MedalStrip.Build(panel, 430f, level.Id, mode, progress.Medal(level.Id, mode), MedalLevel.None);
+            RectTransform pays = ToyKit.PillRow(panel, "Pays", yPays, 96f);
             if (starsHave >= 3)
             {
                 ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "50%", new Color(1f, 0.92f, 0.5f), 250f, 96f);   // 3-star levels: replays pay 50 percent of the coins and no gems
@@ -1781,11 +1839,12 @@ namespace BoingUpSkyTower.Gameplay
                 ToyKit.InfoPill(pays, art != null ? art.StarFilled : null, "+60", Color.white, 220f, 96f);
                 ToyKit.InfoPill(pays, ToyKit.Get("icon_flame"), "+5", new Color(1f, 0.78f, 0.35f), 220f, 96f);
             }
-            if (p != null && p.BestScore > 0)
+            if (hasBestScore)
             {
-                RectTransform best = ToyKit.PillRow(panel, "Best", 550f, 96f);
+                RectTransform best = ToyKit.PillRow(panel, "Best", yBest, 96f);
                 ToyKit.InfoPill(best, ToyKit.Get("icon_crown"), p.BestScore.ToString(), new Color(1f, 0.9f, 0.4f), 300f, 96f);
             }
+            TimedUi.RecordBlock(panel, yRecord, mode, bestPace, bestTicks, false);
             ToyKit.PopupAction(popup.Find("Panel"), "PLAY", Btn(1), Color.white, 60f, () =>
             {
                 GameSession.CurrentLevelId = level.Id;

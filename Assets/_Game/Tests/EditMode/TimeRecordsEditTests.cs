@@ -319,5 +319,137 @@ namespace BoingUpSkyTower.Tests
             Assert.AreEqual(session.RunTicks / TimeRecords.TicksPerSecond, rec.Curve.Length, "one curve point per full second of the clock");
             for (int i = 1; i < rec.Curve.Length; i++) Assert.GreaterOrEqual(rec.Curve[i], rec.Curve[i - 1], "floors never decrease");
         }
+
+        // ---- endless splits, Time Attack and the per minute stats (doc 46 section 7) ----
+
+        [Test]
+        public void EndlessSplitsAndTheLiveSplitDeltaAreReadable()
+        {
+            var run = new RunRecord { Kind = RunKind.Endless, RegionId = region1.Id, Floors = 230, Ticks = 9000, Mode = 2, Splits = new[] { 3000, 6500 }, Curve = new[] { 3, 6 }, Inputs = new byte[] { 1, 5 }, LayoutSeed = 77, HeroId = "momo", GameVersion = "1.0.0.1" };
+            svc.RecordRun(run);
+            Assert.AreEqual(new[] { 3000, 6500 }, svc.EndlessSplits(region1.Id, 2));
+            Assert.AreEqual(0, svc.EndlessSplits(region1.Id, 1).Length, "another mode has no splits");
+            Assert.AreEqual(0, svc.EndlessSplits("nope", 2).Length);
+            int d;
+            Assert.IsTrue(svc.EndlessSplitDelta(region1.Id, 2, 1, 2800, out d));
+            Assert.AreEqual(-200, d);
+            Assert.IsTrue(svc.EndlessSplitDelta(region1.Id, 2, 2, 7000, out d));
+            Assert.AreEqual(500, d);
+            Assert.IsFalse(svc.EndlessSplitDelta(region1.Id, 2, 3, 9000, out d));
+            // the best run's seed, hero, version and inputs are kept for the later server check
+            EndlessModeRecord rec = svc.EndlessRecord(region1.Id, 2);
+            Assert.AreEqual(77, rec.LayoutSeed);
+            Assert.AreEqual("momo", rec.HeroId);
+            Assert.AreEqual(new byte[] { 1, 5 }, rec.Inputs);
+            Assert.AreEqual(2, rec.Mode);
+        }
+
+        [Test]
+        public void TimeAttackRunPaysTheEndlessTableCountsOnceInTheCapAndStillRecordsPastIt()
+        {
+            string day = "20261109";
+            int cap = repo.RemoteConfig.Economy.EndlessCoinDailyFullRateRuns;
+            Assert.Greater(cap, 0);
+            int coinsBefore = svc.Coins;
+            RecordResult rr;
+            RunRecord first = new RunRecord { Kind = RunKind.TimeAttack, RegionId = region1.Id, Floors = 100, Ticks = TimeRecords.TimeAttackTicks, Mode = 2, Coins = 0, Gems = 3, Inputs = new byte[] { 7 }, LayoutSeed = 5, HeroId = "momo", GameVersion = "1.0.0.1" };
+            EndlessReward er = svc.FinishEndlessRun(first, day, out rr);
+            Assert.Greater(er.Coins, 0, "pays the normal endless coins");
+            Assert.IsFalse(er.OverCap);
+            Assert.AreEqual(coinsBefore + er.Coins, svc.Coins);
+            Assert.AreEqual(1, svc.EndlessRunsOn(day), "one paying run in the shared daily cap");
+            Assert.AreEqual(0, svc.EndlessBestFloor(region1.Id), "Time Attack never touches the endless best floor");
+            Assert.IsTrue(rr.Counted);
+            Assert.IsTrue(rr.NewBestFloors);
+            Assert.AreEqual(100, svc.TimeAttackBest(region1.Id, 2).BestFloors);
+            Assert.AreEqual(new byte[] { 7 }, svc.TimeAttackBest(region1.Id, 2).Inputs);
+            Assert.AreEqual(TimeRecords.PerMinuteX100(er.FullRateCoins, TimeRecords.TimeAttackTicks), svc.BestCoinsPerMinX100(region1.Id), "the capture uses the full rate coins");
+            Assert.AreEqual(TimeRecords.PerMinuteX100(3, TimeRecords.TimeAttackTicks), svc.BestGemsPerMinX100(region1.Id));
+            Assert.AreEqual(100, svc.TimedTimeAttackFloorsThisWeek());
+
+            // fill the cap with further runs, then one past it: reduced coins, but the record still counts
+            for (int i = 1; i < cap; i++)
+            {
+                RunRecord filler = new RunRecord { Kind = RunKind.TimeAttack, RegionId = region1.Id, Floors = 60, Ticks = TimeRecords.TimeAttackTicks, Mode = 2 };
+                svc.FinishEndlessRun(filler, day, out rr);
+            }
+            Assert.AreEqual(cap, svc.EndlessRunsOn(day));
+            RunRecord past = new RunRecord { Kind = RunKind.TimeAttack, RegionId = region1.Id, Floors = 140, Ticks = TimeRecords.TimeAttackTicks, Mode = 2 };
+            EndlessReward over = svc.FinishEndlessRun(past, day, out rr);
+            Assert.IsTrue(over.OverCap);
+            Assert.Less(over.Coins, over.FullRateCoins);
+            Assert.IsTrue(rr.Counted);
+            Assert.IsTrue(rr.NewBestFloors, "a run past the coin cap still sets the record");
+            Assert.AreEqual(140, svc.TimeAttackBestFloors(region1.Id, 2));
+            Assert.AreEqual(140, svc.TimedTimeAttackFloorsThisWeek());
+        }
+
+        [Test]
+        public void FinishEndlessRunSetsTheEndlessBestAndTheRecordsInOneCall()
+        {
+            RecordResult rr;
+            var run = new RunRecord { Kind = RunKind.Endless, RegionId = region1.Id, Floors = 120, Ticks = 7200, Mode = 0, Coins = 10, Splits = new[] { 5000 }, Curve = new[] { 1 } };
+            EndlessReward er = svc.FinishEndlessRun(run, "20261109", out rr);
+            Assert.IsTrue(er.NewBest);
+            Assert.AreEqual(120, svc.EndlessBestFloor(region1.Id));
+            Assert.AreEqual(120, svc.EndlessBestFloorsInMode(region1.Id, 0));
+            Assert.AreEqual(5000, svc.EndlessBestSplit(region1.Id, 0, 1));
+            Assert.Throws<ArgumentException>(() => svc.FinishEndlessRun(LevelRun(lvl1, 10, 600), "20261109", out rr));
+        }
+
+        [Test]
+        public void ARevivedRunNeverSetsAnEndlessRateOrSplit()
+        {
+            RecordResult rr;
+            var run = new RunRecord { Kind = RunKind.Endless, RegionId = region1.Id, Floors = 300, Ticks = 9000, Mode = 2, Revived = true, Gems = 9, Splits = new[] { 100 } };
+            svc.FinishEndlessRun(run, "20261109", out rr);
+            Assert.IsFalse(rr.Counted);
+            Assert.AreEqual(0, svc.EndlessSplits(region1.Id, 2).Length);
+            Assert.AreEqual(0, svc.BestGemsPerMinX100(region1.Id));
+            Assert.IsNull(svc.EndlessRecord(region1.Id, 2));
+        }
+
+        [Test]
+        public void ATimeAttackSessionEndsOnTheThreeMinuteClockHasNoReviveAndBuildsATimeAttackRecord()
+        {
+            var cfg = new SimConfig();
+            var session = new RunSession(repo, cfg, region1, 4321, true);
+            session.Mode = 2;
+            session.HeroId = "momo";
+            Assert.IsTrue(session.IsTimeAttack);
+            Assert.IsTrue(session.IsEndless);
+            Assert.IsFalse(session.CanRevive);
+            Assert.AreEqual(TimeRecords.TimeAttackTicks, session.TimeAttackTicksLeft, "the full 3:00 before the first jump");
+            Assert.IsFalse(session.TimeUp);
+            int guard = 0;
+            while (session.State.StartTick < 0 && guard++ < 400) session.Step(SimInput.Jump);
+            Assert.GreaterOrEqual(session.State.StartTick, 0);
+            // keep playing with a simple script until the clock or the hero ends the run
+            for (int t = 0; t < 12000 && !session.Over; t++) session.Step(t % 40 < 6 ? SimInput.Jump : SimInput.Right);
+            Assert.IsTrue(session.Over);
+            if (session.State.Dead) Assert.Less(session.RunTicks, TimeRecords.TimeAttackTicks);
+            else
+            {
+                Assert.IsTrue(session.TimeUp);
+                Assert.AreEqual(TimeRecords.TimeAttackTicks, session.RunTicks, "ends on exactly 10800 ticks");
+                Assert.AreEqual(0, session.TimeAttackTicksLeft);
+                int stopTick = session.State.Tick;
+                session.Step(SimInput.Jump);
+                Assert.AreEqual(stopTick, session.State.Tick, "no tick runs after the clock ended");
+            }
+            RunRecord rec = session.BuildRunRecord("1.0.0.1");
+            Assert.AreEqual(RunKind.TimeAttack, rec.Kind);
+            Assert.AreEqual(region1.Id, rec.RegionId);
+            Assert.AreEqual(4321, rec.LayoutSeed);
+            Assert.AreEqual(session.State.Tick, InputCodec.DecodedLength(rec.Inputs));
+            Assert.IsFalse(rec.Revived);
+            StringAssert.StartsWith("timeattack", session.LayoutInfo);
+
+            var normal = new RunSession(repo, cfg, region1, 4321);
+            Assert.IsFalse(normal.IsTimeAttack);
+            Assert.IsFalse(normal.TimeUp);
+            Assert.AreEqual(0, normal.TimeAttackTicksLeft);
+            Assert.AreEqual(RunKind.Endless, normal.BuildRunRecord("1").Kind);
+        }
     }
 }

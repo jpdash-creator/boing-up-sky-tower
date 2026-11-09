@@ -35,7 +35,7 @@ namespace BoingUpSkyTower.Gameplay
             Input = new RunInputReader();
             if (GameSession.EndlessMode && !string.IsNullOrEmpty(GameSession.EndlessRegionId))
             {
-                StartEndlessRun(GameSession.EndlessRegionId);
+                if (GameSession.TimeAttackMode) StartTimeAttackRun(GameSession.EndlessRegionId); else StartEndlessRun(GameSession.EndlessRegionId);
                 return;
             }
             string id = string.IsNullOrEmpty(GameSession.CurrentLevelId) ? "lvl_001_01" : GameSession.CurrentLevelId;
@@ -45,6 +45,7 @@ namespace BoingUpSkyTower.Gameplay
         public void StartRun(string levelId)
         {
             GameSession.EndlessMode = false;
+            GameSession.TimeAttackMode = false;
             GameSession.CurrentLevelId = levelId;
             GameSession.ApplyDifficulty();
             if (GameSession.Progress != null) GameSession.Progress.RecordLevelStarted(GameSettings.Difficulty);   // reward statistics: a hard level was played
@@ -58,10 +59,22 @@ namespace BoingUpSkyTower.Gameplay
         public void StartEndlessRun(string regionId)
         {
             GameSession.EndlessMode = true;
+            GameSession.TimeAttackMode = false;
             GameSession.EndlessRegionId = regionId;
             GameSession.EndlessSeed = GameSession.NewEndlessSeed();
             GameSession.ApplyDifficulty();
             BeginRun(new RunSession(GameSession.Repo, GameSession.BuildRunCfg(), GameSession.Repo.GetRegion(regionId), GameSession.EndlessSeed));
+        }
+
+        /// <summary>The 3:00 Time Attack (doc 46 section 7): a new tower of the region, a countdown from the first jump, no revive; the score is the floors reached.</summary>
+        public void StartTimeAttackRun(string regionId)
+        {
+            GameSession.EndlessMode = true;
+            GameSession.TimeAttackMode = true;
+            GameSession.EndlessRegionId = regionId;
+            GameSession.EndlessSeed = GameSession.NewEndlessSeed();
+            GameSession.ApplyDifficulty();
+            BeginRun(new RunSession(GameSession.Repo, GameSession.BuildRunCfg(), GameSession.Repo.GetRegion(regionId), GameSession.EndlessSeed, true));
         }
 
         void BeginRun(RunSession session)
@@ -100,7 +113,7 @@ namespace BoingUpSkyTower.Gameplay
             Input.Pad = Hud.Pad;
             Hud.OnPause = Pause;
             Hud.OnResume = Resume;
-            Hud.OnRetry = () => { if (Session.IsEndless) StartEndlessRun(Session.Region.Id); else StartRun(GameSession.CurrentLevelId); };
+            Hud.OnRetry = () => { if (Session.IsTimeAttack) StartTimeAttackRun(Session.Region.Id); else if (Session.IsEndless) StartEndlessRun(Session.Region.Id); else StartRun(GameSession.CurrentLevelId); };
             Hud.OnMenu = ExitToMeta;
             Hud.OnNext = PlayNext;
             Hud.OnRevive = Revive;
@@ -185,12 +198,12 @@ namespace BoingUpSkyTower.Gameplay
             {
                 // The run is over for good (no revive in endless): best floor and coins are saved right now (CUX-8).
                 Haptics.Pulse();
-                EndlessReward er = GameSession.Progress.ApplyEndlessRun(Session.Region.Id, Session.State.Row, EndlessRewards.DayKey(System.DateTime.UtcNow), Session.State.Coins);
+                RunRecord endlessRecord = Session.BuildRunRecord(Application.version);   // Kind (Endless or TimeAttack) comes from the session; Coins = the combo coins of the run
+                RecordResult endlessRecorded;
+                // One call pays the coins (endless or Time Attack table, shared daily cap) and records the run (best Pace, survived Time, floors, splits, captures).
+                EndlessReward er = GameSession.Progress.FinishEndlessRun(endlessRecord, EndlessRewards.DayKey(System.DateTime.UtcNow), out endlessRecorded);
                 ReportRunStats();
-                RunRecord endlessRecord = Session.BuildRunRecord(Application.version);
-                endlessRecord.Coins = er.Coins;   // coins paid (per-minute capture); the gems collected in the run are already in the record
-                RecordResult endlessRecorded = GameSession.Progress.RecordRun(endlessRecord);   // doc 46: best Pace, survived Time, floors and splits per region and mode
-                GameSession.LastResult = new RunResult { Endless = true, RegionId = Session.Region.Id, Floors = Session.State.Row, Score = Session.State.Score, EndlessReward = er, Ticks = endlessRecord.Ticks, PaceNumerator = endlessRecord.Floors, PaceDenominator = endlessRecord.Ticks, Revived = endlessRecord.Revived, Record = endlessRecorded };
+                GameSession.LastResult = new RunResult { Endless = true, TimeAttack = Session.IsTimeAttack, RegionId = Session.Region.Id, Floors = Session.State.Row, Score = Session.State.Score, EndlessReward = er, Ticks = endlessRecord.Ticks, PaceNumerator = endlessRecord.Floors, PaceDenominator = endlessRecord.Ticks, Revived = endlessRecord.Revived, Record = endlessRecorded };
                 Hud.ShowEndlessFailed(Session, er);
                 return;
             }
@@ -297,6 +310,7 @@ namespace BoingUpSkyTower.Gameplay
             if (Session != null && GameSession.Progress != null) Session.SettlePowerUps(GameSession.Progress);
             GameSession.PendingRegionId = Session != null ? Session.Region.Id : null;
             GameSession.EndlessMode = false;
+            GameSession.TimeAttackMode = false;
             SceneManager.LoadScene("Meta");
         }
     }

@@ -108,6 +108,7 @@ namespace BoingUpSkyTower.Gameplay
             GameSettings.Difficulty = mode;
             GameSession.ApplyDifficulty();
             RefreshGameplayRow(plates, rings, checks, buttons);
+            RefreshMedalBadges();   // the node medals follow the chosen mode
         }
 
         /// <summary>Sets plate colour, outline, check mark and accessibility text of the five buttons from the stored choice.</summary>

@@ -86,6 +86,7 @@ namespace BoingUpSkyTower.Economy
                 case RegionGoalType.PowerUps: return s != null ? s.PowerUps : 0;
                 case RegionGoalType.HardClears: return s != null ? s.HardClears : 0;
                 case RegionGoalType.NoWallClears: return RegionNoWallClears(g.Region);
+                case RegionGoalType.GoldMedalLevels: return GoldMedalLevelsInRegion(g.Region);
                 default: return EndlessBestFloor(def.Id);
             }
         }

@@ -499,7 +499,7 @@ namespace BoingUpSkyTower.Tests
             GameSettings.ShowDevRowsForTests = true;
             AccountScenario("guest");
             var holder = new RenderTexture[1];
-            string[] names = { "SoundToggle", "MusicToggle", "HapticsToggle", "Reduced motionToggle", "Left-handedToggle", "TextsizeButton", "Google", "SaveProgress", "Reset", "RestorePurchases", "Admin", "VersionTap" };
+            string[] names = { "SoundToggle", "MusicToggle", "HapticsToggle", "Reduced motionToggle", "Left-handedToggle", "Pace ghostToggle", "TextsizeButton", "Google", "SaveProgress", "Reset", "RestorePurchases", "Admin", "VersionTap" };
             foreach (Aspect a in Aspects)
             {
                 UiKit.SafeAreaNormalized = () => FullSafe;
@@ -1164,6 +1164,159 @@ namespace BoingUpSkyTower.Tests
             var endlessReward = new EndlessReward { Floors = 142, BestBefore = 120, NewBest = true, FullRateCoins = 121, Coins = 61, OverCap = true, RunsToday = 4 };
             yield return CheckScreen("run-endless-failed", () => rc.Hud.ShowEndlessFailed(rc.Session, endlessReward), problems);
             Report(problems);
+        }
+
+        // ---- timed gameplay (doc 46): level popup with medals and records, the HUD timer row with delta and Pace Ghost, result screens, Time Attack ----
+
+        [UnityTest]
+        public IEnumerator TimedGameplayScreensFitEveryAspect() { return TimedAudit(100, false); }
+
+        [UnityTest]
+        public IEnumerator TimedGameplayScreensSurvive130PercentTextAndLeftHandedLayout() { return TimedAudit(130, true); }
+
+        static RunRecord TimedRun(string levelId, string regionId, int floors, int ticks, bool revived = false)
+        {
+            return new RunRecord { Kind = RunKind.Level, LevelId = levelId, RegionId = regionId, Floors = floors, Ticks = ticks, Mode = 0, HeroId = "momo", GameVersion = "test", Revived = revived, Curve = new[] { 4, 9, 14, 19, 24, 29 } };
+        }
+
+        IEnumerator TimedAudit(int textPercent, bool leftHanded)
+        {
+            GameSettings.TextPercent = textPercent;
+            GameSettings.LeftHanded = leftHanded;
+            GameSettings.PaceGhost = true;
+            IMedalTargetSource savedTargets = MedalTargets.Source;
+            var targets = new DictionaryMedalTargets();
+            targets.Set("lvl_001_03", 0, 900);
+            MedalTargets.Source = targets;
+            var problems = new List<string>();
+            try
+            {
+                RegionDef r1 = GameSession.Repo.GetRegionByIndex(1);
+                for (int i = 1; i <= 2; i++)
+                    GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
+                GameSession.Progress.RecordRun(TimedRun("lvl_001_03", r1.Id, 30, 1800));   // 1.00 plat/s: the best record the screens compare with
+                GameSession.Progress.RecordRun(new RunRecord { Kind = RunKind.Endless, RegionId = r1.Id, Floors = 142, Ticks = 4200, Mode = 0, HeroId = "momo", GameVersion = "test", Curve = new[] { 3, 6, 9, 12 }, Splits = new[] { 2400 } });
+
+                yield return Load("Meta");
+                var meta = Object.FindFirstObjectByType<MetaController>();
+                var levels = GameSession.Repo.LevelsOf(r1.Id);
+                yield return CheckScreen("level-popup-timed", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[2]); }, problems);
+                yield return CheckScreen("level-popup-no-record", () => { meta.ShowLevels(r1); meta.OnLevelTapped(levels[1]); }, problems);
+                yield return CheckScreen("endless-popup-timed", () => { meta.ShowLevels(r1); meta.OnEndlessTapped(r1); }, problems);
+                // audit gap 2: the Time Attack line carries the best pace (and the time of a run that ended early) as a second line; it must not overlap at any aspect or at 130 percent
+                GameSession.Progress.RecordRun(new RunRecord { Kind = RunKind.TimeAttack, RegionId = r1.Id, Floors = 96, Ticks = 9100, Mode = 0, HeroId = "momo", GameVersion = "test", Curve = new[] { 3, 6, 9 } });
+                Assert.IsNotNull(GameSession.Progress.TimeAttackBest(r1.Id, 0), "a Time Attack record exists for the popup");
+                yield return CheckScreen("endless-popup-timeattack-pace", () => { meta.ShowLevels(r1); meta.OnEndlessTapped(r1); }, problems);
+                Assert.IsNotNull(GameObject.Find("TimeAttackBest"), "the Time Attack record line is shown");
+
+                GameSession.CurrentLevelId = "lvl_001_03";
+                yield return Load("Run");
+                var rc = Object.FindFirstObjectByType<RunController>();
+                Assert.IsTrue(rc.Hud.GhostActive, "the ghost is on (Settings) and a best curve exists");
+                rc.Hud.SkipIntro();
+                int frame = 0;
+                rc.Input.ScriptedMove = () => SimInput.Right;
+                rc.Input.ScriptedJump = () => frame % 45 == 0;
+                for (frame = 1; frame <= 150; frame++) yield return null;
+                yield return CheckScreen("run-hud-timed", () => { }, problems);
+                var reward = GameSession.Progress.ApplyRun(GameSession.CurrentLevelId, rc.Session.BuildOutcome());
+                RecordResult better = GameSession.Progress.RecordRun(TimedRun("lvl_001_03", r1.Id, 30, 1500));
+                GameSession.LastResult = new RunResult { LevelId = "lvl_001_03", Completed = true, Floors = 30, Ticks = 1500, Record = better };
+                yield return CheckScreen("run-results-new-best", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
+                rc.Hud.CloseOverlay();
+                // audit gap 6: a run with a new best Time AND a new best Pace shows two separate ribbons (NEW BEST TIME and NEW BEST PACE), stacked without overlap
+                var both = new RecordResult { Kind = RunKind.Level, Floors = 30, Ticks = 1400, Counted = true, NewBestTime = true, NewBestPace = true, HasPrevTime = true, HasPrevPace = true, DeltaTicks = -100, DeltaPaceHundredths = 7 };
+                GameSession.LastResult = new RunResult { LevelId = "lvl_001_03", Completed = true, Floors = 30, Ticks = 1400, Record = both };
+                yield return CheckScreen("run-results-new-best-time-and-pace", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
+                Assert.IsNotNull(GameObject.Find("NewBestTimeBadge"), "NEW BEST TIME ribbon");
+                Assert.IsNotNull(GameObject.Find("NewBestPaceBadge"), "NEW BEST PACE ribbon");
+                Assert.IsNull(GameObject.Find("NewBestBadge"), "no generic ribbon when Time and Pace are named");
+                rc.Hud.CloseOverlay();
+                RecordResult worse = GameSession.Progress.RecordRun(TimedRun("lvl_001_03", r1.Id, 30, 2100));
+                GameSession.LastResult = new RunResult { LevelId = "lvl_001_03", Completed = true, Floors = 30, Ticks = 2100, Record = worse };
+                yield return CheckScreen("run-results-slower", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
+                rc.Hud.CloseOverlay();
+                RecordResult revived = GameSession.Progress.RecordRun(TimedRun("lvl_001_03", r1.Id, 30, 1000, true));
+                GameSession.LastResult = new RunResult { LevelId = "lvl_001_03", Completed = true, Floors = 30, Ticks = 1000, Revived = true, Record = revived };
+                yield return CheckScreen("run-results-revived", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
+                rc.Hud.CloseOverlay();
+
+                // endless and Time Attack: the HUD (ghost pill, countdown) and the end screen
+                rc.StartTimeAttackRun(r1.Id);
+                rc.Hud.SkipIntro();
+                yield return CheckScreen("run-timeattack-hud", () => { }, problems);
+                var er = new EndlessReward { Floors = 142, BestBefore = 120, NewBest = true, FullRateCoins = 121, Coins = 61, RunsToday = 1 };
+                GameSession.LastResult = new RunResult { Endless = true, TimeAttack = true, RegionId = r1.Id, Floors = 142, Ticks = 10800, Record = new RecordResult { Kind = RunKind.TimeAttack, Floors = 142, Ticks = 10800, Counted = true, NewBestFloors = true } };
+                yield return CheckScreen("run-timeattack-end", () => rc.Hud.ShowEndlessFailed(rc.Session, er), problems);
+                rc.Hud.CloseOverlay();
+                rc.StartEndlessRun(r1.Id);
+                rc.Hud.SkipIntro();
+                yield return CheckScreen("run-endless-hud-timed", () => { }, problems);
+                var rec2 = GameSession.Progress.RecordRun(new RunRecord { Kind = RunKind.Endless, RegionId = r1.Id, Floors = 160, Ticks = 4000, Mode = 0, HeroId = "momo", GameVersion = "test", Curve = new[] { 3, 6, 9 } });
+                GameSession.LastResult = new RunResult { Endless = true, RegionId = r1.Id, Floors = 160, Ticks = 4000, Record = rec2 };
+                yield return CheckScreen("run-endless-end-timed", () => rc.Hud.ShowEndlessFailed(rc.Session, er), problems);
+            }
+            finally
+            {
+                MedalTargets.Source = savedTargets;
+            }
+            Report(problems);
+        }
+
+        /// <summary>Audit gap 5 (doc 46): the medal badge on a level node is the medal of the CURRENT Gameplay mode, not the best over all five, and it follows a mode change in place.</summary>
+        [UnityTest]
+        public IEnumerator LevelNodeMedalFollowsTheGameplayMode()
+        {
+            IMedalTargetSource savedTargets = MedalTargets.Source;
+            var targets = new DictionaryMedalTargets();
+            targets.Set("lvl_001_03", 0, 900);
+            targets.Set("lvl_001_03", 3, 900);
+            MedalTargets.Source = targets;
+            try
+            {
+                RegionDef r1 = GameSession.Repo.GetRegionByIndex(1);
+                for (int i = 1; i <= 2; i++)
+                    GameSession.Progress.ApplyRun("lvl_001_0" + i, new RunOutcome { Completed = true, StarMask = 1, Score = 100, CoinsCollected = 10 });
+                GameSession.Progress.RecordRun(TimedRun("lvl_001_03", r1.Id, 30, 1800));   // Relaxed (mode 0) only: 1.00 plat/s against a 0.90 target
+                Assert.AreNotEqual(MedalLevel.None, GameSession.Progress.Medal("lvl_001_03", 0), "the Relaxed run earned a medal");
+                Assert.AreEqual(MedalLevel.None, GameSession.Progress.Medal("lvl_001_03", 3), "nothing in Hard yet");
+                yield return Load("Meta");
+                var meta = Object.FindFirstObjectByType<MetaController>();
+                GameSettings.Difficulty = 0;
+                meta.ShowLevels(r1);
+                yield return null;
+                Transform node = FindRt("Level3");
+                Assert.IsNotNull(node, "level 3 node");
+                Assert.IsNotNull(node.Find(MetaController.MedalBadgeName), "Relaxed shows the Relaxed medal");
+                GameSettings.Difficulty = 3;
+                meta.ShowLevels(r1);
+                yield return null;
+                node = FindRt("Level3");
+                Assert.IsNull(node.Find(MetaController.MedalBadgeName), "Hard has no medal: the best over all modes is NOT shown");
+            }
+            finally
+            {
+                MedalTargets.Source = savedTargets;
+                GameSettings.Difficulty = 0;
+            }
+        }
+
+        /// <summary>The Pace Ghost is OFF by default; Settings carries its switch without a scroll view.</summary>
+        [UnityTest]
+        public IEnumerator PaceGhostIsOffByDefaultAndTheSettingsSwitchWorks()
+        {
+            Assert.IsFalse(GameSettings.PaceGhost, "default OFF (owner 2026-11-09)");
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            meta.ShowSettings();
+            yield return null;
+            RectTransform toggle = FindRt("Pace ghostToggle");
+            Assert.IsNotNull(toggle, "the Settings screen has the Pace ghost switch");
+            Assert.IsNull(FindRt("Content").GetComponentInParent<ScrollRect>(), "Settings stays non-scrolling");
+            toggle.GetComponent<Button>().onClick.Invoke();
+            Assert.IsTrue(GameSettings.PaceGhost, "the switch turns it on");
+            toggle.GetComponent<Button>().onClick.Invoke();
+            Assert.IsFalse(GameSettings.PaceGhost, "and off again");
         }
 
         // ---- power-ups (docs/15): the in-run buttons on every aspect, at 130 percent text, right- and left-handed ----
@@ -2292,6 +2445,35 @@ namespace BoingUpSkyTower.Tests
             Assert.LessOrEqual(bestMax, 6.0, "worst script time per frame (CUX-1), best of 3 windows");
             Assert.LessOrEqual(bestAlloc, AllocBudget, "managed allocation per frame (CUX-1)");
             Assert.IsFalse(rc.Paused, "the run was not interrupted");
+        }
+
+        /// <summary>CUX-1: the timer, live delta and Pace Ghost of the timed HUD do not allocate per frame (strings are cached, they change only with the shown tenth or floor).</summary>
+        [UnityTest]
+        public IEnumerator TimedHudWithGhostAndDeltaDoesNotAllocate()
+        {
+            GameSettings.PaceGhost = true;
+            var region = GameSession.Repo.GetRegionByIndex(1);
+            GameSession.Progress.RecordRun(new RunRecord { Kind = RunKind.Level, LevelId = "lvl_001_01", RegionId = region.Id, Floors = 30, Ticks = 1800, Mode = 0, HeroId = "momo", GameVersion = "test", Curve = new[] { 4, 9, 14, 19, 24, 29 } });
+            GameSession.CurrentLevelId = "lvl_001_01";
+            var op = SceneManager.LoadSceneAsync("Run");
+            while (!op.isDone) yield return null;
+            yield return null;
+            var rc = Object.FindFirstObjectByType<RunController>();
+            Assert.IsTrue(rc.Hud.GhostActive);
+            rc.Hud.SkipIntro();
+            int frame = 0;
+            rc.Input.ScriptedMove = () => (frame / 70) % 2 == 0 ? SimInput.Right : SimInput.Left;
+            rc.Input.ScriptedJump = () => frame % 30 == 0;
+            for (frame = 1; frame <= 120; frame++) yield return null;
+            string first = rc.Hud.TimerText.text;
+            System.GC.Collect();
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            const int measured = 400;
+            for (int k = 0; k < measured; k++) { frame++; yield return null; }
+            double perFrame = (System.GC.GetAllocatedBytesForCurrentThread() - before) / (double)measured;
+            Assert.AreNotEqual(first, rc.Hud.TimerText.text, "the timer ran");
+            Assert.LessOrEqual(perFrame, AllocBudget, "managed allocation per frame with the timed HUD (CUX-1)");
+            PlayerPrefs.DeleteAll();
         }
 
         const double AllocBudget = 1024.0;

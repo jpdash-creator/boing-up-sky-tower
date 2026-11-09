@@ -16,6 +16,8 @@ namespace BoingUpSkyTower.Gameplay
         public int Score;
         /// <summary>Endless run: the floor reached, the coins paid and whether it is a new best (LevelId is then null, RegionId is set).</summary>
         public bool Endless;
+        /// <summary>With <see cref="Endless"/>: the run was a 3:00 Time Attack (Floors is the score).</summary>
+        public bool TimeAttack;
         public string RegionId;
         public int Floors;
         public EndlessReward EndlessReward;
@@ -68,13 +70,23 @@ namespace BoingUpSkyTower.Gameplay
         /// tower of EndlessRegionId instead of CurrentLevelId. EndlessSeed is the seed of the current tower (stored with the run; 0 = pick a new one).
         /// </summary>
         public static bool EndlessMode;
+        /// <summary>With <see cref="EndlessMode"/>: the run is the 3:00 Time Attack of EndlessRegionId (doc 46 section 7).</summary>
+        public static bool TimeAttackMode;
         public static string EndlessRegionId;
         public static int EndlessSeed;
+
+        /// <summary>Starts a 3:00 Time Attack run next time the Run scene loads (same tower rules as endless, a countdown instead of a free clock).</summary>
+        public static void SelectTimeAttack(string regionId)
+        {
+            SelectEndless(regionId);
+            TimeAttackMode = true;
+        }
 
         /// <summary>Starts an endless run next time the Run scene loads. A new random seed is drawn for every run.</summary>
         public static void SelectEndless(string regionId)
         {
             EndlessMode = true;
+            TimeAttackMode = false;
             EndlessRegionId = regionId;
             EndlessSeed = 0;
         }
@@ -143,6 +155,7 @@ namespace BoingUpSkyTower.Gameplay
             PendingRegionId = null;
             LastResult = null;
             EndlessMode = false;
+            TimeAttackMode = false;
             EndlessRegionId = null;
             EndlessSeed = 0;
             AttemptSeed = 0;
@@ -159,6 +172,7 @@ namespace BoingUpSkyTower.Gameplay
             PendingRegionId = null;
             LastResult = null;
             EndlessMode = false;
+            TimeAttackMode = false;
             EndlessRegionId = null;
             EndlessSeed = 0;
             AttemptSeed = 0;

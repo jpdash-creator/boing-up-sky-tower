@@ -42,6 +42,20 @@
       "stat": "hardClear",
       "target": 1,
       "points": 20
+    },
+    {
+      "id": "d_pace2",
+      "title": "2 clears at 0.6 plat/s",
+      "stat": "paceClears",
+      "target": 2,
+      "points": 15
+    },
+    {
+      "id": "d_floor100",
+      "title": "Endless floor 100 in 3:00",
+      "stat": "floor100in3",
+      "target": 1,
+      "points": 15
     }
   ],
   "dailyMilestones": [
@@ -141,6 +155,29 @@
       "gems": 10,
       "coins": 800,
       "powerups": 1
+    },
+    {
+      "id": "w_pace3",
+      "title": "Best pace on 3 levels",
+      "stat": "bestPaceLevels",
+      "target": 3,
+      "gems": 8,
+      "coins": 600
+    },
+    {
+      "id": "w_gold5",
+      "title": "Earn 5 gold medals",
+      "stat": "goldMedals",
+      "target": 5,
+      "coins": 800,
+      "powerups": 1
+    },
+    {
+      "id": "w_ta100",
+      "title": "Time Attack: 100 floors",
+      "stat": "taFloors",
+      "target": 100,
+      "coins": 500
     },
     {
       "id": "w_hard5",
