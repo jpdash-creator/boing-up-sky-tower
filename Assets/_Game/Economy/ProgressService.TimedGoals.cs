@@ -1,6 +1,6 @@
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// Reward time goals (doc 46 section 8). The Daily and Weekly goals read the period counters <see cref="TimedCounters"/> that ProgressService.Records.cs keeps

@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>The four physics numbers of a hero as the index works on them: launch in tenths of u/s (190 = 19.0), speed, control, wall share in hundredths.</summary>
     public struct HeroPhysics

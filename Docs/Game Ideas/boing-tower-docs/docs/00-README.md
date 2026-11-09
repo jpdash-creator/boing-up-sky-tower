@@ -1,4 +1,4 @@
-# Boing Up: Sky Tower - Master Plan
+# Fluffy Climbers: Tower Jump - Master Plan
 
 A 2D vertical-jumping arcade game for Android and iOS in the generic vertical-jumper genre: momentum jumps, wall bounces, combo chains, and a tower that keeps rising. Original name, mascot, world and art. Only the genre mechanics are shared.
 

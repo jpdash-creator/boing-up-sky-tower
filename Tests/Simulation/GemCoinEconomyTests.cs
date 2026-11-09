@@ -5,7 +5,7 @@ using System.Text.Json;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Issue list 24 (owner 2026-10-25), points 5 and 6: gem spot share and rarity, gem budget per region, campaign coin payout

@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Heroes section of the Shop "Character / Power-ups" page (Bug List 4 E2, docs/26 section 8b): a 2 x 2 grid of hero cards, row 1 Uncommon and Rare, row 2 Elite

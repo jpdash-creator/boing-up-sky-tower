@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Chooses the rewarded-ad implementation (test ads in the editor and development builds, LevelPlay on device), pre-loads, and

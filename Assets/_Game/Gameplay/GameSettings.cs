@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Player preferences (doc 01 FR-X3). Stored in PlayerPrefs; audio and haptics read these when they exist.</summary>
     public static class GameSettings
@@ -21,7 +21,17 @@ namespace BoingUpSkyTower.Gameplay
         const string PaceGhostKey = "settings.paceghost";
 
         /// <summary>True in a development build on a device (not in the editor tests): the testing toggles are offered and default to on.</summary>
-        public static bool DevBuild { get { return (Debug.isDebugBuild && !Application.isEditor) || AdminAccess.Unlocked; } }
+        public static bool DevBuild
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                return (Debug.isDebugBuild && !Application.isEditor) || AdminAccess.Unlocked;
+#else
+                return false;   // release player: every test flag reads false, whatever the PlayerPrefs hold
+#endif
+            }
+        }
 
         /// <summary>Tests set this to build the Settings screen with the two dev flag rows (GAME_JUMP_TEST, SYSTEM_TEST) in the editor, where DevBuild is false. It changes only the layout.</summary>
         public static bool ShowDevRowsForTests;
@@ -92,9 +102,9 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Pushes the flags into ProgressService (levels, regions, all characters). Called on boot and when a flag changes.</summary>
         public static void ApplyFlags()
         {
-            BoingUpSkyTower.Economy.ProgressService.TestUnlockAll = TestUnlockAll;
-            BoingUpSkyTower.Economy.ProgressService.TestAllCharacters = CharacterTest;
-            BoingUpSkyTower.Economy.ProgressService.TestMainRewardsAllowed = SystemTest;   // the saved Main rewards test override counts only while System Test is on
+            FluffyClimbers.Economy.ProgressService.TestUnlockAll = TestUnlockAll;
+            FluffyClimbers.Economy.ProgressService.TestAllCharacters = CharacterTest;
+            FluffyClimbers.Economy.ProgressService.TestMainRewardsAllowed = SystemTest;   // the saved Main rewards test override counts only while System Test is on
         }
 
         /// <summary>
@@ -118,9 +128,9 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>Game difficulty (owner, Bug List 6 item 6): scroll speed grows by this percent every 5 seconds: 20, 22, 25, 28, 30 (SimConfig holds the integer table; chosen on the level screen).</summary>
-        public static readonly int[] DifficultyStepPercent = BoingUpSkyTower.Simulation.SimConfig.DifficultyStepPercent;
+        public static readonly int[] DifficultyStepPercent = FluffyClimbers.Simulation.SimConfig.DifficultyStepPercent;
         /// <summary>Chance in per mille that a gem spot (one per level row) holds a gem (owner 2026-10-25: halved; tuned values live in SimConfig).</summary>
-        public static readonly int[] DifficultyGemPermille = BoingUpSkyTower.Simulation.SimConfig.DifficultyGemPermille;
+        public static readonly int[] DifficultyGemPermille = FluffyClimbers.Simulation.SimConfig.DifficultyGemPermille;
         public static readonly string[] DifficultyNames = { "Relaxed", "Easy", "Normal", "Hard", "Insane" };
 
         public static int Difficulty
@@ -135,7 +145,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Highest speed-up the steps can reach on a difficulty: ScrollStepMaxSteps steps of DifficultyStepPercent, limited by the cap.</summary>
         public static int MaxSpeedUpPercent(int level)
         {
-            int p = DifficultyStepPercent[level] * new BoingUpSkyTower.Simulation.SimConfig().ScrollStepMaxSteps;
+            int p = DifficultyStepPercent[level] * new FluffyClimbers.Simulation.SimConfig().ScrollStepMaxSteps;
             return p > SpeedUpCapPercent ? SpeedUpCapPercent : p;
         }
 

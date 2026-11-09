@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Placement rules of the region special platforms (doc 24: the seven region 1 platforms; RegionPlatformSets lists the set of each region, so

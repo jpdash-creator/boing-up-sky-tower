@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>The kinds of per-region Main goals (Bug List 5 F1.a, docs/39). Every goal counts ONLY play inside its region.</summary>
     public enum RegionGoalType

@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>docs/44: the character stat model. The baseline must be bit-identical to the SimConfig defaults (golden hashes and bot proofs depend on it).</summary>
     public class CharacterStatsTests

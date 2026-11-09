@@ -1,10 +1,10 @@
 using System;
 using System.Globalization;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The first-launch login screen and the "choose your save" popup, built in code (docs/35). Pure view: callers pass the actions.
@@ -47,7 +47,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             else
             {
-                Text title = UiKit.AddText(safe, "Title", "BOING UP: SKY TOWER", 90, Color.white, TextAnchor.MiddleCenter, true);
+                Text title = UiKit.AddText(safe, "Title", "FLUFFY CLIMBERS\nTOWER JUMP", 90, Color.white, TextAnchor.MiddleCenter, true);
                 UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(840f, 260f));
             }
             if (art != null)

@@ -1,9 +1,9 @@
 using System;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Monetization;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Monetization;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Glue between the progress (ProgressService) and the Google account (Services.Account): signs in, links a guest save to the account, decides

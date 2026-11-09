@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Owner question 2026-11-05: across the 5 regions, does endless have the same platforms as the levels? (1) parity: the kinds endless can make equal the

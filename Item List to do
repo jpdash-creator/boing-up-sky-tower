@@ -131,7 +131,7 @@ Character Screen and Inventory also needed to be created to dress
 Issue List - 12
 1. The UI for shop is all buttons I thought I said tabs, I do not need buttons. Look at latest games and create tabs
 2. The UI look and feel is very retro, can we fix it to look better, the UX design can it use Impeccable and other design skills to make it better.
-3. Let's change everywhere to "Sky Hopper" from "Boing Tower". No more boing tower any where.
+3. Let's change everywhere to "Sky Hopper" from "Fluffy Climbers". No more fluffy climbers any where.
 
 
 Issue list 13
@@ -707,5 +707,40 @@ So redo rewards UI for Main, and redo the tasks for all main, daily, weekly
 	We will do this at the end after point 1 to and 3 are done. Also In shop all the heros should be tied to Bundles, Chests, Rewards to ensure that open regions we can get characters.
 
 	First write to Bug-List-5.md
+	
+Bug List 6
+1. Now I feel there are too many heroes. Apart from Primary region heroes and their rarity (Common, Uncommon, Rare, Elite, Legendary) counterparts who should be marked by default ACTIVE. Mark all other heroes and their rarity (Common, Uncommon, Rare, Elite, Legendary) counterparts as INACTIVE. Primary Heroes are Momo, Capi, Otto, Bonbon and Bao. The other heroes will remain INACTIVE in CODE ALWAYS and not become part of download or APK. Do not show in ALL Heroes as well.
+2. With these heroes, update all shops (Bundles, Chests, Hero Shop) and rewards (Main, Daily, Weekly) to grant heroes based on rules from these ACTIVE heroes only, not everything.
+3. Heroes
+	a. All heroes why has yellow background. Looks do not match with merge. In this row there are 3 icons now - Momo Icon with All heroes text, Merge icon with Merge text and Power up icon with Powers bought from shop. This is a screen similar to all heroes screen where we list all power ups with a counter bottom right.
+	b. Bottom of Heroes, we see power ups, Play and Character - remove those and extend the hero grid height.
+4. If you had to numerically assign difficulty of Level 1 to 15 how would you do it? Now after than I would like to change from level 1 to 15 to Level 1 to 25. Apart from level 1 which is at difficulty 5, Have Level 2 to 5 between Difficulty 20 to 40 increasing difficulty, 6 to 10 from 40 to 60 increasing difficulty, level 10 to 15 from 60 to 75 difficulty, 15 to 25 from 75 to 100 difficulty. This should be done from all regions from Region 1 to 5 and all future regions. This is now the new rule paradigm.
+5. The powers of a character should not be handled separately, it should be merged on the right with the power-ups and mark them as free and make them as 50% 
+6. Move the Gameplay (change into icons with text - icons should be open art new icons) - It should be moved from Admin to Level Screen just below the region name and centered. The level screen starts after that. Relaxed - 0% more than current, Easy - 10% more than current, Normal  - 25% more than current, Hard - 40% more than current, Insane - 50% more than current. Now UI wise - Have Flight, Rocket and Double jump on left and rest 4 on right.
+7. The Settings main screen should not be scrolling. 
+8. Shop - When I Bought the number changed in the shop - it should always show x1. why it's number changed? This is just a shop. This actual list of power ups bought is in heroes screen as mentioned above.
+
+Bug List 7
+1. For every gameplay, we need to record a time as well. The time also covers for main, daily and weekly rewards as well as leaderboard in the future. Come up with best way to record time. Every level shows while starting best time done and also records best time. Like in many mobile games, we need to have faster clearance for timing.
+
+
+Bug List 8
+1. Heroes - All the screens
+	a. All Heroes, Merge and Powers - In the main hero screen, there is a number icon on top right, it is not needed.
+	b. In the All Heroes, Merge, Powers Pop up Screen as well top right there is numbers, it is not needed for each of them.
+	c. In All heroes, It seemse the i icon gives a new pop up, it should redirect to existing hero sheet already built, why a new pop up? it is not needed. When we go from main hero screen, back button from hero stat sheet takes from main sheet, when it is from all heroes, it comes back to all heroes.
+	d. In the Powers screen, the number increase the width to the card and have it centered aligned, now it is bottom left. number should remain center aligned as well.
+	e. back button from heroes, should take to World map if it originates from world map, if from level screen then goes to level screen.
+2. Level Screen
+	a. We do not need a tick mark on the green selection of relaxed, easy, normal, hard, insane. Increase the icon size and reduce the text size
+	b. Endless - Time Attack also should be green button but come up with a new icon for Time attack Play and keep play and time attack play at the same row.
+	c. Game pop up Time Attack or Endless in game run is not centered vertically.
+3. Game Play - Level 1 is 60 platforms, Level 2 to 5 are 75 platforms, 6 to 10 are 90 Platforms - 11 to 15 are 105 platforms, 16 to 20 are 120 platforms and 21 to 25 are 150 platforms. Review endless and timed attack as well in this way in terms of complexity. This should happen for all 5 open regions.
+4. Rewards - Looks like winning an award - overlaps music 2 times. have a look. Back icon is at bottom left, it should be at same place as all other screens like shop, world map, heroes, etc. And back from rewards should take to World map if it originates from world map, if from level screen then goes to level screen. In rewards, some of the text is going double lines which makes UI look bad, reduce font size. Pop up is too small for winning a chest make is 50% bigger.
+5. In the level select pop up before play - Look at each text it should be center aligned. Looked like Level 1 was not center aligned, check all screens. Then there is Circle, diamond, Star with numbers which I do not understand - what are they ask proper questions to explain me so i can decide.
+6. We had vX.Y.Z.B - We do not use Z at all - vX.Y.B can be used going forward.
+
+
+I would like to change the game name to "Fluffy Climbers: Tower Jump" Apart from changing repository name and folder name. Change everything
 
 For extreme clarity use askuserquestion as many times as you need for 100% clarity and continue asking to understand what I want. Run these in parallel sub-agents and background workers to execute faster. 

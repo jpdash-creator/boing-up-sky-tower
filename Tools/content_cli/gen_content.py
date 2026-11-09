@@ -107,7 +107,7 @@ COIN_PACKS = [  # (coins, gemsList, gemsPromo); owner table docs/22 4.2
 
 def gem_packs():
     return [{"id": "gempack_%d" % g, "gems": g, "usdList": ul, "usdPromo": up, "inrList": inr, "firstPurchaseDouble": g <= 1000,
-             "sku": "boingupskytower.gems.%d" % g, "badge": b} for g, ul, up, inr, b in GEM_PACKS]
+             "sku": "fluffyclimbers.gems.%d" % g, "badge": b} for g, ul, up, inr, b in GEM_PACKS]
 
 
 def coin_packs():

@@ -3,7 +3,7 @@
 // Rows listed in Legacy still carry the old hand-tuned stats (converted 1:1) and are not yet generated/measured; the generator removes an id from Legacy when it writes its row.
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>The physics of one hero (docs/44, HeroIndex): plain data.</summary>
     public sealed class HeroRow

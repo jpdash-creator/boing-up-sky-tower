@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>The rectangle every character sits in: a rounded box in the rarity colour with a seam (border) around it (docs/21).</summary>
     public static class RarityUi

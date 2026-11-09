@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Development-only "real player": a component that feeds the Run scene through the same input path as the touch pad

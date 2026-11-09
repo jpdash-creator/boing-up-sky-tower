@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Pure integer rules of the campaign coin payout and the milestone gems (owner, issue list 24 points 5 and 6, 2026-10-25).

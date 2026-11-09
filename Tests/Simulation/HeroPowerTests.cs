@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Hero powers (owner 2026-11-02, docs/34): a hero activation is a normal power-up activation of the same type for HeroPowerDurationPercent (60) percent of the time,

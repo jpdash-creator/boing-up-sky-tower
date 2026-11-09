@@ -1,12 +1,12 @@
 using System;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Monetization;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Monetization;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Settings admin tools, Reset Progress and Restore Purchases (docs/38).</summary>
     public class AdminSettingsTests

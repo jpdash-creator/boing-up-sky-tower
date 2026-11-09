@@ -1,4 +1,4 @@
-# Boing Up: Sky Tower - Asset Catalog (generated)
+# Fluffy Climbers: Tower Jump - Asset Catalog (generated)
 
 **Status:** planning only. Zero credits spent. Every batch below needs the owner's explicit approval (`.claude/rules/openart-credit-guardrail.md`).
 

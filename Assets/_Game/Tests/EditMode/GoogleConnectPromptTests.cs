@@ -1,9 +1,9 @@
 using System;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Bug List 1 B1.c: when the "connect Google in Settings" pop-up may show (guest, after a completed level, every 3 calendar days, once per session).</summary>
     public class GoogleConnectPromptTests
@@ -73,7 +73,7 @@ namespace BoingUpSkyTower.Tests
         public void ShowingStoresTheStampAndKeepsOldSavesLoadable()
         {
             var store = new MemorySaveStore();
-            var p = new ProgressService(BoingUpSkyTower.Content.ContentRepository.LoadFromResources(), store);
+            var p = new ProgressService(FluffyClimbers.Content.ContentRepository.LoadFromResources(), store);
             Assert.AreEqual("", p.Data.LastGooglePromptUtc);
             p.MarkGooglePromptShown(Now);
             Assert.AreEqual(0, GoogleConnectPrompt.DaysSinceLastPrompt(p.Data.LastGooglePromptUtc, Now));

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     // Timed gameplay (doc 46): Time, Pace, records, medals. PURE C# (no UnityEngine types) so dotnet tests cover it.
     // Time is kept in simulation ticks (60 per second), Pace as the rational floors x 60 / ticks and is only ever compared by

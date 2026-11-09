@@ -44,14 +44,19 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0",
-    "com.alttester.sdk": "2.3.2"
+    "com.alttester.sdk": "2.3.2",
+    "com.google.ads.mobile": "11.6.0",
+    "com.google.play.games": "2.3.0"
   },
   "scopedRegistries": [
     {
       "name": "OpenUPM",
       "url": "https://package.openupm.com",
       "scopes": [
-        "com.alttester"
+        "com.alttester",
+        "com.google.ads.mobile",
+        "com.google.play.games",
+        "com.google.external-dependency-manager"
       ]
     }
   ]

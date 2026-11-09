@@ -1,8 +1,8 @@
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests.EditModeTests
+namespace FluffyClimbers.Tests.EditModeTests
 {
     /// <summary>CUX-5 / CUX-6: contrast of the fixed colour combinations, accessibility settings and haptics gating.</summary>
     [Category("CriticalUX")]

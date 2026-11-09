@@ -1,10 +1,10 @@
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Doc 22 point 9: revive prices (5 then 10 gems), one free ad revive with the first revive, charges only after success.</summary>
     public class ReviveTests

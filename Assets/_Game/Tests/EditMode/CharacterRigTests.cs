@@ -1,9 +1,9 @@
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>The character parts, the roster and the chest rolls (gear and the inventory were removed 2026-10-24).</summary>
     public class CharacterRigTests

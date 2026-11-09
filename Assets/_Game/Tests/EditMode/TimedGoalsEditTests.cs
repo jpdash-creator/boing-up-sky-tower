@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Reward time goals (doc 46 section 8) and the medal target data: the Daily, Weekly and Main goals read the timed counters and gold medals, pay the existing

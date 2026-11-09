@@ -15,7 +15,7 @@ Source: owner posted three reference screenshots of a polished mobile game (load
 
 ## C. Structure
 - Host character: Momo, a different painted scene per screen (shopkeeper counter, map explorer scene, ...); these are scene paintings, not equipment.
-- Logo: original OpenArt wordmark "BOING UP / SKY TOWER" with Momo bouncing through it, 2 candidates to pick from.
+- Logo: original OpenArt wordmark "FLUFFY CLIMBERS / TOWER JUMP" with Momo bouncing through it, 2 candidates to pick from.
 - Persistent 5-tab bottom bar: Shop, Chests, PLAY (centre, biggest), Characters, Rewards; selected tab yellow with a label; blue back button on sub-screens; red badge for news. (The former Gear tab became Chests and the Daily tab became Rewards; gear was removed 2026-10-24 and 2026-11-01, docs 20, 26.)
 - Top currency bar: three dark rounded pills: Coins, Gems, total Stars.
 - Loading screen: full-bleed key art (Momo, tower, floating power-ups), logo, real progress bar tied to asset warm-up, rotating one-line tip, Momo bounce.

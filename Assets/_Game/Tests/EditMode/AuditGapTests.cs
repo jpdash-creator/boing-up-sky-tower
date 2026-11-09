@@ -1,9 +1,9 @@
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Audit gaps of the doc 46 timed goals: Rewards icons of the new goals and the Time Attack record line of the Endless popup.</summary>
     public class AuditGapTests

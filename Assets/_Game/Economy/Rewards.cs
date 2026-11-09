@@ -1,8 +1,8 @@
 using System;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Tunables that doc 08 leaves open. Defaults are assumptions; they will move to Remote Config.</summary>
     public static class EconomyRules

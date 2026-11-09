@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Owner report 2026-10-21: gems and stars sometimes sit in the same place and overlap. Stars and gems must keep a visible gap.</summary>
     public class PickupOverlapTests

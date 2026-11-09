@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>The pure rules of the Shop hero cards (Bug List 4 E2): the one price table, the pick among open-region heroes of the right rarity, repeatable rolls, the tier info lines.</summary>
     public class HeroPurchaseRulesTests

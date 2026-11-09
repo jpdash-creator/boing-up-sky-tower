@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// The hidden hero card inside every bundle (owner Bug List 1 B4.a.iii, docs/37-bundles.md). Pure rules, no Unity types, so the simulation test project compiles it too.

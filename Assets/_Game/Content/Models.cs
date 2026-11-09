@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace BoingUpSkyTower.Content
+namespace FluffyClimbers.Content
 {
     // Property names match Content/*.json exactly. Unknown JSON members are an error (see ContentRepository).
 

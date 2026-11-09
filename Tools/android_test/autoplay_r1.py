@@ -23,8 +23,8 @@ import sys
 import threading
 import time
 
-PKG = "com.jdlabs.boingupskytower"
-APK = "E:/Unity/builds/boingupskytower.apk"
+PKG = "com.jdlabs.fluffyclimbers"
+APK = "E:/Unity/builds/fluffyclimbers.apk"
 SHOTS = "E:/Unity/device_shots"
 QA = "E:/Unity/qa"
 FLAG = "autoplay.json"

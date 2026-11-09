@@ -1,7 +1,7 @@
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Shop tab bar of Bug List 1 section 4: exactly four tabs, Bundles | Crown (Subscription + Chests) | Character / Power-ups | Gems / Coins; Heroes and

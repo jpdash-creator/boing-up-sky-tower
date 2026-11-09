@@ -1,9 +1,9 @@
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Dev flags GAME_JUMP_TEST and SYSTEM_TEST (docs/23) and Capi (region 2 hero) who stays hidden until region 2 is unlocked.</summary>
     public class FlagTests

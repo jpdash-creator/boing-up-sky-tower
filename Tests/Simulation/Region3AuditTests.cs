@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Owner report (QA region 3): a drifting platform swung through the platform beside it on the same row, so two platforms looked stacked and one could be touched inside the other. Region 3 (Sunny Beach, drifting platforms) audit: swing-aware overlap and pickup/platform checks.</summary>
     public class Region3AuditTests

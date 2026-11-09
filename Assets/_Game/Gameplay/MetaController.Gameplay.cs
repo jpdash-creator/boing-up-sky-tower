@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Gameplay setting on the level screen (Bug List 6 item 6): a centred row of five buttons (Relaxed, Easy, Normal, Hard, Insane), each an icon plus its

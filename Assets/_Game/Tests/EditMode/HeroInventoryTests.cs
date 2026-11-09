@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Reflection;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Character inventory (hidden master list) versus hero inventory (the player's heroes with copies), docs/36.</summary>
     public class HeroInventoryTests

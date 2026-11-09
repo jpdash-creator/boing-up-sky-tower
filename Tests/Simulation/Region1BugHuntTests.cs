@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Region 1 (Meadow Springs) bug hunt, 2026-10-24. Each test pins one finding:

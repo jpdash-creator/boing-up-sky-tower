@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>First-purchase double of the gem packs (docs/22 4.1). Switch OFF by default; the flag is stored per pack in the account's save.</summary>
     public sealed partial class ProgressService

@@ -1,4 +1,4 @@
-# Boing Up: Sky Tower - project guide for Claude
+# Fluffy Climbers: Tower Jump - project guide for Claude
 
 2D vertical-jumper for Android + iOS. Unity 6 LTS (C#), 2D URP. Data-driven: regions, levels, items and offers are JSON plus asset bundles, never hardcoded in scenes.
 
@@ -18,6 +18,7 @@ User experience and accessibility are critical. Gameplay must be seamless and ne
 - **IDs are permanent:** content IDs (`region_021_dragon_peak`, `lvl_021_01`, `pw_flight`) never change once shipped.
 - **No allocations** in gameplay loops. Pool platforms and particles.
 - Behaviour is code (rare app updates); content is data + bundles (frequent). Only assets and data are downloaded, never code.
+- **Legal documents (owner, 2026-11-09):** `POLICY.md` (privacy policy) and `TERMS.md` (terms of use) at the repo root are the public, store-facing documents; `Docs/LEGAL-HOSTING.md` has the hosting steps, the Play Console mapping and the release blockers they assume (UMP consent prompt, in-app policy links, chest odds in the (i) popup, receipt validation, admin code). Any change that touches data handling (new SDK, permission, analytics, server, notifications, ad network, product kind, cloud feature, age handling) updates both files and their "Last updated" date in the same change, before the build ships. The documents say: not directed to children under 13, publisher J. P. Dash (Bengaluru, India), contact jpdash.creator@gmail.com, ads non-personalised by default, no own server.
 
 ## Layout
 ```
@@ -73,7 +74,7 @@ Open items waiting on the owner are logged in `.claude/pendingdecisions/` (asset
 C# 9+, assembly definitions per module, DI via VContainer or a small service locator plus an event bus, no scattered singletons. Tests: EditMode for pure logic, a Simulation suite with golden replays. Art follows `Art/<Class>/<id>_<layer>.png`, lowercase snake_case, prompts and seeds logged in `assets_log.csv`.
 
 ## Device testing (Android)
-`Tools/unity_tests.ps1 -Platform PlayMode|EditMode` runs the Unity tests and prints failures. `Assets/Editor/Build/AndroidBuild.cs` builds the development APK (`-executeMethod BoingUpSkyTower.Editor.Build.AndroidBuild.BuildFromCommandLine`, output `E:/Unity/builds/boingupskytower.apk`). `python Tools/android_test/smoke_test.py` installs it on the connected phone (the phone asks to confirm each install), walks every screen, plays, and checks layout and frame time through the in-game TestBridge (development builds only). `Tools/android_test/bt.py` is the reusable adb driver (find by text, tap, hold, screenshot); `TestBridge` prints `BTSTATE {...}` (version, scene, fps, run state) and `BTUI {...}` (visible UI elements with screen rectangles) to logcat. AltTester (SDK 2.3.2 in `Packages/manifest.json`, Python driver and Desktop on E:) is being added by a separate task (T26) next to this kit. Settings has "Test: all levels open" (development builds only, default on) so every level of the 5 regions can be reached while testing. Owner feedback and decisions: `.claude/pendingdecisions/device-feedback-2026-10-19.md`.
+`Tools/unity_tests.ps1 -Platform PlayMode|EditMode` runs the Unity tests and prints failures. `Assets/Editor/Build/AndroidBuild.cs` builds the development APK (`-executeMethod FluffyClimbers.Editor.Build.AndroidBuild.BuildFromCommandLine`, output `E:/Unity/builds/fluffyclimbers.apk`). `python Tools/android_test/smoke_test.py` installs it on the connected phone (the phone asks to confirm each install), walks every screen, plays, and checks layout and frame time through the in-game TestBridge (development builds only). `Tools/android_test/bt.py` is the reusable adb driver (find by text, tap, hold, screenshot); `TestBridge` prints `BTSTATE {...}` (version, scene, fps, run state) and `BTUI {...}` (visible UI elements with screen rectangles) to logcat. AltTester (SDK 2.3.2 in `Packages/manifest.json`, Python driver and Desktop on E:) is being added by a separate task (T26) next to this kit. Settings has "Test: all levels open" (development builds only, default on) so every level of the 5 regions can be reached while testing. Owner feedback and decisions: `.claude/pendingdecisions/device-feedback-2026-10-19.md`.
 
 
 ## Build versioning

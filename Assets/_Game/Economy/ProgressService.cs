@@ -1,7 +1,7 @@
 using System;
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     public enum SkipResult
     {
@@ -250,7 +250,7 @@ namespace BoingUpSkyTower.Economy
         /// </summary>
         public int[] BuildRunStock()
         {
-            var stock = new int[BoingUpSkyTower.Simulation.PowerUps.MaxType + 1];
+            var stock = new int[FluffyClimbers.Simulation.PowerUps.MaxType + 1];
             foreach (PowerUpDef def in PowerUpDefs.Implemented)
             {
                 if (!IsPowerUpUnlocked(def)) continue;
@@ -382,7 +382,7 @@ namespace BoingUpSkyTower.Economy
 
             LevelProgress before = GetProgress(levelId);
             RewardResult reward = RewardCalculator.Compute(level, region, run, before);
-            BoingUpSkyTower.Simulation.CharacterStats finds = CharacterDefs.ActiveStats();   // docs/44: flat per cleared level, 0 for every current hero
+            FluffyClimbers.Simulation.CharacterStats finds = CharacterDefs.ActiveStats();   // docs/44: flat per cleared level, 0 for every current hero
             if (finds.CoinFind > 0) reward.PayoutCoins += finds.CoinFind;
             if (finds.GemFind > 0) reward.RewardGems += finds.GemFind;
             // docs/44: the hero's "Run bonus", paid at the end of every completed run (meta reward only, the sim never sees it)

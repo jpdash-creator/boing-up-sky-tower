@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Region 2 (Mushroom Grove) has ONE ACTIVE hero line, Capi, at all five tiers (owner Bug List 6, 2026-11-09: the four extra Common lines of this region and their tiers are inactive always):

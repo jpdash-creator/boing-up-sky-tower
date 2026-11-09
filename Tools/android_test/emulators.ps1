@@ -1,5 +1,5 @@
 <#
-Android emulator helper for Boing Up: Sky Tower (see EMULATORS.md).
+Android emulator helper for Fluffy Climbers: Tower Jump (see EMULATORS.md).
 
   .\emulators.ps1 list
   .\emulators.ps1 create                      # (re)creates the standard AVDs
@@ -14,7 +14,7 @@ Android emulator helper for Boing Up: Sky Tower (see EMULATORS.md).
 param(
     [Parameter(Position = 0)][ValidateSet('list', 'create', 'start', 'install', 'launch', 'shot', 'stop', 'run', 'matrix')][string]$Cmd = 'list',
     [Parameter(Position = 1)][string]$Avd,
-    [string]$Apk = 'E:\Unity\builds\boingupskytower.apk',
+    [string]$Apk = 'E:\Unity\builds\fluffyclimbers.apk',
     [string]$Out,
     [switch]$Headless,
     [switch]$Clear,
@@ -29,7 +29,7 @@ $env:ANDROID_AVD_HOME = 'E:\dev-tools\avd'
 $Adb = Join-Path $Sdk 'platform-tools\adb.exe'
 $Emu = Join-Path $Sdk 'emulator\emulator.exe'
 $Avdm = Join-Path $Sdk 'cmdline-tools\latest\bin\avdmanager.bat'
-$Pkg = 'com.jdlabs.boingupskytower'
+$Pkg = 'com.jdlabs.fluffyclimbers'
 $ShotDir = 'E:\Unity\shots'
 
 # name -> @(system image api, width, height, density, extra config)

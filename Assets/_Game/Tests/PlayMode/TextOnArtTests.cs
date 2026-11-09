@@ -1,17 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Issue list 24, point 1 (name tags, no cut letters). Every text that sits on a backing (region name tags on the world map, shop badges,

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The multi-section pages of the shop (owner issue 35; Bug List 1 section 4; docs/26 section 8). Crown is ONE scrollable page: the fixed yellow banner

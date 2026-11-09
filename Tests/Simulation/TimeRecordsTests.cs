@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Text;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Timed gameplay (doc 46 section 11): Time and Pace maths and text, the exact Pace comparison, medals, the run-length input code,

@@ -1,0 +1,19 @@
+{
+  "name": "FluffyClimbers.Services.UnityIap",
+  "rootNamespace": "FluffyClimbers.Monetization",
+  "references": [
+    "FluffyClimbers.Services",
+    "Unity.Purchasing"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "FLUFFY_UNITY_IAP"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

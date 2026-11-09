@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     public enum ChestKind
     {

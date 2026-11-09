@@ -1,23 +1,23 @@
 using System;
 using System.IO;
 using System.Linq;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Gameplay;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Editor
+namespace FluffyClimbers.Editor
 {
     /// <summary>
     /// Fills Assets/Resources/ArtCatalog.asset from the sliced art in Assets/Art (see Assets/Art/NOTES.md).
-    /// Menu: Tools/Boing Up: Sky Tower/Build Art Catalog. Headless: -executeMethod BoingUpSkyTower.Editor.ArtCatalogBuilder.BuildFromCommandLine
+    /// Menu: Tools/Fluffy Climbers: Tower Jump/Build Art Catalog. Headless: -executeMethod FluffyClimbers.Editor.ArtCatalogBuilder.BuildFromCommandLine
     /// </summary>
     public static class ArtCatalogBuilder
     {
         const string Art = "Assets/Art";
         const string AssetPath = "Assets/Resources/ArtCatalog.asset";
 
-        [MenuItem("Tools/Boing Up: Sky Tower/Build Art Catalog")]
+        [MenuItem("Tools/Fluffy Climbers: Tower Jump/Build Art Catalog")]
         public static void Build()
         {
             AssetDatabase.Refresh();
@@ -212,7 +212,7 @@ namespace BoingUpSkyTower.Editor
                 if (!File.Exists(json)) continue;
                 JObject root = JObject.Parse(File.ReadAllText(json));
                 if (root["kind"] == null) continue;   // reg00N_widths (normal, crumble, moving, bounce) is loaded above
-                BoingUpSkyTower.Simulation.PlatformKind kind;
+                FluffyClimbers.Simulation.PlatformKind kind;
                 if (!Enum.TryParse((string)root["kind"], true, out kind)) { Debug.LogWarning("[ArtCatalog] Unknown platform kind in " + json); continue; }
                 foreach (JToken pc in (JArray)root["pieces"])
                 {
@@ -233,16 +233,16 @@ namespace BoingUpSkyTower.Editor
                     if ((int)kind > maxKind) maxKind = (int)kind;
                 }
                 JToken logTok = root["log"];   // Rolling Log (region 5): the log object of the set, a sprite file next to the track pieces
-                if (logTok != null && kind == BoingUpSkyTower.Simulation.PlatformKind.RollingLog)
+                if (logTok != null && kind == FluffyClimbers.Simulation.PlatformKind.RollingLog)
                     ra.RollingLog = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)logTok["file"]);
                 JToken knob = root["knob"];
-                if (knob != null && kind == BoingUpSkyTower.Simulation.PlatformKind.Seesaw)
+                if (knob != null && kind == FluffyClimbers.Simulation.PlatformKind.Seesaw)
                 {
                     ra.SeesawKnob = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)knob["file"]);
                     ra.SeesawKnobTopDropPx = (float)knob["topDropPx"];
                 }
                 JToken stem = root["stem"];
-                if (stem != null && kind == BoingUpSkyTower.Simulation.PlatformKind.SproutLift)
+                if (stem != null && kind == FluffyClimbers.Simulation.PlatformKind.SproutLift)
                 {
                     ra.SproutStem = AssetDatabase.LoadAssetAtPath<Sprite>(dir + "/" + (string)stem["file"]);
                     ra.SproutStemTopDropPx = (float)stem["topDropPx"];

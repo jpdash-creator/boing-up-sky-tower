@@ -1,10 +1,10 @@
 using System;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Run screen layout (CUX-3: the HUD and the pads never cover the player, the next platforms or a hazard). The screen is split into a TOP strip (wallet row, gauge and stars)

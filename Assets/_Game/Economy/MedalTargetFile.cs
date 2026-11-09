@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// The medal target data file (doc 46 section 6): Content/config/medal_targets.json, written by the calibration test

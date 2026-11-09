@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     public enum ProductKind
     {
@@ -43,13 +43,13 @@ namespace BoingUpSkyTower.Monetization
 
     /// <summary>
     /// THE central list of every real-money product (docs/33-ids-ads-payments.md). Id format:
-    /// com.jdlabs.boingupskytower.CATEGORY.NAME in lowercase letters, digits and underscores (valid for Google Play and App Store).
+    /// com.jdlabs.fluffyclimbers.CATEGORY.NAME in lowercase letters, digits and underscores (valid for Google Play and App Store).
     /// Only gem packs and the two subscriptions are sold for money today (chests, bundles, coin packs and power-ups cost gems).
     /// Keep the prices identical to ShopCatalog.BuiltInGemPacks and SubscriptionCatalog.BuiltIn (a unit test checks it).
     /// </summary>
     public static class ProductCatalog
     {
-        public const string Prefix = "com.jdlabs.boingupskytower.";
+        public const string Prefix = "com.jdlabs.fluffyclimbers.";
 
         public const string Gems50 = Prefix + "gems.pack_50";
         public const string Gems100 = Prefix + "gems.pack_100";

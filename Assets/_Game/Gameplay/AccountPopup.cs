@@ -1,10 +1,10 @@
 using System;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Monetization;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Monetization;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Account pop-up opened by the round account button on Home (owner issue 35.3, docs/35 section 8). Three states: Guest (Sign in with Google Play),

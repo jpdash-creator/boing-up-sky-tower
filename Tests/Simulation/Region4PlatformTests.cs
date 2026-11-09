@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Doc 30 section 5 (owner list 34): the seven region 4 (Candy Canyon) special platforms: Candy Bowl, Floss Glide, Fizz Vent, Licorice Belt,

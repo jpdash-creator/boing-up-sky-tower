@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Endless mode (T13): deterministic tower, reachable gaps, prefix stability, bot climbs in every region.</summary>
     public class EndlessTests
@@ -190,7 +190,7 @@ namespace BoingUpSkyTower.Simulation.Tests
     }
 }
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Owner 2026-10-24: the endless tower follows the campaign rules too (painted widths only, nothing stretched, no touching platforms).</summary>
     public class EndlessPaintedWidthTests

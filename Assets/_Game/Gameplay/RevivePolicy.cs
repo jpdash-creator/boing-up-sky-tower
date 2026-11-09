@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Revive schedule of ONE run (owner list 2026-11-02, item 4; new state for every run, see docs/32-revive-and-ads.md). Pure C#, no Unity types.

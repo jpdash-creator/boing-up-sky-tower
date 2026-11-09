@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Pins the exact LevelData hash of all 125 levels of regions 1-5 in Content/golden/level_hashes_r1-5.txt.

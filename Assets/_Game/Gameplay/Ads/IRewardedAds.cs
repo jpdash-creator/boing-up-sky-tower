@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// One rewarded-ad provider. <see cref="Show"/> calls <c>onFinished(true)</c> only when the ad was watched to the reward point;

@@ -1,0 +1,30 @@
+title: Fluffy Climbers
+description: Fluffy Climbers: Tower Jump, a 2D vertical-jumping arcade game
+theme: jekyll-theme-minimal
+plugins:
+  - jekyll-optional-front-matter
+include:
+  - POLICY.md
+  - TERMS.md
+  - index.md
+exclude:
+  - Art
+  - Assets
+  - Content
+  - Docs
+  - Item List to do
+  - Library
+  - Logs
+  - Packages
+  - ProjectSettings
+  - Temp
+  - Tests
+  - Tools
+  - UserSettings
+  - README.md
+  - CLAUDE.md
+  - PRODUCT.md
+  - LICENSE
+  - "*.whl"
+  - "*.tar.gz"
+  - "*.meta"

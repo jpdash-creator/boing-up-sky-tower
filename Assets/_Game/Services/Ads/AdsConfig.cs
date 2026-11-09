@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
     /// LevelPlay credentials from Resources/Services/ads_config.json: {"appKey","rewardedAdUnitId","testMode"}. The shipped file holds

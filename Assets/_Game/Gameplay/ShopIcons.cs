@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The two merged bottom-bar icons of the shop (Bug List 1, 4c to 4e): <see cref="CharacterPower"/> (Character / Power-ups) and <see cref="GemsCoins"/>

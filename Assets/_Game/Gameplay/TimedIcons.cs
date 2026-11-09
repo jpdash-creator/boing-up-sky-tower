@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Code-drawn icons of the timed gameplay (Bug List 8 item 2b, owner choice: code-drawn, 0 credits). <see cref="Stopwatch"/> is the Time Attack play icon: a ring with a

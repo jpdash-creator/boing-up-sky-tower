@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Power-up types (docs/15 section 3.2). The numeric ids are stable (saved loadouts and replays use them).

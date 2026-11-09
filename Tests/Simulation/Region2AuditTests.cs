@@ -5,7 +5,7 @@ using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Region 2 (Mushroom Grove) QA: platform overlap with swing, pickups inside platform bodies, star targets versus supply. Category Audit.</summary>
     [Trait("Category", "Audit")]

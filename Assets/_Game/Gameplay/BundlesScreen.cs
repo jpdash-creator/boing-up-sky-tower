@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Bundles page of the shop (docs/26 section 3, docs/37; owner issue list 28 and Bug List 1 B4.a): a fixed "Refresh Bundles" header (ribbon, caption, two refresh buttons:

@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>Dev/editor payments: every known product succeeds at once (no money moves). Used when Unity IAP is not compiled in.</summary>
     public sealed class StubPaymentService : IPaymentService

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json.Linq;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>One sellable power-up (docs/15 section 3.2, Content/economy/powerups.json). Effect numbers live in SimConfig.</summary>
     public sealed class PowerUpDef

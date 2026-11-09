@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The chunky toy-plate UI kit (docs/16, picked by the owner 2026-10-23): painted buttons, panels, pill, badge, tab bar and logo

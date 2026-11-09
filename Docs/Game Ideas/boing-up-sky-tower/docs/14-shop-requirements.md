@@ -115,7 +115,7 @@ All cross-checks (value per dollar, dollars per gem, time to afford) are in **do
 | C-5 | VIP gems undercut packs. | **Superseded:** VIP removed; the subscription is cheaper per gem than packs on purpose (doc 27 RC 6). |
 | C-6 | Free gem inflow vs packs. | Open: rewards, not pickups, are the faucet (doc 27 findings 1 and 2). |
 | C-7 | A list price never charged may mislead. | Open (verify): the promo is off, so list is the real price. |
-| C-8 | One store product has one price (promo SKU). | Open for billing: SKUs `boingupskytower.gems.<n>` exist; promo SKU `.launch` is Planned. |
+| C-8 | One store product has one price (promo SKU). | Open for billing: SKUs `fluffyclimbers.gems.<n>` exist; promo SKU `.launch` is Planned. |
 | C-9 | Skips and revives sold to someone who can buy a large pack. | Accepted. |
 
 ## 6. Purchase flows

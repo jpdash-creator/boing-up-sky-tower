@@ -1,9 +1,9 @@
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests.EditModeTests
+namespace FluffyClimbers.Tests.EditModeTests
 {
     /// <summary>Bug List 6 item 6: the Gameplay setting (Relaxed, Easy, Normal, Hard, Insane) now lives on the level screen; step sizes 20/22/25/28/30 percent.</summary>
     public class GameplaySettingTests

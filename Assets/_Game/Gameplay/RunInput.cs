@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Supplies the input word (SimInput bits) for each simulation tick. Used by the development-only Autopilot.</summary>
     public interface IInputSource

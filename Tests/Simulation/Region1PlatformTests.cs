@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Doc 24 (owner issue list 26): the seven region 1 special platforms, their placement rules, the level 3 to 15 difficulty ramp and endless mode.

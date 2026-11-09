@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Owner decision 2026-11-05 ("Fix the limit now"): endless can be PLAYED to floor 100000 and beyond. The played tower is an EndlessWorld: a Stream tower whose heights are

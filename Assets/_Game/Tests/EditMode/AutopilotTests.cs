@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>The Autopilot's decision code (planner bridge, brain, stack counter, CSV / JSON writers). No scene needed.</summary>
     public class AutopilotTests

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Draws a RunSession with SpriteRenderers (no gameplay logic here: it only reads the Sim state).

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Powers tab of the Heroes screen (Bug List 6 item 3a): ALL 7 power-ups as cards in the look of the All Heroes grid (3 to a row, scrolling, the Merge screen's background and header),

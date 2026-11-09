@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// Pure rules of the hidden ADMIN tools (docs/38-settings-admin.md): who may see the Admin button, how the hidden code is checked, and the

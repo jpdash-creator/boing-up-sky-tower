@@ -1,4 +1,4 @@
-"""Boing Up: Sky Tower content CLI.
+"""Fluffy Climbers: Tower Jump content CLI.
 
 Usage (from the repo root):
     python Tools/content_cli/content.py validate

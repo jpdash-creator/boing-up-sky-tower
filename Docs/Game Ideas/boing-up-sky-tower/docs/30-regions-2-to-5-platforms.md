@@ -309,7 +309,7 @@ Baked (no Unity needed) by `Tools/art_pipeline/bake_region3_new_platforms.py`, s
 | KelpTangle | 2, 3, 4, 6 u | |
 | PufferfishPad | 3, 4, 6 u x pose calm (-1) / swelling (+1) / puffed (+2) | glossy highlights painted out of the calm and swelling rows so they do not repeat |
 
-View: `RunView` (posed kinds: Spore Pop, Clam open when `(tick + Phase) % 144 < 72` via `Sim.ClamOpen`, Pufferfish calm / swelling / puffed via `Sim.PufferPhase`; turtle x from `PlatformX`, raft y from `PlatformY`) and `SpecialPlatformFx` (turtle faces its next glide, placeholder tints). Catalog: `ArtCatalogBuilder.LoadKindPieces` already reads every `*_widths` folder; run **Tools/Boing Up: Sky Tower/Build Art Catalog** once so `RegionArt.KindPieces` of region 3 is filled. No code-drawn cues.
+View: `RunView` (posed kinds: Spore Pop, Clam open when `(tick + Phase) % 144 < 72` via `Sim.ClamOpen`, Pufferfish calm / swelling / puffed via `Sim.PufferPhase`; turtle x from `PlatformX`, raft y from `PlatformY`) and `SpecialPlatformFx` (turtle faces its next glide, placeholder tints). Catalog: `ArtCatalogBuilder.LoadKindPieces` already reads every `*_widths` folder; run **Tools/Fluffy Climbers: Tower Jump/Build Art Catalog** once so `RegionArt.KindPieces` of region 3 is filled. No code-drawn cues.
 
 Open points for the owner:
 - **Sandcastle riser**: the painted step is only 0.16 to 0.23 u high (with the platform 0.5 u thick), but `SimConfig.SandcastleRise` is 0.9 u. Either set `SandcastleRise` to about 0.2 u or ask for a taller-step sheet; at 0.9 u the player would hover above the raised half.

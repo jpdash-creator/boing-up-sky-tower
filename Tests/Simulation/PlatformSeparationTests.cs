@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Owner issue 15 (Sunny Beach level 7): two platforms sat together and read as one broken image. Platforms near the same height keep a visible gap.</summary>
     public class PlatformSeparationTests

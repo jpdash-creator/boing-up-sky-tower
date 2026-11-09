@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     public enum CharacterRarity
     {

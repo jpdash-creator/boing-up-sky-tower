@@ -75,7 +75,7 @@ Because the budget is lean, I recommend launching with fewer *playable* regions 
 | Placeholder or unverified art (platform sets for regions 2-5, map segments, popup frame) | Visual quality | Owner verifies picks; every OpenArt batch needs an approval packet (credit guardrail) |
 
 ## Open items I could still clarify later (not blockers)
-1. Mascot approval (placeholder: Momo). Game name is **Boing Up: Sky Tower** (chosen); still run trademark and app-store availability checks.
+1. Mascot approval (placeholder: Momo). Game name is **Fluffy Climbers: Tower Jump** (chosen); still run trademark and app-store availability checks.
 2. Target launch countries and languages beyond the first five.
 3. ~~Whether to start with 20 live regions or the leaner 8-10 launch~~ Decided: 20, with 8-10 as fallback at the Phase 4 checkpoint.
 4. Mac access for iOS builds (own, cloud or CI).

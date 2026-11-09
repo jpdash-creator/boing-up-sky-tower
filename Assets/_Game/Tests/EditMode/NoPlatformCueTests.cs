@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests.EditModeTests
+namespace FluffyClimbers.Tests.EditModeTests
 {
     /// <summary>
     /// Owner decision 2026-11-01 (issue list 30 item 3, overrides the telegraph part of CUX-6 / CUX-7): platform behaviour is discovered by the player,

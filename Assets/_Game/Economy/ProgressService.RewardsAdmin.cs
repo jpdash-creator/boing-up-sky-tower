@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// Admin "Main rewards" test switch (docs/38, Bug List 4 E3): every Main-tab region goal (all goals of regions 1 to 5) reads as complete but

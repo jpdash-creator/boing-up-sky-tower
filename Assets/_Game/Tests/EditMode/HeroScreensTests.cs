@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Bug List 5 F2 (docs/34 section 10): the Merge list (only mergeable types, one card per copy, no numbers), the selection rule (exactly 3 of one hero type), the list cleaning after

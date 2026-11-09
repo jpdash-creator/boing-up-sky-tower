@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The icon of each Gameplay setting button on the level screen (Relaxed, Easy, Normal, Hard, Insane; Bug List 6 item 6). ONE hook: <see cref="For"/>.

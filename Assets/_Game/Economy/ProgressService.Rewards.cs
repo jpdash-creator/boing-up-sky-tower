@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Counters and claims of one reward period: a local day (Key = yyyyMMdd) or a week (Key = the Monday, yyyyMMdd).</summary>
     public sealed class RewardPeriod

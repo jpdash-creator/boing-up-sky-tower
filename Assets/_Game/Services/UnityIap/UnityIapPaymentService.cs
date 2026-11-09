@@ -1,13 +1,13 @@
-#if BOING_UNITY_IAP
+#if FLUFFY_UNITY_IAP
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Purchasing;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
-    /// Real purchases through Unity IAP v5 (com.unity.purchasing 5.x, StoreController API). Compiled only with the define BOING_UNITY_IAP.
+    /// Real purchases through Unity IAP v5 (com.unity.purchasing 5.x, StoreController API). Compiled only with the define FLUFFY_UNITY_IAP.
     /// Flow: Connect, FetchProducts(ProductCatalog Live products), PurchaseProduct, OnPurchasePending, the game grants inside the
     /// Purchase callback, then ConfirmPurchase. A purchase found at start-up with no waiting callback (app killed mid-purchase) is reported
     /// through RecoveredPurchase; with no subscriber it is left unconfirmed, so the store re-delivers it next launch (nothing is lost).

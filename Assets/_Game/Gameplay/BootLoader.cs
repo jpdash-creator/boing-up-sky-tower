@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Boot scene: the loading screen (sky background, logo, Momo, a green progress bar tied to the real warm-up steps and a rotating tip), then
@@ -55,7 +55,7 @@ namespace BoingUpSkyTower.Gameplay
             }
             else
             {
-                Text title = UiKit.AddText(safe, "Title", "BOING UP: SKY TOWER", 120, Color.white);
+                Text title = UiKit.AddText(safe, "Title", "FLUFFY CLIMBERS\nTOWER JUMP", 120, Color.white);
                 UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -260f), new Vector2(1000f, 160f));
             }
             if (art != null)

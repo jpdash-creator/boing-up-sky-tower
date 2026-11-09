@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>One card of the All Heroes screen: a real character, or a placeholder for a tier that has no hero data yet (Rare, Elite, Legendary).</summary>
     public sealed class AllHeroEntry

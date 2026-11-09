@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Endless mode world (owner decision 2026-10-20): a tower of one region's look and platform rules that never ends.

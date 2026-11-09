@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// The HERO INVENTORY (docs/36): the heroes one player (account or guest) owns, with a copy count per character id. It is a view over the save

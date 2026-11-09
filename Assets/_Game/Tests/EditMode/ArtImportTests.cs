@@ -1,10 +1,10 @@
 using System.IO;
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     // Checks the sliced Tier 1 art (roadmap T1) is present and imports as mobile-ready sprites.
     public class ArtImportTests

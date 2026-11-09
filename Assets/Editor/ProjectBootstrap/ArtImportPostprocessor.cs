@@ -153,6 +153,7 @@ namespace ProjectBootstrap
             if (assetPath.StartsWith("Assets/Resources/Art/PowerUps/")) { ApplyIcon((TextureImporter)assetImporter); return; }
             if (assetPath.StartsWith("Assets/Resources/Art/HeroSheet/")) { ApplyRewards((TextureImporter)assetImporter); return; }   // hero sheet plates (slices.json): plain FullRect sprites, the game sets the 9-slice borders by code
             if (assetPath.StartsWith("Assets/Resources/Art/Rewards/")) { ApplyRewards((TextureImporter)assetImporter); return; }
+            if (assetPath.StartsWith("Assets/Art/AppIcon/")) return;   // app icons are configured by AppIconSetup (plain textures, not sprites)
             if (!assetPath.StartsWith("Assets/Art/")) return;
             var ti = (TextureImporter)assetImporter;
             ti.textureType = TextureImporterType.Sprite;

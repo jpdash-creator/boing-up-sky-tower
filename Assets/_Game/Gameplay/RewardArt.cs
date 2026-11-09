@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Calls back once per frame while the Rewards screen lives (the countdown and the midnight / Monday rollover). Removed with the screen.</summary>
     public sealed class RewardsTicker : MonoBehaviour

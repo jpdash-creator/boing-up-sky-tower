@@ -24,7 +24,7 @@ BASE = "https://opengameart.org"
 
 
 def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (BoingUp asset check)"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (FluffyClimbers asset check)"})
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read()
 

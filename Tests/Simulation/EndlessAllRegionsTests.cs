@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Owner requirement 2026-11-02: endless mode in ALL five regions uses all of that region's platforms (its new set, its signature platform and the

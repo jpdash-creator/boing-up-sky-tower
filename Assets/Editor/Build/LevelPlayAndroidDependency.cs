@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using UnityEditor.Android;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Editor.Build
+namespace FluffyClimbers.Editor.Build
 {
     /// <summary>
     /// The Unity package com.unity.services.levelplay ships only the C# and Java bridge; the native LevelPlay Android SDK is normally added

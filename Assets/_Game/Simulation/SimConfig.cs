@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Physics and rules constants (doc 09 D4: prototype baselines, to be tuned then frozen).

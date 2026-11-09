@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Editor and development-build rewarded ads: grants at once and logs. Tests can switch availability, force a failure or

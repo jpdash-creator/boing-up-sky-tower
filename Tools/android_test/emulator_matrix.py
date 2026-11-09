@@ -44,7 +44,7 @@ PROFILES = {
 }
 DEFAULT_AVD = "emu_720x1280_9x16"
 DEFAULT_AVDS = ["emu_720x1280_9x16", "emu_1080x1920_9x16", "emu_1080x2400_9x20", "emu_1080x2520_9x21", "emu_1536x2048_3x4"]
-DEFAULT_APK = "E:/Unity/builds/boingupskytower_v0.42.0.48_x86.apk"
+DEFAULT_APK = "E:/Unity/builds/fluffyclimbers_v0.42.0.48_x86.apk"
 OUT_ROOT = "E:/Unity/device_shots/emulators"
 QA_DIR = "E:/Unity/qa"
 PORT = 5554
@@ -313,7 +313,7 @@ def logcat_issues(avd):
     pat = re.compile(r"FATAL EXCEPTION|ANR in |Fatal signal|NullReferenceException|IndexOutOfRange|Unity\s*:.*(Exception|error CS)|Unity\s*:\s*ERROR|Unity\s*:\s*\[?Error")
     seen, out = set(), []
     for l in raw.splitlines():
-        if "boingup" not in l.lower() and "Unity" not in l:
+        if "fluffyclimbers" not in l.lower() and "Unity" not in l:
             continue
         if pat.search(l):
             k = re.sub(r"^\S+ \S+ ", "", l)[:120]

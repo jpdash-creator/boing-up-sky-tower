@@ -1,8 +1,8 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Medals (doc 46 section 6): earned medals use the approved OpenArt art (Resources/Art/Ui/medal_bronze|silver|gold.png) when present; the code-drawn medals are the fallback and the hollow versions. The three tiers differ by SHAPE and by the number of pips, not only by colour:

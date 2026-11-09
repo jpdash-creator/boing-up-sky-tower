@@ -1,17 +1,17 @@
 using System;
 using System.IO;
 using System.Text;
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Editor.ContentSync
+namespace FluffyClimbers.Editor.ContentSync
 {
     /// <summary>
     /// Builds the offline fallback manifest Assets/Resources/Content/content_manifest.json from the Content/ source files.
-    /// Headless:  Unity.exe -batchmode -nographics -projectPath ... -executeMethod BoingUpSkyTower.Editor.ContentSync.ContentManifestBuilder.BuildFromCommandLine -logFile ...
+    /// Headless:  Unity.exe -batchmode -nographics -projectPath ... -executeMethod FluffyClimbers.Editor.ContentSync.ContentManifestBuilder.BuildFromCommandLine -logFile ...
     /// (run without -quit; the method exits itself: 0 ok, 1 error).
     /// </summary>
     public static class ContentManifestBuilder
@@ -22,7 +22,7 @@ namespace BoingUpSkyTower.Editor.ContentSync
         public static string ContentRoot { get { return Path.Combine(ProjectRoot, "Content"); } }
         public static string OutputFile { get { return Path.Combine(ProjectRoot, OutputAssetPath.Replace('/', Path.DirectorySeparatorChar)); } }
 
-        [MenuItem("Tools/Boing Up: Sky Tower/Build Content Manifest")]
+        [MenuItem("Tools/Fluffy Climbers: Tower Jump/Build Content Manifest")]
         public static void BuildMenu()
         {
             Build();

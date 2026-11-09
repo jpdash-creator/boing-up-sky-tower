@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Doc 30 section 3 (owner list 30): the seven region 2 (Mushroom Grove) special platforms: Squish Cap, Sprout Lift, Puff Float, Fairy Ring,

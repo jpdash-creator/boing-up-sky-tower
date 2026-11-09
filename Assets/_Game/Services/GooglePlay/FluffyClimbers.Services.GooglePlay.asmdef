@@ -1,0 +1,19 @@
+{
+  "name": "FluffyClimbers.Services.GooglePlay",
+  "rootNamespace": "FluffyClimbers.Monetization",
+  "references": [
+    "FluffyClimbers.Services",
+    "Google.Play.Games"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "FLUFFY_GPGS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

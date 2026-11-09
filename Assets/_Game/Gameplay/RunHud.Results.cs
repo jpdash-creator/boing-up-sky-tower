@@ -1,8 +1,8 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     public sealed partial class RunHud
     {

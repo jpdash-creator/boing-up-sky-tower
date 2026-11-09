@@ -1,9 +1,9 @@
 using System;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The timer bundle offer (docs/26 section 3): a round-ish button at the bottom-left above the tab bar with the bag icon, "30%" and the

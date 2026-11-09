@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// The four main stats exactly as the player SEES them on the hero sheet (docs/44 section 3): Jump as a height (launch squared over 2g), Speed, Control, Wall Bounce (speed times wall share),

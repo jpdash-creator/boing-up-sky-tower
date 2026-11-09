@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Shop Heroes section (Bug List 4 E2): the price table, the random pick from open regions only, no charge when a tier has no hero, exactly one copy, repeatable picks,

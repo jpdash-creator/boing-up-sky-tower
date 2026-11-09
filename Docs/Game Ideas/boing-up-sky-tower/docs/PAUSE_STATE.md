@@ -19,3 +19,11 @@ Stopped on request: full sim suite (simout57, no result, must be re-run from scr
 3. Unity may need a Unity Hub sign-in after restart. Phone may need reconnecting.
 4. Open owner questions: chest coin inflation (about 2x/3x), test-mode Commons for locked regions, hero buy at max copies still charges, hard stop at exactly 100,000 floors, admin code 0000-TEST before release, LevelPlay / Play Games / Play Console accounts.
 5. The recurring 3-minute status prompt (one table Task | Status | Est. minutes left + one line) continues.
+
+## Rename 2026-11-09
+- Game renamed: "Boing Up: Sky Tower" -> "Fluffy Climbers: Tower Jump" (code namespace BoingUpSkyTower -> FluffyClimbers; menu Tools/Fluffy Climbers: Tower Jump/...).
+- New bundle id / IAP prefix: com.jdlabs.fluffyclimbers (old com.jdlabs.boingupskytower). IAP product ids are com.jdlabs.fluffyclimbers.CATEGORY.NAME.
+- The old id was never uploaded to any store, so there is no migration. The Play Store, App Store and Firebase entries (and the AdMob, LevelPlay and Play Games apps) must be created for the new id com.jdlabs.fluffyclimbers; see docs 33 and 35.
+- Folder and repo names (boing-up-sky-tower, boing-tower-docs, boing-tower-game) are unchanged on purpose.
+- New app icons: files in Assets/Art/AppIcon, applied by the menu Tools/Fluffy Climbers: Tower Jump/Apply App Icons (AppIconSetup.cs; monochrome layer not supported by Unity 6000.3, not assigned). Run it once in the Editor, then commit ProjectSettings.
+- Short launcher label "Fluffy Climbers" (product name unchanged): AndroidShortLabel.cs post-gradle step rewrites the existing app_name in the generated launcher strings.xml (no extra resource, no duplicate-resource risk).

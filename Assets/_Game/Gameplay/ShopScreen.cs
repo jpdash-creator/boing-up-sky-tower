@@ -1,12 +1,12 @@
 using System;
 using System.Globalization;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The in-game shop (docs/14, docs/22, docs/23; restyled by docs/26 section 1 to the reference screenshots). Four tabs in the bottom bar (Bug List 1 section 4):

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     // Save containers of the timed records (doc 46 section 9) and the pure rules that update them.
     // All additive: an old save has no entries (null / empty), nothing is migrated. JsonProperty names are short on purpose.
@@ -86,7 +86,7 @@ namespace BoingUpSkyTower.Economy
     public static class TimeAttackRamp
     {
         /// <summary>Level whose difficulty floor 1 of a Time Attack run has (doc 46 section 7, EndlessTower.TimeAttackStartLevel).</summary>
-        public const int StartLevel = BoingUpSkyTower.Simulation.EndlessTower.TimeAttackStartLevel;
+        public const int StartLevel = FluffyClimbers.Simulation.EndlessTower.TimeAttackStartLevel;
         /// <summary>True when the record was set on the current ramp (a record without the stamp is a legacy one and does not count).</summary>
         public static bool IsCurrent(TimeAttackRecord rec) { return rec != null && rec.RampStartLevel == StartLevel; }
     }

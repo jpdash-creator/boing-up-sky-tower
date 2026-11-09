@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Power-ups (docs/15 FR-PWR, FR-REGION): each effect on hand-built worlds (exact numbers) and on the real levels of all five regions,

@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Headers of the Rewards tabs: the Main region strip (30 circles, goals of the selected region), the Daily / Weekly scene with its timer, the points track (chests) and the tasks done bar.</summary>
     public sealed partial class RewardsScreen

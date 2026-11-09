@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Cards, plates and bars of the Rewards screen (RewardsStyle: cream open, yellow ready with a big green Claim button on its reward plate, green claimed with a check).</summary>
     public sealed partial class RewardsScreen

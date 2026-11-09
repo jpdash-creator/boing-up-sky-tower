@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Rewards screen (docs/26 section 4, "RewardsStyle"), tabs Main | Daily | Weekly in a footer with Back and Claim All.

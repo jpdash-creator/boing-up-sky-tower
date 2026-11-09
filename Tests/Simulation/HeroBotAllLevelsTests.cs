@@ -8,11 +8,11 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// The end-to-end proof of the rebuilt roster: EVERY hero (25 lines x 5 tiers, Common to Legendary) is played by the solvability bot on EVERY shipped level (5 regions x 15 levels = 75),

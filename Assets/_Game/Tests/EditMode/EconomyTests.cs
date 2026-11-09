@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     public class EconomyTests
     {

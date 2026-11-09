@@ -1,6 +1,6 @@
 # Economy module (T8): save, wallet, rewards, unlocks
 
-Assembly `BoingUpSkyTower.Economy` (references Simulation, Content, Newtonsoft). Plain C# except nothing engine-specific; tested in Unity EditMode (`Assets/_Game/Tests/EditMode/EconomyTests.cs`, 28 tests).
+Assembly `FluffyClimbers.Economy` (references Simulation, Content, Newtonsoft). Plain C# except nothing engine-specific; tested in Unity EditMode (`Assets/_Game/Tests/EditMode/EconomyTests.cs`, 28 tests).
 
 ## API
 ```

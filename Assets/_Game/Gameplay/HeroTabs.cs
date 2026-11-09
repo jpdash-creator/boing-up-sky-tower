@@ -1,10 +1,10 @@
 using System;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The top row of three icon tabs of the Heroes screen (Bug List 6 item 3a): (1) the hero icon with "All Heroes", (2) the Merge icon with "Merge", (3) a power-up icon with "Powers".

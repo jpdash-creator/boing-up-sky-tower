@@ -39,7 +39,7 @@ Policies change often: re-read the official page for each row **(verify)**.
 | 1 | Play developer account (one-time registration fee, amount (verify)); identity verification; personal vs organization account decides the testing rules | Register, verify identity | everything |
 | 2 | Merchant (payments) profile linked to the account; bank account | Create in Play Console | any paid item |
 | 3 | Tax forms and country tax info (US W-8/W-9 style forms, VAT where asked) (verify) | Fill in | payouts |
-| 4 | App created, package name final (`com.<owner>.boingupskytower` or the chosen id: cannot change later) | Decide id | upload |
+| 4 | App created, package name final (`com.<owner>.fluffyclimbers` or the chosen id: cannot change later) | Decide id | upload |
 | 5 | App signing: Play App Signing (recommended) and an upload keystore kept safe outside the repo | Create keystore, back it up twice | release build |
 | 6 | Upload an AAB (not APK) to a testing track; Billing needs a Play-signed build on a track to test real purchases | Claude prepares the AAB (T-IAP-9) | purchase test |
 | 7 | Closed testing track + license testers (Gmail accounts added in Play Console, Settings > License testing). New personal accounts may need a minimum number of testers for a minimum number of days before production (verify) | Provide tester emails; start the test clock early | production |

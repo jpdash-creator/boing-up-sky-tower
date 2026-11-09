@@ -1,12 +1,12 @@
 using System;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Endless mode (T13): coin formula, daily cap, best floor save, old saves, and the endless RunSession.</summary>
     public class EndlessTests

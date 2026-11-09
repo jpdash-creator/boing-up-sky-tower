@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Treasure Shop page (docs/22 point 3, docs/26 section 1; reworked by Bug List 5 F3 to match the Bundles: coins + power-ups + exactly one hero card, a "Worth x.." tag and an "i" popup).

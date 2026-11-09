@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Development-only runner that plays a list of levels in sequence with the Autopilot, like a real player, without any UI tap:

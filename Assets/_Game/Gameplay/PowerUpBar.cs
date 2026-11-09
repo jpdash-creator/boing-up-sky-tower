@@ -1,10 +1,10 @@
 using System;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The in-run power buttons (docs/15 FR-PWR-3, section 9.5; merged with the hero powers 2026-11-09, owner Bug List 6): ONE round button per power TYPE that the player owns

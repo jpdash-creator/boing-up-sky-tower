@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Main tab = per-region goals (Bug List 5 F1.a, docs/39): the goal lists, region gating, retroactive progress from an existing save, the per-region

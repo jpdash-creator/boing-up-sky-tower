@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Owner spec 2026-11-05 ("Endless is endless: go till floor 100000 via code"): the endless difficulty is stepped by EndlessTower.LevelForFloor.

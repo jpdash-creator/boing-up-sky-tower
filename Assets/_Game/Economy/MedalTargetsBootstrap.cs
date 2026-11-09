@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Installs the shipped target file as <see cref="MedalTargets.Source"/> when the game starts (before the first scene). A missing or broken file leaves "no data" and logs once.</summary>
     public static class MedalTargetsBootstrap

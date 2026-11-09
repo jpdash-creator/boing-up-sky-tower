@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Owner Bug List 6 (2026-11-09): only five hero lines are ACTIVE (Momo, Capi, Otto, Bonbon, Bao) = 25 heroes. The other 20 lines (100 heroes) keep their generated physics rows as DATA

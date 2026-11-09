@@ -1,18 +1,18 @@
 using System.Collections;
 using System.IO;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
-    /// Plays the real scenes. Screenshots go to the folder in the environment variable BOINGUPSKYTOWER_SHOTS (default E:/Unity/shots)
+    /// Plays the real scenes. Screenshots go to the folder in the environment variable FLUFFYCLIMBERS_SHOTS (default E:/Unity/shots)
     /// so a developer (or Claude) can look at the result. Run with graphics enabled (no -nographics) to get real pixels.
     /// </summary>
     public class SceneSmokeTests
@@ -21,7 +21,7 @@ namespace BoingUpSkyTower.Tests
         {
             get
             {
-                string d = System.Environment.GetEnvironmentVariable("BOINGUPSKYTOWER_SHOTS");
+                string d = System.Environment.GetEnvironmentVariable("FLUFFYCLIMBERS_SHOTS");
                 return string.IsNullOrEmpty(d) ? "E:/Unity/shots" : d;
             }
         }

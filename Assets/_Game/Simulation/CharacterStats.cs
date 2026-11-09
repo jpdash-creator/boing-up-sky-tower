@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// The six stats stored per character (docs/44). Everything else a character does is derived from these and the global <see cref="SimConfig"/>.

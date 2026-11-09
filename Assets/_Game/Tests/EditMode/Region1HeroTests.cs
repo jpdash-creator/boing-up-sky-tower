@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Region 1 has ONE ACTIVE hero line, Momo, at all five rarity tiers (owner Bug List 6, 2026-11-09). Bumble, Ribbi, Dandy and Pip and their tiers are INACTIVE ALWAYS: their physics rows stay as data
@@ -130,7 +130,7 @@ namespace BoingUpSkyTower.Tests
         [Test]
         public void ANewSaveOwnsMomoOnlyAndASaveNamingAnInactiveHeroDropsItWithoutCrashing()
         {
-            var svc = new ProgressService(BoingUpSkyTower.Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
+            var svc = new ProgressService(FluffyClimbers.Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
             Assert.IsTrue(svc.OwnsCharacter("momo"));
             foreach (string id in AllIds().Where(i => i != "momo")) Assert.IsFalse(svc.OwnsCharacter(id), id + " is not free");
             foreach (string id in Inactive)
@@ -152,7 +152,7 @@ namespace BoingUpSkyTower.Tests
             old.Copies["bumble_u"] = 3; old.Copies["ryu"] = 2; old.Copies["momo"] = 1;
             old.HeroesRevealed.Add("pip");
             store.Save(old);
-            var svc = new ProgressService(BoingUpSkyTower.Content.ContentRepository.LoadFromResources(), store, 5);   // must not throw
+            var svc = new ProgressService(FluffyClimbers.Content.ContentRepository.LoadFromResources(), store, 5);   // must not throw
             CollectionAssert.DoesNotContain(svc.Data.Characters, "bumble");
             CollectionAssert.DoesNotContain(svc.Data.Copies.Keys, "bumble_u");
             CollectionAssert.DoesNotContain(svc.Data.Copies.Keys, "ryu");
@@ -272,7 +272,7 @@ namespace BoingUpSkyTower.Tests
             try
             {
                 ProgressService.TestAllCharacters = true;
-                var svc = new ProgressService(BoingUpSkyTower.Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
+                var svc = new ProgressService(FluffyClimbers.Content.ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
                 foreach (CharacterSpec c in CharacterDefs.All) Assert.AreEqual(c.Rarity == CharacterRarity.Common, svc.OwnsCharacter(c.Id), c.Id);
             }
             finally { ProgressService.TestAllCharacters = old; }

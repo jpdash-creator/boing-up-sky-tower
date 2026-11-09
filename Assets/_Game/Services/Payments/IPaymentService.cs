@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     public enum PurchaseStatus
     {

@@ -2,7 +2,7 @@ using System;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Owner report: the speed-up percent on screen does not match the real game speed.

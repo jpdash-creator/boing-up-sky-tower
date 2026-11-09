@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// The CHARACTER INVENTORY (docs/36): the hidden, static, read-only master list of every character that exists in the game (the Common heroes and

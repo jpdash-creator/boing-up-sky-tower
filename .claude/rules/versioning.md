@@ -12,7 +12,7 @@ The old HOTFIX part is gone. Fix-only builds just raise BUILD.
 
 How it is used
 - Bump MINOR BEFORE building when the change set of the next build is a new feature or rule change. Several builds of the same change set only raise BUILD.
-- The build writes: app version name `M.m.b` (`Application.version`, `PlayerSettings.bundleVersion`, a valid Android versionName), Android version code = BUILD (always increasing), the file `E:/Unity/builds/boingupskytower_v<M.m.b>.apk` (kept) and a copy `boingupskytower.apk` (latest, used by the device test kit), and one line in `Content/builds/build_log.csv` (rows before v0.52.67 keep the old 4-part format).
+- The build writes: app version name `M.m.b` (`Application.version`, `PlayerSettings.bundleVersion`, a valid Android versionName), Android version code = BUILD (always increasing), the file `E:/Unity/builds/fluffyclimbers_v<M.m.b>.apk` (kept) and a copy `fluffyclimbers.apk` (latest, used by the device test kit), and one line in `Content/builds/build_log.csv` (rows before v0.52.67 keep the old 4-part format).
 - The game shows the version on the main menu (bottom) and logs it in the first field of `BTSTATE`.
 - Always tell the owner the version of the build you installed ("v0.52.68 is on your phone") and name the version in the report and in the commit message of a build ("Build v0.52.68: ...").
 - Never ship or install an APK that is not produced by the build script (it would have no new version).

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>What the hero sheet shows (plain numbers, docs/44). Built from a character's spec, or from a fake one in tests.</summary>
     public sealed class HeroSheetData

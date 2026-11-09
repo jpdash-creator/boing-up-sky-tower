@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Treasure chest rules of docs/22 point 3 as reworked by Bug List 5 F3: loot ranges, equal power-up chances, exactly one hero card per chest (odds 70/20/10 and 50/40/10, open regions only,

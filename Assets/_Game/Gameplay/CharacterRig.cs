@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     [Serializable]
     sealed class RigJson
@@ -145,7 +145,7 @@ namespace BoingUpSkyTower.Gameplay
             CharacterDefs.ActiveStats = () =>
             {
                 CharacterSpec info = Selected.Info;
-                return info != null && info.Stats != null ? info.Stats : BoingUpSkyTower.Simulation.CharacterStats.Default;
+                return info != null && info.Stats != null ? info.Stats : FluffyClimbers.Simulation.CharacterStats.Default;
             };
         }
 

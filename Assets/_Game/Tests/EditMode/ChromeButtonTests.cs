@@ -1,9 +1,9 @@
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>CriticalUX: back (blue) and close X (red) buttons are drawn at the shared 70 percent scale while the hit target stays at least 48 dp (Issue 32).</summary>
     public class ChromeButtonTests

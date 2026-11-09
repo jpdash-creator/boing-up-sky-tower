@@ -1,7 +1,7 @@
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Owner list 2026-11-02 item 4: the per-run revive schedule (ads 30 s, 1 m, none; gems 5 then 10).</summary>
     public class RevivePolicyTests

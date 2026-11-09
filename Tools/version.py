@@ -1,4 +1,4 @@
-"""Build version of Boing Up: Sky Tower: vMAJOR.MINOR.BUILD, example v0.52.68 (see .claude/rules/versioning.md).
+"""Build version of Fluffy Climbers: Tower Jump: vMAJOR.MINOR.BUILD, example v0.52.68 (see .claude/rules/versioning.md).
 
     python Tools/version.py show
     python Tools/version.py bump minor      # MINOR+1 (BUILD is never reset)

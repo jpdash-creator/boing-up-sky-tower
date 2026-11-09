@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
     /// Editor/dev ad service used when the LevelPlay SDK is not compiled in: always ready, completes true after DelaySeconds

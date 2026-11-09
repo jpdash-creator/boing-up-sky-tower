@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>One authored row. X is the platform centre as a share of the screen width in permille (0..1000).</summary>
     public struct ChunkRow

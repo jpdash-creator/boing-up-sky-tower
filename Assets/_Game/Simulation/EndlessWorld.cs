@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// The world of a PLAYED endless run (owner 2026-11-05, "Fix the limit now": endless can be played to floor 100000 and beyond).

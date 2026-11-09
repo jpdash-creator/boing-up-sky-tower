@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
     /// Every rewarded-ad placement (docs/13 section 4.2, docs/33). The string is also the LevelPlay placement name: create a placement

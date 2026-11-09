@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Difficulty measurements for doc 24 (levels 1-2 gentle, 3 to 15 clearly harder, region 1 level 15 about as hard as region 3 level 15).

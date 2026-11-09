@@ -1,13 +1,13 @@
-#if BOING_LEVELPLAY
+#if FLUFFY_LEVELPLAY
 using System;
 using Unity.Services.LevelPlay;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
     /// Rewarded ads through Unity LevelPlay (package com.unity.services.levelplay 9.x). Compiled only with the scripting define
-    /// BOING_LEVELPLAY. Credentials come from AdsConfig (Resources/Services/ads_config.json); with placeholders it stays inactive
+    /// FLUFFY_LEVELPLAY. Credentials come from AdsConfig (Resources/Services/ads_config.json); with placeholders it stays inactive
     /// ("not ready"). Initialises on first use. The placement name is passed to ShowAd for dashboard reporting.
     /// Replaces the older Gameplay/Ads/LevelPlay path once the revive code uses IAdService.
     /// </summary>

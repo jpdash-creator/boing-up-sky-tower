@@ -35,7 +35,7 @@ Out of scope here: ads (doc 13), leaderboards, the server design (doc 03), art p
 
 ## 3. Patterns from successful casual and arcade games (generic)
 
-| Pattern | What good games do | How Boing Up: Sky Tower uses it | Tab / FR | Pri |
+| Pattern | What good games do | How Fluffy Climbers: Tower Jump uses it | Tab / FR | Pri |
 |---|---|---|---|---|
 | Shop as a destination | One shop reachable from the menu, the map and every "not enough" prompt; tab bar with 3 to 5 tabs; the currency wallet always visible | 4 tabs (D-SHOP-1), wallet at top, entries from menu now, map and prompts later | FR-SHOP-1..8 | P0 |
 | Featured and best-value badges | One or two cards carry a badge ("Popular", "Best value"); badges never cover price or amount | Badge per pack from data (`badge` field) | FR-SHOP-18 | P1 |
@@ -174,7 +174,7 @@ What this means in plain words:
 | C-5 | VIP (doc 08): 25 gems a day = 750 gems a month for $7.99. At the new prices those gems are worth $11.25 (promo best) to $22.50 (list best); VIP is cheaper per gem (94 gems per $) than the best pack (67 per $ at promo), so it undercuts every pack. | Lower VIP to 15 gems a day (450 a month, 56 gems per $, worth $6.75 to $13.50) and sell the remaining value as ad-free, coin multiplier and exclusive cosmetic. Re-test after soft launch. | Keeps VIP attractive without undercutting packs. |
 | C-6 | Free gem inflow (about 10 per level, 160 to 220 per region, economy report concerns 1 to 3) makes the small packs nearly worthless and lets a normal player afford the next region skip by play. | Do not change inflow now. After the first soft-launch data, decide between lowering gem density (revenue up, friction up) and keeping it generous (retention up). | Open economy decision (doc 09 section F). |
 | C-7 | A "list price" that was never charged can count as a misleading reference price in some jurisdictions (rules on reference prices and "lowest price in the last 30 days") (verify). | Call it "Launch offer", give the promo an end date in remote config, keep the list price low enough to be a price you would really charge, get a legal read before launch. | Avoids a compliance blocker. |
-| C-8 | A store product has one price. Switching the promo off remotely cannot change what the store charges for an existing SKU. | Two products per gem pack: `boingupskytower.gems.<name>` (list) and `boingupskytower.gems.<name>.launch` (promo). The flag chooses which product the Buy button starts; the displayed price always comes from the product that will be charged. | Display and charge can never disagree. The data file keeps one `sku` (the list one); the promo SKU is derived by the suffix `.launch`. |
+| C-8 | A store product has one price. Switching the promo off remotely cannot change what the store charges for an existing SKU. | Two products per gem pack: `fluffyclimbers.gems.<name>` (list) and `fluffyclimbers.gems.<name>.launch` (promo). The flag chooses which product the Buy button starts; the displayed price always comes from the product that will be charged. | Display and charge can never disagree. The data file keeps one `sku` (the list one); the promo SKU is derived by the suffix `.launch`. |
 | C-9 | Region skip and revive are sold to the same player who can buy 1000 gems for $14.99: all five skips (499 gems) cost $7.49 at best. | Optional: price skips on the real-money rate by capping purchases (for example one skip per 24 h) or leave. | Pacing of the 75 levels is protected. |
 
 ## 6. Purchase flows
@@ -280,7 +280,7 @@ Wireframe: two big cards. VIP card: crown art, perks list (daily gems, no ads, c
 
 | ID | Requirement | Pri | Acceptance criteria | State |
 |---|---|---|---|---|
-| FR-SHOP-67 | **Starter pack:** one-time real-money bundle (100 gems, 3,000 coins, 2 Rare Power-up Chests, 1 Epic Power-up Chest and 1 day ad-free) shown after the player finishes region 1 or after 3 sessions, whichever first; disappears when bought or after 7 days. | P1 | Store SKU `boingupskytower.starter`; one purchase per account (server check); shown at most once per session; closes with one tap. | Planned |
+| FR-SHOP-67 | **Starter pack:** one-time real-money bundle (100 gems, 3,000 coins, 2 Rare Power-up Chests, 1 Epic Power-up Chest and 1 day ad-free) shown after the player finishes region 1 or after 3 sessions, whichever first; disappears when bought or after 7 days. | P1 | Store SKU `fluffyclimbers.starter`; one purchase per account (server check); shown at most once per session; closes with one tap. | Planned |
 | FR-SHOP-68 | **Daily deal:** one free daily gift (coins) and one discounted item that changes at 00:00 UTC. | P1 | Claim button; claimed state persists; clock manipulation does not give a second claim (server time). | Planned |
 | FR-SHOP-69 | **Limited-time offers:** remote scheduled bundles with a countdown ("2d 4h"); never more than 2 active; ends are enforced by the server. | P2 | Countdown text updates once per second only while visible (no per-frame string building: change-only updates); no flashing under reduced motion. | Planned |
 | FR-SHOP-70 | Offers never block retry or the results screen (CUX-7) and are never shown during a run. | P0 | Layout audit on results screen with an offer strip. | Planned |
@@ -328,9 +328,9 @@ Wireframe: two big cards. VIP card: crown art, perks list (daily gems, no ads, c
 
 ```json
 [
-  {"id": "gempack_pinch", "gems": 10, "usdList": 0.99, "usdPromo": 0.49, "sku": "boingupskytower.gems.pinch", "badge": ""},
-  {"id": "gempack_sack", "gems": 100, "usdList": 7.99, "usdPromo": 3.99, "sku": "boingupskytower.gems.sack", "badge": "popular"},
-  {"id": "gempack_treasury", "gems": 1000, "usdList": 29.99, "usdPromo": 14.99, "sku": "boingupskytower.gems.treasury", "badge": "best_value"}
+  {"id": "gempack_pinch", "gems": 10, "usdList": 0.99, "usdPromo": 0.49, "sku": "fluffyclimbers.gems.pinch", "badge": ""},
+  {"id": "gempack_sack", "gems": 100, "usdList": 7.99, "usdPromo": 3.99, "sku": "fluffyclimbers.gems.sack", "badge": "popular"},
+  {"id": "gempack_treasury", "gems": 1000, "usdList": 29.99, "usdPromo": 14.99, "sku": "fluffyclimbers.gems.treasury", "badge": "best_value"}
 ]
 ```
 (all 7 tiers are in the file; `badge` is one of `""`, `popular`, `best_value`; `sku` is the list-price product, the promo product is `sku + ".launch"`, conflict C-8.)

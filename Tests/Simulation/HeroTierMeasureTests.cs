@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Measurement (not a pass/fail gate): how hard is Region 1 level 15 for each tier of a hero line, played with that hero's EFFECTIVE (capped) stats.

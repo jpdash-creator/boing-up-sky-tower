@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Newtonsoft.Json;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Subscription state in the save (docs/26 section 2). Additive field of SaveData, no version bump.</summary>
     public sealed class SubscriptionData

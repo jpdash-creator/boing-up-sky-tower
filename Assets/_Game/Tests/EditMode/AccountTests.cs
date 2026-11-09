@@ -1,12 +1,12 @@
 using System;
 using System.Text;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Monetization;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Monetization;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Login, account and cloud save rules (docs/35): summaries, bytes, the decision table, the stub account and the sync glue.</summary>
     public class AccountTests

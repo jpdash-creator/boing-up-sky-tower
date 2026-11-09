@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Units of one power-up inside a bundle.</summary>
     public sealed class BundlePowerUp

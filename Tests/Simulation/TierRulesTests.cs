@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Merge tier rules (docs/34 section 2b, docs/44): the rule tables (run bonus, powers), the validators, and the hero table (one absolute physics row per hero,

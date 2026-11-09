@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Shop economy (docs/14, docs/22 point 4): the owner's pack tables, test gem purchases, coin packs bought with gems, launch promo on and off. The price validators and first-purchase tests are in ShopEconomyTests.</summary>
     public class ShopTests

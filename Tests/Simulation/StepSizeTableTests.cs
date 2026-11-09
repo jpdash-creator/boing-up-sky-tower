@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Bug List 6 item 6: the scroll speed-up step size per gameplay setting (Relaxed x1.00, Easy x1.10, Normal x1.25, Hard x1.40, Insane x1.50 of 20 percent), integer maths only.</summary>
     public class StepSizeTableTests

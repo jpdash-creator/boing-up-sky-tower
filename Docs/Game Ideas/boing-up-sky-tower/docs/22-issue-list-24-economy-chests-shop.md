@@ -1,6 +1,6 @@
 # 22. Issue list 24: name tags, chest screen, economics, gems, coins, bundles, daily rewards, revive (owner, 2026-10-25)
 
-Source: the owner's pasted "Boing Tower: full requirements for issue-list points 1 to 9". This file is the working copy with the owner's answers (Q&A) applied. Where it differs from docs/21 (characters, chests, shop of 2026-10-24) THIS file wins.
+Source: the owner's pasted "Fluffy Climbers: full requirements for issue-list points 1 to 9". This file is the working copy with the owner's answers (Q&A) applied. Where it differs from docs/21 (characters, chests, shop of 2026-10-24) THIS file wins.
 
 ## Shared conventions
 - $1 = 95 rupees. 1 gem = 20 coins. A 1,000-coin power-up = 50 gems, a 1,500-coin one = 75 gems. Reference gem value = the 1000-pack rate, $0.01099 per gem.

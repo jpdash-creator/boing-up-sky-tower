@@ -1,8 +1,8 @@
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     // Flight wings (owner pick A, 2026-11-01): one painted symmetric picture, with the code-drawn wing as the fallback when the PNG is missing (CUX-10).
     [Category("CriticalUX")]

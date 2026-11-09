@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Account support (docs/35): the progress can be replaced by a cloud save and the login choice is stored in the save.</summary>
     public sealed partial class ProgressService

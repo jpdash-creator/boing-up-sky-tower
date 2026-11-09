@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Character copies and merging (docs/34). Every public change saves once.</summary>
     public sealed partial class ProgressService
@@ -21,7 +21,7 @@ namespace BoingUpSkyTower.Economy
             if (Data.Characters.Contains(c.Id)) return true;
             if (c.Rarity != CharacterRarity.Common || c.Region <= 0 || !c.RegionStarter) return false;   // only the region's starter hero comes with the region; the other Commons need a copy
             if (c.Region == 1) return true;
-            BoingUpSkyTower.Content.RegionDef r = repo.TryGetRegionByIndex(c.Region);
+            FluffyClimbers.Content.RegionDef r = repo.TryGetRegionByIndex(c.Region);
             return r != null && IsRegionUnlocked(r);
         }
 

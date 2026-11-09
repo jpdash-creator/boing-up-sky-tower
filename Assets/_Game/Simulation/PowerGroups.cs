@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Which side of the run HUD a power button sits on (owner Bug List 6, 2026-11-09). Pure C#, no Unity types.

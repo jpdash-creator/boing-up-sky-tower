@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Q16.16 fixed-point number. All simulation and generator math uses this type so results are

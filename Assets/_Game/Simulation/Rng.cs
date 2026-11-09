@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Seeded xoshiro128** generator, integer-only, identical on every platform. State is seeded

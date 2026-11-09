@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>Release build without the Play Games SDK: no account. The login screen then shows only "Play as guest".</summary>
     public sealed class UnavailableAccountService : IAccountService

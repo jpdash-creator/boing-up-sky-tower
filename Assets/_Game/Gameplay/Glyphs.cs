@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The control glyphs (chevrons, pause bars, cross) drawn in code as chunky white shapes with a navy outline, so every control reads as an icon

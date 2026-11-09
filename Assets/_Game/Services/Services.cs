@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
     /// Static locator: Services.Ads, Services.Payments. The real SDK services are used when the scripting define
-    /// BOING_LEVELPLAY / BOING_UNITY_IAP is on (and the package is installed), else the stubs. Resolved once; no per-frame work.
+    /// FLUFFY_LEVELPLAY / FLUFFY_UNITY_IAP is on (and the package is installed), else the stubs. Resolved once; no per-frame work.
     /// </summary>
     public static class Services
     {
@@ -49,7 +49,7 @@ namespace BoingUpSkyTower.Monetization
             set { payments = value; }
         }
 
-        /// <summary>The player's Google account and cloud save (docs/35): Play Games with BOING_GPGS on Android, else the stub in the editor and development builds (signs in as "Test Player"), else an unavailable service (guest only).</summary>
+        /// <summary>The player's Google account and cloud save (docs/35): Play Games with FLUFFY_GPGS on Android, else the stub in the editor and development builds (signs in as "Test Player"), else an unavailable service (guest only).</summary>
         public static IAccountService Account
         {
             get { if (account == null) account = CreateAccount(); return account; }
@@ -61,7 +61,7 @@ namespace BoingUpSkyTower.Monetization
 
         static IAccountService CreateAccount()
         {
-#if BOING_GPGS
+#if FLUFFY_GPGS
             if (!Application.isEditor && ServiceFactories.GooglePlay != null)
             {
                 try { return ServiceFactories.GooglePlay(); }
@@ -75,7 +75,7 @@ namespace BoingUpSkyTower.Monetization
 
         static IAdService CreateAds()
         {
-#if BOING_LEVELPLAY
+#if FLUFFY_LEVELPLAY
             if (!Application.isEditor && ServiceFactories.LevelPlay != null)
             {
                 try { return ServiceFactories.LevelPlay(); }
@@ -87,7 +87,7 @@ namespace BoingUpSkyTower.Monetization
 
         static IPaymentService CreatePayments()
         {
-#if BOING_UNITY_IAP
+#if FLUFFY_UNITY_IAP
             if (!Application.isEditor && ServiceFactories.UnityIap != null)
             {
                 try { return ServiceFactories.UnityIap(); }

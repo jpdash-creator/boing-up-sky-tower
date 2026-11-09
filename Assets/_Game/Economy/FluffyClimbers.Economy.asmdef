@@ -1,0 +1,18 @@
+{
+  "name": "FluffyClimbers.Economy",
+  "rootNamespace": "FluffyClimbers.Economy",
+  "references": [
+    "FluffyClimbers.Simulation",
+    "FluffyClimbers.Content",
+    "Unity.Nuget.Newtonsoft-Json"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

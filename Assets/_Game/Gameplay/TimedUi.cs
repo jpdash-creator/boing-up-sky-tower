@@ -1,8 +1,8 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Small UI helpers shared by the level-start popup, the result screen and the Run HUD of the timed gameplay (doc 46).</summary>
     public static class TimedUi

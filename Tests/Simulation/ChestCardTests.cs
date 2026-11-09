@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>The hero card of a Treasure Chest (Bug List 5 F3): odds 70/20/10 and 50/40/10, the open-regions rule, the tier fallback, determinism and the worth band.</summary>
     public class ChestCardTests

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Globalization;
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// The shop's gem and coin packs (docs/14-shop-requirements.md). Loaded from the content manifest (Content/economy/gem_packs.json and
@@ -69,7 +69,7 @@ namespace BoingUpSkyTower.Economy
                 list.Add(new GemPackDef
                 {
                     Id = "gempack_" + gems, Gems = gems, UsdList = (double)r[1], UsdPromo = (double)r[2], InrList = (int)r[3],
-                    FirstPurchaseDouble = gems <= FirstPurchaseMaxGems, Sku = "boingupskytower.gems." + gems, Badge = (string)r[4]
+                    FirstPurchaseDouble = gems <= FirstPurchaseMaxGems, Sku = "fluffyclimbers.gems." + gems, Badge = (string)r[4]
                 });
             }
             return list;

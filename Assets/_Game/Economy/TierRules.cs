@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// The owner's rule for one merge tier (docs/34 section 2b, docs/44), as plain data: the run-bonus ranges and the number and cooldown of the hero powers. The PHYSICS of a tier hero are no longer a percent

@@ -3,7 +3,7 @@ using System;
 using Unity.Services.LevelPlay;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Device rewarded ads through Unity LevelPlay (package com.unity.services.levelplay). Lives in its own Android-only assembly so the rest of

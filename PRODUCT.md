@@ -16,7 +16,7 @@ Casual players of all ages (owner decision 2026-10-20: "all of them"), on a phon
 
 ## Product Purpose
 
-Boing Up: Sky Tower is a 2D vertical jumper. The player steers a small chibi character up an endless tower of platforms through 30 themed regions (5 playable now) while the screen scrolls up and the bottom edge is the danger. Success: smooth 60 fps play, instant input, clear feedback, a progression of regions, and a shop that never blocks play.
+Fluffy Climbers: Tower Jump is a 2D vertical jumper. The player steers a small chibi character up an endless tower of platforms through 30 themed regions (5 playable now) while the screen scrolls up and the bottom edge is the danger. Success: smooth 60 fps play, instant input, clear feedback, a progression of regions, and a shop that never blocks play.
 
 ## Positioning
 
@@ -36,7 +36,7 @@ One thumb on a 6 to 6.8 inch phone, often outdoors or in transit, sound often of
 
 ## Brand Commitments
 
-Name: Boing Up: Sky Tower (store title; two lines Boing Up and Sky Tower on the title screen; package com.jdlabs.boingupskytower). Mascot: Momo (fluffy white chibi with a pink scarf). Art world: cute chibi cartoon, neon rim light, glossy sparkle accents, saturated gradients, daylight sky and meadow as home base.
+Name: Fluffy Climbers: Tower Jump (store title; two lines on the title screen: FLUFFY CLIMBERS at the top in yellow bubble letters and TOWER JUMP on a ribbon in blue letters, with the same white fluffy cat with a pink scarf; package com.jdlabs.fluffyclimbers). Mascot: Momo (fluffy white chibi with a pink scarf). Art world: cute chibi cartoon, neon rim light, glossy sparkle accents, saturated gradients, daylight sky and meadow as home base.
 
 ## Evidence on Hand
 

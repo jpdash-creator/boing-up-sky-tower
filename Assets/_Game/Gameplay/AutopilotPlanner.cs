@@ -1,7 +1,7 @@
 using System;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     // Development-only test tooling (the Autopilot). Plain C#, no Unity types, so it is unit-testable and allocation-free per tick:
     // only AutopilotPlanner.Plan() does real work, once per landing, on buffers it allocated up front.

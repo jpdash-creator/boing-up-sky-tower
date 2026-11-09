@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>One physics configuration to measure: launch in tenths of u/s (190 = 19.0), speed, control, wall share in hundredths.</summary>
     public struct PhysicsKey

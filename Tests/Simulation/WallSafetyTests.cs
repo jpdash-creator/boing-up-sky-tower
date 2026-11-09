@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// H7 (owner 2026-10-31): in Candy Canyon level 7 touching the wall ended the run ("Wall bounce!", twice). The no-wall level (7, now 10) of every region

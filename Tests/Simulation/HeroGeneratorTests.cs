@@ -6,11 +6,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// The hero generator tool (the bible, docs/44): draws candidates with <see cref="HeroIndex.Draw"/> and keeps one only when its MEASURED FI passes the gates, in three stages:

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// LevelPlay credentials. The owner supplies the real app key and rewarded ad unit id later (open item 10 in doc 22, together with

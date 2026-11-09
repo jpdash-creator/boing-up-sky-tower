@@ -1,8 +1,8 @@
 using System;
 using System.Diagnostics;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The decision core of the Autopilot, free of Unity types: call Next(session) once per simulation tick and feed the result to the

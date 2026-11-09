@@ -1,12 +1,12 @@
 using System;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Timed records (doc 46) through ProgressService: RecordRun, the queries, medals, the reward counters, old saves, and the RunSession clock.</summary>
     public class TimeRecordsEditTests

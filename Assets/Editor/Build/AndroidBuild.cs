@@ -4,12 +4,12 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Editor.Build
+namespace FluffyClimbers.Editor.Build
 {
-    /// <summary>Headless Android build: -executeMethod BoingUpSkyTower.Editor.Build.AndroidBuild.BuildFromCommandLine (output E:/Unity/builds/boingupskytower.apk).</summary>
+    /// <summary>Headless Android build: -executeMethod FluffyClimbers.Editor.Build.AndroidBuild.BuildFromCommandLine (output E:/Unity/builds/fluffyclimbers.apk).</summary>
     public static class AndroidBuild
     {
-        const string OutputPath = "E:/Unity/builds/boingupskytower.apk";   // always the latest build (the device test kit installs this one)
+        const string OutputPath = "E:/Unity/builds/fluffyclimbers.apk";   // always the latest build (the device test kit installs this one)
 
         // Semantic build version vMAJOR.MINOR.BUILD (.claude/rules/versioning.md): MAJOR and MINOR are bumped by hand with
         // Tools/version.py, BUILD is incremented here for every produced APK and never reset. It becomes the app version name, and the
@@ -23,7 +23,7 @@ namespace BoingUpSkyTower.Editor.Build
 
         static void WriteVersion(VersionInfo v) { File.WriteAllText(VersionFile, JsonUtility.ToJson(v, true) + "\n"); }
 
-        [MenuItem("Tools/Boing Up: Sky Tower/Build Android APK")]
+        [MenuItem("Tools/Fluffy Climbers: Tower Jump/Build Android APK")]
         public static void BuildFromMenu() { Build(); }
 
         public static void BuildFromCommandLine()
@@ -34,17 +34,12 @@ namespace BoingUpSkyTower.Editor.Build
         static bool Build()
         {
             Directory.CreateDirectory(Path.GetDirectoryName(OutputPath));
-            VersionInfo ver = ReadVersion();
-            ver.build++;
-            WriteVersion(ver);
-            string versionName = ver.major + "." + ver.minor + "." + ver.build;
-            PlayerSettings.bundleVersion = versionName;
-            PlayerSettings.Android.bundleVersionCode = ver.build;
-            // Opt-in AltTester build (-altTester or BT_ALTTESTER=1, see AltTesterBuildHook): own file name, and it never replaces the clean boingupskytower.apk.
+            string versionName = BumpAndApplyVersion();
+            // Opt-in AltTester build (-altTester or BT_ALTTESTER=1, see AltTesterBuildHook): own file name, and it never replaces the clean fluffyclimbers.apk.
             bool altTester = AltTesterBuildHook.Requested();
             // Opt-in emulator build (BT_X86=1): adds x86_64 so Android emulators run it natively; own file name, never the clean phone APK.
             bool x86 = Environment.GetEnvironmentVariable("BT_X86") == "1";
-            string versionedPath = "E:/Unity/builds/boingupskytower_v" + versionName + (altTester ? "_alttester" : "") + (x86 ? "_x86" : "") + ".apk";
+            string versionedPath = "E:/Unity/builds/fluffyclimbers_v" + versionName + (altTester ? "_alttester" : "") + (x86 ? "_x86" : "") + ".apk";
             Debug.Log("[BUILD] version v" + versionName + (x86 ? " (emulator build, arm64 + x86_64)" : ""));
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = x86 ? (AndroidArchitecture.ARM64 | AndroidArchitecture.X86_64) : AndroidArchitecture.ARM64;
@@ -65,12 +60,33 @@ namespace BoingUpSkyTower.Editor.Build
             finally { AltTesterBuildHook.End(); }
             Debug.Log("[BUILD] result " + report.summary.result + ", size " + (report.summary.totalSize / (1024 * 1024)) + " MB, errors " + report.summary.totalErrors);
             bool ok = report.summary.result == BuildResult.Succeeded;
-            if (ok && !x86) File.Copy(versionedPath, altTester ? "E:/Unity/builds/boingupskytower_alttester.apk" : OutputPath, true);
+            if (ok && !x86) File.Copy(versionedPath, altTester ? "E:/Unity/builds/fluffyclimbers_alttester.apk" : OutputPath, true);
+            AppendBuildLog(versionName, report, versionedPath);
+            return ok;
+        }
+
+        /// <summary>
+        /// Shared with AndroidReleaseBuild (same rules for the APK and the AAB): reads Tools/version.json, adds 1 to BUILD, writes it back and sets the app
+        /// version name M.m.b (PlayerSettings.bundleVersion) and the Android version code (= BUILD). Returns the version name.
+        /// </summary>
+        internal static string BumpAndApplyVersion()
+        {
+            VersionInfo ver = ReadVersion();
+            ver.build++;
+            WriteVersion(ver);
+            string versionName = ver.major + "." + ver.minor + "." + ver.build;
+            PlayerSettings.bundleVersion = versionName;
+            PlayerSettings.Android.bundleVersionCode = ver.build;
+            return versionName;
+        }
+
+        /// <summary>Shared with AndroidReleaseBuild: appends one row to Content/builds/build_log.csv (the last column holds the output path, .apk or .aab).</summary>
+        internal static void AppendBuildLog(string versionName, BuildReport report, string outputPath)
+        {
             string log = Path.Combine(ProjectRoot, "Content", "builds", "build_log.csv");
             Directory.CreateDirectory(Path.GetDirectoryName(log));
             if (!File.Exists(log)) File.WriteAllText(log, "date,version,result,sizeMB,apk\n");
-            File.AppendAllText(log, DateTime.Now.ToString("yyyy-MM-dd HH:mm") + ",v" + versionName + "," + report.summary.result + "," + (report.summary.totalSize / (1024 * 1024)) + "," + versionedPath + "\n");
-            return ok;
+            File.AppendAllText(log, DateTime.Now.ToString("yyyy-MM-dd HH:mm") + ",v" + versionName + "," + report.summary.result + "," + (report.summary.totalSize / (1024 * 1024)) + "," + outputPath + "\n");
         }
     }
 }

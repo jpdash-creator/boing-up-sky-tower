@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The Settings screen (Bug List 1 B2, docs/35 and docs/38): one compact popup on the sky background, sized from its content. Icon cells with a green

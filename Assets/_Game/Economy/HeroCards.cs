@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// One CARD of the Heroes and Merge screens (docs/34 section 10): exactly one owned copy of a hero. The save keeps a count per hero, the screens show one card per

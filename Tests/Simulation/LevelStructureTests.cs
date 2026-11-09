@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Doc 25 (owner list 27): level structure of every campaign level of regions 1 to 5: rows, 1.3 platforms per row, the special platform share

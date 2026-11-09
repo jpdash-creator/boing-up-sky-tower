@@ -1,4 +1,4 @@
-BOING UP: SKY TOWER - RECOMMENDED CHANGES RC 1 TO RC 14 (DETAILED)
+FLUFFY CLIMBERS: TOWER JUMP - RECOMMENDED CHANGES RC 1 TO RC 14 (DETAILED)
 Written 2026-11-01. Based on the game code in E:\Code\boing-up-sky-tower (build v0.38.0.40)
 and the economy reference docs/27-economy-tables-from-code.md.
 No code or data was changed. These are proposals for the owner to approve.
@@ -240,7 +240,7 @@ Starter                    100   2,000   200      $2.20          2.2x           
 100-gem pack (compare)     100       0   100      $1.10          0.74x           67
 It sits between the packs (63 to 125 GE per $) and the subscriptions (232 to 354), so it does
 not undercut either.
-Needed: SKU boingupskytower.starter (store price point about Rs 99); an account flag
+Needed: SKU fluffyclimbers.starter (store price point about Rs 99); an account flag
 starterBought; hide the offer after purchase and decide whether it also expires after N days
 (doc 22 open item 7); a shop placement; tests for once per account, atomic grant and restore.
 Dependency: Play Billing (doc 13), which is not built. Effort: about 120 min after billing exists.

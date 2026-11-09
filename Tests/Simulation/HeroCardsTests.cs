@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Hero cards (one card per owned copy, no counts), the merge list and selection rule, and the All Heroes grouping (docs/34 section 10).</summary>
     public class HeroCardsTests

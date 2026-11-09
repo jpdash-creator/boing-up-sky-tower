@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     public interface ISaveStore
     {

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// Timed records (doc 46): best Pace and Time per level and Gameplay mode, medals, endless and Time Attack records, and the counters of

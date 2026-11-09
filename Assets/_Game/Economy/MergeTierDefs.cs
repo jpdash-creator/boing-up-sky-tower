@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// One higher-tier character as plain data (docs/34): which hero line it belongs to, its own id, name and art, and its run bonus on top of the Common hero. Its four physics numbers are the absolute row of the line and tier in <see cref="HeroTable"/>.

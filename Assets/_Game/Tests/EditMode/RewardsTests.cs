@@ -1,14 +1,14 @@
 using System;
 using System.IO;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Rewards of docs/26 section 4: counters fed from play, daily and weekly resets on the local clock, claims, the Main tab, saving.</summary>
     public class RewardsTests
@@ -1290,7 +1290,7 @@ namespace BoingUpSkyTower.Tests
         static string Src(string id) { string s, i, k; RewardsScreen.TaskSources(id, out s, out i, out k); return i; }
         static string Slot(string id) { string s, i, k; RewardsScreen.TaskSources(id, out s, out i, out k); return s; }
 
-        static Sprite ToyKit_Get(string name) { return BoingUpSkyTower.Gameplay.ToyKit.Get(name); }
+        static Sprite ToyKit_Get(string name) { return FluffyClimbers.Gameplay.ToyKit.Get(name); }
 
         [Test]
         public void ResetAllClearsTheRewardCounters()

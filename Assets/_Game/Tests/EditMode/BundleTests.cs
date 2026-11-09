@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Gem bundles (docs/26 section 3): the 2,000 bundle data, atomic buying, the paid refresh, the 6 saved offers, the timer offer and the save round trip.</summary>
     public class BundleTests

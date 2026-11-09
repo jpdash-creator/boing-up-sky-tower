@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Shop economics of docs/22 point 4: the gem and coin pack tables (4.1, 4.2), power-up gem prices (4.3), the validators (4.6), the

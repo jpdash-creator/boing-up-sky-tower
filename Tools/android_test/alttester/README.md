@@ -1,4 +1,4 @@
-# AltTester tests for Boing Up: Sky Tower (roadmap T26)
+# AltTester tests for Fluffy Climbers: Tower Jump (roadmap T26)
 
 AltTester drives the real game objects (by name) on the phone: find a button, tap it, read its text, swipe the map. It is an addition to
 `Tools/android_test` (`bt.py`, `smoke_test.py`), not a replacement.
@@ -19,24 +19,24 @@ AltTester drives the real game objects (by name) on the phone: find a button, ta
   commands) compile into every player, but nothing instantiates them unless the prefab is in a scene.
 - Our build hook does **not** use `AltBuilder` (it saves the scene file and edits player settings). `AltTesterBuildHook` defines `ALTTESTER` for
   that one build with `BuildPlayerOptions.extraScriptingDefines` and adds the prefab to the Boot scene in memory (`IProcessSceneWithReport`),
-  so the scene files and project settings stay untouched. Port 13000, host 127.0.0.1, app name `BoingUpSkyTower`, popup hidden.
+  so the scene files and project settings stay untouched. Port 13000, host 127.0.0.1, app name `FluffyClimbers`, popup hidden.
 
 ## Steps for the owner
 
 1. **Build the alttester APK.** Close nothing else; Unity must not be running another build. From a terminal in the project folder:
 
    ```bash
-   BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectPath . -executeMethod BoingUpSkyTower.Editor.Build.AndroidBuild.BuildFromCommandLine -logFile Logs/build_alttester.log
+   BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectPath . -executeMethod FluffyClimbers.Editor.Build.AndroidBuild.BuildFromCommandLine -logFile Logs/build_alttester.log
    ```
 
    (or add `-altTester` to the command line instead of the environment variable). Look for `[ALTTESTER] on:` and `[ALTTESTER] runner added to scene`
-   in the log. Result: `E:/Unity/builds/boingupskytower_v<version>_alttester.apk` and a copy `E:/Unity/builds/boingupskytower_alttester.apk`.
-   The clean `boingupskytower.apk` is not touched. The build number goes up as for any build (`.claude/rules/versioning.md`); tell the owner the version.
+   in the log. Result: `E:/Unity/builds/fluffyclimbers_v<version>_alttester.apk` and a copy `E:/Unity/builds/fluffyclimbers_alttester.apk`.
+   The clean `fluffyclimbers.apk` is not touched. The build number goes up as for any build (`.claude/rules/versioning.md`); tell the owner the version.
    A normal build (no variable, no flag) contains no AltTester runner.
 2. **Install** (same package name as the normal build, so it replaces it; the next normal build replaces it back):
 
    ```bash
-   adb install -r E:/Unity/builds/boingupskytower_alttester.apk
+   adb install -r E:/Unity/builds/fluffyclimbers_alttester.apk
    ```
 3. **Start AltTester Desktop** on the PC: `E:/tools/alttester_desktop/AltTesterDesktopPackageWindows__2_4_0/AltTesterDesktop__v2.4.0.exe`.
    Leave it on the default port 13000.
@@ -47,7 +47,7 @@ AltTester drives the real game objects (by name) on the phone: find a button, ta
    ```
 
    `--install` installs the alttester APK first; leave it out when it is already installed. The script runs `adb reverse`, launches the game with cleared
-   data, waits until the game shows up in Desktop, then runs the tests. In the Desktop window the game should appear as app `BoingUpSkyTower` before
+   data, waits until the game shows up in Desktop, then runs the tests. In the Desktop window the game should appear as app `FluffyClimbers` before
    the driver connects. Options: `--no-launch` (use the game that is running), `--only <part of a test name>`.
 5. Output is `PASS`, `FAIL` or `SKIP` per test and `RESULT: PASSED` or `FAILED` (exit code 1 on a failure). Screenshots of failures and a few
    milestones go to `E:/Unity/device_shots/alttester/`.
@@ -107,8 +107,8 @@ and the `dense` flag (6 or more, the 'stacked platforms' case). At the end it wr
 
    Useful options: `--skill 0` (perfect player: a fall then points at an unfair level), `--levels 8` or `--levels 1-15`, `--difficulty 0..4`,
    `--seeds 3` (three runs per level with different jitter), `--speed 2` (game speed, 1 is real time), `--stop-on-fail`, `--install`
-   (installs `E:/Unity/builds/boingupskytower.apk` first), `--where internal|external|both` (where `autoplay.json` is written; `auto` is right on most phones).
-3. The script pushes `autoplay.json` (run-as for the internal files folder, adb push for `/sdcard/Android/data/com.jdlabs.boingupskytower/files`), launches the
+   (installs `E:/Unity/builds/fluffyclimbers.apk` first), `--where internal|external|both` (where `autoplay.json` is written; `auto` is right on most phones).
+3. The script pushes `autoplay.json` (run-as for the internal files folder, adb push for `/sdcard/Android/data/com.jdlabs.fluffyclimbers/files`), launches the
    game, follows the `BTAUTO` lines, prints a PASS/FAIL table, takes a screenshot at every fall and writes the report. Do not touch the phone while it plays;
    the whole region takes 10 to 20 minutes in real time.
 4. Results: `E:/Unity/qa/autoplay_report.md`, `E:/Unity/qa/autoplay_results_<run>.csv` (copy of the file on the phone),
@@ -177,8 +177,8 @@ time, gems and coins (taken/placed), stars, fail reason, verdict, checks.
 
 ### How the test sets the flags (no adb prefs file, no intent extra)
 
-The game side is `Assets/_Game/Gameplay/LevelSweepApi.cs`: a static class that AltTester calls with `call_static_method` (type `BoingUpSkyTower.Gameplay.LevelSweepApi`,
-assembly `BoingUpSkyTower.Gameplay`). `SetFlags(true, true)` sets SYSTEM_TEST and GAME_JUMP_TEST through `GameSettings` (PlayerPrefs plus `ApplyFlags`), so every level is open and the Autopilot
+The game side is `Assets/_Game/Gameplay/LevelSweepApi.cs`: a static class that AltTester calls with `call_static_method` (type `FluffyClimbers.Gameplay.LevelSweepApi`,
+assembly `FluffyClimbers.Gameplay`). `SetFlags(true, true)` sets SYSTEM_TEST and GAME_JUMP_TEST through `GameSettings` (PlayerPrefs plus `ApplyFlags`), so every level is open and the Autopilot
 is allowed; the script verifies `unlockAll` and `autopilot` in the reply and stops with a clear message otherwise. `--jump-test off` leaves levels on real progress.
 Other methods: `Ping`, `GetFlags`, `SelectCharacter`, `SetSpeed`, `LevelPreview(region, level)`, `RunState()`, `AttachAutopilot(skill, seed, depth)`, `Resume`.
 All are marked `[Preserve]` against IL2CPP stripping; if a call still fails with "type not found", add the class to a `link.xml`.
@@ -188,7 +188,7 @@ The app data is cleared at launch (fresh save), so the sweep never depends on ea
 
 ```bash
 # 1. build the alttester APK (Unity closed, no other build running), see 'Steps for the owner' above
-BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectPath . -executeMethod BoingUpSkyTower.Editor.Build.AndroidBuild.BuildFromCommandLine -logFile Logs/build_alttester.log
+BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectPath . -executeMethod FluffyClimbers.Editor.Build.AndroidBuild.BuildFromCommandLine -logFile Logs/build_alttester.log
 # 2. start AltTester Desktop (leave it on port 13000)
 E:/tools/alttester_desktop/AltTesterDesktopPackageWindows__2_4_0/AltTesterDesktop__v2.4.0.exe
 # 3. install and run the sweep (leave out --install when the alttester APK is already on the phone)

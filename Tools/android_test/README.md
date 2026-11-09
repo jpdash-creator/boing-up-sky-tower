@@ -8,7 +8,7 @@
 
     python Tools/android_test/emulator_matrix.py [--avd NAME]... [--apk PATH] [--skip-boot-wait]
 
-- Default: the 5 `emu_*` AVDs (720x1280, 1080x1920, 1080x2400, 1080x2520, 1536x2048) and `E:/Unity/builds/boingupskytower_v0.42.0.48_x86.apk`.
+- Default: the 5 `emu_*` AVDs (720x1280, 1080x1920, 1080x2400, 1080x2520, 1536x2048) and `E:/Unity/builds/fluffyclimbers_v0.42.0.48_x86.apk`.
 - Needs a development build that includes x86_64 (the normal arm64-only APK crashes with SIGILL) and the Android SDK at
   `E:\dev-tools\android-sdk` (override with `ANDROID_SDK_ROOT`, `ANDROID_AVD_HOME`).
 - Each AVD: boot (port 5554, swiftshader), install, launch with cleared data, tour (home, settings, shop + all 5 tabs, VIP, Heroes,

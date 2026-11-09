@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Buying one hero card for gems in the Shop (Bug List 4 E2; rules in <see cref="HeroPurchase"/>).</summary>
     public sealed partial class ProgressService

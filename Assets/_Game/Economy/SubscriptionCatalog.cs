@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Newtonsoft.Json.Linq;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>One subscription plan (docs/26 section 2, Content/economy/subscriptions.json).</summary>
     public sealed class SubscriptionDef

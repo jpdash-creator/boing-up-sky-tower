@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// Builds a complete campaign level (platforms, hazards, pickups) from a LevelSpec. Deterministic: the

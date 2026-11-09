@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The sprites of the Merge screen drawn in code (docs/34). Each one has a REPLACEABLE SLOT: drop a picture at Resources/Art/Ui/MergeBackground or

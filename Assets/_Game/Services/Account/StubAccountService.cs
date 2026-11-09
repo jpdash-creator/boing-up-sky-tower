@@ -1,16 +1,16 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
-    /// Editor and dev-build account: signs in as "Test Player" at once and keeps a fake cloud blob in PlayerPrefs (key boing.stub.cloud, base64), so the
-    /// whole flow (first link, conflict, restore) can be tried without the Google SDK. Used whenever BOING_GPGS is off. Delete the key to clear the "cloud".
+    /// Editor and dev-build account: signs in as "Test Player" at once and keeps a fake cloud blob in PlayerPrefs (key fluffy.stub.cloud, base64), so the
+    /// whole flow (first link, conflict, restore) can be tried without the Google SDK. Used whenever FLUFFY_GPGS is off. Delete the key to clear the "cloud".
     /// </summary>
     public sealed class StubAccountService : IAccountService
     {
-        public const string CloudKey = "boing.stub.cloud";
-        public const string SignedInKey = "boing.stub.signedin";
+        public const string CloudKey = "fluffy.stub.cloud";
+        public const string SignedInKey = "fluffy.stub.signedin";
 
         bool signedIn;
         /// <summary>Tests: make the next sign-in fail or get cancelled, or the cloud read/write fail.</summary>

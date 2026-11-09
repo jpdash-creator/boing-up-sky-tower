@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>The three tabs of the Rewards screen (docs/26 section 4).</summary>
     public enum RewardTab

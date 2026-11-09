@@ -1,18 +1,18 @@
 using System;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Gameplay;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Editor
+namespace FluffyClimbers.Editor
 {
     /// <summary>
     /// Puts the bootstrap component into each of the three scenes (Boot, Meta, Run) created by ProjectSetup and saves them.
-    /// Idempotent. Headless: -executeMethod BoingUpSkyTower.Editor.SceneBuilder.BuildFromCommandLine
+    /// Idempotent. Headless: -executeMethod FluffyClimbers.Editor.SceneBuilder.BuildFromCommandLine
     /// </summary>
     public static class SceneBuilder
     {
-        [MenuItem("Tools/Boing Up: Sky Tower/Build Scenes")]
+        [MenuItem("Tools/Fluffy Climbers: Tower Jump/Build Scenes")]
         public static void Build()
         {
             Setup("Assets/Scenes/Boot.unity", go => go.AddComponent<BootLoader>(), "BootLoader");

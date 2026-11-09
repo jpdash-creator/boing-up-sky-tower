@@ -1,11 +1,11 @@
 using System;
 using System.Globalization;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Bug List 1, B1.c: the small pop-up that asks a guest to connect a Google account in Settings (Google sign-in lives only in Settings now).

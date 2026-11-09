@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>One real-money purchase kept in the save (docs/38). Survives Reset Progress; restore and cloud sync read it.</summary>
     public sealed class PurchaseRecord
@@ -11,7 +11,7 @@ namespace BoingUpSkyTower.Economy
         public const string KindNonConsumable = "nonconsumable";
         public const string KindSubscription = "subscription";
 
-        /// <summary>Store product id (ProductCatalog.Id), for example com.jdlabs.boingupskytower.sub.monthly.</summary>
+        /// <summary>Store product id (ProductCatalog.Id), for example com.jdlabs.fluffyclimbers.sub.monthly.</summary>
         [JsonProperty("productId")] public string ProductId = "";
         [JsonProperty("kind")] public string Kind = KindConsumable;
         /// <summary>Store transaction id (stub purchases: "stub-N" or "test-..."). Empty = unknown.</summary>
@@ -25,7 +25,7 @@ namespace BoingUpSkyTower.Economy
     public sealed partial class ProgressService
     {
         /// <summary>Same prefix as ProductCatalog.Prefix (Economy cannot see the Services assembly; a unit test keeps them equal).</summary>
-        public const string ProductIdPrefix = "com.jdlabs.boingupskytower.";
+        public const string ProductIdPrefix = "com.jdlabs.fluffyclimbers.";
 
         public IReadOnlyList<PurchaseRecord> Purchases
         {
@@ -122,7 +122,7 @@ namespace BoingUpSkyTower.Economy
         public int AdminUnlockAllRegions()
         {
             int added = 0;
-            foreach (BoingUpSkyTower.Content.RegionDef r in repo.Regions)
+            foreach (FluffyClimbers.Content.RegionDef r in repo.Regions)
             {
                 if (!IsRegionPlayable(r) || r.Index == 1 || Data.UnlockedRegions.Contains(r.Id)) continue;
                 Data.UnlockedRegions.Add(r.Id);
@@ -136,11 +136,11 @@ namespace BoingUpSkyTower.Economy
         public int AdminCompleteAllLevels()
         {
             int n = 0;
-            foreach (BoingUpSkyTower.Content.RegionDef r in repo.Regions)
+            foreach (FluffyClimbers.Content.RegionDef r in repo.Regions)
             {
                 if (!IsRegionPlayable(r)) continue;
                 if (r.Index != 1 && !Data.UnlockedRegions.Contains(r.Id)) Data.UnlockedRegions.Add(r.Id);
-                foreach (BoingUpSkyTower.Content.LevelDef l in repo.LevelsOf(r.Id))
+                foreach (FluffyClimbers.Content.LevelDef l in repo.LevelsOf(r.Id))
                 {
                     ApplyRun(l.Id, new RunOutcome { Completed = true, StarMask = 7, Score = 1000, CoinsCollected = 0 });
                     n++;

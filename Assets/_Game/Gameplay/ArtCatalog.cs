@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Measured walkable island of a platform sprite, in the sprite's pixels (Tools/art_pipeline/platform_metrics.py).</summary>
     [Serializable]
@@ -66,7 +66,7 @@ namespace BoingUpSkyTower.Gameplay
         public Sprite RollingLog;
 
         /// <summary>Index into KindPieces of the painted piece for this kind, thorny side and width (nearest width within 1 unit), or -1 when there is none.</summary>
-        public int KindPieceIndex(BoingUpSkyTower.Simulation.PlatformKind kind, int dir, float width)
+        public int KindPieceIndex(FluffyClimbers.Simulation.PlatformKind kind, int dir, float width)
         {
             if (KindPieces == null) return -1;
             int k = (int)kind;
@@ -82,7 +82,7 @@ namespace BoingUpSkyTower.Gameplay
             return best;
         }
 
-        public Sprite KindSprite(BoingUpSkyTower.Simulation.PlatformKind kind)
+        public Sprite KindSprite(FluffyClimbers.Simulation.PlatformKind kind)
         {
             int i = (int)kind;
             return KindSprites != null && i >= 0 && i < KindSprites.Length ? KindSprites[i] : null;
@@ -91,7 +91,7 @@ namespace BoingUpSkyTower.Gameplay
 
     /// <summary>
     /// Every sprite the game needs, referenced from one asset in Resources so player builds include them.
-    /// Rebuild with Tools/Boing Up: Sky Tower/Build Art Catalog after the art changes.
+    /// Rebuild with Tools/Fluffy Climbers: Tower Jump/Build Art Catalog after the art changes.
     /// </summary>
     public sealed class ArtCatalog : ScriptableObject
     {

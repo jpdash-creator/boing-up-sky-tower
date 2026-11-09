@@ -1,11 +1,11 @@
 using System;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Monetization;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Monetization;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Settings extras (docs/38-settings-admin.md): the version label and small Admin button, the hidden code box, the Admin popup (System Test master switch
@@ -38,6 +38,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void OnVersionTapped()
         {
+            if (!AdminAccess.ToolsCompiledIn) return;   // release player: the 7-tap gesture does nothing
             if (AdminAccess.Available) return;   // already open to this install
             if (versionTaps.Tap(Time.unscaledTimeAsDouble)) ShowAdminCodeBox();
         }
@@ -45,6 +46,7 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>The small hidden code box. A right code turns admin mode on and opens the Admin popup; a wrong code does nothing (the box stays).</summary>
         public void ShowAdminCodeBox()
         {
+            if (!AdminAccess.ToolsCompiledIn) return;   // release player: the code box can never open
             OpenPopup("Enter code", "", 800f);
             Transform panel = popup.Find("Panel");
             Transform emptyBody = panel.Find("Body");

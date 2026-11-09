@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Power-ups economy (docs/15 FR-PWR-1, 9, 10; reworked 2026-10-31): catalog, owned stock WITHOUT any cap, atomic buying, no loadout, save compatibility.</summary>
     public class PowerUpEconomyTests

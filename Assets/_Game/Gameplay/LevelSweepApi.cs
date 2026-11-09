@@ -1,18 +1,18 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.SceneManagement;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Static methods that the AltTester level sweep (Tools/android_test/alttester/level_sweep.py) calls on the phone with
-    /// AltDriver.call_static_method("BoingUpSkyTower.Gameplay.LevelSweepApi", "MethodName", "BoingUpSkyTower.Gameplay", [args]).
+    /// AltDriver.call_static_method("FluffyClimbers.Gameplay.LevelSweepApi", "MethodName", "FluffyClimbers.Gameplay", [args]).
     /// Every method returns one JSON string (AltTester wraps it once more; the Python side unwraps both).
     /// Development builds only: the methods that change anything refuse in a release build (Debug.isDebugBuild is false there; AltTester itself only exists in the alttester development build),
     /// and the Autopilot additionally needs SYSTEM_TEST (Autopilot.Allowed). Read-only except SetFlags, SelectCharacter,

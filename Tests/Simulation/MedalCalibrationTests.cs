@@ -7,11 +7,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Medal calibration (doc 46 section 6 and 12 point 2). For every level of regions 1 to 5 and every Gameplay mode (Relaxed..Insane = scroll step table

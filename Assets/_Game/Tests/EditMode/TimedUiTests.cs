@@ -1,9 +1,9 @@
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests.EditModeTests
+namespace FluffyClimbers.Tests.EditModeTests
 {
     /// <summary>Timed gameplay UI helpers (doc 46): cached HUD strings, the code-drawn medals, the Pace Ghost setting and the strip reserve of the third HUD row.</summary>
     [Category("CriticalUX")]

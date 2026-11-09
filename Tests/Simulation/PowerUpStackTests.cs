@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Power-up rework of 2026-10-31: base durations, STACKING (a tap adds the full base time onto the remaining time, every tap uses one unit,

@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>Input bit flags for one tick. Jump is an edge: set it only on the tick of the tap.</summary>
     public static class SimInput

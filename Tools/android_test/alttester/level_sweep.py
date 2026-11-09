@@ -27,8 +27,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import altbt  # noqa: E402
 from altbt import TestFailure, By  # noqa: E402
 
-BRIDGE_TYPE = "BoingUpSkyTower.Gameplay.LevelSweepApi"
-BRIDGE_ASM = "BoingUpSkyTower.Gameplay"
+BRIDGE_TYPE = "FluffyClimbers.Gameplay.LevelSweepApi"
+BRIDGE_ASM = "FluffyClimbers.Gameplay"
 OUT_MD = "E:/Unity/logs/alttester_levels.md"
 OUT_JSON = "E:/Unity/logs/alttester_levels.json"
 POWER_NAMES = ["Flight", "Rocket", "DoubleJump", "WallStick", "Shield", "Magnet", "SlowTime"]   # PowerUpBar: object "Power<Type>" per owned type

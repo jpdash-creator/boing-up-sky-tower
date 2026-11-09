@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     public enum ChestOpenResult
     {

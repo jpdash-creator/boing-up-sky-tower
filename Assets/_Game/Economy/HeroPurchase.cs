@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>Outcome of buying a hero card in the Shop (Heroes section of the Character / Power-ups page).</summary>
     public enum HeroBuyResult

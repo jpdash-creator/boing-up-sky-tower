@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Doc 30 section 4 (owner list 31): the seven region 3 (Sunny Beach) special platforms: Surf Boost Wave, Sandcastle Step, Clam Shell Pad,

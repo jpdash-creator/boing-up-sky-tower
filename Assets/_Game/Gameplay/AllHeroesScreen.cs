@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The All Heroes screen (docs/34 section 10): EVERY character of the game as cards, 3 to a row, as many rows as needed, scrolling, grouped BY REGION under a banner (the groups

@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Subscription economy (docs/26 section 2): buy and extend, one daily claim per local day, the monthly power-up on every 5th claim, expiry, the release gate, save round trip, value text.</summary>
     public class SubscriptionTests

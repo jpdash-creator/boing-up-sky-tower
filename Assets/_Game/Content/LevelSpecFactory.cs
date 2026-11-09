@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 
-namespace BoingUpSkyTower.Content
+namespace FluffyClimbers.Content
 {
     /// <summary>
     /// Maps a content LevelDef (+ its RegionDef) to the Simulation's engine-agnostic LevelSpec.

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Bug List 6 item 4: the new difficulty curve of the 25-level regions. DIFFICULTY SCORE 0..100 (defined by the owner/lead from the old region 1 report):

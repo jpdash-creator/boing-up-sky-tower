@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace BoingUpSkyTower.Content
+namespace FluffyClimbers.Content
 {
     /// <summary>
     /// Read-only, validated view of all shipped content, loaded from the merged manifest

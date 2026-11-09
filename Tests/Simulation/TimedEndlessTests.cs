@@ -1,8 +1,8 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Doc 46 section 7, the logic side (T3): endless splits and live split delta, the 3:00 Time Attack clock and record (score = floors, own

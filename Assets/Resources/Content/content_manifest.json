@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contentHash": "d42f4b12afed74f0818cac376bd23a65c77f48b1425d0a5fd68c3485db9a91e6",
+  "contentHash": "ccc1d947f2c6dc815d00a1111c114fb5fab978c058d9750600fd052b290162c5",
   "regions": [
     {
       "id": "region_001_meadow_springs",
@@ -17690,7 +17690,7 @@
       "usdPromo": 0.49,
       "inrList": 75,
       "firstPurchaseDouble": true,
-      "sku": "boingupskytower.gems.50",
+      "sku": "fluffyclimbers.gems.50",
       "badge": ""
     },
     {
@@ -17700,7 +17700,7 @@
       "usdPromo": 0.79,
       "inrList": 142,
       "firstPurchaseDouble": true,
-      "sku": "boingupskytower.gems.100",
+      "sku": "fluffyclimbers.gems.100",
       "badge": "popular"
     },
     {
@@ -17710,7 +17710,7 @@
       "usdPromo": 1.29,
       "inrList": 237,
       "firstPurchaseDouble": true,
-      "sku": "boingupskytower.gems.200",
+      "sku": "fluffyclimbers.gems.200",
       "badge": ""
     },
     {
@@ -17720,7 +17720,7 @@
       "usdPromo": 2.99,
       "inrList": 569,
       "firstPurchaseDouble": true,
-      "sku": "boingupskytower.gems.500",
+      "sku": "fluffyclimbers.gems.500",
       "badge": ""
     },
     {
@@ -17730,7 +17730,7 @@
       "usdPromo": 5.49,
       "inrList": 1044,
       "firstPurchaseDouble": true,
-      "sku": "boingupskytower.gems.1000",
+      "sku": "fluffyclimbers.gems.1000",
       "badge": "best_value"
     },
     {
@@ -17740,7 +17740,7 @@
       "usdPromo": 10.49,
       "inrList": 1994,
       "firstPurchaseDouble": false,
-      "sku": "boingupskytower.gems.2000",
+      "sku": "fluffyclimbers.gems.2000",
       "badge": ""
     },
     {
@@ -17750,7 +17750,7 @@
       "usdPromo": 24.99,
       "inrList": 4749,
       "firstPurchaseDouble": false,
-      "sku": "boingupskytower.gems.5000",
+      "sku": "fluffyclimbers.gems.5000",
       "badge": ""
     },
     {
@@ -17760,7 +17760,7 @@
       "usdPromo": 44.99,
       "inrList": 8549,
       "firstPurchaseDouble": false,
-      "sku": "boingupskytower.gems.10000",
+      "sku": "fluffyclimbers.gems.10000",
       "badge": ""
     },
     {
@@ -17770,7 +17770,7 @@
       "usdPromo": 59.99,
       "inrList": 11399,
       "firstPurchaseDouble": false,
-      "sku": "boingupskytower.gems.15000",
+      "sku": "fluffyclimbers.gems.15000",
       "badge": ""
     }
   ],

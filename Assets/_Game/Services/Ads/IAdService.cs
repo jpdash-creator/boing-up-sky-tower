@@ -1,6 +1,6 @@
 using System;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>Rewarded-ad service. See AdPlacements for the placement names.</summary>
     public interface IAdService

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Doc 30 section 15 (Bug List 3 item D5, region 5 half): the seven region 5 (Bamboo Temple) special platforms: Bamboo Flick, Lantern Lift, Koi Stone,

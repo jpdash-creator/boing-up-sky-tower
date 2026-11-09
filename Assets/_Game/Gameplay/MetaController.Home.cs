@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Home screen buttons (Bug List 1, B1.a to B1.e): one end-to-end Play icon button, the Settings button just above it and the Google connect pop-up.</summary>
     public sealed partial class MetaController

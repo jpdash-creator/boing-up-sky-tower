@@ -1,0 +1,30 @@
+{
+  "name": "FluffyClimbers.Tests.EditMode",
+  "rootNamespace": "FluffyClimbers.Tests",
+  "references": [
+    "FluffyClimbers.Simulation",
+    "FluffyClimbers.Content",
+    "FluffyClimbers.Economy",
+    "FluffyClimbers.Gameplay",
+    "FluffyClimbers.Services",
+    "Unity.Nuget.Newtonsoft-Json",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

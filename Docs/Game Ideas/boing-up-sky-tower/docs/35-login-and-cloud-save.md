@@ -1,7 +1,7 @@
 # 35. Login (Google Play Games or guest) and cloud save
 
 Owner Issue 34 item 1. Decisions: both ways to play; progress in **Google Play Games Saved Games**, purchases in **Google Play Billing**; **no own server**.
-Package id: `com.jdlabs.boingupskytower` (Android only; the Play Games plugin no longer supports iOS).
+Package id: `com.jdlabs.fluffyclimbers` (Android only; the Play Games plugin no longer supports iOS).
 
 ## 1. What the player sees
 
@@ -33,7 +33,7 @@ Whole saves are chosen, never merged field by field (a mixed wallet could duplic
 `lastPlayedUtc` is stamped by `ProgressService.Commit` on every change; `SaveEnvelope.savedUtc` is stamped when the bytes are made.
 
 ### Cloud bytes
-UTF-8 JSON `SaveEnvelope { format, savedUtc, saveVersion, summary{levels,gems,coins,heroCopies,lastPlayed}, data = SaveData }`, file name `boing_save`.
+UTF-8 JSON `SaveEnvelope { format, savedUtc, saveVersion, summary{levels,gems,coins,heroCopies,lastPlayed}, data = SaveData }`, file name `fluffy_save`.
 The header lets the popup show a summary without understanding the save. Size is small (a few KB, the limit is 3 MB).
 
 ### Upload timing (`Gameplay/AccountSync.cs`)
@@ -47,10 +47,10 @@ The header lets the popup show a summary without understanding the save. Size is
 | File | Role |
 |---|---|
 | `Services/Account/IAccountService.cs` | Interface: `SignIn`, `SilentSignIn`, `SignOut`, `IsSignedIn`, `DisplayName`, `PlayerId`, `IsAvailable`, `LoadCloudSave`, `LastLoadFailed`, `SaveCloud`. |
-| `Services/Account/StubAccountService.cs` | Editor and development builds: signs in as "Test Player", fake cloud blob in PlayerPrefs (`boing.stub.cloud`). Test switches: `FailSignIn`, `CancelSignIn`, `FailCloud`, `UseMemoryOnly`, `SeedCloud`. |
+| `Services/Account/StubAccountService.cs` | Editor and development builds: signs in as "Test Player", fake cloud blob in PlayerPrefs (`fluffy.stub.cloud`). Test switches: `FailSignIn`, `CancelSignIn`, `FailCloud`, `UseMemoryOnly`, `SeedCloud`. |
 | `Services/Account/UnavailableAccountService.cs` | Release build without the SDK: login screen shows only "Play as guest". |
-| `Services/GooglePlay/GooglePlayGamesAccountService.cs` + asmdef | Real service, compiled only with `BOING_GPGS`. |
-| `Services/Services.cs` | `Services.Account` (stub in the editor / dev build, Play Games with `BOING_GPGS` on a device, else unavailable). |
+| `Services/GooglePlay/GooglePlayGamesAccountService.cs` + asmdef | Real service, compiled only with `FLUFFY_GPGS`. |
+| `Services/Services.cs` | `Services.Account` (stub in the editor / dev build, Play Games with `FLUFFY_GPGS` on a device, else unavailable). |
 | `Economy/SaveSync.cs` | Summary, bytes, decision table, account field helpers. |
 | `Economy/ProgressService.Account.cs` | `ReplaceData`, `SetAccount`, `MarkCloudSynced`. |
 | `Economy/SaveData.cs` | New fields `accountMode`, `accountId`, `lastCloudSyncUtc`, `loginChosen`, `lastPlayedUtc` (additive, no version bump). |
@@ -67,7 +67,7 @@ The header lets the popup show a summary without understanding the save. Size is
 
 ### 4.1 Play Console
 1. Play Console, open the game, **Grow users > Play Games Services > Setup and management > Configuration**. Create the Play Games Services project (it creates a linked Google Cloud project). Name, category, description.
-2. **Credentials > Add credential > Android**: an **OAuth client** for package `com.jdlabs.boingupskytower`. It needs the **SHA-1 of the signing key**. Add **one credential per key**:
+2. **Credentials > Add credential > Android**: an **OAuth client** for package `com.jdlabs.fluffyclimbers`. It needs the **SHA-1 of the signing key**. Add **one credential per key**:
    - the **Play App Signing** key (Play Console > Test and release > Setup > App signing: "App signing key certificate" SHA-1) for builds installed from Play,
    - the **upload key** SHA-1 and/or the **debug / local keystore** SHA-1 (Unity Keystore Manager; `keytool -list -v -keystore <file>`) for sideloaded test builds. A wrong or missing SHA-1 gives sign-in failure with `DeveloperError`.
 3. **Enable features > Saved games** (Setup and management > Enable features). Without it `OpenWithAutomaticConflictResolution` fails.
@@ -79,8 +79,8 @@ The header lets the popup show a summary without understanding the save. Size is
 1. Plugin: **Google Play Games plugin for Unity**, github.com/playgameservices/play-games-plugin-for-unity. Latest release seen on its Releases page: **v2.3.0** (29 Sep). Download the `.unitypackage` from the repository folder `current-build` (`GooglePlayGamesPluginForUnity-2.3.0.unitypackage`; use the newest file there). It is not on the Unity registry, and no OpenUPM entry was confirmed, so use the `.unitypackage` (do not edit `Packages/manifest.json`).
 2. **Assets > Import Package > Custom Package** and import everything. Platform must be **Android**, scripting backend **IL2CPP**.
 3. **Window > Google Play Games > Setup > Android Setup**: paste the Android resources XML from step 5 above, set the constants folder/class, **Setup**. Then **Nearby Connections Setup** with the package id (the dialog needs it even though the game does not use Nearby).
-4. Check the plugin's assembly definition name. The code in `Services/GooglePlay` references **`Google.Play.Games`** (`BoingUpSkyTower.Services.GooglePlay.asmdef`). Find the plugin's `.asmdef` under `Assets/GooglePlayGames/...` and, if its `name` differs, edit the reference in our asmdef. If the plugin has no asmdef, move our asmdef folder content to a folder compiled with the plugin or add the plugin to an asmdef (decide then).
-5. **Project Settings > Player > Other Settings > Scripting Define Symbols** (Android): add **`BOING_GPGS`**. The project still compiles without it (all SDK code is behind the define and the asmdef has `defineConstraints`).
+4. Check the plugin's assembly definition name. The code in `Services/GooglePlay` references **`Google.Play.Games`** (`FluffyClimbers.Services.GooglePlay.asmdef`). Find the plugin's `.asmdef` under `Assets/GooglePlayGames/...` and, if its `name` differs, edit the reference in our asmdef. If the plugin has no asmdef, move our asmdef folder content to a folder compiled with the plugin or add the plugin to an asmdef (decide then).
+5. **Project Settings > Player > Other Settings > Scripting Define Symbols** (Android): add **`FLUFFY_GPGS`**. The project still compiles without it (all SDK code is behind the define and the asmdef has `defineConstraints`).
 6. Optional: manifest flag `com.google.android.gms.games.SUPPRESS_GAME_PROFILE_CREATION` is **not** set, so Play Games offers to create a profile itself on first use.
 7. Clean install rule (owner memory): uninstall then install on the phone, never keep an old save. To test the conflict popup: play as guest, progress a level, then sign in with a Google account that already has a save from another install.
 
@@ -90,7 +90,7 @@ Google Play Billing is the record of purchases. Non-consumables and subscription
 
 ## 6. Test checklist (editor with the stub, then device with the SDK)
 
-- Editor: first run shows the login. "Sign in with Google Play" signs in as Test Player (stub). Delete `boing.stub.cloud` and `boing.stub.signedin` in PlayerPrefs to reset the fake cloud.
+- Editor: first run shows the login. "Sign in with Google Play" signs in as Test Player (stub). Delete `fluffy.stub.cloud` and `fluffy.stub.signedin` in PlayerPrefs to reset the fake cloud.
 - Guest then Settings sign-in with a non-empty fake cloud: popup with both summaries, each button works, the other save is replaced.
 - Kill the app mid-upload / airplane mode: the game keeps playing, the next upload happens later.
 - Two devices, same Google account: play on A, open B: B takes A's save silently; play on both while offline: B shows the popup.
@@ -123,3 +123,6 @@ Google Play Billing is the record of purchases. Non-consumables and subscription
 - **Save Progress** (Settings, second big button, AccountPopup.SaveProgress): always writes the save to the phone first (ProgressService.SaveLocalNow). Guest: the button label shows **Saved on this phone** for 2.5 s. Signed in with Google: also uploads to Google Saved Games (AccountSync.SyncNow, the SaveSync upload), label **Saved to Google**, or **Saved on phone only** when the upload failed (it is retried later). The result is shown on the button itself (a short toast, no extra layer, no extra height).
 - **Tests**: `GoogleConnectPromptTests` (EditMode: first completed level, guest only, once per session, 3 calendar days, unreadable stamp, clock set back, stamp saved); `AccountPopupTests` (EditMode: state, letter, labels, sign-in/out, Sync now, Save Progress guest = local write, signed in = cloud stub receives the save, failure keeps the phone copy); PlayMode `HomeHasOneBigPlayButtonAndSettingsAboveIt` (no bar / wallet / Account / Rewards on Home, Play end to end with a centred icon and no text, Settings above Play, 48 dp, labels), `GooglePromptHasIconButtonsThatOpenSettingsOrClose`, `GooglePromptShowsOnHomeOnlyAfterAFirstCompletedLevelAndOncePerSession`, `AccountPopupStatesAndActions`; CriticalUX / TextOnArt audit screens `menu`, `menu-signed-in`, `google-prompt`, `account-popup-*`, `settings-*` (guest, signed in, unavailable, Admin icon, Save result on the button; all aspects, notch, 130 percent text). Test set-ups switch the automatic pop-up off (`GoogleConnectPrompt.AutoShow = false`) so the plain Home is audited.
 - **Open points**: the Play and Settings icons use the existing kit sprites; the final OpenArt gear is a sprite swap on the `Icon` image. The pop-up G is the same text G as the Google sign-in button, not the official Google logo.
+
+## Rename note (2026-11-09)
+The game is now "Fluffy Climbers: Tower Jump", package `com.jdlabs.fluffyclimbers` (old id never uploaded, no migration). The Google Play Games Services project, the OAuth client (package name + signing SHA-1) and the Firebase app must be created / registered with the NEW package name; the old id has no entries to move.

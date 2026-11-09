@@ -1,21 +1,21 @@
-#if BOING_GPGS
+#if FLUFFY_GPGS
 using System;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.BasicApi.SavedGame;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Monetization
+namespace FluffyClimbers.Monetization
 {
     /// <summary>
-    /// Google Play Games Services account (docs/35) with Saved Games as the cloud save. Compiled only with the define BOING_GPGS and the
+    /// Google Play Games Services account (docs/35) with Saved Games as the cloud save. Compiled only with the define FLUFFY_GPGS and the
     /// "Google Play Games plugin for Unity" (v2.x, github.com/playgameservices/play-games-plugin-for-unity) imported.
     /// Sign-in: PlayGamesPlatform.Instance.Authenticate (silent) and ManuallyAuthenticate (sheet). Cloud: ISavedGameClient
     /// OpenWithAutomaticConflictResolution, ReadBinaryData, CommitUpdate on one file (<see cref="FileName"/>). Android only.
     /// </summary>
     public sealed class GooglePlayGamesAccountService : IAccountService
     {
-        public const string FileName = "boing_save";
+        public const string FileName = "fluffy_save";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Register() { ServiceFactories.GooglePlay = () => new GooglePlayGamesAccountService(); }
@@ -101,7 +101,7 @@ namespace BoingUpSkyTower.Monetization
                     {
                         if (openStatus != SavedGameRequestStatus.Success) { if (done != null) done(false); return; }
                         SavedGameMetadataUpdate update = new SavedGameMetadataUpdate.Builder()
-                            .WithUpdatedDescription("Boing Up: Sky Tower " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm") + " UTC")
+                            .WithUpdatedDescription("Fluffy Climbers: Tower Jump " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm") + " UTC")
                             .Build();
                         Client.CommitUpdate(meta, update, data, (commitStatus, committed) =>
                         {

@@ -1,8 +1,8 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The timed part of the Run HUD (doc 46 section 5), a third strip row under the gauge: an always-visible timer (the clock of the run, or the 3:00 countdown of a Time Attack),

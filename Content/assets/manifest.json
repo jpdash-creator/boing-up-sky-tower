@@ -256,14 +256,14 @@
       "group": "brand",
       "tier": "hero",
       "candidates": 6,
-      "name": "Boing Up: Sky Tower logo / wordmark concepts",
+      "name": "Fluffy Climbers: Tower Jump logo / wordmark concepts",
       "purpose": "Game logo exploration. Final wordmark text is added in Unity/vector, not trusted from AI.",
       "prompt": "Game logo emblem concept (symbol only, no letters): a stack of glowing neon platforms forming a tower with a small cloud-fox bouncing on a spring at the top. cute chibi cartoon with neon rim light and glow, thick consistent dark-hue outline, saturated gradient colors, glossy sparkle accents, top-left light, clean vector-like edges, solid flat #808080 mid-grey background, no text, no watermark",
       "aspect": "1:1",
       "size": "2K",
       "path": "Art/Marketing/logo/logo_concept_v1.png",
       "manual": [
-        "Wordmark typography by hand/vector (AI text is unreliable)"
+        "Wordmark typography by hand/vector (AI text is unreliable): FLUFFY CLIMBERS (top, yellow bubble letters) + TOWER JUMP (on ribbon, blue letters), with the same white fluffy cat with pink scarf"
       ],
       "checks": [
         "No letters",

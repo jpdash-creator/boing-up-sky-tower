@@ -1,7 +1,7 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>Pure rules of the hidden Admin tools (docs/38): release/development gating, the code check and the 7-tap counter.</summary>
     public class AdminGateTests

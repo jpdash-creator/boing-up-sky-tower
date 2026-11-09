@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>What the "choose your save" popup shows for one save (docs/35).</summary>
     public sealed class SaveSummary
@@ -56,7 +56,7 @@ namespace BoingUpSkyTower.Economy
         public const string ModeGuest = "guest";
         public const string ModeGoogle = "google";
         /// <summary>Name of the Saved Games file in Play Games.</summary>
-        public const string CloudFileName = "boing_save";
+        public const string CloudFileName = "fluffy_save";
 
         public static string NowText() { return DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture); }
 

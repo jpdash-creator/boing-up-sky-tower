@@ -38,7 +38,7 @@ Reading guide. **OK** = claim matches code or recomputes. **WRONG** = claim or n
 - `Assets/_Game/Economy/NOTES.md` line 23 says replay percent 40; `CLAUDE.md` line 56 and docs 07 (L78, L91), 08 (L268), 09 (G section), 14 (L112), 15 (L233), 27 mention the stale values and must be reworded after the fix.
 
 ### (b) Conflicts
-- (i) Code: removing `VipGemsPerDay` is safe only in one commit across JSON, `Models.cs` and manifest (see finding 5). `ContentManifestMerger` rebuilds the manifest from ALL sources and changes `contentHash`; it is plain C# (`Assets/_Game/Content/ContentManifestMerger.cs`), run by the Unity menu "Tools/Boing Up: Sky Tower/Build Content Manifest" or `ContentManifestBuilder.BuildFromCommandLine`. Needs a Unity run (or a dotnet harness).
+- (i) Code: removing `VipGemsPerDay` is safe only in one commit across JSON, `Models.cs` and manifest (see finding 5). `ContentManifestMerger` rebuilds the manifest from ALL sources and changes `contentHash`; it is plain C# (`Assets/_Game/Content/ContentManifestMerger.cs`), run by the Unity menu "Tools/Fluffy Climbers: Tower Jump/Build Content Manifest" or `ContentManifestBuilder.BuildFromCommandLine`. Needs a Unity run (or a dotnet harness).
 - (ii) None. The owner asked in doc 27 section 18 question 1 and doc 09 G whether this is an error.
 Conflicts: 0 with decisions, 1 with code mechanics.
 
@@ -336,7 +336,7 @@ None for "keep off". For a flip: `GameSettings.cs:63-77`, `gem_packs.json`/`coin
 Source doc 22 point 7: $0.99 = 100 gems + 2,000 coins OK. Value: 100 + 100 = 200 GE = **$2.20 ref, 2.22x, 202 GE/$** OK; 100-gem pack 100 GE, $1.10, 0.74x, 67 OK. Position between packs (63 to 125) and subscriptions (232 to 354) OK in GE/$ (202 is below weekly 232 and above every pack).
 - Doc 27 section 17 says "about 2.4 times value"; the correct figure is 2.2x (RC 12 is right, doc 27 wrong).
 - Not built: no `starter` anywhere in code, no billing package (`Packages/manifest.json` has no `com.unity.purchasing`), `SaveData` has no `starterBought`. OK.
-- "SKU boingupskytower.starter": consistent with `boingupskytower.gems.<n>` naming.
+- "SKU fluffyclimbers.starter": consistent with `fluffyclimbers.gems.<n>` naming.
 - "Rs 99": $0.99 x 95 = Rs 94; doc 22 uses Rs 49 for the India entry bundle (40 gems + 500 coins), which RC 12 omits.
 - **Observation**: for $0.99 the starter gives 200 GE, while the $1.49 pack gives 100 GE and the $0.79 pack 50 GE, so for a first-time buyer it strictly dominates the 50- and 100-gem packs (as intended for a converter, but the 100-pack then looks pointless on first view).
 

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Owner issue (doc 23, Gameplay 4, CRITICAL): the platform layout must change on EVERY attempt of a level. The campaign run seed is

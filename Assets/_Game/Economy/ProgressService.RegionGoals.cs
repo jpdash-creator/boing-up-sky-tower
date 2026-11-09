@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using BoingUpSkyTower.Content;
+using FluffyClimbers.Content;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// Main tab = per-region goals (Bug List 5 F1.a, docs/39). A region's goals open when the region is unlocked and count ONLY play inside that region.

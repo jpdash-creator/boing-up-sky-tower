@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The contents of persistentDataPath/autoplay.json, written by the host (Tools/android_test/autoplay_r1.py):

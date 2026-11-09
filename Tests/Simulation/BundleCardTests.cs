@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>The hidden hero card of a bundle (docs/37): tier odds 70:20:10, the pick among a tier, the open-regions rule, the fallback when a tier is empty, and the 2,000-bundle price and worth rules.</summary>
     public class BundleCardTests

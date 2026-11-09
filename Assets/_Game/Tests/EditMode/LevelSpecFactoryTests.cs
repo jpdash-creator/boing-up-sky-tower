@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Content;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     // End-to-end content check inside Unity: ContentRepository -> LevelSpecFactory -> LevelBuilder.
     // The hashes must equal the dotnet-generated golden file (Content/golden/level_hashes_r1-5.txt), proving both toolchains build bit-identical levels.

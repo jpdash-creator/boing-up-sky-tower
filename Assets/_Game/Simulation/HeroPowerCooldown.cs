@@ -1,4 +1,4 @@
-namespace BoingUpSkyTower.Simulation
+namespace FluffyClimbers.Simulation
 {
     /// <summary>
     /// The cooldown clock of a hero's powers in one run (owner 2026-11-02, docs/34 section "Hero powers in a run"). Pure C#, no Unity types, counted in

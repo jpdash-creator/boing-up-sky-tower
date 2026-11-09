@@ -1,7 +1,7 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// The hidden ADMIN tools gate (docs/38-settings-admin.md). Development builds always have the Admin button; release builds show it only after the
@@ -15,6 +15,16 @@ namespace BoingUpSkyTower.Gameplay
 
         [System.Serializable]
         sealed class ConfigData { public string adminCode; }
+
+        /// <summary>
+        /// Compile-time lockdown (Google Play release): true only in the Editor and in development builds. In a non-development player this is false, so the
+        /// admin unlock can never be reached or set: the stored PlayerPrefs value is ignored, a code is never accepted and the Admin button never shows.
+        /// </summary>
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public const bool ToolsCompiledIn = true;
+#else
+        public const bool ToolsCompiledIn = false;
+#endif
 
         static string code;
 
@@ -45,18 +55,19 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>True after the hidden code was accepted on this install (stays until Lock).</summary>
         public static bool Unlocked
         {
-            get { return PlayerPrefs.GetInt(UnlockedKey, 0) == 1; }
-            private set { PlayerPrefs.SetInt(UnlockedKey, value ? 1 : 0); PlayerPrefs.Save(); }
+            get { return ToolsCompiledIn && PlayerPrefs.GetInt(UnlockedKey, 0) == 1; }   // release player: always false, whatever the PlayerPrefs hold
+            private set { if (!ToolsCompiledIn) return; PlayerPrefs.SetInt(UnlockedKey, value ? 1 : 0); PlayerPrefs.Save(); }
         }
 
         static bool DevelopmentBuild { get { return DevelopmentBuildOverride ?? Debug.isDebugBuild; } }
 
         /// <summary>True when the Admin button is shown: development build, or the code was accepted.</summary>
-        public static bool Available { get { return AdminGate.Available(DevelopmentBuild, Unlocked); } }
+        public static bool Available { get { return ToolsCompiledIn && AdminGate.Available(DevelopmentBuild, Unlocked); } }
 
         /// <summary>Checks a typed code. Right: admin mode is on and true is returned. Wrong or empty: nothing changes, false.</summary>
         public static bool TryUnlock(string entered)
         {
+            if (!ToolsCompiledIn) return false;   // release player: no code is ever accepted
             if (!AdminGate.CodeMatches(entered, Code)) return false;
             Unlocked = true;
             GameSettings.ApplyFlags();

@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>The HUD groups its power buttons by TYPE (Bug List 6): left = Flight, Rocket, Double Jump; right = Magnet, Shield, Slow Time, Wall Stick. Category PowerGroups.</summary>
     [Trait("Category", "PowerGroups")]

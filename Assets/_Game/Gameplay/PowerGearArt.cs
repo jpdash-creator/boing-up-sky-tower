@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Temporary gear that Flight (wings) and Rocket (a rocket pack) put on Momo while the power-up runs (owner 2026-10-24). The pictures are drawn

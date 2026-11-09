@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Monetization;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Monetization;
 using NUnit.Framework;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>Product ids, prices and ad placements (docs/33). Ids are permanent store ids: these tests guard against accidental changes.</summary>
     public class ServicesTests
     {
-        static readonly Regex IdFormat = new Regex("^com\\.jdlabs\\.boingupskytower\\.[a-z]+\\.[a-z0-9_]+$");
+        static readonly Regex IdFormat = new Regex("^com\\.jdlabs\\.fluffyclimbers\\.[a-z]+\\.[a-z0-9_]+$");
 
         [Test]
         public void ProductIdsAreUniqueAndWellFormed()

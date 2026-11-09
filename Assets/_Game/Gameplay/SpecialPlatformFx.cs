@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Simulation;
 using UnityEngine;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Creates a sprite renderer under the run world (RunView.NewSprite).</summary>
     public delegate SpriteRenderer SpriteFactory(string name, Sprite sprite, int order);

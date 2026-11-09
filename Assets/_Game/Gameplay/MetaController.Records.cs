@@ -1,10 +1,10 @@
-using BoingUpSkyTower.Content;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Content;
+using FluffyClimbers.Economy;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Timed gameplay entries of the Meta scene (doc 46): the Time Attack start on the endless popup.</summary>
     public sealed partial class MetaController

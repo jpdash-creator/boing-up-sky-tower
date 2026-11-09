@@ -1,7 +1,7 @@
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 using Xunit;
 
-namespace BoingUpSkyTower.Simulation.Tests
+namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>The hidden master list (docs/36): complete, ordered by hero then tier, and a copy so nobody can change it.</summary>
     public class CharacterInventoryTests

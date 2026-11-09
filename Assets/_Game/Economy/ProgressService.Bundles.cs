@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BoingUpSkyTower.Economy
+namespace FluffyClimbers.Economy
 {
     /// <summary>
     /// Gem bundles (docs/26 section 3): the saved set of 6 offers, buying, the paid refresh, and the timer offer (30 percent off for 5 minutes,
@@ -201,7 +201,7 @@ namespace BoingUpSkyTower.Economy
         bool IsBundleRegionOpen(int regionIndex)
         {
             if (regionIndex <= 1) return true;
-            BoingUpSkyTower.Content.RegionDef r = repo.TryGetRegionByIndex(regionIndex);
+            FluffyClimbers.Content.RegionDef r = repo.TryGetRegionByIndex(regionIndex);
             return r != null && IsRegionUnlocked(r);
         }
 
@@ -209,7 +209,7 @@ namespace BoingUpSkyTower.Economy
         public int BundleOpenRegionCount()
         {
             int n = 0;
-            foreach (BoingUpSkyTower.Content.RegionDef r in repo.Regions) if (IsRegionUnlocked(r)) n++;
+            foreach (FluffyClimbers.Content.RegionDef r in repo.Regions) if (IsRegionUnlocked(r)) n++;
             return Math.Max(1, n);
         }
 

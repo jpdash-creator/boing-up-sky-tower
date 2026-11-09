@@ -1,12 +1,12 @@
-# BoingUpSkyTower.Content (T2: runtime content loading)
+# FluffyClimbers.Content (T2: runtime content loading)
 
-Assembly `BoingUpSkyTower.Content` (references BoingUpSkyTower.Simulation + Unity.Nuget.Newtonsoft-Json, package `com.unity.nuget.newtonsoft-json` 3.2.2). Namespace `BoingUpSkyTower.Content`.
+Assembly `FluffyClimbers.Content` (references FluffyClimbers.Simulation + Unity.Nuget.Newtonsoft-Json, package `com.unity.nuget.newtonsoft-json` 3.2.2). Namespace `FluffyClimbers.Content`.
 
 ## Loading
 - Offline fallback: `ContentRepository.LoadFromResources()` reads `Assets/Resources/Content/content_manifest.json` (TextAsset, path `Content/content_manifest`).
 - Remote/other text: `ContentRepository.LoadFromJson(string manifestJson)` (same format, validated identically).
-- Regenerate the manifest after any change under `Content/`: menu `Tools/Boing Up: Sky Tower/Build Content Manifest`, or headless
-  `Unity.exe -batchmode -nographics -projectPath <repo> -executeMethod BoingUpSkyTower.Editor.ContentSync.ContentManifestBuilder.BuildFromCommandLine -logFile <log>` (no `-quit`; exits 0/1).
+- Regenerate the manifest after any change under `Content/`: menu `Tools/Fluffy Climbers: Tower Jump/Build Content Manifest`, or headless
+  `Unity.exe -batchmode -nographics -projectPath <repo> -executeMethod FluffyClimbers.Editor.ContentSync.ContentManifestBuilder.BuildFromCommandLine -logFile <log>` (no `-quit`; exits 0/1).
   It also runs automatically before every player build (`ContentManifestBuildStep`, IPreprocessBuildWithReport).
 - The EditMode test `ResourcesManifestIsInSyncWithSourceContent` fails when the manifest is stale.
 

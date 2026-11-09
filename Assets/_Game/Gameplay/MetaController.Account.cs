@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>Account entry points of the Meta scene (owner issue 35.3, docs/35 section 8): the round account button on Home, the pop-up and the Settings account block.</summary>
     public sealed partial class MetaController

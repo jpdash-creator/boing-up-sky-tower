@@ -1,7 +1,7 @@
 using System.Text;
-using BoingUpSkyTower.Economy;
+using FluffyClimbers.Economy;
 
-namespace BoingUpSkyTower.Gameplay
+namespace FluffyClimbers.Gameplay
 {
     /// <summary>
     /// Cached strings for the Run HUD timer, the live delta and small numbers (doc 46, CUX-1: zero managed allocations per frame). A time text is looked up by its tenth of a

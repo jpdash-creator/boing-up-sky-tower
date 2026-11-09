@@ -1,11 +1,11 @@
-using BoingUpSkyTower.Economy;
-using BoingUpSkyTower.Gameplay;
-using BoingUpSkyTower.Simulation;
+using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
+using FluffyClimbers.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoingUpSkyTower.Tests
+namespace FluffyClimbers.Tests
 {
     /// <summary>The hero sheet (docs/21, 29): data from the stats system, plates cut for 9-slice, rarity colours, and the header, tab and use buttons.</summary>
     public class HeroSheetTests

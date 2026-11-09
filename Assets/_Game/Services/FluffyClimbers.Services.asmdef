@@ -1,0 +1,14 @@
+{
+  "name": "FluffyClimbers.Services",
+  "rootNamespace": "FluffyClimbers.Monetization",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
