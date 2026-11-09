@@ -7,7 +7,7 @@ namespace BoingUpSkyTower.Gameplay
     /// The Gameplay setting on the level screen (Bug List 6 item 6): a centred row of five buttons (Relaxed, Easy, Normal, Hard, Insane), each an icon plus its
     /// label, directly below the region name. It replaces the Difficulty row of Settings. The choice is stored in the same PlayerPrefs key as before and decides
     /// the size of the scroll speed-up steps (20, 22, 25, 28, 30 percent every 5 s) and the gem chance. The selected button is NOT shown by colour alone: it is
-    /// green, has a thick ink outline and a check mark, and its accessibility label says "selected".
+    /// green, has a thick ink outline (no tick mark, Bug List 8 item 2a), and its accessibility label says "selected".
     /// </summary>
     public sealed partial class MetaController
     {
@@ -17,11 +17,14 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Row height in canvas units for the current text scale: icon, a gap and one line of label, never below 48 dp.</summary>
         static float GameplayRowHeight()
         {
-            float labelH = Mathf.Ceil(Mathf.Max(40f, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.25f);
-            return Mathf.Max(UiKit.MinTouchRef, 10f + GameplayIconPx + 2f + labelH + 8f);
+            float labelH = GameplayLabelH();
+            return Mathf.Max(UiKit.MinTouchRef, 8f + GameplayIconPx + 2f + labelH + 6f);
         }
 
-        const float GameplayIconPx = 56f, GameplaySideMargin = 16f, GameplayBelowGap = 12f;
+        static float GameplayLabelPx { get { return UiKit.MinBodyTextPx; } }   // 16 sp minimum, smaller than before so the bigger icon fits (Bug List 8 item 2a)
+        static float GameplayLabelH() { return Mathf.Ceil(GameplayLabelPx * UiKit.TextScale * 1.25f); }
+
+        const float GameplayIconPx = 88f, GameplaySideMargin = 16f, GameplayBelowGap = 12f;
 
         /// <summary>
         /// Builds the Gameplay row under <paramref name="parent"/> with its top edge <paramref name="top"/> units below the parent's top and returns the vertical space
@@ -48,14 +51,13 @@ namespace BoingUpSkyTower.Gameplay
             int count = GameplayIcons.Keys.Length;
             var plates = new Image[count];
             var rings = new Outline[count];
-            var checks = new GameObject[count];
             var buttons = new Button[count];
             int selected = GameSettings.Difficulty;
             for (int i = 0; i < count; i++)
             {
                 int mode = i;
                 string name = GameSettings.DifficultyNames[mode];
-                Button b = UiKit.AddButton(row, "Gameplay" + name, "", Btn(mode == selected ? 1 : 0), Color.white, new Vector2(UiKit.MinTouchPx, rowH), () => SelectGameplay(mode, plates, rings, checks, buttons));
+                Button b = UiKit.AddButton(row, "Gameplay" + name, "", Btn(mode == selected ? 1 : 0), Color.white, new Vector2(UiKit.MinTouchPx, rowH), () => SelectGameplay(mode, plates, rings, buttons));
                 buttons[mode] = b;
                 plates[mode] = b.GetComponent<Image>();
                 var ring = b.gameObject.AddComponent<Outline>();   // thick ink outline for the selected one (not colour-only)
@@ -69,28 +71,20 @@ namespace BoingUpSkyTower.Gameplay
                 var irt = icon.rectTransform;
                 irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 1f);
                 irt.pivot = new Vector2(0.5f, 1f);
-                irt.anchoredPosition = new Vector2(0f, -10f);
+                irt.anchoredPosition = new Vector2(0f, -8f);
                 irt.sizeDelta = new Vector2(GameplayIconPx, GameplayIconPx);
 
-                float labelH = Mathf.Ceil(Mathf.Max(40f, UiKit.MinBodyTextPx) * UiKit.TextScale * 1.25f);
-                Text label = UiKit.AddText(b.transform, "Label", name, 40, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+                float labelH = GameplayLabelH();
+                Text label = UiKit.AddText(b.transform, "Label", name, Mathf.RoundToInt(GameplayLabelPx), UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
                 DropOutline(label);
                 label.horizontalOverflow = HorizontalWrapMode.Overflow;   // a word is never broken: the button is sized to the widest label
                 var lrt = (RectTransform)label.transform;
                 lrt.anchorMin = new Vector2(0f, 0f);
                 lrt.anchorMax = new Vector2(1f, 0f);
                 lrt.pivot = new Vector2(0.5f, 0f);
-                lrt.offsetMin = new Vector2(4f, 8f);
-                lrt.offsetMax = new Vector2(-4f, 8f + labelH);
+                lrt.offsetMin = new Vector2(4f, 6f);
+                lrt.offsetMax = new Vector2(-4f, 6f + labelH);
 
-                // check mark in the top right corner, only on the selected button
-                Image tick = UiKit.AddImage(b.transform, "Check", Glyphs.Check, Color.white);
-                var trt = tick.rectTransform;
-                trt.anchorMin = trt.anchorMax = new Vector2(1f, 1f);
-                trt.pivot = new Vector2(1f, 1f);
-                trt.anchoredPosition = new Vector2(-4f, -4f);
-                trt.sizeDelta = new Vector2(40f, 40f);
-                checks[mode] = tick.gameObject;
 
                 var le = b.gameObject.AddComponent<LayoutElement>();
                 le.minWidth = UiKit.MinTouchPx;
@@ -99,20 +93,20 @@ namespace BoingUpSkyTower.Gameplay
                 le.minHeight = rowH;
                 le.preferredHeight = rowH;
             }
-            RefreshGameplayRow(plates, rings, checks, buttons);
+            RefreshGameplayRow(plates, rings, buttons);
             return rowH + GameplayBelowGap;
         }
 
-        void SelectGameplay(int mode, Image[] plates, Outline[] rings, GameObject[] checks, Button[] buttons)
+        void SelectGameplay(int mode, Image[] plates, Outline[] rings, Button[] buttons)
         {
             GameSettings.Difficulty = mode;
             GameSession.ApplyDifficulty();
-            RefreshGameplayRow(plates, rings, checks, buttons);
+            RefreshGameplayRow(plates, rings, buttons);
             RefreshMedalBadges();   // the node medals follow the chosen mode
         }
 
-        /// <summary>Sets plate colour, outline, check mark and accessibility text of the five buttons from the stored choice.</summary>
-        static void RefreshGameplayRow(Image[] plates, Outline[] rings, GameObject[] checks, Button[] buttons)
+        /// <summary>Sets plate colour, outline and accessibility text of the five buttons from the stored choice.</summary>
+        static void RefreshGameplayRow(Image[] plates, Outline[] rings, Button[] buttons)
         {
             int selected = GameSettings.Difficulty;
             for (int i = 0; i < plates.Length; i++)
@@ -122,7 +116,6 @@ namespace BoingUpSkyTower.Gameplay
                 Sprite plate = ToyKit.Button(on ? 1 : 0);
                 if (plate != null) plates[i].sprite = plate;
                 rings[i].enabled = on;
-                checks[i].SetActive(on);
                 var a11y = buttons[i].GetComponent<A11yLabel>();
                 if (a11y != null) a11y.Text = "Gameplay " + GameSettings.DifficultyNames[i] + ", speed-up steps of " + GameSettings.DifficultyStepPercent[i] + " percent, up to plus " + GameSettings.MaxSpeedUpPercent(i) + " percent" + (on ? ", selected" : "");
             }

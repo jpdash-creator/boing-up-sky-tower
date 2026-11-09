@@ -67,11 +67,11 @@ namespace BoingUpSkyTower.Content
         /// Endless mode spec of a region: its signature and difficulty offset, the run's seed (kept with the run so a retry or a replay can
         /// rebuild the same tower) and the floor where the layout difficulty reaches 1 (remote config generator.endlessDifficultyFloors).
         /// </summary>
-        public static LevelSpec BuildEndless(RegionDef region, int seed, int difficultyFloors)
+        public static LevelSpec BuildEndless(RegionDef region, int seed, int difficultyFloors, bool timeAttack = false)
         {
             if (region == null) throw new ContentException("(null)", "RegionDef is null.");
             Fx offset = Fx.FromRatio((int)System.Math.Round(region.Rules.DifficultyOffset * 10000), 10000);
-            return EndlessTower.MakeSpec(seed, offset, SignatureKinds.FromModuleId(region.Rules.SignatureModule), difficultyFloors, region.Levels.Count);
+            return EndlessTower.MakeSpec(seed, offset, SignatureKinds.FromModuleId(region.Rules.SignatureModule), difficultyFloors, region.Levels.Count, timeAttack);
         }
 
         /// <summary>Convenience: spec for a level id using a loaded repository.</summary>

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contentHash": "6298c88958aace06a432d00b8c3a2c7a129e9a3dbafbfcd5e29a60c8cefaa95d",
+  "contentHash": "d42f4b12afed74f0818cac376bd23a65c77f48b1425d0a5fd68c3485db9a91e6",
   "regions": [
     {
       "id": "region_001_meadow_springs",
@@ -1471,7 +1471,7 @@
       "index": 1,
       "seed": 124993,
       "class": "simple",
-      "difficulty": 0.05,
+      "difficulty": 0.052,
       "goal": {
         "type": "reachFloor",
         "value": 60
@@ -1503,10 +1503,10 @@
       "index": 2,
       "seed": 229722,
       "class": "simple",
-      "difficulty": 0.202,
+      "difficulty": 0.201,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -1535,10 +1535,10 @@
       "index": 3,
       "seed": 334451,
       "class": "simple",
-      "difficulty": 0.233,
+      "difficulty": 0.232,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -1567,10 +1567,10 @@
       "index": 4,
       "seed": 439180,
       "class": "medium",
-      "difficulty": 0.28,
+      "difficulty": 0.291,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -1599,7 +1599,7 @@
       "index": 5,
       "seed": 543909,
       "class": "medium",
-      "difficulty": 0.49,
+      "difficulty": 0.541,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -1632,10 +1632,10 @@
       "index": 6,
       "seed": 648638,
       "class": "medium",
-      "difficulty": 0.375,
+      "difficulty": 0.396,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -1664,10 +1664,10 @@
       "index": 7,
       "seed": 753367,
       "class": "medium",
-      "difficulty": 0.398,
+      "difficulty": 0.424,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -1696,10 +1696,10 @@
       "index": 8,
       "seed": 858096,
       "class": "medium",
-      "difficulty": 0.42,
+      "difficulty": 0.443,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -1728,10 +1728,10 @@
       "index": 9,
       "seed": 962825,
       "class": "hard",
-      "difficulty": 0.491,
+      "difficulty": 0.472,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -1760,10 +1760,10 @@
       "index": 10,
       "seed": 1067554,
       "class": "hard",
-      "difficulty": 0.518,
+      "difficulty": 0.512,
       "goal": {
         "type": "noWallBounce",
-        "value": 150
+        "value": 90
       },
       "stars": [
         {
@@ -1793,10 +1793,10 @@
       "index": 11,
       "seed": 1172283,
       "class": "hard",
-      "difficulty": 0.55,
+      "difficulty": 0.542,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -1825,10 +1825,10 @@
       "index": 12,
       "seed": 1277012,
       "class": "hard",
-      "difficulty": 0.565,
+      "difficulty": 0.545,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -1857,10 +1857,10 @@
       "index": 13,
       "seed": 1381741,
       "class": "hard",
-      "difficulty": 0.574,
+      "difficulty": 0.617,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -1889,10 +1889,10 @@
       "index": 14,
       "seed": 1486470,
       "class": "hard",
-      "difficulty": 0.642,
+      "difficulty": 0.651,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -1921,10 +1921,10 @@
       "index": 15,
       "seed": 1591199,
       "class": "complex",
-      "difficulty": 0.645,
+      "difficulty": 0.647,
       "goal": {
         "type": "findHiddenGem",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -1953,10 +1953,10 @@
       "index": 16,
       "seed": 1695928,
       "class": "complex",
-      "difficulty": 0.694,
+      "difficulty": 0.688,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -1985,10 +1985,10 @@
       "index": 17,
       "seed": 1800657,
       "class": "complex",
-      "difficulty": 0.701,
+      "difficulty": 0.699,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -2017,10 +2017,10 @@
       "index": 18,
       "seed": 1905386,
       "class": "complex",
-      "difficulty": 0.746,
+      "difficulty": 0.727,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -2049,10 +2049,10 @@
       "index": 19,
       "seed": 2010115,
       "class": "complex",
-      "difficulty": 0.772,
+      "difficulty": 0.754,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -2081,11 +2081,11 @@
       "index": 20,
       "seed": 2114844,
       "class": "complex",
-      "difficulty": 0.801,
+      "difficulty": 0.822,
       "goal": {
         "type": "speedrun",
-        "value": 90,
-        "timeSec": 75
+        "value": 120,
+        "timeSec": 100
       },
       "stars": [
         {
@@ -2311,10 +2311,10 @@
       "index": 2,
       "seed": 237641,
       "class": "simple",
-      "difficulty": 0.195,
+      "difficulty": 0.22,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -2343,10 +2343,10 @@
       "index": 3,
       "seed": 342370,
       "class": "simple",
-      "difficulty": 0.225,
+      "difficulty": 0.244,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -2375,10 +2375,10 @@
       "index": 4,
       "seed": 447099,
       "class": "medium",
-      "difficulty": 0.306,
+      "difficulty": 0.314,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -2407,7 +2407,7 @@
       "index": 5,
       "seed": 551828,
       "class": "medium",
-      "difficulty": 0.52,
+      "difficulty": 0.529,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -2440,10 +2440,10 @@
       "index": 6,
       "seed": 656557,
       "class": "medium",
-      "difficulty": 0.378,
+      "difficulty": 0.364,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -2472,10 +2472,10 @@
       "index": 7,
       "seed": 761286,
       "class": "medium",
-      "difficulty": 0.41,
+      "difficulty": 0.437,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -2504,10 +2504,10 @@
       "index": 8,
       "seed": 866015,
       "class": "medium",
-      "difficulty": 0.459,
+      "difficulty": 0.492,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -2536,10 +2536,10 @@
       "index": 9,
       "seed": 970744,
       "class": "hard",
-      "difficulty": 0.492,
+      "difficulty": 0.51,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -2568,10 +2568,10 @@
       "index": 10,
       "seed": 1075473,
       "class": "hard",
-      "difficulty": 0.565,
+      "difficulty": 0.514,
       "goal": {
         "type": "noWallBounce",
-        "value": 150
+        "value": 90
       },
       "stars": [
         {
@@ -2601,10 +2601,10 @@
       "index": 11,
       "seed": 1180202,
       "class": "hard",
-      "difficulty": 0.575,
+      "difficulty": 0.605,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -2633,10 +2633,10 @@
       "index": 12,
       "seed": 1284931,
       "class": "hard",
-      "difficulty": 0.594,
+      "difficulty": 0.608,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -2665,10 +2665,10 @@
       "index": 13,
       "seed": 1389660,
       "class": "hard",
-      "difficulty": 0.653,
+      "difficulty": 0.611,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -2697,10 +2697,10 @@
       "index": 14,
       "seed": 1494389,
       "class": "hard",
-      "difficulty": 0.671,
+      "difficulty": 0.674,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -2729,10 +2729,10 @@
       "index": 15,
       "seed": 1599118,
       "class": "complex",
-      "difficulty": 0.699,
+      "difficulty": 0.687,
       "goal": {
         "type": "findHiddenGem",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -2761,10 +2761,10 @@
       "index": 16,
       "seed": 1703847,
       "class": "complex",
-      "difficulty": 0.713,
+      "difficulty": 0.739,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -2793,10 +2793,10 @@
       "index": 17,
       "seed": 1808576,
       "class": "complex",
-      "difficulty": 0.76,
+      "difficulty": 0.779,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -2825,10 +2825,10 @@
       "index": 18,
       "seed": 1913305,
       "class": "complex",
-      "difficulty": 0.767,
+      "difficulty": 0.783,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -2857,10 +2857,10 @@
       "index": 19,
       "seed": 2018034,
       "class": "complex",
-      "difficulty": 0.796,
+      "difficulty": 0.786,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -2889,11 +2889,11 @@
       "index": 20,
       "seed": 2122763,
       "class": "complex",
-      "difficulty": 0.84,
+      "difficulty": 0.864,
       "goal": {
         "type": "speedrun",
-        "value": 90,
-        "timeSec": 75
+        "value": 120,
+        "timeSec": 100
       },
       "stars": [
         {
@@ -3119,10 +3119,10 @@
       "index": 2,
       "seed": 245560,
       "class": "simple",
-      "difficulty": 0.213,
+      "difficulty": 0.209,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -3151,10 +3151,10 @@
       "index": 3,
       "seed": 350289,
       "class": "simple",
-      "difficulty": 0.229,
+      "difficulty": 0.215,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -3183,10 +3183,10 @@
       "index": 4,
       "seed": 455018,
       "class": "medium",
-      "difficulty": 0.275,
+      "difficulty": 0.305,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -3215,7 +3215,7 @@
       "index": 5,
       "seed": 559747,
       "class": "medium",
-      "difficulty": 0.49,
+      "difficulty": 0.545,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -3248,10 +3248,10 @@
       "index": 6,
       "seed": 664476,
       "class": "medium",
-      "difficulty": 0.366,
+      "difficulty": 0.371,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -3280,10 +3280,10 @@
       "index": 7,
       "seed": 769205,
       "class": "medium",
-      "difficulty": 0.438,
+      "difficulty": 0.431,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -3312,10 +3312,10 @@
       "index": 8,
       "seed": 873935,
       "class": "medium",
-      "difficulty": 0.454,
+      "difficulty": 0.491,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -3344,10 +3344,10 @@
       "index": 9,
       "seed": 978663,
       "class": "hard",
-      "difficulty": 0.465,
+      "difficulty": 0.498,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -3376,10 +3376,10 @@
       "index": 10,
       "seed": 1083392,
       "class": "hard",
-      "difficulty": 0.541,
+      "difficulty": 0.54,
       "goal": {
         "type": "noWallBounce",
-        "value": 150
+        "value": 90
       },
       "stars": [
         {
@@ -3409,10 +3409,10 @@
       "index": 11,
       "seed": 1188121,
       "class": "hard",
-      "difficulty": 0.564,
+      "difficulty": 0.577,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -3441,10 +3441,10 @@
       "index": 12,
       "seed": 1292850,
       "class": "hard",
-      "difficulty": 0.567,
+      "difficulty": 0.592,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -3473,10 +3473,10 @@
       "index": 13,
       "seed": 1397579,
       "class": "hard",
-      "difficulty": 0.632,
+      "difficulty": 0.61,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -3505,10 +3505,10 @@
       "index": 14,
       "seed": 1502308,
       "class": "hard",
-      "difficulty": 0.679,
+      "difficulty": 0.628,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -3537,10 +3537,10 @@
       "index": 15,
       "seed": 1607037,
       "class": "complex",
-      "difficulty": 0.708,
+      "difficulty": 0.687,
       "goal": {
         "type": "findHiddenGem",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -3569,10 +3569,10 @@
       "index": 16,
       "seed": 1711766,
       "class": "complex",
-      "difficulty": 0.711,
+      "difficulty": 0.679,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -3601,10 +3601,10 @@
       "index": 17,
       "seed": 1816495,
       "class": "complex",
-      "difficulty": 0.75,
+      "difficulty": 0.732,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -3633,10 +3633,10 @@
       "index": 18,
       "seed": 1921224,
       "class": "complex",
-      "difficulty": 0.756,
+      "difficulty": 0.755,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -3665,10 +3665,10 @@
       "index": 19,
       "seed": 2025953,
       "class": "complex",
-      "difficulty": 0.779,
+      "difficulty": 0.775,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -3697,11 +3697,11 @@
       "index": 20,
       "seed": 2130682,
       "class": "complex",
-      "difficulty": 0.822,
+      "difficulty": 0.808,
       "goal": {
         "type": "speedrun",
-        "value": 90,
-        "timeSec": 75
+        "value": 120,
+        "timeSec": 100
       },
       "stars": [
         {
@@ -3927,10 +3927,10 @@
       "index": 2,
       "seed": 253479,
       "class": "simple",
-      "difficulty": 0.218,
+      "difficulty": 0.2,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -3959,10 +3959,10 @@
       "index": 3,
       "seed": 358208,
       "class": "simple",
-      "difficulty": 0.259,
+      "difficulty": 0.234,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -3991,10 +3991,10 @@
       "index": 4,
       "seed": 462937,
       "class": "medium",
-      "difficulty": 0.301,
+      "difficulty": 0.323,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -4023,7 +4023,7 @@
       "index": 5,
       "seed": 567666,
       "class": "medium",
-      "difficulty": 0.511,
+      "difficulty": 0.595,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -4056,10 +4056,10 @@
       "index": 6,
       "seed": 672395,
       "class": "medium",
-      "difficulty": 0.382,
+      "difficulty": 0.397,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4088,10 +4088,10 @@
       "index": 7,
       "seed": 777124,
       "class": "medium",
-      "difficulty": 0.454,
+      "difficulty": 0.47,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4120,10 +4120,10 @@
       "index": 8,
       "seed": 881853,
       "class": "medium",
-      "difficulty": 0.457,
+      "difficulty": 0.473,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4152,10 +4152,10 @@
       "index": 9,
       "seed": 986582,
       "class": "hard",
-      "difficulty": 0.51,
+      "difficulty": 0.52,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4184,10 +4184,10 @@
       "index": 10,
       "seed": 1091311,
       "class": "hard",
-      "difficulty": 0.548,
+      "difficulty": 0.568,
       "goal": {
         "type": "noWallBounce",
-        "value": 150
+        "value": 90
       },
       "stars": [
         {
@@ -4217,10 +4217,10 @@
       "index": 11,
       "seed": 1196040,
       "class": "hard",
-      "difficulty": 0.588,
+      "difficulty": 0.593,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -4249,10 +4249,10 @@
       "index": 12,
       "seed": 1300769,
       "class": "hard",
-      "difficulty": 0.617,
+      "difficulty": 0.643,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -4281,10 +4281,10 @@
       "index": 13,
       "seed": 1405498,
       "class": "hard",
-      "difficulty": 0.646,
+      "difficulty": 0.664,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -4313,10 +4313,10 @@
       "index": 14,
       "seed": 1510227,
       "class": "hard",
-      "difficulty": 0.693,
+      "difficulty": 0.705,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -4345,10 +4345,10 @@
       "index": 15,
       "seed": 1614956,
       "class": "complex",
-      "difficulty": 0.711,
+      "difficulty": 0.733,
       "goal": {
         "type": "findHiddenGem",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -4377,10 +4377,10 @@
       "index": 16,
       "seed": 1719685,
       "class": "complex",
-      "difficulty": 0.75,
+      "difficulty": 0.769,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -4409,10 +4409,10 @@
       "index": 17,
       "seed": 1824414,
       "class": "complex",
-      "difficulty": 0.783,
+      "difficulty": 0.792,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -4441,10 +4441,10 @@
       "index": 18,
       "seed": 1929143,
       "class": "complex",
-      "difficulty": 0.806,
+      "difficulty": 0.824,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -4473,10 +4473,10 @@
       "index": 19,
       "seed": 2033872,
       "class": "complex",
-      "difficulty": 0.882,
+      "difficulty": 0.828,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -4505,11 +4505,11 @@
       "index": 20,
       "seed": 2138601,
       "class": "complex",
-      "difficulty": 0.908,
+      "difficulty": 0.875,
       "goal": {
         "type": "speedrun",
-        "value": 90,
-        "timeSec": 75
+        "value": 120,
+        "timeSec": 100
       },
       "stars": [
         {
@@ -4735,10 +4735,10 @@
       "index": 2,
       "seed": 261398,
       "class": "simple",
-      "difficulty": 0.195,
+      "difficulty": 0.201,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -4767,10 +4767,10 @@
       "index": 3,
       "seed": 366127,
       "class": "simple",
-      "difficulty": 0.22,
+      "difficulty": 0.204,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -4799,10 +4799,10 @@
       "index": 4,
       "seed": 470856,
       "class": "medium",
-      "difficulty": 0.254,
+      "difficulty": 0.261,
       "goal": {
         "type": "reachFloor",
-        "value": 90
+        "value": 75
       },
       "stars": [
         {
@@ -4831,7 +4831,7 @@
       "index": 5,
       "seed": 575585,
       "class": "medium",
-      "difficulty": 0.474,
+      "difficulty": 0.504,
       "goal": {
         "type": "comboChain",
         "value": 3,
@@ -4864,10 +4864,10 @@
       "index": 6,
       "seed": 680314,
       "class": "medium",
-      "difficulty": 0.323,
+      "difficulty": 0.315,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4896,10 +4896,10 @@
       "index": 7,
       "seed": 785043,
       "class": "medium",
-      "difficulty": 0.375,
+      "difficulty": 0.388,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4928,10 +4928,10 @@
       "index": 8,
       "seed": 889772,
       "class": "medium",
-      "difficulty": 0.397,
+      "difficulty": 0.408,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4960,10 +4960,10 @@
       "index": 9,
       "seed": 994501,
       "class": "hard",
-      "difficulty": 0.442,
+      "difficulty": 0.411,
       "goal": {
         "type": "reachFloor",
-        "value": 120
+        "value": 90
       },
       "stars": [
         {
@@ -4992,10 +4992,10 @@
       "index": 10,
       "seed": 1099230,
       "class": "hard",
-      "difficulty": 0.473,
+      "difficulty": 0.488,
       "goal": {
         "type": "noWallBounce",
-        "value": 150
+        "value": 90
       },
       "stars": [
         {
@@ -5025,10 +5025,10 @@
       "index": 11,
       "seed": 1203959,
       "class": "hard",
-      "difficulty": 0.516,
+      "difficulty": 0.522,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -5057,10 +5057,10 @@
       "index": 12,
       "seed": 1308688,
       "class": "hard",
-      "difficulty": 0.531,
+      "difficulty": 0.525,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -5089,10 +5089,10 @@
       "index": 13,
       "seed": 1413417,
       "class": "hard",
-      "difficulty": 0.594,
+      "difficulty": 0.549,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -5121,10 +5121,10 @@
       "index": 14,
       "seed": 1518146,
       "class": "hard",
-      "difficulty": 0.614,
+      "difficulty": 0.608,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -5153,10 +5153,10 @@
       "index": 15,
       "seed": 1622875,
       "class": "complex",
-      "difficulty": 0.635,
+      "difficulty": 0.643,
       "goal": {
         "type": "findHiddenGem",
-        "value": 150
+        "value": 105
       },
       "stars": [
         {
@@ -5185,10 +5185,10 @@
       "index": 16,
       "seed": 1727604,
       "class": "complex",
-      "difficulty": 0.682,
+      "difficulty": 0.681,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -5217,10 +5217,10 @@
       "index": 17,
       "seed": 1832333,
       "class": "complex",
-      "difficulty": 0.699,
+      "difficulty": 0.697,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -5249,10 +5249,10 @@
       "index": 18,
       "seed": 1937062,
       "class": "complex",
-      "difficulty": 0.717,
+      "difficulty": 0.714,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -5281,10 +5281,10 @@
       "index": 19,
       "seed": 2041791,
       "class": "complex",
-      "difficulty": 0.742,
+      "difficulty": 0.747,
       "goal": {
         "type": "reachFloor",
-        "value": 150
+        "value": 120
       },
       "stars": [
         {
@@ -5313,11 +5313,11 @@
       "index": 20,
       "seed": 2146520,
       "class": "complex",
-      "difficulty": 0.807,
+      "difficulty": 0.782,
       "goal": {
         "type": "speedrun",
-        "value": 90,
-        "timeSec": 75
+        "value": 120,
+        "timeSec": 100
       },
       "stars": [
         {

@@ -112,7 +112,7 @@ namespace BoingUpSkyTower.Gameplay
             IsEndless = true;
             IsTimeAttack = timeAttack;
             Seed = seed;
-            Spec = LevelSpecFactory.BuildEndless(region, seed, repo.RemoteConfig.Generator.EndlessDifficultyFloors);
+            Spec = LevelSpecFactory.BuildEndless(region, seed, repo.RemoteConfig.Generator.EndlessDifficultyFloors, timeAttack);
             World = new EndlessWorld(cfg, Spec);
             Tower = World.Tower;
             Data = World.Data;

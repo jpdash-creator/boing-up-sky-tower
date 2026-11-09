@@ -114,7 +114,8 @@ def levels_in_region(n):
 
 # Owner decision 2026-10-19 (T14): Speedrun keeps normal gaps, the time goal is relaxed. Regions 1-5 were verified by the bot
 # (slowest bot time 61.0 s, timeSec = ceil(1.2 * 61.0 to 5 s) = 75). Any change must be re-verified with the Simulation tests.
-SPEEDRUN_VALUE = 90
+# Owner Bug List 8 item 3 (2026-11-09): level 20 has 120 rows, the time scales 75 s per 90 rows -> 100 s per 120 rows.
+SPEEDRUN_VALUE = 120
 SPEEDRUN_TIME_MIN, SPEEDRUN_TIME_MAX = 60, 120
 PLAYABLE_REGIONS = 5
 COIN_STAR_MIN, COIN_STAR_MAX = 15, 500

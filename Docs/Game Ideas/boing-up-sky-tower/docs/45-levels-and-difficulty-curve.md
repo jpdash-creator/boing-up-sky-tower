@@ -64,7 +64,22 @@ Level 15 (target exactly 75) sits on the border: it counts as Hard (the top of t
 - **Special-goal levels** (combo chain, no wall bounce, hidden gem, speedrun) are levels **5, 10, 15 and 20**. Which goal sits on which level is set per region in the level table; the goal rules themselves stay as in doc 25 (combo chain has no gems, no wall bounce fails on a wall touch, and so on). The speedrun goal is new and is specified when it is built.
 - **Level 25 is the highly complex reach-the-top level** of the region (plain reach-the-last-platform goal, the hardest layout of the region).
 - Level ids are `lvl_RRR_01` to `lvl_RRR_25` (RRR = region number, three digits). The existing ids 1 to 15 **keep their ids and their seeds**, so saves, stars and bot proofs stay valid; ids 16 to 25 are new.
-- Rows per level, platforms per row and special share are set so the measured score meets the target of section 3; the doc 25 values are a starting point, not a rule.
+- Platforms per row and special share are set so the measured score meets the target of section 3; the doc 25 values are a starting point, not a rule. **Rows per level are fixed by the owner (section 4a).**
+
+### 4a. Rows (floors) per level, Regions 1 to 5 (owner Bug List 8 item 3, 2026-11-09)
+
+The level size is the number of platform rows (floors) from the start platform to the top row. It is the goal value of every row goal (reach the top, no wall bounce, hidden gem, speedrun) and `LevelSpec.RowsFor()` (the combo chain level 5 has no row goal and uses 75). It is the same in all five open regions; Regions 6 to 30 keep their legacy tables until they are migrated.
+
+| Levels | Rows (floors) | Was (old table) |
+|---|---|---|
+| 1 | 60 | 60 |
+| 2 to 5 | 75 | 90 |
+| 6 to 10 | 90 | 120 (6 to 9), 150 (10) |
+| 11 to 15 | 105 | 150 |
+| 16 to 20 | 120 | 150 (16 to 19), 90 (20, speedrun) |
+| 21 to 25 | 150 | 150 |
+
+Rows per region fall from 3,240 to 2,685 (a level is on average 17 percent shorter). The special levels follow their band: level 5 combo chain 75 rows, level 10 no wall bounce 90, level 15 hidden gem 105, level 20 speedrun 120 rows. **The speedrun time limit scales with its rows: 75 s for 90 rows became 100 s for 120 rows** (same margin over the bot as before). Goals, stars and star tiers, rewards (coin payout per level) and the difficulty scores of section 3 are unchanged; the builder difficulty d of each level was re-solved for the new lengths (section 10).
 
 ## 5. Region goal tiers and stars
 
@@ -80,7 +95,9 @@ Stars per region: 25 levels x 3 = **75**. Star thresholds that unlock regions or
 
 ## 6. The endless tower
 
-The endless tower has **25 stages of 100 floors** (floors 1 to 2500). Stage N follows the difficulty of level N (stage 1 = level 1, up to stage 25 = level 25). After floor 2500 the tower **cycles** (`EndlessTower`, `FirstCycleFloors` 2500, `CycleFloors` 1400): levels **15 to 24** for 100 floors each, then **level 25 is held for 400 floors** (`HoldFloors`), and that 1400-floor cycle repeats without end (floors 2501 to 3900 are the first cycle, and so on). The difficulty never rises above level 25. The endless generator stays separate from the level generator; only its difficulty input changes.
+The endless tower has **25 stages of 100 floors** (floors 1 to 2500). Stage N follows the difficulty of level N (stage 1 = level 1, up to stage 25 = level 25). After floor 2500 the tower **cycles** (`EndlessTower`, `FirstCycleFloors` 2500, `CycleFloors` 1400): levels **15 to 24** for 100 floors each, then **level 25 is held for 400 floors** (`HoldFloors`), and that 1400-floor cycle repeats without end (floors 2501 to 3900 are the first cycle, and so on). The difficulty never rises above level 25. The endless generator stays separate from the level generator; only its difficulty input changes. Each 100-floor stage of the endless tower uses the **complexity** of its campaign level (difficulty, platform kinds, scroll speed), not that level's row count (section 4a); the endless floors per stage stay 100 (owner Bug List 8 item 3).
+
+**Time Attack ramp (owner Bug List 8 item 3).** Time Attack (doc 46, section 7) does not start at level 1. Floor 1 of a Time Attack run has the complexity of **level 10**; every further 100 floors the level rises by one up to **level 25**, which is then held for the rest of the run (it never enters the endless cycle). Floors 1 to 100 are level 10, 101 to 200 level 11, and so on to floors 1501 and above at level 25. Implemented as `EndlessTower.LevelForFloorTimeAttack`: the plain first climb read at `floor + 900` (`TimeAttackFloorOffset`), clamped to the top level, so the tower stays prefix stable and replayable from the seed (`LevelSpec.TimeAttack`, `LevelData.EndlessTimeAttack`; the Sim scroll speed follows the same level).
 
 **Curve note.** The Region 4 (Candy Canyon) difficulty curve overshoots its target by 7.07 points on levels 23 to 25 (its sticky platforms limit how hard it measures); the owner accepted this for now (section 10).
 
@@ -132,8 +149,11 @@ Region 1 builder difficulty, levels 1 to 25: .05 .202 .233 .28 .49 .375 .398 .42
 **4. Region goals and endless.** Region goals are 25 levels and 75 stars per region; tiers clear 5 / 10 / 15 / 20 / 25 levels with the same rewards, the last tier still gives the Common hero; star tiers 15 / 30 / 45 / 60 / 75 and three-star tiers 5 / 13 / 25. The endless tower has 25 stages of 100 floors (floors 1 to 2500), then a 1400-floor cycle (levels 15 to 24 for 100 floors each, level 25 held for 400 floors). Regions 6 to 30 keep the old 15-level rules until they are migrated.
 
 **5. Economy after the move to 25 levels.** Perfect-play coins per region rise from about 3,750 to about 6,250. Gem income per region doubled (115 to 150 gems) and was brought back by scaling the gem drop chance by about 0.52 (permille per Gameplay mode from 27, 27, 29, 30, 32 to 14, 14, 15, 15, 15; 0.55 exactly overshoots the band in Region 3). Placed gem value per region on all 25 levels is now 61 to 70 on every mode (band 55 to 75, hard cap 91); the gem tier odds 70 / 22 / 7 / 1 percent are unchanged. The golden hashes (`Content/golden/level_hashes_r1-5.txt`) are regenerated and the curve scores did not move.
+
+**6. Level sizes in rows (owner Bug List 8 item 3, section 4a).** Regions 1 to 5 now use 60 / 75 / 90 / 105 / 120 / 150 rows for levels 1 / 2 to 5 / 6 to 10 / 11 to 15 / 16 to 20 / 21 to 25 (speedrun level 20: 120 rows in 100 s). The builder difficulty d of all 125 levels was re-solved (`Content/config/difficulty_curve.json`, `migrate_levels_25.py`): largest score error per region R1 0.62, R2 1.78, R3 1.03, R4 7.07 (the accepted Candy Canyon cap), R5 0.84. Golden hashes regenerated. Gem income: the shorter levels carry fewer gem spots, so the drop shares went from 14 / 14 / 15 / 15 / 15 to 16 / 16 / 17 / 17 / 17 permille (placed value back inside 55 to 75 per region). Medal targets and the full bot proof of all heroes on the new rows are re-run separately (see the build report).
 <!-- RESULTS END -->
 
 ## 11. Changelog
 
+- 2026-11-09 (Bug List 8 item 3): level sizes fixed in rows (section 4a: 60 / 75 / 90 / 105 / 120 / 150), speedrun time 100 s for 120 rows, difficulty curve re-solved, golden hashes, medal targets and gem income re-checked; endless unchanged; Time Attack ramps from level 10 (section 6).
 - 2026-11-09: document created from owner Bug List 6 (25 levels per region, the 0..100 difficulty score, the target curve, region goal tiers, the endless tower of 25 stages, the Gameplay setting, the active hero rule).

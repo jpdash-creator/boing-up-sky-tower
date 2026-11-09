@@ -1,9 +1,8 @@
-"""Build version of Boing Up: Sky Tower: vMAJOR.MINOR.HOTFIX.BUILD (see .claude/rules/versioning.md).
+"""Build version of Boing Up: Sky Tower: vMAJOR.MINOR.BUILD, example v0.52.68 (see .claude/rules/versioning.md).
 
     python Tools/version.py show
-    python Tools/version.py bump minor      # MINOR+1, HOTFIX back to 0 (BUILD is never reset)
-    python Tools/version.py bump hotfix     # HOTFIX+1
-    python Tools/version.py bump major      # MAJOR+1, MINOR and HOTFIX back to 0
+    python Tools/version.py bump minor      # MINOR+1 (BUILD is never reset)
+    python Tools/version.py bump major      # MAJOR+1, MINOR back to 0 (BUILD is never reset)
 BUILD is incremented by the Android build itself (Assets/Editor/Build/AndroidBuild.cs), once per produced APK, and never reset.
 """
 import json
@@ -25,21 +24,21 @@ def save(v):
 
 
 def name(v):
-    return "v%d.%d.%d.%d" % (v["major"], v["minor"], v["hotfix"], v["build"])
+    return "v%d.%d.%d" % (v["major"], v["minor"], v["build"])
 
 
 def main():
     v = load()
+    v.pop("hotfix", None)   # the old vX.Y.Z.B scheme had a hotfix part; it is dropped
     if len(sys.argv) >= 2 and sys.argv[1] == "bump":
         part = sys.argv[2]
         if part == "major":
-            v["major"] += 1; v["minor"] = 0; v["hotfix"] = 0
+            v["major"] += 1; v["minor"] = 0
         elif part == "minor":
-            v["minor"] += 1; v["hotfix"] = 0
-        elif part == "hotfix":
-            v["hotfix"] += 1
+            v["minor"] += 1
         else:
-            raise SystemExit("bump major|minor|hotfix")
+            raise SystemExit("bump major|minor")
+        v.pop("hotfix", None)
         save(v)
     print(name(v))
 

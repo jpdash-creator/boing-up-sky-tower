@@ -120,7 +120,7 @@ namespace BoingUpSkyTower.Gameplay
             tr.offsetMax = new Vector2(-(bs + 40f), -16f);
 
             float tabsTop = 16f + bs + 8f;
-            HeroTabs.Build(body, tabsTop, HeroTabs.Powers, host != null ? host.OpenAllHeroes : null, host != null ? host.OpenMerge : null, null, false, HeroTabs.Counts(progress));
+            HeroTabs.Build(body, tabsTop, HeroTabs.Powers, host != null ? host.OpenAllHeroes : null, host != null ? host.OpenMerge : null, null, false);
             BuildList(tabsTop + HeroTabs.RowH + 8f);
         }
 
@@ -193,15 +193,17 @@ namespace BoingUpSkyTower.Gameplay
             if (no != null) no.enabled = false;
             UiKit.Stretch(name.rectTransform);
 
-            // the owned number at the BOTTOM RIGHT of the card, on its own dark badge (never over the name)
+            // the owned number at the bottom CENTRE of the card, full width, on its own dark badge (never over the name)
             float ch = CountH;
             Image badge = UiKit.AddPanel(inner, "OwnedBadge", PillInk);
             badge.raycastTarget = false;
             RectTransform br = badge.rectTransform;
-            br.anchorMin = br.anchorMax = new Vector2(1f, 0f);
-            br.pivot = new Vector2(1f, 0f);
-            br.anchoredPosition = new Vector2(-6f, 6f);
-            br.sizeDelta = new Vector2(Mathf.Ceil(ch * 2.2f), ch);
+            // Bug List 8 item 1d: as wide as the card (same 3 to 97 percent span as the name pill), centred horizontally at the bottom
+            br.anchorMin = new Vector2(0.03f, 0f);
+            br.anchorMax = new Vector2(0.97f, 0f);
+            br.pivot = new Vector2(0.5f, 0f);
+            br.anchoredPosition = new Vector2(0f, Pad);
+            br.sizeDelta = new Vector2(0f, ch);
             Text count = UiKit.AddText(badge.transform, OwnedName, owned.ToString(), BodyFont, Color.white, TextAnchor.MiddleCenter, true);
             count.horizontalOverflow = HorizontalWrapMode.Overflow;
             Outline co = count.GetComponent<Outline>();

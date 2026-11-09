@@ -11,10 +11,10 @@ namespace BoingUpSkyTower.Editor.Build
     {
         const string OutputPath = "E:/Unity/builds/boingupskytower.apk";   // always the latest build (the device test kit installs this one)
 
-        // Semantic build version vMAJOR.MINOR.HOTFIX.BUILD (.claude/rules/versioning.md): the first three parts are bumped by hand with
+        // Semantic build version vMAJOR.MINOR.BUILD (.claude/rules/versioning.md): MAJOR and MINOR are bumped by hand with
         // Tools/version.py, BUILD is incremented here for every produced APK and never reset. It becomes the app version name, and the
         // Android version code is BUILD, so every install is newer than the one before.
-        [Serializable] class VersionInfo { public int major, minor, hotfix, build; }
+        [Serializable] class VersionInfo { public int major, minor, build; }
 
         static string ProjectRoot { get { return Directory.GetParent(Application.dataPath).FullName; } }
         static string VersionFile { get { return Path.Combine(ProjectRoot, "Tools", "version.json"); } }
@@ -37,7 +37,7 @@ namespace BoingUpSkyTower.Editor.Build
             VersionInfo ver = ReadVersion();
             ver.build++;
             WriteVersion(ver);
-            string versionName = ver.major + "." + ver.minor + "." + ver.hotfix + "." + ver.build;
+            string versionName = ver.major + "." + ver.minor + "." + ver.build;
             PlayerSettings.bundleVersion = versionName;
             PlayerSettings.Android.bundleVersionCode = ver.build;
             // Opt-in AltTester build (-altTester or BT_ALTTESTER=1, see AltTesterBuildHook): own file name, and it never replaces the clean boingupskytower.apk.

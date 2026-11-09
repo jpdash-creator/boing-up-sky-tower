@@ -276,7 +276,7 @@ namespace BoingUpSkyTower.Economy
             TimeAttackRecord[] arr;
             if (regionId == null || Data.TimeAttackRecords == null || !TimeRecords.ValidMode(mode) || !Data.TimeAttackRecords.TryGetValue(regionId, out arr) || arr == null || mode >= arr.Length) return null;
             TimeAttackRecord rec = arr[mode];
-            return rec != null && rec.BestFloors > 0 ? rec : null;
+            return rec != null && rec.BestFloors > 0 && TimeAttackRamp.IsCurrent(rec) ? rec : null;
         }
 
         /// <summary>Floor-by-time curve of the best Time Attack run (empty when none).</summary>
@@ -293,7 +293,7 @@ namespace BoingUpSkyTower.Economy
         public int TimeAttackBestFloors(string regionId, int mode)
         {
             TimeAttackRecord[] arr;
-            if (regionId == null || Data.TimeAttackRecords == null || !TimeRecords.ValidMode(mode) || !Data.TimeAttackRecords.TryGetValue(regionId, out arr) || arr == null || mode >= arr.Length || arr[mode] == null) return 0;
+            if (regionId == null || Data.TimeAttackRecords == null || !TimeRecords.ValidMode(mode) || !Data.TimeAttackRecords.TryGetValue(regionId, out arr) || arr == null || mode >= arr.Length || arr[mode] == null || !TimeAttackRamp.IsCurrent(arr[mode])) return 0;
             return arr[mode].BestFloors;
         }
 

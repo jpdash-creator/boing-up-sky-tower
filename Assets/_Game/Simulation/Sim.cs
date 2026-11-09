@@ -167,6 +167,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Endless: base scroll per tick of campaign level N (index 1..15), the speed of that level (EndlessTower.LevelForFloor); null otherwise.</summary>
         private readonly Fx[] endlessScroll;
         private readonly int endlessLevels;
+        private readonly bool endlessTimeAttack;
         private readonly Fx maxPickupRadius;
         private readonly Fx powerCapY;
         /// <summary>Vertical reach of bobbing platforms around their base Y (zero when the level has no Bee Hive Lift): widens the landing search.</summary>
@@ -210,6 +211,7 @@ namespace BoingUpSkyTower.Simulation
                 // difficulty (the HUD percent is measured against it); the region offset is recovered from it (spec.Difficulty = Effective(0.05, offset)).
                 int topLevel = level.EndlessLevels;
                 endlessLevels = topLevel;
+                endlessTimeAttack = level.EndlessTimeAttack;
                 endlessScroll = new Fx[EndlessTower.MaxLevel + 1];
                 Fx offset = level.HasEndlessOffset ? level.EndlessOffset : EndlessTower.OffsetFromStartDifficulty(difficulty);
                 for (int n = 1; n <= topLevel; n++)
@@ -786,7 +788,7 @@ namespace BoingUpSkyTower.Simulation
         /// </summary>
         public Fx ScrollPerTickAt(in SimState s, int tick)
         {
-            Fx scroll = Endless ? endlessScroll[EndlessTower.LevelForFloor(s.Row, endlessLevels)] : scrollPerTick;
+            Fx scroll = Endless ? endlessScroll[EndlessTower.LevelForFloor(s.Row, endlessLevels, endlessTimeAttack)] : scrollPerTick;
             int steps = (tick - s.StartTick) / (Cfg.ScrollStepSeconds * SimConfig.TicksPerSecond);
             if (steps > Cfg.ScrollStepMaxSteps) steps = Cfg.ScrollStepMaxSteps;
             int stepPct = CampaignRamp ? 0 : steps * Cfg.ScrollStepPercent;   // boss levels already ramp with the row

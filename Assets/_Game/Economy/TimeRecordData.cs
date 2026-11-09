@@ -74,6 +74,21 @@ namespace BoingUpSkyTower.Economy
         [JsonProperty("ver")] public string GameVersion = "";
         [JsonProperty("in")] public byte[] Inputs = new byte[0];
         [JsonProperty("c")] public int[] Curve = new int[0];
+        /// <summary>
+        /// Difficulty ramp the best run was played on (owner Bug List 8 item 3): <see cref="TimeAttackRamp.StartLevel"/> (10) = the ramp from campaign level 10.
+        /// 0 = a record of the unreleased build that started at floor 1 (levels 1 to 3 difficulty): it is not comparable, so it counts as no record (<see cref="TimeAttackRamp.IsCurrent"/>) and the next counted run replaces it.
+        /// Additive field: old saves load with 0.
+        /// </summary>
+        [JsonProperty("ramp")] public int RampStartLevel;
+    }
+
+    /// <summary>Which Time Attack difficulty ramp a stored record belongs to.</summary>
+    public static class TimeAttackRamp
+    {
+        /// <summary>Level whose difficulty floor 1 of a Time Attack run has (doc 46 section 7, EndlessTower.TimeAttackStartLevel).</summary>
+        public const int StartLevel = BoingUpSkyTower.Simulation.EndlessTower.TimeAttackStartLevel;
+        /// <summary>True when the record was set on the current ramp (a record without the stamp is a legacy one and does not count).</summary>
+        public static bool IsCurrent(TimeAttackRecord rec) { return rec != null && rec.RampStartLevel == StartLevel; }
     }
 
     /// <summary>Best single-run captures per region (not per mode): coins and gems per minute, both x 100 (hundredths).</summary>
@@ -265,12 +280,14 @@ namespace BoingUpSkyTower.Economy
         {
             var r = new RecordResult();
             Fill(r, run);
+            if (rec.BestFloors > 0 && !TimeAttackRamp.IsCurrent(rec)) rec.BestFloors = 0;   // legacy record of the old flat start: not comparable, replaced by the first counted run
             r.PrevBestFloors = rec.BestFloors;
             r.FirstRecord = rec.BestFloors <= 0;
             r.Counted = !run.Revived && run.Floors > 0;
             if (!r.Counted) return r;
             if (run.Floors > rec.BestFloors)
             {
+                rec.RampStartLevel = TimeAttackRamp.StartLevel;
                 rec.BestFloors = run.Floors;
                 rec.Ticks = run.Ticks;
                 rec.LayoutSeed = run.LayoutSeed;

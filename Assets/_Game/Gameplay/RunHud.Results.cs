@@ -25,7 +25,11 @@ namespace BoingUpSkyTower.Gameplay
             public RecordResult Rec;
             public bool Endless, NewBest, Revived;
 
-            const float BadgeH = 110f;
+            /// <summary>
+            /// Pitch of one NEW BEST ribbon (also the gap-free stacking step): the ribbon graphic is <see cref="BadgeW"/> x (BadgeH) ref px. The ribbon sprite (827 x 292) has its flat label band in the
+            /// middle 64 percent of its width and the top ~45 percent of its height, so it is stretched (no aspect lock) to a wide banner: the band is then about 380 x 60 px, enough for the label.
+            /// </summary>
+            public const float BadgeH = 140f, BadgeW = 620f;
 
             /// <summary>Names of the badges (tests look them up). The generic one only shows for a record that is neither a Time nor a Pace (endless floors or a split).</summary>
             public const string BadgeTimeName = "NewBestTimeBadge", BadgePaceName = "NewBestPaceBadge", BadgeGenericName = "NewBestBadge";
@@ -59,16 +63,20 @@ namespace BoingUpSkyTower.Gameplay
             /// <summary>One gold ribbon with its label; the text shrinks to fit (never clipped, never wrapped) at any text scale.</summary>
             static void Badge(Transform panel, string name, string label, float y)
             {
-                Text ribbon = ToyKit.Ribbon(panel, label, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(520f, BadgeH - 10f));
+                Text ribbon = ToyKit.Ribbon(panel, label, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(BadgeW, BadgeH));
                 ribbon.transform.parent.name = name;
+                // Stretch the graphic over the whole rect: with the aspect lock the sprite was drawn only about 283 px wide inside the 520 px rect, narrower than the label.
+                ribbon.transform.parent.GetComponent<Image>().preserveAspect = false;
                 var trt = (RectTransform)ribbon.transform;
-                trt.anchorMin = new Vector2(0.14f, 0.5f);
-                trt.anchorMax = new Vector2(0.86f, 0.9f);
+                // Label inside the flat band of the sprite (x 0.20..0.80, y 0.45..0.88 from the bottom), one line, shrink to fit.
+                trt.anchorMin = new Vector2(0.20f, 0.45f);
+                trt.anchorMax = new Vector2(0.80f, 0.88f);
+                trt.offsetMin = trt.offsetMax = Vector2.zero;
                 ribbon.horizontalOverflow = HorizontalWrapMode.Wrap;
                 ribbon.verticalOverflow = VerticalWrapMode.Truncate;
                 ribbon.resizeTextForBestFit = true;
                 ribbon.resizeTextMinSize = 20;
-                ribbon.resizeTextMaxSize = 52;
+                ribbon.resizeTextMaxSize = 44;
                 ribbon.transform.parent.gameObject.AddComponent<A11yLabel>().Text = label;
             }
 

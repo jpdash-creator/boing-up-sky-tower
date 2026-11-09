@@ -23,7 +23,7 @@ All names (game, mascot, regions, items) are **placeholders** and can be changed
 | Launch scope | All 20 regions playable at launch (confirmed); roadmap in doc 07 stands as written |
 | Format | Markdown in `E:\Source\Game Ideas\boing-up-sky-tower\docs` |
 | Typography | Lilita One (display) + Nunito Bold (body), both free OFL fonts (owner decision 2026-10-20) |
-| Versioning | Every build is vMAJOR.MINOR.HOTFIX.BUILD (major 0 = pre-release); rules in the game repo `.claude/rules/versioning.md`, version file `Tools/version.json`, build log `Content/builds/build_log.csv` |
+| Versioning | Every build is vMAJOR.MINOR.BUILD (example v0.52.68; changed 2026-11-09 from vX.Y.Z.B, old build-log rows keep the old format) (major 0 = pre-release); rules in the game repo `.claude/rules/versioning.md`, version file `Tools/version.json`, build log `Content/builds/build_log.csv` |
 
 ## Document index
 

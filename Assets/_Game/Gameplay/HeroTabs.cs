@@ -18,37 +18,6 @@ namespace BoingUpSkyTower.Gameplay
         public const string RowName = "HeroTabs";
         public static readonly string[] Captions = { "All Heroes", "Merge", "Powers" };
         public static readonly string[] ButtonNames = { "TabAllHeroes", "TabMerge", "TabPowers" };
-        /// <summary>Name of the count badge in the top right corner of a tab (tests look it up).</summary>
-        public const string CountName = "Count";
-        /// <summary>Counts above this show as "99+" so the badge never grows past its slot.</summary>
-        public const int MaxShownCount = 99;
-
-        /// <summary>
-        /// The three numbers of the tabs (Bug List 6): All Heroes = heroes owned (any tier), Merge = stacks that can merge right now (3 copies and a next tier),
-        /// Powers = power-up units owned. Cheap; call when a screen is built, never per frame. A null service gives zeros.
-        /// </summary>
-        public static int[] Counts(ProgressService progress)
-        {
-            var c = new int[3];
-            if (progress == null) return c;
-            foreach (CharacterSpec s in CharacterInventory.All)
-            {
-                if (CharacterCatalog.Owns(progress, CharacterCatalog.Get(s.Id))) c[AllHeroes]++;
-                if (progress.Copies(s.Id) >= MergeRules.CopiesNeeded && MergeRules.NextTier(s) != null) c[Merge]++;
-            }
-            foreach (PowerUp p in PowersScreen.Order)
-            {
-                PowerUpDef d = progress.PowerUpDefs.Get(p);
-                if (d == null) continue;
-                long total = (long)c[Powers] + progress.PowerUpCount(d.Id);
-                c[Powers] = (int)System.Math.Min(total, int.MaxValue);
-            }
-            return c;
-        }
-
-        /// <summary>The badge text of a count: the number, or "99+" above <see cref="MaxShownCount"/>.</summary>
-        public static string CountText(int n) { return n > MaxShownCount ? MaxShownCount + "+" : (n < 0 ? 0 : n).ToString(); }
-
         /// <summary>Margin between the row and the (safe area) screen edge.</summary>
         public const float SideMargin = 28f;
         const int Font = 38;
@@ -69,10 +38,10 @@ namespace BoingUpSkyTower.Gameplay
 
         /// <summary>
         /// Builds the row <paramref name="top"/> px below the top of <paramref name="parent"/> and returns it. <paramref name="selected"/> is 0 to 2 (the tab of the page showing) or -1 for none;
-        /// a tap on the selected tab does nothing. A null action leaves its tab inert. <paramref name="counts"/> (see <see cref="Counts"/>) puts a small count badge in the top right corner of each tab;
-        /// null shows none. The badge sits beside the icon (never over it or over the label) and its text shrinks to fit rather than clip.
+        /// a tap on the selected tab does nothing. A null action leaves its tab inert.
+        /// There is no owned-count badge on the tabs (Bug List 8 item 1a/1b).
         /// </summary>
-        public static RectTransform Build(RectTransform parent, float top, int selected, Action openAllHeroes, Action openMerge, Action openPowers, bool compact = false, int[] counts = null)
+        public static RectTransform Build(RectTransform parent, float top, int selected, Action openAllHeroes, Action openMerge, Action openPowers, bool compact = false)
         {
             float h = RowHFor(compact);
             RectTransform row = UiKit.Rect(parent, RowName);
@@ -87,7 +56,7 @@ namespace BoingUpSkyTower.Gameplay
                 int idx = i;
                 bool on = i == selected;
                 Button b = UiKit.AddButton(row, ButtonNames[i], "", UiKit.PillSprite, on ? SelectedFill : PlainFill, new Vector2(300f, h), () => { if (!on && actions[idx] != null) actions[idx](); });
-                b.GetComponent<A11yLabel>().Text = Captions[i] + " tab" + (counts != null && i < counts.Length ? ", " + CountText(counts[i]) + (i == Merge ? " ready to merge" : " owned") : "") + (on ? ", selected" : "");
+                b.GetComponent<A11yLabel>().Text = Captions[i] + " tab" + (on ? ", selected" : "");
                 b.GetComponent<Image>().raycastTarget = true;
                 RectTransform cell = (RectTransform)b.transform;
                 cell.anchorMin = new Vector2(i / 3f, 0f);
@@ -106,7 +75,6 @@ namespace BoingUpSkyTower.Gameplay
                 }
 
                 AddIcon(cell, i, compact);
-                if (counts != null && i < counts.Length) AddCount(cell, i, counts[i], on, compact, h);
 
                 Text label = UiKit.AddText(cell, "Label", Captions[i], Font, on ? UiKit.ButtonInk : Color.white, TextAnchor.MiddleCenter, true);
                 label.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -121,32 +89,6 @@ namespace BoingUpSkyTower.Gameplay
                 lr.offsetMax = new Vector2(-4f, lb + Line);
             }
             return row;
-        }
-
-        /// <summary>The count badge: a dark pill with white text in the top right corner of the cell, between the icon and the cell edge, above the label row.</summary>
-        static void AddCount(RectTransform cell, int tab, int count, bool selected, bool compact, float cellH)
-        {
-            float labelBottom = (compact ? 6f : 10f) + Line;
-            float room = cellH - labelBottom - 6f;
-            float h = Mathf.Max(30f, Mathf.Min(Line, room));
-            Image pill = UiKit.AddImage(cell, CountName, UiKit.PillSprite, selected ? new Color(0.10f, 0.06f, 0.14f, 0.95f) : new Color(1f, 1f, 1f, 0.95f));
-            pill.raycastTarget = false;
-            RectTransform pr = pill.rectTransform;
-            pr.anchorMin = pr.anchorMax = new Vector2(1f, 1f);
-            pr.pivot = new Vector2(1f, 1f);
-            pr.anchoredPosition = new Vector2(-6f, -6f);
-            pr.sizeDelta = new Vector2(Mathf.Max(h, 96f), h);
-            Text t = UiKit.AddText(pill.transform, "Text", CountText(count), 40, selected ? Color.white : UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
-            Outline o = t.GetComponent<Outline>();
-            if (o != null) o.enabled = false;
-            t.horizontalOverflow = HorizontalWrapMode.Wrap;
-            t.verticalOverflow = VerticalWrapMode.Truncate;
-            t.resizeTextForBestFit = true;
-            t.resizeTextMinSize = 18;
-            t.resizeTextMaxSize = t.fontSize;
-            UiKit.Stretch(t.rectTransform);
-            t.rectTransform.offsetMin = new Vector2(4f, 0f);
-            t.rectTransform.offsetMax = new Vector2(-4f, 0f);
         }
 
         /// <summary>The icon of tab <paramref name="tab"/>, centred at the top of its cell (name "Icon"). Missing art falls back to a drawn badge, never nothing.</summary>

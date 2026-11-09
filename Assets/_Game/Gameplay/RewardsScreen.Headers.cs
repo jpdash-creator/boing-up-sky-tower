@@ -281,7 +281,7 @@ namespace BoingUpSkyTower.Gameplay
         /// </summary>
         void BuildMainHeader(RectTransform parent)
         {
-            float top = WalletTop + WalletH + 12f;
+            float top = HeaderH;
             RectTransform header = UiKit.Rect(parent, "MainHeader");
             header.anchorMin = new Vector2(0f, 1f);
             header.anchorMax = new Vector2(1f, 1f);

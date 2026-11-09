@@ -57,6 +57,8 @@ namespace BoingUpSkyTower.Simulation
         public int Rows;
         /// <summary>Endless towers only: levels of the region the cycle follows (EndlessTower.LevelForFloor); not part of the hash.</summary>
         public int EndlessLevels = SimConfig.LevelsPerRegion;
+        /// <summary>Endless towers only: a Time Attack tower (difficulty ramp from level 10, EndlessTower.LevelForFloorTimeAttack); not part of the hash.</summary>
+        public bool EndlessTimeAttack;
         /// <summary>Endless towers only: the exact region difficulty offset of the tower (the Sim would otherwise recover it from its start difficulty with a rounding error of a raw unit); not part of the hash.</summary>
         public Fx EndlessOffset;
         public bool HasEndlessOffset;

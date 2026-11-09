@@ -334,7 +334,7 @@ namespace BoingUpSkyTower.Gameplay
             float isz = Mathf.Min(bs, 112f);
             UiKit.Place(icon.rectTransform, new Vector2(1f, 1f), new Vector2(-24f - (bs - isz) * 0.5f, -16f - (bs - isz) * 0.5f), new Vector2(isz, isz));
             float top = 16f + bs + 8f;
-            HeroTabs.Build(body, top, HeroTabs.Merge, host != null ? host.OpenAllHeroes : null, null, host != null ? host.OpenPowers : null, compactTabs, HeroTabs.Counts(progress));
+            HeroTabs.Build(body, top, HeroTabs.Merge, host != null ? host.OpenAllHeroes : null, null, host != null ? host.OpenPowers : null, compactTabs);
             return top + HeroTabs.RowHFor(compactTabs) + 8f;
         }
 

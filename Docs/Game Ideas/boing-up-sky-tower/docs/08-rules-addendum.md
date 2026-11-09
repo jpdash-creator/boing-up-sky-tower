@@ -287,5 +287,5 @@ Not in the game: gear (hats, shirts, pants, boots, outfits), Bronze/Silver chest
 ## Playable scope and testing switch (2026-10-20)
 - The current build plays **5 regions x 15 levels** (Meadow Springs, Mushroom Grove, Sunny Beach, Candy Canyon, Bamboo Temple). The progress service has `playableRegionLimit` = 5; content still marks regions 6-20 live and 21-30 teaser.
 - **"Test: all levels open"** (Settings, development builds only, default on) treats every level and region of the playable set as unlocked for testing. It is off in tests and release builds.
-- Versioning: every build is vMAJOR.MINOR.HOTFIX.BUILD (game repo `.claude/rules/versioning.md`, `Tools/version.json`, build log `Content/builds/build_log.csv`).
+- Versioning: every build is vMAJOR.MINOR.BUILD (example v0.52.68; changed 2026-11-09 from vX.Y.Z.B, old build-log rows keep the old format) (game repo `.claude/rules/versioning.md`, `Tools/version.json`, build log `Content/builds/build_log.csv`).
 - Fonts: Lilita One (display) + Nunito Bold (body).

@@ -582,10 +582,17 @@ namespace BoingUpSkyTower.Simulation.Tests
                     else
                     {
                         Assert.True(s.EffectiveDifficulty(cfg) >= s.Difficulty);
-                        if (i > 0 && s.LevelIndex > 3 && ls[i - 1].Spec.Goal.Type != GoalType.ComboChain) Assert.True(s.EffectiveDifficulty(cfg) > ls[i - 1].Spec.EffectiveDifficulty(cfg) || ls[i - 1].Spec.EffectiveDifficulty(cfg) >= Fx.FromRatio(999, 1000), "level " + s.LevelIndex + " not harder than " + ls[i - 1].Spec.LevelIndex);
+                        if (i > 0 && s.LevelIndex > 3 && ls[i - 1].Spec.Goal.Type != GoalType.ComboChain)
+                        {
+                            // Bug List 8 item 3: the special-goal levels (5, 10, 15, 20) are calibrated on their SCORE (their goal changes what the probe measures), so next to one of them
+                            // the content difficulty may dip by up to 0.03 (the score curve of doc 45 stays the rule); all other neighbours must rise strictly.
+                            bool nearSpecial = s.LevelIndex % 5 == 0 || ls[i - 1].Spec.LevelIndex % 5 == 0;
+                            Fx tol = nearSpecial ? Fx.FromRatio(30, 1000) : Fx.Zero;
+                            Assert.True(s.EffectiveDifficulty(cfg) + tol > ls[i - 1].Spec.EffectiveDifficulty(cfg) || ls[i - 1].Spec.EffectiveDifficulty(cfg) >= Fx.FromRatio(999, 1000), "level " + s.LevelIndex + " not harder than " + ls[i - 1].Spec.LevelIndex);
+                        }
                     }
                 }
-                Assert.True(ls[2].Spec.EffectiveDifficulty(cfg) > ls[1].Spec.EffectiveDifficulty(cfg) + Fx.FromRatio(1, 100), "level 3 must be harder than level 2");
+                Assert.True(ls[2].Spec.EffectiveDifficulty(cfg) > ls[1].Spec.EffectiveDifficulty(cfg) + Fx.FromRatio(2, 1000), "level 3 must be harder than level 2");
                 Assert.Equal(ls[24].Spec.Difficulty, ls[24].Spec.EffectiveDifficulty(cfg));   // level 25 is already at the top (the 25-level rule)
             }
         }

@@ -20,10 +20,12 @@ namespace BoingUpSkyTower.Simulation.Tests
 
         public static int ExpectedRows(int index)
         {
+            // Bug List 8 item 3 (owner): L1 60, L2-5 75, L6-10 90, L11-15 105, L16-20 120, L21-25 150
             if (index == 1) return 60;
-            if (index == 20) return 90;   // the speedrun level (goal value 90)
-            if (index <= 5) return 90;
-            if (index <= 9) return 120;
+            if (index <= 5) return 75;
+            if (index <= 10) return 90;
+            if (index <= 15) return 105;
+            if (index <= 20) return 120;
             return 150;
         }
 

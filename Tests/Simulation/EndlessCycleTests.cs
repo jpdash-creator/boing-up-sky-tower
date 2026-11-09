@@ -139,7 +139,8 @@ namespace BoingUpSkyTower.Simulation.Tests
                 // Bug List 6 item 4: the endless cycle reads the smooth region 1 table (SimConfig.LevelContentDifficultyPermille) with the region offset. Region 1 ships exactly that
                 // curve (except the combo level 5, whose own d is higher, see Content/config/difficulty_curve.json); regions 2 to 5 ship their own calibrated d (the same SCORE
                 // per level needs another d with another signature), so they stay within 0.2 of it.
-                if (region == 1 && n != 5) Assert.True(shipped.Raw == endless.Raw, "region " + region + " level " + n + ": shipped d " + shipped + " but endless level d " + endless);
+                // Bug List 8 item 3: the region 1 d values were re-solved for the new level lengths and differ from the (unchanged, endless stays as it is) table by at most 0.05.
+                if (region == 1 && n != 5) Assert.True(Math.Abs(shipped.Raw - endless.Raw) <= Fx.OneRaw * 5 / 100, "region " + region + " level " + n + ": shipped d " + shipped + " but endless level d " + endless);
                 else Assert.True(n == 5 || Math.Abs(shipped.Raw - endless.Raw) <= Fx.OneRaw * 20 / 100, "region " + region + " level " + n + ": shipped d " + shipped + " far from the endless level d " + endless);
                 // and the tower reads the same value for the floors of that level
                 Assert.Equal(endless.Raw, tower.DifficultyAt((n - 1) * 100 + 50).Raw);

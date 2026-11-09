@@ -104,8 +104,11 @@ Per run: floors reached, time survived and floors per second.
 | Revive | None. |
 | Hero and powers | Same hero and powers as normal endless. |
 | Coins | Pays the normal endless coin rules and counts as **one paying run** in the existing daily cap. |
+| Difficulty (owner Bug List 8 item 3) | **A ramp that starts hard**: floor 1 of the run has the complexity of campaign **Level 10** (layout difficulty, platform kinds, special share and scroll speed), the level rises by one every 100 floors up to **Level 25**, which is held for the rest of the run (never the endless cycle; doc 45 section 6). Normal endless is unchanged (levels 1 to 25 at 100 floors each, then the 1400-floor cycle). |
 | Score | Floors reached in 3 minutes. |
 | Record | Its own best per region and Gameplay mode. |
+
+**Time Attack records and the ramp.** The tower is `EndlessTower` with `LevelSpec.TimeAttack` set (`RunSession` passes the flag; floor f plays like endless floor f + 900, clamped to level 25), so it stays prefix stable and a run replays from seed plus inputs. Floors reached in 3:00 are now harder-won than in the old flat start, so the **old Time Attack records are not comparable**: `TimeAttackRecord.RampStartLevel` (JSON `ramp`, additive) is stamped with 10 when a record is set; a record without the stamp (from the unreleased flat-start build, no migration needed) is treated as no record (`TimeAttackRamp.IsCurrent`) and the first counted run replaces it. Old saves still load. The Weekly goal "100 floors in a Time Attack" and its pace (about 0.56 floors per second) are unchanged; the owner may want to re-check that target once the ramp is played, because level 10 is harder than level 1 (open point 0 below).
 
 **Timed captures** (best of a single run, per region): best **coins per minute** and best **gems per minute**.
 
@@ -186,7 +189,11 @@ Resolved in the build:
 - Exact HUD position of the best pace and the delta: the third row of the top strip (section 5).
 - Time Attack coins use the same per-run table as normal endless and count as one paying run in the daily cap (section 7).
 
+Decided on 2026-11-09 (Bug List 8 item 3): Time Attack difficulty ramps from Level 10 at floor 1 to Level 25 at floor 1501, then holds (section 7).
+
 Still open (not blocking):
+
+0. Re-check the Weekly Time Attack goal (100 floors) and the Daily/Weekly pace goals after a play test on the Level 10 start; the Pace Ghost and the delta need no change.
 
 1. Medal icon art (code-drawn now; an OpenArt batch needs the owner's approval).
 2. How the hero's physics affect the later leaderboard (records do not depend on the hero).
@@ -196,4 +203,5 @@ Still open (not blocking):
 
 - 2026-11-09: document created from the owner's timed gameplay decisions (Time, Pace, records per level and mode, Pace Ghost, medals, endless splits, Time Attack, reward time goals).
 - 2026-11-09: open points decided: reward sizes reused, medal reference Momo over 5 layouts, Time Attack open from the start and records past the cap, Weekly Time Attack goal 100 floors.
+- 2026-11-09 (Bug List 8 item 3): Time Attack uses a difficulty ramp from Level 10 (floor 1) to Level 25 (floor 1501, then held); `TimeAttackRecord.RampStartLevel` marks records of the new ramp, legacy flat-start records count as no record. Level lengths changed in doc 45 (section 4a); medal targets re-calibrated for the new rows.
 - 2026-11-09: status and sections 5, 6, 8, 9, 11, 12 updated to the built code (third HUD row, ghost diamond and pill, medal target file and calibration report, actual reward packages, Daily full day 130 points, record class names and caps, tests done and open). Endless popup shows the Time Attack best pace; node medals follow the current Gameplay mode; separate NEW BEST TIME and NEW BEST PACE ribbons; gold medal tier 5 gives a random Common hero.

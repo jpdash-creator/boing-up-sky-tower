@@ -273,6 +273,9 @@ namespace BoingUpSkyTower.Gameplay
         }
 
         /// <summary>Banner size and centre offsets (reference px from the middle of the safe area). Public so tests can assert the centre placement.</summary>
+        /// <summary>Offset of the intro popup centre from the middle of the safe area (0 = centred vertically).</summary>
+        public const float IntroCenterY = 0f;
+
         public const float BannerW = 380f, BannerH = 112f, BannerComboY = 70f, BannerSpeedY = -70f;
 
         /// <summary>An icon + text pill (combo, speed up) in the centre of the screen: anchored to the middle, offset vertically by <paramref name="y"/>. Returns its root; the text is the out parameter.</summary>
@@ -307,7 +310,8 @@ namespace BoingUpSkyTower.Gameplay
         void BuildIntro(RectTransform root, RunSession session)
         {
             Image back = Theme.GlassPanel(root, "Intro", 40f);
-            UiKit.Place(back.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 130f), new Vector2(780f, 410f));
+            // Centred vertically in the safe area (Bug List 8 item 2c; it used to sit 130 above the middle): the HUD root IS the safe area, so anchor y 0 is its middle.
+            UiKit.Place(back.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, IntroCenterY), new Vector2(780f, 410f));
             back.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             introRoot = back.rectTransform;
             string introTitle = session.IsTimeAttack ? "Time Attack" : endless ? "Endless" : "Level " + session.Level.Index;
@@ -734,6 +738,7 @@ namespace BoingUpSkyTower.Gameplay
                 MakeAct("Retry", "Try again", 1, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
                 MakeAct("Shop", "Shop", 0, ToyKit.Get("icon_shop"), 150f, OpenShop),
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
+            FitPanelToSafeArea();
         }
 
         public void ShowResults(RunSession s, RewardResult reward, bool hasNext)
@@ -742,41 +747,75 @@ namespace BoingUpSkyTower.Gameplay
             ResultTiming timing = ResultTiming.For(s, rec, false, false);
             int mode = s.Mode;
             bool medals = MedalStrip.HasTargets(s.Level.Id, mode);
-            float medalsH = medals ? MedalStrip.Height + 12f : 0f;
-            float yEarned = 400f + medalsH;
-            float yTime = yEarned + 240f, yTail = yTime + 220f;
+            // Compact result layout (CUX-3/4): nothing is ever scaled down, so the height is budgeted row by row (see FitPanelToSafeArea) and every row is tight:
+            // title (own line height, so it never touches the stars), small stars, compact medal strip (icons + word), 2 earned rows, time and pace rows, ribbons, action row.
+            const float TitleTop = 36f, StarSize = 84f, PillH = 96f, PillPitch = 102f, SectionGap = 6f;
+            float titleFont = Mathf.Round(60f * UiKit.TextScale);   // 60 (not 76): "Level clear!" at 130 percent text must stay inside its line
+            float titleH = Mathf.Ceil(titleFont * 1.55f);
+            float starY = TitleTop + titleH + SectionGap;
+            float yMedals = starY + StarSize + SectionGap;
+            float medalsH = medals ? MedalStrip.CompactHeight + SectionGap : 0f;
+            float yEarned = yMedals + medalsH;
+            float yTime = yEarned + 2f * PillPitch, yTail = yTime + 2f * PillPitch - SectionGap;   // 6 px gaps between the pill rows; the ribbons start right under the pace row
             float actionTopL = ButtonY + ButtonSizeFor(150f);
-            OpenOverlay("Level clear!", yTail + timing.TailHeight + 20f + actionTopL);
+            float panelH = yTail + timing.TailHeight + 12f + actionTopL;
+            OpenOverlay("Level clear!", panelH);
             AudioManager.Play(Sfx.Win);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
+            Text titleText = panel.Find("Title") != null ? panel.Find("Title").GetComponent<Text>() : null;
+            if (titleText != null)
+            {
+                titleText.fontSize = Mathf.RoundToInt(titleFont);
+                var ttr = (RectTransform)titleText.transform;
+                ttr.anchoredPosition = new Vector2(0f, -TitleTop);
+                ttr.sizeDelta = new Vector2(ttr.sizeDelta.x, titleH);
+            }
             int mask = s.BuildOutcome().StarMask;
             for (int i = 0; i < 3; i++)
             {
                 bool got = (mask & (1 << i)) != 0;
                 Image star = UiKit.AddImage(panel, "Star" + i, art != null ? (got ? art.StarFilled : art.StarEmpty) : null, got ? Color.white : new Color(1f, 1f, 1f, 0.6f));
-                UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 200f, -190f), new Vector2(180f, 180f));
+                UiKit.Place(star.rectTransform, new Vector2(0.5f, 1f), new Vector2((i - 1) * 130f, -starY), new Vector2(StarSize, StarSize));
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
             // What you earned, as icon pills (no sentences): coins and gems, then the best combo.
             if (medals)
             {
                 MedalLevel held = GameSession.Progress != null ? GameSession.Progress.Medal(s.Level.Id, mode) : MedalLevel.None;
-                MedalStrip.Build(panel, 380f, s.Level.Id, mode, held, rec != null && rec.MedalImproved ? rec.Medal : MedalLevel.None);
+                MedalStrip.Build(panel, yMedals, s.Level.Id, mode, held, rec != null && rec.MedalImproved ? rec.Medal : MedalLevel.None, true);   // compact: icons + word, NEW on a fresh medal; pace targets live in the level-start popup
             }
-            RectTransform row1 = ToyKit.PillRow(panel, "Earned", yEarned, 104f);
-            ToyKit.InfoPill(row1, art != null ? art.CoinIcon : null, "+" + reward.TotalCoins, new Color(1f, 0.92f, 0.5f), 270f, 104f);
-            ToyKit.InfoPill(row1, art != null ? art.GemIcon : null, "+" + reward.TotalGems, new Color(0.75f, 0.92f, 1f), 270f, 104f);
-            RectTransform row2 = ToyKit.PillRow(panel, "Earned2", yEarned + 120f, 104f);
-            ToyKit.InfoPill(row2, ToyKit.Get("icon_flame"), "x" + s.State.BestCombo, new Color(1f, 0.78f, 0.35f), 270f, 104f);
-            if (reward.FirstClear) ToyKit.InfoPill(row2, ToyKit.Get("icon_crown"), "First", new Color(1f, 0.9f, 0.4f), 270f, 104f);
-            if (!string.IsNullOrEmpty(reward.UnlockedRegionId)) ToyKit.InfoPill(row2, ToyKit.Get("icon_flag"), "New", new Color(0.7f, 1f, 0.75f), 270f, 104f);
-            timing.Build(panel, yTime, yTime + 110f, yTail);
+            RectTransform row1 = ToyKit.PillRow(panel, "Earned", yEarned, PillH);
+            ToyKit.InfoPill(row1, art != null ? art.CoinIcon : null, "+" + reward.TotalCoins, new Color(1f, 0.92f, 0.5f), 270f, PillH);
+            ToyKit.InfoPill(row1, art != null ? art.GemIcon : null, "+" + reward.TotalGems, new Color(0.75f, 0.92f, 1f), 270f, PillH);
+            RectTransform row2 = ToyKit.PillRow(panel, "Earned2", yEarned + PillPitch, PillH);
+            ToyKit.InfoPill(row2, ToyKit.Get("icon_flame"), "x" + s.State.BestCombo, new Color(1f, 0.78f, 0.35f), 270f, PillH);
+            if (reward.FirstClear) ToyKit.InfoPill(row2, ToyKit.Get("icon_crown"), "First", new Color(1f, 0.9f, 0.4f), 270f, PillH);
+            if (!string.IsNullOrEmpty(reward.UnlockedRegionId)) ToyKit.InfoPill(row2, ToyKit.Get("icon_flag"), "New", new Color(0.7f, 1f, 0.75f), 270f, PillH);
+            timing.Build(panel, yTime, yTime + PillPitch, yTail);
             // Three equal round buttons (owner issue 16.7).
             OverlayRow(
                 MakeAct("Next", "Next level", 1, ToyKit.Get("icon_play"), 150f, () => { if (OnNext != null) OnNext(); }, hasNext),
                 MakeAct("Retry", "Play again", 0, Glyphs.Restart, 150f, () => { if (OnRetry != null) OnRetry(); }),
                 MakeAct("Home", "Level select", 2, ToyKit.Get("icon_home"), 150f, () => { if (OnMenu != null) OnMenu(); }));
+            FitPanelToSafeArea();
+        }
+
+        /// <summary>
+        /// Guard for tall popups (CUX-3): centres the overlay panel in the safe area. It NEVER scales the panel: scaling shrank the buttons and the close X below 48 dp. The callers budget the height
+        /// from the real line heights instead (compact rows); if a panel is still taller than the safe area the overflow is logged so the layout test and the owner see it.
+        /// </summary>
+        void FitPanelToSafeArea()
+        {
+            Transform p = overlay != null ? overlay.Find("Panel") : null;
+            if (p == null) return;
+            var rt = (RectTransform)p;
+            Vector2 canvasSize = UiKit.CanvasSizeRef();
+            Rect sa = UiKit.SafeAreaNormalized();
+            rt.anchoredPosition = new Vector2(0f, (sa.center.y - 0.5f) * canvasSize.y);   // the panel is anchored at the canvas centre: move it to the centre of the safe area
+            rt.localScale = Vector3.one;
+            float availH = canvasSize.y * sa.height;
+            if (rt.sizeDelta.y > availH) Debug.LogWarning("RunHud popup is taller than the safe area: " + rt.sizeDelta.y + " > " + availH);
         }
     }
 }

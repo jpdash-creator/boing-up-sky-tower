@@ -284,6 +284,8 @@ namespace BoingUpSkyTower.Simulation
         public int Rows;
         /// <summary>Endless mode (EndlessTower): no goal, the Goal field is a never-reached placeholder. Campaign specs leave this false.</summary>
         public bool Endless;
+        /// <summary>Endless only: a Time Attack tower. Its floor f has the difficulty of campaign level 9 + ceil(f / 100), at most the top level (floor 1 = level 10); see EndlessTower.LevelForFloorTimeAttack. Prefix stable and replayable from the seed like every endless tower.</summary>
+        public bool TimeAttack;
         /// <summary>Endless only: the region's difficulty offset (0..0.25) and the floor where difficulty reaches 1 (remote config, 400).</summary>
         public Fx RegionOffset;
         public int EndlessDifficultyFloors = 400;
@@ -310,8 +312,8 @@ namespace BoingUpSkyTower.Simulation
                         rows = Goal.Value > 0 ? Goal.Value : DefaultRows;
                         break;
                     case GoalType.ComboChain:
-                        // Doc 25: the combo levels are level 5 (90 rows) and level 10 (150 rows); other combo specs keep the default
-                        rows = LevelIndex == 5 ? 90 : DefaultRows;
+                        // Doc 25 / Bug List 8 item 3: the combo level is level 5: 75 rows in the 25-level regions (1 to 5), 90 in the legacy 15-level regions; other combo specs keep the default
+                        rows = LevelIndex == 5 ? (LevelsInRegion >= 25 ? 75 : 90) : DefaultRows;
                         break;
                     default:
                         rows = DefaultRows;

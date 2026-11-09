@@ -84,7 +84,7 @@ namespace BoingUpSkyTower.Simulation.Tests
         [Fact]
         public void OnlyLevel20HasATimedGoalAndItsTimeIsOneConstant()
         {
-            // Bug List 6 item 4: the speedrun is one of the four special goals (level 20); every other level has no timed goal (owner 2026-10-19 relaxed time: 75 s for 90 rows)
+            // Bug List 6 item 4: the speedrun is one of the four special goals (level 20); every other level has no timed goal (owner 2026-10-19 relaxed time: 75 s for 90 rows; Bug List 8 item 3: 100 s for 120 rows)
             string root = ContentLoader.FindRoot();
             if (root == null) return;
             foreach (LevelOutcome o in SolvabilityT4Tests.Outcomes())
@@ -92,7 +92,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 if (o.Level.Spec.LevelIndex == 20)
                 {
                     Assert.Equal(GoalType.Speedrun, o.Level.Spec.Goal.Type);
-                    Assert.Equal(75, o.Level.Spec.Goal.TimeSec);
+                    Assert.Equal(100, o.Level.Spec.Goal.TimeSec);   // Bug List 8 item 3: 120 rows, 100 s (was 75 s for 90 rows)
                 }
                 else Assert.NotEqual(GoalType.Speedrun, o.Level.Spec.Goal.Type);
             }

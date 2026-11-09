@@ -34,6 +34,9 @@ namespace BoingUpSkyTower.Gameplay
             public Action CloseOverlay;
             /// <summary>Back returns to the Heroes screen.</summary>
             public Action Back;
+            /// <summary>Bug List 8 item 1c: the "i" of a made hero opens the existing hero stat sheet (the one the Heroes screen uses) with this hero id; its Back returns to All Heroes.
+            /// Null (tests) or a hero that is not made yet falls back to the small details popup.</summary>
+            public Action<string> OpenHeroSheet;
             /// <summary>The other two tabs of the top row (Bug List 6 item 3a): Merge and Powers. A tab without an action is inert.</summary>
             public Action OpenMerge, OpenPowers;
             /// <summary>Name of a region by index (null = "Region n").</summary>
@@ -111,7 +114,7 @@ namespace BoingUpSkyTower.Gameplay
             tr.offsetMax = new Vector2(-(bs + 40f), -16f);
 
             float tabsTop = 16f + bs + 8f;
-            HeroTabs.Build(body, tabsTop, HeroTabs.AllHeroes, null, host != null ? host.OpenMerge : null, host != null ? host.OpenPowers : null, false, HeroTabs.Counts(progress));
+            HeroTabs.Build(body, tabsTop, HeroTabs.AllHeroes, null, host != null ? host.OpenMerge : null, host != null ? host.OpenPowers : null, false);
             BuildList(tabsTop + HeroTabs.RowH + 8f);
         }
 
@@ -326,6 +329,7 @@ namespace BoingUpSkyTower.Gameplay
 
         void ShowInfo(AllHeroEntry e)
         {
+            if (host != null && host.OpenHeroSheet != null && !e.Placeholder && CharacterCatalog.Get(e.Id) != null) { host.OpenHeroSheet(e.Id); return; }
             if (host == null || host.NewOverlay == null) return;
             OpenInfoFor = e;
             RectTransform overlay = host.NewOverlay();

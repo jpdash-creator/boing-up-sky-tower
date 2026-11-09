@@ -137,64 +137,108 @@ namespace BoingUpSkyTower.Gameplay
         }
     }
 
-    /// <summary>A row of the three medal slots (icon plus the pace each needs, or NEW) for the level-start popup and the result screen. Builds nothing when the level has no target data.</summary>
+    /// <summary>
+    /// The medal strip of the level-start popup and the result screen (Bug List 8 item 5): a small caption "Medals: beat this pace", then the three medal icons, each with its
+    /// word (Bronze / Silver / Gold) and the pace it needs ("0.90 plat/s", or NEW for the tier this run just earned) under it. Everything is centred; the icon shapes still differ
+    /// by shape, never only by colour. Builds nothing when the level has no target data.
+    /// </summary>
     public static class MedalStrip
     {
-        public const string RowName = "Medals";
-        const float IconSize = 84f, SlotW = 250f;
+        public const string RowName = "Medals", CaptionName = "MedalsCaption", CaptionText = "Medals: beat this pace";
+        const float IconSize = 76f, SlotW = 270f, Gap = 4f, LineGap = 2f;
 
-        /// <summary>Height of the strip at the current text size.</summary>
-        public static float Height { get { return IconSize + 6f + TimedUi.LineHeight(1.25f); } }
+        /// <summary>Font size of every strip label: the 16 sp floor, grown only half as fast as the text scale (the strip is dense; at 130 percent text it is 115 percent).</summary>
+        static int FontPx { get { return Mathf.RoundToInt(UiKit.MinBodyTextPx * Mathf.Lerp(1f, Mathf.Max(1f, UiKit.TextScale), 0.5f)); } }
+
+        /// <summary>Vertical slot of one label line: the real line height of the display font at the current size (measured about 1.5 x the size) plus a margin, so two stacked labels never overlap.</summary>
+        static float LineH { get { return Mathf.Ceil(FontPx * 1.55f); } }
+
+        /// <summary>Height of the strip at the current text size: caption line, icon, the word and the pace line, each in its own slot.</summary>
+        public static float Height { get { return LineH + Gap + IconSize + 2f + LineH + LineGap + LineH + LineGap; } }
+
+        /// <summary>Height of the compact strip of the result popup: the three icons and under each only the word (no caption, no pace targets), at the current text size.</summary>
+        public static float CompactHeight { get { return IconSize + 2f + LineH + 2f; } }
 
         /// <summary>True when medals can be earned here: the calibration job has written a target for this level and mode.</summary>
         public static bool HasTargets(string levelId, int mode) { return MedalTargets.Lookup(levelId, mode) > 0; }
 
+        /// <summary>"0.90 plat/s": the pace a medal line needs, from its milli plat/s value (rounded half up to hundredths).</summary>
+        public static string PaceLineText(int paceMilli)
+        {
+            var c = new System.Text.StringBuilder(16);
+            TimeRecords.AppendHundredths(c, (paceMilli + 5) / 10);
+            c.Append(TimeRecords.PaceUnit);
+            return c.ToString();
+        }
+
+        static Text Cell(RectTransform row, string name, string text, Color color, float x, float y, float w, bool fit)
+        {
+            Text t = UiKit.AddText(row, name, text, 42, color, TextAnchor.MiddleCenter, true);
+            var o = t.GetComponent<Outline>();
+            if (o != null) o.enabled = false;
+            // one line, never wrapped: shrink the size (down to the 16 sp floor) until the text fits its slot width
+            t.fontSize = FontPx;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            t.verticalOverflow = VerticalWrapMode.Truncate;
+            t.resizeTextForBestFit = false;
+            if (fit)
+            {
+                int min = Mathf.RoundToInt(UiKit.MinBodyTextPx);
+                float need = t.preferredWidth;
+                if (need > w && need > 0f) t.fontSize = Mathf.Max(min, Mathf.FloorToInt(t.fontSize * w / need));
+            }
+            var trt = (RectTransform)t.transform;
+            trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 1f);
+            trt.pivot = new Vector2(0.5f, 1f);
+            trt.anchoredPosition = new Vector2(x, -y);
+            trt.sizeDelta = new Vector2(w, LineH);
+            return t;
+        }
+
         /// <summary>
         /// Builds the strip <paramref name="y"/> below the top of <paramref name="panel"/> and returns its height (0 and nothing built without targets). A slot is filled when
-        /// <paramref name="held"/> reaches it; under it stands the Pace it needs (plat/s), or NEW for the tier <paramref name="newlyEarned"/> that this run just earned.
+        /// <paramref name="held"/> reaches it; under it stand the tier word and the Pace it needs (plat/s), or NEW for the tier <paramref name="newlyEarned"/> that this run just earned.
         /// </summary>
-        public static float Build(Transform panel, float y, string levelId, int mode, MedalLevel held, MedalLevel newlyEarned)
+        public static float Build(Transform panel, float y, string levelId, int mode, MedalLevel held, MedalLevel newlyEarned, bool compact = false)
         {
             int target = MedalTargets.Lookup(levelId, mode);
             if (target <= 0) return 0f;
-            float h = Height;
+            float h = compact ? CompactHeight : Height, lh = LineH;
             RectTransform row = UiKit.Rect(panel, RowName);
             row.anchorMin = new Vector2(0f, 1f);
             row.anchorMax = new Vector2(1f, 1f);
             row.pivot = new Vector2(0.5f, 1f);
             row.anchoredPosition = new Vector2(0f, -y);
             row.sizeDelta = new Vector2(-48f, h);
-            var sb = new System.Text.StringBuilder(96);
-            sb.Append("Medals: ").Append(held == MedalLevel.None ? "none earned" : MedalIcons.Name(held) + " earned").Append(". ");
+            if (!compact) Cell(row, CaptionName, CaptionText, Theme.InkSoft, 0f, 0f, 3f * SlotW, true);
+            float iconY = compact ? 0f : lh + Gap, nameY = iconY + IconSize + 2f, paceY = nameY + lh + LineGap;
+            var sb = new System.Text.StringBuilder(112);
+            sb.Append(compact ? "Medals: " : "Medals, beat this pace: ").Append(held == MedalLevel.None ? "none earned" : MedalIcons.Name(held) + " earned").Append(". ");
             for (int i = 1; i <= 3; i++)
             {
                 var tier = (MedalLevel)i;
                 bool got = held >= tier;
+                float x = (i - 2) * SlotW;
                 int line = TimeRecords.MedalLinePaceMilli(tier, target);
                 Image icon = UiKit.AddImage(row, MedalIcons.Name(tier) + "Medal", MedalIcons.For(tier, got), Color.white);
                 icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0.5f, 1f);
                 icon.rectTransform.pivot = new Vector2(0.5f, 1f);
-                icon.rectTransform.anchoredPosition = new Vector2((i - 2) * SlotW, 0f);
+                icon.rectTransform.anchoredPosition = new Vector2(x, -iconY);
                 icon.rectTransform.sizeDelta = new Vector2(IconSize, IconSize);
-                string cap;
-                bool isNew = newlyEarned == tier;
-                if (isNew) cap = "NEW";
+                Color ink = got ? Theme.Ink : Theme.InkSoft;
+                if (compact)
+                {
+                    // result popup: icon plus the word only; the tier this run just earned says NEW in front of its word (the pace targets stay in the level-start popup)
+                    string word = newlyEarned == tier ? "NEW " + MedalIcons.Name(tier) : MedalIcons.Name(tier);
+                    Cell(row, MedalIcons.Name(tier) + "Name", word, ink, x, nameY, SlotW - 10f, true);
+                }
                 else
                 {
-                    var c = new System.Text.StringBuilder(8);
-                    TimeRecords.AppendHundredths(c, (line + 5) / 10);
-                    cap = c.ToString();
+                    string cap = newlyEarned == tier ? "NEW" : PaceLineText(line);
+                    Cell(row, MedalIcons.Name(tier) + "Name", MedalIcons.Name(tier), ink, x, nameY, SlotW - 10f, true);
+                    Cell(row, MedalIcons.Name(tier) + "Caption", cap, ink, x, paceY, SlotW - 10f, true);
                 }
-                Text t = UiKit.AddText(row, MedalIcons.Name(tier) + "Caption", cap, 42, got ? Theme.Ink : Theme.InkSoft, TextAnchor.UpperCenter, true);
-                var o = t.GetComponent<Outline>();
-                if (o != null) o.enabled = false;
-                t.horizontalOverflow = HorizontalWrapMode.Overflow;
-                var trt = (RectTransform)t.transform;
-                trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 1f);
-                trt.pivot = new Vector2(0.5f, 1f);
-                trt.anchoredPosition = new Vector2((i - 2) * SlotW, -(IconSize + 6f));
-                trt.sizeDelta = new Vector2(SlotW - 20f, TimedUi.LineHeight(1.25f));
-                sb.Append(MedalIcons.Name(tier)).Append(got ? " earned" : " needs " + cap + " plat per second").Append(i < 3 ? ", " : ".");
+                sb.Append(MedalIcons.Name(tier)).Append(got ? " earned" : " needs " + PaceLineText(line)).Append(i < 3 ? ", " : ".");
             }
             row.gameObject.AddComponent<A11yLabel>().Text = sb.ToString();
             return h;

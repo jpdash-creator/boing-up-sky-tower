@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using BoingUpSkyTower.Content;
@@ -910,9 +910,11 @@ namespace BoingUpSkyTower.Tests
                         float scale = b.GetComponentInParent<Canvas>().rootCanvas.scaleFactor;
                         if (label.fontSize < UiKit.MinBodyTextPx - 1f) problems.Add(tag + names[i] + " label below 16 sp");
                         if (label.preferredWidth > bb.width + 0.5f) problems.Add(tag + names[i] + " label (" + Mathf.RoundToInt(label.preferredWidth) + ") is wider than its button (" + Mathf.RoundToInt(bb.width) + ")");
+                        if (b.Find("Icon") != null && ((RectTransform)b.Find("Icon")).sizeDelta.x < 80f) problems.Add(tag + names[i] + " icon must be bigger (at least 80 px)");
                         if (b.Find("Icon") == null || b.Find("Icon").GetComponent<Image>().sprite == null) problems.Add(tag + names[i] + " has no icon (fallback glyph missing)");
-                        Transform tick = b.Find("Check");
-                        bool on = tick != null && tick.gameObject.activeSelf;
+                        if (b.Find("Check") != null) problems.Add(tag + names[i] + " must not have a tick mark (Bug List 8 item 2a)");
+                        var ringOutline = b.GetComponent<Outline>();
+                        bool on = ringOutline != null && ringOutline.enabled;
                         if (on) marked++;
                         if (on != (i == GameSettings.Difficulty)) problems.Add(tag + names[i] + " selected mark does not match the setting");
                         if (b.GetComponent<A11yLabel>() == null || !b.GetComponent<A11yLabel>().Text.Contains(names[i])) problems.Add(tag + names[i] + " needs an accessibility label");
@@ -930,7 +932,7 @@ namespace BoingUpSkyTower.Tests
                     if (marked != 1) problems.Add(tag + marked + " buttons are marked selected, expected 1");
                     FindRt("GameplayHard", row).GetComponent<Button>().onClick.Invoke();
                     if (GameSettings.Difficulty != 3) problems.Add(tag + "tapping Hard did not store the setting");
-                    if (!FindRt("GameplayHard", row).Find("Check").gameObject.activeSelf || FindRt("GameplayRelaxed", row).Find("Check").gameObject.activeSelf) problems.Add(tag + "the selected mark did not move to Hard");
+                    if (!FindRt("GameplayHard", row).GetComponent<Outline>().enabled || FindRt("GameplayRelaxed", row).GetComponent<Outline>().enabled) problems.Add(tag + "the selected mark did not move to Hard");
                     if (GameSession.Cfg.ScrollStepPercent != 28) problems.Add(tag + "Hard must set a speed-up step of 28 percent, got " + GameSession.Cfg.ScrollStepPercent);
                 }
                 GameSettings.Difficulty = 0;
@@ -1174,6 +1176,151 @@ namespace BoingUpSkyTower.Tests
         [UnityTest]
         public IEnumerator TimedGameplayScreensSurvive130PercentTextAndLeftHandedLayout() { return TimedAudit(130, true); }
 
+        /// <summary>
+        /// Bug List 8: a NEW BEST ribbon must be a wide banner (at least 600 x 130 ref px, stretched over its whole rect, not aspect-locked into a small graphic) and its image rect must fully contain
+        /// the label text rect with a margin on every side; the label is one line and may shrink to 20 px at the least.
+        /// </summary>
+        static void AssertRibbonCoversLabel(string badgeName)
+        {
+            GameObject badge = GameObject.Find(badgeName);
+            Assert.IsNotNull(badge, badgeName);
+            var img = badge.GetComponent<UnityEngine.UI.Image>();
+            Assert.IsNotNull(img, badgeName + " has the ribbon image");
+            Assert.IsFalse(img.preserveAspect, badgeName + ": the ribbon graphic fills its rect (no aspect lock shrinking it below the label)");
+            var rt = (RectTransform)badge.transform;
+            Assert.GreaterOrEqual(rt.rect.width, 600f, badgeName + " ribbon width (ref px)");
+            Assert.GreaterOrEqual(rt.rect.height, 130f, badgeName + " ribbon height (ref px)");
+            var label = badge.GetComponentInChildren<UnityEngine.UI.Text>();
+            Assert.IsNotNull(label, badgeName + " label");
+            Assert.IsTrue(label.resizeTextForBestFit && label.resizeTextMinSize <= 20, badgeName + " label shrinks to fit down to 20 (one line)");
+            var lrt = (RectTransform)label.transform;
+            var rc = new Vector3[4];
+            var lc = new Vector3[4];
+            rt.GetWorldCorners(rc);
+            lrt.GetWorldCorners(lc);
+            float mx = 0.04f * Mathf.Abs(rc[2].x - rc[0].x);   // at least 4 percent of the ribbon width left and right
+            float my = 0.08f * Mathf.Abs(rc[2].y - rc[0].y);   // and 8 percent of its height above and below
+            Assert.Greater(lc[0].x - rc[0].x, mx, badgeName + " left margin");
+            Assert.Greater(rc[2].x - lc[2].x, mx, badgeName + " right margin");
+            Assert.Greater(lc[0].y - rc[0].y, my, badgeName + " bottom margin");
+            Assert.Greater(rc[2].y - lc[2].y, my, badgeName + " top margin");
+        }
+
+        static bool IsCentred(TextAnchor a) { return a == TextAnchor.UpperCenter || a == TextAnchor.MiddleCenter || a == TextAnchor.LowerCenter; }
+
+        /// <summary>
+        /// Bug List 8 items 2b and 5: the level popup and the endless popup are centred. The title sits on the middle of the panel, every text in them is centre aligned, the medal strip
+        /// has its caption, the words Bronze / Silver / Gold under the icons and a "plat/s" target under each word, and START and Time Attack are two green buttons on one row.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator LevelAndEndlessPopupsAreCentredWithMedalWords()
+        {
+            IMedalTargetSource savedTargets = MedalTargets.Source;
+            var targets = new DictionaryMedalTargets();
+            targets.Set("lvl_001_01", 0, 900);
+            MedalTargets.Source = targets;
+            var problems = new List<string>();
+            try
+            {
+                foreach (int percent in new[] { 100, 130 })
+                {
+                    GameSettings.TextPercent = percent;
+                    GameSettings.Difficulty = 0;
+                    yield return Load("Meta");
+                    var meta = Object.FindFirstObjectByType<MetaController>();
+                    RegionDef r1 = GameSession.Repo.GetRegionByIndex(1);
+                    var levels = GameSession.Repo.LevelsOf(r1.Id);
+                    var holder = new RenderTexture[1];
+                    foreach (Aspect a in Aspects)
+                    {
+                        UiKit.SafeAreaNormalized = () => FullSafe;
+                        for (int popup = 0; popup < 2; popup++)
+                        {
+                            meta.ShowLevels(r1);
+                            if (popup == 0) meta.OnLevelTapped(levels[0]); else meta.OnEndlessTapped(r1);
+                            yield return ApplyAspect(a, holder);
+                            string tag = a.Name + "@" + percent + (popup == 0 ? " level popup: " : " endless popup: ");
+                            RectTransform panel = FindRt("Panel"), title = panel != null ? FindRt("Title", panel) : null;
+                            if (panel == null || title == null) { problems.Add(tag + "panel or title missing"); continue; }
+                            Rect pb = CanvasBox(panel);
+                            if (Mathf.Abs(CanvasBox(title).center.x - pb.center.x) > 3f) problems.Add(tag + "the title is not centred on the panel");
+                            foreach (Text t in panel.GetComponentsInChildren<Text>())
+                            {
+                                if (!t.gameObject.activeInHierarchy || string.IsNullOrEmpty(t.text)) continue;
+                                if (!IsCentred(t.alignment)) problems.Add(tag + t.name + " is not centre aligned");
+                                Rect tb = CanvasBox(t.rectTransform);
+                                if (tb.xMin < pb.xMin - 1f || tb.xMax > pb.xMax + 1f) problems.Add(tag + t.name + " leaves the panel");
+                            }
+                            if (popup == 0)
+                            {
+                                RectTransform strip = FindRt(MedalStrip.RowName, panel);
+                                if (strip == null) { problems.Add(tag + "medal strip missing"); continue; }
+                                RectTransform cap = FindRt(MedalStrip.CaptionName, strip);
+                                if (cap == null || cap.GetComponent<Text>().text != MedalStrip.CaptionText) problems.Add(tag + "the medal strip needs its caption");
+                                else if (Mathf.Abs(CanvasBox(cap).center.x - pb.center.x) > 3f) problems.Add(tag + "the medal caption is not centred");
+                                foreach (string tier in new[] { "Bronze", "Silver", "Gold" })
+                                {
+                                    RectTransform icon = FindRt(tier + "Medal", strip), word = FindRt(tier + "Name", strip), pace = FindRt(tier + "Caption", strip);
+                                    if (icon == null || word == null || pace == null) { problems.Add(tag + tier + " icon, word or pace missing"); continue; }
+                                    if (word.GetComponent<Text>().text != tier) problems.Add(tag + tier + " word is wrong");
+                                    if (!pace.GetComponent<Text>().text.EndsWith("plat/s")) problems.Add(tag + tier + " target must read like 0.90 plat/s");
+                                    Rect ib = CanvasBox(icon), wb = CanvasBox(word), cb = CanvasBox(pace);
+                                    if (Mathf.Abs(wb.center.x - ib.center.x) > 3f || Mathf.Abs(cb.center.x - ib.center.x) > 3f) problems.Add(tag + tier + " word and target are not centred under the icon");
+                                    if (wb.yMax > ib.yMin + 1f || cb.yMax > wb.yMin + 1f) problems.Add(tag + tier + " icon, word and target overlap or are out of order");
+                                }
+                            }
+                            else
+                            {
+                                RectTransform start = FindRt("START", panel), ta = FindRt(MetaController.TimeAttackButtonName, panel);
+                                if (start == null || ta == null) { problems.Add(tag + "START or Time Attack button missing"); continue; }
+                                Rect sb = CanvasBox(start), tb = CanvasBox(ta);
+                                if (Mathf.Abs(sb.center.y - tb.center.y) > 2f) problems.Add(tag + "START and Time Attack must be on the same row");
+                                if (sb.Overlaps(tb)) problems.Add(tag + "START and Time Attack overlap");
+                                if (sb.width < UiKit.MinTouchPx - 1f || tb.width < UiKit.MinTouchPx - 1f) problems.Add(tag + "action buttons below 48 dp");
+                                if (start.GetComponent<Image>().sprite != ta.GetComponent<Image>().sprite) problems.Add(tag + "Time Attack must use the same green plate as START");
+                                bool stopwatch = false;
+                                foreach (Image im in ta.GetComponentsInChildren<Image>()) if (im.sprite == TimedIcons.Stopwatch) stopwatch = true;
+                                if (!stopwatch) problems.Add(tag + "Time Attack must carry the stopwatch icon");
+                                if (FindRt(MetaController.TimeAttackCaptionName, panel) == null || FindRt(MetaController.EndlessCaptionName, panel) == null) problems.Add(tag + "captions under the two buttons missing");
+                            }
+                        }
+                    }
+                    Restore(holder);
+                }
+            }
+            finally { MedalTargets.Source = savedTargets; GameSettings.TextPercent = 100; }
+            Report(problems);
+        }
+
+        /// <summary>Bug List 8 item 2c: the intro popup of Time Attack / Endless is centred vertically (and horizontally) in the safe area at every aspect.</summary>
+        [UnityTest]
+        public IEnumerator RunIntroPopupIsCentredInSafeArea()
+        {
+            var problems = new List<string>();
+            foreach (bool timeAttack in new[] { true, false })
+            {
+                yield return Load("Meta");
+                RegionDef r1 = GameSession.Repo.GetRegionByIndex(1);
+                if (timeAttack) GameSession.SelectTimeAttack(r1.Id); else GameSession.SelectEndless(r1.Id);
+                yield return Load("Run");
+                var holder = new RenderTexture[1];
+                foreach (Aspect a in Aspects)
+                {
+                    UiKit.SafeAreaNormalized = () => FullSafe;
+                    yield return ApplyAspect(a, holder);
+                    string tag = a.Name + (timeAttack ? " time attack: " : " endless: ");
+                    RectTransform intro = FindRt("Intro");
+                    if (intro == null) { problems.Add(tag + "intro popup missing"); continue; }
+                    Rect ib = CanvasBox(intro), sb = CanvasBox((RectTransform)intro.parent);
+                    if (Mathf.Abs(ib.center.y - sb.center.y) > 3f) problems.Add(tag + "the intro popup is not centred vertically in the safe area");
+                    if (Mathf.Abs(ib.center.x - sb.center.x) > 3f) problems.Add(tag + "the intro popup is not centred horizontally");
+                    if (ib.yMin < sb.yMin || ib.yMax > sb.yMax || ib.xMin < sb.xMin || ib.xMax > sb.xMax) problems.Add(tag + "the intro popup leaves the safe area");
+                }
+                Restore(holder);
+            }
+            Report(problems);
+        }
+
         static RunRecord TimedRun(string levelId, string regionId, int floors, int ticks, bool revived = false)
         {
             return new RunRecord { Kind = RunKind.Level, LevelId = levelId, RegionId = regionId, Floors = floors, Ticks = ticks, Mode = 0, HeroId = "momo", GameVersion = "test", Revived = revived, Curve = new[] { 4, 9, 14, 19, 24, 29 } };
@@ -1223,6 +1370,8 @@ namespace BoingUpSkyTower.Tests
                 RecordResult better = GameSession.Progress.RecordRun(TimedRun("lvl_001_03", r1.Id, 30, 1500));
                 GameSession.LastResult = new RunResult { LevelId = "lvl_001_03", Completed = true, Floors = 30, Ticks = 1500, Record = better };
                 yield return CheckScreen("run-results-new-best", () => rc.Hud.ShowResults(rc.Session, reward, true), problems);
+                if (GameObject.Find("NewBestTimeBadge") != null) AssertRibbonCoversLabel("NewBestTimeBadge");
+                if (GameObject.Find("NewBestBadge") != null) AssertRibbonCoversLabel("NewBestBadge");
                 rc.Hud.CloseOverlay();
                 // audit gap 6: a run with a new best Time AND a new best Pace shows two separate ribbons (NEW BEST TIME and NEW BEST PACE), stacked without overlap
                 var both = new RecordResult { Kind = RunKind.Level, Floors = 30, Ticks = 1400, Counted = true, NewBestTime = true, NewBestPace = true, HasPrevTime = true, HasPrevPace = true, DeltaTicks = -100, DeltaPaceHundredths = 7 };
@@ -1231,6 +1380,11 @@ namespace BoingUpSkyTower.Tests
                 Assert.IsNotNull(GameObject.Find("NewBestTimeBadge"), "NEW BEST TIME ribbon");
                 Assert.IsNotNull(GameObject.Find("NewBestPaceBadge"), "NEW BEST PACE ribbon");
                 Assert.IsNull(GameObject.Find("NewBestBadge"), "no generic ribbon when Time and Pace are named");
+                AssertRibbonCoversLabel("NewBestTimeBadge");
+                AssertRibbonCoversLabel("NewBestPaceBadge");
+                var tr = (RectTransform)GameObject.Find("NewBestTimeBadge").transform;
+                var pr = (RectTransform)GameObject.Find("NewBestPaceBadge").transform;
+                Assert.GreaterOrEqual(tr.position.y - pr.position.y, tr.rect.height * tr.lossyScale.y - 0.5f, "stacked ribbons do not overlap");
                 rc.Hud.CloseOverlay();
                 RecordResult worse = GameSession.Progress.RecordRun(TimedRun("lvl_001_03", r1.Id, 30, 2100));
                 GameSession.LastResult = new RunResult { LevelId = "lvl_001_03", Completed = true, Floors = 30, Ticks = 2100, Record = worse };
@@ -1248,6 +1402,7 @@ namespace BoingUpSkyTower.Tests
                 var er = new EndlessReward { Floors = 142, BestBefore = 120, NewBest = true, FullRateCoins = 121, Coins = 61, RunsToday = 1 };
                 GameSession.LastResult = new RunResult { Endless = true, TimeAttack = true, RegionId = r1.Id, Floors = 142, Ticks = 10800, Record = new RecordResult { Kind = RunKind.TimeAttack, Floors = 142, Ticks = 10800, Counted = true, NewBestFloors = true } };
                 yield return CheckScreen("run-timeattack-end", () => rc.Hud.ShowEndlessFailed(rc.Session, er), problems);
+                AssertRibbonCoversLabel("NewBestBadge");   // (NewBestFloors only, so the generic ribbon) the endless / Time Attack end screens use the same ribbon sizes
                 rc.Hud.CloseOverlay();
                 rc.StartEndlessRun(r1.Id);
                 rc.Hud.SkipIntro();
@@ -1949,7 +2104,10 @@ namespace BoingUpSkyTower.Tests
                 var cc = new Vector3[4];
                 card.GetWorldCorners(cc);
                 Vector3 mid = (cc[0] + cc[2]) * 0.5f, at = owned.rectTransform.position;
-                Assert.Greater(at.x, mid.x, kv.Key + ": the number is on the right half of the card");
+                Assert.AreEqual(mid.x, at.x, 0.05f * (cc[2].x - cc[0].x), kv.Key + ": the number is centred horizontally on the card (Bug List 8 item 1d)");
+                var oc = new Vector3[4];
+                owned.rectTransform.GetWorldCorners(oc);
+                Assert.Greater(oc[2].x - oc[0].x, 0.6f * (cc[2].x - cc[0].x), kv.Key + ": the number box is wide (most of the card width)");
                 Assert.Less(at.y, mid.y, kv.Key + ": the number is on the bottom half of the card");
             }
             foreach (Button bt in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
@@ -1970,6 +2128,57 @@ namespace BoingUpSkyTower.Tests
             yield return null;
             Assert.AreEqual(4, GameSession.Progress.PowerUpCount("pw_flight"));
             foreach (Text t in FindRt("Power_pw_flight").GetComponentsInChildren<Text>()) if (t.name == PowersScreen.OwnedName) Assert.AreEqual("4", t.text);
+        }
+
+        /// <summary>Bug List 8 items 1c/1e: Back of the Heroes and Rewards screens returns to where they were opened (World map, Level screen, home); the "i" of All Heroes opens the hero stat sheet and Back returns to All Heroes.</summary>
+        [UnityTest]
+        public IEnumerator BackReturnsToTheScreenThatOpenedHeroesAndRewards()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            RegionDef r1 = GameSession.Repo.GetRegionByIndex(1);
+            // Heroes from the World map
+            meta.ShowMap();
+            yield return null;
+            meta.ShowCharacters();
+            yield return null;
+            FindButtonNamed("Back").onClick.Invoke();
+            yield return null;
+            Assert.AreEqual("Map", meta.CurrentScreen, "Heroes opened from the World map goes back to it");
+            // Heroes from the Level screen, through All Heroes and a hero sheet
+            meta.ShowLevels(r1);
+            yield return null;
+            meta.ShowCharacters();
+            yield return null;
+            FindButtonNamed(HeroTabs.ButtonNames[HeroTabs.AllHeroes]).onClick.Invoke();
+            yield return null;
+            meta.CurrentAllHeroes.OpenInfo("momo");
+            yield return null;
+            Assert.AreEqual(HeroSheetScreen.ScreenName, meta.CurrentScreen, "the i opens the existing hero stat sheet");
+            FindButtonNamed("Back").onClick.Invoke();
+            yield return null;
+            Assert.AreEqual(AllHeroesScreen.ScreenName, meta.CurrentScreen, "Back from the sheet returns to All Heroes");
+            FindButtonNamed("Back").onClick.Invoke();
+            yield return null;
+            Assert.AreEqual("Characters", meta.CurrentScreen);
+            FindButtonNamed("Back").onClick.Invoke();
+            yield return null;
+            Assert.AreEqual("Levels", meta.CurrentScreen, "Heroes opened from the Level screen goes back to it");
+            // Rewards from the World map and from the Level screen
+            meta.ShowMap();
+            yield return null;
+            meta.ShowRewards();
+            yield return null;
+            FindButtonNamed("Back").onClick.Invoke();
+            yield return null;
+            Assert.AreEqual("Map", meta.CurrentScreen, "Rewards opened from the World map goes back to it");
+            meta.ShowLevels(r1);
+            yield return null;
+            meta.ShowRewards();
+            yield return null;
+            FindButtonNamed("Back").onClick.Invoke();
+            yield return null;
+            Assert.AreEqual("Levels", meta.CurrentScreen, "Rewards opened from the Level screen goes back to it");
         }
 
         /// <summary>Bug List 6 item 3a: the three tabs switch between All Heroes, Merge and Powers, the tab of the page showing is selected, Back returns to the Heroes screen, and none of the pages has the old yellow button or a bottom bar.</summary>

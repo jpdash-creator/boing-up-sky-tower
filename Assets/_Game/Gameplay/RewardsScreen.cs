@@ -32,10 +32,15 @@ namespace BoingUpSkyTower.Gameplay
 
         // ---- metrics (canvas units of the 1080 x 1920 reference) ----
         const float Side = 24f;
-        const float WalletTop = 16f, WalletH = 100f;
-        const float BackSize = 150f, BottomPad = 16f, TabH = 130f, TabGap = 14f;
-        /// <summary>Height of the dark footer bar (Back and Claim All live in it).</summary>
-        public const float FooterH = BottomPad + BackSize + BottomPad;
+        // The Back arrow sits top left exactly like on every other screen (MetaController.AddBack: 150 px at 20 / -20) and the wallet row starts to its right at 190 px
+        // (MetaController.AddPillRow: 190 .. -16, top 16, 112 tall). The list starts below both.
+        public const float BackSize = 150f, BackX = 20f, BackTop = 20f;
+        const float WalletTop = 16f, WalletH = 112f, WalletLeft = 190f, WalletRight = 16f;
+        const float BottomPad = 16f, ClaimBtnH = 130f, TabH = 130f, TabGap = 14f;
+        /// <summary>Top of the list / pinned Main header: under the Back arrow (the taller of Back and the wallet row) plus a gap.</summary>
+        public const float HeaderH = BackTop + BackSize + 12f;
+        /// <summary>Height of the dark footer bar (Claim All lives in it).</summary>
+        public const float FooterH = BottomPad + ClaimBtnH + BottomPad;
         const int BodyPx = 44;
 
         // Main header stack (top to bottom): circles (selected one is 190 tall, starts at -14), 10 gap, name zone, gap (holds the pointer).
@@ -120,8 +125,8 @@ namespace BoingUpSkyTower.Gameplay
             wallet.anchorMin = new Vector2(0f, 1f);
             wallet.anchorMax = new Vector2(1f, 1f);
             wallet.pivot = new Vector2(0.5f, 1f);
-            wallet.offsetMin = new Vector2(Side, -(WalletTop + WalletH));
-            wallet.offsetMax = new Vector2(-Side, -WalletTop);
+            wallet.offsetMin = new Vector2(WalletLeft, -(WalletTop + WalletH));
+            wallet.offsetMax = new Vector2(-WalletRight, -WalletTop);
             var whl = wallet.gameObject.AddComponent<HorizontalLayoutGroup>();
             whl.spacing = 10f;
             whl.childControlWidth = whl.childControlHeight = true;
@@ -131,9 +136,9 @@ namespace BoingUpSkyTower.Gameplay
             UiKit.SetText(CoinText, progress.Coins.ToString());
             UiKit.SetText(GemText, progress.Gems.ToString());
 
-            // the blue back arrow, bottom left (it stays on every tab; Render keeps it above the footer bar)
+            // the blue back arrow, top left: same place and size as MetaController.AddBack on every other screen (it stays on every tab; Render keeps it on top)
             backButton = ToyKit.GlyphButton(root, "Back", "Back", 2, Glyphs.Left, new Vector2(BackSize, BackSize), () => { if (host != null && host.Back != null) host.Back(); });
-            UiKit.Place((RectTransform)backButton.transform, new Vector2(0f, 0f), new Vector2(Side, BottomPad), new Vector2(BackSize, BackSize));
+            UiKit.Place((RectTransform)backButton.transform, new Vector2(0f, 1f), new Vector2(BackX, -BackTop), new Vector2(BackSize, BackSize));
 
             ticker = root.gameObject.AddComponent<RewardsTicker>();
             ticker.OnTick = Tick;
@@ -226,7 +231,7 @@ namespace BoingUpSkyTower.Gameplay
             viewport.anchorMin = Vector2.zero;
             viewport.anchorMax = Vector2.one;
             viewport.offsetMin = new Vector2(0f, BottomReserve());   // full width: the scene headers run edge to edge
-            viewport.offsetMax = new Vector2(0f, -(WalletTop + WalletH + 12f + (Tab == RewardTab.Main ? CircleZone : 0f)));
+            viewport.offsetMax = new Vector2(0f, -(HeaderH + (Tab == RewardTab.Main ? CircleZone : 0f)));
             viewport.gameObject.AddComponent<RectMask2D>();
             Image hit = viewport.gameObject.AddComponent<Image>();   // catches the drag on the gaps between cards
             hit.color = new Color(0f, 0f, 0f, 0.001f);
@@ -348,7 +353,7 @@ namespace BoingUpSkyTower.Gameplay
             Button b = UiKit.AddButton(body, "ClaimAll", "Claim All", ToyKit.Button(1), Color.white, new Vector2(440f, 130f), () => ClaimAll(tab), 50);
             b.GetComponent<A11yLabel>().Text = tab == RewardTab.Main ? "Claim all ready rewards of this region" : "Claim all ready rewards";
             b.GetComponent<Image>().raycastTarget = true;
-            UiKit.Place((RectTransform)b.transform, new Vector2(1f, 0f), new Vector2(-Side, BottomPad + (BackSize - 130f) * 0.5f), new Vector2(440f, 130f));
+            UiKit.Place((RectTransform)b.transform, new Vector2(1f, 0f), new Vector2(-Side, BottomPad), new Vector2(440f, ClaimBtnH));
             claimAllGo = b.gameObject;
             if (backButton != null) backButton.transform.SetAsLastSibling();
         }
@@ -384,7 +389,10 @@ namespace BoingUpSkyTower.Gameplay
         // ---------------- the small reward card ----------------
 
         const float ChipCardW = 206f, ChipCardGap = 14f, ChipIcon = 96f, CardPad = 36f;
-        const int ChipsPerRow = 4;
+        /// <summary>Two chips a row: with the card drawn 50 percent bigger four chips would be wider than the 1080 reference (CUX-3), so more chips wrap to a new row.</summary>
+        const int ChipsPerRow = 2;
+        /// <summary>Owner Bug List 8: the reward (chest) card is 50 percent bigger in width and height. It is applied as the panel's scale so every chip, icon and the OK button grow with it.</summary>
+        public const float RewardCardScale = 1.5f;
         /// <summary>Seconds the small reward card stays before it closes itself.</summary>
         public const float RewardCardSeconds = 4f;
 
@@ -444,6 +452,11 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform panel = UiKit.Rect(overlay, "Panel");
             UiKit.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(w, h));
             panel.pivot = new Vector2(0.5f, 0.5f);
+            // 50 percent bigger, but never beyond the safe area (a Side margin all round) at any aspect or text size
+            float availW = screen != null && screen.rect.width > 200f ? screen.rect.width : 1080f;
+            float availH = screen != null && screen.rect.height > 200f ? screen.rect.height : 1920f;
+            float scale = Mathf.Min(RewardCardScale, (availW - 2f * Side) / w, (availH - 2f * Side) / h);
+            panel.localScale = new Vector3(scale, scale, 1f);
             Theme.CardBacking(panel);
             RewardCard = panel;
 

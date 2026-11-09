@@ -311,7 +311,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.True(l15.Spec.Stars[1].Value >= 20); // coin target of the star (coin_star_targets.json, rescaled for the doc 25 lengths)
             LoadedLevel l9 = all.Find(x => x.Id == "lvl_001_09");
             Assert.Equal(GoalType.ReachFloor, l9.Spec.Goal.Type); // the timed goal was removed (owner, 2026-10-19)
-            Assert.Equal(120, l9.Spec.Goal.Value);
+            Assert.Equal(90, l9.Spec.Goal.Value);   // Bug List 8 item 3: levels 6 to 10 have 90 rows
             Assert.Equal(SignatureKind.BounceFlowers, l9.Spec.Signature);
             // effective difficulty applies the region offset: d + offset (1 - d)
             LoadedLevel l1 = all.Find(x => x.Id == "lvl_005_01");

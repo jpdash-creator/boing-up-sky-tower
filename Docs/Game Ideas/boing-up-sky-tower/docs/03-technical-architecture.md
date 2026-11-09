@@ -125,7 +125,7 @@ Weekly leaderboard resets use PlayFab's reset frequency setting; archive winners
 - Bot playthrough of every level in CI.
 - **Update 2026-10-20, Android test kit:** `Tools/android_test/bt.py` (a small adb driver: install, launch, find by text, tap, hold, screenshot) and `Tools/android_test/smoke_test.py` (walks every screen, plays, checks layout and frame time). Both read the `TestBridge` logcat lines (development builds only): `BTSTATE {...}` (version, scene, fps, run state) and `BTUI {...}` (visible UI elements with screen rectangles). The smoke test passed 7/7 steps on the owner's OnePlus 13 on 2026-10-20.
 - **AltTester** (in preparation, roadmap T26): SDK 2.3.2 in `Packages/manifest.json`, Python driver on E:, AltTester Desktop extracted under `E:/tools`. It complements, not replaces, the lightweight kit above.
-- **Build versioning:** every APK is vMAJOR.MINOR.HOTFIX.BUILD from `Tools/version.json`, logged in `Content/builds/build_log.csv` (rules: game repo `.claude/rules/versioning.md`). Reports always name the installed version.
+- **Build versioning:** every APK is vMAJOR.MINOR.BUILD (example v0.52.68; changed 2026-11-09 from vX.Y.Z.B, old build-log rows keep the old format) from `Tools/version.json`, logged in `Content/builds/build_log.csv` (rules: game repo `.claude/rules/versioning.md`). Reports always name the installed version.
 - Test counts at the time of writing (2026-10-20): dotnet simulation tests 97 (plays all 75 shipped levels with the bot), Unity EditMode 72 (84 with the endless tests being added), Unity PlayMode 13.
 - Device farm smoke tests (Firebase Test Lab, BrowserStack) **(verify)**.
 - Store sandbox/test tracks for IAP: Google Play license testers, Apple sandbox accounts.

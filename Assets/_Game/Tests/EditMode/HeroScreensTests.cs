@@ -297,13 +297,24 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
+        public void TheInfoIconOpensTheExistingHeroSheetWhenTheHostProvidesIt()
+        {
+            string opened = null;
+            var host = new AllHeroesScreen.Host { NewOverlay = () => UiKit.Rect(canvas, "Popup"), CloseOverlay = () => { }, OpenHeroSheet = id => opened = id };
+            var s = new AllHeroesScreen(canvas, canvas, P, GameSession.Art, host);
+            s.Build();
+            Assert.IsTrue(s.OpenInfo("momo"));
+            Assert.AreEqual("momo", opened, "the hero stat sheet is opened, not a new popup");
+            Assert.IsNull(FindDeep(canvas, AllHeroesScreen.InfoPopupName), "no separate info popup");
+        }
+
+        [Test]
         public void NoCardTextIsACount()
         {
             Give("momo", 4);
             NewAll();
             foreach (Text t in canvas.GetComponentsInChildren<Text>(true))
             {
-                if (t.transform.parent != null && t.transform.parent.name == HeroTabs.CountName) continue;   // the owned-count badge on a tab is a count by design; cards must not show one
                 int n;
                 Assert.IsFalse(int.TryParse(t.text, out n), "a number on the All Heroes screen: " + t.text);
             }
@@ -335,8 +346,10 @@ namespace BoingUpSkyTower.Tests
                 Text owned = FindDeep(card, PowersScreen.OwnedName).GetComponent<Text>();
                 Assert.AreEqual(P.PowerUpCount(ids[i]).ToString(), owned.text, ids[i] + ": the number owned");
                 RectTransform badge = (RectTransform)owned.transform.parent;
-                Assert.AreEqual(new Vector2(1f, 0f), badge.anchorMin, "bottom right anchor");
-                Assert.AreEqual(new Vector2(1f, 0f), badge.anchorMax, "bottom right anchor");
+                Assert.AreEqual(0.5f, badge.pivot.x, 0.001f, "centred horizontally");
+                Assert.AreEqual(0.5f, (badge.anchorMin.x + badge.anchorMax.x) * 0.5f, 0.001f, "centred horizontally");
+                Assert.GreaterOrEqual(badge.anchorMax.x - badge.anchorMin.x, 0.9f, "the number box spans the card width");
+                Assert.AreEqual(0f, badge.anchorMin.y, "bottom edge");
             }
             Assert.AreEqual("3", FindDeep(FindDeep(canvas, "Power_pw_flight"), PowersScreen.OwnedName).GetComponent<Text>().text);
             Assert.AreEqual("40", FindDeep(FindDeep(canvas, "Power_pw_slowtime"), PowersScreen.OwnedName).GetComponent<Text>().text);
@@ -393,53 +406,32 @@ namespace BoingUpSkyTower.Tests
         }
 
         [Test]
-        public void HeroTabsShowOwnedCountsAndTheCountsFollowTheSave()
+        public void HeroTabsHaveNoOwnedCountBadge()
         {
-            int[] before = HeroTabs.Counts(P);
-            Assert.GreaterOrEqual(before[HeroTabs.AllHeroes], 1, "Momo is always owned");
-            Assert.AreEqual(0, before[HeroTabs.Merge], "a new player has nothing to merge");
-            P.AddCopies("momo", 2);   // 3 Momo: one merge ready
-            Assert.AreEqual(1, HeroTabs.Counts(P)[HeroTabs.Merge]);
-            Assert.AreEqual("0", HeroTabs.CountText(0));
-            Assert.AreEqual("99", HeroTabs.CountText(99));
-            Assert.AreEqual("99+", HeroTabs.CountText(100), "the badge never grows past its slot");
-            Assert.AreEqual("0", HeroTabs.CountText(-5));
-            Assert.AreEqual(0, HeroTabs.Counts(null)[HeroTabs.Powers], "no service: zeros");
-
+            // Bug List 8 item 1a/1b: no count badge on any tab of any Heroes screen
             NewAll();
-            for (int i = 0; i < 3; i++) AssertCountBadge(canvas, i, HeroTabs.CountText(HeroTabs.Counts(P)[i]));
+            AssertNoBadge(canvas);
             Object.DestroyImmediate(FindDeep(canvas, "AllHeroesBody").gameObject);
             Object.DestroyImmediate(FindDeep(canvas, "AllHeroesBackground").gameObject);
             NewMerge();
-            for (int i = 0; i < 3; i++) AssertCountBadge(canvas, i, HeroTabs.CountText(HeroTabs.Counts(P)[i]));
+            AssertNoBadge(canvas);
             Object.DestroyImmediate(FindDeep(canvas, "MergeBody").gameObject);
             Object.DestroyImmediate(FindDeep(canvas, "MergeBackground").gameObject);
             NewPowers();
-            for (int i = 0; i < 3; i++) AssertCountBadge(canvas, i, HeroTabs.CountText(HeroTabs.Counts(P)[i]));
+            AssertNoBadge(canvas);
         }
 
-        /// <summary>CUX-3: the badge is a child of its tab, in the top right corner, inside the tab, and clear of the label row and of the icon.</summary>
-        static void AssertCountBadge(Transform root, int tab, string expected)
+        static void AssertNoBadge(Transform root)
         {
-            Transform cellT = FindDeep(root, HeroTabs.ButtonNames[tab]);
-            Assert.IsNotNull(cellT, HeroTabs.ButtonNames[tab]);
-            Transform badge = cellT.Find(HeroTabs.CountName);
-            Assert.IsNotNull(badge, "count badge on tab " + tab);
-            Assert.AreEqual(expected, badge.Find("Text").GetComponent<Text>().text, "badge text of tab " + tab);
-            Assert.IsFalse(badge.GetComponent<Image>().raycastTarget, "the badge never steals the tap");
-            Assert.IsTrue(cellT.GetComponent<A11yLabel>().Text.Contains(expected), "the accessibility label carries the count");
-            var cell = (RectTransform)cellT;
-            var b = (RectTransform)badge;
-            Canvas.ForceUpdateCanvases();
-            if (cell.rect.width <= 1f) return;   // layout not computed in this environment
-            Rect bc = Rel(cell, b), lc = Rel(cell, (RectTransform)FindDeep(cellT, "Label")), ic = Rel(cell, (RectTransform)FindDeep(cellT, "Icon"));
-            Assert.GreaterOrEqual(bc.xMin, -0.5f, "badge inside the tab (left)");
-            Assert.LessOrEqual(bc.xMax, cell.rect.width + 0.5f, "badge inside the tab (right)");
-            Assert.GreaterOrEqual(bc.yMin, -0.5f, "badge inside the tab (bottom)");
-            Assert.LessOrEqual(bc.yMax, cell.rect.height + 0.5f, "badge inside the tab (top)");
-            Assert.IsFalse(bc.Overlaps(ic), "badge does not cover the icon of tab " + tab);
-            Assert.LessOrEqual(lc.yMax, bc.yMin + 0.5f, "badge sits above the label row of tab " + tab);
+            for (int i = 0; i < 3; i++)
+            {
+                Transform cellT = FindDeep(root, HeroTabs.ButtonNames[i]);
+                Assert.IsNotNull(cellT, HeroTabs.ButtonNames[i]);
+                Assert.IsNull(cellT.Find("Count"), "no count badge on tab " + i);
+                StringAssert.DoesNotContain("owned", cellT.GetComponent<A11yLabel>().Text);
+            }
         }
+
 
         /// <summary>Rectangle of <paramref name="child"/> in the lower-left based space of <paramref name="cell"/>.</summary>
         static Rect Rel(RectTransform cell, RectTransform child)

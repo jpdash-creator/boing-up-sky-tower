@@ -105,6 +105,7 @@ namespace BoingUpSkyTower.Simulation.Tests
                 {
                     sum += placed[g][1];
                     line += " R" + g + "=" + placed[g][1] + " (" + placed[g][0] + " pickups)";
+                    if (placed[g][1] < TargetMin || placed[g][1] > TargetMax) output.WriteLine(line);
                     Assert.InRange(placed[g][1], TargetMin, TargetMax);
                 }
                 output.WriteLine(line + " average " + (sum / Regions).ToString("F1"));
@@ -119,7 +120,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             // Owner 2026-11-09: with 25 levels per region the shares were scaled down by about 0.55 (27 / 27 / 29 / 30 / 32 to 14 / 14 / 15 / 15 / 15; the 55..75 band
             // does not allow more) so the income per region stays at the old level. Compared here on the same 25-level campaign against the previous shares.
             int[] old = { 27, 27, 29, 30, 32 };
-            Assert.Equal(new[] { 14, 14, 15, 15, 15 }, SimConfig.DifficultyGemPermille);
+            Assert.Equal(new[] { 16, 16, 17, 17, 17 }, SimConfig.DifficultyGemPermille);   // Bug List 8 item 3: was 14 / 14 / 15 / 15 / 15 before the levels got shorter
             double before = 0, after = 0;
             for (int d = 0; d < old.Length; d++)
                 for (int g = 1; g <= Regions; g++) { before += PlacedPerRegion(old[d])[g][1]; after += PlacedPerRegion(SimConfig.DifficultyGemPermille[d])[g][1]; }

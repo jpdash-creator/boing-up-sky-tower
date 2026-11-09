@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using BoingUpSkyTower.Content;
 using BoingUpSkyTower.Economy;
@@ -502,6 +502,31 @@ namespace BoingUpSkyTower.Gameplay
             }
         }
 
+        // ---------------- navigation origin (Bug List 8 item 1e) ----------------
+
+        /// <summary>Where Back goes from the Heroes screen: the screen that opened it (World map, Level screen, otherwise home). Set only when the Heroes screen is entered from OUTSIDE its own family of screens.</summary>
+        Action heroesReturn;
+        /// <summary>Where Back goes from the Rewards screen (World map, Level screen, otherwise home).</summary>
+        Action rewardsReturn;
+
+        static bool InHeroesFamily(string screen) { return screen == "Characters" || screen == AllHeroesScreen.ScreenName || screen == MergeScreen.ScreenName || screen == PowersScreen.ScreenName || screen == HeroSheetScreen.ScreenName; }
+
+        /// <summary>The action that returns to <paramref name="from"/> when it is the World map or a Level screen (the screen's region), else home. Shared by the Heroes and Rewards screens.</summary>
+        Action OriginReturnFor(string from)
+        {
+            switch (from)
+            {
+                case "Map": return ShowMap;
+                case "Levels":
+                    {
+                        RegionDef r = currentRegionId != null && repo != null ? repo.GetRegion(currentRegionId) : null;
+                        if (r == null) return ShowMenu;
+                        return () => ShowLevels(r);
+                    }
+                default: return ShowMenu;
+            }
+        }
+
         /// <summary>Treasure Chest screen (docs/22 point 3): opened from the bottom bar Chests tab and the shop's first section; Back returns to the caller.</summary>
         public void ShowTreasureChests()
         {
@@ -567,10 +592,11 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Rewards: tabs Main | Daily | Weekly, opened from the home button; Back returns to the home screen.</summary>
         public void ShowRewards(RewardTab tab)
         {
+            if (CurrentScreen != "Rewards") rewardsReturn = OriginReturnFor(CurrentScreen);   // a tab switch inside Rewards keeps the first caller
             NewScreen("Rewards");
             Background(null, new Color(0.30f, 0.34f, 0.64f, 1f));   // the blue-purple quest look
             progress.RecordLogin();
-            var host = new RewardsScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup, Back = ShowMenu };
+            var host = new RewardsScreen.Host { NewOverlay = NewOverlay, CloseOverlay = ClosePopup, Back = () => { if (rewardsReturn != null) rewardsReturn(); else ShowMenu(); } };
             rewards = new RewardsScreen(screen, progress, repo, art, host);
             rewards.Build(tab);   // its own Back arrow sits bottom left
             coinText = rewards.CoinText;
@@ -587,11 +613,12 @@ namespace BoingUpSkyTower.Gameplay
         /// <summary>Characters: the chosen character on the land stage (the current region's backdrop, grass and the dirt oval) and the list of characters below.</summary>
         public void ShowCharacters()
         {
+            if (!InHeroesFamily(CurrentScreen)) heroesReturn = OriginReturnFor(CurrentScreen);   // remember the caller (map, levels, home)
             NewScreen("Characters");
             Stage stage = StageScene.Build(screenRoot, art, progress, StageScene.CharacterLayout());
             characters = new CharactersScreen(screen, progress, art, new CharactersScreen.Host { Stage = stage, OpenHero = who => ShowHeroSheet(who, ShowCharacters), OpenMerge = ShowMerge, OpenAllHeroes = ShowAllHeroes, OpenPowers = ShowPowers });
             characters.Build();
-            AddBack("Back", ShowMenu);   // no bottom tab bar on the Heroes screen (Bug List 6 item 3b): the three tabs are the row under the stage
+            AddBack("Back", () => { if (heroesReturn != null) heroesReturn(); else ShowMenu(); });   // no bottom tab bar on the Heroes screen (Bug List 6 item 3b): the three tabs are the row under the stage
             coinText = characters.CoinText;
             gemText = characters.GemText;
             RefreshWallet();
@@ -612,6 +639,7 @@ namespace BoingUpSkyTower.Gameplay
                 NewOverlay = NewOverlay,
                 CloseOverlay = ClosePopup,
                 Back = ShowCharacters,
+                OpenHeroSheet = id => ShowHeroSheet(CharacterCatalog.Get(id), ShowAllHeroes),   // Bug List 8 item 1c: the existing stat sheet; Back returns to All Heroes
                 OpenMerge = ShowMerge,
                 OpenPowers = ShowPowers,
                 RegionName = i => { RegionDef r = repo != null ? repo.TryGetRegionByIndex(i) : null; return r != null ? r.Name : null; },
@@ -1657,16 +1685,14 @@ namespace BoingUpSkyTower.Gameplay
         public void OnEndlessTapped(RegionDef region)
         {
             int best = progress.EndlessBestFloor(region.Id);
-            // Content-sized: content ends at 521 (best-floor pill), then the best Pace / Time block (doc 46), the Time Attack line and button, START (at least 48 dp) and a margin. One close: the X in the frame.
+            // Content-sized: content ends at 521 (best-floor pill), then the best Pace / Time block (doc 46), the Time Attack line, one row with START and Time Attack (at least 48 dp) and a margin. One close: the X in the frame.
             int mode = GameSettings.Difficulty;
             PaceValue bestPace = progress.EndlessBestPace(region.Id, mode);
             int bestAlive = progress.EndlessBestSurvived(region.Id, mode);
-            float startSize = Mathf.Max(150f, UiKit.MinTouchRef);
             float recordTop = 535f;
             float taLineTop = recordTop + TimedUi.RecordBlockHeight(bestPace.IsValid || bestAlive > 0) + 10f;
-            float taBtnH = Mathf.Max(130f, UiKit.MinTouchRef);
             TimeAttackRecord taRec = progress.TimeAttackBest(region.Id, mode);
-            OpenPopup("Endless", "", taLineTop + TimeAttackLineHeight(taRec) + 8f + taBtnH + 24f + startSize + 60f);
+            OpenPopup("Endless", "", taLineTop + TimeAttackLineHeight(taRec) + 8f + EndlessActionRowHeight());
             Transform panel = popup.Find("Panel");
             Destroy(panel.Find("Body").gameObject);
             Transform endTitle = panel.Find("Title");
@@ -1684,8 +1710,8 @@ namespace BoingUpSkyTower.Gameplay
             RectTransform bestRow = ToyKit.PillRow(panel, "BestFloor", 425f, 96f);
             ToyKit.InfoPill(bestRow, ToyKit.Get("icon_crown"), best > 0 ? best.ToString() : "-", new Color(1f, 0.9f, 0.4f), 300f, 96f);
             TimedUi.RecordBlock(panel, recordTop, mode, bestPace, bestAlive, true);
-            AddTimeAttackEntry((RectTransform)panel, region, mode, taLineTop, taBtnH, 60f + startSize + 24f);
-            ToyKit.PopupAction(popup.Find("Panel"), "START", Btn(1), Color.white, 60f, () => StartEndless(region), 0f);
+            AddTimeAttackEntry((RectTransform)panel, region, mode, taLineTop);
+            AddEndlessActionRow((RectTransform)panel, region);   // START (Endless) and Time Attack: two green buttons on one row
         }
 
         /// <summary>Height reserved at the bottom of the level screen for the Endless button (button 130 + 24 margin + 16 gap).</summary>

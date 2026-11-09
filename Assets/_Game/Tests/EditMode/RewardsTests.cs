@@ -975,8 +975,11 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual(4, chips, "gem, coin and one chip per power-up type");
                 foreach (Text t in card.GetComponentsInChildren<Text>()) Assert.LessOrEqual(t.text.Length, 5, "amounts only, no sentences: \"" + t.text + "\"");
                 Assert.AreEqual("40", card.Find("Chip/Amount").GetComponent<Text>().text);
-                Assert.Less(card.sizeDelta.y, 980f * 0.6f, "about half of the old 980 px reward popup");
-                Assert.Less(card.sizeDelta.x, 1080f);
+                // Bug List 8: the card is drawn 50 percent bigger (panel scale), and still fits the 1080 x 1920 reference with the Side margin
+                Assert.AreEqual(RewardsScreen.RewardCardScale, card.localScale.x, 0.001f, "50 percent bigger in width");
+                Assert.AreEqual(RewardsScreen.RewardCardScale, card.localScale.y, 0.001f, "50 percent bigger in height");
+                Assert.LessOrEqual(card.sizeDelta.y * card.localScale.y, 1920f - 48f, "fits the height");
+                Assert.LessOrEqual(card.sizeDelta.x * card.localScale.x, 1080f - 48f, "fits the width");
                 var ok = (RectTransform)card.Find("OK");
                 Assert.IsNotNull(ok.GetComponent<Button>());
                 Assert.GreaterOrEqual(ok.sizeDelta.x, UiKit.MinTouchPx - 1f);
@@ -1044,6 +1047,103 @@ namespace BoingUpSkyTower.Tests
                 Assert.AreEqual("150", s.RewardCard.Find("Chip/Amount").GetComponent<Text>().text, "150 coins: a single coin chip");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void RewardCardIsFiftyPercentBiggerAndStaysInsideTheSafeAreaAtEveryAspect()
+        {
+            ProgressService svc = NewService();
+            Vector2[] screens = { new Vector2(1080f, 1920f), new Vector2(1080f, 2340f), new Vector2(1080f, 2520f), new Vector2(1080f, 1440f) };   // 9:16, 9:19.5, 9:21, 3:4
+            float oldScale = UiKit.TextScale;
+            try
+            {
+                foreach (float ts in new[] { 1f, 1.3f })
+                {
+                    UiKit.TextScale = ts;
+                    foreach (Vector2 size in screens)
+                    {
+                        GameObject root;
+                        RewardsScreen s = BuildScreenWithHost(svc, RewardTab.Main, out root);
+                        try
+                        {
+                            ((RectTransform)root.transform).sizeDelta = size;
+                            var res = new RewardClaimOutcome { Result = RewardClaimResult.Ok, Gems = 40, Coins = 2000 };
+                            res.PowerUpIds.Add("pw_flight"); res.PowerUpIds.Add("pw_shield");
+                            res.HeroIds.Add("forestgirl"); res.HeroIds.Add("forestgirl");   // 6 chips, the tallest case
+                            s.ShowClaimed(res);
+                            RectTransform card = s.RewardCard;
+                            float w = card.sizeDelta.x * card.localScale.x, h = card.sizeDelta.y * card.localScale.y;
+                            string where = size + " text " + ts;
+                            Assert.LessOrEqual(w, size.x - 48f + 0.5f, "width inside the safe area at " + where);
+                            Assert.LessOrEqual(h, size.y - 48f + 0.5f, "height inside the safe area at " + where);
+                            Assert.GreaterOrEqual(card.localScale.x, 1f, "never smaller than the old card at " + where);
+                            // a small card (one chip) is exactly 50 percent bigger than the base size
+                            s.ShowClaimed(new RewardClaimOutcome { Result = RewardClaimResult.Ok, Coins = 150 });
+                            Assert.AreEqual(RewardsScreen.RewardCardScale, s.RewardCard.localScale.x, 0.001f, "one chip: exactly 1.5x at " + where);
+                        }
+                        finally { UnityEngine.Object.DestroyImmediate(root); }
+                    }
+                }
+            }
+            finally { UiKit.TextScale = oldScale; }
+        }
+
+        [Test]
+        public void BackArrowIsTopLeftWithTheSamePositionAndSizeAsEveryOtherScreen()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreenWithHost(svc, RewardTab.Main, out root);
+            try
+            {
+                var back = (RectTransform)root.transform.Find("RewardsRoot/Back");
+                Assert.IsNotNull(back, "Rewards has its Back arrow");
+                Assert.AreEqual(new Vector2(0f, 1f), back.anchorMin, "top left like MetaController.AddBack");
+                Assert.AreEqual(new Vector2(0f, 1f), back.anchorMax);
+                Assert.AreEqual(new Vector2(20f, -20f), back.anchoredPosition, "20 / -20 like the other screens");
+                Assert.AreEqual(new Vector2(150f, 150f), back.sizeDelta, "150 x 150 like the other screens");
+                Assert.GreaterOrEqual(RewardsScreen.HeaderH, 20f + 150f, "the list starts below the Back arrow");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void TaskTitlesStayOnOneLineAtOneHundredAndOneHundredThirtyPercentText()
+        {
+            ProgressService svc = NewService();
+            float oldScale = UiKit.TextScale;
+            try
+            {
+                foreach (float ts in new[] { 1f, 1.3f })
+                {
+                    UiKit.TextScale = ts;
+                    foreach (RewardTab tab in new[] { RewardTab.Daily, RewardTab.Weekly, RewardTab.Main })
+                    {
+                        GameObject root;
+                        var r = new GameObject("RewardsTestRoot", typeof(RectTransform));
+                        root = r;
+                        ((RectTransform)r.transform).sizeDelta = new Vector2(1080f, 1920f);
+                        var s = new RewardsScreen((RectTransform)r.transform, svc, repo, null, new RewardsScreen.Host { NewOverlay = () => (RectTransform)new GameObject("O", typeof(RectTransform), typeof(Image)).transform });
+                        try
+                        {
+                            s.Build(tab);
+                            if (tab == RewardTab.Main) s.SelectRegion(1);
+                            LayoutRebuilder.ForceRebuildLayoutImmediate(s.ListContent);
+                            int checkedTitles = 0;
+                            foreach (Text t in s.ListContent.GetComponentsInChildren<Text>(true))
+                            {
+                                if (t.name != "Title") continue;
+                                checkedTitles++;
+                                Assert.LessOrEqual(t.preferredHeight, t.fontSize * 1.5f, "one line: \"" + t.text + "\" (" + tab + ", text " + ts + ")");
+                                Assert.GreaterOrEqual(t.fontSize, Mathf.FloorToInt(UiKit.MinBodyTextPx), "never below the 16 sp floor: \"" + t.text + "\"");
+                            }
+                            Assert.Greater(checkedTitles, 0, "the " + tab + " tab lists task titles");
+                        }
+                        finally { UnityEngine.Object.DestroyImmediate(root); }
+                    }
+                }
+            }
+            finally { UiKit.TextScale = oldScale; }
         }
 
         [Test]

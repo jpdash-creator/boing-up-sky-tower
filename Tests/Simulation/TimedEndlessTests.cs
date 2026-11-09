@@ -246,7 +246,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(new byte[] { 0, 200, 255 }, e2.Inputs);
             Assert.Equal(new[] { 2000 }, e2.Splits);
 
-            var t = new TimeAttackRecord { BestFloors = 140, Ticks = 10800, LayoutSeed = -7, HeroId = "capi", Mode = 4, GameVersion = "1.0.0.1", Inputs = new byte[] { 3, 4 }, Curve = new[] { 2, 5 } };
+            var t = new TimeAttackRecord { BestFloors = 140, Ticks = 10800, LayoutSeed = -7, HeroId = "capi", Mode = 4, GameVersion = "1.0.0.1", Inputs = new byte[] { 3, 4 }, Curve = new[] { 2, 5 }, RampStartLevel = 10 };
             TimeAttackRecord t2 = JsonConvert.DeserializeObject<TimeAttackRecord>(JsonConvert.SerializeObject(t));
             Assert.Equal(140, t2.BestFloors);
             Assert.Equal(-7, t2.LayoutSeed);
@@ -254,6 +254,7 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(4, t2.Mode);
             Assert.Equal(new byte[] { 3, 4 }, t2.Inputs);
             Assert.Equal(new[] { 2, 5 }, t2.Curve);
+            Assert.Equal(10, t2.RampStartLevel);
 
             // an old save with only the floors
             TimeAttackRecord old = JsonConvert.DeserializeObject<TimeAttackRecord>("{\"bf\":77}");
@@ -261,6 +262,8 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.NotNull(old.Inputs);
             Assert.NotNull(old.Curve);
             Assert.Equal("", old.HeroId);
+            Assert.Equal(0, old.RampStartLevel);   // legacy record of the flat-start Time Attack
+            Assert.False(TimeAttackRamp.IsCurrent(old));
             EndlessModeRecord oldE = JsonConvert.DeserializeObject<EndlessModeRecord>("{\"bf\":10,\"sp\":[100]}");
             Assert.NotNull(oldE.Inputs);
             Assert.Equal(new[] { 100 }, oldE.Splits);
@@ -311,5 +314,110 @@ namespace BoingUpSkyTower.Simulation.Tests
             Assert.Equal(s.Dead, r.Dead);
             Assert.Equal(s.Coins, r.Coins);
         }
-    }
+
+        // ---- Time Attack difficulty ramp (owner Bug List 8 item 3): floor 1 = level 10, +1 level per 100 floors, level 25 held ----
+
+        [Theory]
+        [InlineData(0, 10)]
+        [InlineData(1, 10)]
+        [InlineData(100, 10)]
+        [InlineData(101, 11)]
+        [InlineData(200, 11)]
+        [InlineData(201, 12)]
+        [InlineData(1500, 24)]
+        [InlineData(1501, 25)]
+        [InlineData(1600, 25)]
+        [InlineData(1601, 25)]
+        [InlineData(5000, 25)]
+        [InlineData(100000, 25)]
+        [InlineData(int.MaxValue, 25)]
+        public void TimeAttackStartsAtLevel10RisesOneLevelPerHundredFloorsAndHoldsLevel25(int floor, int level)
+        {
+            Assert.Equal(level, EndlessTower.LevelForFloorTimeAttack(floor, 25));
+            Assert.Equal(level, EndlessTower.LevelForFloor(floor, 25, true));
+        }
+
+        [Fact]
+        public void TimeAttackLevelIsNeverBelowTenNeverFallsAndNeverEntersTheEndlessCycle()
+        {
+            int prev = 10;
+            for (int f = -5; f <= 30000; f++)
+            {
+                int l = EndlessTower.LevelForFloorTimeAttack(f, 25);
+                Assert.InRange(l, 10, 25);
+                Assert.True(l >= prev, "level fell at floor " + f);
+                prev = l;
+            }
+            Assert.Equal(25, prev);
+            // a normal endless tower is untouched by the flag
+            for (int f = 0; f <= 4000; f++) Assert.Equal(EndlessTower.LevelForFloor(f, 25), EndlessTower.LevelForFloor(f, 25, false));
+            // legacy 15-level regions: levels 10..15, then hold 15
+            Assert.Equal(10, EndlessTower.LevelForFloorTimeAttack(1, 15));
+            Assert.Equal(15, EndlessTower.LevelForFloorTimeAttack(501, 15));
+            Assert.Equal(15, EndlessTower.LevelForFloorTimeAttack(9999, 15));
+        }
+
+        [Fact]
+        public void TimeAttackTowerUsesLevel10DifficultyFromFloor1AndStaysPrefixStableAndReplayable()
+        {
+            var cfg = new SimConfig();
+            Fx off = Fx.FromRatio(500, 10000);
+            LevelSpec ta = EndlessTower.MakeSpec(777, off, SignatureKind.BounceFlowers, 400, 25, true);
+            LevelSpec en = EndlessTower.MakeSpec(777, off, SignatureKind.BounceFlowers, 400);
+            Assert.True(ta.TimeAttack);
+            Assert.False(en.TimeAttack);
+            var tTa = new EndlessTower(cfg, ta);
+            var tEn = new EndlessTower(cfg, en);
+            Assert.True(tTa.DifficultyAt(1) == LevelSpec.DifficultyForLevel(cfg, 10, off, 25));
+            Assert.True(tTa.DifficultyAt(150) == LevelSpec.DifficultyForLevel(cfg, 11, off, 25));
+            Assert.True(tTa.DifficultyAt(3000) == LevelSpec.DifficultyForLevel(cfg, 25, off, 25));
+            Assert.True(tEn.DifficultyAt(1) == LevelSpec.DifficultyForLevel(cfg, 1, off, 25));
+            Assert.True(tTa.DifficultyAt(1) > tEn.DifficultyAt(1));
+            Assert.True(tTa.Data.EndlessTimeAttack);
+            Assert.False(tEn.Data.EndlessTimeAttack);
+            Assert.NotEqual(tTa.Fingerprint, tEn.Fingerprint);   // the Time Attack tower is a different tower than the endless one of the same seed
+
+            // prefix stable: growing never changes what exists, and a second tower of the same spec grown in another order is identical
+            var a = new EndlessTower(cfg, ta);
+            Platform[] early = a.Data.Platforms;
+            a.EnsureAhead(400);
+            var b = new EndlessTower(cfg, EndlessTower.MakeSpec(777, off, SignatureKind.BounceFlowers, 400, 25, true));
+            b.EnsureAhead(200);
+            b.EnsureAhead(400);
+            Assert.Equal(a.Fingerprint, b.Fingerprint);
+            Platform[] pa = a.Data.Platforms, pb = b.Data.Platforms;
+            Assert.Equal(pa.Length, pb.Length);
+            for (int i = 0; i < pa.Length; i++)
+                Assert.True(pa[i].X == pb[i].X && pa[i].Y == pb[i].Y && pa[i].Width == pb[i].Width && pa[i].Kind == pb[i].Kind, "platform " + i);
+            for (int i = 0; i < early.Length; i++)
+                Assert.True(early[i].Y == pa[i].Y && early[i].Kind == pa[i].Kind && early[i].X == pa[i].X, "prefix platform " + i);
+        }
+
+        [Fact]
+        public void TimeAttackScrollStartsAtTheLevel10SpeedAndEndlessScrollStillStartsAtLevel1()
+        {
+            var cfg = new SimConfig();
+            var ta = new EndlessWorld(cfg, EndlessTower.MakeSpec(5, Fx.Zero, SignatureKind.None, 400, 25, true));
+            var en = new EndlessWorld(cfg, EndlessTower.MakeSpec(5, Fx.Zero, SignatureKind.None, 400));
+            SimState s1 = ta.NewState(), s2 = en.NewState();
+            for (int i = 0; i < 120; i++) { Drive(ta, ref s1, SimInput.Jump); Drive(en, ref s2, SimInput.Jump); }
+            Assert.True(ta.Sim.ScrollPerTickAt(s1, s1.Tick) > en.Sim.ScrollPerTickAt(s2, s2.Tick), "the Time Attack screen scrolls faster at the start (level 10 speed)");
+        }
+
+        [Fact]
+        public void ALegacyFlatStartTimeAttackRecordIsReplacedByTheFirstCountedRunEvenWithFewerFloors()
+        {
+            var rec = new TimeAttackRecord { BestFloors = 500 };   // no ramp stamp: set on the old flat start
+            RecordResult r = RecordRules.ApplyTimeAttack(rec, Ta(40));
+            Assert.True(r.Counted);
+            Assert.True(r.FirstRecord);
+            Assert.True(r.NewBestFloors);
+            Assert.Equal(40, rec.BestFloors);
+            Assert.Equal(TimeAttackRamp.StartLevel, rec.RampStartLevel);
+            Assert.Equal(10, TimeAttackRamp.StartLevel);
+            RecordResult worse = RecordRules.ApplyTimeAttack(rec, Ta(30));
+            Assert.False(worse.NewBestFloors);
+            Assert.Equal(40, rec.BestFloors);
+        }
+}
 }

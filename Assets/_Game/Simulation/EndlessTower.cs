@@ -75,6 +75,28 @@ namespace BoingUpSkyTower.Simulation
             return level > levels ? levels : level;
         }
 
+        /// <summary>Time Attack (owner Bug List 8 item 3): floor 1 of the run has the difficulty of campaign level 10, one level more per 100 floors, level 25 held for ever after.</summary>
+        public const int TimeAttackStartLevel = 10;
+        /// <summary>The floor offset of a Time Attack tower: floor f plays like endless floor f + 900 (level 10 = floors 901 to 1000), clamped to the top level.</summary>
+        public const int TimeAttackFloorOffset = (TimeAttackStartLevel - 1) * FloorsPerLevel;
+
+        /// <summary>
+        /// LevelForFloor of a Time Attack tower: the plain first climb read at floor + TimeAttackFloorOffset (levels 10 to <paramref name="levels"/>, 100 floors each),
+        /// then the top level is held for ever (it never enters the endless cycle). Pure, allocation free, prefix stable, defined for every int.
+        /// </summary>
+        public static int LevelForFloorTimeAttack(int floor, int levels)
+        {
+            long f = (floor < 1 ? 1L : (long)floor) + TimeAttackFloorOffset;
+            if (f > FirstClimbFloors(levels)) return levels;
+            return LevelForFloor((int)f, levels);
+        }
+
+        /// <summary>LevelForFloor of a normal endless tower, or of a Time Attack tower when <paramref name="timeAttack"/> is set.</summary>
+        public static int LevelForFloor(int floor, int levels, bool timeAttack)
+        {
+            return timeAttack ? LevelForFloorTimeAttack(floor, levels) : LevelForFloor(floor, levels);
+        }
+
         /// <summary>Position of a floor inside its 100-floor level step, 1..100 (floor 0 counts as 1).</summary>
         public static int PositionInLevel(int floor)
         {
@@ -106,6 +128,7 @@ namespace BoingUpSkyTower.Simulation
         private int pattern, patternLeft;
         private readonly SignatureKind signature;
         private readonly int levels;
+        private readonly bool timeAttack;
         private readonly PlatformKind sigKind;
         // Region special platforms (doc 24): own Rng stream, so the base geometry of the tower is independent of them; prefix stable like the rest.
         private Rng specRng;
@@ -169,6 +192,7 @@ namespace BoingUpSkyTower.Simulation
             this.spec = spec;
             signature = spec.Signature;
             levels = spec.LevelsInRegion;
+            timeAttack = spec.TimeAttack;
             sigKind = SignatureKinds.PlatformFor(spec.Signature);
             rng = new Rng(spec.Seed);
             hazRng = new Rng(spec.Seed ^ 0x5A3C9E17);
@@ -201,11 +225,12 @@ namespace BoingUpSkyTower.Simulation
         /// level 1, 0.05); the layout difficulty per row comes from the offset and the level of the floor (LevelForFloor, DifficultyAt).
         /// <paramref name="difficultyFloors"/> is kept for the remote config but no longer used: the old 400-floor ramp is replaced by the endless cycle.
         /// </summary>
-        public static LevelSpec MakeSpec(int seed, Fx regionOffset, SignatureKind signature, int difficultyFloors, int levelsInRegion = SimConfig.LevelsPerRegion)
+        public static LevelSpec MakeSpec(int seed, Fx regionOffset, SignatureKind signature, int difficultyFloors, int levelsInRegion = SimConfig.LevelsPerRegion, bool timeAttack = false)
         {
             LevelSpec spec = new LevelSpec();
             spec.Seed = seed;
             spec.Endless = true;
+            spec.TimeAttack = timeAttack;
             spec.LevelsInRegion = levelsInRegion;
             spec.RegionOffset = regionOffset;
             spec.EndlessDifficultyFloors = difficultyFloors < 1 ? 400 : difficultyFloors;
@@ -260,7 +285,7 @@ namespace BoingUpSkyTower.Simulation
         /// <summary>Layout difficulty of a row, 0..1: the difficulty of the campaign level LevelForFloor(r) in this region (offset applied).</summary>
         public Fx DifficultyAt(int r)
         {
-            return levelD[LevelForFloor(r, levels)];
+            return levelD[LevelForFloor(r, levels, timeAttack)];
         }
 
         /// <summary>Grows the tower (in whole chunks) until it reaches <paramref name="playerRow"/> + LookaheadRows. True when it grew.</summary>
@@ -307,6 +332,7 @@ namespace BoingUpSkyTower.Simulation
             d.Hazards = hazards.ToArray();
             d.Rows = row;
             d.EndlessLevels = levels;
+            d.EndlessTimeAttack = timeAttack;
             d.EndlessOffset = spec.RegionOffset;
             d.HasEndlessOffset = true;
             Data = d;
@@ -364,7 +390,7 @@ namespace BoingUpSkyTower.Simulation
             Fx screen = cfg.ScreenWidth;
             Fx half = cfg.PlayerHalfWidth;
             Fx maxGap = cfg.LayoutMaxJumpHeight() * 9 / 10;
-            int level = LevelForFloor(r, levels);
+            int level = LevelForFloor(r, levels, timeAttack);
             Fx d = levelD[level];
 
             Fx widthEasyLo = Fx.FromInt(6), widthEasyHi = Fx.FromInt(8);

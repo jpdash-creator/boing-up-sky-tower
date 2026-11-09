@@ -387,12 +387,11 @@ namespace BoingUpSkyTower.Gameplay
             title.horizontalOverflow = HorizontalWrapMode.Wrap;
             float textW = Mathf.Max(1f, cardW - midL - midR - 4f);
             float titleH = Mathf.Max(LineH(BodyPx), MeasureTitle(title, textW));   // same measure for the card height and the title rect
-            if (UiKit.TextScale > 1.01f)
             {
-                // 130 percent text: shrink the title down to the 16 sp minimum before the card grows.
-                float budget = CompactCardH - 2f * CardPadY - TitleBarGap - CardBarH;
+                // Bug List 8: a task title stays on ONE line. Shrink the font (down to the 16 sp minimum) until it fits the text column; only a title that still
+                // wraps at the minimum (very long text at 130 percent) falls back to a taller card, so nothing is ever clipped.
                 int minFs = Mathf.CeilToInt(UiKit.MinBodyTextPx);
-                while (titleH > budget && title.fontSize - 2 >= minFs)
+                while (titleH > Mathf.Ceil(title.fontSize * 1.3f) && title.fontSize - 2 >= minFs)
                 {
                     title.fontSize -= 2;
                     titleH = Mathf.Max(Mathf.Ceil(title.fontSize * 1.22f), MeasureTitle(title, textW));

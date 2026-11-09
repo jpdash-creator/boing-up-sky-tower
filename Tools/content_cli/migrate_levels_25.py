@@ -19,18 +19,25 @@ LEVELS = 25
 SPECIAL = (5, 10, 15, 20)
 # Target difficulty score per level (Bug List 6 item 4), see Tests/Simulation/DIFFICULTY_CURVE_REPORT.md
 TARGET = [5, 20, 26.7, 33.3, 40, 44, 48, 52, 56, 60, 63, 66, 69, 72, 75, 77.5, 80, 82.5, 85, 87.5, 90, 92.5, 95, 97.5, 100]
-SPEEDRUN_VALUE, SPEEDRUN_TIME = 90, 75
+# Owner Bug List 8 item 3: rows per level L1 60, L2-5 75, L6-10 90, L11-15 105, L16-20 120, L21-25 150 (speedrun time scaled 75 s per 90 rows -> 100 s per 120 rows)
+SPEEDRUN_VALUE, SPEEDRUN_TIME = 120, 100
+
+
+def rows(i):
+    if i == 1: return 60
+    if i <= 5: return 75
+    if i <= 10: return 90
+    if i <= 15: return 105
+    if i <= 20: return 120
+    return 150
 
 
 def goal(i):
-    if i == 1: return {"type": "reachFloor", "value": 60}
-    if i in (2, 3, 4): return {"type": "reachFloor", "value": 90}
     if i == 5: return {"type": "comboChain", "value": 3, "count": 3}
-    if i in (6, 7, 8, 9): return {"type": "reachFloor", "value": 120}
-    if i == 10: return {"type": "noWallBounce", "value": 150}
-    if i == 15: return {"type": "findHiddenGem", "value": 150}
     if i == 20: return {"type": "speedrun", "value": SPEEDRUN_VALUE, "timeSec": SPEEDRUN_TIME}
-    return {"type": "reachFloor", "value": 150}
+    if i == 10: return {"type": "noWallBounce", "value": rows(i)}
+    if i == 15: return {"type": "findHiddenGem", "value": rows(i)}
+    return {"type": "reachFloor", "value": rows(i)}
 
 
 def cls(i):
