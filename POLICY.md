@@ -4,10 +4,10 @@ Last updated: 2026-11-10
 
 > **In short**
 >
-> - Fluffy Climbers: Tower Jump ("the Game") has no account system of its own, no server of its own, no analytics or crash-reporting software, no chat and no push notifications.
+> - Fluffy Climbers: Tower Jump ("the Game") has no account system of its own, no server of its own, no analytics or crash-reporting software of its own (the advertising and purchasing libraries report their own diagnostics to Google and Unity, sections 5 to 7), no chat and no push notifications.
 > - Your progress (levels, stars, coins, gems, heroes, power-ups, records and settings) is stored on your device. If you choose to sign in with Google Play Games, a copy of your progress is also stored in your Google account through Google's Saved Games service. Guests keep their progress on the device only.
 > - Purchases are processed by Google Play (and, where the Game is offered there, the Apple App Store). We never receive card or bank details.
-> - The Game shows optional rewarded video ads, and only after you tap an ad button. The advertising software built into the Game (the Google Mobile Ads SDK, which serves Google AdMob ads) uses your device's advertising ID and shares device, app and ad-interaction data with Google. Where the law requires it, Google's consent form (the User Messaging Platform) asks for your choices before ads are requested, and you can change them at any time under "Privacy choices" in Settings.
+> - The Game shows optional rewarded video ads, and only after you tap an ad button. The advertising software built into the Game (the Google Mobile Ads SDK, which serves Google AdMob ads) starts with the Game and loads the next ad in advance, so from the first launch it uses your device's advertising ID and shares device, app and ad-interaction data with Google, whether or not you watch an ad. Where the law requires it, Google's consent form (the User Messaging Platform) asks for your choices before ads are requested, and you can change them at any time under "Privacy choices" in Settings.
 > - You can play as a guest, unlink your Google account, reset all progress, change your ad choices in Settings, and reset or delete your advertising ID at any time.
 > - The Game is not directed to children under 13. If you are under 18, a parent or guardian must agree to this policy and to our Terms of Use for you. See section 15.
 
@@ -80,13 +80,15 @@ The Game sells gem packs and two subscriptions (weekly and monthly) through the 
 - **What the Game receives on your device.** For a completed purchase the store software gives the Game the product id, the store order or transaction id, and a purchase token or receipt that the Game uses to verify the purchase before it grants the gems or subscription. The Game stores the product id, kind, transaction id and time in your save (section 3). The receipt itself is not kept by the Game beyond the purchase. The Game also reads the store's localised price text so that prices can be shown in your currency.
 - **Restoring purchases.** "Restore" in Settings asks the store software on your device for your purchase history for this Game and re-grants active subscription days. This reads data from your store account on your device; it is not sent to us.
 - **What we receive from the store.** Google Play and Apple provide developers with sales and subscription reports and order details (for example order id, country, amount, currency, tax and refund status) under their own policies. We use these reports only for accounting, tax, refund handling and fraud prevention, and keep them as long as tax and accounting laws require. We cannot identify you from them unless you contact us about an order.
-- **Unity.** The Unity In-App Purchasing library is made by Unity Technologies. It may process device and transaction information to run the purchase, as described in the [Unity Privacy Policy](https://unity.com/legal/privacy-policy).
+- **Unity.** The Unity In-App Purchasing library is made by Unity Technologies and runs the purchase flow on your device. It is started only when you open the shop, restore purchases or buy something; a guest who never opens the shop sends nothing to Unity. Once started, the library sends to Unity's purchasing service: the product, price and transaction details the store returns (product id, order id, purchase token), a Unity installation identifier and session identifier, device information (model, operating system version, language and locale), its own diagnostic, performance and crash data, and the country derived from your IP address. Unity uses this to run the purchasing service, to de-duplicate transactions and to give us sales reports; it keeps transaction data as long as the service needs it and its service logs for 30 days, and acts as our processor under the [Unity Privacy Policy](https://unity.com/legal/privacy-policy). Unity never receives payment details.
 
 Purchases, refunds and subscription management are governed by the [Google Play Terms of Service](https://play.google.com/about/play-terms/) and the [Google Privacy Policy](https://policies.google.com/privacy), or by Apple's media services terms and the [Apple Privacy Policy](https://www.apple.com/legal/privacy/).
 
 ## 6. Advertising
 
 The Game is free to download and is partly funded by **rewarded video ads**. An ad plays only after you tap an ad button (for example "watch an ad to revive"), and you can always decline. There are no banner ads and no ads that interrupt play uninvited.
+
+The ad software itself, however, starts together with the Game: once your consent choices are known (see "Consent and your ad choices" below) it initialises and loads the next rewarded ad in advance, so that the ad is ready when you ask for it. The data listed below is therefore sent from the first launch of each play session, whether or not you ever watch an ad. Where the law requires consent, nothing is requested until you have answered the consent form.
 
 **Who serves the ads.** Ads are delivered by **Google AdMob**, an advertising service of Google LLC, through the **Google Mobile Ads SDK** built into the Game. Google acts as an independent controller for the data it handles when it serves and measures ads. If we add further ad networks we will list them here before they go live. The Game is not directed to children and its ad content rating is set to "T" (Teen), so AdMob is asked to show ads suitable for that rating.
 
@@ -111,7 +113,7 @@ The processing by Google is described in the [Google Privacy Policy](https://pol
 | Component | Provider | Purpose in the Game | Data it may process | Policy |
 |---|---|---|---|---|
 | Unity game engine | Unity Technologies | Runs the Game | Device and operating-system information needed to run the Game. Unity Analytics, Unity Crash Reporting, Unity Performance Reporting and Unity Ads (as engine services) are turned off in the Game and no Unity cloud project is linked. | [Unity Privacy Policy](https://unity.com/legal/privacy-policy) |
-| Unity In-App Purchasing | Unity Technologies | Talks to Google Play Billing / Apple in-app purchase | Product ids, transaction ids, receipts, device information (section 5) | [Unity Privacy Policy](https://unity.com/legal/privacy-policy) |
+| Unity In-App Purchasing | Unity Technologies | Talks to Google Play Billing / Apple in-app purchase | Product, price and transaction details, Unity installation and session identifiers, device information, the library's own diagnostics, performance data and crash logs, country derived from your IP address (section 5) | [Unity Privacy Policy](https://unity.com/legal/privacy-policy) |
 | Google Mobile Ads SDK (Google AdMob) | Google LLC | Rewarded video ads | Advertising ID, IP address, device and app information, ad interaction data, diagnostics (section 6) | [Google Privacy Policy](https://policies.google.com/privacy), [AdMob terms](https://admob.google.com/home/terms/) |
 | Google User Messaging Platform (consent form) | Google LLC | Shows the ad consent / privacy choices form and stores your choice | Your consent choices, device and app identifiers needed to apply them | [Google Privacy Policy](https://policies.google.com/privacy) |
 | Google Play Billing | Google LLC | Payments | Payment and order data (never seen by us) | [Google Privacy Policy](https://policies.google.com/privacy) |
@@ -124,7 +126,7 @@ All regions, levels, art and sounds ship inside the app package. The Game downlo
 ## 8. Data we do not collect
 
 - No account, sign-in, name, e-mail address, phone number or password is required or collected by the Game. Google sign-in is optional and handled by Google.
-- No analytics, usage-tracking or crash-reporting software is included, and the Game sends no usage events to us.
+- No analytics, usage-tracking or crash-reporting software of ours is included, and the Game sends no usage events to us. The only diagnostics that leave your device are those the Google Mobile Ads SDK, Google Play services and the Unity In-App Purchasing library report to their own makers (sections 5 to 7).
 - No precise location, contacts, calendar, photos, files, camera or microphone access.
 - No chat, messages, friend lists, user-generated content or anything other players can see.
 - No push or remote notifications; the Game has no notification feature at all.
@@ -164,7 +166,7 @@ Under India's Digital Personal Data Protection Act, 2023, we process personal da
 - **Google LLC** (Google Play, Google Play Billing, Google Play services, Google Play Games Services) receives the data described in sections 4 and 5 directly from your device, as an independent controller under its own policy.
 - **Apple Inc.** receives payment and store data if you use the Game through the App Store.
 - **Google LLC (Google AdMob)** receives the advertising ID, device and app identifiers, IP address and ad interaction data described in section 6 directly from your device, and may share them with advertisers and advertising partners as described in Google's policies. Google acts as an independent controller for ad delivery and measurement.
-- **Unity Technologies** receives the data described in sections 5 and 7 for the engine and In-App Purchasing library.
+- **Unity Technologies** receives, as our processor, the purchasing data described in section 5 (transaction details, installation and session identifiers, device information, diagnostics and crash logs of the purchasing library, and country) when you use the shop. The Unity engine itself sends nothing, because its cloud services are turned off (section 7).
 - **Nobody else.** We have no analytics vendors, no hosting provider for player data, no marketing partners and no data brokers. We do not sell personal data and we do not share it for money.
 - **Legal requirements.** We may disclose information we hold (in practice, order records from the store) if the law requires it or to protect our rights, your safety or the safety of others.
 - **Business transfer.** If the Game or the developer's business is transferred to another publisher, the store listing, this policy and the limited records we hold would pass to the new publisher under the same commitments. Your device data and cloud save are not affected, because we do not hold them.
@@ -182,6 +184,7 @@ We do not transfer your personal data across borders, because we do not hold it 
 | Cloud save, Play Games player id and display name | Your Google account (Saved Games, Play Games profile) | Until you delete it or overwrite it | Reset while signed in (uploads an empty save), or delete the Game's Play Games data in Google Play Games settings or Google Drive. We hold no copy on any server of ours, so there is nothing for us to delete on your behalf |
 | Advertising ID and ad interaction data | Google AdMob systems | Per Google's policies | Reset or delete the advertising ID in Android settings; change or withdraw ad consent under Privacy choices in Settings |
 | Store order and sales reports | Google or Apple, and our accounting records | As long as tax and accounting laws require (several years), then deleted | Refunds and order questions go through the store; e-mail us for anything else |
+| Unity purchasing service records (transaction details, identifiers, diagnostics, crash logs) | Unity Technologies | Transaction data as long as the service needs it; service logs 30 days | E-mail us; Unity offers no self-service deletion, so we relay your request to Unity as its customer |
 | E-mail you send us | Our mailbox | As long as needed to resolve your request and to meet legal obligations, then deleted | Ask us to delete it |
 
 Uninstalling the Game or resetting progress does not cancel a subscription. Cancel it in your Google Play or App Store subscription settings.
@@ -191,7 +194,7 @@ Uninstalling the Game or resetting progress does not cancel a subscription. Canc
 - **Play as a guest.** Nothing leaves your device except what sections 5 and 6 describe.
 - **Sign in or unlink Google** at any time in Settings.
 - **Reset progress** in Settings deletes all progress, wallet and items on your device (and, if you are signed in, uploads the empty save to your Google account). Purchase records are kept so that subscriptions can be restored.
-- **Ads.** Do not tap ad buttons and no ad is shown. Open **Privacy choices** in Settings at any time to review, change or withdraw your ad consent (this reopens Google's consent form). Reset or delete your advertising ID, or opt out of ads personalisation, in Android settings.
+- **Ads.** Do not tap ad buttons and no ad is shown (the ad software still loads one in the background, section 6). Open **Privacy choices** in Settings at any time to review, change or withdraw your ad consent (this reopens Google's consent form). Reset or delete your advertising ID, or opt out of ads personalisation, in Android settings.
 - **Purchases.** Manage subscriptions, payment methods and purchase approvals (for example "require authentication for purchases" and Family Link approvals) in your Google Play or Apple account.
 - **Haptics, sound, music, reduced motion, text size and left-handed layout** are in Settings and stay on your device.
 
@@ -210,7 +213,7 @@ Because we hold no server-side data about players, most rights are exercised dir
 - **Access and portability:** your progress is on your device and, if signed in, in your Google account (Google Takeout exports Play Games data). We can provide a copy of any order or e-mail record we hold about you.
 - **Correction:** edit progress and settings in the Game; order data is corrected through the store.
 - **Erasure:** Reset progress, uninstall, and delete the Game's Play Games data (section 13). We will delete e-mail and order records we hold unless tax or accounting law requires us to keep them.
-- **Restriction and objection:** you can object to processing based on legitimate interests (section 10) by contacting us; you can stop ad processing by not tapping ad buttons, deleting your advertising ID and withdrawing consent.
+- **Restriction and objection:** you can object to processing based on legitimate interests (section 10) by contacting us; you can limit ad processing by withdrawing consent under Privacy choices, deleting your advertising ID and not tapping ad buttons.
 - **Withdraw consent:** at any time, under Privacy choices in Settings, or by e-mail; withdrawal does not affect processing that already happened.
 - **Automated decisions:** we do not profile you or make automated decisions with legal or similar effects about you.
 - **European Economic Area and United Kingdom:** you may complain to your local data protection authority (in the UK, the Information Commissioner's Office).
@@ -227,19 +230,23 @@ Your progress is protected by your device's own security (app sandboxing, lock s
 
 ## 18. Store data safety summary
 
-This table mirrors what we declare in the Google Play Data safety section and the App Store privacy labels.
+This table mirrors what we declare in the Google Play Data safety section and the App Store privacy labels. "Required" means the data is sent whenever the Game runs, because the ad software starts with the Game (section 6); "optional" means it is sent only if you choose to sign in, open the shop or buy something.
 
-| Data type | Collected by | Purpose | Shared with | Optional? |
+| Data type | Collected by | Purpose | Shared with | Required or optional |
 |---|---|---|---|---|
-| Purchase history (product id, order id, time) | Google Play / Apple; the Game stores product and transaction ids on your device and in your cloud save | App functionality (delivering and restoring purchases), fraud prevention | Google or Apple as payment providers; Unity In-App Purchasing | Only if you buy something |
-| Device or other identifiers: advertising ID, device and app identifiers | Google Mobile Ads SDK (AdMob) | Advertising, fraud prevention, measurement | Google | Only if you tap an ad button; resettable in Android settings |
-| App activity: ad interactions (impressions, clicks, video completion) | Google Mobile Ads SDK (AdMob) | Advertising, measurement, paying for ad views | Google | Only if you tap an ad button |
-| Approximate location (derived from IP address) | Google (ads, purchases and sign-in) | Advertising delivery and compliance, payments | Google | Only when those features are used |
-| App info and performance (ad diagnostics) | Google Mobile Ads SDK (AdMob) | Advertising reliability | Google | Only when ads are used |
-| Account identifiers: Google Play Games player id and display name | Google Play Games Services; the Game stores the player id on your device and in your cloud save | Account management, cloud save | Google | Yes, sign-in is optional |
-| App activity: your save file (progress, wallet, items, records) | Stored on your device; a copy in your Google account if signed in | App functionality | Google (Saved Games) | Cloud copy only if signed in |
+| Approximate location (derived from your IP address) | Google Mobile Ads SDK at every ad request; Unity In-App Purchasing (country only) | App functionality, analytics, advertising, fraud prevention | Google (advertising) | Required for ads; optional for purchases |
+| User IDs: Google Play Games player id; Unity installation and player identifiers for purchasing | Google Play Games Services (the Game stores the player id on your device and in your cloud save); Unity In-App Purchasing | Account management, app functionality, analytics | Not shared | Optional: only when you sign in or use the shop |
+| Purchase history (product, price, order or transaction id, time) | Unity In-App Purchasing (sent to Unity's purchasing service); the Game stores product and transaction ids on your device and in your cloud save | App functionality (delivering and restoring purchases), analytics (sales reports), fraud prevention | Not shared; Google or Apple process the payment itself under their own policies | Optional: only if you buy something |
+| App interactions: ad interactions (app launch, taps, impressions, video completion) | Google Mobile Ads SDK (AdMob) | Advertising, analytics, fraud prevention, paying for ad views | Google (advertising) | Required |
+| Other actions: your save file (progress, wallet, items, records) | Google Saved Games, only while signed in | App functionality, account management (cloud save) | Not shared; stored in your own Google account | Optional: only when signed in |
+| Crash logs | Unity In-App Purchasing (crash data of the purchasing library) | Analytics | Not shared | Optional: only when the shop is used |
+| Diagnostics | Google Mobile Ads SDK, Unity In-App Purchasing, Google Play Games Services | App functionality, analytics, advertising reliability, fraud prevention | Google (advertising) | Required |
+| Other app performance data | Unity In-App Purchasing | App functionality, analytics | Not shared | Optional: only when the shop is used |
+| Device or other IDs: advertising ID, app set ID, other device and app identifiers, Unity installation identifier | Google Mobile Ads SDK (AdMob), Google Play services, Unity In-App Purchasing | App functionality, analytics, advertising, fraud prevention | Google (advertising) | Required; the advertising ID can be reset or deleted in Android settings |
 
-Not collected: name, e-mail address, phone number, address, precise location, contacts, photos, videos, audio, files, health or fitness data, financial account details (payment is handled entirely by the store), messages, search history, browsing history, installed apps, calendar, or any user-generated content.
+All of this data is encrypted in transit by the software that sends it. None of it is processed only ephemerally. How to delete it: section 13.
+
+Not collected: name (your Play Games display name is shown only on your own device and is never sent anywhere by the Game), e-mail address, phone number, address, precise location, contacts, photos, videos, audio, files, health or fitness data, financial account details (payment is handled entirely by the store), messages, search history, browsing history, installed apps, calendar, or any user-generated content.
 
 ## 19. Changes to this policy
 

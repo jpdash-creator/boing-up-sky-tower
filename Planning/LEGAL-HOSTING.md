@@ -29,7 +29,7 @@ Open each URL in a private browser window before entering it anywhere.
 | Where | Entry | Source |
 |---|---|---|
 | Play Console > Store listing | Privacy policy URL | the POLICY URL above |
-| Play Console > App content > Data safety | Collected and shared data | `POLICY.md` section 18 (purchase history; advertising ID and device/app identifiers; ad interactions; approximate location; app diagnostics; Play Games id and display name; app activity (save) when signed in). Data shared with Google (AdMob). Payment data is handled by Google, not collected by the app. |
+| Play Console > App content > Data safety | Collected and shared data | Step-by-step answers in `Planning/Game Ideas/fluffy-climbers-sky-tower/docs/49-play-data-safety-form.md`, mirrored by `POLICY.md` section 18: nine types (approximate location; user IDs; purchase history; app interactions; other actions = cloud save; crash logs; diagnostics; other app performance data; device or other IDs). Shared only where AdMob is the source; ad-SDK types are required (the SDK starts with the app), sign-in and shop types optional. Encrypted in transit yes; deletion request yes; account creation no. Payment data is handled by Google, not collected by the app. |
 | Play Console > App content > Ads | "Contains ads": yes (rewarded only) | `POLICY.md` section 6 |
 | Play Console > App content > Advertising ID | Uses the advertising ID: yes (ads, fraud prevention) | the Google Mobile Ads SDK needs `AD_ID` (confirm it is declared in the built manifest) |
 | Play Console > App content > Target audience | 13 and over; **not** designed for children | `POLICY.md` section 15, `TERMS.md` section 3, docs/13 row 12 |
