@@ -149,6 +149,7 @@ namespace FluffyClimbers.Gameplay
         public void SelectTab(RewardTab tab)
         {
             Tab = tab;
+            completedOpen = false;   // every tab starts with its Completed section collapsed
             Render();
         }
 
@@ -158,6 +159,7 @@ namespace FluffyClimbers.Gameplay
         /// </summary>
         public void SelectRegion(int index)
         {
+            if (Mathf.Clamp(index, 1, RegionGoalTable.TotalRegions) != selectedRegion) completedOpen = false;
             selectedRegion = Mathf.Clamp(index, 1, RegionGoalTable.TotalRegions);
             if (Tab != RewardTab.Main || body == null) return;
             ApplyStripSelection();
@@ -270,12 +272,12 @@ namespace FluffyClimbers.Gameplay
             else if (Tab == RewardTab.Daily)
             {
                 BuildSceneHeader(content, true);
-                foreach (RewardEntry a in defs.DailyActions) AddCard(content, a, false);
+                AddCardsWithCompleted(content, defs.DailyActions, false);   // a finished daily action moves to "Completed (N)" at once
             }
             else
             {
                 BuildSceneHeader(content, false);
-                foreach (RewardEntry e in defs.WeeklyTasks) AddCard(content, e, true);
+                AddCardsWithCompleted(content, defs.WeeklyTasks, true);
             }
         }
 

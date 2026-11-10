@@ -400,7 +400,7 @@ namespace FluffyClimbers.Gameplay
             if (s.Dot) ToyKit.AddBadge(s.Btn);   // red dot: something to claim in this region
 
             s.Name = s.Soon ? "Coming\nSoon" : region.Name.Replace(' ', '\n');
-            Text name = UiKit.AddText(slot, "Name", s.Name, Mathf.RoundToInt(Mathf.Max(36f, UiKit.MinBodyTextPx)), s.Soon ? new Color(0.84f, 0.87f, 0.96f, 1f) : Color.white, TextAnchor.UpperCenter, true);
+            Text name = UiKit.AddText(slot, "Name", s.Name, Mathf.RoundToInt(Mathf.Max(36f, UiKit.MinBodyTextPx)), s.Soon ? new Color(0.84f, 0.87f, 0.96f, 1f) : Color.white, TextAnchor.MiddleCenter, true);   // centred on the zone's middle line (one or two lines), not hung from the top
             Head(name);
             // Never break inside a word (1080x2520 showed "Mushroo / m Grove"): the lines are split by hand at the spaces and a word that is a little
             // wider than its slot spills into the free space beside it. The size is already at the 16 sp floor, so it cannot shrink further.
@@ -459,12 +459,15 @@ namespace FluffyClimbers.Gameplay
             if (!progress.IsRegionGoalsOpen(selectedRegion)) BuildLockedNote(content);
             IReadOnlyList<RegionGoal> goals = progress.RegionGoals(selectedRegion);
             bool divider = false;
+            List<RewardEntry> done = null;
             for (int i = 0; i < goals.Count; i++)
             {
                 RegionGoal g = goals[i];
+                if (progress.IsRegionGoalClaimed(g)) { if (done == null) done = new List<RewardEntry>(16); done.Add(g); continue; }   // claimed goals wait in "Completed (N)" at the bottom
                 if (g.IsEndless && !divider) { BuildEndlessDivider(content); divider = true; }   // the endless tiers come last, under their own heading
                 AddCard(content, g, true);
             }
+            AddCompletedSection(content, done, true);
         }
 
         /// <summary>One centred card for a region without goals: a lock and "Coming Soon", nothing to claim.</summary>

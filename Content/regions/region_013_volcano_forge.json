@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_rising_lava",
     "difficultyOffset": 0.1034,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.36,

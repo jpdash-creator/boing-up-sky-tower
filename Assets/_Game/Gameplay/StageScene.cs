@@ -18,6 +18,8 @@ namespace FluffyClimbers.Gameplay
         public float BackdropH, GroundBottom, OvalY, OvalW, OvalH;
         /// <summary>Size factor of this layout against the 760 px reference stage.</summary>
         public float Scale = 1f;
+        /// <summary>Distance from the screen top to the centre of the island grass of the stage picture (equals FeetY when the picture is used, -1 otherwise).</summary>
+        public float IslandGrassY = -1f;
 
         /// <summary>Puts the doll (any rect) on the oval: bottom centre of the doll a little below the oval's centre, so the feet are on the dirt.</summary>
         public void Stand(RectTransform doll)
@@ -49,7 +51,7 @@ namespace FluffyClimbers.Gameplay
             return new Stage { Scale = k, BackdropH = Mathf.Round(210f * k), GroundBottom = Mathf.Round(742f * k), OvalY = Mathf.Round(660f * k), OvalW = Mathf.Round(480f * k), OvalH = Mathf.Round(128f * k) };
         }
 
-        static Sprite grass, oval, edge;
+        static Sprite grass, edge;
 
         /// <summary>Builds the stage described by <paramref name="layout"/> as the first child of <paramref name="screenRoot"/> (behind every other element).</summary>
         public static Stage Build(RectTransform screenRoot, ArtCatalog art, ProgressService progress, Stage layout)
@@ -59,6 +61,51 @@ namespace FluffyClimbers.Gameplay
             root.SetAsFirstSibling();
             layout.Root = root;
 
+            // the painted stage picture (Resources/Art/Ui/hero_stage_bg), when present, replaces the generated sky, hills and grass; the present look is the fallback
+            if (!BuildPictureBackground(root, layout)) BuildGeneratedBackground(root, art, progress, layout);
+            return Finish(layout);
+        }
+
+        /// <summary>Resources name (under Art/Ui) of the painted stage picture for the Heroes screen.</summary>
+        public const string StageBgName = "hero_stage_bg";
+
+        /// <summary>Where the centre of the island's grassy top lies in hero_stage_bg, as a fraction of the picture height from its top (measured from the owner's screenshot, 2026-11-10: about 0.65). Change this one number when the picture is replaced.</summary>
+        public const float IslandGrassFrac = 0.62f;
+
+        /// <summary>
+        /// Cover-fits the picture into the top GroundBottom px of the screen: one uniform scale (never stretched), centred, the overflow cropped by a RectMask2D.
+        /// Returns false (nothing built) when the file is missing.
+        /// </summary>
+        static bool BuildPictureBackground(RectTransform root, Stage layout)
+        {
+            Sprite pic = ToyKit.Get(StageBgName);
+            if (pic == null) return false;
+            RectTransform box = UiKit.Rect(root, "StageBg");
+            box.anchorMin = new Vector2(0f, 1f);
+            box.anchorMax = new Vector2(1f, 1f);
+            box.pivot = new Vector2(0.5f, 1f);
+            box.offsetMin = new Vector2(0f, -layout.GroundBottom);
+            box.offsetMax = Vector2.zero;
+            box.gameObject.AddComponent<RectMask2D>();
+            Image img = UiKit.AddImage(box, "Picture", pic, Color.white);
+            img.preserveAspect = false;
+            img.raycastTarget = false;
+            // Uniform scale only (never stretched). The picture is placed so the centre of the island's grass top (IslandGrassFrac of the picture height from its top) lies exactly on the
+            // hero's feet line (layout.FeetY), then scaled up just enough that it still covers the whole box: width, height, the part below the feet and the part above them.
+            float aspect = pic.rect.width / Mathf.Max(1f, pic.rect.height);
+            float w = 1080f, h = layout.GroundBottom, feet = layout.FeetY;
+            float dh = Mathf.Max(Mathf.Max(h, w / aspect), Mathf.Max(feet / IslandGrassFrac, (h - feet) / (1f - IslandGrassFrac)));
+            RectTransform ir = img.rectTransform;
+            ir.anchorMin = ir.anchorMax = new Vector2(0.5f, 1f);
+            ir.pivot = new Vector2(0.5f, 1f);
+            ir.sizeDelta = new Vector2(dh * aspect, dh);
+            ir.anchoredPosition = new Vector2(0f, -(feet - IslandGrassFrac * dh));   // top edge of the picture relative to the box top (above it when positive)
+            layout.IslandGrassY = feet;
+            return true;
+        }
+
+        static void BuildGeneratedBackground(RectTransform root, ArtCatalog art, ProgressService progress, Stage layout)
+        {
             // the current region's backdrop (region 1 when the region has none), cropped to the top part
             RegionDef cur = progress != null ? progress.CurrentRegion() : null;
             RegionArt ra = art != null ? (art.ForRegion(cur != null ? cur.Index : 1) ?? art.ForRegion(1)) : null;
@@ -111,17 +158,12 @@ namespace FluffyClimbers.Gameplay
             Image ei = edge.gameObject.AddComponent<Image>();
             ei.sprite = EdgeSprite();
             ei.raycastTarget = false;
+        }
 
-            // the dirt oval
-            Image ov = UiKit.AddImage(root, "DirtOval", OvalSprite(), Color.white);
-            ov.preserveAspect = false;
-            ov.raycastTarget = false;
-            RectTransform ort = ov.rectTransform;
-            ort.anchorMin = ort.anchorMax = new Vector2(0.5f, 1f);
-            ort.pivot = new Vector2(0.5f, 0.5f);
-            ort.sizeDelta = new Vector2(layout.OvalW, layout.OvalH);
-            ort.anchoredPosition = new Vector2(0f, -layout.OvalY);
-            layout.Oval = ort;
+        /// <summary>The brown dirt oval is gone (owner 2026-11-10): the hero stands on the painted island, or on the plain grass of the fallback.</summary>
+        static Stage Finish(Stage layout)
+        {
+            layout.Oval = null;
             return layout;
         }
 
@@ -174,28 +216,5 @@ namespace FluffyClimbers.Gameplay
             return edge;
         }
 
-        static Sprite OvalSprite()
-        {
-            if (oval != null) return oval;
-            const int w = 256, h = 96;
-            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-            var px = new Color32[w * h];
-            Color mid = new Color(0.96f, 0.72f, 0.40f), rim = new Color(0.78f, 0.50f, 0.24f);
-            for (int y = 0; y < h; y++)
-            {
-                for (int x = 0; x < w; x++)
-                {
-                    float dx = (x + 0.5f) / w * 2f - 1f, dy = (y + 0.5f) / h * 2f - 1f;
-                    float r = Mathf.Sqrt(dx * dx + dy * dy);
-                    Color c = Color.Lerp(mid, rim, Mathf.SmoothStep(0.55f, 1f, r));
-                    c.a = Mathf.Clamp01((1f - r) / 0.10f);          // feathered edge
-                    px[y * w + x] = c;
-                }
-            }
-            tex.SetPixels32(px);
-            tex.Apply();
-            oval = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
-            return oval;
-        }
     }
 }

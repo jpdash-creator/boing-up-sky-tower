@@ -16,7 +16,7 @@ Source: the nine additional rules from the product owner, plus the clarifying an
 | 3 | Similar mechanics, brand-new feel, "dazzle" | Section 3: neon glow + juicy particle FX |
 | 4 | Random platform generator; wider platforms on easy levels | Section 4 |
 | 5 | Same mechanics across regions, regions are skins | Section 5 (with the owner's clarification: signature mechanics per region sit on top of the shared core) |
-| 6 | All 30 regions, 15 levels each, every 5th complex, 15th highly complex | Section 6 |
+| 6 | All 30 regions, 25 levels each (doc 45; regions 6 to 30 still carry 15 levels until they are migrated), every 5th level a special goal, levels 16 to 25 complex | Section 6, doc 45 |
 | 7 | Coins per level, bigger on 5th, biggest on 15th, some gems | Section 7 |
 | 8 | Standard coins : gems : USD ratio | Section 8 (proposal) |
 | 9 | Generic jumper, no reference to any existing game | Section 9 |
@@ -38,7 +38,7 @@ Why per-level boards are friends-only: 450 global boards are costly and rarely r
 - Cap: **+150 percent** (reached around floor 940), then constant.
 - The multiplier scales the **tower scroll speed and hazard tempo fully, and the player's max run speed at half rate** so control stays fair. Jump physics (gravity, impulse formula) are not scaled.
 - Constants live in Remote Config: `rampFloors=25`, `rampPercent=4`, `rampCap=150`, `playerSpeedShare=0.5`.
-- Campaign levels do not ramp except where a level's definition says so (L5/L10/L15 may ramp inside the level).
+- Campaign levels do not ramp except where a level's definition says so (the special-goal levels 5, 10, 15 and 20 may ramp inside the level).
 
 ## 3. Look and feel: "neon dazzle" (rule 3)
 Same fundamental mechanics as the genre, but a fresh, shareable presentation.
@@ -64,7 +64,7 @@ Seeded, deterministic (same seed gives the same level on every device). Inputs: 
 
 *Update 2026-10-20: the vertical gap in the table is superseded. Normal gaps are capped at 4.2 u (owner jump retune, see "Jump numbers"), and gap and sideways reach shrink with platform width so that one jump always works (full gap from 3.2 wide, 55 percent at 1.5 wide). The row pattern of a level is a fixed easy ladder first, then a new pattern every 6 to 10 rows (ladder, dense patches of small platforms, zigzag).*
 
-Rules: a **solvability check** guarantees that every platform is reachable from the previous one using the player's max speed and jump formula; bot validation in CI runs every level seed. Easy levels place wide platforms and coins on the path; hard levels narrow them and put coins on risky routes. Chunks (hand-authored patterns) are mixed in at L5/L10/L15 so complex levels feel designed, not random. Endless uses the same generator with `d = min(1, floor / 400)` (D16). Screen width is about 10 world units in portrait (D5), so easy platforms (6-8) span most of the screen. Specials are region-weighted through `platformWeights` (D12): a region's signature platform appears at its full share, others stay at 0 until the region's difficulty tier allows them. Authored chunks (D15): one shared library of about 12 chunks per class (complex, highly complex), reused across regions with re-skinning, not 60 unique sets.
+Rules: a **solvability check** guarantees that every platform is reachable from the previous one using the player's max speed and jump formula; bot validation in CI runs every level seed. Easy levels place wide platforms and coins on the path; hard levels narrow them and put coins on risky routes. Chunks (hand-authored patterns) are mixed in at L5/L10/L15 so complex levels feel designed, not random. Endless uses the same generator with `d = min(1, floor / 400)` (D16). Screen width is about 10 world units in portrait (D5), so easy platforms (6-8) span most of the screen. Specials are region-weighted in code (D12, `RegionPlatformSets` and `SpecialPlatforms.Options`; the old `platformWeights` data field was removed 2026-11-10): a region's signature platform is listed twice among the options so it is the most common, next to the generic kinds. Authored chunks (D15): one shared library of about 12 chunks per class (complex, highly complex), reused across regions with re-skinning, not 60 unique sets.
 
 ## 5. Regions as skins plus signature mechanics (rule 5, as clarified)
 - **Shared core (never changes by region)**: movement, jump formula, wall bounce, combo, scroll rule, coin/gem system, power-up rules, random generator.
@@ -73,7 +73,7 @@ Rules: a **solvability check** guarantees that every platform is reachable from 
 - The owner's wording ("randomness, power-ups, background are skinned; mechanics are unique per region") is respected: skinning covers presentation, and the signature mechanic gives each region a distinct feel without changing core controls.
 
 ## 6. All 30 regions (rule 6)
-15 levels each. **Levels 5 and 10 are complex. Level 15 is highly complex.**
+25 levels each for the five open regions (doc 45, owner Bug List 6, 2026-11-09); regions 6 to 30 keep 15 levels until they are migrated with the same rules. **Levels 5, 10, 15 and 20 carry the special goals; levels 16 to 25 are the complex class and level 25 is the highly complex reach-the-top level.**
 
 | # | Region | Skin / palette | Signature mechanic (module) | Status |
 |---|---|---|---|---|
@@ -110,28 +110,22 @@ Rules: a **solvability check** guarantees that every platform is reachable from 
 
 Locked regions appear on the map as silhouettes with a lock and "coming soon". Their signature modules can be built at any time, because the data model carries them already.
 
-### Level complexity template (applies to every region)
-| Level | Class | d (difficulty) | Platform width | Hazards | Notes |
-|---|---|---|---|---|---|
-| 1 | Simple | 0.05 | very wide | none | Tutorial feel; region skin shown |
-| 2 | Simple | 0.10 | very wide | none | |
-| 3 | Simple | 0.15 | wide | signature mechanic introduced gently | |
-| 4 | Simple | 0.22 | wide | signature mechanic | |
-| **5** | **Complex** | 0.40 | medium | signature + hazard wave | Authored chunks mixed in; better rewards; gem chance |
-| 6 | Medium | 0.35 | wide-medium | signature | Breather after L5 |
-| 7 | Medium | 0.42 | medium | signature | |
-| 8 | Medium | 0.50 | medium | signature + hazard | |
-| 9 | Medium | 0.58 | medium-narrow | signature + hazard | |
-| **10** | **Complex** | 0.70 | narrow | signature + waves | Better rewards; gem chance |
-| 11 | Hard | 0.62 | narrow | all signature | Breather after L10 |
-| 12 | Hard | 0.70 | narrow | | |
-| 13 | Hard | 0.78 | very narrow | | |
-| 14 | Hard | 0.86 | very narrow | | |
-| **15** | **Highly complex** | 1.00 | tight, moving/vanishing mix | everything, timed gauntlet or boss chase | Many coins and gems |
+### Level structure (applies to every migrated region, doc 45 is the source)
+The old 15-level template (d from 0.05 to 1.00 per level, the L5/L10 "complex" and L15 "highly complex" rows) is retired for regions 1 to 5. Every level now has a measured difficulty score from 0 to 100 (doc 45 section 2) and a target score:
 
-Region difficulty offset: +0.0 (region 1) to +0.25 (region 30). It is applied as `d_eff = d + offset * (1 - d)` so it compresses toward 1.0 instead of clamping (decision D1): later regions are harder at equal level number, L14 never collapses onto L15, and L15 (d = 1.0) differs across regions through other levers (hazard tempo, gap jitter, scroll speed scaled by the same offset). *Stars (superseded 2026-10-20): each level has 3 collectible stars, see "Economy v2".*
+| Level | 1 | 2 | 3 | 4 | 5 | 6-10 | 11-15 | 16-20 | 21-25 |
+|---|---|---|---|---|---|---|---|---|---|
+| Target score | 5 | 20 | 26.7 | 33.3 | 40 | 44 to 60 (+4 per level) | 63 to 75 (+3 per level) | 77.5 to 87.5 (+2.5 per level) | 90 to 100 (+2.5 per level) |
+| Class | Simple (1-3), Medium (4-8), Hard (9-15), Complex (16-25) | | | | | | | | |
+
+- **Special-goal levels:** 5, 10, 15 and 20 (combo chain, no wall bounce, hidden gem, speedrun, set per region). Level 25 is the highly complex reach-the-last-platform level.
+- **Specials are planned from level 1.** The share of rows with a special platform ramps inside each level (`SimConfig.RampLowPercent/RampHighPercent`: level 1 from 10 to 30 percent of rows, rising in steps of 5 to level 25 at 50 to 70 percent); hazard-type specials (Thorn, Snap) are only left out of level 1. The old "level 1 and 2 have no specials, level 3 introduces them" rule is gone.
+- **Rows per level** (60 / 75 / 90 / 105 / 120 / 150 by band) are in doc 45 section 4a. The builder difficulty d of each level is solved per region to meet its target score (`Content/config/difficulty_curve.json`).
+
+Region difficulty offset: +0.0 (region 1) to +0.25 (region 30). It is used in **one place only**: the per-level calibrated builder difficulty d is turned into the effective difficulty `d_eff = d + offset * (1 - d)` (`LevelGenerator.EffectiveDifficulty`), which compresses toward 1.0 instead of clamping (decision D1), so later regions are harder at equal level number. The offset does **not** scale hazard tempo, gap jitter or scroll speed separately: those follow from d_eff through the generator and the scroll model only. The retired per-region `platformWeights` data field was removed from the region files on 2026-11-10. *Stars (superseded 2026-10-20): each level has 3 collectible stars, see "Economy v2".*
 
 ## 7. In-level coin and gem rules (rule 7)
+> **Data note (2026-11-10):** the level fields `stars` (clear / coin target / no revive entries), `rewards.coinPayout`, the region field `platformWeights` and `remote_config` `economy.regionCoinScalePercent` were dead and are removed from the content, the schemas and the loader; stars are the 3 collectible pickups only and the payout is the Economy v3 formula.
 > **Superseded 2026-10-20 by "Economy v2" (end of this document):** coins are no longer collected in a level (no landing coins, no floating coins, no jump-height coins). Coins are paid at the end; gems are pickups with rarity tiers. The tables below stay as history and for the endless rules, which are unchanged. **Updated 2026-11-01:** the end-of-level payout is now 70 + 60 per star + 5 per combo step (see "Economy v3" at the end of this document); the 60-900 coin payouts below are history. Endless gem drops (floors 250/500/1,000) are specified but **not built**.
 
 **Coin sources inside a level**

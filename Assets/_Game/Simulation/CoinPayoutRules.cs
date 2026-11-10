@@ -21,6 +21,12 @@ namespace FluffyClimbers.Simulation
             return starsBefore >= 3;
         }
 
+        /// <summary>
+        /// The region coin factor of regions 1 to 5 in percent (owner 2026-11-10): ONE factor for the level payout (region JSON coinFactor 1.00 to 1.12) and for the
+        /// main-goal coin rewards (RegionGoalTable.ScaledCoins). A test keeps it equal to the shipped region files.
+        /// </summary>
+        public static readonly int[] RegionFactorPercent = { 100, 103, 106, 109, 112 };
+
         /// <summary>Clear payout before the region factor: 70 + 60 per star.</summary>
         public static int BaseCoins(int stars)
         {

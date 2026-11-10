@@ -16,7 +16,7 @@ Indent 2, LF, no timestamps. Regions ordered by index, levels by id (ordinal); i
 
 ## Public API
 - `ContentRepository`: `Regions` (by index), `LiveRegions`, `Modules`, `GemPacks`, `CoinPacks` (optional key, docs/14), `Items`, `RemoteConfig`, `ContentHash`, `LevelCount`; `GetRegion(id)`, `GetRegionByIndex(n)`, `GetLevel(id)`, `LevelsOf(regionId)` (ordered by index, new list per call).
-- Static helpers: `ContentRepository.EffectiveDifficulty(LevelDef, RegionDef)` returns `Fx` (base d rounded to 1/1000, region offset to 1/10000, then `LevelGenerator.EffectiveDifficulty`); `ContentRepository.CoinPayoutFor(LevelDef, RegionDef)` = coinPayout * coinFactor, half up, integer math (factor in 1/10000 steps).
+- Static helpers: `ContentRepository.EffectiveDifficulty(LevelDef, RegionDef)` returns `Fx` (base d rounded to 1/1000, region offset to 1/10000, then `LevelGenerator.EffectiveDifficulty`). (`CoinPayoutFor` and the level fields `stars` and `rewards.coinPayout`, the region field `platformWeights` and the config key `regionCoinScalePercent` were removed 2026-11-10; the payout is `CoinPayoutRules` in Simulation.)
 - Models (`Models.cs`): RegionDef, UnlockDef, ThemeDef, RegionRulesDef, LevelDef (`LevelClass` = JSON `class`; constants `ClassSimple/ClassComplex/ClassHighlyComplex`), GoalDef, StarDef, LevelOverridesDef, RewardsDef, GemRewardDef, ModuleDef, GemPackDef, ItemDef, RemoteConfigDef (+ Ramp/Generator/Score/Economy sections). Content layer uses `double`; convert to `Fx` only at the Simulation boundary.
 - Errors: `ContentException` (`ContentId`, message prefixed `[id]`).
 

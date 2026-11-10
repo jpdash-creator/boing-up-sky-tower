@@ -11,7 +11,7 @@ namespace FluffyClimbers.Tests
 {
     /// <summary>
     /// Shop Heroes section (Bug List 4 E2): the price table, the random pick from open regions only, no charge when a tier has no hero, exactly one copy, repeatable picks,
-    /// the not-enough-gems and failure paths (nothing changes) and the save. Plus the tier plate colours stay readable (CUX-5).
+    /// the not-enough-coins and failure paths (nothing changes) and the save. Plus the tier plate colours stay readable (CUX-5).
     /// </summary>
     public class HeroPurchaseTests
     {
@@ -25,10 +25,11 @@ namespace FluffyClimbers.Tests
             store = new MemorySaveStore();
         }
 
-        ProgressService NewService(int gems = 5000, int seed = 12345)
+        ProgressService NewService(int coins = 100000, int seed = 12345)
         {
             var svc = new ProgressService(repo, store, 5);
-            svc.Data.Gems = gems;
+            svc.Data.Coins = coins;
+            svc.Data.Gems = 777;   // heroes never touch gems
             svc.Data.Bundles = new BundleSaveData { Seed = seed };
             return svc;
         }
@@ -43,11 +44,12 @@ namespace FluffyClimbers.Tests
         [Test]
         public void ThePriceTableIsTheOwnerTable()
         {
-            Assert.AreEqual(150, HeroPurchase.GemPrice(CharacterRarity.Uncommon));
-            Assert.AreEqual(300, HeroPurchase.GemPrice(CharacterRarity.Rare));
-            Assert.AreEqual(700, HeroPurchase.GemPrice(CharacterRarity.Epic));
-            Assert.AreEqual(1500, HeroPurchase.GemPrice(CharacterRarity.Legendary));
-            Assert.AreEqual(0, HeroPurchase.GemPrice(CharacterRarity.Common), "Common is not sold");
+            // coins only (owner Bug List Shop 2a): the old gem prices 150, 300, 700, 1,500 x 20 coins per gem
+            Assert.AreEqual(3000, HeroPurchase.CoinPrice(CharacterRarity.Uncommon));
+            Assert.AreEqual(6000, HeroPurchase.CoinPrice(CharacterRarity.Rare));
+            Assert.AreEqual(14000, HeroPurchase.CoinPrice(CharacterRarity.Epic));
+            Assert.AreEqual(30000, HeroPurchase.CoinPrice(CharacterRarity.Legendary));
+            Assert.AreEqual(0, HeroPurchase.CoinPrice(CharacterRarity.Common), "Common is not sold");
             Assert.AreEqual(HeroPurchase.Tiers.Length, HeroPurchase.Prices.Length);
         }
 
@@ -112,14 +114,15 @@ namespace FluffyClimbers.Tests
         // ---- buying ----
 
         [Test]
-        public void BuyingPaysTheGemsAndAddsExactlyOneCopyOfAnOpenUncommonHero()
+        public void BuyingPaysTheCoinsAndAddsExactlyOneCopyOfAnOpenUncommonHero()
         {
-            ProgressService svc = NewService(1000);
+            ProgressService svc = NewService(10000);
             int before = svc.Copies("momo_u");
             CharacterSpec hero;
             Assert.AreEqual(HeroBuyResult.Ok, svc.TryBuyHero(CharacterRarity.Uncommon, out hero));
             CollectionAssert.Contains(new[] { "momo_u" }, hero.Id, "only region 1 is open: Momo is its only active line, never an inactive hero");
-            Assert.AreEqual(1000 - 150, svc.Gems);
+            Assert.AreEqual(10000 - 3000, svc.Coins);
+            Assert.AreEqual(777, svc.Gems, "no gem option: gems untouched");
             Assert.AreEqual(before + 1, svc.Copies("momo_u"), "exactly one copy");
             Assert.AreEqual(1, svc.Data.Bundles.HeroBuys);
         }
@@ -129,22 +132,23 @@ namespace FluffyClimbers.Tests
         {
             foreach (CharacterRarity r in HeroPurchase.Tiers)
             {
-                ProgressService svc = NewService(5000);
+                ProgressService svc = NewService(100000);
                 if (svc.HeroBuyPool(r).Count == 0) continue;
                 CharacterSpec hero;
                 Assert.AreEqual(HeroBuyResult.Ok, svc.TryBuyHero(r, out hero));
-                Assert.AreEqual(5000 - HeroPurchase.GemPrice(r), svc.Gems);
+                Assert.AreEqual(100000 - HeroPurchase.CoinPrice(r), svc.Coins);
+                Assert.AreEqual(777, svc.Gems);
             }
         }
 
         [Test]
         public void TheStateIsSavedImmediately()
         {
-            ProgressService svc = NewService(1000);
+            ProgressService svc = NewService(10000);
             CharacterSpec hero;
             svc.TryBuyHero(CharacterRarity.Uncommon, out hero);
             SaveData saved = store.Load();
-            Assert.AreEqual(850, saved.Gems);
+            Assert.AreEqual(7000, saved.Coins);
             Assert.AreEqual(1, saved.Bundles.HeroBuys);
             int copies;
             Assert.IsTrue(saved.Copies.TryGetValue(hero.Id, out copies));
@@ -154,7 +158,7 @@ namespace FluffyClimbers.Tests
         [Test]
         public void OnlyHeroesOfOpenRegionsCanBeBought()
         {
-            ProgressService svc = NewService(100000);
+            ProgressService svc = NewService(1000000);
             Assert.AreEqual(1, svc.HeroBuyPool(CharacterRarity.Uncommon).Count, "Region 1: Momo only (the other lines are inactive)");
             foreach (CharacterRarity r in new[] { CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary })
                 Assert.AreEqual(1, svc.HeroBuyPool(r).Count, r + ": one active hero in Region 1, none from the closed regions");
@@ -176,7 +180,7 @@ namespace FluffyClimbers.Tests
         [Test]
         public void ARarityWithNoOpenHeroChargesNothingAndChangesNothing()
         {
-            ProgressService svc = NewService(5000);
+            ProgressService svc = NewService(100000);
             foreach (CharacterRarity r in HeroPurchase.Tiers)
             {
                 if (svc.HeroBuyPool(r).Count != 0) continue;   // none today: Region 1 has heroes of every tier (a future empty tier must still charge nothing)
@@ -184,27 +188,28 @@ namespace FluffyClimbers.Tests
                 CharacterSpec hero;
                 Assert.AreEqual(HeroBuyResult.NoHeroes, svc.TryBuyHero(r, out hero));
                 Assert.IsNull(hero);
-                Assert.AreEqual(5000, svc.Gems);
+                Assert.AreEqual(100000, svc.Coins);
                 Assert.AreEqual(before, Snapshot(svc), "not a field of the save moved");
             }
         }
 
         [Test]
-        public void TooFewGemsIsRefusedWithNothingChanged()
+        public void TooFewCoinsIsRefusedWithNothingChanged()
         {
-            ProgressService svc = NewService(149);
+            ProgressService svc = NewService(2999);
             string before = Snapshot(svc);
             CharacterSpec hero;
-            Assert.AreEqual(HeroBuyResult.NotEnoughGems, svc.TryBuyHero(CharacterRarity.Uncommon, out hero));
+            Assert.AreEqual(HeroBuyResult.NotEnoughCoins, svc.TryBuyHero(CharacterRarity.Uncommon, out hero));
             Assert.IsNull(hero);
-            Assert.AreEqual(149, svc.Gems);
+            Assert.AreEqual(2999, svc.Coins);
+            Assert.AreEqual(777, svc.Gems, "gems cannot pay for a hero");
             Assert.AreEqual(before, Snapshot(svc));
         }
 
         [Test]
         public void ARarityThatIsNotSoldFailsWithNothingChanged()
         {
-            ProgressService svc = NewService(5000);
+            ProgressService svc = NewService(100000);
             string before = Snapshot(svc);
             CharacterSpec hero;
             Assert.AreEqual(HeroBuyResult.Invalid, svc.TryBuyHero(CharacterRarity.Common, out hero));
@@ -217,7 +222,7 @@ namespace FluffyClimbers.Tests
             List<string> Sequence(int seed)
             {
                 ProgressService svc = new ProgressService(repo, new MemorySaveStore(), 5);
-                svc.Data.Gems = 100000;
+                svc.Data.Coins = 100000000;
                 svc.Data.Bundles = new BundleSaveData { Seed = seed };
                 svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(2).Id);
                 svc.Data.UnlockedRegions.Add(repo.GetRegionByIndex(3).Id);
@@ -232,7 +237,7 @@ namespace FluffyClimbers.Tests
         [Test]
         public void TheBuyCounterSurvivesASaveRoundTrip()
         {
-            ProgressService a = NewService(1000);
+            ProgressService a = NewService(10000);
             CharacterSpec hero;
             a.TryBuyHero(CharacterRarity.Uncommon, out hero);
             a.TryBuyHero(CharacterRarity.Uncommon, out hero);

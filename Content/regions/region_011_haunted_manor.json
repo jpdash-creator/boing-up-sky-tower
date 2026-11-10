@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_ghost_platforms",
     "difficultyOffset": 0.0862,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.3,

@@ -17,7 +17,6 @@
   "economy": {
     "coinsPerGem": 20,
     "replayCoinPercent": 50,
-    "regionCoinScalePercent": 3,
     "endlessCoinDailyFullRateRuns": 3,
     "endlessCoinOverCapMultiplier": 0.5
   }

@@ -198,7 +198,7 @@ namespace FluffyClimbers.Simulation
 
             int gemRow = -1;
             // The hidden gem is the goal of a FindHiddenGem level (legacy) and the bonus gem of level 8 (doc 25).
-            bool hiddenGemLevel = spec.Goal.Type == GoalType.FindHiddenGem || (!spec.Endless && spec.LevelIndex == 8 && spec.Goal.Type != GoalType.ComboChain);
+            bool hiddenGemLevel = spec.Goal.Type == GoalType.FindHiddenGem || (!spec.Endless && GemLevels.IsGemLevel(spec.LevelIndex, spec.Goal.Type) && spec.Goal.Type != GoalType.ComboChain);
             if (hiddenGemLevel)
             {
                 gemRow = rows / 2;
@@ -762,8 +762,8 @@ namespace FluffyClimbers.Simulation
                 Pickup g = new Pickup();
                 g.Kind = PickupKind.HiddenGem;
                 g.X = hgx; g.Y = hgy; g.Radius = cfg.HiddenGemRadius;
-                // Level 8 bonus gem (doc 25): a double one (Tag 1, worth 2) for HiddenBonusDoublePercent of the attempts.
-                if (!spec.Endless && spec.LevelIndex == 8 && spec.Goal.Type != GoalType.FindHiddenGem) g.Tag = (int)(((uint)spec.Seed * 2654435761u) >> 8) % 100 < cfg.HiddenBonusDoublePercent ? 1 : 0;
+                // Hidden gem of level 8 and of the FindHiddenGem level (owner 2026-11-10): a double one (Tag 1, worth 2) for HiddenBonusDoublePercent of the attempts.
+                if (!spec.Endless && GemLevels.IsGemLevel(spec.LevelIndex, spec.Goal.Type)) g.Tag = (int)(((uint)spec.Seed * 2654435761u) >> 8) % 100 < cfg.HiddenBonusDoublePercent ? 1 : 0;
                 list.Add(g);
             }
 

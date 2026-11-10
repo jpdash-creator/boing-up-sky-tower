@@ -47,12 +47,6 @@ namespace FluffyClimbers.Content
             goal.TimeSec = level.Goal.TimeSec ?? 0;
             spec.Goal = goal;
 
-            var stars = new StarSpec[level.Stars.Count];
-            for (int i = 0; i < stars.Length; i++)
-            {
-                stars[i] = new StarSpec { Kind = StarSpec.KindFromId(level.Stars[i].Type), Value = level.Stars[i].Value ?? 0 };
-            }
-            spec.Stars = stars;
             if (attemptSeed != 0) { spec.AttemptSeed = attemptSeed; spec.Seed = LevelSpec.MixAttemptSeed(level.Seed, attemptSeed); }
 
             if (level.Overrides != null)

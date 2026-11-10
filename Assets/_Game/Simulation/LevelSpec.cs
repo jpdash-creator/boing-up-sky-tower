@@ -77,6 +77,14 @@ namespace FluffyClimbers.Simulation
             PlatformKind.ThornBush, PlatformKind.Ladybug, PlatformKind.Seesaw
         };
 
+        /// <summary>
+        /// Generic kinds region 1 keeps next to its new set (owner 2026-11-10): the meadow log Crumble (forgiving: it holds for a moment, a
+        /// player who keeps moving never falls) and the breeze-drifting Moving platform (a slow, readable timing kind, never a hazard or a
+        /// launcher). The harsher generics (Vanishing, Slippery, Sticky) stay out of the first region. Neither is a hazard, so the level 1
+        /// tutorial gate (no hazard kinds) leaves them in; level 1 simply gets them from row 3 like every special kind.
+        /// </summary>
+        private static readonly PlatformKind[] Region1Generics = { PlatformKind.Crumble, PlatformKind.Moving };
+
         private static readonly PlatformKind[] Region2Set =
         {
             PlatformKind.SquishCap, PlatformKind.SproutLift, PlatformKind.PuffFloat, PlatformKind.FairyRing,
@@ -125,9 +133,10 @@ namespace FluffyClimbers.Simulation
             return NoneSet;
         }
 
-        /// <summary>The generic kinds that join the new set of a region (empty for regions without a new set and for region 1).</summary>
+        /// <summary>The generic kinds that join the new set of a region (empty for regions without a new set).</summary>
         public static PlatformKind[] GenericsFor(SignatureKind signature)
         {
+            if (signature == SignatureKind.BounceFlowers) return Region1Generics;
             if (signature == SignatureKind.DriftingPlatforms) return Region3Generics;
             if (signature == SignatureKind.StickyGum) return Region4Generics;
             if (signature == SignatureKind.SwingingGongs) return Region5Generics;

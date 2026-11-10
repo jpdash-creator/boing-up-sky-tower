@@ -36,7 +36,7 @@ namespace FluffyClimbers.Economy
         /// <summary>
         /// THE ONE TABLE for the gem value of a hero card in a worth number: Uncommon, Rare, Epic come from <see cref="BundleCards.TierGems"/> (100, 250, 600), so chests and bundles
         /// value a card identically; a Common card is worth <see cref="CommonCardGems"/>. These are WORTH values (what the card counts for in "Worth x..."), deliberately below the
-        /// retail prices of the Heroes shop (<see cref="HeroPurchase.Prices"/>: 150, 300, 700, 1,500), because a card from a chest or bundle is random.
+        /// retail prices of the Heroes shop (<see cref="HeroPurchase.Prices"/>: gem equivalents 150, 300, 700, 1,500; coin prices are 20x), because a card from a chest or bundle is random.
         /// </summary>
         public const int CommonCardGems = 40;
 

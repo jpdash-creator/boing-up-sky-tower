@@ -39,7 +39,7 @@ Opened by the Admin icon (still behind the code gate above). Height follows the 
 | **Cloud Test** (a heading, shown while System Test is on) | none | signed in or out, Sign in (Google), Sign out, Upload save |
 4. **Admin mode** (only when opened by code): "Lock admin again".
 
-Defaults: Shop Test and Character Test default to on in a development build (so the old System Test behaviour is unchanged there), off in a release build opened by code. They never count while System Test is off. Every switch change rebuilds the popup and keeps the scroll position. Not built: infinite revives and skipping a level goal (the run code has no hook for them yet).
+Defaults (owner 2026-11-10): System Test, Game Test, Shop Test and Character Test all default to OFF everywhere, so a fresh development install reads PROD READY (the Admin button still shows in a development build; a release build shows it only after the code). They never count while System Test is off. Every switch change rebuilds the popup and keeps the scroll position. Not built: infinite revives and skipping a level goal (the run code has no hook for them yet).
 ## Reset Progress
 Confirm popup: "This deletes levels, heroes, gems and coins on this device." plus "Your cloud save is reset too." for a Google player and "Purchases are kept.". Cancel or the red Reset. Reset calls `ProgressService.ResetAll` (fresh save, login choice and linked account kept, **purchases list kept**), selects Momo, uploads the fresh state to the Google account when signed in, and returns to the menu.
 

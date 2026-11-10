@@ -238,7 +238,7 @@ namespace FluffyClimbers.Tests
         {
             ProgressService svc = NewService();
             ClearLevels(svc, 1, 25);
-            Assert.AreEqual(2, Daily(svc, RewardStat.GemLevel), "levels 8 and 25");
+            Assert.AreEqual(3, Daily(svc, RewardStat.GemLevel), "levels 8, 15 (hidden-gem goal, owner 2026-11-10) and 25");
         }
 
         [Test]
@@ -654,7 +654,8 @@ namespace FluffyClimbers.Tests
                 Assert.IsNotNull(root.transform.Find("RewardsRoot/Body/ClaimAll"));
 
                 s.ClaimAll(RewardTab.Main);
-                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1/Card").GetComponent<Button>(), "claimed: no button any more");
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1"), "claimed: the card left the list (it waits in the collapsed Completed section)");
+                Assert.IsNotNull(s.ListContent.Find("CompletedHeader"), "Completed (1) header at the bottom");
                 Assert.IsNull(root.transform.Find("RewardsRoot/Body/ClaimAll"), "nothing left to claim in the region");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
@@ -704,8 +705,10 @@ namespace FluffyClimbers.Tests
                 Assert.AreEqual(coins + 150, svc.Coins, "paid exactly the 150 coins of that goal");
                 Assert.AreEqual(gems, svc.Gems);
                 Assert.AreEqual(1, svc.RegionGoalsClaimedCount(1), "no other goal was claimed");
-                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1/Card").GetComponent<Button>(), "claimed: green check card, no button");
-                Assert.IsNotNull(s.ListContent.Find("Row_g_1_levels_1/Card/Check"), "claimed cards keep the check badge");
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1"), "claimed: moved into the collapsed Completed section");
+                s.ListContent.Find("CompletedHeader/Toggle").GetComponent<Button>().onClick.Invoke();
+                Assert.IsNotNull(s.ListContent.Find("Row_g_1_levels_1/Small/Check"), "expanded: the small completed card keeps the check badge");
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1/Small").GetComponent<Button>(), "a completed card has no button");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
@@ -1301,6 +1304,172 @@ namespace FluffyClimbers.Tests
             svc.ResetAll();
             Assert.AreEqual(0, Daily(svc, RewardStat.Login));
             Assert.AreEqual(0, svc.DailyPoints());
+        }
+
+        // ---- Bug List 10: hidden central play timer, one-line titles, Completed section, centred region names ----
+
+        [Test]
+        public void CentralPlayTimerAccumulatesOnlyFedRunTimeAndSurvivesTheSave()
+        {
+            ProgressService svc = NewService();
+            Assert.AreEqual(0L, svc.PlayTotalSeconds);
+            for (int i = 0; i < 12; i++) svc.FeedPlayTime(1f, false, 1);   // twelve live run seconds: two 5 second batches
+            svc.FlushPlayTime();                                           // the two pending seconds are added too
+            Assert.AreEqual(12L, svc.PlayTotalSeconds, "lifetime total");
+            Assert.AreEqual(12, Daily(svc, RewardStat.PlaySeconds), "the daily counter grows with it");
+            Assert.AreEqual(0, Weekly(svc, RewardStat.PlayMinutes), "12 s is under a minute");
+            Assert.AreEqual(12L, new ProgressService(repo, store, 5) { Clock = () => now }.PlayTotalSeconds, "saved by the flush");
+            svc.FlushPlayTime();
+            Assert.AreEqual(12L, svc.PlayTotalSeconds, "a second flush adds nothing");
+            Assert.AreEqual(0L, JsonConvert.DeserializeObject<SaveData>("{\"coins\":3}").Rewards.PlayTotalSeconds, "an old save starts at 0");
+        }
+
+        [Test]
+        public void MenuTimeIsNeverFedIntoThePlayGoals()
+        {
+            ProgressService svc = NewService();
+            // the meta scene no longer calls FeedPlayTime: only RunController does, while a run is live and not paused
+            string meta = System.IO.File.ReadAllText(System.IO.Path.Combine(Application.dataPath, "_Game/Gameplay/MetaController.cs"));
+            Assert.IsFalse(meta.Contains("FeedPlayTime"), "menus, shop and idle time do not count");
+            Assert.AreEqual(0, Daily(svc, RewardStat.PlaySeconds));
+        }
+
+        [Test]
+        public void GoldMedalGoalTitleIsShortEnoughForOneLine()
+        {
+            Assert.AreEqual("Gold on 25 levels", RewardsScreen.ShortTitle("Gold medals on 25 levels"));
+        }
+
+        [Test]
+        public void ClaimedMainGoalMovesToACollapsedCompletedSectionThatTogglesOpenAndClosed()
+        {
+            ProgressService svc = NewService();
+            ClearLevels(svc, 1, 5);
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                s.SelectRegion(1);
+                Assert.IsNull(s.ListContent.Find("CompletedHeader"), "nothing completed yet: no section");
+                s.Claim(RewardTab.Main, "g_1_levels_1");
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1"), "collapsed by default");
+                Transform header = s.ListContent.Find("CompletedHeader");
+                Assert.IsNotNull(header);
+                Assert.AreEqual("Completed (1)", header.Find("Toggle/Label").GetComponent<Text>().text);
+                Assert.AreEqual(s.ListContent.childCount - 1, header.GetSiblingIndex(), "the section is last in the list");
+                var hrt = (RectTransform)header;
+                Assert.GreaterOrEqual(hrt.GetComponent<LayoutElement>().preferredHeight, UiKit.MinTouchPx - 1f, "header is at least 48 dp");
+                header.Find("Toggle").GetComponent<Button>().onClick.Invoke();
+                Assert.IsTrue(s.CompletedOpen);
+                Transform small = s.ListContent.Find("Row_g_1_levels_1");
+                Assert.IsNotNull(small, "expanded: the small card is listed");
+                Assert.AreEqual(s.ListContent.childCount - 1, small.GetSiblingIndex(), "...after the header, at the bottom");
+                s.ListContent.Find("CompletedHeader/Toggle").GetComponent<Button>().onClick.Invoke();
+                Assert.IsFalse(s.CompletedOpen);
+                Assert.IsNull(s.ListContent.Find("Row_g_1_levels_1"), "collapsed again");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void FinishedDailyActionMovesToCompletedAtOnceAndWeeklyClaimsMoveToo()
+        {
+            ProgressService svc = NewService();
+            svc.RecordLogin();   // d_login is finished
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Daily, out root);
+            try
+            {
+                Assert.IsNull(s.ListContent.Find("Row_d_login"), "the finished action is not in the open list");
+                Assert.AreEqual("Completed (1)", s.ListContent.Find("CompletedHeader/Toggle/Label").GetComponent<Text>().text);
+                Assert.IsNotNull(s.ListContent.Find("Row_d_play5"), "open actions stay");
+                s.SelectTab(RewardTab.Weekly);
+                Assert.IsFalse(s.CompletedOpen, "a tab change collapses the section");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void RegionNamesAreCentredOnTheNameZoneMiddleLine()
+        {
+            ProgressService svc = NewService();
+            GameObject root;
+            RewardsScreen s = BuildScreen(svc, RewardTab.Main, out root);
+            try
+            {
+                int n = 0;
+                foreach (Text t in root.GetComponentsInChildren<Text>(true))
+                {
+                    if (t.name != "Name") continue;
+                    n++;
+                    Assert.AreEqual(TextAnchor.MiddleCenter, t.alignment, "name \"" + t.text + "\" is vertically centred");
+                }
+                Assert.Greater(n, 0);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void CompletedHeaderArrowStaysInsideTheHeaderInBothStatesOnEveryTab()
+        {
+            float oldScale = UiKit.TextScale;
+            try
+            {
+                foreach (float ts in new[] { 1f, 1.3f })
+                {
+                    UiKit.TextScale = ts;
+                    foreach (RewardTab tab in new[] { RewardTab.Main, RewardTab.Daily, RewardTab.Weekly })
+                    {
+                        ProgressService svc = NewService();
+                        if (tab == RewardTab.Main) ClearLevels(svc, 1, 5);
+                        else if (tab == RewardTab.Daily) svc.RecordLogin();
+                        else svc.AddPlaySeconds(6000);
+                        GameObject root;
+                        root = new GameObject("RewardsTestRoot", typeof(RectTransform));
+                        ((RectTransform)root.transform).sizeDelta = new Vector2(1080f, 1920f);   // a real screen size: a zero-size root would squeeze the header narrower than its own arrow
+                        var s = new RewardsScreen((RectTransform)root.transform, svc, repo, null, null);
+                        s.Build(tab);
+                        try
+                        {
+                            if (tab == RewardTab.Main) { s.SelectRegion(1); s.Claim(RewardTab.Main, "g_1_levels_1"); }
+                            else if (tab == RewardTab.Weekly) s.Claim(RewardTab.Weekly, "w_play100");
+                            Vector2 firstCentre = Vector2.zero, firstSize = Vector2.zero;
+                            for (int state = 0; state < 2; state++)
+                            {
+                                LayoutRebuilder.ForceRebuildLayoutImmediate(s.ListContent);
+                                Transform header = s.ListContent.Find("CompletedHeader");
+                                Assert.IsNotNull(header, tab + " has a Completed header");
+                                var hrt = (RectTransform)header;
+                                Assert.Greater(hrt.rect.width, 600f, "the header has a real width after layout");
+                                var arrow = (RectTransform)header.Find("Toggle/ArrowSlot/Arrow");
+                                var hc = new Vector3[4]; var ac = new Vector3[4];
+                                hrt.GetWorldCorners(hc); arrow.GetWorldCorners(ac);
+                                string who = tab + " text " + ts + " open=" + s.CompletedOpen;
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    Assert.GreaterOrEqual(ac[i].x, hc[0].x - 0.01f, who + ": arrow inside the header (left)");
+                                    Assert.LessOrEqual(ac[i].x, hc[2].x + 0.01f, who + ": arrow inside the header (right)");
+                                    Assert.GreaterOrEqual(ac[i].y, hc[0].y - 0.01f, who + ": arrow inside the header (bottom)");
+                                    Assert.LessOrEqual(ac[i].y, hc[2].y + 0.01f, who + ": arrow inside the header (top)");
+                                }
+                                Vector2 centre = new Vector2((ac[0].x + ac[2].x) * 0.5f - hc[0].x, (ac[0].y + ac[2].y) * 0.5f - hc[0].y);
+                                Vector2 size = new Vector2(Mathf.Abs(ac[2].x - ac[0].x), Mathf.Abs(ac[2].y - ac[0].y));   // a 180 degree turn swaps the corners: compare sizes as magnitudes
+                                Assert.AreEqual(((hc[0].y + hc[2].y) - (ac[0].y + ac[2].y)) * 0.5f, 0f, 0.5f, who + ": vertically centred");
+                                if (state == 0) { firstCentre = centre; firstSize = size; }
+                                else
+                                {
+                                    Assert.AreEqual(firstCentre.x, centre.x, 0.01f, who + ": same place in both states");
+                                    Assert.AreEqual(firstCentre.y, centre.y, 0.01f);
+                                    Assert.AreEqual(firstSize.x, size.x, 0.01f);
+                                }
+                                header.Find("Toggle").GetComponent<Button>().onClick.Invoke();
+                            }
+                        }
+                        finally { UnityEngine.Object.DestroyImmediate(root); }
+                    }
+                }
+            }
+            finally { UiKit.TextScale = oldScale; }
         }
     }
 }

@@ -28,8 +28,9 @@ namespace FluffyClimbers.Gameplay
         public static string PlacementFor(int adsUsed) { return adsUsed <= 0 ? PlacementShort : (adsUsed == 1 ? PlacementLong : null); }
         public static int GemCostFor(int gemRevivesUsed) { return gemRevivesUsed <= 0 ? FirstGemCost : LaterGemCost; }
 
-        /// <summary>Button text of the ad option: "AD 30s" / "AD 1m"; empty when no ad is left.</summary>
-        public static string AdLabelFor(int adsUsed) { return adsUsed <= 0 ? "AD 30s" : (adsUsed == 1 ? "AD 1m" : ""); }
+        /// <summary>Button text of the ad option: "Watch Ad" (no ad length, owner 2026-11-10); empty when no ad is left.</summary>
+        public const string AdButtonText = "Watch Ad";
+        public static string AdLabelFor(int adsUsed) { return adsUsed < MaxAds ? AdButtonText : ""; }
         public string AdLabel { get { return AdLabelFor(AdsUsed); } }
 
         /// <summary>An ad revive happened (the ad was watched and the player was revived).</summary>

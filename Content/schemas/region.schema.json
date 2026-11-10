@@ -31,12 +31,11 @@
     },
     "rules": {
       "type": "object",
-      "required": ["signatureModule", "difficultyOffset", "platformWeights"],
+      "required": ["signatureModule", "difficultyOffset"],
       "additionalProperties": false,
       "properties": {
         "signatureModule": {"type": "string", "pattern": "^mod_[a-z0-9_]+$"},
         "difficultyOffset": {"type": "number", "minimum": 0, "maximum": 0.25},
-        "platformWeights": {"type": "object"},
         "hazards": {"type": "array", "items": {"type": "string"}}
       }
     },

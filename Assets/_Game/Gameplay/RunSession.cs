@@ -428,7 +428,7 @@ namespace FluffyClimbers.Gameplay
             GoalSpec g = spec.Goal;
             switch (g.Type)
             {
-                case GoalType.ReachFloor: return spec.LevelIndex == 8 || spec.IsTopLevel ? "Reach floor " + g.Value + " and grab the gems" : "Reach floor " + g.Value;
+                case GoalType.ReachFloor: return GemLevels.IsGemLevel(spec.LevelIndex, spec.Goal.Type) || spec.IsTopLevel ? "Reach floor " + g.Value + " and grab the gems" : "Reach floor " + g.Value;
                 case GoalType.CollectCoins: return "Collect " + g.Count + " coins";
                 case GoalType.ComboChain: return "Chain " + g.Count + " jump" + (g.Count == 1 ? "" : "s") + " of " + g.Value + "+ floors";
                 case GoalType.NoWallBounce: return "Reach floor " + g.Value;
@@ -437,18 +437,6 @@ namespace FluffyClimbers.Gameplay
                 case GoalType.SurviveWave: return "Survive the wave and reach the top";
                 case GoalType.BossChase: return "Outclimb the chase: floor " + g.Value;
                 default: return "Reach the top";
-            }
-        }
-
-        public static string DescribeStar(StarSpec star)
-        {
-            switch (star.Kind)
-            {
-                case StarSpec.KindClear: return "Clear the level";
-                case StarSpec.KindCoins: return "Collect " + star.Value + " coins";
-                case StarSpec.KindNoRevive: return "Do not revive";
-                case StarSpec.KindTime: return "Finish in " + star.Value + " s";
-                default: return "";
             }
         }
     }

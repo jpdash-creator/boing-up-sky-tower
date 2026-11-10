@@ -198,9 +198,11 @@ namespace FluffyClimbers.Simulation.Tests
             // Hero activation never touches the level: the layout hash is the same before and after a hero run (the golden file test pins the 75 hashes).
             string root = ContentLoader.FindRoot();
             Assert.NotNull(root);
-            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, 1))
+            int checkedLevels = 0;
+            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, 5))
             {
-                if (ll.Id != "lvl_001_05") continue;
+                if (ll.Spec.LevelIndex != 5) continue;
+                checkedLevels++;
                 LevelData data = LevelBuilder.Build(Cfg, ll.Spec);
                 long before = data.ComputeHash();
                 Sim sim = new Sim(Cfg, data, ll.Spec);
@@ -215,9 +217,8 @@ namespace FluffyClimbers.Simulation.Tests
                 Assert.True(br.Solved);
                 Assert.Equal(0, br.Final.PwUsed);
                 Assert.Equal(0, br.Final.PwUsedMask);
-                return;
             }
-            throw new InvalidOperationException("lvl_001_05 not found");
+            Assert.Equal(5, checkedLevels);
         }
 
         [Fact]

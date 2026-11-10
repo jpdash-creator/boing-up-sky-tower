@@ -23,6 +23,8 @@ namespace FluffyClimbers.Gameplay
         const int LineSize = 5;
         const float Margin = 16f, Gap = 12f, DollH = 210f, Pad = 8f;
         const int BodyFont = 40;
+        /// <summary>Text of a locked tile (italic, instead of the name).</summary>
+        public const string LockedLabel = "Locked";
         static readonly Color PillInk = new Color(0.07f, 0.06f, 0.20f, 0.94f);
         static readonly Color Silhouette = new Color(0.14f, 0.16f, 0.27f, 1f);
         static readonly Color LockedGrey = new Color(0.36f, 0.38f, 0.47f, 1f);
@@ -83,7 +85,10 @@ namespace FluffyClimbers.Gameplay
         static float InfoSize { get { return Mathf.Max(UiKit.MinTouchRef, UiKit.MinTouchPx); } }
 
         /// <summary>Height of one card at the current text size: the "i" strip, the silhouette, and a two-line name pill.</summary>
-        public static float CardHeight { get { return Pad + InfoSize + 6f + DollH + 6f + 2f * Line(BodyFont) + 16f + Pad; } }
+        public static float CardHeight { get { return Pad + InfoSize + 6f + DollH + 6f + NameGap + 2f * Line(BodyFont) + 16f + Pad; } }
+
+        /// <summary>Extra clear space between the hero picture and the name pill, so the two-line name never touches the face (130 percent text, every aspect).</summary>
+        const float NameGap = 24f;
 
         /// <summary>Height of a region banner at the current text size.</summary>
         static float BannerHeight { get { return Line(52) + 24f; } }
@@ -209,10 +214,14 @@ namespace FluffyClimbers.Gameplay
                 lr.sizeDelta = new Vector2(ls, ls);
             }
             AllHeroEntry pickEntry = e;
-            Button info = UiKit.AddButton(inner, "Info", "i", ToyKit.Button(2), Color.white, new Vector2(ib, ib), () => ShowInfo(pickEntry), 64);
-            info.GetComponent<A11yLabel>().Text = "Details of " + e.Name;
-            UiKit.Place((RectTransform)info.transform, new Vector2(1f, 1f), new Vector2(-2f, -2f), new Vector2(ib, ib));
-            ((RectTransform)info.transform).pivot = new Vector2(1f, 1f);
+            if (!e.Locked)
+            {
+                // only heroes the player owns carry the "i" (Bug List Heroes 3b); a locked tile explains itself on a tap of the whole tile (CUX-8)
+                Button info = UiKit.AddButton(inner, "Info", "i", ToyKit.Button(2), Color.white, new Vector2(ib, ib), () => ShowInfo(pickEntry), 64);
+                info.GetComponent<A11yLabel>().Text = "Details of " + e.Name;
+                UiKit.Place((RectTransform)info.transform, new Vector2(1f, 1f), new Vector2(-2f, -2f), new Vector2(ib, ib));
+                ((RectTransform)info.transform).pivot = new Vector2(1f, 1f);
+            }
 
             // the hero (silhouette when locked) under the strip
             RectTransform area = UiKit.Rect(inner, "FaceArea");
@@ -232,22 +241,24 @@ namespace FluffyClimbers.Gameplay
             pr.pivot = new Vector2(0.5f, 0f);
             pr.anchoredPosition = new Vector2(0f, 4f);
             pr.sizeDelta = new Vector2(0f, 2f * lh + 12f);
-            Text name = UiKit.AddText(pill.transform, "HeroName", e.BaseName, BodyFont, Color.white, TextAnchor.UpperCenter, true);
-            name.horizontalOverflow = HorizontalWrapMode.Overflow;
-            name.rectTransform.anchorMin = new Vector2(0f, 1f);
-            name.rectTransform.anchorMax = Vector2.one;
-            name.rectTransform.pivot = new Vector2(0.5f, 1f);
-            name.rectTransform.offsetMin = new Vector2(0f, -(lh + 4f));
-            name.rectTransform.offsetMax = new Vector2(0f, -4f);
+            // ONE label centred both ways: the hero's own name when owned (no rarity word: "Momo", "Cloudguard Momo"), "Locked" in italics when locked.
+            Text name = UiKit.AddText(pill.transform, "HeroName", e.Locked ? LockedLabel : e.Name, BodyFont, Color.white, TextAnchor.MiddleCenter, !e.Locked);
+            name.horizontalOverflow = HorizontalWrapMode.Wrap;
+            name.verticalOverflow = VerticalWrapMode.Truncate;
+            if (e.Locked) name.fontStyle = FontStyle.Italic;
+            UiKit.Stretch(name.rectTransform);
+            name.rectTransform.offsetMin = new Vector2(6f, 4f);
+            name.rectTransform.offsetMax = new Vector2(-6f, -4f);
             DropOutline(name);
-            Text rar = UiKit.AddText(pill.transform, "Rarity", e.RarityName, BodyFont, Color.white, TextAnchor.UpperCenter);
-            rar.horizontalOverflow = HorizontalWrapMode.Overflow;
-            rar.rectTransform.anchorMin = Vector2.zero;
-            rar.rectTransform.anchorMax = new Vector2(1f, 0f);
-            rar.rectTransform.pivot = new Vector2(0.5f, 0f);
-            rar.rectTransform.offsetMin = new Vector2(0f, 4f);
-            rar.rectTransform.offsetMax = new Vector2(0f, 4f + lh);
-            DropOutline(rar);
+
+            if (e.Locked)
+            {
+                // the "why locked" explanation stays reachable (CUX-8): a tap on the whole tile opens the details popup
+                var tap = outer.gameObject.AddComponent<Button>();
+                tap.transition = Selectable.Transition.None;
+                outer.GetComponent<Image>().raycastTarget = true;
+                tap.onClick.AddListener(() => ShowInfo(pickEntry));
+            }
 
             outer.gameObject.AddComponent<A11yLabel>().Text = e.Name + ", " + e.RarityName + (e.Locked ? ", locked" : ", owned");
         }

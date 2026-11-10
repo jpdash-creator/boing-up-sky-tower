@@ -13,10 +13,10 @@ namespace FluffyClimbers.Simulation.Tests
         static CharacterSpec Tier(string id, string line, CharacterRarity r) { return new CharacterSpec { Id = id, Name = id, Rarity = r, Line = line, IsMergeTier = true }; }
 
         [Fact]
-        public void PriceTableIsUncommon150Rare300Elite700Legendary1500()
+        public void PriceTableIsUncommon3000Rare6000Elite14000Legendary30000Coins()
         {
-            Assert.Equal(new[] { 150, 300, 700, 1500 }, HeroPurchase.Tiers.Select(HeroPurchase.GemPrice).ToArray());
-            Assert.Equal(0, HeroPurchase.GemPrice(CharacterRarity.Common));
+            Assert.Equal(new[] { 3000, 6000, 14000, 30000 }, HeroPurchase.Tiers.Select(HeroPurchase.CoinPrice).ToArray());
+            Assert.Equal(0, HeroPurchase.CoinPrice(CharacterRarity.Common));
             Assert.Equal(new[] { "Uncommon", "Rare", "Elite", "Legendary" }, HeroPurchase.Tiers.Select(HeroPurchase.RarityName).ToArray());
         }
 

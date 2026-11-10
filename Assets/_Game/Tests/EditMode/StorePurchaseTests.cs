@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using FluffyClimbers.Content;
 using FluffyClimbers.Economy;
+using FluffyClimbers.Gameplay;
 using FluffyClimbers.Monetization;
 using NUnit.Framework;
 
@@ -148,6 +149,98 @@ namespace FluffyClimbers.Tests
             Assert.AreEqual(1, SaveSync.PickGreater(many, newer), "same progress: the newer save wins");
             Assert.AreEqual(0, SaveSync.PickGreater(many, new byte[] { 1, 2, 3 }), "a corrupt blob loses");
             Assert.AreEqual(1, SaveSync.PickGreater(new byte[0], many));
+        }
+
+        // ---- Restore purchases (owner 2026-11-10: store purchases only) ----
+
+        static StoreLink.RestoreResult RunRestore(StubPaymentService pay, ProgressService svc)
+        {
+            StoreLink.RestoreResult got = null;
+            int calls = 0;
+            StoreLink.RestoreFromStore(pay, svc, r => { got = r; calls++; });
+            Assert.AreEqual(1, calls, "done runs exactly once");
+            return got;
+        }
+
+        [Test]
+        public void RestoreOnAFreshInstallReappliesTheOwnedSubscriptionButNotGems()
+        {
+            StoreLink.ResetForTests();
+            var pay = new StubPaymentService();
+            pay.Owned.Add(new PurchaseResult { ProductId = ProductCatalog.SubMonthly, TransactionId = "GPA.m1" });
+            // a gem pack is a consumable: the store never lists a confirmed one as owned, and Restore never re-grants one
+            var svc = NewService();
+            int gems = svc.Gems;
+            StoreLink.RestoreResult r = RunRestore(pay, svc);
+            Assert.AreEqual(StoreLink.RestoreStatus.Restored, r.Status);
+            Assert.AreEqual(1, r.Count);
+            Assert.AreEqual("monthly", svc.ActiveSubscription(DateTime.UtcNow));
+            Assert.AreEqual(gems, svc.Gems, "restoring a subscription pays no instant gems");
+            StoreLink.ResetForTests();
+        }
+
+        [Test]
+        public void RestoreTwiceNeverGrantsTwice()
+        {
+            StoreLink.ResetForTests();
+            var pay = new StubPaymentService();
+            pay.Owned.Add(new PurchaseResult { ProductId = ProductCatalog.SubWeekly, TransactionId = "GPA.w1" });
+            var svc = NewService();
+            Assert.AreEqual(StoreLink.RestoreStatus.Restored, RunRestore(pay, svc).Status);
+            long expiry = svc.Data.Subscription.ExpiryUtcTicks;
+            int claims = svc.Data.Subscription.ClaimsLeft;
+            int records = svc.Purchases.Count;
+            StoreLink.RestoreResult again = RunRestore(pay, svc);
+            Assert.AreEqual(StoreLink.RestoreStatus.AlreadyRestored, again.Status, "the second restore says everything is already restored");
+            Assert.AreEqual(0, again.Count);
+            Assert.AreEqual(expiry, svc.Data.Subscription.ExpiryUtcTicks, "no extra days");
+            Assert.AreEqual(claims, svc.Data.Subscription.ClaimsLeft);
+            Assert.AreEqual(records, svc.Purchases.Count, "no extra ledger record");
+            StoreLink.ResetForTests();
+        }
+
+        [Test]
+        public void RestoreWithNothingOwnedSaysNothingToRestore()
+        {
+            StoreLink.ResetForTests();
+            var svc = NewService();
+            StoreLink.RestoreResult r = RunRestore(new StubPaymentService(), svc);
+            Assert.AreEqual(StoreLink.RestoreStatus.NothingToRestore, r.Status);
+            Assert.AreEqual(0, r.Count);
+            string title, text;
+            StoreLink.RestoreTexts(r, out title, out text);
+            Assert.AreEqual("Nothing to restore", text);
+            StoreLink.ResetForTests();
+        }
+
+        [Test]
+        public void RestoreWhenTheStoreIsUnavailableSaysSo()
+        {
+            StoreLink.ResetForTests();
+            var svc = NewService();
+            Assert.AreEqual(StoreLink.RestoreStatus.StoreUnavailable, RunRestore(new StubPaymentService { RestoreFails = true }, svc).Status);
+            StoreLink.RestoreResult none = null;
+            StoreLink.RestoreFromStore(new UnavailablePaymentService(), svc, r => none = r);
+            Assert.AreEqual(StoreLink.RestoreStatus.StoreUnavailable, none.Status, "a release build without a store");
+            StoreLink.RestoreFromStore(null, svc, r => none = r);
+            Assert.AreEqual(StoreLink.RestoreStatus.StoreUnavailable, none.Status);
+            StoreLink.ResetForTests();
+        }
+
+        [Test]
+        public void RestoreReappliesRecordedSubscriptionDaysAndRestoreTextsAreClear()
+        {
+            StoreLink.ResetForTests();
+            var svc = NewService();
+            svc.ApplyStorePurchase(ProductCatalog.SubMonthly, "GPA.m1", DateTime.UtcNow);
+            svc.Data.Subscription.ExpiryUtcTicks = 0; svc.Data.Subscription.Type = "";   // the running time was lost; the record remains
+            StoreLink.RestoreResult r = RunRestore(new StubPaymentService(), svc);
+            Assert.AreEqual(StoreLink.RestoreStatus.Restored, r.Status);
+            string title, text;
+            StoreLink.RestoreTexts(r, out title, out text);
+            Assert.AreEqual("Purchases restored", title);
+            StringAssert.Contains("1", text);
+            StoreLink.ResetForTests();
         }
     }
 }

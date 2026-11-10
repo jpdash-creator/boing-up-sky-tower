@@ -46,14 +46,6 @@ def cls(i):
     return "simple" if s < 30 else "medium" if s < 55 else "hard" if s < 75 else "complex"
 
 
-NORMAL = [i for i in range(1, LEVELS) if i not in SPECIAL]
-
-
-def coin_payout(i):
-    if i in SPECIAL: return 300
-    if i == LEVELS: return 900
-    k = NORMAL.index(i)
-    return int(round((60 + 80 * k / (len(NORMAL) - 1)) / 5) * 5)
 
 
 def gem_rewards(i):
@@ -98,12 +90,10 @@ def main():
             lid = "lvl_%03d_%02d" % (n, i)
             prev = old.get(i)
             seed = prev["seed"] if prev else (n * 7919 + i * 104729 + 12345) % 2147483647
-            star = prev["stars"][1]["value"] if prev else min(500, 20 + 5 * i)
             out.append({
                 "id": lid, "region": region["id"], "index": i, "seed": seed, "class": cls(i),
                 "difficulty": curve.get(lid, provisional_d(i)), "goal": goal(i),
-                "stars": [{"type": "clear"}, {"type": "coins", "value": star}, {"type": "noRevive"}],
-                "rewards": {"coinPayout": coin_payout(i), "gems": gem_rewards(i)},
+                "rewards": {"gems": gem_rewards(i)},
             })
         region["levels"] = [lv["id"] for lv in out]
         write(lf, out)

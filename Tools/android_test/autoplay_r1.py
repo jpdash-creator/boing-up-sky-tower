@@ -1,6 +1,6 @@
-"""Region 1 as a real player (adb only, no AltTester): the development build plays its own levels with the Autopilot.
+"""Regions 1 to 5 (default; --regions N for one) as a real player (adb only, no AltTester): the development build plays its own levels with the Autopilot.
 
-    python Tools/android_test/autoplay_r1.py [--skill 0.5] [--difficulty 0] [--levels 1-15] [--seeds 1] [--stop-on-fail]
+    python Tools/android_test/autoplay_r1.py [--skill 0.5] [--difficulty 0] [--regions 1-5] [--levels 1-25] [--seeds 1] [--stop-on-fail]
                                              [--speed 1] [--install] [--where auto|internal|external|both] [--timeout 3600]
 
 What it does:
@@ -14,6 +14,7 @@ in the repo, build via the normal Android build) and the phone connected with th
 Exit code: 0 all levels cleared, 1 a level failed or the run broke off, 2 no device.
 """
 import argparse
+import copy
 import datetime
 import json
 import os
@@ -193,7 +194,7 @@ def table(results):
 def write_report(results, shots, opts, meta, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     passed = sum(1 for r in results if verdict(r) == "PASS")
-    out = ["# Region 1 autoplay report", "",
+    out = ["# Region %s autoplay report" % opts.get("region", 1), "",
            "- Date: %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
            "- Game version: %s" % meta.get("version", "?"),
            "- Device: %s" % meta.get("device", "?"),
@@ -269,8 +270,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--skill", type=float, default=0.5)
     ap.add_argument("--difficulty", type=int, default=0)
-    ap.add_argument("--levels", default="1-15")
-    ap.add_argument("--region", type=int, default=1)
+    ap.add_argument("--levels", default="1-25", help="levels of each region (default 1-25)")
+    ap.add_argument("--regions", default="1-5", help="regions to play one after the other (default 1-5)")
+    ap.add_argument("--region", type=int, default=None, help="single region (same as --regions N)")
     ap.add_argument("--seeds", type=int, default=1)
     ap.add_argument("--speed", type=float, default=1.0)
     ap.add_argument("--stop-on-fail", action="store_true")
@@ -280,7 +282,22 @@ def main():
     ap.add_argument("--report", default=os.path.join(QA, "autoplay_report.md"))
     ap.add_argument("--dry-run", action="store_true", help="print autoplay.json and stop")
     a = ap.parse_args()
+    regions = [a.region] if a.region is not None else parse_levels(a.regions)
+    code = 0
+    for i, region in enumerate(regions):
+        sub = copy.copy(a)
+        sub.region = region
+        if len(regions) > 1:
+            base, ext = os.path.splitext(a.report)
+            sub.report = "%s_r%d%s" % (base, region, ext)
+        if i > 0:
+            sub.install = False            # install once
+        print("=== region %d ===" % region)
+        code = run_region(sub) or code
+    return code
 
+
+def run_region(a):
     opts = {"region": a.region, "levels": parse_levels(a.levels), "skill": a.skill, "difficulty": a.difficulty, "stopOnFail": a.stop_on_fail,
             "seeds": a.seeds, "speed": a.speed}
     text = json.dumps(opts)

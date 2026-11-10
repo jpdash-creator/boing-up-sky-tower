@@ -34,7 +34,7 @@ Today a run only produces stars, a score and (in endless) a best floor. The only
 | Starts | At the first jump of the run. |
 | Stops | When the goal completes (a level) or when the run ends (endless). |
 | Pauses | Excluded. Pause, an app switch or an interruption does not add time. |
-| Revive | A run that used a revive still pays its rewards and stars, but it **never sets a best Time or best Pace and never goes to the leaderboard**. |
+| Revive | **Owner 2026-11-10:** a revive is paid with gems earned or bought, so a revived level run counts like any other: best Time and Pace records, NEW BEST ribbons, Bronze/Silver/Gold and the timed reward goals. The run clock is the simulation tick, which does not advance while the player is dead, so the time spent on the revive popup is never counted. Ranked leaderboards stay clean-run only. (Before this date a revived run earned nothing.) |
 
 ## 4. Which records are kept
 
@@ -53,7 +53,7 @@ Today a run only produces stars, a score and (in endless) a best floor. The only
 
 **Verification.** The simulation is deterministic, so a run can be re-played from the seed plus the inputs. The server must later decide leaderboard scores (rule in CLAUDE.md); the client never decides them. The stored best-run data is what the server will receive. No leaderboard exists yet; this spec only makes the data available.
 
-**Update rule.** A record is replaced only when the new run improves it (higher Pace; a lower Time updates the best Time on its own). Revived runs never update it (section 3).
+**Update rule.** A record is replaced only when the new run improves it (higher Pace; a lower Time updates the best Time on its own). Revived level runs update it like any other (section 3, owner 2026-11-10).
 
 ## 5. UI
 
@@ -62,7 +62,7 @@ Today a run only produces stars, a score and (in endless) a best floor. The only
 | Level-start popup | `RecordBlock` (`TimedUi`): "Best in <Gameplay mode>" with the best Pace (`0.83 plat/s`) and the best Time (`mm:ss.t`) as two pills, or `<mode>: no record yet`. The medal strip (`MedalStrip`) sits under the stars. |
 | Endless popup | Best floor pill, then the same record block (best Pace and the longest Time alive), then the **Time Attack line**: `3:00, best N floors` and, on a second line, the best Pace of that run plus `fell at m:ss` when the best run ended before the full 3:00 (nothing extra for a full run). The TIME ATTACK button sits under it; START is below. The popup is content-sized, so the second line adds height instead of overlapping. |
 | Level map | Each node shows the medal of the **current Gameplay mode** (not the best of all five) at its top left; it redraws in place when the Gameplay mode is changed on the level screen. |
-| Result screen | Time and Pace pills, each with a tick or cross pill for the difference to the previous best (never colour alone), the medal strip with the newly earned medal, and **separate ribbons**: `NEW BEST TIME` and `NEW BEST PACE` (both, stacked, when both were set). A record that is neither (endless floors or a split) shows one generic `NEW BEST` ribbon. A revived run shows "Revive used: no record or medal" instead. In endless, a longer Time alive counts as the Time record. |
+| Result screen | Time and Pace pills, each with a tick or cross pill for the difference to the previous best (never colour alone), the medal strip with the newly earned medal, and **separate ribbons**: `NEW BEST TIME` and `NEW BEST PACE` (both, stacked, when both were set). A record that is neither (endless floors or a split) shows one generic `NEW BEST` ribbon. In endless, a longer Time alive counts as the Time record. |
 | Run HUD | A **third row in the reserved top strip** (`HudTimes`, `RunLayout.Row3H`) under the wallet row and the gauge row: the timer pill (the run clock, or the 3:00 countdown of a Time Attack), the best Pace pill (best floors in a Time Attack) and a delta pill. The delta shows faster or slower against the best run's curve every 10 floors (every 100 floors against the best split in endless), with a tick or cross icon. The timer text changes only when the shown tenth changes. |
 | Pace Ghost | Settings switch, **off by default**. In a level it is a translucent **diamond on the tower gauge** (a shape that differs from the round player marker). In endless and Time Attack, which have no gauge, it is a **ghost floor pill** in the free second row showing the floor your best run had reached at this second. It never leaves the reserved strip, so it cannot cover the player, platforms or hazards. |
 
@@ -118,7 +118,7 @@ Computed from the recorded Pace, Time and medals (`ProgressService.TimedGoals.cs
 
 | Tab | Goal (id) | Counter | Reward as built |
 |---|---|---|---|
-| Daily | Clear 2 levels at a pace of at least 0.6 plat/s (`d_pace2`) | clears with Pace of 0.6 or more (not revived), `PaceClearsToday` | 15 daily points |
+| Daily | Clear 2 levels at a pace of at least 0.6 plat/s (`d_pace2`) | clears with Pace of 0.6 or more (revived runs count), `PaceClearsToday` | 15 daily points |
 | Daily | Reach floor 100 in Endless within 3:00 (`d_floor100`) | split to floor 100 of 3:00 or less, `Split100TodayTicks` | 15 daily points |
 | Weekly | Beat your best pace on 3 different levels (`w_pace3`) | distinct levels with a new best Pace this week, `BestPaceLevelsWeek` | 8 gems + 600 coins |
 | Weekly | Earn 5 gold medals (`w_gold5`) | gold medals earned this week, `GoldWeek` | 800 coins + 1 power-up |

@@ -89,13 +89,6 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void CoinPayoutScalesWithRegionFactor()
-        {
-            Assert.AreEqual(900, ContentRepository.CoinPayoutFor(Repo.GetLevel("lvl_001_25"), Repo.GetRegionByIndex(1)));
-            Assert.AreEqual(1008, ContentRepository.CoinPayoutFor(Repo.GetLevel("lvl_005_25"), Repo.GetRegionByIndex(5)));
-        }
-
-        [Test]
         public void UnknownIdsThrowWithId()
         {
             var e1 = Assert.Throws<ContentException>(() => Repo.GetLevel("lvl_999_99"));

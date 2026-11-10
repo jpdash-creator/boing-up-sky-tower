@@ -47,12 +47,12 @@ namespace FluffyClimbers.Gameplay
         }
 
         /// <summary>
-        /// Dev flag SYSTEM_TEST (development builds only, default ON): on = everything open (levels, regions, all characters, test purchases, Autopilot);
+        /// Dev flag SYSTEM_TEST (development builds only, default OFF since 2026-11-10): on = everything open (levels, regions, all characters, test purchases, Autopilot);
         /// off = fully real production behaviour. Release builds are always real.
         /// </summary>
         public static bool SystemTest
         {
-            get { return DevBuild && PlayerPrefs.GetInt(SystemTestKey, Debug.isDebugBuild ? 1 : 0) == 1; }   // a release build opened with the admin code starts with it OFF
+            get { return DevBuild && PlayerPrefs.GetInt(SystemTestKey, 0) == 1; }   // default OFF everywhere: a fresh install reads PROD READY (owner 2026-11-10)
             set
             {
                 PlayerPrefs.SetInt(SystemTestKey, value ? 1 : 0);
@@ -64,18 +64,18 @@ namespace FluffyClimbers.Gameplay
 
         /// <summary>
         /// Admin switch SHOP TEST (docs/38): test gem and subscription purchases and the shop test rows. Only counts while SYSTEM_TEST is on; development builds
-        /// default to on (the old SYSTEM_TEST behaviour), a release build opened with the admin code starts with it off.
+        /// default to off (owner 2026-11-10).
         /// </summary>
         public static bool ShopTest
         {
-            get { return SystemTest && PlayerPrefs.GetInt(ShopTestKey, Debug.isDebugBuild ? 1 : 0) == 1; }
+            get { return SystemTest && PlayerPrefs.GetInt(ShopTestKey, 0) == 1; }
             set { PlayerPrefs.SetInt(ShopTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
         }
 
         /// <summary>Admin switch CHARACTER TEST (docs/38): every hero owned and the hero test tools. Only counts while SYSTEM_TEST is on (same defaults as <see cref="ShopTest"/>).</summary>
         public static bool CharacterTest
         {
-            get { return SystemTest && PlayerPrefs.GetInt(CharacterTestKey, Debug.isDebugBuild ? 1 : 0) == 1; }
+            get { return SystemTest && PlayerPrefs.GetInt(CharacterTestKey, 0) == 1; }
             set { PlayerPrefs.SetInt(CharacterTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
         }
 

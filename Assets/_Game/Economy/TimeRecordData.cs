@@ -181,6 +181,7 @@ namespace FluffyClimbers.Economy
         {
             var r = new RecordResult();
             Fill(r, run);
+            r.Counted = run.Floors > 0 && run.Ticks > 0;   // owner 2026-11-10: a revived level run counts like any other (records, medals, goals); the clock already stops while dead
             r.PrevPaceFloors = rec.Floors;
             r.PrevPaceTicks = rec.Ticks;
             r.PrevBestTimeTicks = rec.BestTimeTicks;

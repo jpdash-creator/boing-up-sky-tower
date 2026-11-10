@@ -20,9 +20,6 @@
   "rules": {
     "signatureModule": "mod_bounce_flowers",
     "difficultyOffset": 0.0,
-    "platformWeights": {
-      "normal": 1.0
-    },
     "hazards": []
   },
   "coinFactor": 1.0,

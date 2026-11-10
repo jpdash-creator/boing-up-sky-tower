@@ -177,8 +177,6 @@ namespace FluffyClimbers.Tests
             Assert.AreEqual("Reach floor 60", RunSession.DescribeGoal(s.Spec));
             Assert.IsNull(RunSession.GoalRule(s.Spec));
             Assert.AreEqual("Don't touch the walls.", RunSession.GoalRule(new RunSession(repo, new SimConfig(), "lvl_001_10").Spec));
-            Assert.AreEqual("Clear the level", RunSession.DescribeStar(s.Spec.Stars[0]));
-            Assert.AreEqual("Do not revive", RunSession.DescribeStar(s.Spec.Stars[2]));
         }
 
         [Test]

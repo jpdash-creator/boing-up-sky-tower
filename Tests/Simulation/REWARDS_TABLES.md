@@ -7,11 +7,11 @@ Generated from `RegionGoalTable` (Assets/_Game/Economy/RegionGoals.cs). GE = gem
 | Region | Goals | Gems core | Gems endless | Gems total | Coins core | Coins endless | PU core | PU endless | Hero | GE core | GE total |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | 49 | 74 | 23 | 110 | 4100 | 7300 | 2 | 4 | 1 | 450 | 1185 |
-| 2 | 49 | 74 | 23 | 110 | 4430 | 7890 | 2 | 4 | 1 | 467 | 1233 |
-| 3 | 49 | 74 | 23 | 110 | 4730 | 8480 | 2 | 4 | 1 | 482 | 1280 |
-| 4 | 49 | 74 | 23 | 110 | 5110 | 9040 | 2 | 4 | 1 | 501 | 1330 |
-| 5 | 49 | 74 | 23 | 110 | 5410 | 9630 | 2 | 4 | 1 | 516 | 1376 |
-| **1-5 total** | 245 | 370 | 180 | 550 | 23780 | 45820 | 10 | 25 | 5 | 2416 | 6405 |
+| 2 | 49 | 74 | 23 | 110 | 4220 | 7520 | 2 | 4 | 1 | 456 | 1203 |
+| 3 | 49 | 74 | 23 | 110 | 4350 | 7750 | 2 | 4 | 1 | 463 | 1221 |
+| 4 | 49 | 74 | 23 | 110 | 4480 | 7950 | 2 | 4 | 1 | 469 | 1239 |
+| 5 | 49 | 74 | 23 | 110 | 4590 | 8170 | 2 | 4 | 1 | 475 | 1256 |
+| **1-5 total** | 245 | 370 | 180 | 550 | 21740 | 41870 | 10 | 25 | 5 | 2314 | 6105 |
 
 ## Region 1 goals
 
@@ -71,52 +71,52 @@ Generated from `RegionGoalTable` (Assets/_Game/Economy/RegionGoals.cs). GE = gem
 
 | Id | Goal | Target | Gems | Coins | PU | Hero |
 |---|---|---|---|---|---|---|
-| g_5_stars_1 | Earn 15 stars | 15 | 0 | 260 | 0 |  |
+| g_5_stars_1 | Earn 15 stars | 15 | 0 | 220 | 0 |  |
 | g_5_stars_2 | Earn 30 stars | 30 | 3 | 0 | 0 |  |
-| g_5_stars_3 | Earn 45 stars | 45 | 0 | 530 | 0 |  |
+| g_5_stars_3 | Earn 45 stars | 45 | 0 | 450 | 0 |  |
 | g_5_stars_4 | Earn 60 stars | 60 | 4 | 0 | 0 |  |
 | g_5_stars_5 | Earn 75 stars | 75 | 6 | 0 | 1 | Common hero |
-| g_5_levels_1 | Clear 5 levels | 5 | 0 | 200 | 0 |  |
+| g_5_levels_1 | Clear 5 levels | 5 | 0 | 170 | 0 |  |
 | g_5_levels_2 | Clear 10 levels | 10 | 2 | 0 | 0 | Common hero |
-| g_5_levels_3 | Clear 15 levels | 15 | 0 | 400 | 0 | Common hero |
+| g_5_levels_3 | Clear 15 levels | 15 | 0 | 340 | 0 | Common hero |
 | g_5_levels_4 | Clear 20 levels | 20 | 4 | 0 | 0 | Common hero |
-| g_5_levels_5 | Clear all 25 levels | 25 | 8 | 660 | 0 | Common hero |
-| g_5_stars3_1 | Get 3 stars on 5 levels | 5 | 0 | 260 | 0 |  |
+| g_5_levels_5 | Clear all 25 levels | 25 | 8 | 560 | 0 | Common hero |
+| g_5_stars3_1 | Get 3 stars on 5 levels | 5 | 0 | 220 | 0 |  |
 | g_5_stars3_2 | Get 3 stars on 13 levels | 13 | 4 | 0 | 0 |  |
-| g_5_stars3_3 | Get 3 stars on 25 levels | 25 | 8 | 400 | 0 |  |
-| g_5_jumps_1 | Make 880 jumps | 880 | 0 | 200 | 0 |  |
-| g_5_jumps_2 | Make 2600 jumps | 2600 | 2 | 260 | 0 |  |
+| g_5_stars3_3 | Get 3 stars on 25 levels | 25 | 8 | 340 | 0 |  |
+| g_5_jumps_1 | Make 880 jumps | 880 | 0 | 170 | 0 |  |
+| g_5_jumps_2 | Make 2600 jumps | 2600 | 2 | 220 | 0 |  |
 | g_5_jumps_3 | Make 6600 jumps | 6600 | 4 | 0 | 0 |  |
-| g_5_combos_1 | Make 20 combos | 20 | 0 | 200 | 0 |  |
-| g_5_combos_2 | Make 90 combos | 90 | 2 | 260 | 0 |  |
+| g_5_combos_1 | Make 20 combos | 20 | 0 | 170 | 0 |  |
+| g_5_combos_2 | Make 90 combos | 90 | 2 | 220 | 0 |  |
 | g_5_combos_3 | Make 220 combos | 220 | 4 | 0 | 0 |  |
-| g_5_time_1 | Play 35 minutes | 35 | 0 | 200 | 0 |  |
-| g_5_time_2 | Play 100 minutes | 100 | 2 | 260 | 0 |  |
+| g_5_time_1 | Play 35 minutes | 35 | 0 | 170 | 0 |  |
+| g_5_time_2 | Play 100 minutes | 100 | 2 | 220 | 0 |  |
 | g_5_time_3 | Play 260 minutes | 260 | 4 | 0 | 0 |  |
-| g_5_coins_1 | Earn 2200 coins | 2200 | 0 | 130 | 0 |  |
-| g_5_coins_2 | Earn 7700 coins | 7700 | 1 | 200 | 0 |  |
+| g_5_coins_1 | Earn 2200 coins | 2200 | 0 | 110 | 0 |  |
+| g_5_coins_2 | Earn 7700 coins | 7700 | 1 | 170 | 0 |  |
 | g_5_coins_3 | Earn 17600 coins | 17600 | 3 | 0 | 0 |  |
-| g_5_powerups_1 | Use 5 power-ups | 5 | 0 | 200 | 0 |  |
+| g_5_powerups_1 | Use 5 power-ups | 5 | 0 | 170 | 0 |  |
 | g_5_powerups_2 | Use 17 power-ups | 17 | 2 | 0 | 0 |  |
-| g_5_powerups_3 | Use 45 power-ups | 45 | 0 | 400 | 1 |  |
-| g_5_hard_1 | Clear a hard level | 1 | 0 | 260 | 0 |  |
+| g_5_powerups_3 | Use 45 power-ups | 45 | 0 | 340 | 1 |  |
+| g_5_hard_1 | Clear a hard level | 1 | 0 | 220 | 0 |  |
 | g_5_hard_2 | Clear 3 hard levels | 3 | 2 | 0 | 0 |  |
 | g_5_hard_3 | Clear 6 hard levels | 6 | 4 | 0 | 0 |  |
-| g_5_nowall_1 | Clear the no-wall level | 1 | 2 | 130 | 0 |  |
+| g_5_nowall_1 | Clear the no-wall level | 1 | 2 | 110 | 0 |  |
 | g_5_nowall_2 | Clear the no-wall level 3 times | 3 | 3 | 0 | 0 |  |
-| g_5_gold_1 | Gold medals on 5 levels | 5 | 0 | 260 | 0 |  |
+| g_5_gold_1 | Gold medals on 5 levels | 5 | 0 | 220 | 0 |  |
 | g_5_gold_2 | Gold medals on 10 levels | 10 | 3 | 0 | 0 |  |
-| g_5_gold_3 | Gold medals on 15 levels | 15 | 0 | 530 | 0 |  |
+| g_5_gold_3 | Gold medals on 15 levels | 15 | 0 | 450 | 0 |  |
 | g_5_gold_4 | Gold medals on 20 levels | 20 | 4 | 0 | 0 |  |
 | g_5_gold_5 | Gold medals on 25 levels | 25 | 6 | 0 | 1 | Common hero |
-| g_5_endless_1 | Reach floor 100 in Endless | 100 | 1 | 130 | 0 |  |
-| g_5_endless_2 | Reach floor 200 in Endless | 200 | 1 | 200 | 0 |  |
-| g_5_endless_3 | Reach floor 500 in Endless | 500 | 2 | 330 | 0 |  |
-| g_5_endless_4 | Reach floor 1000 in Endless | 1000 | 2 | 460 | 0 |  |
-| g_5_endless_5 | Reach floor 1500 in Endless | 1500 | 2 | 590 | 1 |  |
-| g_5_endless_6 | Reach floor 2000 in Endless | 2000 | 2 | 730 | 0 |  |
-| g_5_endless_7 | Reach floor 3000 in Endless | 3000 | 2 | 920 | 0 |  |
-| g_5_endless_8 | Reach floor 4000 in Endless | 4000 | 2 | 1120 | 0 |  |
-| g_5_endless_9 | Reach floor 5000 in Endless | 5000 | 2 | 1320 | 1 |  |
-| g_5_endless_10 | Reach floor 7500 in Endless | 7500 | 3 | 1720 | 0 |  |
-| g_5_endless_11 | Reach floor 10000 in Endless | 10000 | 4 | 2110 | 2 |  |
+| g_5_endless_1 | Reach floor 100 in Endless | 100 | 1 | 110 | 0 |  |
+| g_5_endless_2 | Reach floor 200 in Endless | 200 | 1 | 170 | 0 |  |
+| g_5_endless_3 | Reach floor 500 in Endless | 500 | 2 | 280 | 0 |  |
+| g_5_endless_4 | Reach floor 1000 in Endless | 1000 | 2 | 390 | 0 |  |
+| g_5_endless_5 | Reach floor 1500 in Endless | 1500 | 2 | 500 | 1 |  |
+| g_5_endless_6 | Reach floor 2000 in Endless | 2000 | 2 | 620 | 0 |  |
+| g_5_endless_7 | Reach floor 3000 in Endless | 3000 | 2 | 780 | 0 |  |
+| g_5_endless_8 | Reach floor 4000 in Endless | 4000 | 2 | 950 | 0 |  |
+| g_5_endless_9 | Reach floor 5000 in Endless | 5000 | 2 | 1120 | 1 |  |
+| g_5_endless_10 | Reach floor 7500 in Endless | 7500 | 3 | 1460 | 0 |  |
+| g_5_endless_11 | Reach floor 10000 in Endless | 10000 | 4 | 1790 | 2 |  |

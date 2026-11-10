@@ -44,7 +44,7 @@ Working copy of the owner's list with the owner's answers applied. Builds on doc
 ## General: two feature flags (dev builds only, switches in Settings)
 - GAME_JUMP_TEST: OFF = levels and regions follow REAL progress while home, shop, chests, characters stay on. ON = every level and region open.
 - SYSTEM_TEST: OFF = fully real (production behaviour: no test gem buys, real unlocks and ownership). ON = everything open (levels, regions, all characters, test purchases, dev tools). SYSTEM_TEST on wins over GAME_JUMP_TEST.
-- Defaults in the owner's test build: GAME_JUMP_TEST OFF, SYSTEM_TEST ON (owner's answer). Release builds ignore both flags and are always real.
+- Defaults in the owner's test build: GAME_JUMP_TEST OFF, SYSTEM_TEST OFF (changed 2026-11-10: a fresh install reads PROD READY; the owner turns it on in Admin). Release builds ignore both flags and are always real.
 - Characters: Momo is open by default. The Sporeling is HIDDEN until region 2 is unlocked, then shown unlocked (one character per region added after this test).
 - Shop and Treasure Chests stay working in every state.
 

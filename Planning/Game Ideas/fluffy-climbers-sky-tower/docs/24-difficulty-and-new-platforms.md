@@ -4,7 +4,7 @@
 
 Owner decisions so far (Q and A):
 - Levels 1 and 2 of EVERY region stay gentle; from level 3 to 15 the game is clearly harder, in every region.
-- Region 1 (Meadow Springs) gets 7 NEW special platforms, ALL available from level 3, mixed freely. Today region 1 only has Normal plus the signature bouncy flowers (and the generic Moving/Crumble/Vanishing/Sticky/Slippery/Bounce kinds the builder can mix).
+- Region 1 (Meadow Springs) gets 7 NEW special platforms, ALL available from level 3, mixed freely. Region 1 has Normal plus the signature bouncy flowers and, since owner decision 2026-11-10, two gentle generic kinds like regions 2 to 5 (`RegionPlatformSets.GenericsFor`): the meadow log Crumble (forgiving, it holds for a moment) and the drifting Moving platform (slow, readable). Vanishing, Slippery and Sticky stay out of the first region; neither generic is a hazard, so level 1 keeps them (no hazard types in the tutorial).
 - Platform art is made with OpenArt, region by region; region 1 first, implement, test; then region 2, and so on one by one (each region gets its own questions).
 - The same difficulty and randomness also apply to Endless mode.
 - The speed-up percentage shown on screen must match the real speed (stream S1 verifies it).
@@ -23,7 +23,7 @@ Owner decision 2026-11-01: platform behaviour is discovered by the player; no co
 | 6 | Ladybug Rider | Moves along a short horizontal path and moves 1.5x faster while you stand on it | A ladybug riding on it, speed lines when boosted |
 | 7 | Seesaw Leaf | Tilts toward the side you land on and slides you toward that edge | The leaf visibly tilts, small slope arrows |
 
-Rules for the generator: levels 1 and 2 of region 1 use none of them. From level 3 the share of rows with a new special rises with the level (about 15 percent at level 3 to about 55 percent at level 15, each row picks one of the 7 or the flower), gaps and speed rise per the difficulty curve; no two hazard-type platforms (Thorn Bush, Snap Daisy) in adjacent rows; the last 3 rows before the goal and the 2 rows around the hidden gem avoid launch and hazard kinds (existing rules). The bot must solve every random layout of levels 3 to 15 (20 seeds each plus more).
+Rules for the generator: levels 1 and 2 of region 1 use none of them. From level 3 the share of rows with a new special rises with the level (about 15 percent at level 3 to about 55 percent at level 15, each row picks one of the 7, the flower, Crumble or Moving), gaps and speed rise per the difficulty curve; no two hazard-type platforms (Thorn Bush, Snap Daisy) in adjacent rows; the last 3 rows before the goal and the 2 rows around the hidden gem avoid launch and hazard kinds (existing rules). The bot must solve every random layout of levels 3 to 15 (20 seeds each plus more).
 
 ## Difficulty curve (all regions, levels 3 to 15)
 - Levels 1, 2: as today.

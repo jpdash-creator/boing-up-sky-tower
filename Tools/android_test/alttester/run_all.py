@@ -4,9 +4,9 @@
 
 Prerequisites (README.md): AltTester Desktop is running on the PC, the phone is connected through adb.
 --install  installs E:/Unity/builds/fluffyclimbers_alttester.apk first.  --no-launch  uses the game that is already running.
---long  also runs the long tests (region 1 autopilot, up to 45 min); --only region1 runs just that one.
+--long  also runs the long tests (all-regions autopilot, TEST_REGIONS default 1-5, about 45 min per region); --only all_regions runs just that one.
 --skip-if-offline  prints SKIP and exits 0 when AltTester Desktop / the alttester build cannot be reached (instead of FAIL).
---levels 1-15 --region 1  runs the LEVEL SWEEP instead of the tests above (level_sweep.py: the in-game Autopilot plays every level, checklist per level,
+--levels 1-25 --regions 1-5 (both default; --level-count N, --region N for one)  runs the LEVEL SWEEP instead of the tests above (level_sweep.py: the in-game Autopilot plays every level, checklist per level,
 results in E:/Unity/logs/alttester_levels.md/.json). It takes its own options (--skill, --speed, --time-limit, --fresh, --install, --no-launch ...), see README.md."""
 import os
 import sys
@@ -37,7 +37,7 @@ def main():
         g.find("Play", 40)                  # the menu is up
     except TestFailure as e:
         if "--skip-if-offline" in sys.argv:
-            print("SKIP all  AltTester not reachable (%s). For region 1 without AltTester use Tools/android_test/autoplay_r1.py" % str(e)[:120])
+            print("SKIP all  AltTester not reachable (%s). Without AltTester use Tools/android_test/autoplay_r1.py (all 5 regions by default)" % str(e)[:120])
             return 0
         print("FAIL connect  %s" % e)
         print("RESULT: FAILED")
@@ -47,7 +47,7 @@ def main():
         if only and only not in fn.__name__:
             continue
         if getattr(fn, "long", False) and not only and "--long" not in sys.argv:
-            print("SKIP %-34s long test, use --long or --only %s" % (fn.__name__, fn.__name__[5:13]))
+            print("SKIP %-34s long test, use --long or --only %s" % (fn.__name__, fn.__name__[5:]))
             skipped += 1
             continue
         t = time.time()

@@ -68,7 +68,7 @@ Assumptions used everywhere (change them here and the tables follow):
 | Region skip | 100 + (n-2) x 300/18 | **100 / 116 / 133 / 150 gems** for regions 2 to 5 | `regions/*.json` |
 | Chests | Coin / Gear / Power-up kinds in 4 tiers, earned chests | **Iron and Gold only**, gems only, 100 and 300 (x10 = 1,000 and 3,000); **no earned chests** | `Chests.cs` |
 | Power-ups | 11 types, loadout of 3, carry caps, stock cap 99 | **7 implemented** (Flight, Rocket, Double Jump, Wall Stick, Shield, Magnet, Slow Time); Spring Boots, Coin Doubler, Star Seeker, Safety Net exist as hidden rows; **no stock cap, no carry cap; a tap while active adds the full duration** | `PowerUpCatalog.cs` |
-| Power-up prices | 800 to 2,400 coins, 8 to 30 gems | **1,000 coins / 50 gems and 1,500 coins / 75 gems** | `powerups.json` |
+| Power-up prices | 800 to 2,400 coins, 8 to 30 gems | **1,000 coins and 1,500 coins** (Shop sells power-ups and hero cards in COINS ONLY since 2026-11-10; gem column kept as data: 50 / 75 gems = 1 gem per 20 coins; hero cards 3,000 / 6,000 / 14,000 / 30,000 coins = old gem prices x 20) | `powerups.json`, `HeroPurchase.Prices` |
 | VIP | 6 tiers with jump, gem, coin percent | **Subscription**: Weekly $1.49 and Monthly $4.99, no tiers, no stat bonuses; VIP left the shop | `subscriptions.json` |
 | Bundles | starter pack, daily deal, limited offers | **1,000 generated bundles priced in gems (200 to 500)**, a Refresh and a 30-percent-off timer bundle; starter pack and money bundles not built | `bundles.json` |
 | Rewards | 7-day login loop, quests, weekly board | **Rewards screen with Main, Daily, Weekly tabs** (section 11 to 13); no chests in rewards | `rewards.json` |
@@ -145,7 +145,7 @@ Dollar columns = the gem price of the pack at the three gem rates. The coin pack
 |---|---|
 | Gem value per pickup | 1 / 2 / 5 / 10 at 70 / 22 / 7 / 1 percent (average 1.59) |
 | Gem spots | 2.7 / 2.7 / 2.9 / 3.0 / 3.2 percent of rows by difficulty (Relaxed to Insane) |
-| Milestone gems (first clear) | L5, L10: a roll of 1 to 3 gems (L10 guarantees 1); L15: 5 guaranteed + 2 bonus (double gem); L8: hidden gem up to 2 |
+| Milestone gems (first clear) | L5, L10: a roll of 1 to 3 gems (L10 guarantees 1); L15: 5 guaranteed + 2 bonus (double gem); hidden gem up to 2 on L8 AND on the FindHiddenGem level (L15), both can hold the double gem (owner 2026-11-10, `GemLevels`); main-goal coin rewards use the same region coin factor as the level payout (100 / 103 / 106 / 109 / 112 percent) |
 | Failed run | gems lost; kept on revive |
 | Replay of a 3-star level | no gems |
 | Endless | no gems yet (thresholds 250/500/1,000 floors are specified but not built) |

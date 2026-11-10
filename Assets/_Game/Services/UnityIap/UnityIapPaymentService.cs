@@ -52,7 +52,11 @@ namespace FluffyClimbers.Monetization
                 store.OnPurchaseFailed += OnFailed;
                 store.OnPurchaseDeferred += OnDeferred;
                 store.OnPurchasesFetched += OnFetched;
-                store.OnPurchasesFetchFailed += f => Debug.LogWarning("[IAP] purchases fetch failed: " + (f != null ? f.message : ""));
+                store.OnPurchasesFetchFailed += f =>
+                {
+                    Debug.LogWarning("[IAP] purchases fetch failed: " + (f != null ? f.message : ""));
+                    FinishRestore(false, f != null ? f.message : "purchases fetch failed");
+                };
                 await store.Connect();
             }
             catch (Exception e)
@@ -199,6 +203,12 @@ namespace FluffyClimbers.Monetization
 
         void OnFetched(Orders orders)
         {
+            try { ReportOwned(orders); }
+            finally { FinishRestore(true, null); }
+        }
+
+        void ReportOwned(Orders orders)
+        {
             if (orders == null || ActiveSubscriptionFound == null || orders.ConfirmedOrders == null) return;
             for (int i = 0; i < orders.ConfirmedOrders.Count; i++)
             {
@@ -232,12 +242,32 @@ namespace FluffyClimbers.Monetization
             if (cb != null) cb(new PurchaseResult { Status = PurchaseStatus.Pending, ProductId = id });
         }
 
-        public void Restore(Action<bool, string> done)
+        Action<bool, string> restoreDone;
+
+        void FinishRestore(bool ok, string msg)
+        {
+            Action<bool, string> d = restoreDone;
+            restoreDone = null;
+            if (d != null) d(ok, msg);
+        }
+
+        /// <summary>
+        /// Restore (Google Play): the plugin's RestoreTransactions does nothing on Android (it only calls back), so this asks the store for the account's owned purchases
+        /// with FetchPurchases. Active subscriptions arrive through ActiveSubscriptionFound, unconfirmed orders through RecoveredPurchase; done runs once after the fetch
+        /// (or after 15 seconds without an answer). Consumables that were already confirmed are not owned any more and are never returned.
+        /// </summary>
+        public async void Restore(Action<bool, string> done)
         {
             if (store == null || !productsReady) { if (done != null) done(false, "store not ready"); return; }
-            // Google Play: RestoreTransactions re-reads the owned purchases; pending ones arrive through OnPending/RecoveredPurchase, active subscriptions through ActiveSubscriptionFound.
-            try { store.RestoreTransactions((ok, msg) => { if (done != null) done(ok, msg); }); }
-            catch (Exception e) { if (done != null) done(false, e.Message); }
+            if (restoreDone != null) { if (done != null) done(false, "restore already running"); return; }
+            restoreDone = done;
+            try
+            {
+                store.FetchPurchases();
+                await System.Threading.Tasks.Task.Delay(15000);
+                FinishRestore(false, "store did not answer");   // no-op when the fetch already finished
+            }
+            catch (Exception e) { FinishRestore(false, e.Message); }
         }
     }
 }

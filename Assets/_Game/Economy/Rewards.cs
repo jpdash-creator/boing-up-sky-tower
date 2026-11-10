@@ -134,7 +134,7 @@ namespace FluffyClimbers.Economy
                 result.RewardGems = CoinPayoutRules.MilestoneGems(level.Seed, g.Chance, g.Min, g.Max, g.FirstClearGuaranteed ?? 0);
             }
             if (firstClear && level.LevelClass == LevelDef.ClassHighlyComplex) result.RewardGems += EconomyRules.Level15DoubleGemBonus;
-            if (firstClear && level.Index == 8) result.HiddenGemReward = Math.Min(Math.Max(run.HiddenGems, 0), EconomyRules.Level8HiddenGemMax);
+            if (firstClear && GemLevels.IsGemLevel(level.Index, level.Goal == null ? null : level.Goal.Type)) result.HiddenGemReward = Math.Min(Math.Max(run.HiddenGems, 0), EconomyRules.Level8HiddenGemMax);
             return result;
         }
     }

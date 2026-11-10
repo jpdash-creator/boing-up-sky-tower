@@ -117,8 +117,6 @@ def levels_in_region(n):
 # Owner Bug List 8 item 3 (2026-11-09): level 20 has 120 rows, the time scales 75 s per 90 rows -> 100 s per 120 rows.
 SPEEDRUN_VALUE = 120
 SPEEDRUN_TIME_MIN, SPEEDRUN_TIME_MAX = 60, 120
-PLAYABLE_REGIONS = 5
-COIN_STAR_MIN, COIN_STAR_MAX = 15, 500
 
 
 def validate():
@@ -205,17 +203,6 @@ def validate():
         if lid not in listed:
             errors.append("%s: level not referenced by any region" % lid)
 
-    # --- coin-star table (regions 1-5, generated from the bot by Tests/Simulation CoinStarTargetTests) ---
-    table_path = os.path.join(CONTENT, "config", "coin_star_targets.json")
-    coin_table = {}
-    if os.path.exists(table_path):
-        coin_table = load_abs(table_path).get("levels", {})
-    else:
-        errors.append("config/coin_star_targets.json missing (run the Simulation tests with UPDATE_COIN_TARGETS=1)")
-    for lid in sorted(levels):
-        n = int(lid.split("_")[1])
-        if n <= PLAYABLE_REGIONS and lid not in coin_table:
-            errors.append("%s: no entry in config/coin_star_targets.json" % lid)
     speedrun_times = set()
 
     # --- level rules (doc 08 sections 6-7) ---
@@ -244,24 +231,10 @@ def validate():
             if abs(lv["difficulty"] - D_BY_LEVEL[i]) > 1e-9:
                 errors.append("%s: base difficulty should be %s" % (lid, D_BY_LEVEL[i]))
             specials = (5, 10)
-        if i in specials and lv["rewards"]["coinPayout"] != 300:
-            errors.append("%s: special level payout must be 300" % lid)
-        if i == top and lv["rewards"]["coinPayout"] != 900:
-            errors.append("%s: finale payout must be 900" % lid)
-        if i not in specials and i != top and not 60 <= lv["rewards"]["coinPayout"] <= 140:
-            errors.append("%s: normal payout must be 60-140" % lid)
         if lv["rewards"]["gems"]["min"] > lv["rewards"]["gems"]["max"]:
             errors.append("%s: gems min > max" % lid)
         if i == top and lv["rewards"]["gems"].get("firstClearGuaranteed") != 5:
             errors.append("%s: the last level must guarantee 5 gems on first clear" % lid)
-        coin_stars = [st for st in lv["stars"] if st["type"] == "coins"]
-        if len(coin_stars) != 1 or lv["stars"][1]["type"] != "coins":
-            errors.append("%s: star 2 must be a coins star" % lid)
-        else:
-            target = coin_stars[0].get("value", 0)
-            if not COIN_STAR_MIN <= target <= COIN_STAR_MAX:
-                errors.append("%s: coin star %s outside %d-%d" % (lid, target, COIN_STAR_MIN, COIN_STAR_MAX))
-            # Economy v2: the coin star is retired (stars are collectible pickups); only the range is kept for the schema.
         if lv["goal"]["type"] == "speedrun":
             g = lv["goal"]
             speedrun_times.add(g.get("timeSec"))

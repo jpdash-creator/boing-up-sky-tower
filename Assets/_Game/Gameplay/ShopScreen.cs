@@ -13,7 +13,7 @@ namespace FluffyClimbers.Gameplay
     /// The in-game shop (docs/14, docs/22, docs/23; restyled by docs/26 section 1 to the reference screenshots). Four tabs in the bottom bar (Bug List 1 section 4):
     /// Bundles | Crown | Character / Power-ups | Gems / Coins, all built inside <see cref="ShopChrome"/> (Momo shopkeeper scene on a wood background, yellow banner, framed cards).
     /// Bundles is built by BundlesScreen; Crown is ONE scrollable page, Subscription (<see cref="SubscriptionScreen"/>) then a Chests banner and
-    /// (<see cref="TreasureChestScreen"/>); Character / Power-ups is one page: a Heroes "coming soon" card (nothing to buy), then the Power-ups cards (a coins and a gems
+    /// (<see cref="TreasureChestScreen"/>); Character / Power-ups is one page: a Heroes "coming soon" card (nothing to buy), then the Power-ups cards (one coin
     /// Buy button each); Gems / Coins is one page: gem packs (TEST purchases in development builds, nothing in release builds because there is no billing yet), then
     /// a Coins banner and the coin packs for gems (real). Characters stay on the Heroes screen. Built in code under the safe area. Menu screen only: it has no per-frame code.
     /// The Crown and Character pages live in ShopScreen.Subscription.cs. There is no ticket / Rewards / Subscription button in the header any more.
@@ -59,7 +59,7 @@ namespace FluffyClimbers.Gameplay
         // Layout (reference pixels). Cards are anchored by fractions of the content width.
         const float CardGap = 14f, ColGap = 16f, ButtonH = 126f;
         // Power-up card (gold like the coin and gem cards): a face with the (i), the icon, the name and the count, then a dark strip with the two price buttons.
-        const float PowerStripH = 20f + ButtonH + 10f + ButtonH + 12f;
+        const float PowerStripH = 20f + ButtonH + 12f;   // one coin button (power-ups are coins only, owner Bug List Shop 2a)
         static float PowerFaceH { get { return 262f + (Mathf.Max(1f, UiKit.TextScale) - 1f) * 200f; } }
         static float PowerCardH { get { return PowerFaceH + PowerStripH; } }
 
@@ -296,9 +296,10 @@ namespace FluffyClimbers.Gameplay
             own.rectTransform.offsetMin = new Vector2(6f, -(130f + nameH * 2f));
             own.rectTransform.offsetMax = new Vector2(-6f, -(130f + nameH));
 
-            BottomButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins", () => TapBuyPowerUp(def, PowerUpCurrency.Coins), 20f, 22f);
-            if (def.GemPrice > 0)
-                BottomButton(crt, "BuyGems", 0, art != null ? art.GemIcon : null, Num(def.GemPrice), "Buy " + def.Name + " for " + Num(def.GemPrice) + " gems", () => TapBuyPowerUp(def, PowerUpCurrency.Gems), 20f + ButtonH + 10f, 22f);
+            // Coins only (no gem button). Too few coins: the button is dimmed; a tap still explains it and offers the coin packs.
+            bool afford = progress.Coins >= def.CoinPrice;
+            Button buy = BottomButton(crt, "BuyCoins", 1, art != null ? art.CoinIcon : null, Num(def.CoinPrice), "Buy " + def.Name + " for " + Num(def.CoinPrice) + " coins" + (afford ? "" : ", not enough coins"), () => TapBuyPowerUp(def), 20f, 22f);
+            DimIf(buy, !afford);
         }
 
         /// <summary>The (i) info button at the top LEFT of a power-up card: a 48 dp target with a small circled i drawn at its top left corner.</summary>
@@ -350,39 +351,50 @@ namespace FluffyClimbers.Gameplay
             RebuildKeepScroll();
         }
 
-        /// <summary>Tap on a Buy button: too few coins or gems explains it and points to the right place; a gem spend above 50 asks first.</summary>
-        public void TapBuyPowerUp(PowerUpDef def, PowerUpCurrency currency)
+        /// <summary>Dims a price button that cannot be afforded (still tappable: the tap explains why). Alpha 0.5 through a CanvasGroup.</summary>
+        static void DimIf(Button b, bool dim)
         {
-            if (def == null) return;
-            int price = PowerUpCatalog.PriceFor(def, currency, 1);
-            bool coins = currency == PowerUpCurrency.Coins;
-            string unit = coins ? "coins" : "gems";
-            int have = coins ? progress.Coins : progress.Gems;
-            if (have < price)
-            {
-                host.OpenPopup("Not enough " + unit, "You need " + Num(price) + " " + unit + " and have " + Num(have) + ".\n" + (coins ? "Earn coins in levels or buy them with gems." : "Get more gems first."), 1180f);
-                host.PopupButton(coins ? "Get coins" : "Get gems", true, 230f, () =>
-                {
-                    host.ClosePopup();
-                    SelectTab(TabGems, coins ? CoinsSection : GemsSection);
-                });
-                host.PopupButton("Close", false, 60f, host.ClosePopup);
-                return;
-            }
-            if (!coins && price > ConfirmGemThreshold)
-            {
-                host.OpenPopup("Confirm purchase", "Buy " + def.Name + " for " + Num(price) + " gems?\nYou have " + Num(progress.Gems) + " gems.", 1180f);
-                host.PopupButton("Buy for " + Num(price) + " gems", true, 230f, () => CompletePowerUpPurchase(def, currency));
-                host.PopupButton("Cancel", false, 60f, host.ClosePopup);
-                return;
-            }
-            CompletePowerUpPurchase(def, currency);
+            if (b == null || !dim) return;
+            CanvasGroup g = b.GetComponent<CanvasGroup>();
+            if (g == null) g = b.gameObject.AddComponent<CanvasGroup>();
+            g.alpha = 0.5f;
         }
 
-        void CompletePowerUpPurchase(PowerUpDef def, PowerUpCurrency currency)
+        /// <summary>Tap on a power-up Buy button (coins only): too few coins explains it with the amounts and offers the coin packs; otherwise buys at once.</summary>
+        public void TapBuyPowerUp(PowerUpDef def)
+        {
+            if (def == null) return;
+            int price = PowerUpCatalog.PriceFor(def, PowerUpCurrency.Coins, 1);
+            if (progress.Coins < price)
+            {
+                ShowNotEnoughCoins(price);
+                return;
+            }
+            CompletePowerUpPurchase(def);
+        }
+
+        /// <summary>Kept for old callers: power-ups are priced in coins only, whatever currency is passed.</summary>
+        public void TapBuyPowerUp(PowerUpDef def, PowerUpCurrency currency)
+        {
+            TapBuyPowerUp(def);
+        }
+
+        /// <summary>The short "Not enough coins" popup of the Heroes and Power-ups sections: price and balance, a button to the coin packs, Close. Nothing is charged.</summary>
+        void ShowNotEnoughCoins(int price)
+        {
+            host.OpenPopup("Not enough coins", "You need " + Num(price) + " coins and have " + Num(progress.Coins) + ".\nEarn coins in levels or get a coin pack.", 1180f);
+            host.PopupButton("Get coins", true, 230f, () =>
+            {
+                host.ClosePopup();
+                SelectTab(TabGems, CoinsSection);
+            });
+            host.PopupButton("Close", false, 60f, host.ClosePopup);
+        }
+
+        void CompletePowerUpPurchase(PowerUpDef def)
         {
             host.ClosePopup();
-            PowerUpBuyResult result = progress.TryBuyPowerUp(def.Id, currency, 1);
+            PowerUpBuyResult result = progress.TryBuyPowerUp(def.Id, PowerUpCurrency.Coins, 1);
             switch (result)
             {
                 case PowerUpBuyResult.Ok:
@@ -391,9 +403,6 @@ namespace FluffyClimbers.Gameplay
                     break;
                 case PowerUpBuyResult.NotEnoughCoins:
                     Info("Not enough coins", "You do not have enough coins for " + def.Name + ".");
-                    break;
-                case PowerUpBuyResult.NotEnoughGems:
-                    Info("Not enough gems", "You do not have enough gems for " + def.Name + ".");
                     break;
                 default:
                     Info("Not available", def.Name + " cannot be bought right now.");

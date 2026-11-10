@@ -23,13 +23,17 @@ namespace FluffyClimbers.Simulation.Tests
         private readonly ITestOutputHelper output;
         public EndlessCycleTests(ITestOutputHelper output) { this.output = output; }
 
-        private static readonly int[] OffsetTenThousandths = { 0, 86, 172, 259, 345 };
-        private static readonly SignatureKind[] Signatures =
+        private static readonly Fx[] RegionOffsets = new Fx[5];
+        private static readonly SignatureKind[] Signatures = new SignatureKind[5];
+        static EndlessCycleTests()
         {
-            SignatureKind.BounceFlowers, SignatureKind.BounceCaps, SignatureKind.DriftingPlatforms, SignatureKind.StickyGum, SignatureKind.SwingingGongs
-        };
+            // Offsets and signatures come from Content/regions (owner 2026-11-10: no hardcoded region arrays).
+            string root = ContentLoader.FindRoot();
+            if (root == null) return;
+            for (int r = 0; r < 5; r++) ContentLoader.LoadRegionRules(root, r + 1, out RegionOffsets[r], out Signatures[r]);
+        }
 
-        private static Fx OffsetOf(int region0) { return Fx.FromRatio(OffsetTenThousandths[region0], 10000); }
+        private static Fx OffsetOf(int region0) { return RegionOffsets[region0]; }
 
         private static LevelSpec SpecFor(int region0, int seed)
         {

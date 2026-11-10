@@ -13,7 +13,7 @@ namespace FluffyClimbers.Tests
             Assert.AreEqual(2, p.AdsLeft);
             Assert.IsTrue(p.AdAvailable);
             Assert.AreEqual(30, p.NextAdSeconds);
-            Assert.AreEqual("AD 30s", p.AdLabel);
+            Assert.AreEqual("Watch Ad", p.AdLabel);
             Assert.AreEqual("revive_30", p.NextAdPlacement);
             Assert.AreEqual(5, p.NextGemCost);
         }
@@ -25,7 +25,7 @@ namespace FluffyClimbers.Tests
             p.RecordAd();
             Assert.AreEqual(1, p.AdsLeft);
             Assert.AreEqual(60, p.NextAdSeconds);
-            Assert.AreEqual("AD 1m", p.AdLabel);
+            Assert.AreEqual("Watch Ad", p.AdLabel, "no ad length in the label");
             Assert.AreEqual("revive_60", p.NextAdPlacement);
             Assert.AreEqual(5, p.NextGemCost);
         }

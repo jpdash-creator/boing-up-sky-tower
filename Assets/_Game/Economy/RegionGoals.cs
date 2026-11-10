@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FluffyClimbers.Simulation;
 
 namespace FluffyClimbers.Economy
 {
@@ -64,8 +65,8 @@ namespace FluffyClimbers.Economy
         public static readonly int[] TargetPercent = { 100, 125, 150, 180, 220 };
         /// <summary>Power-ups used scale gently (they cost the player money): percent of the base target.</summary>
         public static readonly int[] PowerUpTargetPercent = { 100, 100, 125, 150, 175 };
-        /// <summary>Coin rewards grow a little with the region: percent of the base coin reward for regions 1..5 (gems and power-ups do not scale).</summary>
-        public static readonly int[] CoinPercent = { 100, 108, 116, 124, 132 };
+        /// <summary>Coin rewards grow a little with the region (gems and power-ups do not scale). Owner 2026-11-10: the SAME factor as the level payout (region coinFactor 1.00 to 1.12), one table in <see cref="CoinPayoutRules.RegionFactorPercent"/>.</summary>
+        public static int[] CoinPercent { get { return CoinPayoutRules.RegionFactorPercent; } }
 
         /// <summary>One tier row: base target (before region scaling) and the reward.</summary>
         public struct Tier

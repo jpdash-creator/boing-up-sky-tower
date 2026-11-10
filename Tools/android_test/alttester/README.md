@@ -58,12 +58,12 @@ If the driver cannot connect: Desktop not running, `adb reverse --list` empty, t
 
 | Test | Covers |
 |---|---|
-| `test_level_grid_has_15_nodes` | Menu, map, region 1: the objects `Level1` to `Level15` exist and there is no `Level16` |
+| `test_level_grid_has_all_nodes` | Menu, map, every region of `TEST_REGIONS` (default 1-5): the objects `Level1` to `Level<TEST_LEVEL_COUNT>` (default 25) exist and there is no object one past the last |
 | `test_endless_button_present` | The level screen has the `Endless` button, its label says Endless, it is on screen. SKIP when the object is missing |
 | `test_settings_toggles_persist` | Flips the five settings toggles, leaves and re-enters Settings, checks the values stuck, then restores them |
-| `test_all_levels_open_toggle` | Dev toggle 'Test: all levels open' ON: region 2 opens and its level 15 shows the level popup (`PLAY`) instead of 'Locked'. SKIP outside development builds |
+| `test_all_levels_open_toggle` | Dev toggle 'Test: all levels open' ON: region 2 opens and its last level shows the level popup (`PLAY`) instead of 'Locked'. SKIP outside development builds |
 | `test_map_scroll_to_far_region` | Swipes the world map until the highest region pin is on screen, taps it, level grid opens. SKIP if that region is locked |
-| `test_region1_all_levels_autopilot` | LONG (only with `--long` or `--only region1`, up to 45 min). Writes `autoplay.json` so the game's own Autopilot plays region 1, levels 1 to 15; AltTester only observes the Run scene (pad objects) and takes a screenshot at every death; the results come from the `BTAUTO` logcat lines. FAIL when a level is not cleared. See the next section |
+| `test_all_regions_autopilot` | LONG (only with `--long` or `--only all_regions`, about 45 min per region). Writes `autoplay.json` so the game's own Autopilot plays every region of `TEST_REGIONS` (default 1-5), levels 1 to `TEST_LEVEL_COUNT` (default 25); AltTester only observes the Run scene (pad objects) and takes a screenshot at every death; the results come from the `BTAUTO` logcat lines. FAIL when a level is not cleared. See the next section |
 | `test_menu_map_play_fail` | Menu, map, region 1, level 1, PLAY, jump taps on `PadJump`, drift until the fail overlay (`Try again`, `Level select`), back to the map |
 
 Object names come from the UI code (`MetaController.cs`, `RunHud.cs`, `ControlPad.cs`, `UiKit.AddButton`): a button's object name is the
@@ -120,10 +120,10 @@ and the `dense` flag (6 or more, the 'stacked platforms' case). At the end it wr
 2. Run the long test on its own (it is not part of the normal run):
 
    ```bash
-   python Tools/android_test/alttester/run_all.py --install --only region1
+   python Tools/android_test/alttester/run_all.py --install --only all_regions
    ```
 
-   Environment variables: `AUTOPLAY_SKILL` (0.5), `AUTOPLAY_LEVELS` (`1-15`), `AUTOPLAY_DIFFICULTY` (0), `AUTOPLAY_SEEDS` (1), `AUTOPLAY_MINUTES` (45).
+   Environment variables: `AUTOPLAY_SKILL` (0.5), `AUTOPLAY_LEVELS` (`1-<TEST_LEVEL_COUNT>`), `TEST_REGIONS` (`1-5`), `TEST_LEVEL_COUNT` (`25`), `AUTOPLAY_DIFFICULTY` (0), `AUTOPLAY_SEEDS` (1), `AUTOPLAY_MINUTES` (45).
    `--skip-if-offline` makes the script print SKIP and exit 0 when Desktop or the alttester build cannot be reached.
 3. The test writes the flag file while the menu is up (the game polls for it once a second), then observes with AltTester: the Run scene and its pad
    objects must appear; at every death it saves `E:/Unity/device_shots/alttester/autopilot_<level>_<n>_death.png`. Report: `E:/Unity/qa/autoplay_report_alttester.md`.
@@ -144,7 +144,7 @@ first that `lvl_001_01` is cleared at skill 0 (EditMode test `PerfectAutopilotCl
 
 ## Level sweep: every level of a region on the phone (stream T1)
 
-`level_sweep.py` plays levels 1 to 15 of a region through the real UI with the game's own Autopilot, checks a per-level checklist and writes a results table.
+`level_sweep.py` plays levels 1 to 25 of each region (default `--regions 1-5 --level-count 25`; `--region N` for one) through the real UI with the game's own Autopilot, checks a per-level checklist and writes a results table.
 It replaces nothing: `autoplay_r1.py` (adb only, no UI) stays the quick check of the autopilot; the sweep is the UI-level test for the restructured campaign (doc 25).
 
 ### What it does per level
@@ -169,7 +169,7 @@ time, gems and coins (taken/placed), stars, fail reason, verdict, checks.
 | Popup shows the right goal text | popup `Goal` text equals `RunSession.DescribeGoal` of the level (`LevelPreview`) |
 | Level 7 italic wall rule; no rule elsewhere | object `Rule` exists, text matches, `fontStyle` is Italic (read with `get_component_property`; "unknown" counts as ok); a rule on any other level fails |
 | Combo levels show no gem icon | no `GemBadge` child on the level circle, no `GemPill` in the run HUD, 0 gem pickups placed |
-| Levels 8 and 15 have gems | gem pickups placed > 0 |
+| Levels 8, 15 and the last level have gems (GemLevels.cs) | gem pickups placed > 0 |
 | Run goal equals popup goal | goal text and target row |
 | Run uses the selected character | `RunView.Character.Id` equals `CharacterCatalog.Selected.Id` (`--character momo` or `forestgirl` selects one first) |
 | Power-up button count | owned types at start = `PowerUpBar.ButtonCount` = number of `Power<Type>` objects on screen |
@@ -192,8 +192,8 @@ BT_ALTTESTER=1 "<Unity 6000.3.26f1 editor>/Unity.exe" -batchmode -quit -projectP
 # 2. start AltTester Desktop (leave it on port 13000)
 E:/tools/alttester_desktop/AltTesterDesktopPackageWindows__2_4_0/AltTesterDesktop__v2.4.0.exe
 # 3. install and run the sweep (leave out --install when the alttester APK is already on the phone)
-python Tools/android_test/alttester/run_all.py --levels 1-15 --region 1 --install
-#    identical: python Tools/android_test/alttester/level_sweep.py --levels 1-15 --region 1 --install
+python Tools/android_test/alttester/run_all.py --install
+#    identical: python Tools/android_test/alttester/level_sweep.py --install
 ```
 
 Useful options: `--skill 0` (perfect player: a fall then points at an unfair level), `--speed 2` (game at double speed), `--time-limit 300`, `--character forestgirl`,
@@ -203,7 +203,7 @@ The phone is picked with `ANDROID_SERIAL` (default `96355505`, the owner's phone
 Expected duration: the autopilot plays in real time. About 1.5 to 3 minutes for a 60 to 150 row level plus about 25 s of UI per level (popup, intro, restart, result):
 roughly **45 to 60 minutes for levels 1 to 15** at `--speed 1`, about 25 to 35 minutes at `--speed 2`. These are estimates; the first run gives the real figure.
 
-Resume from level N (after a crash, or to re-check fixes): `python Tools/android_test/alttester/run_all.py --levels 8-15 --region 1`. The app data is cleared at launch and
+Resume from level N (after a crash, or to re-check fixes): `python Tools/android_test/alttester/run_all.py --levels 8-25 --region 1`. The app data is cleared at launch and
 all levels are open through `SetFlags`, so any start level works. Earlier rows for levels 1 to 7 stay in the results files unless you pass `--fresh`. A single level: `--levels 7`.
 
 ### Dry run without a device

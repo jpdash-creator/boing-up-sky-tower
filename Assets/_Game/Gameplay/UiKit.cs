@@ -294,6 +294,12 @@ namespace FluffyClimbers.Gameplay
             Text t = AddText(panel, "Title", title, title.Length > 14 ? 60 : 76, Theme.Ink, TextAnchor.MiddleCenter, true);
             var tout = t.GetComponent<Outline>();
             if (tout != null) tout.enabled = false;
+            // A long title (two lines at 130 percent text) shrinks (never below 16 sp) to stay inside its 130 px box instead of running into the content below.
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
+            t.verticalOverflow = VerticalWrapMode.Truncate;
+            t.resizeTextForBestFit = true;
+            t.resizeTextMinSize = Mathf.RoundToInt(MinBodyTextPx);
+            t.resizeTextMaxSize = t.fontSize;
             // Centred on the panel (Bug List 8 item 5: it used to sit 30 left of centre). The X is 132+20 wide at the right edge, so the title is as wide as fits between the two mirrored X zones.
             float closeZone = onClose != null ? Mathf.Max(132f, MinTouchRef) + 20f + 8f : 0f;
             Place((RectTransform)t.transform, new Vector2(0.5f, 1f), new Vector2(0f, -52f), new Vector2(Mathf.Min(600f, size.x - 2f * closeZone), 130f));

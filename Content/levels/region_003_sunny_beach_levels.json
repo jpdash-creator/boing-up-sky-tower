@@ -10,20 +10,7 @@
       "type": "reachFloor",
       "value": 60
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 110
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 60,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -42,20 +29,7 @@
       "type": "reachFloor",
       "value": 75
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 175
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 65,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -74,20 +48,7 @@
       "type": "reachFloor",
       "value": 75
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 225
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 70,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -106,20 +67,7 @@
       "type": "reachFloor",
       "value": 75
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 15
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 75,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -139,20 +87,7 @@
       "value": 3,
       "count": 3
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 65
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 300,
       "gems": {
         "chance": 0.25,
         "min": 1,
@@ -171,20 +106,7 @@
       "type": "reachFloor",
       "value": 90
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 315
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 75,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -203,20 +125,7 @@
       "type": "reachFloor",
       "value": 90
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 235
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 80,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -235,20 +144,7 @@
       "type": "reachFloor",
       "value": 90
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 55
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 85,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -267,20 +163,7 @@
       "type": "reachFloor",
       "value": 90
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 365
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 90,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -299,20 +182,7 @@
       "type": "noWallBounce",
       "value": 90
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 165
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 300,
       "gems": {
         "chance": 0.25,
         "min": 1,
@@ -332,20 +202,7 @@
       "type": "reachFloor",
       "value": 105
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 65
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 95,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -364,20 +221,7 @@
       "type": "reachFloor",
       "value": 105
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 425
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 100,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -396,20 +240,7 @@
       "type": "reachFloor",
       "value": 105
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 470
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 100,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -428,20 +259,7 @@
       "type": "reachFloor",
       "value": 105
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 500
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 105,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -460,20 +278,7 @@
       "type": "findHiddenGem",
       "value": 105
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 490
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 300,
       "gems": {
         "chance": 0.25,
         "min": 1,
@@ -492,20 +297,7 @@
       "type": "reachFloor",
       "value": 120
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 100
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 110,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -524,20 +316,7 @@
       "type": "reachFloor",
       "value": 120
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 105
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 115,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -556,20 +335,7 @@
       "type": "reachFloor",
       "value": 120
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 110
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 120,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -588,20 +354,7 @@
       "type": "reachFloor",
       "value": 120
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 115
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 125,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -621,20 +374,7 @@
       "value": 120,
       "timeSec": 100
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 120
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 300,
       "gems": {
         "chance": 0.25,
         "min": 1,
@@ -654,20 +394,7 @@
       "type": "reachFloor",
       "value": 150
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 125
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 125,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -686,20 +413,7 @@
       "type": "reachFloor",
       "value": 150
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 130
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 130,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -718,20 +432,7 @@
       "type": "reachFloor",
       "value": 150
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 135
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 135,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -750,20 +451,7 @@
       "type": "reachFloor",
       "value": 150
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 140
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 140,
       "gems": {
         "chance": 0.03,
         "min": 1,
@@ -782,20 +470,7 @@
       "type": "reachFloor",
       "value": 150
     },
-    "stars": [
-      {
-        "type": "clear"
-      },
-      {
-        "type": "coins",
-        "value": 145
-      },
-      {
-        "type": "noRevive"
-      }
-    ],
     "rewards": {
-      "coinPayout": 900,
       "gems": {
         "chance": 1.0,
         "min": 5,

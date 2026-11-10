@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_cannonballs",
     "difficultyOffset": 0.069,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.24,

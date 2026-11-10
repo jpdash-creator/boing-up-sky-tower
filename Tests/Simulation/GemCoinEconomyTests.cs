@@ -207,11 +207,17 @@ namespace FluffyClimbers.Simulation.Tests
         [Trait("Category", "Economy")]
         public void GemsNeverSitOnTopOfAStarOrEachOther()
         {
+            for (int region = 1; region <= 5; region++) GemsNeverSitOnTopOfAStarOrEachOtherIn(region);
+        }
+
+        private static void GemsNeverSitOnTopOfAStarOrEachOtherIn(int region)
+        {
             // Regression for the Q16.16 overflow in the pickup distance test: far pairs (more than 181 u apart) were reported as touching.
             SimConfig cfg = new SimConfig();
             cfg.GemSpotPermille = SimConfig.DifficultyGemPermille[4];
             string root = ContentLoader.FindRoot();
-            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, 1))
+            Assert.NotNull(root);
+            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, region, region))
             {
                 Pickup[] ps = LevelBuilder.Build(cfg, ll.Spec).Pickups;
                 for (int i = 0; i < ps.Length; i++)

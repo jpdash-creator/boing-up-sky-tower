@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "LevelDef",
   "type": "object",
-  "required": ["id", "region", "index", "seed", "class", "difficulty", "goal", "stars", "rewards"],
+  "required": ["id", "region", "index", "seed", "class", "difficulty", "goal", "rewards"],
   "additionalProperties": false,
   "properties": {
     "id": {"type": "string", "pattern": "^lvl_[0-9]{3}_[0-9]{2}$"},
@@ -22,20 +22,6 @@
         "timeSec": {"type": "integer", "minimum": 1}
       }
     },
-    "stars": {
-      "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
-      "items": {
-        "type": "object",
-        "required": ["type"],
-        "additionalProperties": false,
-        "properties": {
-          "type": {"type": "string", "enum": ["clear", "coins", "noRevive", "time"]},
-          "value": {"type": "integer", "minimum": 1}
-        }
-      }
-    },
     "overrides": {
       "type": "object",
       "additionalProperties": false,
@@ -46,10 +32,9 @@
     },
     "rewards": {
       "type": "object",
-      "required": ["coinPayout", "gems"],
+      "required": ["gems"],
       "additionalProperties": false,
       "properties": {
-        "coinPayout": {"type": "integer", "minimum": 0},
         "gems": {
           "type": "object",
           "required": ["chance", "min", "max"],

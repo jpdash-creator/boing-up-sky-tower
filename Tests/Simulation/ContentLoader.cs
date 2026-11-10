@@ -50,6 +50,20 @@ namespace FluffyClimbers.Simulation.Tests
             return e.TryGetProperty(name, out v) ? v.GetInt32() : fallback;
         }
 
+        /// <summary>Region offset and signature as shipped in Content/regions (single source for tests that need them without levels).</summary>
+        public static void LoadRegionRules(string root, int region, out Fx offset, out SignatureKind signature)
+        {
+            string prefix = "region_" + region.ToString("D3") + "_";
+            string[] regionFiles = Directory.GetFiles(Path.Combine(root, "Content", "regions"), prefix + "*.json");
+            if (regionFiles.Length != 1) throw new InvalidOperationException("missing content for region " + region);
+            using (JsonDocument rd = JsonDocument.Parse(File.ReadAllText(regionFiles[0])))
+            {
+                JsonElement rules = rd.RootElement.GetProperty("rules");
+                offset = Fx.FromRatio((int)Math.Round(rules.GetProperty("difficultyOffset").GetDouble() * 10000), 10000);
+                signature = SignatureKinds.FromModuleId(rules.GetProperty("signatureModule").GetString());
+            }
+        }
+
         public static List<LoadedLevel> LoadRegions(string root, int firstRegion, int lastRegion)
         {
             List<LoadedLevel> result = new List<LoadedLevel>();
@@ -72,6 +86,7 @@ namespace FluffyClimbers.Simulation.Tests
 
                 using (JsonDocument doc = JsonDocument.Parse(File.ReadAllText(levelFiles[0])))
                 {
+                    int levelsInRegion = doc.RootElement.GetArrayLength();
                     foreach (JsonElement lv in doc.RootElement.EnumerateArray())
                     {
                         LoadedLevel ll = new LoadedLevel();
@@ -87,6 +102,7 @@ namespace FluffyClimbers.Simulation.Tests
                         spec.LevelIndex = lv.GetProperty("index").GetInt32();
                         spec.Class = ClassFromName(ll.ClassName);
                         spec.Signature = signature;
+                        spec.LevelsInRegion = levelsInRegion;
 
                         JsonElement goal = lv.GetProperty("goal");
                         GoalSpec g = new GoalSpec();
@@ -95,16 +111,6 @@ namespace FluffyClimbers.Simulation.Tests
                         g.Count = Int(goal, "count", 0);
                         g.TimeSec = Int(goal, "timeSec", 0);
                         spec.Goal = g;
-
-                        List<StarSpec> stars = new List<StarSpec>();
-                        foreach (JsonElement st in lv.GetProperty("stars").EnumerateArray())
-                        {
-                            StarSpec ss = new StarSpec();
-                            ss.Kind = StarSpec.KindFromId(st.GetProperty("type").GetString());
-                            ss.Value = Int(st, "value", 0);
-                            stars.Add(ss);
-                        }
-                        spec.Stars = stars.ToArray();
 
                         JsonElement ov;
                         if (lv.TryGetProperty("overrides", out ov))

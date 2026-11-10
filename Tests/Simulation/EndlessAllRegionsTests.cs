@@ -19,15 +19,19 @@ namespace FluffyClimbers.Simulation.Tests
         private readonly ITestOutputHelper output;
         public EndlessAllRegionsTests(ITestOutputHelper output) { this.output = output; }
 
-        private static readonly int[] OffsetTenThousandths = { 0, 86, 172, 259, 345 };
-        private static readonly SignatureKind[] Signatures =
+        private static readonly Fx[] RegionOffsets = new Fx[5];
+        private static readonly SignatureKind[] Signatures = new SignatureKind[5];
+        static EndlessAllRegionsTests()
         {
-            SignatureKind.BounceFlowers, SignatureKind.BounceCaps, SignatureKind.DriftingPlatforms, SignatureKind.StickyGum, SignatureKind.SwingingGongs
-        };
+            // Offsets and signatures come from Content/regions (owner 2026-11-10: no hardcoded region arrays).
+            string root = ContentLoader.FindRoot();
+            if (root == null) return;
+            for (int r = 0; r < 5; r++) ContentLoader.LoadRegionRules(root, r + 1, out RegionOffsets[r], out Signatures[r]);
+        }
 
         private static LevelSpec SpecFor(int region0, int seed)
         {
-            return EndlessTower.MakeSpec(seed, Fx.FromRatio(OffsetTenThousandths[region0], 10000), Signatures[region0], 400);
+            return EndlessTower.MakeSpec(seed, RegionOffsets[region0], Signatures[region0], 400);
         }
 
         /// <summary>The kinds each region's endless tower may use (spine rows), written out here on purpose: a change to a region's set must be a deliberate change of this table.</summary>
@@ -35,7 +39,7 @@ namespace FluffyClimbers.Simulation.Tests
         {
             switch (region0)
             {
-                case 0: return new[] { PlatformKind.WindPetal, PlatformKind.HiveLift, PlatformKind.SnapDaisy, PlatformKind.Dandelion, PlatformKind.ThornBush, PlatformKind.Ladybug, PlatformKind.Seesaw, PlatformKind.Bounce };
+                case 0: return new[] { PlatformKind.WindPetal, PlatformKind.HiveLift, PlatformKind.SnapDaisy, PlatformKind.Dandelion, PlatformKind.ThornBush, PlatformKind.Ladybug, PlatformKind.Seesaw, PlatformKind.Bounce, PlatformKind.Crumble, PlatformKind.Moving };
                 case 1: return new[] { PlatformKind.SquishCap, PlatformKind.SproutLift, PlatformKind.PuffFloat, PlatformKind.FairyRing, PlatformKind.OrbitCap, PlatformKind.DizzySpores, PlatformKind.SporePop, PlatformKind.BounceCap, PlatformKind.Crumble, PlatformKind.Slippery };
                 case 2: return new[] { PlatformKind.SurfBoostWave, PlatformKind.SandcastleStep, PlatformKind.ClamShellPad, PlatformKind.SinkingRaft, PlatformKind.TurtleShuttle, PlatformKind.KelpTangle, PlatformKind.PufferfishPad, PlatformKind.Moving, PlatformKind.Crumble, PlatformKind.Vanishing };
                 case 3: return new[] { PlatformKind.CandyBowl, PlatformKind.FlossGlide, PlatformKind.FizzVent, PlatformKind.LicoriceBelt, PlatformKind.TaffyStretch, PlatformKind.JellyWobble, PlatformKind.PinwheelGust, PlatformKind.Sticky, PlatformKind.Crumble, PlatformKind.Slippery };

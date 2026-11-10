@@ -106,13 +106,14 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void AdReviveIsOfferedWithTheFirstReviveOnlyWhenAnAdIsReady()
+        public void AdReviveIsOfferedWithTheFirstReviveAndTheButtonIsDimmedNotHiddenWhenNoAdIsReady()
         {
             RunSession s = NewDeadSession();
-            Assert.IsTrue(s.AdReviveOffered);
+            Assert.IsTrue(s.AdReviveOffered, "offered by the schedule, independent of the ad being loaded (the button is dimmed, not hidden)");
+            Assert.AreEqual("Watch Ad", s.Revive.AdLabel, "no 30s / 1m in the label");
             var ads = new StubAdService { Immediate = true, Ready = false };
             Services.Ads = ads;
-            Assert.IsFalse(Services.Ads.IsReady(AdPlacements.Revive), "no ad or no network: only the gem option shows");
+            Assert.IsFalse(Services.Ads.IsReady(AdPlacements.Revive), "no ad loaded: the Watch Ad button is dimmed and a tap says so");
             ads.Ready = true;
             Assert.IsTrue(Services.Ads.IsReady(AdPlacements.Revive));
         }

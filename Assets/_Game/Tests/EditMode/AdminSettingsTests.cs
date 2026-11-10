@@ -108,6 +108,28 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
+        public void FreshDevelopmentInstallReadsProdReadyAndEveryTestFlagIsOff()
+        {
+            AdminInstall();   // development build: the admin tools are on, but no flag was ever stored
+            foreach (string k in TestKeys) PlayerPrefs.DeleteKey(k);
+            GameSettings.ApplyFlags();
+            Assert.IsTrue(GameSettings.DevBuild);
+            Assert.IsFalse(GameSettings.SystemTest, "SYSTEM_TEST defaults to OFF (owner 2026-11-10)");
+            Assert.IsFalse(GameSettings.GameJumpTest);
+            Assert.IsFalse(GameSettings.ShopTest);
+            Assert.IsFalse(GameSettings.CharacterTest);
+            Assert.IsTrue(GameSettings.ProdReady);
+            Assert.IsFalse(AdminAccess.AnyTestOn);
+            Assert.AreEqual("PROD READY", AdminAccess.PillText(GameSettings.SystemTest));
+            AdminAccess.DevelopmentBuildOverride = true;
+            Assert.IsTrue(AdminAccess.Available, "a development build shows the Admin button");
+            AdminAccess.DevelopmentBuildOverride = false;
+            AdminAccess.Lock();
+            Assert.IsFalse(AdminAccess.Available, "a release build hides the Admin button until the code is typed");
+            AdminAccess.DevelopmentBuildOverride = null;
+        }
+
+        [Test]
         public void SystemTestOffClearsEveryTestSwitchAndStaysOff()
         {
             AdminInstall();

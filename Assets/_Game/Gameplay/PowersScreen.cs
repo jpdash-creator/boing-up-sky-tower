@@ -74,9 +74,18 @@ namespace FluffyClimbers.Gameplay
         }
 
         /// <summary>Height of one card at the current text size: icon, a one-line name pill, and the row of the owned number (bottom right).</summary>
-        public static float CardHeight { get { return Pad + IconS + 8f + Line(BodyFont) + 16f + CountH + Pad; } }
+        public static float CardHeight { get { return InnerInset + Pad + IconS + RowGap + PillH + RowGap + PillH + Pad; } }
 
-        static float CountH { get { return Line(BodyFont) + 8f; } }
+        /// <summary>Top plus bottom inset of the card fill inside its rarity frame (RarityUi.Box: 8 px each); the content lives inside the fill, so the card grows by it.</summary>
+        const float InnerInset = 16f;
+
+        /// <summary>The ONE gap between icon and name and between name and number (Bug List Heroes 3c).</summary>
+        public const float RowGap = 12f;
+
+        /// <summary>Height of the name pill and of the number badge (the same, one line of text plus 4 px above and below).</summary>
+        public static float PillH { get { return Line(BodyFont) + 8f; } }
+
+        
 
         /// <summary>The owned count of one power-up (what the card shows).</summary>
         public int OwnedOf(PowerUpDef def)
@@ -171,7 +180,6 @@ namespace FluffyClimbers.Gameplay
             outer.sizeDelta = new Vector2(-Gap, cardH);
             outer.anchoredPosition = new Vector2(0f, -y);
 
-            float lh = Line(BodyFont);
             int owned = OwnedOf(def);
 
             // the power-up picture, centred at the top (the code badge shows when the art is missing)
@@ -185,8 +193,8 @@ namespace FluffyClimbers.Gameplay
             pr.anchorMin = new Vector2(0.03f, 1f);
             pr.anchorMax = new Vector2(0.97f, 1f);
             pr.pivot = new Vector2(0.5f, 1f);
-            pr.anchoredPosition = new Vector2(0f, -(Pad + IconS + 8f));
-            pr.sizeDelta = new Vector2(0f, lh);
+            pr.anchoredPosition = new Vector2(0f, -(Pad + IconS + RowGap));
+            pr.sizeDelta = new Vector2(0f, PillH);
             Text name = UiKit.AddText(pill.transform, "PowerName", def.Name, BodyFont, Color.white, TextAnchor.MiddleCenter, true);
             name.horizontalOverflow = HorizontalWrapMode.Overflow;
             Outline no = name.GetComponent<Outline>();
@@ -194,7 +202,7 @@ namespace FluffyClimbers.Gameplay
             UiKit.Stretch(name.rectTransform);
 
             // the owned number at the bottom CENTRE of the card, full width, on its own dark badge (never over the name)
-            float ch = CountH;
+            float ch = PillH;
             Image badge = UiKit.AddPanel(inner, "OwnedBadge", PillInk);
             badge.raycastTarget = false;
             RectTransform br = badge.rectTransform;

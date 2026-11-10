@@ -423,6 +423,18 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
+        public void HiddenGemOfTheFindHiddenGemLevel15PaysItsValueOnTheFirstClearOnly()
+        {
+            var svc = NewService();
+            for (int i = 1; i <= 14; i++) svc.ApplyRun("lvl_001_" + i.ToString("D2"), Won());
+            RunOutcome run = Won();
+            run.HiddenGems = 2;   // a double hidden gem
+            RewardResult first = svc.ApplyRun("lvl_001_15", run);
+            Assert.AreEqual(2, first.HiddenGemReward);
+            Assert.AreEqual(0, svc.ApplyRun("lvl_001_15", run).HiddenGemReward, "first clear only");
+        }
+
+        [Test]
         public void HiddenGemOnOtherLevelsPaysNoExtraGem()
         {
             var svc = NewService();

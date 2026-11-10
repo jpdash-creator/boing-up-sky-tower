@@ -90,19 +90,17 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void RevivedRunsNeverSetARecordOrSaveAnything()
+        public void RevivedRunsSetRecordsAndMedalsLikeAnyOtherRun()
         {
             RecordResult r = svc.RecordRun(LevelRun(lvl1, 60, 4344, 2, true));
-            Assert.IsFalse(r.Counted);
+            Assert.IsTrue(r.Counted);
             Assert.IsTrue(r.Revived);
             Assert.AreEqual(60, r.Floors);
             Assert.AreEqual(83, r.PaceHundredths);
-            Assert.IsFalse(svc.BestPace(lvl1, 2).IsValid);
-            Assert.AreEqual(0, svc.BestTime(lvl1, 2));
-            Assert.IsNull(svc.GetProgress(lvl1), "a revived run does not even create a level entry");
-            svc.RecordRun(LevelRun(lvl1, 10, 3000));
+            Assert.IsTrue(svc.BestPace(lvl1, 2).IsValid);
+            Assert.AreEqual(4344, svc.BestTime(lvl1, 2));
             svc.RecordRun(LevelRun(lvl1, 500, 1000, 2, true));
-            Assert.AreEqual(10, svc.BestPace(lvl1, 2).Floors);
+            Assert.AreEqual(500, svc.BestPace(lvl1, 2).Floors);
         }
 
         [Test]
@@ -148,10 +146,10 @@ namespace FluffyClimbers.Tests
             // the medal survives a later weak run
             svc.RecordRun(LevelRun(lvl1, 1, 1200, 0));
             Assert.AreEqual(MedalLevel.Gold, svc.Medal(lvl1, 0));
-            // and a revived run cannot earn one
-            RecordResult cheat = svc.RecordRun(LevelRun(lvl3, 50, 1200, 0, true));
-            Assert.AreEqual(MedalLevel.None, cheat.Medal);
-            Assert.AreEqual(MedalLevel.None, svc.Medal(lvl3, 0));
+            // and a revived run earns one too (owner 2026-11-10)
+            RecordResult revivedRun = svc.RecordRun(LevelRun(lvl3, 50, 1200, 0, true));
+            Assert.AreEqual(MedalLevel.Gold, revivedRun.Medal);
+            Assert.AreEqual(MedalLevel.Gold, svc.Medal(lvl3, 0));
         }
 
         [Test]
@@ -161,8 +159,8 @@ namespace FluffyClimbers.Tests
             svc.RecordRun(LevelRun(lvl2, 6, 600));             // exactly 0.60 plat/s: counts
             svc.RecordRun(LevelRun(lvl3, 5, 600));             // 0.50: no pace clear, still a new best
             svc.RecordRun(LevelRun(lvl1, 30, 4344));           // 0.41 plat/s and worse than the best: nothing
-            svc.RecordRun(LevelRun(lvl1, 600, 1000, 2, true)); // revived: nothing
-            Assert.AreEqual(2, svc.TimedPaceClearsToday());
+            svc.RecordRun(LevelRun(lvl1, 600, 1000, 2, true)); // revived: counts since 2026-11-10 (a pace clear in another mode)
+            Assert.AreEqual(3, svc.TimedPaceClearsToday());
             Assert.AreEqual(3, svc.TimedBestPaceLevelsThisWeek());
 
             now = now.AddDays(1);                              // Tuesday: a new day, the same week

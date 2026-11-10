@@ -200,12 +200,5 @@ namespace FluffyClimbers.Content
                 Fx.FromRatio((int)Math.Round(level.Difficulty * 1000), 1000),
                 Fx.FromRatio((int)Math.Round(region.Rules.DifficultyOffset * 10000), 10000));
         }
-
-        /// <summary>coinPayout * coinFactor, rounded half up (doc 08 section 7). coinFactor is taken in 1/10000 steps.</summary>
-        public static int CoinPayoutFor(LevelDef level, RegionDef region)
-        {
-            long factor = (long)Math.Round(region.CoinFactor * 10000);
-            return (int)(((long)level.Rewards.CoinPayout * factor + 5000) / 10000);
-        }
     }
 }

@@ -57,7 +57,7 @@ namespace FluffyClimbers.Gameplay
             /// <summary>Height under the pace row: the badge, or the revive note, or nothing.</summary>
             public float TailHeight
             {
-                get { return BadgeCount > 0 ? BadgeCount * BadgeH : (Revived ? 2f * TimedUi.LineHeight() + 10f : 0f); }
+                get { return BadgeCount > 0 ? BadgeCount * BadgeH : 0f; }
             }
 
             /// <summary>One gold ribbon with its label; the text shrinks to fit (never clipped, never wrapped) at any text scale.</summary>
@@ -103,10 +103,6 @@ namespace FluffyClimbers.Gameplay
                     if (BestTime) { Badge(panel, BadgeTimeName, "NEW BEST TIME", y); y += BadgeH; }
                     if (BestPace) { Badge(panel, BadgePaceName, "NEW BEST PACE", y); y += BadgeH; }
                     if (!BestTime && !BestPace) Badge(panel, BadgeGenericName, "NEW BEST", y);
-                }
-                else if (Revived)
-                {
-                    TimedUi.Line(panel, "ReviveNote", "Revive used: no record or medal", yTail, 780f, 2, true, Theme.InkSoft);
                 }
             }
         }

@@ -117,16 +117,23 @@ namespace FluffyClimbers.Gameplay
 
         // ---------------- restore purchases ----------------
 
-        /// <summary>Restore Purchases: asks the store to re-deliver, then re-grants what the recorded purchases entitle the player to (docs/38).</summary>
+        /// <summary>
+        /// Restore Purchases (Settings > Restore, store purchases only): asks Google Play what the account owns and re-applies VIP subscriptions through the idempotent ledger
+        /// (docs/38). Gems and coins are consumables and are never re-granted. Shows restored N / already restored / nothing to restore / store not reachable.
+        /// </summary>
         public void RestorePurchases()
         {
-            try { Services.Payments.Initialize(); } catch (Exception e) { Debug.LogWarning("[Settings] store init failed: " + e.Message); }
-            Services.Payments.Restore((ok, msg) =>
-            {
-                int n = progress.RestoreFromRecords(DateTime.UtcNow);
-                if (!ok && n == 0) { ShowMessage("Store not reachable", "Could not reach the store. Check your connection and try again."); return; }
-                ShowPurchasesRestored(n);
-            });
+            StoreLink.RestoreFromStore(Services.Payments, progress, r => StartCoroutine(ShowRestoreResultSoon(r)));
+        }
+
+        // a short wait lets orders that arrive just after the store answered (unconfirmed purchases) land before the result is shown
+        System.Collections.IEnumerator ShowRestoreResultSoon(StoreLink.RestoreResult r)
+        {
+            yield return new WaitForSecondsRealtime(0.35f);
+            string title, text;
+            StoreLink.RestoreTexts(r, out title, out text);
+            ShowMessage(title, text);
+            RefreshWallet();
         }
 
         /// <summary>The result popup: how many purchases were restored, or that there was nothing to restore.</summary>

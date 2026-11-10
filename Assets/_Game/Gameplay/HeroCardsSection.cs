@@ -9,7 +9,7 @@ namespace FluffyClimbers.Gameplay
     /// <summary>
     /// The Heroes section of the Shop "Character / Power-ups" page (Bug List 4 E2, docs/26 section 8b): a 2 x 2 grid of hero cards, row 1 Uncommon and Rare, row 2 Elite
     /// (code tier Epic) and Legendary. Each card has the same build as a Power-up card (the (i) at the top left, an icon, a brown strip with a green price button) but its plate is a
-    /// light tint of the tier colour (<see cref="BundlesScreen.RarityInk"/>), the icon is the bundle's "?" hero card and the price is the gem price of
+    /// light tint of the tier colour (<see cref="BundlesScreen.RarityInk"/>), the icon is the bundle's "?" hero card and the price is the coin price of
     /// <see cref="HeroPurchase"/>. The (i) opens the tier popup; the green button asks to confirm, pays and gives ONE random hero of that rarity from the player's open regions
     /// (<see cref="ProgressService.TryBuyHero"/>), then shows the hero reveal. A tier with no hero in an open region charges nothing and says "No Rare heroes yet".
     /// Only the two buttons are tappable, never the card as a whole. Menu screen only: no per-frame code.
@@ -42,13 +42,13 @@ namespace FluffyClimbers.Gameplay
         void BuildHeroCard(RectTransform grid, float y, int col, CharacterRarity rarity)
         {
             string rname = HeroPurchase.RarityName(rarity);
-            int price = HeroPurchase.GemPrice(rarity);
+            int price = HeroPurchase.CoinPrice(rarity);
             RectTransform crt = ShopChrome.Card(grid, "HeroCard_" + rname, ShopChrome.FrameColor.Gold);
             PlaceCell(crt, y, col, 2, HeroCardH);
             // the tier's own plate: tint the card's border and fill (children 0 and 1 of the shared card builder)
             crt.GetChild(0).GetComponent<Image>().color = HeroEdgeColor(rarity);
             crt.GetChild(1).GetComponent<Image>().color = HeroPlateColor(rarity);
-            crt.gameObject.AddComponent<A11yLabel>().Text = rname + " hero card, " + Num(price) + " gems";
+            crt.gameObject.AddComponent<A11yLabel>().Text = rname + " hero card, " + Num(price) + " coins" + (progress.Coins >= price ? "" : ", not enough coins");
 
             Image strip = ToyKit.Sliced(crt, "Strip", Theme.RoundSprite, 26f);
             strip.color = HeroStripBrown;
@@ -73,8 +73,10 @@ namespace FluffyClimbers.Gameplay
             name.rectTransform.offsetMin = new Vector2(6f, -(top + 60f + TextK * 100f));
             name.rectTransform.offsetMax = new Vector2(-6f, -top);
 
-            Button buy = BottomButton(crt, "BuyHero", 1, art != null ? art.GemIcon : null, Num(price), "Buy a random " + rname + " hero for " + Num(price) + " gems", () => TapHeroBuy(rarity), 20f, 22f);
+            bool afford = progress.Coins >= price;
+            Button buy = BottomButton(crt, "BuyHero", 1, art != null ? art.CoinIcon : null, Num(price), "Buy a random " + rname + " hero for " + Num(price) + " coins" + (afford ? "" : ", not enough coins"), () => TapHeroBuy(rarity), 20f, 22f);
             buy.name = "BuyHero";
+            DimIf(buy, !afford);   // too few coins: dimmed; a tap still explains it and offers the coin packs
         }
 
         // ---------------- the (i) popup ----------------
@@ -141,30 +143,24 @@ namespace FluffyClimbers.Gameplay
 
         // ---------------- buying ----------------
 
-        /// <summary>Tap on the green button of a tier: no hero in an open region says so (nothing charged); too few gems explains it; otherwise asks to confirm.</summary>
+        /// <summary>Tap on the green button of a tier: no hero in an open region says so (nothing charged); too few coins explains it and offers the coin packs; otherwise asks to confirm.</summary>
         public void TapHeroBuy(CharacterRarity rarity)
         {
             string rname = HeroPurchase.RarityName(rarity);
-            int price = HeroPurchase.GemPrice(rarity);
+            int price = HeroPurchase.CoinPrice(rarity);
             if (price <= 0) return;
             if (progress.HeroBuyPool(rarity).Count == 0)
             {
                 ShowNoHeroes(rarity);
                 return;
             }
-            if (progress.Gems < price)
+            if (progress.Coins < price)
             {
-                host.OpenPopup("Not enough gems", "You need " + Num(price) + " gems and have " + Num(progress.Gems) + ".\nGet more gems first.", 1180f);
-                host.PopupButton("Get gems", true, 230f, () =>
-                {
-                    host.ClosePopup();
-                    SelectTab(TabGems, GemsSection);
-                });
-                host.PopupButton("Close", false, 60f, host.ClosePopup);
+                ShowNotEnoughCoins(price);
                 return;
             }
-            host.OpenPopup("Confirm purchase", "Buy a " + rname + " hero for " + Num(price) + " gems?\nYou get a random hero of this rarity from your open regions.\nYou have " + Num(progress.Gems) + " gems.", 1180f);
-            host.PopupButton("Buy for " + Num(price) + " gems", true, 230f, () => CompleteHeroBuy(rarity));
+            host.OpenPopup("Confirm purchase", "Buy a " + rname + " hero for " + Num(price) + " coins?\nYou get a random hero of this rarity from your open regions.\nYou have " + Num(progress.Coins) + " coins.", 1180f);
+            host.PopupButton("Buy for " + Num(price) + " coins", true, 230f, () => CompleteHeroBuy(rarity));
             host.PopupButton("Cancel", false, 60f, host.ClosePopup);
         }
 
@@ -178,13 +174,13 @@ namespace FluffyClimbers.Gameplay
                 case HeroBuyResult.Ok:
                     AudioManager.Play(Sfx.PowerUp);
                     RebuildKeepScroll();   // the wallet follows
-                    ShowHeroReveal(hero, HeroPurchase.GemPrice(rarity));
+                    ShowHeroReveal(hero, HeroPurchase.CoinPrice(rarity));
                     break;
                 case HeroBuyResult.NoHeroes:
                     ShowNoHeroes(rarity);
                     break;
-                case HeroBuyResult.NotEnoughGems:
-                    Info("Not enough gems", "You do not have enough gems for a " + HeroPurchase.RarityName(rarity) + " hero.");
+                case HeroBuyResult.NotEnoughCoins:
+                    Info("Not enough coins", "You do not have enough coins for a " + HeroPurchase.RarityName(rarity) + " hero.");
                     break;
                 default:
                     Info("Not available", "This hero card cannot be bought right now.");
@@ -229,7 +225,7 @@ namespace FluffyClimbers.Gameplay
             }
             const float dollH = 480f, dollTop = 190f, gap = 12f, panelW = 860f;
             float nameY = dollTop + dollH + gap, nameH = BundlesScreen.TextHeight(plain, 50f, 780f);
-            float paidY = nameY + nameH + gap, paidH = BundlesScreen.TextHeight("Paid 1,500 gems", 40f, 780f);
+            float paidY = nameY + nameH + gap, paidH = BundlesScreen.TextHeight("Paid 30,000 coins", 40f, 780f);
             float buttonReserve = 50f + Mathf.Max(170f, UiKit.MinTouchRef) + gap;
             float panelH = Mathf.Max(1300f, paidY + paidH + buttonReserve);
             RectTransform overlay = host.NewOverlay();
@@ -247,7 +243,7 @@ namespace FluffyClimbers.Gameplay
             nm.fontStyle = FontStyle.Bold;
             nm.horizontalOverflow = HorizontalWrapMode.Wrap;
             BundlesScreen.PlaceTop((RectTransform)nm.transform, nameY, 780f, nameH);
-            HeroInfoText(panel, "Paid", "Paid " + Num(paid) + " gems", paidY, paidH, 780f, false, UiKit.PanelInk);
+            HeroInfoText(panel, "Paid", "Paid " + Num(paid) + " coins", paidY, paidH, 780f, false, UiKit.PanelInk);
             ToyKit.PopupAction(panel, "OK", ToyKit.Button(1), Color.white, 50f, host.CloseOverlay);
         }
     }

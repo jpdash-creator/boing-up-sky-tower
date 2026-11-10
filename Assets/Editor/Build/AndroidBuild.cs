@@ -39,6 +39,8 @@ namespace FluffyClimbers.Editor.Build
             bool altTester = AltTesterBuildHook.Requested();
             // Opt-in emulator build (BT_X86=1): adds x86_64 so Android emulators run it natively; own file name, never the clean phone APK.
             bool x86 = Environment.GetEnvironmentVariable("BT_X86") == "1";
+            // Opt-in production-like APK (BT_PROD=1): NOT a development build, so every test flag (SYSTEM_TEST, GAME_JUMP_TEST, admin tools, TestBridge) reads off.
+            bool prod = Environment.GetEnvironmentVariable("BT_PROD") == "1" && !altTester;
             string versionedPath = "E:/Unity/builds/fluffyclimbers_v" + versionName + (altTester ? "_alttester" : "") + (x86 ? "_x86" : "") + ".apk";
             Debug.Log("[BUILD] version v" + versionName + (x86 ? " (emulator build, arm64 + x86_64)" : ""));
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
@@ -49,7 +51,7 @@ namespace FluffyClimbers.Editor.Build
                 scenes = new[] { "Assets/Scenes/Boot.unity", "Assets/Scenes/Meta.unity", "Assets/Scenes/Run.unity" },
                 locationPathName = versionedPath,
                 target = BuildTarget.Android,
-                options = BuildOptions.Development   // development build: on-device profiler and logcat while we tune
+                options = prod ? BuildOptions.None : BuildOptions.Development   // development build: on-device profiler and logcat while we tune; BT_PROD=1 = no test flags
             };
             BuildReport report;
             try

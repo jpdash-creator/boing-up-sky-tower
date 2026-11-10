@@ -102,15 +102,13 @@ namespace FluffyClimbers.Tests
         // ---- Daily ----
 
         [Test]
-        public void DailyPaceClearsCountNotRevivedClearsAtZeroPointSixAndPayFifteenPoints()
+        public void DailyPaceClearsCountClearsAtZeroPointSixAndPayFifteenPoints()
         {
             svc.RecordRun(LevelRun(Lvl(1), 60, 3600));              // 1.00 plat/s
             Assert.AreEqual(1, Daily(svc, RewardStat.PaceClears));
             Assert.AreEqual(0, svc.DailyPoints());
             svc.RecordRun(LevelRun(Lvl(2), 30, 3600));              // 0.50: too slow
-            svc.RecordRun(LevelRun(Lvl(3), 600, 3600, 2, true));    // revived: nothing
-            Assert.AreEqual(1, Daily(svc, RewardStat.PaceClears));
-            svc.RecordRun(LevelRun(Lvl(4), 36, 3600));              // exactly 0.60
+            svc.RecordRun(LevelRun(Lvl(3), 36, 3600, 2, true));     // revived, exactly 0.60: counts since 2026-11-10
             Assert.AreEqual(2, Daily(svc, RewardStat.PaceClears));
             Assert.AreEqual(15, svc.DailyPoints(), "d_pace2 is done");
             Assert.AreEqual(2, svc.RewardProgress(RewardTab.Daily, DailyAction("d_pace2")));
@@ -174,7 +172,7 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void WeeklyGoldMedalsCountNewMedalsOnlyAndAreNotEarnedByARevivedRun()
+        public void WeeklyGoldMedalsCountNewMedalsOnlyAndIncludeRevivedRuns()
         {
             var table = new DictionaryMedalTargets();
             for (int i = 1; i <= 6; i++) table.Set(Lvl(i), 2, 1000);
@@ -182,8 +180,8 @@ namespace FluffyClimbers.Tests
             svc.RecordRun(LevelRun(Lvl(1), 60, 3600));               // 1.00 plat/s against 1.00: gold
             svc.RecordRun(LevelRun(Lvl(1), 61, 3600));               // better, gold again: not a new medal
             svc.RecordRun(LevelRun(Lvl(2), 50, 3600));               // 0.83: silver
-            svc.RecordRun(LevelRun(Lvl(3), 600, 3600, 2, true));     // revived: nothing
-            for (int i = 3; i <= 5; i++) svc.RecordRun(LevelRun(Lvl(i), 60, 3600));
+            svc.RecordRun(LevelRun(Lvl(3), 600, 3600, 2, true));     // revived: counts, gold
+            for (int i = 4; i <= 5; i++) svc.RecordRun(LevelRun(Lvl(i), 60, 3600));
             Assert.AreEqual(4, Weekly(svc, RewardStat.GoldMedals));  // levels 1, 3, 4, 5
             Assert.IsFalse(svc.IsRewardReady(RewardTab.Weekly, WeeklyTask("w_gold5")));
             svc.RecordRun(LevelRun(Lvl(2), 60, 3600));               // silver becomes gold: the fifth

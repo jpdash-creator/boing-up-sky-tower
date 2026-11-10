@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_carnival_mix",
     "difficultyOffset": 0.1379,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.48,

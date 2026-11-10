@@ -73,7 +73,6 @@ LEVELS = {
     14: ("hard", 0.86, {"type": "reachFloor", "value": 150}),
     15: ("highly_complex", 1.00, {"type": "reachFloor", "value": 150}),
 }
-NORMAL_LEVELS = [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14]
 
 # Bug List 6 item 4: regions 1..MIGRATED_REGIONS have 25 levels (new difficulty curve, goals and rewards); their region and level files are written by
 # Tools/content_cli/migrate_levels_25.py and are NOT regenerated here. The tables above stay the 15-level tables of the regions 6-30 until they are
@@ -114,15 +113,6 @@ def coin_packs():
     return [{"id": "coinpack_%d" % c, "coins": c, "gemsList": gl, "gemsPromo": gp} for c, gl, gp in COIN_PACKS]
 
 
-def coin_payout(index):
-    if index in (5, 10):
-        return 300
-    if index == 15:
-        return 900
-    k = NORMAL_LEVELS.index(index)
-    return int(round((60 + 80 * k / 11) / 5) * 5)
-
-
 def gem_rewards(index):
     if index == 15:
         return {"chance": 1.0, "min": 5, "max": 5, "firstClearGuaranteed": 5,
@@ -132,26 +122,6 @@ def gem_rewards(index):
     if index == 5:
         return {"chance": 0.25, "min": 1, "max": 3}
     return {"chance": 0.03, "min": 1, "max": 1}
-
-
-def load_coin_star_targets():
-    """Star-2 targets of regions 1-5 from Content/config/coin_star_targets.json (written by the Simulation test
-    CoinStarTargetTests from the bot's proven coin bound). Returns {level id: target}; empty if the file is absent."""
-    path = os.path.join(CONTENT, "config", "coin_star_targets.json")
-    if not os.path.exists(path):
-        return {}
-    with open(path, encoding="utf-8") as f:
-        table = json.load(f)
-    return {lid: e["target"] for lid, e in table["levels"].items()}
-
-
-COIN_STAR_TARGETS = load_coin_star_targets()
-
-
-def coin_star_target(level_id, i):
-    """Raised target for the five playable regions (from the bot table); the old formula for regions 6-30."""
-    # Economy v2: the coin star is retired (stars are collectible pickups); the value is kept only to satisfy the schema.
-    return min(500, COIN_STAR_TARGETS.get(level_id, 20 + 5 * i))
 
 
 def make_level(r, region_id, i):
@@ -165,8 +135,7 @@ def make_level(r, region_id, i):
         "class": cls,
         "difficulty": d,
         "goal": goal,
-        "stars": [{"type": "clear"}, {"type": "coins", "value": coin_star_target(level_id, i)}, {"type": "noRevive"}],
-        "rewards": {"coinPayout": coin_payout(i), "gems": gem_rewards(i)},
+        "rewards": {"gems": gem_rewards(i)},
     }
     return level
 
@@ -180,7 +149,6 @@ def main():
         mod_id = "mod_" + slug(mod_name)
         modules.append({"id": mod_id, "name": mod_name, "description": mod_desc,
                         "regions": [n], "buildStatus": "planned"})
-        weights = {"normal": 1.0} if n == 1 else {"normal": 1.0, "signature": 0.3}
         region = {
             "id": rid,
             "index": n,
@@ -194,7 +162,7 @@ def main():
             "theme": {"bundle": "region_%03d" % n, "palette": palette, "music": None},
             "rules": {"signatureModule": mod_id,
                       "difficultyOffset": round(0.25 * (n - 1) / 29, 4),
-                      "platformWeights": weights, "hazards": []},
+                      "hazards": []},
             "coinFactor": round(1 + 0.03 * (n - 1), 2),
             "levels": ["lvl_%03d_%02d" % (n, i) for i in range(1, 16)],
             "availableFrom": None,
@@ -215,7 +183,7 @@ def main():
         "ramp": {"rampFloors": 25, "rampPercent": 4, "rampCap": 150, "playerSpeedShare": 0.5},
         "generator": {"endlessDifficultyFloors": 400, "screenWidthUnits": 10},
         "score": {"floorPoints": 10, "comboPointsMultiplier": 5, "coinPoints": 1},
-        "economy": {"coinsPerGem": 20, "replayCoinPercent": 50, "regionCoinScalePercent": 3,
+        "economy": {"coinsPerGem": 20, "replayCoinPercent": 50,
                     "endlessCoinDailyFullRateRuns": 3,
                     "endlessCoinOverCapMultiplier": 0.5},
     })

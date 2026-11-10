@@ -62,13 +62,7 @@ namespace FluffyClimbers.Simulation.Tests
                     Sim sim = new Sim(cfg, data, ll.Spec);
                     o.Solve = new LevelBot(sim, ll.Spec, data, Budget(ll.Spec)).Solve();
 
-                    for (int i = 0; i < ll.Spec.Stars.Length; i++)
-                    {
-                        StarSpec st = ll.Spec.Stars[i];
-                        if (st.Kind == StarSpec.KindCoins) o.CoinTarget = st.Value;
-                        if (st.Kind == StarSpec.KindNoRevive) o.Star3Kind = "noRevive";
-                        if (st.Kind == StarSpec.KindTime) { o.Star3Kind = "time"; o.Star3TimeTicks = st.Value * SimConfig.TicksPerSecond; }
-                    }
+                    // The level stars are the 3 collectible pickups (economy v2); the retired coin-star target no longer exists in the data.
                     if (o.Solve.Solved && o.CoinTarget > 0)
                     {
                         // Best known coin count at the moment the run ends (owner decision 2026-10-19: the run ends at goal completion).
@@ -306,9 +300,6 @@ namespace FluffyClimbers.Simulation.Tests
             Assert.Equal(SignatureKind.SwingingGongs, l15.Spec.Signature);
             Assert.Equal(4, l15.Spec.Class);
             Assert.Empty(l15.Spec.FixedChunks);
-            Assert.Equal(3, l15.Spec.Stars.Length);
-            Assert.Equal(StarSpec.KindCoins, l15.Spec.Stars[1].Kind);
-            Assert.True(l15.Spec.Stars[1].Value >= 20); // coin target of the star (coin_star_targets.json, rescaled for the doc 25 lengths)
             LoadedLevel l9 = all.Find(x => x.Id == "lvl_001_09");
             Assert.Equal(GoalType.ReachFloor, l9.Spec.Goal.Type); // the timed goal was removed (owner, 2026-10-19)
             Assert.Equal(90, l9.Spec.Goal.Value);   // Bug List 8 item 3: levels 6 to 10 have 90 rows

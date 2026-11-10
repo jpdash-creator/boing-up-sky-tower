@@ -45,7 +45,7 @@ Scaling by region (regions 1 / 2 / 3 / 4 / 5):
 | Play minutes | 15 / 45 / 120 | 18 / 55 / 150 | 20 / 65 / 180 | 25 / 80 / 220 | 35 / 100 / 260 |
 | Coins earned | 1,000 / 3,500 / 8,000 | 1,300 / 4,400 / 10,000 | 1,500 / 5,300 / 12,000 | 1,800 / 6,300 / 14,400 | 2,200 / 7,700 / 17,600 |
 | Power-ups used | 3 / 10 / 25 | 3 / 10 / 25 | 3 / 12 / 30 | 4 / 15 / 35 | 5 / 17 / 45 |
-| Coin reward percent | 100 | 108 | 116 | 124 | 132 |
+| Coin reward percent (the region coin factor, 1.00 to 1.12, the same as the level payout; owner 2026-11-10) | 100 | 103 | 106 | 109 | 112 |
 
 Endless floor targets (owner list) are the same in every region. Stars, levels, 3-star, hard and no-wall targets are the same in every region.
 

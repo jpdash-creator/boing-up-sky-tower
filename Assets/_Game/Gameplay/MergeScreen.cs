@@ -508,6 +508,8 @@ namespace FluffyClimbers.Gameplay
             return y + lh + 12f;
         }
 
+        static float lastMergeSoundTime = -100f;
+
         void OnMergeTapped()
         {
             if (!HeroCards.IsMergeSet(picked)) return;
@@ -515,7 +517,8 @@ namespace FluffyClimbers.Gameplay
             MergeOutcome o = progress.TryMerge(id);   // consumes exactly 3 copies of that hero and adds 1 of the next tier (the save keeps counts)
             picked.Clear();
             if (o.Result != MergeResult.Ok) { BuildNow(); return; }
-            AudioManager.Play(Sfx.Win);
+            float now = Time.unscaledTime;
+            if (SoundCooldown.ShouldPlay(now, lastMergeSoundTime, SoundCooldown.MergeCooldown)) { lastMergeSoundTime = now; AudioManager.Play(Sfx.Win); }   // one jingle per burst of merges
             Haptics.Pulse();
             BuildNow();   // the list is rebuilt from the save: the three consumed copies are gone, a type with fewer than 3 left vanishes
             ShowResult(o);

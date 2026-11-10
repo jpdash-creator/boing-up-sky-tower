@@ -341,6 +341,8 @@ namespace FluffyClimbers.Gameplay
             if (t.StartsWith(noWall, StringComparison.Ordinal) && t.EndsWith(times, StringComparison.Ordinal) && t.Length > noWall.Length + times.Length)
                 t = "No-wall level x" + t.Substring(noWall.Length, t.Length - noWall.Length - times.Length);
             if (t.StartsWith(threeStar, StringComparison.Ordinal)) t = "3 stars on " + t.Substring(threeStar.Length);
+            const string goldMedals = "Gold medals on ";   // the gold medal icon already says "medals": "Gold on 25 levels" stays on one line next to the plate (owner Bug List 10)
+            if (t.StartsWith(goldMedals, StringComparison.Ordinal)) t = "Gold on " + t.Substring(goldMedals.Length);
             return t;
         }
 

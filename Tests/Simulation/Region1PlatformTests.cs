@@ -390,7 +390,7 @@ namespace FluffyClimbers.Simulation.Tests
 
         // ------------------------------------------------------------------ generator: counts, ramp, rules
 
-        public static bool IsNewSpecial(PlatformKind k) { return PlatformKinds.IsRegion1New(k) || k == PlatformKind.Bounce; }
+        public static bool IsNewSpecial(PlatformKind k) { return PlatformKinds.IsRegion1New(k) || k == PlatformKind.Bounce || k == PlatformKind.Crumble || k == PlatformKind.Moving; }   // region 1 generics since 2026-11-10
 
         private sealed class RowInfo
         {
@@ -398,12 +398,17 @@ namespace FluffyClimbers.Simulation.Tests
             public int Rows;
         }
 
-        /// <summary>Spine kind per row: the first non-Crumble platform of each row (dense patch extras are Normal / Crumble only).</summary>
+        /// <summary>Spine kind per row: the first platform of each row (dense patch extras are Normal / Crumble only and come after the spine platform).</summary>
         private static RowInfo Rows(LevelData d)
         {
             RowInfo ri = new RowInfo { Rows = d.Rows, Kind = new PlatformKind[d.Rows + 2] };
+            bool[] seenRow = new bool[d.Rows + 2];
             foreach (Platform p in d.Platforms)
-                if (p.Row >= 1 && p.Row <= d.Rows && IsNewSpecial(p.Kind)) ri.Kind[p.Row] = p.Kind;
+            {
+                if (p.Row < 1 || p.Row > d.Rows || seenRow[p.Row]) continue;
+                seenRow[p.Row] = true;
+                if (IsNewSpecial(p.Kind)) ri.Kind[p.Row] = p.Kind;
+            }
             return ri;
         }
 
@@ -640,7 +645,13 @@ namespace FluffyClimbers.Simulation.Tests
             {
                 LevelData d = EndlessTower.BuildFixed(cfg, Endless(seed * 977), 320);
                 PlatformKind[] kinds = new PlatformKind[322];
-                foreach (Platform p in d.Platforms) if (p.Row >= 1 && IsNewSpecial(p.Kind)) { kinds[p.Row] = p.Kind; seen.Add(p.Kind); }
+                bool[] rowDone = new bool[322];
+                foreach (Platform p in d.Platforms)
+                {
+                    if (p.Row < 1 || p.Row > 321 || rowDone[p.Row]) continue;   // spine platform = first of its row
+                    rowDone[p.Row] = true;
+                    if (IsNewSpecial(p.Kind)) { kinds[p.Row] = p.Kind; seen.Add(p.Kind); }
+                }
                 for (int r = 5; r <= 40; r++) { early += kinds[r] != PlatformKind.Normal ? 1 : 0; e++; }
                 for (int r = 200; r <= 320; r++) { late += kinds[r] != PlatformKind.Normal ? 1 : 0; l++; }
                 // rules hold in endless too
@@ -661,7 +672,7 @@ namespace FluffyClimbers.Simulation.Tests
             output.WriteLine("endless special share: floors 5-40 " + ep.ToString("F1") + " percent, floors 200-320 " + lp.ToString("F1") + " percent");
             Assert.InRange(ep, 8, 16);   // endless cycle: floors 5-40 are the start of level 1 (10 to 30 percent ramp over its 100 floors)
             Assert.InRange(lp, 18, 30);   // floors 200-320 are levels 2 to 4 (Bug List 6 curve: 10 to 35 percent ramps)
-            Assert.Equal(8, seen.Count);   // all seven new platforms and the flower appear
+            Assert.Equal(10, seen.Count);   // all seven new platforms, the flower and the two generics (Crumble, Moving) appear
         }
 
         [Fact]

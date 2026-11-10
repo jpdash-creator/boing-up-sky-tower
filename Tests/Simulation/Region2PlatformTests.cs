@@ -612,7 +612,7 @@ namespace FluffyClimbers.Simulation.Tests
             Assert.Equal(7, set.Length);
             Assert.All(set, k => Assert.True(PlatformKinds.IsRegion2New(k)));
             Assert.Equal(new[] { PlatformKind.Crumble, PlatformKind.Slippery }, RegionPlatformSets.GenericsFor(SignatureKind.BounceCaps));
-            Assert.Empty(RegionPlatformSets.GenericsFor(SignatureKind.BounceFlowers));
+            Assert.Equal(new[] { PlatformKind.Crumble, PlatformKind.Moving }, RegionPlatformSets.GenericsFor(SignatureKind.BounceFlowers));   // region 1 got two gentle generics (owner 2026-11-10)
             Assert.Equal(7, RegionPlatformSets.For(SignatureKind.StickyGum).Length);   // region 4 has its own set since D5
             Assert.Equal(7, RegionPlatformSets.For(SignatureKind.SwingingGongs).Length);   // region 5 got its seven kinds (Region5PlatformTests)
             Assert.True(PlatformKinds.IsHazardType(PlatformKind.DizzySpores) && PlatformKinds.IsHazardType(PlatformKind.SporePop));

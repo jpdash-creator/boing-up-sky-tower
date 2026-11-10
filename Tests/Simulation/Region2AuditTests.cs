@@ -108,23 +108,35 @@ namespace FluffyClimbers.Simulation.Tests
             Assert.Empty(bad);
         }
 
-        [Fact]
-        public void BotAtEveryStepTable()
+        /// <summary>Owner 2026-11-10: every region (1-5), every step table, real asserts: the bot solves all 25 levels. (Replaces the print-only region 2 version; regions 3 to 5 added.)</summary>
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        [InlineData(5)]
+        public void BotAtEveryStepTable(int region)
         {
             string root = ContentLoader.FindRoot();
-            if (root == null) return;
+            Assert.NotNull(root);
+            List<string> failures = new List<string>();
             foreach (int step in new int[] { 100, 60, 20 })
             {
                 SimConfig cfg = Region1AuditTests.GameConfig(step);
                 cfg.ScrollStepCapPercent = 150;
-                foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 2, 2))
+                List<LoadedLevel> levels = ContentLoader.LoadRegions(root, region, region);
+                Assert.Equal(25, levels.Count);
+                foreach (LoadedLevel ll in levels)
                 {
                     LevelData data = LevelBuilder.Build(cfg, ll.Spec);
                     int budget = SolvabilityT4Tests.NodeBudget * Math.Max(1, ll.Spec.RowsFor() / 60);
-                    BotResult r = new LevelBot(new Sim(cfg, data, ll.Spec), ll.Spec, data, budget).Solve();
-                    output.WriteLine("STEP " + step + " " + ll.Id + " solved=" + r.Solved + " ticks=" + r.Ticks + " bestRow=" + r.BestRow);
+                    BotResult r; bool finished = BotTimeBox.Solve(out r, cfg, ll.Spec, data, budget);
+                    if (!finished) { failures.Add("step " + step + " " + ll.Id + " bot search did not finish in " + BotTimeBox.DefaultSeconds + " s (goal " + ll.Spec.Goal.Type + ")"); continue; }
+                    output.WriteLine("R" + region + " STEP " + step + " " + ll.Id + " solved=" + r.Solved + " ticks=" + r.Ticks + " bestRow=" + r.BestRow);
+                    if (!r.Solved) failures.Add("step " + step + " " + ll.Id + " bestRow=" + r.BestRow);
                 }
             }
+            Assert.Empty(failures);
         }
     }
 }

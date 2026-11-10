@@ -22,7 +22,6 @@ namespace FluffyClimbers.Content
     {
         [JsonProperty("signatureModule", Required = Required.Always)] public string SignatureModule { get; set; }
         [JsonProperty("difficultyOffset", Required = Required.Always)] public double DifficultyOffset { get; set; }
-        [JsonProperty("platformWeights", Required = Required.Always)] public Dictionary<string, double> PlatformWeights { get; set; }
         [JsonProperty("hazards", Required = Required.Always)] public List<string> Hazards { get; set; }
     }
 
@@ -51,12 +50,6 @@ namespace FluffyClimbers.Content
         [JsonProperty("timeSec")] public int? TimeSec { get; set; }
     }
 
-    public sealed class StarDef
-    {
-        [JsonProperty("type", Required = Required.Always)] public string Type { get; set; }
-        [JsonProperty("value")] public int? Value { get; set; }
-    }
-
     public sealed class LevelOverridesDef
     {
         [JsonProperty("fixedChunks")] public List<string> FixedChunks { get; set; }
@@ -76,7 +69,6 @@ namespace FluffyClimbers.Content
 
     public sealed class RewardsDef
     {
-        [JsonProperty("coinPayout", Required = Required.Always)] public int CoinPayout { get; set; }
         [JsonProperty("gems")] public GemRewardDef Gems { get; set; }
     }
 
@@ -93,7 +85,6 @@ namespace FluffyClimbers.Content
         [JsonProperty("class", Required = Required.Always)] public string LevelClass { get; set; }
         [JsonProperty("difficulty", Required = Required.Always)] public double Difficulty { get; set; }
         [JsonProperty("goal", Required = Required.Always)] public GoalDef Goal { get; set; }
-        [JsonProperty("stars", Required = Required.Always)] public List<StarDef> Stars { get; set; }
         [JsonProperty("overrides")] public LevelOverridesDef Overrides { get; set; }
         [JsonProperty("rewards", Required = Required.Always)] public RewardsDef Rewards { get; set; }
     }
@@ -187,7 +178,6 @@ namespace FluffyClimbers.Content
     {
         [JsonProperty("coinsPerGem", Required = Required.Always)] public int CoinsPerGem { get; set; }
         [JsonProperty("replayCoinPercent", Required = Required.Always)] public int ReplayCoinPercent { get; set; }
-        [JsonProperty("regionCoinScalePercent", Required = Required.Always)] public int RegionCoinScalePercent { get; set; }
         [JsonProperty("endlessCoinDailyFullRateRuns", Required = Required.Always)] public int EndlessCoinDailyFullRateRuns { get; set; }
         [JsonProperty("endlessCoinOverCapMultiplier", Required = Required.Always)] public double EndlessCoinOverCapMultiplier { get; set; }
     }

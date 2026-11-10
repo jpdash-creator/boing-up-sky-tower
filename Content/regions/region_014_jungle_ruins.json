@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_vine_swing",
     "difficultyOffset": 0.1121,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.39,

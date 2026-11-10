@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_sliding_stone_doors",
     "difficultyOffset": 0.1897,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.66,

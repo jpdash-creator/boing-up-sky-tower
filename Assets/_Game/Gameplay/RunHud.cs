@@ -621,20 +621,24 @@ namespace FluffyClimbers.Gameplay
         }
 
         /// <summary>
-        /// Run failed. ONE line with [AD 30s] / [AD 1m] (only while the run has an ad left and an ad is ready) next to [gem icon + 5 or 10]; schedule in <see cref="RevivePolicy"/>.
+        /// Run failed. ONE line with [Watch Ad] (always while the run has an ad revive left; dimmed when no ad is loaded) next to [gem icon + 5 or 10]; schedule in <see cref="RevivePolicy"/>.
         /// Retry, Shop and Home stay one tap away (the revive never blocks the retry). Every revive button carries an icon and a text (ad length or price).
         /// </summary>
         public void ShowFailed(RunSession s, int gems, bool adReady)
         {
-            bool offerAd = s.AdReviveOffered && (adReady || s.AdRewardPending);
+            // The Watch Ad button is ALWAYS shown while the schedule still has an ad revive (owner 2026-11-10); without a loaded ad it is dimmed and a tap explains why.
+            adHint = null;
+            bool offerAd = s.AdReviveOffered;
+            bool adDim = offerAd && !adReady && !s.AdRewardPending;
             bool offerGems = s.CanRevive;
+            float hintH = adDim ? AdHintH + 8f : 0f;   // reserved line above the revive row for the "Ad not ready" message (hidden until the player taps)
             // Compact popup (owner 2026-11-02): title, result pills, progress bar, then ONE line with the ad and gem buttons next to each other, then the action row.
             // The height follows the real content: the action row grows with big touch targets / 130 percent text, the revive line with the touch size.
             float contentBottom = s.GoalLost ? 505f : 395f;   // from the top of the panel: end of the progress bar (or of the reason line)
             float reviveH = ReviveButtonH;
             float actionTop = ButtonY + ButtonSizeFor(150f);   // from the bottom of the panel: top of the action buttons
             float reviveY = actionTop + 24f;
-            OpenOverlay(s.GoalLost ? "Wall touched!" : "You fell!", contentBottom + 30f + (offerGems ? reviveH + 24f : 0f) + actionTop);
+            OpenOverlay(s.GoalLost ? "Wall touched!" : "You fell!", contentBottom + 30f + (offerGems ? reviveH + 24f + hintH : 0f) + actionTop);
             AudioManager.Play(Sfx.Fail);
             OnClose = () => { if (OnMenu != null) OnMenu(); };
             Transform panel = PanelOf();
@@ -659,9 +663,22 @@ namespace FluffyClimbers.Gameplay
                 int cost = s.NextReviveCost;
                 if (offerAd)
                 {
-                    string adLabel = s.AdRewardPending ? "FREE" : s.Revive.AdLabel;
-                    string adA11y = s.AdRewardPending ? "Revive for free, ad watched" : "Revive by watching a " + (s.Revive.NextAdSeconds >= 60 ? "1 minute" : s.Revive.NextAdSeconds + " second") + " ad";
-                    ReviveButton(panel, adLabel, adA11y, ToyKit.Get("icon_play"), 1, -step * 0.5f, reviveY, w, () => { if (OnReviveAd != null) OnReviveAd(); });
+                    string adLabel = s.AdRewardPending ? "FREE" : s.Revive.AdLabel;   // "Watch Ad": no ad length in the text (owner 2026-11-10)
+                    string adA11y = s.AdRewardPending ? "Revive for free, ad watched" : (adDim ? "Watch an ad to revive, not ready yet" : "Watch an ad to revive");
+                    Button adBtn = ReviveButton(panel, adLabel, adA11y, ToyKit.Get("icon_play"), 1, -step * 0.5f, reviveY, w, () => { if (OnReviveAd != null) OnReviveAd(); });
+                    if (adDim)
+                    {
+                        // Dimmed, never hidden or disabled: the tap still reaches RunController, which starts an ad load and calls ShowAdNotReady.
+                        Image bi = adBtn.GetComponent<Image>();
+                        if (bi != null) bi.color = new Color(0.55f, 0.55f, 0.55f, 0.85f);
+                        Text bt = adBtn.GetComponentInChildren<Text>();
+                        if (bt != null) bt.color = new Color(0.10f, 0.06f, 0.14f, 0.8f);
+                        Text hint = UiKit.AddText(panel, "AdHint", AdNotReadyText, 38, Theme.Ink, TextAnchor.MiddleCenter, true);
+                        hint.fontStyle = FontStyle.Bold;
+                        UiKit.Place((RectTransform)hint.transform, new Vector2(0.5f, 0f), new Vector2(0f, reviveY + reviveH + 8f + AdHintH * 0.5f), new Vector2(780f, AdHintH));
+                        hint.gameObject.SetActive(false);
+                        adHint = hint;
+                    }
                 }
                 // Too few gems: the button stays enabled and opens the Gems tab of the shop; the revive is taken by tapping again.
                 ReviveButton(panel, cost.ToString(), "Revive for " + cost + " gems", ToyKit.Get("icon_gem"), 0, offerAd ? step * 0.5f : 0f, reviveY, w, () =>
@@ -680,8 +697,20 @@ namespace FluffyClimbers.Gameplay
         const float ReviveBtnW = 380f, ReviveBtnWSolo = 520f, ReviveGap = 20f;
         static float ReviveButtonH { get { return Mathf.Max(130f, UiKit.MinTouchRef); } }
 
-        /// <summary>A revive button: icon at the left, a short label (ad length or gem price) that shrinks to fit at 130 percent text (CUX-4, CUX-5; not colour only).</summary>
-        void ReviveButton(Transform panel, string label, string a11y, Sprite icon, int role, float x, float y, float width, Action act)
+        public const string AdNotReadyText = "Ad not ready, try again in a moment";
+        static float AdHintH { get { return Mathf.Ceil(UiKit.MinBodyTextPx * UiKit.TextScale * 1.25f) * 2f + 8f; } }   // two lines at the current text scale
+        Text adHint;
+
+        /// <summary>Shows the "Ad not ready" message on the failed popup (the dimmed Watch Ad button was tapped). No-op when the popup has no dimmed ad button.</summary>
+        public bool ShowAdNotReady()
+        {
+            if (adHint == null || overlay == null) return false;
+            adHint.gameObject.SetActive(true);
+            return true;
+        }
+
+        /// <summary>A revive button: icon at the left, a short label (Watch Ad or gem price) that shrinks to fit at 130 percent text (CUX-4, CUX-5; not colour only).</summary>
+        Button ReviveButton(Transform panel, string label, string a11y, Sprite icon, int role, float x, float y, float width, Action act)
         {
             float h = ReviveButtonH;
             Button b = UiKit.AddButton(panel, a11y, label, ToyKit.Button(role == 1 ? 1 : 0), Color.white, new Vector2(width, h), act, 44);
@@ -709,6 +738,7 @@ namespace FluffyClimbers.Gameplay
                 r.anchoredPosition = new Vector2(h * 0.42f, 0f);
                 r.sizeDelta = new Vector2(h * 0.56f, h * 0.56f);
             }
+            return b;
         }
 
         /// <summary>

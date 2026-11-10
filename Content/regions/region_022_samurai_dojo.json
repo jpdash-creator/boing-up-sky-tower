@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_falling_blades",
     "difficultyOffset": 0.181,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.63,

@@ -12,6 +12,22 @@ TOGGLES = ["Sound effectsToggle", "MusicToggle", "HapticsToggle", "Reduced motio
 DEV_TOGGLE = "Test: all levels openToggle"
 
 
+def _parse_range(text):
+    out = []
+    for part in str(text).split(","):
+        part = part.strip()
+        if "-" in part:
+            a, b = part.split("-", 1)
+            out.extend(range(int(a), int(b) + 1))
+        elif part:
+            out.append(int(part))
+    return out
+
+
+REGIONS = _parse_range(os.environ.get("TEST_REGIONS", "1-5"))
+LEVEL_COUNT = int(os.environ.get("TEST_LEVEL_COUNT", "25"))
+
+
 def open_settings(g):
     g.to_menu()
     g.tap("Settings")
@@ -22,7 +38,7 @@ def open_settings(g):
 def open_map(g):
     g.to_menu()
     g.tap("Play")
-    g.find("Region1", 15)
+    g.find("Region%d" % REGIONS[0], 15)
     time.sleep(1.0)
 
 
@@ -38,8 +54,8 @@ def toggle_state(g, name):
 
 
 def test_menu_map_play_fail(g):
-    """Menu -> map -> region 1 -> level 1 -> PLAY -> jump taps -> fail overlay."""
-    open_region(g, 1)
+    """Menu -> map -> first region (TEST_REGIONS) -> level 1 -> PLAY -> jump taps -> fail overlay."""
+    open_region(g, REGIONS[0])
     g.tap("Level1")
     g.tap("PLAY")
     g.wait_scene("Run", 30)
@@ -130,19 +146,21 @@ def test_map_scroll_to_far_region(g):
     g.tap("Back")
 
 
-def test_level_grid_has_15_nodes(g):
-    """The level screen of region 1 shows exactly the 15 level circles Level1..Level15."""
-    open_region(g, 1)
-    missing = [i for i in range(1, 16) if not g.exists("Level%d" % i)]
-    if missing:
-        raise TestFailure("level circles missing: %s" % missing)
-    if g.exists("Level16"):
-        raise TestFailure("unexpected Level16 on the grid")
-    g.tap("Back")
+def test_level_grid_has_all_nodes(g):
+    """The level screen of every region (REGIONS, default 1-5) shows exactly LEVEL_COUNT (default 25) circles Level1..Level<N>.
+    Environment: TEST_REGIONS ('1-5'), TEST_LEVEL_COUNT ('25'). Circles below the fold may need a scroll; the grid is scrolled to find them."""
+    for region in REGIONS:
+        open_region(g, region)
+        missing = [i for i in range(1, LEVEL_COUNT + 1) if not g.exists("Level%d" % i)]
+        if missing:
+            raise TestFailure("region %d: level circles missing: %s" % (region, missing))
+        if g.exists("Level%d" % (LEVEL_COUNT + 1)):
+            raise TestFailure("region %d: unexpected Level%d on the grid" % (region, LEVEL_COUNT + 1))
+        g.tap("Back")
 
 
 def test_all_levels_open_toggle(g):
-    """'Test: all levels open' (development builds only) opens region 2: its level 15 opens the level popup instead of 'Locked'."""
+    """'Test: all levels open' (development builds only) opens a second region: its last level opens the level popup instead of 'Locked'."""
     open_settings(g)
     if not g.exists(DEV_TOGGLE, 3):
         g.tap("Back")
@@ -152,11 +170,12 @@ def test_all_levels_open_toggle(g):
         g.tap(DEV_TOGGLE)
     g.tap("Back")
     try:
-        open_region(g, 2)
-        g.tap("Level15")
+        other = REGIONS[1] if len(REGIONS) > 1 else REGIONS[0]
+        open_region(g, other)
+        g.tap("Level%d" % LEVEL_COUNT)
         if not g.exists("PLAY", 6):
             g.screenshot("all_open_failed")
-            raise TestFailure("region 2 level 15 did not open its level popup with all levels open")
+            raise TestFailure("region %d level %d did not open its level popup with all levels open" % (other, LEVEL_COUNT))
         g.tap("Close")
         g.tap("Back")
     finally:
@@ -169,7 +188,7 @@ def test_all_levels_open_toggle(g):
 
 def test_endless_button_present(g):
     """The level screen has an Endless button (endless feature); skipped when the build does not have it."""
-    open_region(g, 1)
+    open_region(g, REGIONS[0])
     if not g.exists("Endless"):
         g.tap("Back")
         raise Skip("object 'Endless' is missing (build without the endless feature)")
@@ -183,10 +202,10 @@ def test_endless_button_present(g):
     g.tap("Back")
 
 
-def test_region1_all_levels_autopilot(g):
-    """Region 1 as a real player: the game's own Autopilot plays levels 1..15 (it needs the autoplay.json flag file, written here), and this test
+def _autopilot_region(g, region):
+    """Every region (TEST_REGIONS, default 1-5) as a real player, one after the other: the game's own Autopilot plays levels 1..LEVEL_COUNT (it needs the autoplay.json flag file, written here), and this test
     only OBSERVES through AltTester (the Run scene and its pad objects exist while the autopilot plays) and takes a screenshot at every death.
-    Results come from the BTAUTO lines in logcat. Settings through the environment: AUTOPLAY_SKILL (0.5), AUTOPLAY_LEVELS ('1-15'),
+    Results come from the BTAUTO lines in logcat. Settings through the environment: AUTOPLAY_SKILL (0.5), AUTOPLAY_LEVELS ('1-<TEST_LEVEL_COUNT>'),
     AUTOPLAY_DIFFICULTY (0), AUTOPLAY_SEEDS (1), AUTOPLAY_MINUTES (45). SKIP outside development builds."""
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     import autoplay_r1 as ap
@@ -194,7 +213,7 @@ def test_region1_all_levels_autopilot(g):
 
     if not g.exists("Settings", 5):
         g.to_menu()
-    opts = {"region": 1, "levels": ap.parse_levels(os.environ.get("AUTOPLAY_LEVELS", "1-15")), "skill": float(os.environ.get("AUTOPLAY_SKILL", "0.5")),
+    opts = {"region": region, "levels": ap.parse_levels(os.environ.get("AUTOPLAY_LEVELS", "1-%d" % LEVEL_COUNT)), "skill": float(os.environ.get("AUTOPLAY_SKILL", "0.5")),
             "difficulty": int(os.environ.get("AUTOPLAY_DIFFICULTY", "0")), "stopOnFail": False, "seeds": int(os.environ.get("AUTOPLAY_SEEDS", "1")),
             "speed": 1.0}
     expected = len(opts["levels"]) * opts["seeds"]
@@ -232,14 +251,14 @@ def test_region1_all_levels_autopilot(g):
             raise TestFailure("autoplay did not finish within the time limit; %d of %d runs reported" % (len(results), expected))
         if not saw_run:
             raise TestFailure("never saw the Run scene or its pad objects through AltTester while the autopilot played")
-        ap.write_report(results, shots, opts, meta, os.path.join(ap.QA, "autoplay_report_alttester.md"))
+        ap.write_report(results, shots, opts, meta, os.path.join(ap.QA, "autoplay_report_alttester_r%d.md" % region))
         print(ap.table(results))
         failed = [r for r in results if ap.verdict(r) == "FAIL"]
         if len(results) < expected:
             raise TestFailure("only %d of %d runs reported" % (len(results), expected))
         if failed:
-            raise TestFailure("%d run(s) not cleared: %s (report: E:/Unity/qa/autoplay_report_alttester.md)" % (
-                len(failed), ", ".join("%s %s@%s" % (r.get("lvl"), r.get("res"), r.get("floors")) for r in failed)))
+            raise TestFailure("%d run(s) not cleared: %s (report: E:/Unity/qa/autoplay_report_alttester_r%d.md)" % (
+                len(failed), ", ".join("%s %s@%s" % (r.get("lvl"), r.get("res"), r.get("floors")) for r in failed), region))
     finally:
         log.close()
         ap.remove_flags()
@@ -250,15 +269,22 @@ def altbt_shots():
     return altbt.SHOTS
 
 
-test_region1_all_levels_autopilot.long = True   # run_all.py runs 'long' tests only with --only or --long
+def test_all_regions_autopilot(g):
+    """Plays every region in TEST_REGIONS (default 1-5) with the autopilot, one after the other; FAIL when a level of any region is not cleared."""
+    for region in REGIONS:
+        print("     --- region %d ---" % region)
+        _autopilot_region(g, region)
+
+
+test_all_regions_autopilot.long = True   # run_all.py runs 'long' tests only with --only or --long
 
 
 TESTS = [
-    test_level_grid_has_15_nodes,
+    test_level_grid_has_all_nodes,
     test_endless_button_present,
     test_settings_toggles_persist,
     test_all_levels_open_toggle,
     test_map_scroll_to_far_region,
     test_menu_map_play_fail,
-    test_region1_all_levels_autopilot,   # long (up to 45 min): run alone with --only region1
+    test_all_regions_autopilot,   # long (hours for 5 regions): run alone with --only all_regions
 ]

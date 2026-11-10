@@ -156,7 +156,7 @@ namespace FluffyClimbers.Gameplay
             if (Session == null) return;
             float dt = Mathf.Min(Time.deltaTime, 0.1f);   // the game never changes timeScale; deltaTime also honours Time.captureFramerate in tests
             Input.Update();
-            if (!Paused && !Session.Over && GameSession.Progress != null) GameSession.Progress.FeedPlayTime(dt, false, Session.Region.Index);   // reward statistics: play time (no file write in a run)
+            if (!Paused && !Session.Over && Hud.IntroRemaining <= 0f && GameSession.Progress != null) GameSession.Progress.FeedPlayTime(dt, false, Session.Region.Index);   // reward statistics: play time (no file write in a run)
             if (!Paused && !Session.Over && GameSession.Progress != null) { bundleTickAcc += dt; if (bundleTickAcc >= 1f) { GameSession.Progress.TickPlayTime(bundleTickAcc, true); bundleTickAcc = 0f; } }   // bundle timer: run time counts, no offer starts in a run, no file write
 
             bool introDone = Hud.IntroRemaining <= 0f;
@@ -281,7 +281,8 @@ namespace FluffyClimbers.Gameplay
         {
             if (adBusy || Session == null) return;
             if (Session.AdRewardPending) { if (Session.TryReviveFree()) AfterRevive(); return; }
-            if (!Services.Ads.IsReady(AdPlacements.Revive)) { ShowFailedOffer(); return; }   // the ad vanished: redraw with the gem option only
+            // No ad loaded: IsReady also asks the ad service to start loading one. Tell the player; the button stays (dimmed), Retry/Home/Shop stay usable.
+            if (!Services.Ads.IsReady(AdPlacements.Revive)) { if (!Hud.ShowAdNotReady()) { ShowFailedOffer(); Hud.ShowAdNotReady(); } return; }
             adBusy = true;
             RunSession sess = Session;
             Services.Ads.ShowRewarded(AdPlacements.Revive, granted =>

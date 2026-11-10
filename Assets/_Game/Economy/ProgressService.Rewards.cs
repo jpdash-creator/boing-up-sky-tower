@@ -46,6 +46,8 @@ namespace FluffyClimbers.Economy
         [JsonProperty("bestCombo")] public int BestCombo;
         /// <summary>Claims made so far: seeds the random power-up picks so they are repeatable.</summary>
         [JsonProperty("claims")] public int Claims;
+        /// <summary>Hidden central play timer (seconds, lifetime): grows only while a run is live in the Run scene and not paused, in every mode. Never shown. Additive field: old saves start at 0. The Daily and Weekly play goals read the period counters that grow with it.</summary>
+        [JsonProperty("playTotalSec", DefaultValueHandling = DefaultValueHandling.Ignore)] public long PlayTotalSeconds;
         /// <summary>Admin "Main rewards" test switch (docs/38): every Main reward counts as complete (not claimed, nothing paid). Cleared when System Test goes off.</summary>
         [JsonProperty("testMainReady", DefaultValueHandling = DefaultValueHandling.Ignore)] public bool TestMainReady;
     }
@@ -91,6 +93,9 @@ namespace FluffyClimbers.Economy
 
         bool playDirty;
         float playFraction;
+        int playRegion;
+        /// <summary>Hidden lifetime play timer in seconds (see <see cref="RewardsData.PlayTotalSeconds"/>). Run-live time only.</summary>
+        public long PlayTotalSeconds { get { return Rw.PlayTotalSeconds; } }
 
         // ---- period keys ----
 
@@ -199,6 +204,7 @@ namespace FluffyClimbers.Economy
             RewardsData r = Rw;
             int before = StatOf(r.Day, RewardStat.PlaySeconds);
             AddBoth(RewardStat.PlaySeconds, seconds);
+            r.PlayTotalSeconds += seconds;
             if (regionIndex > 0) { RegionStats rs = RegionStatsFor(regionIndex, true); rs.PlaySeconds = SaturatingAdd(rs.PlaySeconds, seconds); }   // only play inside a region counts for its goals
             playDirty = true;
             if (save && before / 60 != StatOf(r.Day, RewardStat.PlaySeconds) / 60) FlushPlayTime();
@@ -209,6 +215,7 @@ namespace FluffyClimbers.Economy
         {
             if (deltaSeconds <= 0f) return;
             if (deltaSeconds > 1f) deltaSeconds = 1f;   // a long frame (resume from the background) is not play time
+            playRegion = regionIndex;
             playFraction += deltaSeconds;
             if (playFraction < 5f) return;
             int whole = (int)playFraction;
@@ -219,6 +226,8 @@ namespace FluffyClimbers.Economy
         /// <summary>Writes pending play time to the save (no Changed event). Call when a run pauses, ends or is left.</summary>
         public void FlushPlayTime()
         {
+            int pending = (int)playFraction;   // whole seconds still waiting for the 5 second batch
+            if (pending > 0) { playFraction -= pending; AddPlaySeconds(pending, false, playRegion); }
             if (!playDirty) return;
             playDirty = false;
             store.Save(Data);
@@ -318,7 +327,7 @@ namespace FluffyClimbers.Economy
                 if (regionIndex > 0) { RegionStats hs = RegionStatsFor(regionIndex, true); if (hs != null) hs.HardClears = SaturatingAdd(hs.HardClears, 1); }
             }
             if (level.Index == RegionGoalTable.NoWallLevelIndex) AddBoth(RewardStat.NoWall, 1);
-            if (level.Index == 8 || level.LevelClass == LevelDef.ClassHighlyComplex) AddBoth(RewardStat.GemLevel, 1);
+            if (GemLevels.IsGemLevel(level.Index, level.Goal == null ? null : level.Goal.Type) || level.LevelClass == LevelDef.ClassHighlyComplex) AddBoth(RewardStat.GemLevel, 1);
             int stars = run.Stars;   // star pickups are never stripped on replays, so these two counters work on every level
             if (stars >= 2) AddBoth(RewardStat.Stars2, 1);
             if (stars > 0) AddBoth(RewardStat.StarsEarned, stars);

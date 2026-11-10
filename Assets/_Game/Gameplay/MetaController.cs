@@ -96,7 +96,7 @@ namespace FluffyClimbers.Gameplay
 
         void Update()
         {
-            if (progress != null) progress.FeedPlayTime(Time.unscaledDeltaTime, true);   // reward statistics: menu play time
+            // Play time counts only while a run is live (RunController.Tick); menus, shop and idle time do not count.
             if (mapContent != null && mapViewport != null && (Mathf.Abs(mapViewport.rect.width - mapWidthSeen) > 0.5f || Mathf.Abs(mapViewport.rect.height - mapHeightSeen) > 0.5f) && mapViewport.rect.width > 2f)
             {
                 float norm = mapScroll.verticalNormalizedPosition;
@@ -1782,7 +1782,7 @@ namespace FluffyClimbers.Gameplay
                 UiKit.Stretch((RectTransform)num.transform);
             }
             // Doc 25: the gem icon marks the levels that hold gems to collect on the way (8 and the top level, 25); the combo level (5) has none.
-            bool gemLevel = level.Index == 8 || level.LevelClass == LevelDef.ClassHighlyComplex;
+            bool gemLevel = GemLevels.IsGemLevel(level.Index, level.Goal == null ? null : level.Goal.Type) || level.LevelClass == LevelDef.ClassHighlyComplex;
             if (unlocked && gemLevel && art != null && art.GemIcon != null)
             {
                 Image gem = UiKit.AddImage(rt, "GemBadge", art.GemIcon, Color.white);

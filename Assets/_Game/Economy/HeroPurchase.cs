@@ -6,7 +6,7 @@ namespace FluffyClimbers.Economy
     public enum HeroBuyResult
     {
         Ok,
-        NotEnoughGems,
+        NotEnoughCoins,
         /// <summary>No hero of that rarity exists in an open region (today Rare, Elite and Legendary). Nothing is charged.</summary>
         NoHeroes,
         /// <summary>The rarity is not sold, or the picked hero has no inventory row. Nothing is charged.</summary>
@@ -14,7 +14,7 @@ namespace FluffyClimbers.Economy
     }
 
     /// <summary>
-    /// The Shop "Heroes" section (Bug List 4 E2, docs/26 section 8b). Pure rules, no Unity types. Four cards: Uncommon, Rare, Elite (code tier Epic), Legendary. Buying pays the gems and
+    /// The Shop "Heroes" section (Bug List 4 E2, docs/26 section 8b). Pure rules, no Unity types. Four cards: Uncommon, Rare, Elite (code tier Epic), Legendary. Buying pays COINS (no gem option, owner Bug List Shop 2a) and
     /// adds exactly ONE copy of a RANDOM hero of that rarity chosen among the heroes whose region is open (same open-region rule as the bundle card, <see cref="BundleCards"/>).
     /// The pick is repeatable from the per-account seed and a counter, never from UnityEngine.Random.
     /// </summary>
@@ -24,13 +24,14 @@ namespace FluffyClimbers.Economy
         public static readonly CharacterRarity[] Tiers = { CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary };
 
         /// <summary>
-        /// THE ONE TABLE: gem price of one hero card per tier, same order as <see cref="Tiers"/>: Uncommon 150, Rare 300, Epic (Elite) 700, Legendary 1,500.
+        /// THE ONE TABLE: coin price of one hero card per tier, same order as <see cref="Tiers"/>: Uncommon 3,000, Rare 6,000, Epic (Elite) 14,000, Legendary 30,000
+        /// (the old gem prices 150, 300, 700, 1,500 x 20 coins per gem).
         /// The owner may change the numbers here only.
         /// </summary>
-        public static readonly int[] Prices = { 150, 300, 700, 1500 };
+        public static readonly int[] Prices = { 3000, 6000, 14000, 30000 };
 
-        /// <summary>Gem price of a hero card of this rarity, 0 when the rarity is not sold (Common).</summary>
-        public static int GemPrice(CharacterRarity rarity)
+        /// <summary>Coin price of a hero card of this rarity, 0 when the rarity is not sold (Common).</summary>
+        public static int CoinPrice(CharacterRarity rarity)
         {
             int i = System.Array.IndexOf(Tiers, rarity);
             return i >= 0 ? Prices[i] : 0;

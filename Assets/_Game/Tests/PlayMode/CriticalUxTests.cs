@@ -580,7 +580,8 @@ namespace FluffyClimbers.Tests
                 Assert.AreEqual(LegalLinks.TermsUrl, opened[1]);
                 Assert.IsTrue(LegalLinks.IsWebUrl(opened[0]) && LegalLinks.IsWebUrl(opened[1]), "https pages only");
 
-                Assert.AreEqual(1470f, MetaController.SettingsCapFor(1663f), 0.01f, "3:4 canvas keeps the fixed cap");
+                Assert.AreEqual(1470f, MetaController.SettingsCapFor(1660f), 0.01f, "3:4 canvas keeps the fixed cap");
+                Assert.AreEqual(1471f, MetaController.SettingsCapFor(1663f), 0.01f, "the real 3:4 safe height is one unit above the fixed cap: still safe");
                 Assert.AreEqual(1470f, MetaController.SettingsCapFor(1246f), 0.01f, "a short editor window keeps the fixed cap");
                 Assert.AreEqual(1728f, MetaController.SettingsCapFor(1920f), 0.01f, "9:16 phone: safe height minus 96 above and below");
                 Assert.AreEqual(1800f, MetaController.SettingsCapFor(2400f), 0.01f, "never above 1800");
@@ -1202,7 +1203,9 @@ namespace FluffyClimbers.Tests
             rc.Hud.CloseOverlay();
             yield return CheckScreen("run-failed", () => rc.Hud.ShowFailed(rc.Session, 10, true), problems);
             rc.Hud.CloseOverlay();
-            yield return CheckScreen("run-failed-gems-only", () => rc.Hud.ShowFailed(rc.Session, 0, false), problems);
+            yield return CheckScreen("run-failed-ad-dimmed", () => rc.Hud.ShowFailed(rc.Session, 10, false), problems);   // Watch Ad dimmed, never hidden
+            rc.Hud.CloseOverlay();
+            yield return CheckScreen("run-failed-ad-not-ready-message", () => { rc.Hud.ShowFailed(rc.Session, 0, false); rc.Hud.ShowAdNotReady(); }, problems);   // message visible: no overlap
             rc.Hud.CloseOverlay();
             var outcome = rc.Session.BuildOutcome();
             var reward = GameSession.Progress.ApplyRun(GameSession.CurrentLevelId, outcome);
@@ -1901,6 +1904,11 @@ namespace FluffyClimbers.Tests
             yield return CheckScreen("shop-tab-gems-coins-section", () => meta.ShowShop(ShopScreen.TabGems, ShopScreen.CoinsSection), problems);
             yield return CheckScreen("shop-tab-character-powerups", () => meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.PowerupsSection), problems);
             yield return CheckScreen("shop-tab-character-powerups-bought", () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.PowerupsSection); meta.CurrentShop.TapBuyPowerUp(GameSession.Progress.PowerUpDefs.Get("pw_flight"), PowerUpCurrency.Coins); }, problems);
+            // Shop 2a: Heroes and Power-ups are coins only: no gem buy button anywhere on the Character page (CriticalUX)
+            meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.PowerupsSection);
+            yield return null;
+            foreach (UnityEngine.UI.Button b in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (b.name == "BuyGems") problems.Add("shop-2a: a gem buy button is still on the Character page");
             // Treasure Chest screen (docs/22 point 3): rows, the (i) texts, the confirmation, the single and the ten reveal
             yield return CheckScreen("treasure-chests", () => meta.ShowTreasureChests(), problems);
             // VIP tab (owner issue 35): one scrollable page, Subscription section first, Chests under it; the old 'Chests' tab is gone
@@ -1918,7 +1926,7 @@ namespace FluffyClimbers.Tests
             yield return CheckScreen("shop-heroes-confirm-popup", () => { meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection); meta.CurrentShop.TapHeroBuy(CharacterRarity.Uncommon); }, problems);
             yield return CheckScreen("shop-heroes-reveal", () =>
             {
-                GameSession.Progress.AddGems(HeroPurchase.GemPrice(CharacterRarity.Uncommon));
+                GameSession.Progress.AddCoins(HeroPurchase.CoinPrice(CharacterRarity.Uncommon));
                 meta.ShowShop(ShopScreen.TabCharacter, ShopScreen.HeroesSection);
                 meta.CurrentShop.TapHeroBuy(CharacterRarity.Uncommon);
                 ClickByName("Buy for");

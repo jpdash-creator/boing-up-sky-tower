@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_crumbling_sand",
     "difficultyOffset": 0.0603,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.21,

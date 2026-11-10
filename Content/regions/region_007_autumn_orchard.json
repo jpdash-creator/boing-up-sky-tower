@@ -19,10 +19,6 @@
   "rules": {
     "signatureModule": "mod_wind_gusts",
     "difficultyOffset": 0.0517,
-    "platformWeights": {
-      "normal": 1.0,
-      "signature": 0.3
-    },
     "hazards": []
   },
   "coinFactor": 1.18,

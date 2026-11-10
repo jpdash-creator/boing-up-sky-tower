@@ -1,8 +1,8 @@
 """Level sweep (stream T1): plays the levels of one region on the phone through AltTester with the game's own Autopilot, checks a
 per-level checklist and writes a results table (markdown + JSON).
 
-    python Tools/android_test/alttester/level_sweep.py --levels 1-15 --region 1 [--install] [--no-launch] [--skill 0.5] [--speed 1]
-    python Tools/android_test/alttester/run_all.py   --levels 1-15 --region 1      (same thing, through run_all.py)
+    python Tools/android_test/alttester/level_sweep.py [--levels 1-25] [--regions 1-5] [--level-count 25] [--install] [--no-launch] [--skill 0.5] [--speed 1]
+    python Tools/android_test/alttester/run_all.py   --levels 1-25 --regions 1-5      (same thing, through run_all.py)
 
 For every level the script (all through real UI objects, nothing is started behind the UI's back):
   1. opens the level screen of the region, taps the level circle (scrolling the grid when needed), reads the level popup, screenshot;
@@ -17,6 +17,7 @@ Results are written after every level, so a crash keeps what was done; a new run
 Exit code: 0 = every level PASS or SKIP and every checklist item ok, 1 = a FAIL, 2 = no device.
 """
 import argparse
+import copy
 import datetime
 import json
 import os
@@ -33,7 +34,14 @@ OUT_MD = "E:/Unity/logs/alttester_levels.md"
 OUT_JSON = "E:/Unity/logs/alttester_levels.json"
 POWER_NAMES = ["Flight", "Rocket", "DoubleJump", "WallStick", "Shield", "Magnet", "SlowTime"]   # PowerUpBar: object "Power<Type>" per owned type
 RULE_LEVELS = (7,)            # doc 25: level 7 = no wall touch, the start popup shows the small italic line
-GEM_LEVELS = (8, 15)          # doc 25: gems are placed along the route
+GEM_LEVELS = (8, 15)          # default for 25 levels via gem_levels(); gems are placed along the route
+DEFAULT_REGIONS = "1-5"       # playable regions
+DEFAULT_LEVEL_COUNT = 25      # levels per region (Assets/_Game/Simulation SimConfig.LevelsPerRegion)
+
+
+def gem_levels(level_count=DEFAULT_LEVEL_COUNT):
+    """Levels that hold gems: the bonus gem level 8, the hidden-gem level 15 and the last level (GemLevels.cs). Same in every region."""
+    return tuple(sorted(set((8, 15, level_count))))
 SKIP_GOALS_DEFAULT = "SurviveWave,BossChase"   # goal types the Autopilot does not play (removed from the campaign by doc 25)
 COMBO_GOAL = "ComboChain"
 SERIAL_DEFAULT = "96355505"   # the owner's phone; an emulator may be attached too (adb reads ANDROID_SERIAL)
@@ -131,7 +139,7 @@ def evaluate_popup(n, pre, popup):
     return out
 
 
-def evaluate_run(n, pre, run, power_objects, gem_pill):
+def evaluate_run(n, pre, run, power_objects, gem_pill, gem_level_set=None):
     """Checks on the running level (after the intro). power_objects = number of Power<Type> UI objects found, gem_pill = HUD object GemPill is on screen."""
     out = []
     out.append(check("run uses selected character", bool(run.get("character")) and run.get("character") == run.get("selected"),
@@ -143,7 +151,7 @@ def evaluate_run(n, pre, run, power_objects, gem_pill):
     if pre.get("goalType") == COMBO_GOAL:
         out.append(check("combo level: no gem pill / gems", not gem_pill and run.get("gemsPlaced", 0) == 0,
                          "GemPill on screen=%s, gems placed=%s" % (gem_pill, run.get("gemsPlaced"))))
-    if n in GEM_LEVELS:
+    if n in (gem_level_set if gem_level_set is not None else GEM_LEVELS):
         out.append(check("gem level has gems", run.get("gemsPlaced", 0) > 0, "gems placed=%s" % run.get("gemsPlaced")))
     return out
 
@@ -196,17 +204,18 @@ def render_markdown(meta, rows):
     lines = ["# AltTester level sweep", "",
              "- Date: %s" % meta.get("date", ""),
              "- Build: %s (flags SYSTEM_TEST=%s, GAME_JUMP_TEST=%s)" % (meta.get("version", "?"), meta.get("system", "?"), meta.get("jump", "?")),
-             "- Region %s, autopilot skill %s, depth %s, game speed %s, time limit %s s, character %s" % (
-                 meta.get("region", "?"), meta.get("skill", "?"), meta.get("depth", "?"), meta.get("speed", "?"), meta.get("time_limit", "?"), meta.get("character", "selected")),
+             "- Region(s) %s, autopilot skill %s, depth %s, game speed %s, time limit %s s, character %s" % (
+                 ",".join(str(x) for x in sorted(set(r.get("region", 1) for r in rows))) or meta.get("region", "?"), meta.get("skill", "?"), meta.get("depth", "?"), meta.get("speed", "?"), meta.get("time_limit", "?"), meta.get("character", "selected")),
              "- Result: %d PASS, %d FAIL, %d SKIP, %d checklist item(s) failed" % (counts["PASS"], counts["FAIL"], counts["SKIP"], check_fails), "",
              "| Level | Goal | Rows | Platforms | Special seen | Result | Time (s) | Gems | Coins | Stars | Fail reason | Verdict | Checks |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    multi = len(set(r.get("region", 1) for r in rows)) > 1
     for r in rows:
         special = r.get("kinds_seen") or "-"
         if r.get("kinds_layout"):
             special += " of " + r["kinds_layout"]
         lines.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | **%s** | %s |" % (
-            r["level"], _cell(r.get("goal", "")), "%s/%s" % (r.get("rows", 0), r.get("target", 0)) if r.get("result") != "skip" else "-",
+            ("R%s L%s" % (r.get("region", 1), r["level"])) if multi else r["level"], _cell(r.get("goal", "")), "%s/%s" % (r.get("rows", 0), r.get("target", 0)) if r.get("result") != "skip" else "-",
             r.get("platforms") or "-", _cell(special), r.get("result", ""), "%.1f" % r.get("time", 0.0), "%s/%s" % (r.get("gems", 0), r.get("gems_placed", 0)),
             "%s/%s" % (r.get("coins", 0), r.get("coins_placed", 0)), r.get("stars", 0), _cell(r.get("fail_reason") or r.get("note") or "-"), r.get("verdict", ""),
             _cell(check_summary(r))))
@@ -219,13 +228,13 @@ def render_markdown(meta, rows):
         for r in failed:
             for c in r["checks"]:
                 if c["status"] == "FAIL":
-                    lines.append("- Level %s: **%s** - %s" % (r["level"], c["name"], c.get("detail", "")))
+                    lines.append("- Region %s level %s: **%s** - %s" % (r.get("region", 1), r["level"], c["name"], c.get("detail", "")))
         lines.append("")
     lines += ["## Layouts", "", "| Level | Layout of the played attempt | Hash attempt 1 | Hash attempt 2 | Character | Power-up buttons |", "|---|---|---|---|---|---|"]
     for r in rows:
         if r.get("result") == "skip":
             continue
-        lines.append("| %s | %s | %s | %s | %s | %s |" % (r["level"], _cell(r.get("layout", "")), r.get("layout_hash", ""), r.get("layout_hash2", "") or "-",
+        lines.append("| %s | %s | %s | %s | %s | %s |" % (("R%s L%s" % (r.get("region", 1), r["level"])) if multi else r["level"], _cell(r.get("layout", "")), r.get("layout_hash", ""), r.get("layout_hash2", "") or "-",
                                                          r.get("character", ""), r.get("power_buttons", 0)))
     lines += ["", "Screenshots: E:/Unity/device_shots/alttester/level_NN_popup.png, level_NN_midrun.png, level_NN_result.png", ""]
     return "\n".join(lines)
@@ -415,7 +424,7 @@ def play_level(g, br, n, args, clk):
     run = wait_state(br, clk, lambda s: s.get("run") and not s.get("intro") and not s.get("overlay"), 40, "the level intro to end")
     power_objects = sum(1 for name in POWER_NAMES if g.exists("Power" + name))
     gem_pill = g.exists("GemPill")
-    row["checks"] += evaluate_run(n, pre, run, power_objects, gem_pill)
+    row["checks"] += evaluate_run(n, pre, run, power_objects, gem_pill, gem_levels(getattr(args, "level_count", DEFAULT_LEVEL_COUNT)))
     row["character"] = run.get("character", "")
     row["power_buttons"] = run.get("powerButtons", 0)
     row["rows"] = run.get("row", 0)
@@ -545,8 +554,10 @@ def sweep(g, br, args, clk=None, out_md=OUT_MD, out_json=OUT_JSON):
 
 def parse_args(argv):
     p = argparse.ArgumentParser(description="AltTester level sweep with the in-game Autopilot")
-    p.add_argument("--levels", default="1-15", help="levels of the region, e.g. 1-15 or 8-15 or 3,7 (resume from level N: --levels N-15)")
-    p.add_argument("--region", type=int, default=1)
+    p.add_argument("--levels", default=None, help="levels of each region, e.g. 1-25 or 8-25 or 3,7 (default: 1 to --level-count)")
+    p.add_argument("--level-count", type=int, default=DEFAULT_LEVEL_COUNT, dest="level_count", help="levels per region (default 25)")
+    p.add_argument("--regions", default=DEFAULT_REGIONS, help="regions to sweep, e.g. 1-5 or 2,4 (default all 5 playable regions)")
+    p.add_argument("--region", type=int, default=None, help="single region (same as --regions N)")
     p.add_argument("--skill", type=float, default=0.5, help="autopilot skill: 0 perfect, 1 human-like (reaction lag and jitter)")
     p.add_argument("--depth", type=int, default=2, help="autopilot look-ahead in landings")
     p.add_argument("--seed", type=int, default=1, help="autopilot jitter seed base")
@@ -566,7 +577,9 @@ def parse_args(argv):
     p.add_argument("--out-md", default=OUT_MD, dest="out_md")
     p.add_argument("--out-json", default=OUT_JSON, dest="out_json")
     args, _unknown = p.parse_known_args(argv)
-    args.levels = parse_levels(args.levels)
+    args.levels = parse_levels(args.levels if args.levels else "1-%d" % args.level_count)
+    args.regions = [args.region] if args.region is not None else parse_levels(args.regions)
+    args.region = args.regions[0]
     return args
 
 
@@ -591,7 +604,14 @@ def main(argv=None):
         return 1
     br = Bridge(g.d)
     try:
-        rows, code = sweep(g, br, args, out_md=args.out_md, out_json=args.out_json)
+        rows, code = [], 0
+        for region in args.regions:
+            a = copy.copy(args)
+            a.region = region
+            r_rows, r_code = sweep(g, br, a, out_md=args.out_md, out_json=args.out_json)
+            rows += r_rows
+            code = code or r_code
+            args.fresh = False              # the first region wrote the file; later regions merge into it
     except TestFailure as e:
         print("FAIL setup  %s" % e)
         print("RESULT: FAILED")

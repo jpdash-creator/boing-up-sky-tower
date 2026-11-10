@@ -143,8 +143,13 @@ namespace FluffyClimbers.Simulation.Tests
             Platform p = new Platform(); p.Id = 1; p.Row = 1; p.X = Fx.FromInt(5); p.Y = Fx.FromInt(3); p.Width = Fx.FromInt(10); return p;
         }
 
-        [Fact]
-        public void BotSurvivesRegion1AtTheHardestStepTable()
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        [InlineData(5)]
+        public void BotSurvivesEveryRegionAtTheHardestStepTable(int region)
         {
             string root = ContentLoader.FindRoot();
             if (root == null) return;
@@ -152,11 +157,12 @@ namespace FluffyClimbers.Simulation.Tests
             SimConfig cfg = Region1AuditTests.GameConfig(100);
             cfg.ScrollStepCapPercent = 150;
             List<string> failures = new List<string>();
-            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, 1, 1))
+            foreach (LoadedLevel ll in ContentLoader.LoadRegions(root, region, region))
             {
                 LevelData data = LevelBuilder.Build(cfg, ll.Spec);
                 int budget = SolvabilityT4Tests.NodeBudget * System.Math.Max(1, ll.Spec.RowsFor() / 60);
-                BotResult r = new LevelBot(new Sim(cfg, data, ll.Spec), ll.Spec, data, budget).Solve();
+                BotResult r; bool finished = BotTimeBox.Solve(out r, cfg, ll.Spec, data, budget);
+                if (!finished) { output.WriteLine(ll.Id + " bot search did not finish in " + BotTimeBox.DefaultSeconds + " s"); failures.Add(ll.Id + " bot search did not finish in " + BotTimeBox.DefaultSeconds + " s (goal " + ll.Spec.Goal.Type + ")"); continue; }
                 output.WriteLine(ll.Id + " solved=" + r.Solved + " ticks=" + r.Ticks + " bestRow=" + r.BestRow);
                 if (!r.Solved) failures.Add(ll.Id + " bestRow=" + r.BestRow);
                 else if (r.Ticks < 90 * 60 && ll.Spec.TargetRow() < 150) { /* short level: finished before 90 s, fine */ }

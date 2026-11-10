@@ -442,30 +442,28 @@ namespace FluffyClimbers.Simulation.Tests
         }
 
         [Fact]
-        public void RevivedRunsNeverSetARecordButReturnTheirNumbers()
+        public void RevivedLevelRunsCountLikeAnyOtherRun()
         {
+            // owner 2026-11-10: revives are paid with gems, so a revived level run earns records and medals (the clock is paused while dead)
             var rec = new ModeRecord();
             RunRecord rr = Run(60, 4344, revived: true);
             RecordResult r = RecordRules.ApplyLevel(rec, rr, 1000);
-            Assert.False(r.Counted);
+            Assert.True(r.Counted);
             Assert.True(r.Revived);
-            Assert.False(r.NewBestPace);
-            Assert.False(r.NewBestTime);
-            Assert.False(r.AnyNewBest);
-            Assert.False(r.PaceClear);
-            Assert.Equal(MedalLevel.None, r.Medal);
-            Assert.Equal(60, r.Floors);          // the numbers are still there for the result screen
+            Assert.True(r.NewBestPace);
+            Assert.True(r.NewBestTime);
+            Assert.Equal(60, r.Floors);
             Assert.Equal(4344, r.Ticks);
             Assert.Equal(83, r.PaceHundredths);
-            Assert.False(rec.HasPace);
-            Assert.Equal(0, rec.BestTimeTicks);
-            Assert.Equal(0, rec.Medal);
+            Assert.True(rec.HasPace);
+            Assert.Equal(4344, rec.BestTimeTicks);
+            Assert.Equal((int)MedalLevel.Silver, rec.Medal);   // 0.83 plat/s against a 1.00 target is 83 percent: Silver
 
             RecordRules.ApplyLevel(rec, Run(10, 3000), 0);
-            RecordResult r2 = RecordRules.ApplyLevel(rec, Run(500, 1000, revived: true), 0);   // would be a huge record
-            Assert.False(r2.NewBestPace);
-            Assert.Equal(10, rec.Floors);
-            Assert.Equal(3000, rec.BestTimeTicks);
+            RecordResult r2 = RecordRules.ApplyLevel(rec, Run(500, 1000, revived: true), 0);   // a huge record: a revived run counts since 2026-11-10
+            Assert.True(r2.NewBestPace);
+            Assert.Equal(500, rec.Floors);
+            Assert.Equal(1000, rec.BestTimeTicks);
         }
 
         [Fact]

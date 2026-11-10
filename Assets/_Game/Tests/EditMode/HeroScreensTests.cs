@@ -258,9 +258,115 @@ namespace FluffyClimbers.Tests
                 Transform card = FindDeep(canvas, "Hero_" + e.Id);
                 Assert.IsNotNull(card, e.Id);
                 Assert.AreEqual(e.Locked, FindDeep(card, "Lock") != null, e.Id + ": padlock exactly on locked cards");
-                Assert.IsNotNull(FindDeep(card, "Info"), e.Id + ": every card has an i button");
+                if (e.Locked) { Assert.IsNull(FindDeep(card, "Info"), e.Id + ": a locked tile has no i button"); continue; }
+                Assert.IsNotNull(FindDeep(card, "Info"), e.Id + ": every owned card has an i button");
                 Assert.GreaterOrEqual(((RectTransform)FindDeep(card, "Info")).sizeDelta.x, UiKit.MinTouchPx - 1f, "48 dp");
             }
+        }
+
+        static float CentreX(RectTransform rt)
+        {
+            var c = new Vector3[4];
+            rt.GetWorldCorners(c);
+            return (c[0].x + c[2].x) * 0.5f;
+        }
+
+        [Test]
+        public void TheShownHeroAndHisNameShareOneAxisCentredOnTheStageAtEveryAspect()
+        {
+            Vector2[] screens = { new Vector2(1080f, 1920f), new Vector2(1080f, 2520f), new Vector2(1080f, 1440f) };   // 9:16, 9:21, 3:4
+            foreach (Vector2 size in screens)
+            {
+                canvas.sizeDelta = size;
+                Stage stage = StageScene.Build(canvas, GameSession.Art, P, StageScene.CharacterLayout());
+                var host = new CharactersScreen.Host { Stage = stage, OpenHero = w => { } };
+                new CharactersScreen(canvas, P, GameSession.Art, host).Build();
+                RectTransform doll = (RectTransform)FindDeep(stage.Root, "Doll");
+                RectTransform label = (RectTransform)FindDeep(stage.Root, "HeroNameLabel");
+                Assert.IsNotNull(doll, "doll at " + size);
+                Assert.IsNotNull(label, "name label at " + size);
+                Assert.AreEqual(CentreX(stage.Root), CentreX(doll), 1f, "hero centre = stage centre at " + size);
+                Assert.AreEqual(CentreX(stage.Root), CentreX(label), 1f, "name centre = stage centre at " + size);
+                Assert.AreEqual(CentreX(doll), CentreX(label), 1f, "hero centre = name centre at " + size);
+                Assert.AreEqual(TextAnchor.MiddleCenter, label.GetComponent<Text>().alignment);
+                Object.DestroyImmediate(stage.Root.gameObject);
+                foreach (Transform t in canvas.GetComponentsInChildren<Transform>(true)) if (t != null && t.name == "CharactersBody") { Object.DestroyImmediate(t.gameObject); break; }
+            }
+        }
+
+        [Test]
+        public void TheStagePictureIsCoverFittedWhenPresentAndTheOldBackgroundIsTheFallback()
+        {
+            Stage stage = StageScene.Build(canvas, GameSession.Art, P, StageScene.CharacterLayout());
+            bool hasPicture = ToyKit.Get(StageScene.StageBgName) != null;
+            Assert.AreEqual(hasPicture, FindDeep(stage.Root, "StageBg") != null, "the picture box exists exactly when the file exists");
+            Assert.AreEqual(!hasPicture, FindDeep(stage.Root, "Backdrop") != null, "the old backdrop is the fallback");
+            if (hasPicture)
+            {
+                Assert.IsNotNull(FindDeep(stage.Root, "StageBg").GetComponent<RectMask2D>(), "overflow is cropped, not stretched");
+                RectTransform pr = (RectTransform)FindDeep(stage.Root, "Picture");
+                Sprite pic = ToyKit.Get(StageScene.StageBgName);
+                Assert.AreEqual(pic.rect.width / pic.rect.height, pr.sizeDelta.x / pr.sizeDelta.y, 0.001f, "uniform scale, never stretched");
+            }
+        }
+
+        [Test]
+        public void NoDirtOvalAndTheIslandGrassSitsUnderTheHeroFeetAtEveryAspect()
+        {
+            Vector2[] screens = { new Vector2(1080f, 1920f), new Vector2(1080f, 2520f), new Vector2(1080f, 1440f) };   // 9:16, 9:21, 3:4
+            foreach (Vector2 size in screens)
+            {
+                canvas.sizeDelta = size;
+                Stage stage = StageScene.Build(canvas, GameSession.Art, P, StageScene.CharacterLayout());
+                foreach (Transform t in stage.Root.GetComponentsInChildren<Transform>(true))
+                    Assert.IsFalse(t.name.Contains("Dirt") || t.name.Contains("Oval"), "no dirt oval under the stage at " + size + ": " + t.name);
+                Assert.IsNull(stage.Oval);
+                Transform pic = FindDeep(stage.Root, "Picture");
+                if (pic != null)
+                {
+                    RectTransform pr = (RectTransform)pic;
+                    float grassY = -pr.anchoredPosition.y + StageScene.IslandGrassFrac * pr.sizeDelta.y;
+                    Assert.AreEqual(stage.FeetY, grassY, 40f, "island grass centre at the hero's feet at " + size);
+                    Assert.LessOrEqual(-pr.anchoredPosition.y, 0.5f, "no blank strip above the picture at " + size);
+                    Assert.GreaterOrEqual(-pr.anchoredPosition.y + pr.sizeDelta.y, stage.GroundBottom - 0.5f, "no blank strip below the picture at " + size);
+                    Assert.GreaterOrEqual(pr.sizeDelta.x, 1080f - 0.5f, "covers the width at " + size);
+                }
+                Object.DestroyImmediate(stage.Root.gameObject);
+            }
+        }
+
+        [Test]
+        public void LockedTilesSayLockedInItalicsAndOwnedTilesShowTheirNameWithoutTheRarityWord()
+        {
+            Give("momo_u", 1);
+            AllHeroesScreen s = NewAll();
+            foreach (AllHeroEntry e in AllHeroes.Flatten(s.Groups))
+            {
+                Transform card = FindDeep(canvas, "Hero_" + e.Id);
+                Text t = FindDeep(card, "HeroName").GetComponent<Text>();
+                if (e.Locked)
+                {
+                    Assert.AreEqual("Locked", t.text, e.Id);
+                    Assert.AreEqual(FontStyle.Italic, t.fontStyle, e.Id + ": Locked is italic");
+                    Assert.IsNotNull(card.GetComponent<Button>(), e.Id + ": a tap on a locked tile opens the why-locked details (CUX-8)");
+                }
+                else
+                {
+                    Assert.AreEqual(e.Name, t.text, e.Id);
+                    foreach (string rar in CharacterDefs.RarityNames) if (e.Rarity != CharacterRarity.Common) StringAssert.DoesNotContain(" " + rar, t.text, e.Id);
+                    Assert.IsNull(FindDeep(card, "Rarity"), e.Id + ": no separate rarity line");
+                }
+                Assert.AreEqual(TextAnchor.MiddleCenter, t.alignment, e.Id + ": name centred in both directions");
+                RectTransform pill = (RectTransform)FindDeep(card, "NamePill");
+                Vector3[] pc = new Vector3[4], tc = new Vector3[4];
+                pill.GetWorldCorners(pc);
+                t.rectTransform.GetWorldCorners(tc);
+                Assert.AreEqual((pc[0].x + pc[2].x) * 0.5f, (tc[0].x + tc[2].x) * 0.5f, 1f, e.Id + ": name centred horizontally in its tile");
+                Assert.AreEqual((pc[0].y + pc[2].y) * 0.5f, (tc[0].y + tc[2].y) * 0.5f, 1f, e.Id + ": name centred vertically in its tile");
+            }
+            Text momo = FindDeep(FindDeep(canvas, "Hero_momo"), "HeroName").GetComponent<Text>();
+            Assert.AreEqual("Momo", momo.text);
+            Assert.AreEqual("Cloudguard Momo", FindDeep(FindDeep(canvas, "Hero_momo_u"), "HeroName").GetComponent<Text>().text);
         }
 
         [Test]
@@ -354,6 +460,35 @@ namespace FluffyClimbers.Tests
             Assert.AreEqual("3", FindDeep(FindDeep(canvas, "Power_pw_flight"), PowersScreen.OwnedName).GetComponent<Text>().text);
             Assert.AreEqual("40", FindDeep(FindDeep(canvas, "Power_pw_slowtime"), PowersScreen.OwnedName).GetComponent<Text>().text);
             foreach (Button b in canvas.GetComponentsInChildren<Button>(true)) Assert.IsFalse(b.name.StartsWith("Buy"), "no buy button: " + b.name);
+        }
+
+        [Test]
+        public void PowerCardHasTheSameGapBetweenIconAndNameAndBetweenNameAndNumberAtEveryTextSize()
+        {
+            float oldScale = UiKit.TextScale;
+            try
+            {
+                foreach (float ts in new[] { 1f, 1.3f })
+                {
+                    UiKit.TextScale = ts;
+                    PowersScreen s = NewPowers();
+                    Canvas.ForceUpdateCanvases();
+                    Transform card = FindDeep(canvas, "Power_pw_rocket");
+                    var outer = (RectTransform)card.parent;
+                    RectTransform icon = (RectTransform)FindDeep(card, "Icon"), name = (RectTransform)FindDeep(card, "NamePill"), badge = (RectTransform)FindDeep(card, "OwnedBadge");
+                    var ci = new Vector3[4]; var cn = new Vector3[4]; var cb = new Vector3[4]; var co = new Vector3[4];
+                    icon.GetWorldCorners(ci); name.GetWorldCorners(cn); badge.GetWorldCorners(cb); outer.GetWorldCorners(co);
+                    float gapIconName = ci[0].y - cn[1].y, gapNameNumber = cn[0].y - cb[1].y;
+                    Assert.AreEqual(PowersScreen.RowGap, gapIconName, 1f, "icon to name gap at text " + ts);
+                    Assert.AreEqual(gapIconName, gapNameNumber, 1f, "name to number gap equals icon to name gap at text " + ts);
+                    Assert.AreEqual(name.rect.height, badge.rect.height, 1f, "same box height for name and number");
+                    Assert.GreaterOrEqual(cb[0].y, co[0].y, "number box inside the card");
+                    Assert.LessOrEqual(ci[1].y, co[1].y, "icon inside the card");
+                    Text t = FindDeep(card, PowersScreen.OwnedName).GetComponent<Text>();
+                    Assert.Greater(badge.rect.height, t.preferredHeight - 0.5f, "the number box is taller than its text");
+                }
+            }
+            finally { UiKit.TextScale = oldScale; }
         }
 
         [Test]

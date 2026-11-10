@@ -56,10 +56,6 @@ namespace FluffyClimbers.Tests
             Assert.IsFalse(l15.Ramp);
             Assert.AreEqual(0, l15.FixedChunks.Length);
             Assert.AreEqual(SignatureKind.SwingingGongs, l15.Signature);
-            Assert.AreEqual(3, l15.Stars.Length);
-            Assert.AreEqual(StarSpec.KindClear, l15.Stars[0].Kind);
-            Assert.AreEqual(StarSpec.KindCoins, l15.Stars[1].Kind);
-            Assert.AreEqual(StarSpec.KindNoRevive, l15.Stars[2].Kind);
 
             var l1 = LevelSpecFactory.Build(repo, "lvl_001_01");
             Assert.AreEqual(SignatureKind.BounceFlowers, l1.Signature);
