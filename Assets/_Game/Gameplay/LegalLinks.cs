@@ -12,8 +12,8 @@ namespace FluffyClimbers.Gameplay
     public static class LegalLinks
     {
         public const string ResourcePath = "Services/legal_config";
-        public const string DefaultPrivacyUrl = "https://jpdash-creator.github.io/boing-up-sky-tower/policy.html";
-        public const string DefaultTermsUrl = "https://jpdash-creator.github.io/boing-up-sky-tower/terms.html";
+        public const string DefaultPrivacyUrl = "https://jpdash-creator.github.io/fluffy-climbers-sky-tower/policy.html";
+        public const string DefaultTermsUrl = "https://jpdash-creator.github.io/fluffy-climbers-sky-tower/terms.html";
         public const string DefaultSupportEmail = "jpdash.creator@gmail.com";
 
         /// <summary>Button words (short like Reset and Restore so they fit half a row at 130 percent text) and the screen-reader texts, which say that the game is left.</summary>
