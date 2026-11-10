@@ -31,6 +31,7 @@ namespace FluffyClimbers.Gameplay
         /// <summary>Height of a card whose title needs <paramref name="titleH"/>: the compact base, or the text (title over the bar) when that is more, or the plate row.</summary>
         public static float CardHeightFor(float titleH)
         {
+            titleH = Mathf.Max(titleH, 2f * Mathf.Ceil(LineH(BodyPx) * 1.0f));   // Bug List 8 follow-up: every card has room for a two-line title, so a wrapped title never looks cut
             float byText = CardPadY + titleH + TitleBarGap + CardBarH + CardPadY;
             float byPlate = PlateRowH + 12f;
             return Mathf.Max(CompactCardH, byText, byPlate, ClaimButtonH + 10f);
@@ -388,10 +389,10 @@ namespace FluffyClimbers.Gameplay
             float textW = Mathf.Max(1f, cardW - midL - midR - 4f);
             float titleH = Mathf.Max(LineH(BodyPx), MeasureTitle(title, textW));   // same measure for the card height and the title rect
             {
-                // Bug List 8: a task title stays on ONE line. Shrink the font (down to the 16 sp minimum) until it fits the text column; only a title that still
-                // wraps at the minimum (very long text at 130 percent) falls back to a taller card, so nothing is ever clipped.
+                // Owner follow-up: a title may take TWO lines (the card has room for them). Only a title that needs more than two lines shrinks (down to the 16 sp minimum);
+                // one that still wraps beyond two lines at the minimum makes its own card taller, so nothing is ever clipped.
                 int minFs = Mathf.CeilToInt(UiKit.MinBodyTextPx);
-                while (titleH > Mathf.Ceil(title.fontSize * 1.3f) && title.fontSize - 2 >= minFs)
+                while (titleH > 2f * Mathf.Ceil(title.fontSize * 1.3f) && title.fontSize - 2 >= minFs)
                 {
                     title.fontSize -= 2;
                     titleH = Mathf.Max(Mathf.Ceil(title.fontSize * 1.22f), MeasureTitle(title, textW));

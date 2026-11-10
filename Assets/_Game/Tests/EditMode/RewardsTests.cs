@@ -1134,7 +1134,7 @@ namespace FluffyClimbers.Tests
                             {
                                 if (t.name != "Title") continue;
                                 checkedTitles++;
-                                Assert.LessOrEqual(t.preferredHeight, t.fontSize * 1.5f, "one line: \"" + t.text + "\" (" + tab + ", text " + ts + ")");
+                                Assert.LessOrEqual(t.preferredHeight, t.fontSize * 3.1f, "at most two lines: \"" + t.text + "\" (" + tab + ", text " + ts + ")");   // owner follow-up: two lines are allowed, the card has room for them
                                 Assert.GreaterOrEqual(t.fontSize, Mathf.FloorToInt(UiKit.MinBodyTextPx), "never below the 16 sp floor: \"" + t.text + "\"");
                             }
                             Assert.Greater(checkedTitles, 0, "the " + tab + " tab lists task titles");
@@ -1156,9 +1156,10 @@ namespace FluffyClimbers.Tests
                 float h100 = RewardsScreen.CardHeight;
                 Assert.AreEqual(10f, RewardsScreen.CardGap, "gap between cards");
                 Assert.AreEqual(136f, RewardsScreen.CompactCardH);
-                Assert.AreEqual(RewardsScreen.CompactCardH, h100, 1.5f, "compact base at 100 percent text (was 214)");
+                Assert.AreEqual(RewardsScreen.CardHeightFor(2f * RewardsScreen.LineH(44)), h100, 1.5f, "every card has room for a two-line title");
+                Assert.GreaterOrEqual(h100, RewardsScreen.CompactCardH, "never below the compact base");
                 Assert.GreaterOrEqual(h100, RewardsScreen.ClaimButtonH + 10f, "room for the 48 dp Claim button");
-                Assert.Less(h100, 214f * 0.75f, "at least 25 percent tighter than before");
+                Assert.Less(h100, 214f, "still tighter than the old 214 card");
                 UiKit.TextScale = 1.3f;
                 float h130 = RewardsScreen.CardHeight;
                 Assert.GreaterOrEqual(h130, h100, "never shorter at 130 percent text");
@@ -1199,7 +1200,7 @@ namespace FluffyClimbers.Tests
                                 Assert.LessOrEqual(barTop, titleBottom - RewardsScreen.TitleBarGap + 0.01f, who + ": title rect above the bar rect with a gap");
                                 Assert.GreaterOrEqual(bar.offsetMin.y, -rowH, who + ": bar inside the card");
                                 Assert.LessOrEqual(title.offsetMax.y, 0.01f, who + ": title inside the card");
-                                if (scale == 1f) Assert.AreEqual(RewardsScreen.CompactCardH, rowH, 1.5f, who + ": 100 percent card unchanged");
+                                if (scale == 1f) Assert.GreaterOrEqual(rowH, RewardsScreen.CardHeight - 1.5f, who + ": 100 percent card has room for two title lines");
                             }
                             Assert.Greater(cards, 0, tab + " has cards");
                         }

@@ -376,9 +376,14 @@ namespace FluffyClimbers.Gameplay
             return res;
         }
 
+        /// <summary>Seconds after one win jingle in which further claims stay quiet (Bug List 8 follow-up): claiming many rewards in a row must not repeat the jingle for each.</summary>
+        public const float WinSoundCooldown = 2.5f;
+        static float lastWinSoundTime = -100f;
+
         void AfterClaim(RewardClaimOutcome res)
         {
-            AudioManager.Play(Sfx.Win);
+            float now = Time.unscaledTime;
+            if (now - lastWinSoundTime >= WinSoundCooldown) { lastWinSoundTime = now; AudioManager.Play(Sfx.Win); }   // the tap sound of each card still plays
             Haptics.Pulse();
             UiKit.SetText(CoinText, progress.Coins.ToString());
             UiKit.SetText(GemText, progress.Gems.ToString());
