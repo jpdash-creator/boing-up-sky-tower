@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using FluffyClimbers.Content;
+using FluffyClimbers.Monetization;
 
 namespace FluffyClimbers.Economy
 {
@@ -69,7 +70,7 @@ namespace FluffyClimbers.Economy
                 list.Add(new GemPackDef
                 {
                     Id = "gempack_" + gems, Gems = gems, UsdList = (double)r[1], UsdPromo = (double)r[2], InrList = (int)r[3],
-                    FirstPurchaseDouble = gems <= FirstPurchaseMaxGems, Sku = "fluffyclimbers.gems." + gems, Badge = (string)r[4]
+                    FirstPurchaseDouble = gems <= FirstPurchaseMaxGems, Sku = ProductCatalog.Prefix + "gems.pack_" + gems, Badge = (string)r[4]
                 });
             }
             return list;

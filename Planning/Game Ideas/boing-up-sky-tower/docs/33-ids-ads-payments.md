@@ -1,6 +1,6 @@
 # 33 - Product ids, ad placements, payments and ads SDK setup
 
-Owner list 33, item 5. Code: `Assets/_Game/Services` (assembly `FluffyClimbers.Services`, namespace `FluffyClimbers.Monetization`). Choice: **Unity IAP** + **Unity LevelPlay**.
+Owner list 33, item 5. Code: `Assets/_Game/Services` (assembly `FluffyClimbers.Services`, namespace `FluffyClimbers.Monetization`). Choice: **Unity IAP** + **Google AdMob** (owner decision 2026-11-09, replaces Unity LevelPlay).
 
 ## 1. Rules for ids
 
@@ -30,7 +30,7 @@ Owner list 33, item 5. Code: `Assets/_Game/Services` (assembly `FluffyClimbers.S
 
 ## 3. Rewarded ad placements (`AdPlacements`)
 
-| Constant | Name (= LevelPlay placement name) | Where | State |
+| Constant | Name (= key in `ads_config.json` `rewardedAdUnitIds`) | Where | State |
 |---|---|---|---|
 | Revive | `revive` | Failed overlay, free first revive | **Built** |
 | DoubleReward | `double_reward` | Results after a win, x2 coins | Planned |
@@ -41,30 +41,50 @@ No interstitials or banners at launch (doc 13 4.3).
 
 ## 4. Code overview
 
-- `IAdService { IsReady(placement); ShowRewarded(placement, Action<bool> onDone); }`. `StubAdService` (always ready, true after 1 s) and `LevelPlayAdService` (`#if FLUFFY_LEVELPLAY`, own assembly `FluffyClimbers.Services.LevelPlay`, only compiled when the define is set).
-- `IPaymentService { Initialize(); GetLocalizedPrice(id); Purchase(id, done); Restore(done); }`. `StubPaymentService` (success at once) and `UnityIapPaymentService` (`#if FLUFFY_UNITY_IAP`, assembly `FluffyClimbers.Services.UnityIap`, Unity IAP v5 `StoreController`).
-- `Services.Ads`, `Services.Payments`, `Services.ConsentGiven`: the locator. Real services are used on device only when the define is on, else stubs. The editor always uses stubs.
-- Purchase contract: grant and **save inside** the `Purchase` callback; the store transaction is confirmed right after the callback returns. A purchase recovered at start-up (app killed mid-purchase) is raised by `UnityIapPaymentService.RecoveredPurchase`; subscribe before `Initialize()`; with no subscriber it stays unconfirmed and is re-delivered next launch.
+- `IAdService { IsReady(placement); ShowRewarded(placement, Action<bool> onDone); }`. `StubAdService` (always ready, true after 1 s; editor and tests) and `AdMobAdService` (own assembly `FluffyClimbers.Services.AdMob`, define constraint `FLUFFY_ADMOB`, device only). The revive flow calls `Services.Ads.ShowRewarded(AdPlacements.Revive, ...)`; the old `Gameplay/Ads` path and all LevelPlay code are deleted.
+- `IPaymentService { Initialize(); GetLocalizedPrice(id); Purchase(id, done); Restore(done); }`. `StubPaymentService` (success at once; editor and development builds only), `UnavailablePaymentService` (a release build without a working store refuses every purchase, nothing is ever granted) and `UnityIapPaymentService` (`#if FLUFFY_UNITY_IAP`, assembly `FluffyClimbers.Services.UnityIap`, Unity IAP v5 `StoreController`). The interface also has two events, `RecoveredPurchase` and `ActiveSubscriptionFound`.
+- `Services.Ads`, `Services.Payments`, `Services.ConsentGiven`, `Services.PrivacyOptionsRequired`, `Services.ShowPrivacyOptions(Action onClosed)`: the locator. `PrivacyOptionsRequired` is true only when UMP says a privacy options entry must be offered (Settings shows the button then); stubs and the editor return false and call `onClosed` at once. Real services are used on device only when the define is on, else stubs. The editor always uses stubs.
+- Purchase contract: grant and **save inside** the `Purchase` callback; the store transaction is confirmed right after the callback returns, unless the callback sets `PurchaseResult.Reject` (then it stays unconfirmed and Google refunds it after about 3 days). The receipt is validated BEFORE the callback runs (section 5, step 7). A purchase recovered at start-up (app killed mid-purchase, pending purchase approved later) is raised by `IPaymentService.RecoveredPurchase`; `Gameplay/StoreLink.Start` (a boot step in `BootLoader`) subscribes before `Initialize()`; with no subscriber it stays unconfirmed and is re-delivered next launch.
+- **Grant and ledger** (`Economy/ProgressService.StorePurchases.cs`): `ApplyStorePurchase(productId, transactionId, now)` adds the gems (first-purchase double included) or starts the subscription period and saves ONCE together with the purchase record. The ledger key is `iap:<productId>:<transactionId>` (stored as the record's product id and transaction id; the transaction id is the Google orderId, else the purchase token), so the same purchase delivered twice (retry, restore, recovery) returns `Duplicate` and adds nothing. Outcomes: `Granted`, `Duplicate`, `UnknownProduct` (not a live ProductCatalog id), `NotGranted` (for example the other subscription plan is running: Reject, so Play refunds).
+- **Where it is used**: `ShopScreen.TapGemPack` and `SubscriptionScreen.TapBuy` buy through `Services.Payments.Purchase(ProductCatalog...)` whenever the test purchases are off (always in release builds). The test-grant paths (`GrantTestGemPurchase`, `GrantTestSubscriptionPurchase`) stay behind `ShopScreen.TestPurchasesEnabled` = `GameSettings.ShopTest`, which needs `GameSettings.DevBuild`, which is compiled to false unless `AdminAccess.ToolsCompiledIn` (editor or development build). Store prices (`GetLocalizedPrice`) replace the USD text on the cards once the store has answered (`StoreLink.StorePrice`); the USD price is the fallback.
+- **Subscriptions** (no own server): a purchase starts or extends the plan by its days (weekly 7, monthly 30) and pays the instant gems; renewals while the app was closed are seen through `ActiveSubscriptionFound` (the store lists the subscription as active at start-up and after Restore): when the local time has run out, `ApplyActiveSubscription` starts one new period WITHOUT instant gems (one record per product and local day). Limits: grace period, pause and account-hold states are not modelled; a server check (Google Play Developer API) is the stronger option.
+- **Restore purchases** (Settings > Restore): `Services.Payments.Restore`, then `ProgressService.RestoreFromRecords` re-grants subscriptions the saved purchase records still entitle (gems are never paid twice); a result popup says how many were restored.
 - Display prices: keep `ShopCatalog.FormatUsd` as fallback and prefer `Services.Payments.GetLocalizedPrice(productId)` when not null.
 
 ## 5. Enable the SDKs
 
-Packages in `Packages/manifest.json`: `com.unity.services.levelplay` 9.5.1 (already installed and in use), `com.unity.purchasing` 5.4.4 (new; the Editor resolves it on next open; pulls `com.unity.services.core` 1.18.0).
+Packages in `Packages/manifest.json`: `com.google.ads.mobile` 11.6.0 (Google Mobile Ads Unity plugin, via OpenUPM; pulls the External Dependency Manager), `com.unity.purchasing` 5.4.4. `com.unity.services.levelplay` was removed.
 
-1. Open Unity once so the package resolves. Check the Console for errors.
-2. Player Settings > Other Settings > Scripting Define Symbols, **Android**: add `FLUFFY_LEVELPLAY` and `FLUFFY_UNITY_IAP` (semicolon separated, keep `TMP_PRESENT`). Do this only after the packages resolved. Without the defines the project compiles with stubs.
-3. Build with Gradle as today. Unity IAP adds the Google Play Billing library (resolved by the IAP resolver); LevelPlay already resolves its Android dependencies. `AD_ID` permission is merged by LevelPlay; if the Play Console Data safety / Advertising ID form says otherwise, adjust there.
-4. Retire the older `Assets/_Game/Gameplay/Ads` path (`AdService`, `AdConfig`, `LevelPlay/LevelPlayRewardedAds`) once the revive code uses `Services.Ads`: running both would initialise LevelPlay twice.
+1. Open Unity once so the packages resolve. Check the Console for errors.
+2. Player Settings > Other Settings > Scripting Define Symbols, **Android**: `TMP_PRESENT;FLUFFY_ADMOB;FLUFFY_GPGS;FLUFFY_UNITY_IAP`. Without the defines the project compiles with stubs.
+3. Build with Gradle as today. The Google Mobile Ads plugin resolves `play-services-ads` and UMP through the External Dependency Manager (do not set `UNITY_EDM_DISABLED`). Manifest: `INTERNET`, `ACCESS_NETWORK_STATE`, `com.google.android.gms.permission.AD_ID` are ensured once by `Assets/Editor/Build/AdMobAndroidConfig.cs` (hook order 40, after short label 20 and no-backup 30; it only inserts elements). The AdMob **app id** is written into the plugin settings asset (`GoogleMobileAdsSettings`) before the plugin's own pre-build step, from `ads_config.json`.
+4. App id rules: development builds with placeholders (or `testMode: true`) use Google's sample app id `ca-app-pub-3940256099942544~3347511713` and sample rewarded unit `ca-app-pub-3940256099942544/5224354917`. A **release build with a placeholder `androidAppId` fails** (`AndroidReleaseBuild` preflight and the pre-build hook). A release build with a placeholder unit id (but a real app id) builds and shows no ads (one warning in the log; revive falls back to gems). Sample ids ship in release only with `"testMode": true`.
 
-### LevelPlay (ads) owner steps
+### `Resources/Services/ads_config.json`
 
-1. Create a Unity account / LevelPlay account at unity.com (Unity Dashboard > Monetize > LevelPlay) and accept the terms.
-2. Create an **Android app**: package `com.jdlabs.fluffyclimbers`, Google Play store URL (can be added once the listing exists; use "not yet published" while testing).
-3. Copy the **App Key** (looks like `1a2b3c4d5`).
-4. Create one **Rewarded** ad unit/instance; copy its **Ad Unit ID**. Create the placements from section 3 as Rewarded placements with exactly those names (`revive` first).
-5. Enable at least one network for testing (Unity Ads / LevelPlay test network), turn on **Test mode** and register the test device.
-6. Put the two values in `Assets/Resources/Services/ads_config.json` (shipped with `REPLACE_WITH_LEVELPLAY_APP_KEY` / `REPLACE_WITH_REWARDED_AD_UNIT_ID` placeholders and `"testMode": true`). With placeholders the build shows no ads (only the gem revive). Before release, set up the production networks and switch the dashboard out of test mode.
-7. After the first run on the phone, use `LevelPlay.ValidateIntegration()` (logcat) to verify the integration.
+| Field | Meaning |
+|---|---|
+| `androidAppId` | AdMob App ID `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY` (placeholder `REPLACE_WITH_ADMOB_APP_ID`) |
+| `rewardedAdUnitIds` | `default`, `revive`, `double_reward`, `daily_powerup`, `shop_free_gems`: `ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ`; a placement left as `REPLACE_WITH_REWARDED_UNIT_ID` uses `default`. One unit for all is fine at launch |
+| `testMode` | true = always Google sample ids, also in release (default false) |
+| `tagForChildDirectedTreatment` | `unspecified` (default), `true` = child treatment. The game is NOT child-directed (13+) |
+| `maxAdContentRating` | `G`, `PG`, `T` (default), `MA` |
+| `debugGeography` | `disabled` (default), `eea`, `not_eea`: UMP test geography, **development builds only** |
+| `testDeviceIds` | list of hashed test device ids (also used for UMP debug); logcat prints your id |
+
+Flow (`AdMobAdService`): request configuration, then UMP `ConsentInformation.Update` and `ConsentForm.LoadAndShowConsentFormIfRequired`, `Services.ConsentGiven = CanRequestAds()`, and only then `MobileAds.Initialize` and the first rewarded load. After each show the next ad loads; failed loads retry after 5 s, doubling up to 120 s. The callback of `ShowRewarded` gets `true` only when the reward was earned.
+
+### AdMob owner steps (console)
+
+1. Sign in at admob.google.com, accept the terms, set up payments info and address (needed before payouts, not for testing).
+2. Apps > Add app > Android, "app is published on Google Play": No (until the listing exists; link it later). Name "Fluffy Climbers: Tower Jump". Copy the **App ID** (`ca-app-pub-...~...`).
+3. In the app: Ad units > Add ad unit > **Rewarded**. Name `revive` (reward: any, e.g. 1 "revive"; the game ignores the amount). Copy the **Ad unit ID** (`ca-app-pub-.../...`). Optionally create further units for the planned placements; one unit is enough at launch.
+4. Put both values in `Assets/Resources/Services/ads_config.json` (`androidAppId`, `rewardedAdUnitIds.default`).
+5. **app-ads.txt**: AdMob > Apps > the app > "Set up app-ads.txt". Host the file at the root of the developer website domain that is listed on the Google Play store listing (`https://<domain>/app-ads.txt`), with the line AdMob gives you (`google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`). AdMob shows the check status after the app is published.
+6. **Privacy & messaging** (AdMob left menu): create a **GDPR message** (EEA/UK) and a **US state regulations** message if offered, attach it to the app, publish it. Enable the "Privacy options" entry point. Without a published message UMP shows nothing.
+7. **Test devices**: AdMob > Settings > Test devices > add the phone (device id from logcat or the Ad Inspector). Add the same id to `testDeviceIds`.
+8. **Google Play Console**: App content > Ads: "Yes, my app contains ads". Data safety: declare Device or other IDs (Advertising ID) collected and shared for advertising, plus the data AdMob collects (see its Play data disclosure guide). App content > Advertising ID: "Yes" (the app declares `AD_ID`). Target audience 13+ (not for children), consistent with `tagForChildDirectedTreatment: unspecified`.
+9. POLICY.md / TERMS.md must name AdMob and the consent choice (kept up to date by the legal-docs owner).
 
 ### Google Play (payments) owner steps
 
@@ -74,39 +94,50 @@ Packages in `Packages/manifest.json`: `com.unity.services.levelplay` 9.5.1 (alre
 4. Monetize > **Subscriptions**: create `...sub.weekly` (base plan weekly, auto-renewing) and `...sub.monthly` (base plan monthly); add a base plan in each, set prices, activate. In code the product id is the **subscription id**; Unity IAP uses the base plan automatically (single base plan per subscription recommended).
 5. Add license testers (Setup > License testing) to buy without being charged; install the internal-test build from the Play link (sideloaded APKs cannot buy).
 6. Optional promo variants `<id>_launch` (section 1) - or use Play promotions.
-7. Receipt validation (release blocker): Unity IAP > Receipt Validation Obfuscator to generate `GooglePlayTangle` with the Play licence key, then validate in `UnityIapPaymentService.OnPending` before granting (TODO in the code), or validate on a server with the Google Play Developer API.
+7. **Receipt validation** (done in code, key needed): Play Console > Monetize > **Monetization setup** > "Licensing" shows the base64 **licence key** (a public key). Paste it into `Assets/Resources/Services/iap_config.json` as `playLicenseKey` (shipped placeholder `REPLACE_WITH_PLAY_LICENSE_KEY`). `UnityIapPaymentService` decodes it and checks every purchase with `UnityEngine.Purchasing.Security.CrossPlatformValidator` (RSA signature, package name `com.jdlabs.fluffyclimbers`, product id, state Purchased) before the grant. No key: development builds grant with a logged warning; **release builds refuse the purchase** (Failed, logged, never granted) and `AndroidReleaseBuild` fails its preflight while the key is a placeholder. The package's own tangle generator (`GooglePlayTangle`) is not used: the key is a public key, so a config file is enough and easier to replace. Local validation only stops casual tampering and replayed receipts of other apps; **validating on a server with the Google Play Developer API (purchases.products / purchases.subscriptionsv2) is the stronger option** and the way to see cancellations, refunds and renewals.
 
 ### App Store (later)
 
-Create the same ids in App Store Connect (In-App Purchases: consumables; Subscriptions: one subscription group "Fluffy Climbers Subscription" with weekly and monthly). Ids are identical on both stores, so no `StoreSpecificIds` are needed. Restore Purchases button is mandatory on iOS (`Services.Payments.Restore`). Add `FLUFFY_UNITY_IAP` / `FLUFFY_LEVELPLAY` to the iOS defines then, plus ATT prompt and `NSUserTrackingUsageDescription`.
+Create the same ids in App Store Connect (In-App Purchases: consumables; Subscriptions: one subscription group "Fluffy Climbers Subscription" with weekly and monthly). Ids are identical on both stores, so no `StoreSpecificIds` are needed. Restore Purchases button is mandatory on iOS (`Services.Payments.Restore`). Add `FLUFFY_UNITY_IAP` / `FLUFFY_ADMOB` to the iOS defines then (the AdMob iOS app id and SKAdNetwork list live in the plugin settings and are not wired by this project yet), plus ATT prompt and `NSUserTrackingUsageDescription`.
 
-## 6. Consent / privacy (open)
+## 6. Consent / privacy
 
-`Services.ConsentGiven` is a stub (default false = non-personalised). Ads are never requested before the flag is set, because the privacy call precedes `LevelPlay.Init`. Still to build: Google UMP consent form at first start (EEA/UK), "Privacy choices" and "Restore purchases" entries in Settings, age handling (doc 13 4.4, doc 22 open item 10).
+Built: Google UMP before any ad request (section 5 flow). `Services.ConsentGiven` follows `ConsentInformation.CanRequestAds()`. Settings shows a "Privacy options" button when `Services.PrivacyOptionsRequired` is true; tapping calls `Services.ShowPrivacyOptions(onClosed)`. Age: the game is 13+, not child-directed; `maxAdContentRating` T. Players in a consent region who decline get no ads (revive offers gems only). Still open: "Restore purchases" entry in Settings, doc 13 4.4 / doc 22 item 10 wording.
 
 ## 7. Open TODOs
 
-- Receipt validation (section 5, step 7).
-- Wire `ShopScreen`/`SubscriptionScreen` to `Services.Payments.Purchase(ProductCatalog.*)` instead of `GrantTestGemPurchase`; call `Services.Payments.Initialize()` at boot.
-- Switch the revive code from `AdService` to `Services.Ads.ShowRewarded(AdPlacements.Revive, ...)`.
-- Server/entitlement check for subscriptions (renewal, grace period); today the plan is granted by the test path.
+- Receipt validation: done locally (section 5, step 7); owner supplies the licence key. A server check stays optional.
+- ShopScreen/SubscriptionScreen use `Services.Payments.Purchase(ProductCatalog.*)`, `Initialize()` runs at boot (`StoreLink.Start`): done. Not tested against a real store (needs a Play build and a licence tester).
+- Other placements (`double_reward`, `daily_powerup`, `shop_free_gems`) have unit-id slots in the config but no call sites yet (TODO; only revive and the Admin test button call `Services.Ads`).
+- Server/entitlement check for subscriptions (cancellation, refund, grace period, account hold). Today: purchase and start-up renewal detection only (section 4).
 
 ## 8. Magic strings still in code (for the lead)
 
 | Place | String | Replace with |
 |---|---|---|
-| `Economy/ShopCatalog.cs` BuiltInGemPacks | `Sku = "fluffyclimbers.gems." + gems` | `ProductCatalog.ForGemPack(gems).Id` (Economy cannot reference Services yet: add the assembly reference to `FluffyClimbers.Economy.asmdef`) |
-| `Content/economy/gem_packs.json`, `Resources/Content/content_manifest.json` | `"sku": "fluffyclimbers.gems.50"` ... `.15000` (9 rows, field is `Required.Always`) | the new ids from section 2 (regenerate with the content tool); a test then can compare `Sku` to `ProductCatalog` |
-| `Economy/SubscriptionCatalog.cs` | plan ids `"weekly"`, `"monthly"` (not store ids) | map with `ProductCatalog.ForSubscription(planId)` at purchase time |
-| `Economy/ProgressService.Subscription.cs`, `ProgressService.Shop.cs` `GrantTestGemPurchase` | no store id | pass `ProductCatalog` id in the ledger key (`iap:<productId>:<transactionId>`) |
-| `Gameplay/RunController.cs`, `Gameplay/Ads/AdService.cs` | no placement name | `AdPlacements.Revive` |
-| `Gameplay/Ads/AdConfig.cs` | `Resources/AdsConfig.json` + placeholders | replaced by `AdsConfig` (`Resources/Services/ads_config.json`) |
+| `Economy/ShopCatalog.cs` BuiltInGemPacks | (done) | `Sku = ProductCatalog.Prefix + "gems.pack_" + gems`; `FluffyClimbers.Economy.asmdef` now references `FluffyClimbers.Services` (no cycle: Services references nothing) |
+| `Content/economy/gem_packs.json`, `Content/schemas/gem_pack.schema.json`, `Resources/Content/content_manifest.json` | (done) | `"sku": "com.jdlabs.fluffyclimbers.gems.pack_<gems>"`, schema pattern updated, manifest edited by hand in the same way (the lead rebuilds it in Unity); `StorePurchaseTests` compares every `Sku` to `ProductCatalog` |
+| `Economy/SubscriptionCatalog.cs` | plan ids `"weekly"`, `"monthly"` (not store ids) | (done) mapped with `ProductCatalog.ForSubscription(planId)` in `SubscriptionScreen` |
+| `Economy/ProgressService.Subscription.cs`, `ProgressService.Shop.cs` `GrantTestGemPurchase` | (done) | records use `ProductCatalog` ids; the real path is `ApplyStorePurchase` (ledger key `iap:<productId>:<transactionId>`) |
+| `Gameplay/RunController.cs` | (done) | uses `AdPlacements.Revive`; the old `Gameplay/Ads` folder is deleted |
 
 ## 9. Verification and risks
 
-- `com.unity.purchasing` 5.4.4 verified in the Unity registry (versions list 5.4.0 to 5.4.4; requires Unity 2022.3+; assembly name `Unity.Purchasing`, API checked against the 5.4.4 package source: `UnityIAPServices.StoreController()`, `Connect`, `FetchProducts`, `PurchaseProduct`, `OnPurchasePending`, `ConfirmPurchase`, `RestoreTransactions`). `com.unity.services.levelplay` 9.5.1 is the installed version (API checked against the local package).
+- `com.unity.purchasing` 5.4.4 verified in the Unity registry (versions list 5.4.0 to 5.4.4; requires Unity 2022.3+; assembly name `Unity.Purchasing`, API checked against the 5.4.4 package source: `UnityIAPServices.StoreController()`, `Connect`, `FetchProducts`, `PurchaseProduct`, `OnPurchasePending`, `ConfirmPurchase`, `RestoreTransactions`). `com.google.ads.mobile` 11.6.0: API checked against the package samples (`RewardedAd.Load`, `Show`, `CanShowAd`, full-screen events, `ConsentInformation`, `ConsentForm`, `RequestConfiguration`); the DLLs have no source, so the enum names (`AgeRestrictedTreatment`, `MaxAdContentRating`, `DebugGeography`) are unverified until the first compile.
 - Not compiled by the author (no Unity run): the `#if FLUFFY_*` files are unverified until the defines are enabled in Unity.
-- Android: IAP's Gradle dependency resolution and LevelPlay's can conflict on `androidx` versions; if the Android build fails, check `mainTemplate`/EDM resolver output. `com.unity.services.core` is added by IAP; no UGS project link is required for IAP.
+- Android: IAP's Gradle dependency resolution and AdMob's (`play-services-ads`) can conflict on `androidx` versions; if the Android build fails, check `mainTemplate`/EDM resolver output. `com.unity.services.core` is added by IAP; no UGS project link is required for IAP.
 
 ## Rename note (2026-11-09)
-The game is now "Fluffy Climbers: Tower Jump" and the package / product id prefix is `com.jdlabs.fluffyclimbers` (old: `com.jdlabs.boingupskytower`, never uploaded, so no migration). AdMob, LevelPlay (Unity LevelPlay) and Firebase apps must be registered with the NEW package name `com.jdlabs.fluffyclimbers`; the Play Console / App Store Connect entries and all product ids above must be created for the new id.
+The game is now "Fluffy Climbers: Tower Jump" and the package / product id prefix is `com.jdlabs.fluffyclimbers` (old: `com.jdlabs.boingupskytower`, never uploaded, so no migration). AdMob and Firebase apps must be registered with the NEW package name `com.jdlabs.fluffyclimbers`; the Play Console / App Store Connect entries and all product ids above must be created for the new id.
+
+## 10. AdMob test checklist (phone, development build)
+
+1. Clean install (uninstall first). With placeholders the dev build uses Google sample ids (the build log prints `[AdMob] Android app id ... SAMPLE`).
+2. First start: no crash. To test consent, set `debugGeography` to `eea` in a dev build: the consent form appears before any ad; accept or decline, the menu opens.
+3. Fail a level: the failed overlay offers the ad revive. With no network it offers gems only; with network the test rewarded ad plays.
+4. Watch to the end: revive happens, no gems spent. Close early: no revive, the offer shows again. A second ad in the same run works (next ad was preloaded).
+5. Airplane mode, fail a level: only the gem option, no hang. Network back on: within about 2 minutes (backoff) the ad offer returns.
+6. Settings shows "Privacy options" only in a consent region (`eea` debug geography); it opens the form and returns.
+7. Admin menu "Rewarded ad" shows an ad and reports reward ok / no reward.
+8. Release candidate: real ids in `ads_config.json`, `testMode` false, `debugGeography` disabled. Build Release AAB (it fails while the app id is a placeholder). Install the internal-test build, confirm an ad with the phone listed in AdMob Test devices (never tap your own live ads).
+9. After publishing: check app-ads.txt status in AdMob.

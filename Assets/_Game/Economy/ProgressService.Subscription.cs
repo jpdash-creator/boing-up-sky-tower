@@ -168,7 +168,7 @@ namespace FluffyClimbers.Economy
         /// Credits a paid plan: the instant gems, and the period starts now or, while the same plan is still running, is extended by its days
         /// (buying again stacks). The other plan must have ended first. One step, one save.
         /// </summary>
-        public SubscriptionBuyResult CreditSubscription(string planId, DateTime nowUtc)
+        public SubscriptionBuyResult CreditSubscription(string planId, DateTime nowUtc, bool payInstantGems = true)
         {
             SubscriptionDef def = SubscriptionDefs.Get(planId);
             if (def == null || def.Days <= 0) return SubscriptionBuyResult.Invalid;
@@ -181,7 +181,7 @@ namespace FluffyClimbers.Economy
             s.ExpiryUtcTicks = from > DateTime.MaxValue.Ticks - add ? DateTime.MaxValue.Ticks : from + add;
             s.ClaimsLeft = active ? SaturatingAdd(s.ClaimsLeft, def.Days) : def.Days;   // a lapsed plan forfeits the claims it never used
             s.Type = planId;
-            Data.Gems = SaturatingAdd(Data.Gems, def.InstantGems);
+            if (payInstantGems) Data.Gems = SaturatingAdd(Data.Gems, def.InstantGems);   // false: a renewal the store reports (no new instant gems)
             Commit();
             return SubscriptionBuyResult.Ok;
         }

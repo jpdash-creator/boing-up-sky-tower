@@ -21,6 +21,11 @@ namespace FluffyClimbers.Monetization
         /// <summary>Store receipt/token for server-side validation (TODO, see docs/33).</summary>
         public string Receipt;
         public string Error;
+        /// <summary>
+        /// Set by the Purchase callback (or a RecoveredPurchase handler) when the content could NOT be granted (for example another subscription plan is running):
+        /// the transaction is then left unconfirmed, so Google Play refunds it automatically after about 3 days and nothing is lost for the player.
+        /// </summary>
+        public bool Reject;
         public bool Success { get { return Status == PurchaseStatus.Success; } }
     }
 
@@ -29,6 +34,13 @@ namespace FluffyClimbers.Monetization
         bool IsInitialized { get; }
         /// <summary>Connects to the store and fetches the products of ProductCatalog. Idempotent, non-blocking.</summary>
         void Initialize();
+        /// <summary>
+        /// Raised for a purchase that completed outside a Purchase call (the app was killed mid-purchase, or a pending purchase was found at start-up). The handler grants,
+        /// saves and must be idempotent (ledger key iap:productId:transactionId); the transaction is confirmed after the handler returns, unless it sets Reject. With no handler it stays unconfirmed and is delivered again next launch.
+        /// </summary>
+        event Action<PurchaseResult> RecoveredPurchase;
+        /// <summary>Raised at start-up and after Restore for every subscription the store reports as currently active (a renewal the game could not see). No transaction is confirmed for it.</summary>
+        event Action<PurchaseResult> ActiveSubscriptionFound;
         /// <summary>Store-localised price text ("$0.79" or "Rs 75"), or null when unknown (use the catalog USD price then).</summary>
         string GetLocalizedPrice(string productId);
         /// <summary>

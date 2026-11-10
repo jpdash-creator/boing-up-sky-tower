@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FluffyClimbers.Monetization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -36,6 +37,7 @@ namespace FluffyClimbers.Gameplay
         void Start()
         {
             GameSession.EnsureInit();
+            _ = Services.Ads;   // starts the UMP consent flow and AdMob early (stub in the editor)
             ArtCatalog art = GameSession.Art;
             Canvas canvas = UiKit.CreateCanvas("BootUi", 0);
             canvas.transform.SetParent(transform, false);
@@ -97,6 +99,7 @@ namespace FluffyClimbers.Gameplay
             steps.Add(() => { foreach (string n in new[] { "icon_shop", "icon_gear", "icon_heroes", "icon_daily", "icon_play", "icon_home", "icon_coin", "icon_gem", "icon_star", "icon_flame", "icon_chest", "icon_bolt", "icon_crown", "icon_tower", "icon_flag", "icon_speed", "shop_scene" }) ToyKit.Get(n); });
             steps.Add(() => ToyKit.ApplyTo(GameSession.Art));
             steps.Add(AudioManager.Warm);   // loads the clips during the loading screen
+            steps.Add(StoreLink.Start);   // connects the store, recovers purchases that finished while the app was closed (docs/33)
         }
 
         void Update()

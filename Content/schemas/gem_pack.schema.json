@@ -11,7 +11,7 @@
     "usdPromo": {"type": "number", "minimum": 0.49},
     "inrList": {"type": "integer", "minimum": 1},
     "firstPurchaseDouble": {"type": "boolean"},
-    "sku": {"type": "string", "pattern": "^fluffyclimbers[.]gems[.][a-z0-9_]+$"},
+    "sku": {"type": "string", "pattern": "^com[.]jdlabs[.]fluffyclimbers[.]gems[.]pack_[0-9]+$"},
     "badge": {"type": "string", "enum": ["", "popular", "best_value"]}
   }
 }

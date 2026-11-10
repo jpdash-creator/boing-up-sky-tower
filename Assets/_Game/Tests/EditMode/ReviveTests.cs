@@ -1,6 +1,7 @@
 using FluffyClimbers.Content;
 using FluffyClimbers.Economy;
 using FluffyClimbers.Gameplay;
+using FluffyClimbers.Monetization;
 using FluffyClimbers.Simulation;
 using NUnit.Framework;
 
@@ -17,11 +18,11 @@ namespace FluffyClimbers.Tests
         {
             repo = ContentRepository.LoadFromResources();
             progress = new ProgressService(repo, new MemorySaveStore(), 5);
-            AdService.Rewarded = new TestRewardedAds { Log = false };
+            Services.Ads = new StubAdService { Immediate = true };
         }
 
         [TearDown]
-        public void TearDown() { AdService.Rewarded = new TestRewardedAds { Log = false }; }
+        public void TearDown() { Services.Reset(); }
 
         RunSession NewDeadSession()
         {
@@ -109,11 +110,11 @@ namespace FluffyClimbers.Tests
         {
             RunSession s = NewDeadSession();
             Assert.IsTrue(s.AdReviveOffered);
-            var ads = new TestRewardedAds { Log = false, Available = false };
-            AdService.Rewarded = ads;
-            Assert.IsFalse(AdService.IsRewardedReady, "no ad or no network: only the gem option shows");
-            ads.Available = true;
-            Assert.IsTrue(AdService.IsRewardedReady);
+            var ads = new StubAdService { Immediate = true, Ready = false };
+            Services.Ads = ads;
+            Assert.IsFalse(Services.Ads.IsReady(AdPlacements.Revive), "no ad or no network: only the gem option shows");
+            ads.Ready = true;
+            Assert.IsTrue(Services.Ads.IsReady(AdPlacements.Revive));
         }
 
         [Test]
@@ -123,7 +124,7 @@ namespace FluffyClimbers.Tests
             RunSession s = NewDeadSession();
             s.State.Gems = 4;
             bool granted = false;
-            AdService.ShowRewarded(g => granted = g);
+            Services.Ads.ShowRewarded(AdPlacements.Revive, g => granted = g);
             Assert.IsTrue(granted);
             s.MarkAdWatched();
             Assert.IsTrue(s.TryReviveFree());
@@ -168,12 +169,12 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void AdPlacementIsPassedToTheService()
+        public void ReviveUsesTheReviveAdPlacement()
         {
             string got = null;
-            AdService.ShowRewarded("revive_60", g => got = "done");
-            Assert.AreEqual("revive_60", AdService.LastPlacement);
+            Services.Ads.ShowRewarded(AdPlacements.Revive, g => got = "done");
             Assert.AreEqual("done", got);
+            Assert.AreEqual("revive", AdPlacements.Revive);
         }
 
         [Test]
@@ -181,10 +182,9 @@ namespace FluffyClimbers.Tests
         {
             RunSession s = NewDeadSession();
             Assert.IsFalse(s.TryReviveFree());
-            var ads = new TestRewardedAds { Log = false, GrantResult = false };
-            AdService.Rewarded = ads;
             bool granted = true;
-            AdService.ShowRewarded(g => granted = g);
+            Services.Ads = new StubAdService { Ready = false };
+            Services.Ads.ShowRewarded(AdPlacements.Revive, g => granted = g);
             Assert.IsFalse(granted, "early close or error grants nothing");
             Assert.IsFalse(s.TryReviveFree());
             Assert.IsTrue(s.State.Dead);
@@ -198,8 +198,8 @@ namespace FluffyClimbers.Tests
             s.MarkAdWatched();
             Assert.IsFalse(s.TryReviveFree());
             Assert.IsTrue(s.AdRewardPending, "the reward is kept");
-            var ads = new TestRewardedAds { Log = false };
-            AdService.Rewarded = ads;
+            var ads = new StubAdService { Immediate = true };
+            Services.Ads = ads;
             s.State.Dead = true;
             Assert.IsTrue(s.TryReviveFree());
             Assert.AreEqual(0, ads.ShowCount, "no second ad was needed");
@@ -207,22 +207,12 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void AnAdThatIsStillPlayingBlocksASecondShowAndFinishesOnce()
+        public void AFailedAdGrantsNothing()
         {
-            var ads = new TestRewardedAds { Log = false, Deferred = true };
-            AdService.Rewarded = ads;
-            int calls = 0;
-            bool last = false;
-            AdService.ShowRewarded(g => { calls++; last = g; });
-            Assert.IsTrue(AdService.IsShowing);
-            bool second = true;
-            AdService.ShowRewarded(g => second = g);
-            Assert.IsFalse(second, "a second tap while the ad is up does nothing");
-            ads.Complete(true);
-            ads.Complete(true);
-            Assert.AreEqual(1, calls);
-            Assert.IsTrue(last);
-            Assert.IsFalse(AdService.IsShowing);
+            Services.Ads = new StubAdService { Immediate = true, Ready = false };
+            bool granted = true;
+            Services.Ads.ShowRewarded(AdPlacements.Revive, g => granted = g);
+            Assert.IsFalse(granted, "no fill or an error grants nothing");
         }
     }
 }

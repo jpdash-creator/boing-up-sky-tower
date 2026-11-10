@@ -4,6 +4,7 @@
   "references": [
     "FluffyClimbers.Simulation",
     "FluffyClimbers.Content",
+    "FluffyClimbers.Services",
     "Unity.Nuget.Newtonsoft-Json"
   ],
   "includePlatforms": [],

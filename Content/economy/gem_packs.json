@@ -6,7 +6,7 @@
     "usdPromo": 0.49,
     "inrList": 75,
     "firstPurchaseDouble": true,
-    "sku": "fluffyclimbers.gems.50",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_50",
     "badge": ""
   },
   {
@@ -16,7 +16,7 @@
     "usdPromo": 0.79,
     "inrList": 142,
     "firstPurchaseDouble": true,
-    "sku": "fluffyclimbers.gems.100",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_100",
     "badge": "popular"
   },
   {
@@ -26,7 +26,7 @@
     "usdPromo": 1.29,
     "inrList": 237,
     "firstPurchaseDouble": true,
-    "sku": "fluffyclimbers.gems.200",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_200",
     "badge": ""
   },
   {
@@ -36,7 +36,7 @@
     "usdPromo": 2.99,
     "inrList": 569,
     "firstPurchaseDouble": true,
-    "sku": "fluffyclimbers.gems.500",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_500",
     "badge": ""
   },
   {
@@ -46,7 +46,7 @@
     "usdPromo": 5.49,
     "inrList": 1044,
     "firstPurchaseDouble": true,
-    "sku": "fluffyclimbers.gems.1000",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_1000",
     "badge": "best_value"
   },
   {
@@ -56,7 +56,7 @@
     "usdPromo": 10.49,
     "inrList": 1994,
     "firstPurchaseDouble": false,
-    "sku": "fluffyclimbers.gems.2000",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_2000",
     "badge": ""
   },
   {
@@ -66,7 +66,7 @@
     "usdPromo": 24.99,
     "inrList": 4749,
     "firstPurchaseDouble": false,
-    "sku": "fluffyclimbers.gems.5000",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_5000",
     "badge": ""
   },
   {
@@ -76,7 +76,7 @@
     "usdPromo": 44.99,
     "inrList": 8549,
     "firstPurchaseDouble": false,
-    "sku": "fluffyclimbers.gems.10000",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_10000",
     "badge": ""
   },
   {
@@ -86,7 +86,7 @@
     "usdPromo": 59.99,
     "inrList": 11399,
     "firstPurchaseDouble": false,
-    "sku": "fluffyclimbers.gems.15000",
+    "sku": "com.jdlabs.fluffyclimbers.gems.pack_15000",
     "badge": ""
   }
 ]

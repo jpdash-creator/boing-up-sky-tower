@@ -499,7 +499,7 @@ namespace FluffyClimbers.Tests
             GameSettings.ShowDevRowsForTests = true;
             AccountScenario("guest");
             var holder = new RenderTexture[1];
-            string[] names = { "SoundToggle", "MusicToggle", "HapticsToggle", "Reduced motionToggle", "Left-handedToggle", "Pace ghostToggle", "TextsizeButton", "Google", "SaveProgress", "Reset", "RestorePurchases", "Admin", "VersionTap" };
+            string[] names = { "SoundToggle", "MusicToggle", "HapticsToggle", "Reduced motionToggle", "Left-handedToggle", "Pace ghostToggle", "TextsizeButton", "Google", "SaveProgress", "Reset", "RestorePurchases", "PrivacyPolicy", "TermsOfUse", "Admin", "VersionTap" };
             foreach (Aspect a in Aspects)
             {
                 UiKit.SafeAreaNormalized = () => FullSafe;
@@ -535,11 +535,61 @@ namespace FluffyClimbers.Tests
                 if (FindRt("Back") != null) problems.Add(a.Name + ": Settings has no Back button any more (the X closes it)");
                 if (FindRt("RestorePurchases", panel) != null && FindRt("Reset", panel) != null && !(CanvasBox(FindRt("Reset", panel)).center.x < CanvasBox(FindRt("RestorePurchases", panel)).center.x))
                     problems.Add(a.Name + ": Reset and Restore are one row: Reset left, Restore right");
+                RectTransform privacy = FindRt("PrivacyPolicy", panel), terms = FindRt("TermsOfUse", panel), restoreRt = FindRt("RestorePurchases", panel);
+                if (privacy != null && terms != null && restoreRt != null)
+                {
+                    // owner 2026-11-09: the legal links are the last row, Privacy left and Terms right, directly under Reset / Restore
+                    if (!(CanvasBox(privacy).center.x < CanvasBox(terms).center.x)) problems.Add(a.Name + ": Privacy and Terms are one row: Privacy left, Terms right");
+                    if (!(CanvasBox(privacy).yMax <= CanvasBox(restoreRt).yMin + 1f)) problems.Add(a.Name + ": the Privacy / Terms row sits under Reset / Restore");
+                    if (Mathf.Abs(CanvasBox(privacy).center.y - CanvasBox(terms).center.y) > 1f) problems.Add(a.Name + ": Privacy and Terms are not aligned");
+                }
             }
             GameSettings.ShowDevRowsForTests = false;
             Restore(holder);
             Report(problems);
             AccountCleanup();
+        }
+
+        /// <summary>
+        /// Owner 2026-11-09 (docs/47): the Privacy and Terms buttons open the hosted legal pages (https only) through LegalLinks.Opener, show the short words and
+        /// tell screen readers that the browser opens. The cap rule stays pure: the fixed 1470 on a 3:4 canvas, the safe height minus the margins on a tall phone.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator SettingsPrivacyAndTermsButtonsOpenTheLegalPages()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var opened = new List<string>();
+            LegalLinks.Opener = url => opened.Add(url);
+            try
+            {
+                AccountScenario("guest");
+                meta.ShowSettings();
+                yield return null;
+                RectTransform privacy = FindRt("PrivacyPolicy"), terms = FindRt("TermsOfUse");
+                Assert.IsNotNull(privacy, "Privacy button");
+                Assert.IsNotNull(terms, "Terms button");
+                Assert.AreEqual(LegalLinks.PrivacyA11y, privacy.GetComponent<A11yLabel>().Text);
+                Assert.AreEqual(LegalLinks.TermsA11y, terms.GetComponent<A11yLabel>().Text);
+                Assert.AreEqual(LegalLinks.PrivacyLabel, privacy.GetComponentInChildren<Text>().text);
+                Assert.AreEqual(LegalLinks.TermsLabel, terms.GetComponentInChildren<Text>().text);
+                privacy.GetComponent<Button>().onClick.Invoke();
+                terms.GetComponent<Button>().onClick.Invoke();
+                Assert.AreEqual(2, opened.Count, "each tap opens exactly one page");
+                Assert.AreEqual(LegalLinks.PrivacyUrl, opened[0]);
+                Assert.AreEqual(LegalLinks.TermsUrl, opened[1]);
+                Assert.IsTrue(LegalLinks.IsWebUrl(opened[0]) && LegalLinks.IsWebUrl(opened[1]), "https pages only");
+
+                Assert.AreEqual(1470f, MetaController.SettingsCapFor(1663f), 0.01f, "3:4 canvas keeps the fixed cap");
+                Assert.AreEqual(1470f, MetaController.SettingsCapFor(1246f), 0.01f, "a short editor window keeps the fixed cap");
+                Assert.AreEqual(1728f, MetaController.SettingsCapFor(1920f), 0.01f, "9:16 phone: safe height minus 96 above and below");
+                Assert.AreEqual(1800f, MetaController.SettingsCapFor(2400f), 0.01f, "never above 1800");
+            }
+            finally
+            {
+                LegalLinks.ResetForTests();
+                AccountCleanup();
+            }
         }
 
         /// <summary>Google button: Sign in with Google (guest) or Unlink Google Account (signed in) with the existing sign-in logic; Save Progress: guest saves on the phone, signed in saves to Google.</summary>

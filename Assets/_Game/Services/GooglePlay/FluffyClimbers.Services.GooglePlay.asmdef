@@ -3,6 +3,7 @@
   "rootNamespace": "FluffyClimbers.Monetization",
   "references": [
     "FluffyClimbers.Services",
+    "FluffyClimbers.Economy",
     "Google.Play.Games"
   ],
   "includePlatforms": [],

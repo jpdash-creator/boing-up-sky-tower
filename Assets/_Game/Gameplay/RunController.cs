@@ -1,5 +1,6 @@
 using FluffyClimbers.Content;
 using FluffyClimbers.Economy;
+using FluffyClimbers.Monetization;
 using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -118,7 +119,7 @@ namespace FluffyClimbers.Gameplay
             Hud.OnNext = PlayNext;
             Hud.OnRevive = Revive;
             Hud.OnReviveAd = ReviveByAd;
-            AdService.Preload();
+            Services.Ads.IsReady(AdPlacements.Revive);   // starts consent/SDK/ad loading early (no-op on the stub)
             Hud.OnPower = type => Input.LatchPower((PowerUp)type);
         }
 
@@ -253,7 +254,7 @@ namespace FluffyClimbers.Gameplay
 
         void ShowFailedOffer()
         {
-            Hud.ShowFailed(Session, GameSession.Progress != null ? GameSession.Progress.Gems : 0, AdService.IsRewardedReady);
+            Hud.ShowFailed(Session, GameSession.Progress != null ? GameSession.Progress.Gems : 0, Services.Ads.IsReady(AdPlacements.Revive));
         }
 
         bool adBusy;
@@ -280,14 +281,18 @@ namespace FluffyClimbers.Gameplay
         {
             if (adBusy || Session == null) return;
             if (Session.AdRewardPending) { if (Session.TryReviveFree()) AfterRevive(); return; }
-            if (!AdService.IsRewardedReady) { ShowFailedOffer(); return; }   // the ad vanished: redraw with the gem option only
+            if (!Services.Ads.IsReady(AdPlacements.Revive)) { ShowFailedOffer(); return; }   // the ad vanished: redraw with the gem option only
             adBusy = true;
             RunSession sess = Session;
-            AdService.ShowRewarded(sess.Revive.NextAdPlacement, granted =>
+            Services.Ads.ShowRewarded(AdPlacements.Revive, granted =>
             {
                 adBusy = false;
                 if (this == null || sess != Session) return;               // left the run while the ad was up
-                if (granted)
+                // A TECHNICAL failure (ad could not be shown, SDK error, timeout) must not leave the player on a dead screen: the revive is
+                // given as a courtesy and the game continues. An early close by the player grants nothing (as before).
+                IAdFailureInfo info = Services.Ads as IAdFailureInfo;
+                bool technicalFailure = !granted && info != null && info.LastShowFailed;
+                if (granted || technicalFailure)
                 {
                     sess.MarkAdWatched();
                     if (sess.TryReviveFree()) AfterRevive();

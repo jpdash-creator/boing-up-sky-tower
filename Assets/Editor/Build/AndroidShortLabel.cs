@@ -14,7 +14,7 @@ namespace FluffyClimbers.Editor.Build
     /// ONE EXISTING string value in place (it adds no new resource). Because no second app_name resource, .androidlib or
     /// Assets/Plugins/Android/res file is added, a duplicate-resource build failure cannot happen. If Unity ever changes the file layout
     /// we only log a warning and the long product name is shown (the build is never broken).
-    /// callbackOrder 20 runs after LevelPlayAndroidDependency (10); it touches only strings.xml, so the LevelPlay and AltTester build
+    /// callbackOrder 20 touches only strings.xml, so the AdMob and AltTester build
     /// hooks are unaffected. The path passed in is the unityLibrary module; the launcher module is its sibling directory.
     /// </summary>
     public sealed class AndroidShortLabel : IPostGenerateGradleAndroidProject

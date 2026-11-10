@@ -3,8 +3,8 @@ using System.Collections.Generic;
 namespace FluffyClimbers.Monetization
 {
     /// <summary>
-    /// Every rewarded-ad placement (docs/13 section 4.2, docs/33). The string is also the LevelPlay placement name: create a placement
-    /// with the same name in the LevelPlay dashboard (Rewarded) so reports split by it. Only Revive is built today.
+    /// Every rewarded-ad placement (docs/13 section 4.2, docs/33). The string is also the AdMob placement key: ads_config.json maps each
+    /// placement to a rewarded ad unit id (fallback "default"). Only Revive is built today.
     /// </summary>
     public static class AdPlacements
     {

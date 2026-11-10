@@ -20,4 +20,27 @@ namespace FluffyClimbers.Monetization
     {
         void SetConsent(bool consent);
     }
+
+    /// <summary>Implemented by an ad service that starts its consent/SDK work when the locator creates it.</summary>
+    public interface IAdLifecycle
+    {
+        void Begin();
+    }
+
+    /// <summary>
+    /// Implemented by an ad service that can tell a TECHNICAL failure (ad could not be shown, SDK error, no callback) from a player who simply
+    /// closed the ad early. The game continues for the player after a technical failure instead of leaving a dead screen.
+    /// </summary>
+    public interface IAdFailureInfo
+    {
+        /// <summary>True when the most recent ShowRewarded ended because of an error or timeout, not because the player closed the ad early.</summary>
+        bool LastShowFailed { get; }
+    }
+
+    /// <summary>UMP privacy options entry point (Settings screen button).</summary>
+    public interface IPrivacyOptions
+    {
+        bool PrivacyOptionsRequired { get; }
+        void ShowPrivacyOptions(System.Action onClosed);
+    }
 }

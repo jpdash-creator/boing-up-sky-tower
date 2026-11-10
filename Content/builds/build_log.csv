@@ -70,3 +70,6 @@ date,version,result,sizeMB,apk
 2026-11-09 19:55,v0.54.71,Failed,1234,E:/Unity/builds/fluffyclimbers_v0.54.71.apk
 2026-11-09 19:56,v0.54.72,Succeeded,1399,E:/Unity/builds/fluffyclimbers_v0.54.72.apk
 2026-11-09 20:49,v0.54.73,Succeeded,1306,E:/Unity/builds/fluffyclimbers_v0.54.73.aab
+2026-11-10 11:09,v0.55.74,Succeeded,1412,E:/Unity/builds/fluffyclimbers_v0.55.74.apk
+2026-11-10 11:11,v0.55.75,Succeeded,1412,E:/Unity/builds/fluffyclimbers_v0.55.75.apk
+2026-11-10 12:28,v0.55.76,Succeeded,1412,E:/Unity/builds/fluffyclimbers_v0.55.76.apk

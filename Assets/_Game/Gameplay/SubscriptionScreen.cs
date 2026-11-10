@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using FluffyClimbers.Content;
 using FluffyClimbers.Economy;
+using FluffyClimbers.Monetization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -317,8 +318,9 @@ namespace FluffyClimbers.Gameplay
             }
             string planId = def.Id;
             bool otherActive = progress.IsActive(now);
-            string a11y = "Buy " + def.Name + " for " + SubscriptionCatalog.AmountText(def) + ", " + def.Days + " days" + (ShopScreen.TestPurchasesEnabled ? ", test purchase" : ", not available yet");
-            string price = SubscriptionCatalog.AmountText(def) + "\n/ " + def.Days + " Days";
+            string amount = StoreLink.StorePrice(ProductCatalog.ForSubscription(def.Id)) ?? SubscriptionCatalog.AmountText(def);   // the store localised price once loaded
+            string a11y = "Buy " + def.Name + " for " + amount + ", " + def.Days + " days" + (ShopScreen.TestPurchasesEnabled ? ", test purchase" : "");
+            string price = amount + "\n/ " + def.Days + " Days";
             Button buy = ShopChrome.PriceButton(card, "Buy", 1, null, price, a11y, () => TapBuy(planId), 40);
             FixLabel(buy);
             if (otherActive) buy.GetComponent<Image>().color = DisabledTint;
@@ -374,11 +376,6 @@ namespace FluffyClimbers.Gameplay
         {
             SubscriptionDef def = catalog.Get(planId);
             if (def == null) return;
-            if (!ShopScreen.TestPurchasesEnabled)
-            {
-                Info("Not available yet", "Buying a subscription with real money is not open yet. It arrives with the store release.");
-                return;
-            }
             string running = progress.ActiveSubscription();
             if (running != null && running != planId)
             {
@@ -386,10 +383,43 @@ namespace FluffyClimbers.Gameplay
                 Info("Another plan is running", "Your " + (other != null ? other.Name : "subscription") + " is still active. You can buy this plan after it ends.");
                 return;
             }
+            if (!ShopScreen.TestPurchasesEnabled) { BuyWithStore(def); return; }   // the real store (Services.Payments); the Google sheet is the confirmation
             string extend = running != null ? "\nThis adds " + def.Days + " days to your current time." : "";
             host.OpenPopup("Confirm test buy", "TEST PURCHASE\n" + def.Name + " for " + SubscriptionCatalog.AmountText(def) + ".\nYou get " + Num(def.InstantGems) + " gems now and a daily reward for " + def.Days + " days." + extend + "\nNo money is charged.", 1180f);
             host.PopupButton("Confirm", true, 230f, () => CompleteBuy(def));
             host.PopupButton("Cancel", false, 60f, host.ClosePopup);
+        }
+
+        bool storeBusy;
+
+        /// <summary>A real subscription purchase (docs/33): grant and save inside the store callback, once per transaction; a plan the game cannot start is rejected (not confirmed, so refunded).</summary>
+        void BuyWithStore(SubscriptionDef def)
+        {
+            string productId = ProductCatalog.ForSubscription(def.Id);
+            if (productId == null) { Info("Not available", def.Name + " cannot be bought right now."); return; }
+            if (storeBusy) return;
+            storeBusy = true;
+            IPaymentService pay = Services.Payments;
+            pay.Initialize();
+            pay.Purchase(productId, r =>
+            {
+                storeBusy = false;
+                string title, text;
+                if (r.Status == PurchaseStatus.Success)
+                {
+                    StorePurchaseOutcome o = progress.ApplyStorePurchase(r.ProductId, r.TransactionId, DateTime.UtcNow);
+                    if (o == StorePurchaseOutcome.Granted) { title = "Subscription active"; text = "+" + Num(def.InstantGems) + " gems added.\n" + def.Name + ": " + progress.DaysLeft() + " days left.\nClaim your reward every day."; }
+                    else if (o == StorePurchaseOutcome.Duplicate) { title = "Already added"; text = "This purchase was already added."; }
+                    else { r.Reject = true; title = "Could not start the plan"; text = "Your purchase could not be added. Google Play refunds it if this keeps happening."; }
+                }
+                else if (r.Status == PurchaseStatus.Cancelled) return;
+                else if (r.Status == PurchaseStatus.Pending) { title = "Purchase pending"; text = "Your payment is waiting for approval."; }
+                else { title = "Purchase failed"; text = r.Status == PurchaseStatus.Unavailable ? "The store is not available right now. Check your connection and try again." : "The purchase did not go through. You were not charged."; }
+                if (host == null) return;
+                if (r.Success && !r.Reject) AudioManager.Play(Sfx.PowerUp);
+                Refresh();
+                Info(title, text);
+            });
         }
 
         void CompleteBuy(SubscriptionDef def)

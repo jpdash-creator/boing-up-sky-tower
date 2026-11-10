@@ -1,5 +1,15 @@
 {
-  "appKey": "REPLACE_WITH_LEVELPLAY_APP_KEY",
-  "rewardedAdUnitId": "REPLACE_WITH_REWARDED_AD_UNIT_ID",
-  "testMode": true
+  "androidAppId": "ca-app-pub-7325859214707779~9480003727",
+  "rewardedAdUnitIds": {
+    "default": "ca-app-pub-7325859214707779/6470697007",
+    "revive": "ca-app-pub-7325859214707779/6470697007",
+    "double_reward": "REPLACE_WITH_REWARDED_UNIT_ID",
+    "daily_powerup": "REPLACE_WITH_REWARDED_UNIT_ID",
+    "shop_free_gems": "REPLACE_WITH_REWARDED_UNIT_ID"
+  },
+  "testMode": false,
+  "tagForChildDirectedTreatment": "unspecified",
+  "maxAdContentRating": "T",
+  "debugGeography": "disabled",
+  "testDeviceIds": []
 }

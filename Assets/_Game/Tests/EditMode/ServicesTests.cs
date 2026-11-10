@@ -120,5 +120,30 @@ namespace FluffyClimbers.Tests
             Assert.IsFalse(Services.ConsentGiven);
             Services.Reset();
         }
+
+        [Test]
+        public void AdsConfigResolvesPlaceholdersAndTestMode()
+        {
+            const string P = AdsConfig.PlaceholderUnitId;
+            Assert.AreEqual(AdsConfig.SampleRewardedUnitId, AdsConfig.ResolveUnitId(P, P, false, true), "dev + placeholders = sample id");
+            Assert.IsNull(AdsConfig.ResolveUnitId(P, P, false, false), "release + placeholders = no ads");
+            Assert.AreEqual(AdsConfig.SampleRewardedUnitId, AdsConfig.ResolveUnitId(P, P, true, false), "testMode ships sample ids");
+            Assert.AreEqual("ca-app-pub-1~2/3", AdsConfig.ResolveUnitId(P, "ca-app-pub-1~2/3", false, false), "default is the fallback");
+            Assert.AreEqual("ca-app-pub-1~2/4", AdsConfig.ResolveUnitId("ca-app-pub-1~2/4", "ca-app-pub-1~2/3", false, false));
+            Assert.IsNull(AdsConfig.ResolveAppId(AdsConfig.PlaceholderAppId, false, false));
+            Assert.AreEqual(AdsConfig.SampleAppId, AdsConfig.ResolveAppId(AdsConfig.PlaceholderAppId, false, true));
+            Assert.AreEqual("ca-app-pub-1~2", AdsConfig.ResolveAppId("ca-app-pub-1~2", false, false));
+        }
+
+        [Test]
+        public void PrivacyOptionsAreOffOnStubs()
+        {
+            Services.Reset();
+            Assert.IsFalse(Services.PrivacyOptionsRequired);
+            bool closed = false;
+            Services.ShowPrivacyOptions(() => closed = true);
+            Assert.IsTrue(closed);
+            Services.Reset();
+        }
     }
 }

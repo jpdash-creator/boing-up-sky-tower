@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using FluffyClimbers.Monetization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,10 +14,31 @@ namespace FluffyClimbers.Gameplay
     /// Doc 46 (timed gameplay): the Pace ghost switch sits in the fourth cell row at the left and the version label (7 quick taps open the admin code box) at its right; the
     /// footer row is gone, so the popup grows by one gap only. The Admin icon (development builds and after the hidden code) moved to the top left of the popup frame.
     /// Bug List 6 item 7: the screen never scrolls (no ScrollRect). The Gameplay (difficulty) setting moved to the level screen (item 6), which freed a row; nothing needed the "More" popup.
+    /// Owner 2026-11-09 (docs/47, Planning/LEGAL-HOSTING.md): a last small row with the Privacy and Terms buttons, which open the hosted policy and terms pages in the
+    /// browser (<see cref="LegalLinks"/>; Google Play's User Data policy wants the privacy policy reachable inside the app). The height cap follows the safe area
+    /// (<see cref="SettingsCap"/>) so that row never clips on a dense low-resolution phone whose 48 dp rows are taller than the 126 reference units.
     /// </summary>
     public sealed partial class MetaController
     {
         const float SettingsW = 860f, SettingsPad = 36f, SettingsTop = 176f, SettingsMaxH = 1470f;
+        /// <summary>Reference units kept free above and below the popup when the cap grows with the safe area (the 1470 cap leaves about this much on a 3:4 canvas of 1663).</summary>
+        const float SettingsEdgeMargin = 96f;
+
+        /// <summary>
+        /// The popup's height cap: at least <see cref="SettingsMaxH"/> (what fits a 3:4 canvas), and on a taller safe area everything but <see cref="SettingsEdgeMargin"/> at each
+        /// end, so that a phone whose 48 dp rows are taller than the reference (720 x 1280 at 320 dpi: 144 units) still shows the last row instead of clipping it. The
+        /// editor and the PlayMode tests run on a short window and always get the fixed cap. Never scrolls either way (Bug List 6 item 7).
+        /// </summary>
+        public static float SettingsCap()
+        {
+            return SettingsCapFor(UiKit.SafeSizeRef().y);
+        }
+
+        /// <summary>Pure form of <see cref="SettingsCap"/> (unit-testable): the safe-area height in reference units.</summary>
+        public static float SettingsCapFor(float safeHeight)
+        {
+            return Mathf.Max(SettingsMaxH, Mathf.Min(safeHeight - 2f * SettingsEdgeMargin, 1800f));
+        }
 
         Text saveLabel;
         Button saveButton;
@@ -41,8 +63,10 @@ namespace FluffyClimbers.Gameplay
             float contentW = SettingsW - 2f * SettingsPad;
             float rowH = Mathf.Max(126f, UiKit.MinTouchRef);   // every switch and button is at least 48 dp on this screen density
             float gap = Mathf.Ceil(UiKit.MinSpacingPx);
+            bool privacyChoices = Services.PrivacyOptionsRequired;   // EEA/UK/CH players: the consent form can be reopened (owner 2026-11-10, UMP)
+            float cap = SettingsCap() + (privacyChoices ? rowH + gap : 0f);   // the extra row only exists where it is legally required
 
-            RectTransform panel = UiKit.BuildPopupFrame(screen, "Settings", art, new Vector2(SettingsW, SettingsMaxH), ShowMenu);
+            RectTransform panel = UiKit.BuildPopupFrame(screen, "Settings", art, new Vector2(SettingsW, cap), ShowMenu);
             RectTransform c = PopupBodyBegin(panel, "SettingsViewport", SettingsTop, SettingsPad, false);   // no ScrollRect: everything fits (Bug List 6 item 7)
 
             // ---- the light inner panel: 4 rows of icon cells (the last one: Pace ghost switch and the version label) ----
@@ -106,9 +130,20 @@ namespace FluffyClimbers.Gameplay
             Button restore = SettingsIconButton(c, "RestorePurchases", "Restore", "icon_shop", 0, "Restore purchases", x: halfW + gap, y: y, w: halfW, h: rowH, onClick: RestorePurchases);
             y += rowH + gap;
 
+            // ---- one small row: Privacy policy and Terms of use (owner 2026-11-09). Blue plates: they leave the game for the hosted pages in the browser. ----
+            SettingsLinkButton(c, "PrivacyPolicy", LegalLinks.PrivacyLabel, LegalLinks.PrivacyA11y, x: 0f, y: y, w: halfW, h: rowH, onClick: LegalLinks.OpenPrivacy);
+            SettingsLinkButton(c, "TermsOfUse", LegalLinks.TermsLabel, LegalLinks.TermsA11y, x: halfW + gap, y: y, w: halfW, h: rowH, onClick: LegalLinks.OpenTerms);
+            y += rowH + gap;
+
+            if (privacyChoices)
+            {
+                SettingsPrivacyChoicesButton(c, y, contentW, rowH);
+                y += rowH + gap;
+            }
+
             y -= gap;   // no gap after the last row
 
-            PopupBodyEnd(panel, c, y, SettingsTop, SettingsPad, SettingsMaxH);
+            PopupBodyEnd(panel, c, y, SettingsTop, SettingsPad, cap);
         }
 
         // ---------------- shared popup body (Settings and Admin) ----------------
@@ -238,6 +273,15 @@ namespace FluffyClimbers.Gameplay
             trt.anchorMax = Vector2.one;
             trt.offsetMin = new Vector2(20f + icon0 + 6f, 0f);
             trt.offsetMax = new Vector2(-12f, 0f);
+            return b;
+        }
+
+        /// <summary>A blue kit button with one short word (Privacy, Terms) that opens a web page; the screen-reader text says the game is left for the browser.</summary>
+        static Button SettingsLinkButton(RectTransform c, string name, string label, string a11y, float x, float y, float w, float h, Action onClick)
+        {
+            Button b = UiKit.AddButton(c, name, label, ToyKit.Button(2), Color.white, new Vector2(w, h), onClick, 40);
+            UiKit.Place((RectTransform)b.transform, TopLeft, new Vector2(x, -y), new Vector2(w, h));
+            b.GetComponent<A11yLabel>().Text = a11y;
             return b;
         }
 

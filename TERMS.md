@@ -1,12 +1,12 @@
 # Fluffy Climbers: Tower Jump Terms of Use
 
-Last updated: 2026-11-09
+Last updated: 2026-11-10
 
 > **In short**
 >
-> - Fluffy Climbers: Tower Jump is a free arcade game with optional purchases and optional rewarded ads. You get a personal licence to play it. Do not copy, resell, modify, cheat in or reverse engineer it.
+> - Fluffy Climbers: Tower Jump is a free arcade game with optional purchases and optional rewarded ads (shown by Google AdMob). You never need to watch an ad or buy anything to play. You get a personal licence to play it. Do not copy, resell, modify, cheat in or reverse engineer it.
 > - Gems, coins, power-ups, heroes, chests and subscription benefits are virtual items licensed to you, not property. They have no money value, cannot be transferred and are not refunded by us.
-> - Gem packs and the weekly and monthly subscriptions are billed by Google Play (or the Apple App Store). Manage, cancel and request refunds through your store account.
+> - Gem packs and the weekly and monthly subscriptions are billed by Google Play (or the Apple App Store). Subscriptions renew automatically until you cancel them in the Play Store. Manage, cancel and request refunds through your store account.
 > - Chests and bundles contain random rewards. The odds are shown in the Game and in section 5.
 > - Guests save on their device only; sign in with Google Play to keep a cloud copy. We are not responsible for lost or overwritten progress.
 > - You must be at least 13 to play. Under 18, a parent or guardian must agree to these terms for you and is responsible for purchases.
@@ -45,7 +45,7 @@ Last updated: 2026-11-09
 
 ## 1. About these terms
 
-These terms govern your use of the mobile game Fluffy Climbers: Tower Jump, including all of its content, updates, virtual items, purchases, ads and related services (together "the Game"), published by J. P. Dash, Bengaluru, Karnataka, India ("we", "us", "our"). By installing, opening or using the Game you agree to these terms and to our Privacy Policy, which is published next to these terms and forms part of them. If you do not agree, do not install or use the Game and uninstall it.
+These terms govern your use of the mobile game Fluffy Climbers: Tower Jump, including all of its content, updates, virtual items, purchases, ads and related services (together "the Game"), published by J. P. Dash, Bengaluru, Karnataka, India ("we", "us", "our"). By installing, opening or using the Game you agree to these terms and to our Privacy Policy, which is published next to these terms and forms part of them. Both documents can be opened at any time from the Game's Settings screen (the Privacy and Terms buttons). If you do not agree, do not install or use the Game and uninstall it.
 
 These terms are a legally binding agreement between you and us. The rules of the store you downloaded the Game from (Google Play or the Apple App Store) also apply to you; see section 24. If a store rule conflicts with these terms, the store rule prevails for matters the store governs (billing, refunds, distribution), and these terms prevail for everything else.
 
@@ -63,7 +63,7 @@ We grant you a personal, limited, non-exclusive, non-transferable, non-sublicens
 ## 4. Guest play, Google Play Games sign-in and your device
 
 - The Game has no account system of its own. You may play as a **guest** (progress saved on your device only) or **sign in with Google Play Games** (progress also saved to your Google account). Both are explained in the Privacy Policy.
-- Your Google account is governed by Google's terms. You are responsible for keeping your Google account and your device secure and for everything that happens through them. Do not use another person's account or let another person use yours to play the Game.
+- Your Google account, Google Play Games and Google Play are governed by Google's terms, including the [Google Play Terms of Service](https://play.google.com/about/play-terms/) and the [Google Play Games Services terms](https://developers.google.com/games/services/terms). You are responsible for keeping your Google account and your device secure and for everything that happens through them. Do not use another person's account or let another person use yours to play the Game.
 - One person per linked account. We may rely on the Google Play Games player id to link, compare and replace saves as described in section 11.
 - The Game needs a compatible device and, for ads, purchases and cloud save, an internet connection. You are responsible for your device, operating system, connection and any data charges.
 
@@ -101,9 +101,9 @@ Hero cards come only from regions you have unlocked. A hero you already own is g
 ## 7. Subscriptions
 
 - **Plans.** The Game offers a **Weekly Subscription** (7-day periods) and a **Monthly Subscription** (30-day periods). Each plan gives an instant gem grant when first purchased and a **daily claim** of gems and coins (and, on the Monthly plan, a free random power-up on every fifth claim). The exact amounts and the price are shown in the Game and in the store before you buy.
-- **Auto-renewal.** Subscriptions are auto-renewing. Your store account is charged for each new period unless you cancel at least 24 hours before the current period ends. Renewal is charged within 24 hours before the period ends, at the price shown by the store.
+- **Auto-renewal.** Subscriptions are auto-renewing and are billed by Google Play (or the Apple App Store). Your store account is charged for each new period unless you cancel at least 24 hours before the current period ends. Renewal is charged within 24 hours before the period ends, at the price shown by the store.
 - **Daily claims.** One claim per local calendar day, made by opening the Game and tapping Claim while the plan is active. **Missed days are not stacked, carried over or refunded.** Claims not used by the time the paid period ends are forfeited. Buying the same plan again while it is active adds its days to the days you already have.
-- **Managing and cancelling.** Manage or cancel at any time in your Google Play or App Store subscription settings. Cancellation takes effect at the end of the current paid period; you keep the benefits until then and are not refunded for the remaining days. **Uninstalling the Game, resetting progress, unlinking your Google account or deleting the cloud save does not cancel a subscription.**
+- **Managing and cancelling.** Manage or cancel at any time in the Play Store (Google Play > Payments & subscriptions > Subscriptions) or in your App Store subscription settings. We cannot cancel a subscription for you, because it is held by your store account. Cancellation takes effect at the end of the current paid period; you keep the benefits until then and are not refunded for the remaining days. **Uninstalling the Game, resetting progress, unlinking your Google account or deleting the cloud save does not cancel a subscription.**
 - **Price changes.** The store notifies you of a price change to an existing subscription and, where required, asks for your consent. A change applies from the next renewal; you may cancel before it takes effect.
 - **Restoring.** "Restore" in Settings re-grants the remaining paid days of a subscription on a device signed in to the same store account. The instant gem grant is paid once per purchase and is not repeated on restore.
 - **Free trials and introductory offers**, if we offer any, convert to a paid subscription at the price shown unless cancelled at least 24 hours before the trial ends; eligibility is decided by the store.
@@ -111,7 +111,7 @@ Hero cards come only from regions you have unlocked. A hero you already own is g
 
 ## 8. Refunds, reversals and chargebacks
 
-- Refunds for purchases are handled by Google Play or Apple under their refund policies. We cannot issue refunds directly, and, to the extent the law allows, we do not refund gems or other Virtual Items that have been delivered, used, spent or that you simply no longer want.
+- Refunds for purchases and subscriptions are handled by Google Play or Apple under their refund policies. We cannot issue refunds directly, we do not offer refunds beyond what Google's or Apple's policy and the law provide, and, to the extent the law allows, we do not refund gems or other Virtual Items that have been delivered, used, spent or that you simply no longer want.
 - If a purchase is refunded, reversed, disputed or charged back after delivery, we may remove the gems, coins, items and benefits it paid for (your balance may fall to zero), lock items bought with them, and suspend or end your licence if we reasonably believe the refund was abusive or fraudulent. Repeated refund abuse is a breach of these terms.
 - Nothing in this section limits your statutory rights as a consumer, including any right to a refund under the laws of your country of residence.
 
@@ -121,10 +121,11 @@ Settings > Restore asks the store for your purchase history and re-grants active
 
 ## 10. Rewarded ads
 
-- Rewarded ads are optional. They are offered on buttons such as "watch an ad to revive" and play only after you tap. You can always decline; the normal Retry button is never blocked by an ad offer.
-- A reward is granted only when the ad network reports that you watched the ad to the end. If an ad is not available (no connection, no ad to show, network error), the button is disabled or hidden and no reward is given; you may still use the gem option where offered.
+- Rewarded ads are optional. They are offered on buttons such as "watch an ad to revive" and play only after you tap. You never have to watch an ad or make a purchase to play the Game, and you can always decline; the normal Retry button is never blocked by an ad offer.
+- Ads are shown by Google AdMob using the Google Mobile Ads SDK. Where the law requires it, Google's consent form asks for your choices before ads are requested, and you can review or change them at any time under "Privacy choices" in Settings (see the Privacy Policy, section 6).
+- A reward is granted only when AdMob reports that you watched the ad to the end. If an ad is not available (no connection, no ad to show, network error), the button is disabled or hidden and no reward is given; you may still use the gem option where offered.
 - Ads are limited per run and per day. We may change the placements, rewards, lengths and caps at any time.
-- Ads are supplied by third-party networks (Privacy Policy section 6). We do not control, endorse or take responsibility for their content, and tapping an ad takes you out of the Game to a third-party page or store listing. Ads may be unavailable in some countries or for some ages.
+- Ads are supplied by Google AdMob and its advertisers (Privacy Policy section 6). We do not control, endorse or take responsibility for their content, and tapping an ad takes you out of the Game to a third-party page or store listing. Ads may be unavailable in some countries or for some ages.
 - Watching ads to earn rewards for anyone other than yourself, automating ad views, faking completion signals, or manipulating ad delivery is ad fraud and a breach of these terms.
 
 ## 11. Progress, saves and cloud sync
@@ -133,7 +134,7 @@ Settings > Restore asks the store for your purchase history and re-grants active
 - **Google sign-in** keeps a copy of your save in your Google account through Google's Saved Games service. Uploads happen a few seconds after a change and when you pause or close the Game; they need a connection and can fail or be delayed. Google's terms govern that storage.
 - **Conflicts.** When the device save and the cloud save differ (for example two devices, or a guest save and an older cloud save), the Game shows you both and asks you to choose. **The save you do not pick is permanently replaced.** You are responsible for that choice. A cloud save written by a newer version of the Game is never overwritten by an older version; update the Game to continue.
 - **Reset progress** (Settings) permanently deletes all progress, wallet and items on the device and, when signed in, replaces the cloud save with the empty one. Only purchase records are kept so that subscriptions can be restored. There is no undo.
-- **Unlinking** your Google account stops uploads; the cloud save stays in your Google account until you delete it yourself.
+- **Unlinking** your Google account stops uploads; the cloud save stays in your Google account until you delete it yourself (Google Play Games settings > delete Play Games data for this Game, or Google Drive > Settings > Manage apps > hidden app data). We hold no copy of it and cannot delete it for you.
 - **No liability for saves.** To the fullest extent permitted by law, we are not responsible for lost, corrupted, overwritten or unsynchronised progress or Virtual Items, whatever the cause (your choice in a conflict, device failure, uninstall, store or Google outage, a bug, cheating or an account change). We may, at our discretion and without obligation, try to help.
 - **Save integrity.** The save file is part of the Game. Reading, editing, copying, injecting or replacing it, or using an edited save in the Game, is prohibited (section 12).
 
@@ -153,7 +154,7 @@ You agree not to, and not to help anyone else to:
 - sell, buy, trade, gift or transfer Virtual Items, saves, linked accounts or devices with progress, or advertise such transfers;
 - use the Game to infringe anyone's rights, to harass anyone, or in any way that is unlawful, harmful or contrary to the store's rules;
 - remove, hide or alter any copyright, trademark or other notice in the Game, or use the Game's name, art or characters to suggest that you are affiliated with us;
-- use any data-mining, scraping or extraction tool on the Game, or attempt to probe, scan or test the vulnerability of the Game or of the Google, Unity or ad-network services it uses, except as part of a responsible disclosure to us;
+- use any data-mining, scraping or extraction tool on the Game, or attempt to probe, scan or test the vulnerability of the Game or of the Google, Unity or other third-party services it uses, except as part of a responsible disclosure to us;
 - misrepresent your age or identity, or use the Game if you are below the minimum age in section 3.
 
 ## 13. Enforcement
@@ -164,7 +165,7 @@ If we reasonably believe that you have breached these terms, we may, without not
 
 The Game and everything in it, including its software and code, level and content data, game design, rules and mechanics, art, characters, animations, user interface, text, music, sounds, logos, names and trade dress, and all updates and versions, are owned by J. P. Dash or our licensors and are protected by copyright, trademark, design and other intellectual property laws worldwide. "Fluffy Climbers", "Fluffy Climbers: Tower Jump", the Momo character and the Game's other hero characters and logos are our names and marks. You receive no ownership of any of it and no right to use our names or marks without our written permission, except as section 15 allows.
 
-Fonts and open-source components used in the Game remain under their own licences (for example the SIL Open Font License for Lilita One, Luckiest Guy and Nunito). Google Play, Android and Google Play Games are trademarks of Google LLC; Unity and LevelPlay are trademarks of Unity Technologies; Apple and App Store are trademarks of Apple Inc. They are not affiliated with us and do not sponsor or endorse the Game.
+Fonts and open-source components used in the Game remain under their own licences (for example the SIL Open Font License for Lilita One, Luckiest Guy and Nunito). Google Play, Android, Google Play Games and AdMob are trademarks of Google LLC; Unity is a trademark of Unity Technologies; Apple and App Store are trademarks of Apple Inc. They are not affiliated with us and do not sponsor or endorse the Game.
 
 ## 15. Sharing gameplay, feedback and suggestions
 
@@ -183,7 +184,7 @@ We may discontinue the Game, or stop offering it in your country, at any time. W
 
 ## 18. Third-party services and content
 
-The Game relies on services operated by others: Google Play and Google Play services, Google Play Billing, Google Play Games Services (sign-in and Saved Games), Unity engine and Unity In-App Purchasing, Unity LevelPlay and the advertising networks it mediates, and, where applicable, Apple's services. Your use of them is subject to their own terms and privacy policies. We do not control them and are not responsible for their availability, changes, outages, content, or acts or omissions, nor for any third-party website, store page or offer that an ad or link leads you to.
+The Game relies on services operated by others: Google Play and Google Play services, Google Play Billing, Google Play Games Services (sign-in and Saved Games), Unity engine and Unity In-App Purchasing, the Google Mobile Ads SDK and Google AdMob (rewarded ads and the ad consent form), and, where applicable, Apple's services. Your use of them is subject to their own terms and privacy policies. We do not control them and are not responsible for their availability, changes, outages, content, or acts or omissions, nor for any third-party website, store page or offer that an ad or link leads you to.
 
 ## 19. Health and safety
 
@@ -218,7 +219,7 @@ To the extent permitted by law, you agree to defend, indemnify and hold harmless
 
 ## 24. Google Play and Apple App Store terms
 
-- **Google Play.** If you downloaded the Game from Google Play, the [Google Play Terms of Service](https://play.google.com/about/play-terms/) and Google's refund and subscription policies also apply.
+- **Google Play.** If you downloaded the Game from Google Play, the [Google Play Terms of Service](https://play.google.com/about/play-terms/) and Google's refund and subscription policies also apply, as do the terms for Google Play Games Services and, for ads, [Google AdMob](https://admob.google.com/home/terms/) as they apply to users.
 - **Apple.** If you download the Game from the Apple App Store, Apple's standard Licensed Application End User Licence Agreement also applies: [https://www.apple.com/legal/internet-services/itunes/dev/stdeula/](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/). If these terms conflict with Apple's standard EULA, Apple's standard EULA prevails to the extent of the conflict. Apple is not a party to these terms, has no obligation to provide maintenance or support for the Game, is not responsible for any claim relating to the Game, and is a third-party beneficiary of these terms with the right to enforce them against you. You confirm that you are not in a country subject to a US government embargo or designated as "terrorist supporting", and that you are not on any US government list of prohibited or restricted parties.
 
 ## 25. Changes to these terms
@@ -238,7 +239,7 @@ We may update these terms from time to time, for example when the Game gains a f
 - **Severability.** If any part of these terms is found invalid or unenforceable, that part is applied to the fullest extent permitted and the rest remains in force.
 - **No waiver.** Our failure to enforce a right is not a waiver of it.
 - **Assignment.** You may not assign or transfer these terms or your licence. We may assign them to a successor publisher of the Game; we will tell you in the Game or the store listing when we do.
-- **Force majeure.** We are not liable for any failure or delay caused by events beyond our reasonable control, including outages of Google, Apple, Unity or ad-network services, internet failures, natural disasters, war, strikes, pandemics or acts of government.
+- **Force majeure.** We are not liable for any failure or delay caused by events beyond our reasonable control, including outages of Google, Apple or Unity services, internet failures, natural disasters, war, strikes, pandemics or acts of government.
 - **Language.** These terms are written in English. Any translation is for convenience only; the English version prevails.
 - **No third-party beneficiaries** except Apple as stated in section 24.
 - **Notices.** We may give you notice in the Game, in the store listing or release notes, or by any e-mail address you have used to contact us. You may give us notice at the address in section 28.

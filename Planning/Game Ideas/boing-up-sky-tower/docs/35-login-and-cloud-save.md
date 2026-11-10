@@ -50,6 +50,8 @@ The header lets the popup show a summary without understanding the save. Size is
 | `Services/Account/StubAccountService.cs` | Editor and development builds: signs in as "Test Player", fake cloud blob in PlayerPrefs (`fluffy.stub.cloud`). Test switches: `FailSignIn`, `CancelSignIn`, `FailCloud`, `UseMemoryOnly`, `SeedCloud`. |
 | `Services/Account/UnavailableAccountService.cs` | Release build without the SDK: login screen shows only "Play as guest". |
 | `Services/GooglePlay/GooglePlayGamesAccountService.cs` + asmdef | Real service, compiled only with `FLUFFY_GPGS`. |
+| `Services/Account/PlayGamesConfig.cs`, `Resources/Services/play_games_config.json` | Project ID (placeholder `REPLACE_WITH_PLAY_GAMES_PROJECT_ID`); `IsConfigured` gates the SDK. |
+| `Editor/Build/PlayGamesAndroidSetup.cs` | Build step: APP_ID `@string` reference, `strings.xml`, plugin settings, dependency resolve, release preflight (`StoreConfigPreflight`). |
 | `Services/Services.cs` | `Services.Account` (stub in the editor / dev build, Play Games with `FLUFFY_GPGS` on a device, else unavailable). |
 | `Economy/SaveSync.cs` | Summary, bytes, decision table, account field helpers. |
 | `Economy/ProgressService.Account.cs` | `ReplaceData`, `SetAccount`, `MarkCloudSynced`. |
@@ -63,26 +65,57 @@ The header lets the popup show a summary without understanding the save. Size is
 - **Settings**: `AccountSync.AccountLine` (text), `AccountSync.IsGoogleMode`, `AccountSync.SignInAndLink((ok, message) => ...)` for a "Sign in with Google Play" button (shows the conflict popup itself when needed), `AccountSync.SignOut()` for "Sign out". Both buttons need the 48 dp / 16 sp rules.
 - **Restore Purchases** (`IPaymentService.Restore`): see section 5.
 
-## 4. Owner setup (Google Play Console and Unity)
+## 4. Play Games Services setup (verified against the Google guide)
 
-### 4.1 Play Console
-1. Play Console, open the game, **Grow users > Play Games Services > Setup and management > Configuration**. Create the Play Games Services project (it creates a linked Google Cloud project). Name, category, description.
-2. **Credentials > Add credential > Android**: an **OAuth client** for package `com.jdlabs.fluffyclimbers`. It needs the **SHA-1 of the signing key**. Add **one credential per key**:
-   - the **Play App Signing** key (Play Console > Test and release > Setup > App signing: "App signing key certificate" SHA-1) for builds installed from Play,
-   - the **upload key** SHA-1 and/or the **debug / local keystore** SHA-1 (Unity Keystore Manager; `keytool -list -v -keystore <file>`) for sideloaded test builds. A wrong or missing SHA-1 gives sign-in failure with `DeveloperError`.
-3. **Enable features > Saved games** (Setup and management > Enable features). Without it `OpenWithAutomaticConflictResolution` fails.
-4. **Testers**: while the Play Games project is unpublished only listed accounts can sign in. Add the tester Google accounts (Play Games Services > Testers) and put them on an internal testing track. Publish the Play Games Services project before the public release.
-5. **Get resources** (Configuration page): copy the **Android (XML)** resources.
-6. Billing (existing, see docs/33): products live in the same Play Console app; nothing new for login.
+Source of truth: developer.android.com/games/pgs/android/android-signin ("New client integration": Games v2 SDK `play-services-games-v2`, minSdk 19 or higher, compileSdk 28 or higher; this project has minSdk 25) and the Play Console pages under **Grow users > Play Games Services**. The plugin is `com.google.play.games` (package manager, OpenUPM scoped registry, listed in `Packages/manifest.json`; the C# plugin identifies itself as 2.1.0 in `PluginVersion.cs`, the package as 2.3.0). The Unity side of every step below is done by the repository (config file plus the build step `Assets/Editor/Build/PlayGamesAndroidSetup.cs`); only the console values come from the owner.
 
-### 4.2 Unity
-1. Plugin: **Google Play Games plugin for Unity**, github.com/playgameservices/play-games-plugin-for-unity. Latest release seen on its Releases page: **v2.3.0** (29 Sep). Download the `.unitypackage` from the repository folder `current-build` (`GooglePlayGamesPluginForUnity-2.3.0.unitypackage`; use the newest file there). It is not on the Unity registry, and no OpenUPM entry was confirmed, so use the `.unitypackage` (do not edit `Packages/manifest.json`).
-2. **Assets > Import Package > Custom Package** and import everything. Platform must be **Android**, scripting backend **IL2CPP**.
-3. **Window > Google Play Games > Setup > Android Setup**: paste the Android resources XML from step 5 above, set the constants folder/class, **Setup**. Then **Nearby Connections Setup** with the package id (the dialog needs it even though the game does not use Nearby).
-4. Check the plugin's assembly definition name. The code in `Services/GooglePlay` references **`Google.Play.Games`** (`FluffyClimbers.Services.GooglePlay.asmdef`). Find the plugin's `.asmdef` under `Assets/GooglePlayGames/...` and, if its `name` differs, edit the reference in our asmdef. If the plugin has no asmdef, move our asmdef folder content to a folder compiled with the plugin or add the plugin to an asmdef (decide then).
-5. **Project Settings > Player > Other Settings > Scripting Define Symbols** (Android): add **`FLUFFY_GPGS`**. The project still compiles without it (all SDK code is behind the define and the asmdef has `defineConstraints`).
-6. Optional: manifest flag `com.google.android.gms.games.SUPPRESS_GAME_PROFILE_CREATION` is **not** set, so Play Games offers to create a profile itself on first use.
-7. Clean install rule (owner memory): uninstall then install on the phone, never keep an old save. To test the conflict popup: play as guest, progress a level, then sign in with a Google account that already has a save from another install.
+### 4.1 What the guide requires, and where it is in this project
+
+| Guide requirement | Where it lives here |
+|---|---|
+| Games v2 SDK dependency `com.google.android.gms:play-services-games-v2` | Declared by the plugin (`Editor/GooglePlayGamesPluginDependencies.xml`, version 22.1.0, also `play-services-nearby` 18.5.0) and resolved by the External Dependency Manager into `Assets/Plugins/Android` (section 4.4). |
+| `<meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/game_services_project_id"/>` inside `<application>` | `Assets/Plugins/Android/GooglePlayGamesManifest.androidlib/AndroidManifest.xml` (the plugin's generated Android library). `PlayGamesAndroidSetup` rewrites only this entry to the `@string` reference before every Android build and leaves the plugin's other entries (`unityVersion`, `NativeBridgeActivity`) as generated. |
+| `<string translatable="false" name="game_services_project_id">PROJECT_ID</string>` in `res/values/strings.xml` | `GooglePlayGamesManifest.androidlib/res/values/strings.xml`, written by the same build step from the config file. |
+| The value is the **Project ID** (the leading digits of the OAuth client id, 10 or more digits, shown under the game name on the Play Console Configuration page) | `Assets/Resources/Services/play_games_config.json`, key `projectId` (placeholder `REPLACE_WITH_PLAY_GAMES_PROJECT_ID`). |
+| `PlayGamesSdk.initialize(context)` at start | Done by the plugin: the first access of `PlayGamesPlatform.Instance` builds `AndroidClient`, whose constructor calls `com.google.android.gms.games.PlayGamesSdk.initialize(activity)` (checked in `Runtime/Scripts/Platforms/Android/AndroidClient.cs`). `PlayGamesPlatform.Activate()` is NOT needed (it only sets `Social.Active`). `GooglePlayGamesAccountService` touches `Instance` only on Android with a valid project id. |
+| Automatic sign-in at launch, no mandatory button, retry | `GooglePlayGamesAccountService.AutoSignInAtLaunch` (AfterSceneLoad) calls `PlayGamesPlatform.Authenticate` = the plugin's `GamesSignInClient.isAuthenticated()` check (no UI). A failure is silent; `AccountSync` repeats the check when the app regains focus (max 6 per launch). The manual button (`ManuallyAuthenticate` = `signIn()`) stays optional on the login screen and in Settings. |
+| Never block play; handle SIGN_IN_REQUIRED and other failures quietly | Every sign-in and Saved Games call is wrapped; a failure becomes `SignInOutcome.Failed` / `LastLoadFailed`, never an exception or a popup. The game is fully playable as a guest and offline. A cloud error never overwrites or wipes local progress (`AccountSync` only applies a successfully read cloud save). |
+| Do not keep the Play Games player id in an own backend | There is no own backend. The player id is stored only inside the local save and the cloud blob (`accountId`, used to detect a different Google account). |
+
+### 4.2 Owner steps in Google Play Console and Google Cloud
+
+Values: package name `com.jdlabs.fluffyclimbers`.
+
+1. Create the app `com.jdlabs.fluffyclimbers` in Play Console (once). **Grow users > Play Games Services > Setup and management > Configuration**: create the Play Games Services project (it creates the linked Google Cloud project). Name, short description, category.
+2. Copy the **Project ID** shown under the game name on the Configuration page (10 or more digits). Put it in `Assets/Resources/Services/play_games_config.json` as `"projectId"`. A release build refuses a placeholder or non-digit value.
+3. **OAuth consent screen** (Google Cloud console, the project linked in step 1): User type External, app name, support email, scopes **`.../auth/games`**, **`.../auth/games_lite`** and **`.../auth/drive.appdata`**, then **Publish app** (a consent screen left in Testing blocks real players).
+4. **Credentials > Add credentials > Android** (Play Console, Configuration page: "Add credential > Android"; it creates an OAuth client in the linked Cloud project). Create ONE credential per signing key, all with package name `com.jdlabs.fluffyclimbers`:
+   - **Upload key** SHA-1 `E3:0D:AE:F1:AF:2A:29:EC:78:D5:40:1E:F4:6D:A9:66:81:11:5F:6A`. Used by the APKs and AABs signed with `E:\Unity\keys\fluffyclimbers-upload.keystore` (internal-testing sideloads and the release AAB before Google re-signs it).
+   - **Debug key** SHA-1 `DE:D2:01:A4:59:B2:16:96:16:59:A9:B0:20:53:74:19:E7:C4:AF:85` (development builds signed with the Unity debug keystore).
+   - **Play App Signing key** SHA-1: the owner copies it from Play Console > Test and release > Setup > **App signing** ("App signing key certificate") after the FIRST upload. Builds installed from Google Play are re-signed with this key, so without it sign-in fails for every Play-installed copy (`DeveloperError` in logcat).
+   Then link the client ids: Configuration page > **Credentials**, select each credential and **Save** (the guide says the OAuth client must be linked to the game).
+5. **Saved games**: Configuration page > enable **Saved games** (needed by the cloud save; it uses the Drive app-data scope from step 3).
+6. **Testers**: Play Games Services > **Testers**: add your own Google account (and any tester accounts). While the Play Games project is unpublished only listed testers can sign in. Put them on the internal testing track too.
+7. **Publish game** in the Play Games Services settings (Setup and management > Publish) BEFORE publishing the app to production; an unpublished game works for testers only.
+
+### 4.3 Unity side (done in the repository)
+
+- `Assets/Resources/Services/play_games_config.json` holds the Project ID (step 2). Nothing else needs hand editing: the Plugin's setup window is not used.
+- `Assets/Editor/Build/PlayGamesAndroidSetup.cs` (`IPreprocessBuildWithReport`, order 0, Android only) runs before every Android build: it points the library manifest APP_ID at `@string/game_services_project_id`, writes `res/values/strings.xml` from the config, sets `PlayGamesSettings.asset` `mAppId` (the runtime asset of the plugin) and the plugin's "setup done" flag, and makes sure the Games SDK is resolved. Menu: Tools > Fluffy Climbers: Tower Jump > Apply Play Games setup.
+- With the placeholder a development APK still builds; the game then never initialises the Play Games SDK (`PlayGamesConfig.IsConfigured` is false, the login screen offers guest play only). `AndroidReleaseBuild` fails a release build when the id is the placeholder or not at least 10 digits, when `iap_config.json` still has the placeholder licence key, or when the Games SDK is not resolved (`StoreConfigPreflight`).
+- Scripting define `FLUFFY_GPGS` (Android) activates `GooglePlayGamesAccountService`; the other agent sets it with `FLUFFY_ADMOB;FLUFFY_UNITY_IAP`.
+
+### 4.4 External Dependency Manager (how the Games v2 SDK reaches Gradle)
+
+What was verified by reading: no custom `mainTemplate.gradle` (`useCustomMainGradleTemplate: 0`), so the Google Android Resolver (EDM4U 1.2.182, package `com.google.external-dependency-manager`) copies the resolved AARs into `Assets/Plugins/Android` and Unity's Gradle build picks them up there; its setting "Resolve Automatically On Build" exists (`AutoResolveOnBuild`, default on) and `PlayServicesResolver.ResolveSync` is public in the installed `Google.JarResolver.dll`. `PlayGamesAndroidSetup.EnsureDependenciesResolved` calls `ResolveSync` by reflection if no `play-services-games` artifact is present, so a headless build needs no Force Resolve click; the release preflight calls it and fails the build if the artifact is still missing. NOT verified (needs Unity, JDK/Gradle and network): the first real resolve, the exact file names it produces, and that the batch-mode resolver finishes inside the build. The Unity EDM package (`com.unity.external-dependency-manager` 2.1.0, pulled by AdMob) is installed too, with its own switch `edmEnabled=false` in `ProjectSettings/ExternalDependencyManagerSettings.json`; the Google resolver is the one that runs. If the first release build fails with a missing `com.google.android.gms.games` class, run **Assets > External Dependency Manager > Android Resolver > Force Resolve** once and check the `Assets/Plugins/Android` folder.
+`play-services-nearby` is pulled by the same plugin file although the game does not use Nearby; it may add Bluetooth/location permissions to the merged manifest (check the merged manifest and the Play Console permissions page).
+
+### 4.5 Test checklist on a device
+
+1. Clean install (uninstall first). Internal-testing build from Play, or the sideloaded APK signed with a key whose SHA-1 you added in step 4.
+2. First launch: automatic sign-in runs silently. Settings > "Sign in with Google" opens the Google sheet if it did not sign in by itself.
+3. Play a level, Settings > Save Progress ("Saved to Google"). Uninstall, install, sign in: the progress returns.
+4. Logcat tags: `GamesSDK`, `Unity`. `DeveloperError` or status 10 means a missing or wrong SHA-1 credential.
 
 ## 5. Purchases
 
@@ -97,10 +130,9 @@ Google Play Billing is the record of purchases. Non-consumables and subscription
 
 ## 7. Risks and open points
 
-- **Plugin API not compiled here.** `GooglePlayGamesAccountService` was written from the plugin documentation (Authenticate, ManuallyAuthenticate, `ISavedGameClient.OpenWithAutomaticConflictResolution / ReadBinaryData / CommitUpdate`). Unverified names to check at the first compile with the plugin: `GetUserId()`, `GetUserDisplayName()`, `ConflictResolutionStrategy.UseMostRecentlySaved` (the documented example uses `UseLongestPlaytime`), `SignInStatus.Canceled`, and the asmdef name `Google.Play.Games`.
+- **Plugin API checked against the sources, not compiled.** `GooglePlayGamesAccountService` was checked name by name against `Library/PackageCache/com.google.play.games` (`PlayGamesPlatform.Instance/Authenticate/ManuallyAuthenticate/IsAuthenticated/GetUserId/GetUserDisplayName`, `SavedGame.OpenWithManualConflictResolution/ReadBinaryData/CommitUpdate`, `SignInStatus.Success/Canceled/InternalError`, assembly `Google.Play.Games`); it compiles only inside Unity with `FLUFFY_GPGS`. Conflicts between two devices that wrote at once are resolved by the game (`SaveSync.PickGreater`: readable, more levels cleared, more hero copies, newer, bigger wallet), not by the plugin.
 - Play Games has no sign-out; "Sign out" only makes the game stop using the account. The next "Sign in" shows the sheet or returns at once.
 - Play Games player ids are per game; a player who changes the Google account on the phone is asked before anything is overwritten (rule 5).
-- Cloud conflicts inside the plugin (two devices writing at once) resolve to the most recently saved file; our rules then run on the next start.
 - A guest who never signs in has no recovery after uninstall (Android Auto Backup of `save.json` may help, not relied on).
 - Cheating: the save is plain JSON and trusted. A later server (docs/13) can validate; out of scope (no own server by owner decision).
 - Existing installs with progress and `loginChosen` false see the login screen once; "Play as guest" keeps their save untouched.

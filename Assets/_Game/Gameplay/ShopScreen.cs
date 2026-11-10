@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using FluffyClimbers.Content;
 using FluffyClimbers.Economy;
+using FluffyClimbers.Monetization;
 using FluffyClimbers.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
@@ -481,7 +482,12 @@ namespace FluffyClimbers.Gameplay
         }
 
         /// <summary>The real-money price text of a gem pack ("$0.79"; list price, or the promo price while the promo is on).</summary>
-        public string PriceText(GemPackDef pack) { return ShopChrome.PriceText(ShopCatalog.GemPackUsd(pack, progress.LaunchPromoActive)); }
+        public string PriceText(GemPackDef pack)
+        {
+            ProductDef def = pack != null ? ProductCatalog.ForGemPack(pack.Gems) : null;
+            string store = def != null ? StoreLink.StorePrice(def.Id) : null;   // the store localised price once it is loaded (release builds)
+            return store ?? ShopChrome.PriceText(ShopCatalog.GemPackUsd(pack, progress.LaunchPromoActive));
+        }
 
         void BuildGemCard(RectTransform list, float y, int col, int cols, int index, GemPackDef pack, float tier)
         {
@@ -619,7 +625,7 @@ namespace FluffyClimbers.Gameplay
             GemPackDef pack = catalog.GemPacks[index];
             if (!TestPurchasesEnabled)
             {
-                Info("Not available yet", "Buying gems with real money is not open yet. It arrives with the store release.");
+                BuyGemPackWithStore(pack);   // the real store (Services.Payments); the editor and development builds use the stub, a release build without a store refuses
                 return;
             }
             progress.FirstPurchaseDoubleActive = GameSettings.FirstPurchaseDouble;
@@ -637,6 +643,42 @@ namespace FluffyClimbers.Gameplay
                 }
             });
             host.PopupButton("Cancel", false, 60f, host.ClosePopup);
+        }
+
+        bool storeBusy;
+
+        /// <summary>
+        /// A real gem-pack purchase through Services.Payments (docs/33). The grant and the save happen inside the store callback, once per transaction (purchase ledger); a result
+        /// the game cannot add (Reject) is not confirmed, so the store refunds it. The screen may be gone when the store answers (app switch): the grant never depends on it.
+        /// </summary>
+        void BuyGemPackWithStore(GemPackDef pack)
+        {
+            ProductDef def = ProductCatalog.ForGemPack(pack.Gems);
+            if (def == null || !def.Live) { Info("Not available", "This pack cannot be bought right now."); return; }
+            if (storeBusy) return;
+            storeBusy = true;
+            IPaymentService pay = Services.Payments;
+            pay.Initialize();
+            progress.FirstPurchaseDoubleActive = GameSettings.FirstPurchaseDouble;
+            int added = progress.GemsFromPack(pack);
+            pay.Purchase(def.Id, r =>
+            {
+                storeBusy = false;
+                string message = null, title = "Purchase";
+                if (r.Status == PurchaseStatus.Success)
+                {
+                    StorePurchaseOutcome o = progress.ApplyStorePurchase(r.ProductId, r.TransactionId, DateTime.UtcNow);
+                    if (o == StorePurchaseOutcome.Granted) { title = "Purchase complete"; message = "+" + Num(added) + " gems added."; }
+                    else if (o == StorePurchaseOutcome.Duplicate) { title = "Already added"; message = "This purchase was already added to your gems."; }
+                    else { r.Reject = true; title = "Could not add gems"; message = "Your purchase could not be added. It will be refunded by Google Play if this keeps happening."; }
+                }
+                else if (r.Status == PurchaseStatus.Cancelled) { return; }
+                else if (r.Status == PurchaseStatus.Pending) { title = "Purchase pending"; message = "Your payment is waiting for approval. The gems arrive when it is approved."; }
+                else { title = "Purchase failed"; message = r.Status == PurchaseStatus.Unavailable ? "The store is not available right now. Check your connection and try again." : "The purchase did not go through. You were not charged."; }
+                if (screen == null) return;
+                RebuildKeepScroll();
+                Info(title, message);
+            });
         }
 
         /// <summary>

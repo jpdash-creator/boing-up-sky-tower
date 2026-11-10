@@ -6,6 +6,10 @@ namespace FluffyClimbers.Monetization
     public sealed class StubPaymentService : IPaymentService
     {
         public bool IsInitialized { get; private set; }
+#pragma warning disable 0067
+        public event Action<PurchaseResult> RecoveredPurchase;
+        public event Action<PurchaseResult> ActiveSubscriptionFound;
+#pragma warning restore 0067
         public bool Fail;
         public int PurchaseCount { get; private set; }
 

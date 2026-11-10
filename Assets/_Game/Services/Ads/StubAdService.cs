@@ -4,7 +4,7 @@ using UnityEngine;
 namespace FluffyClimbers.Monetization
 {
     /// <summary>
-    /// Editor/dev ad service used when the LevelPlay SDK is not compiled in: always ready, completes true after DelaySeconds
+    /// Editor/dev ad service used when the AdMob SDK is not compiled in or in the editor: always ready, completes true after DelaySeconds
     /// (unscaled time, driven by a short-lived hidden pump, so nothing runs while idle).
     /// </summary>
     public sealed class StubAdService : IAdService

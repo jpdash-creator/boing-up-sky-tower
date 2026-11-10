@@ -18,7 +18,7 @@ namespace FluffyClimbers.Editor.Build
     /// set only in memory (PlayerSettings.Android.keystorePass / keyaliasPass, which Unity does not serialize); they are cleared again afterwards and are
     /// never logged. Versioning and the build log are the same code as the APK build (AndroidBuild.BumpAndApplyVersion / AppendBuildLog).
     /// Every editor build setting this class changes is restored at the end, so the development APK build keeps working.
-    /// The Gradle hooks (LevelPlay dependency, short label, no backup) are IPostGenerateGradleAndroidProject and run for every Android build, so they apply here too.
+    /// The Gradle hooks (AdMob app id and permissions, short label, no backup) are IPostGenerateGradleAndroidProject and run for every Android build, so they apply here too.
     /// </summary>
     public static class AndroidReleaseBuild
     {
@@ -98,6 +98,10 @@ namespace FluffyClimbers.Editor.Build
                 if (Regex.IsMatch(defines, @"(^|;)(" + AltTesterBuildHook.Symbol + @"|DEVELOPMENT_BUILD)(;|$)"))
                     return Fail("The Android scripting define symbols contain a test symbol (" + defines + "). Remove it in Player Settings first.");
                 if (!CheckScenes()) return false;
+                string adProblem = AdMobBuildConfig.ReleaseProblem();   // placeholder AdMob app id = no release (docs/33)
+                if (adProblem != null) return Fail(adProblem);
+                string storeProblem = StoreConfigPreflight.Check();   // Play Games project id, Play licence key, Games SDK resolved (docs/33, docs/35)
+                if (storeProblem != null) return Fail(storeProblem);
 
                 string keystorePath, alias, storePass, keyPass;
                 if (!ReadSigning(out keystorePath, out alias, out storePass, out keyPass)) return false;

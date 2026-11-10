@@ -159,6 +159,24 @@ namespace FluffyClimbers.Economy
             return SyncDecision.Nothing;
         }
 
+        /// <summary>
+        /// Picks the better of two cloud blobs for the SAME account (two devices wrote at once, Play Games conflict): the readable one beats an unreadable one,
+        /// then more levels cleared, more hero copies, a newer saved time, a bigger wallet. Returns 0 for the first, 1 for the second. Whole saves, never merged.
+        /// </summary>
+        public static int PickGreater(byte[] first, byte[] second)
+        {
+            SaveEnvelope a = TryDeserialize(first), b = TryDeserialize(second);
+            bool ra = IsReadable(a), rb = IsReadable(b);
+            if (ra != rb) return ra ? 0 : 1;
+            if (!ra) return 0;
+            SaveSummary sa = a.Summary ?? Summarize(a.Data), sb = b.Summary ?? Summarize(b.Data);
+            if (sa.LevelsCleared != sb.LevelsCleared) return sa.LevelsCleared > sb.LevelsCleared ? 0 : 1;
+            if (sa.HeroCopies != sb.HeroCopies) return sa.HeroCopies > sb.HeroCopies ? 0 : 1;
+            DateTime ta = TimeOrMin(a.SavedUtc), tb = TimeOrMin(b.SavedUtc);
+            if (ta != tb) return ta > tb ? 0 : 1;
+            return (long)sa.Gems + sa.Coins >= (long)sb.Gems + sb.Coins ? 0 : 1;
+        }
+
         // ---- account fields ----
 
         /// <summary>Keeps the login state when progress is erased (Settings, reset): the player stays signed in and is not asked again.</summary>
