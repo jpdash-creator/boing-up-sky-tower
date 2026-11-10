@@ -21,7 +21,7 @@ All names (game, mascot, regions, items) are **placeholders** and can be changed
 | Scope | 20 live regions + 10 visible locked teaser regions; 15 levels each. **Update 2026-10-20:** the current milestone ships 5 playable regions (75 levels); regions 6-30 are shown on the scrollable world map as "Coming soon". The 20-region launch target below is unchanged |
 | Team | Solo / tiny team, lean budget: automate everything, scope by phase |
 | Launch scope | All 20 regions playable at launch (confirmed); roadmap in doc 07 stands as written |
-| Format | Markdown in `E:\Source\Game Ideas\boing-tower-docs\docs` |
+| Format | Markdown in `E:\Code\fluffy-climbers-sky-tower\Planning\Game Ideas\fluffy-tower-docs\docs` |
 | Typography | Lilita One (display) + Nunito Bold (body), both free OFL fonts (owner decision 2026-10-20) |
 | Versioning | Every build is vMAJOR.MINOR.HOTFIX.BUILD (major 0 = pre-release); rules in the game repo `.claude/rules/versioning.md`, version file `Tools/version.json`, build log `Content/builds/build_log.csv` |
 

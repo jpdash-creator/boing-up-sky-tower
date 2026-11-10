@@ -3,7 +3,7 @@
 Stopped on request: full sim suite (simout57, no result, must be re-run from scratch) and the Momo Rare/Elite/Legendary integration agent (killed mid-work, so the working tree may hold half-finished edits: check git status, then compile and run EditMode before anything else). No OpenArt jobs running.
 
 ## Where things stand
-- Repo E:\Code\boing-up-sky-tower, branch main, last push commit 22cbeac (v0.49.0.60, on phone 96355505).
+- Repo E:\Code\fluffy-climbers-sky-tower, branch main, last push commit 22cbeac (v0.49.0.60, on phone 96355505).
 - Bug Lists 1-4 done and shipped. Bug List 5 (docs/Bug-List-5.md): F1 Rewards, F2 Hero screens, F3 Chests and endless past floor 7,000 are done in code (EditMode green, layout audit clean) but NOT yet built, pushed or installed. F4 new heroes in progress.
 - OpenArt balance: 3,428 credits.
 
@@ -24,6 +24,6 @@ Stopped on request: full sim suite (simout57, no result, must be re-run from scr
 - Game renamed: "Boing Up: Sky Tower" -> "Fluffy Climbers: Tower Jump" (code namespace BoingUpSkyTower -> FluffyClimbers; menu Tools/Fluffy Climbers: Tower Jump/...).
 - New bundle id / IAP prefix: com.jdlabs.fluffyclimbers (old com.jdlabs.boingupskytower). IAP product ids are com.jdlabs.fluffyclimbers.CATEGORY.NAME.
 - The old id was never uploaded to any store, so there is no migration. The Play Store, App Store and Firebase entries (and the AdMob, LevelPlay and Play Games apps) must be created for the new id com.jdlabs.fluffyclimbers; see docs 33 and 35.
-- Folder and repo names (boing-up-sky-tower, boing-tower-docs, boing-tower-game) are unchanged on purpose.
+- Repo and folder renamed 2026-11-10: boing-up-sky-tower -> fluffy-climbers-sky-tower (GitHub jpdash-creator/fluffy-climbers-sky-tower, local E:\Code\fluffy-climbers-sky-tower). Docs now live in the repo under Planning/Game Ideas/fluffy-climbers-sky-tower/docs.
 - New app icons: files in Assets/Art/AppIcon, applied by the menu Tools/Fluffy Climbers: Tower Jump/Apply App Icons (AppIconSetup.cs; monochrome layer not supported by Unity 6000.3, not assigned). Run it once in the Editor, then commit ProjectSettings.
 - Short launcher label "Fluffy Climbers" (product name unchanged): AndroidShortLabel.cs post-gradle step rewrites the existing app_name in the generated launcher strings.xml (no extra resource, no duplicate-resource risk).

@@ -1,6 +1,6 @@
 # Fluffy Climbers: Tower Jump
 
-A 2D vertical-jumping arcade game for Android and iOS (Unity 6 LTS). Planning docs live in `E:\Source\Game Ideas\boing-up-sky-tower\docs\`.
+A 2D vertical-jumping arcade game for Android and iOS (Unity 6 LTS). Planning docs live in `E:\Code\fluffy-climbers-sky-tower\Planning\Game Ideas\fluffy-climbers-sky-tower\docs\`.
 
 > Closed-source commercial game (all rights reserved, see `LICENSE`). This repo also holds the public [privacy policy](POLICY.md) and [terms of use](TERMS.md), ready to publish with GitHub Pages (`index.md`, `_config.yml`). Hosting steps, store-console mapping and the release blockers the documents assume: [Planning/LEGAL-HOSTING.md](Planning/LEGAL-HOSTING.md). Any change to data handling (SDKs, permissions, analytics, server, notifications, ad networks, products) must update both documents and their "Last updated" date before the build ships.
 

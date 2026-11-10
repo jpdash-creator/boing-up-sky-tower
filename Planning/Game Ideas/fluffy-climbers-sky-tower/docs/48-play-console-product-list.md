@@ -63,7 +63,7 @@ Gem packs carry a launch promo USD price in code (0.49, 0.79, 1.29, 2.99, 5.49, 
 
 ## 5. Checklist: Play Console value to project file
 
-Project root: `E:\Code\boing-up-sky-tower`.
+Project root: `E:\Code\fluffy-climbers-sky-tower`.
 
 | Play Console / Google value | Where to find it | Project file and key | State |
 |---|---|---|---|

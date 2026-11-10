@@ -1,5 +1,5 @@
 FLUFFY CLIMBERS: TOWER JUMP - RECOMMENDED CHANGES RC 1 TO RC 14 (DETAILED)
-Written 2026-11-01. Based on the game code in E:\Code\boing-up-sky-tower (build v0.38.0.40)
+Written 2026-11-01. Based on the game code in E:\Code\fluffy-climbers-sky-tower (build v0.38.0.40)
 and the economy reference docs/27-economy-tables-from-code.md.
 No code or data was changed. These are proposals for the owner to approve.
 

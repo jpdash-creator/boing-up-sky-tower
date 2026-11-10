@@ -20,7 +20,7 @@ from scipy import ndimage  # noqa: E402
 
 W, H = 1365, 1649
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-DEFAULT_SRC = "E:/Code/boing-up-sky-tower/Art/_candidates/parts"
+DEFAULT_SRC = "E:/Code/fluffy-climbers-sky-tower/Art/_candidates/parts"
 K = 1.15  # sheet is 2304 x 1728; the boxes below were read off a 2000 px wide view
 
 

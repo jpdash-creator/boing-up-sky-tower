@@ -1,6 +1,6 @@
 # 27. Economy tables from the code (build v0.38.0.40, written 2026-11-01)
 
-Status: **this file is the economy reference.** It was written by reading the game code and content in `E:\Code\boing-up-sky-tower` (not the older docs) and by running `dotnet test Tests/Simulation` for the economy tests (19 passed). Where docs 05, 08, 13, 14, 15 differ, this file and docs 22 and 26 win. Doc 20 (2026-10-24) already removed gear from the game; this pass removes the remaining gear text and data from the docs.
+Status: **this file is the economy reference.** It was written by reading the game code and content in `E:\Code\fluffy-climbers-sky-tower` (not the older docs) and by running `dotnet test Tests/Simulation` for the economy tests (19 passed). Where docs 05, 08, 13, 14, 15 differ, this file and docs 22 and 26 win. Doc 20 (2026-10-24) already removed gear from the game; this pass removes the remaining gear text and data from the docs.
 
 Owner rules applied: **1 gem = 20 coins (fixed)**, **no gear**. No game code was changed by this document. Code facts that contradict the docs are listed in section 3 and 18.
 

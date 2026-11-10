@@ -9,7 +9,7 @@ All names (game, mascot, regions, items) are **placeholders** and can be changed
 | Topic | Decision |
 |---|---|
 | Engine | Unity 6 LTS (C#), 2D URP, one codebase for Android + iOS |
-| Deliverable now | Planning docs (this folder) are complete enough to start building; open items are in doc 09. Game repo: `E:\Code\boing-up-sky-tower`. **Update 2026-10-20:** the game is playable on Android as pre-release v0.9.x (5 regions x 15 levels); status in doc 07 |
+| Deliverable now | Planning docs (this folder) are complete enough to start building; open items are in doc 09. Game repo: `E:\Code\fluffy-climbers-sky-tower`. **Update 2026-10-20:** the game is playable on Android as pre-release v0.9.x (5 regions x 15 levels); status in doc 07 |
 | Art | AI-generated + manual cleanup, hybrid-ready; cute chibi cartoon style |
 | Backend | Managed BaaS (PlayFab core, Firebase for crash/analytics) |
 | Originality | Generic vertical-jumper core mechanics, brand-new look and feel; no third-party game name, art or character referenced anywhere (docs, code, store listing, marketing) |
@@ -21,7 +21,7 @@ All names (game, mascot, regions, items) are **placeholders** and can be changed
 | Scope | 20 live regions + 10 visible locked teaser regions; 15 levels each. **Update 2026-10-20:** the current milestone ships 5 playable regions (75 levels); regions 6-30 are shown on the scrollable world map as "Coming soon". The 20-region launch target below is unchanged |
 | Team | Solo / tiny team, lean budget: automate everything, scope by phase |
 | Launch scope | All 20 regions playable at launch (confirmed); roadmap in doc 07 stands as written |
-| Format | Markdown in `E:\Source\Game Ideas\boing-up-sky-tower\docs` |
+| Format | Markdown in `E:\Code\fluffy-climbers-sky-tower\Planning\Game Ideas\fluffy-climbers-sky-tower\docs` |
 | Typography | Lilita One (display) + Nunito Bold (body), both free OFL fonts (owner decision 2026-10-20) |
 | Versioning | Every build is vMAJOR.MINOR.BUILD (example v0.52.68; changed 2026-11-09 from vX.Y.Z.B, old build-log rows keep the old format) (major 0 = pre-release); rules in the game repo `.claude/rules/versioning.md`, version file `Tools/version.json`, build log `Content/builds/build_log.csv` |
 

@@ -2,7 +2,7 @@
 
 **Owner requirement, 2026-10-19:** user experience and accessibility are critical. Gameplay must be seamless and never choppy. Screen items must never overlap improperly. These requirements apply to every doc, every screen and every release, and override convenience and schedule. They extend FR/NFR in doc 01 (performance, accessibility) and are enforced by automated tests (category `CriticalUX`) in the game repo.
 
-The authoritative, always-loaded copy lives in the game repo: `E:\Code\boing-up-sky-tower\.claude\rules\ux-gameplay-critical.md`. Keep both in sync.
+The authoritative, always-loaded copy lives in the game repo: `E:\Code\fluffy-climbers-sky-tower\.claude\rules\ux-gameplay-critical.md`. Keep both in sync.
 
 | ID | Requirement | Verified by |
 |---|---|---|

@@ -2,10 +2,10 @@
 
 The complete, exhaustive asset request list is generated in the game repo and kept in sync with docs 02, 04, 08 and 09:
 
-- `E:\Code\boing-up-sky-tower\Content\assets\CATALOG.md` - totals, credit scenarios and the ordered approval batches
-- `E:\Code\boing-up-sky-tower\Content\assets\catalog\<class>.md` - every asset with its exact prompt, settings, references, save path, post-processing and acceptance checks
-- `E:\Code\boing-up-sky-tower\Content\assets\manifest.json` - the same data, machine-readable
-- `E:\Code\boing-up-sky-tower\Content\assets\README.md` - the production workflow and roles
+- `E:\Code\fluffy-climbers-sky-tower\Content\assets\CATALOG.md` - totals, credit scenarios and the ordered approval batches
+- `E:\Code\fluffy-climbers-sky-tower\Content\assets\catalog\<class>.md` - every asset with its exact prompt, settings, references, save path, post-processing and acceptance checks
+- `E:\Code\fluffy-climbers-sky-tower\Content\assets\manifest.json` - the same data, machine-readable
+- `E:\Code\fluffy-climbers-sky-tower\Content\assets\README.md` - the production workflow and roles
 
 ## Summary (launch scope)
 | Class | Count | Notes |

@@ -29,7 +29,7 @@ Command line (the editor must not be open on the same project):
 
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.26f1\Editor\Unity.exe" -batchmode -nographics -quit ^
-  -projectPath "E:\Code\boing-up-sky-tower" ^
+  -projectPath "E:\Code\fluffy-climbers-sky-tower" ^
   -executeMethod FluffyClimbers.Editor.Build.AndroidReleaseBuild.BuildReleaseFromCommandLine ^
   -logFile "E:\Unity\builds\release_build.log"
 ```

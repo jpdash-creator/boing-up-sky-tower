@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: FluffyClimbers
-  productName: boing-up-sky-tower
+  productName: Fluffy Climbers: Tower Jump
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.12156863, g: 0.12156863, b: 0.1254902, a: 1}
@@ -745,7 +745,7 @@ PlayerSettings:
   metroCertificateSubject: 
   metroCertificateIssuer: 
   metroCertificateNotAfter: 0000000000000000
-  metroApplicationDescription: boing-up-sky-tower
+  metroApplicationDescription: Fluffy Climbers: Tower Jump
   wsaImages: {}
   metroTileShortName: 
   metroTileShowName: 0
