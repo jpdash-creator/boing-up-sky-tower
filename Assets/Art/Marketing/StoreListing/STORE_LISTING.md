@@ -6,15 +6,15 @@ Package `com.jdlabs.fluffyclimbers` | Publisher J. P. Dash | Prepared 2026-11-10
 `Fluffy Climbers: Tower Jump` (27 chars)
 
 ## 2. Short description (max 80), pick one
-1. `Bounce up the sky with Momo and fluffy friends. One thumb is enough!` (68) recommended
+1. `Bounce up the sky with Momo and fluffy friends. Free to play!` (61) recommended
 2. `Hop up floating towers, collect stars and merge fluffy heroes. Free to play!` (76)
 3. `Fluffy bounce-and-climb arcade: 5 regions, endless tower, hero merging.` (71)
 
-## 3. Full description (max 4000; this one is 2692 chars). Paste everything between the lines.
+## 3. Full description (max 4000; this one is 2709 chars). Paste everything between the lines.
 -----
 Climb the sky, one bounce at a time!
 
-Meet Momo, a fluffy white climber with a pink scarf, and bounce up towers of floating platforms in a cheerful, hand-painted world. Collect stars and gems, dodge the tricky bits, unlock new regions and gather a whole family of fluffy heroes. One thumb is all you need.
+Meet Momo, a fluffy white climber with a pink scarf, and bounce up towers of floating platforms in a cheerful, hand-painted world. Collect stars and gems, dodge the tricky bits, unlock new regions and gather a whole family of fluffy heroes. Steer with one thumb and jump with the other.
 
 FIVE REGIONS, 25 LEVELS EACH
 Climb through Meadow Springs, Mushroom Grove, Sunny Beach, Candy Canyon and Bamboo Temple. Every region has its own look, music, platform tricks and a signature surprise, from bouncy flowers and mushroom caps to drifting clouds, sticky gum and gongs. That is 125 hand-made levels to clear, with up to three stars on each. More regions are on the map, marked "Coming soon".
@@ -45,7 +45,7 @@ MADE FOR EVERYONE
 - Reduced motion option
 - Haptics, sound and music switches
 - Adjustable text size and large, readable buttons
-- Controls sit in the lower half of the screen for one-handed play
+- Big, easy-to-hit buttons: left and right to steer, one to jump
 - Play as a guest, or sign in with Google Play Games to keep a cloud save
 
 FREE TO PLAY
@@ -56,7 +56,7 @@ Questions or feedback? Write to jpdash.creator@gmail.com.
 
 ## 4. Store settings (suggestions, VERIFY in Console)
 - App or game: Game.
-- Category: **Arcade**. Reason: one-thumb reflex jumper with levels, endless and time attack; Casual is the alternative, but Arcade matches the genre best and is less crowded for "jumper" searches.
+- Category: **Arcade**. Reason: two-thumb reflex jumper with levels, endless and time attack; Casual is the alternative, but Arcade matches the genre best and is less crowded for "jumper" searches.
 - Tags (max 5, pick from Play's list as offered for Arcade games, names may differ slightly): Arcade, Platformer, Casual, Cute, Single player. Fallbacks if missing: Endless runner-style/Action, Offline-style is NOT suitable (ads, purchases and sign-in need internet).
 - Contact email: jpdash.creator@gmail.com
 - Website: https://jpdash-creator.github.io/fluffy-climbers-sky-tower/ (the `docs/` GitHub Pages site; see LEGAL-HOSTING.md). Not confirmed live: open it in a private window before entering it. Needs Pages enabled (Deploy from branch main / docs) on a public repo.
