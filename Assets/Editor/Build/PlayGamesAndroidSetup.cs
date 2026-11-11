@@ -155,6 +155,9 @@ namespace FluffyClimbers.Editor.Build
         {
             const string dir = "Assets/Plugins/Android";
             if (!Directory.Exists(dir)) return false;
+            // This project has a custom mainTemplate.gradle: the resolver writes the dependency line there instead of copying an AAR.
+            string template = Path.Combine(dir, "mainTemplate.gradle");
+            if (File.Exists(template) && File.ReadAllText(template).IndexOf("play-services-games", StringComparison.OrdinalIgnoreCase) >= 0) return true;
             foreach (string e in Directory.GetFileSystemEntries(dir))
                 if (Path.GetFileName(e).IndexOf("play-services-games", StringComparison.OrdinalIgnoreCase) >= 0 && !e.EndsWith(".meta", StringComparison.Ordinal)) return true;
             return false;
