@@ -52,7 +52,11 @@ namespace FluffyClimbers.Gameplay
         /// </summary>
         public static bool SystemTest
         {
+#if STORE_CAPTURE
+            get { return true; }   // store listing capture build only (BT_STORECAP=1): not a development build, the autoplay is allowed
+#else
             get { return DevBuild && PlayerPrefs.GetInt(SystemTestKey, 0) == 1; }   // default OFF everywhere: a fresh install reads PROD READY (owner 2026-11-10)
+#endif
             set
             {
                 PlayerPrefs.SetInt(SystemTestKey, value ? 1 : 0);

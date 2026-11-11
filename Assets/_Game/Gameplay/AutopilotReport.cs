@@ -37,6 +37,27 @@ namespace FluffyClimbers.Gameplay
         /// <summary>Planner look-ahead in landings.</summary>
         public int depth = 2;
 
+        // ---- store listing capture (StoreCapture.cs); all optional, off unless capture is true ----
+        public bool capture;
+        /// <summary>Hero id to play with (for example momo_r, forestgirl_l, candygirl); empty = keep the current one.</summary>
+        public string hero = "";
+        /// <summary>Units of every implemented power-up put in the in-memory stock.</summary>
+        public int powerUnits;
+        public bool usePowers;
+        public float powerStartSec = 2f;
+        public float powerEverySec = 3f;
+        /// <summary>Screenshot window in platform rows (shotRowTo 0 = no screenshots).</summary>
+        public int shotRowFrom, shotRowTo;
+        public float shotEverySec = 0.4f;
+        public string shotPrefix = "shot";
+        /// <summary>End the run after this many seconds of play (0 = no limit).</summary>
+        public float runSeconds;
+        public int walletCoins, walletGems;
+        /// <summary>Record the run as numbered JPEG frames (files/frames) at a fixed game clock of fps frames per second, from the end of the intro until runSeconds.</summary>
+        public bool frames;
+        public int fps = 30;
+        public int jpegQuality = 85;
+
         public static AutoplayOptions Parse(string json)
         {
             AutoplayOptions o = JsonUtility.FromJson<AutoplayOptions>(string.IsNullOrEmpty(json) ? "{}" : json);

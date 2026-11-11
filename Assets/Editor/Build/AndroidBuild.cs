@@ -41,7 +41,11 @@ namespace FluffyClimbers.Editor.Build
             bool x86 = Environment.GetEnvironmentVariable("BT_X86") == "1";
             // Opt-in production-like APK (BT_PROD=1): NOT a development build, so every test flag (SYSTEM_TEST, GAME_JUMP_TEST, admin tools, TestBridge) reads off.
             bool prod = Environment.GetEnvironmentVariable("BT_PROD") == "1" && !altTester;
-            string versionedPath = "E:/Unity/builds/fluffyclimbers_v" + versionName + (altTester ? "_alttester" : "") + (x86 ? "_x86" : "") + ".apk";
+            // Opt-in store capture build (BT_STORECAP=1): NOT a development build (no watermark or console), STORE_CAPTURE keeps System Test on so the autoplay capture works. Never ship it.
+            bool storeCap = Environment.GetEnvironmentVariable("BT_STORECAP") == "1" && !altTester;
+            string oldDefines = PlayerSettings.GetScriptingDefineSymbols(UnityEditor.Build.NamedBuildTarget.Android) ?? "";
+            if (storeCap) { prod = true; PlayerSettings.SetScriptingDefineSymbols(UnityEditor.Build.NamedBuildTarget.Android, oldDefines + ";STORE_CAPTURE"); }
+            string versionedPath = "E:/Unity/builds/fluffyclimbers_v" + versionName + (altTester ? "_alttester" : "") + (storeCap ? "_storecap" : "") + (x86 ? "_x86" : "") + ".apk";
             Debug.Log("[BUILD] version v" + versionName + (x86 ? " (emulator build, arm64 + x86_64)" : ""));
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = x86 ? (AndroidArchitecture.ARM64 | AndroidArchitecture.X86_64) : AndroidArchitecture.ARM64;
@@ -59,10 +63,10 @@ namespace FluffyClimbers.Editor.Build
                 if (altTester) AltTesterBuildHook.Begin(ref options);
                 report = BuildPipeline.BuildPlayer(options);
             }
-            finally { AltTesterBuildHook.End(); }
+            finally { AltTesterBuildHook.End(); if (storeCap) PlayerSettings.SetScriptingDefineSymbols(UnityEditor.Build.NamedBuildTarget.Android, oldDefines); }
             Debug.Log("[BUILD] result " + report.summary.result + ", size " + (report.summary.totalSize / (1024 * 1024)) + " MB, errors " + report.summary.totalErrors);
             bool ok = report.summary.result == BuildResult.Succeeded;
-            if (ok && !x86) File.Copy(versionedPath, altTester ? "E:/Unity/builds/fluffyclimbers_alttester.apk" : OutputPath, true);
+            if (ok && !x86 && !storeCap) File.Copy(versionedPath, altTester ? "E:/Unity/builds/fluffyclimbers_alttester.apk" : OutputPath, true);
             AppendBuildLog(versionName, report, versionedPath);
             return ok;
         }

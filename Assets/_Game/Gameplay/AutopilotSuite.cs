@@ -50,6 +50,7 @@ namespace FluffyClimbers.Gameplay
         int savedDifficulty;
         int savedSleep;
         bool isolated;
+        StoreCaptureDriver cap;
 
         public bool IsFinished { get { return phase == Phase.Finished; } }
         public IReadOnlyList<AutoResult> Results { get { return results; } }
@@ -85,6 +86,7 @@ namespace FluffyClimbers.Gameplay
             GameSettings.Difficulty = opt.difficulty;
             GameSession.InitForTests(new MemorySaveStore());
             ProgressService.TestUnlockAll = true;
+            StoreCaptureSetup.Apply(opt);
             Time.timeScale = opt.speed;
             savedSleep = Screen.sleepTimeout;
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -137,6 +139,8 @@ namespace FluffyClimbers.Gameplay
                     rc = found;
                     ap = Autopilot.Attach(rc, opt.skill, opt.seedBase + job.LevelNo * 131 + job.Attempt * 7919, opt.depth);
                     if (ap == null) { Error("autopilot not allowed"); End(); return; }
+                    cap = null;
+                    if (opt.capture) { cap = rc.gameObject.AddComponent<StoreCaptureDriver>(); cap.Init(rc, ap, opt); }
                     phase = Phase.Running;
                     runStartedReal = Time.unscaledTime;
                     bestRow = 0;
@@ -153,6 +157,7 @@ namespace FluffyClimbers.Gameplay
             RunSession ses = rc.Session;
             if (rc.Paused) rc.Resume();   // an interruption (notification shade) must not stall the suite
             if (ses.Over) { Finish(ses.GoalReached ? AutoResult.Cleared : AutoResult.Fell); return; }
+            if (cap != null && cap.Finished) { Finish(AutoResult.Timeout); return; }
             int row = ses.State.Row;
             int tick = ses.State.Tick;
             if (row > bestRow) { bestRow = row; bestRowTick = tick; }
@@ -201,6 +206,7 @@ namespace FluffyClimbers.Gameplay
                 GameSettings.Difficulty = savedDifficulty;
             }
             Autopilot.SuiteActive = false;
+            StoreCaptureSetup.Restore();
             GameSession.Reset();
             GameSession.EnsureInit();   // reloads the real save file, which the suite never wrote
             phase = Phase.Finished;

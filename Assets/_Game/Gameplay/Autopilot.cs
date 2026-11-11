@@ -39,8 +39,13 @@ namespace FluffyClimbers.Gameplay
         public int ReadTick()
         {
             if (controller == null || controller.Session == null || Brain == null) return 0;
-            return Brain.Next(controller.Session);
+            int bits = Brain.Next(controller.Session) | ExtraBits;
+            ExtraBits = 0;
+            return bits;
         }
+
+        /// <summary>Extra input bits (power activations from the store capture driver) added to the next tick, then cleared.</summary>
+        public int ExtraBits;
 
         void OnDestroy()
         {
