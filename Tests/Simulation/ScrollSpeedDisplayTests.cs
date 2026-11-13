@@ -16,13 +16,13 @@ namespace FluffyClimbers.Simulation.Tests
         public ScrollSpeedDisplayTests(ITestOutputHelper output) { this.output = output; }
 
         private static readonly int[] StepPercentByDifficulty = SimConfig.DifficultyStepPercent;   // GameSettings.DifficultyStepPercent
-        private const int GameSessionCapPercent = 150;                                      // GameSession.ApplyDifficulty
+        private static int GameSessionCapPercent(int mode) { return SimConfig.TopSpeedUpPercent(mode); }   // GameSession.ApplyDifficulty
 
         private static SimConfig CfgFor(int difficultySetting)
         {
             SimConfig cfg = new SimConfig();
             cfg.ScrollStepPercent = StepPercentByDifficulty[difficultySetting];
-            cfg.ScrollStepCapPercent = GameSessionCapPercent;
+            cfg.ScrollStepCapPercent = GameSessionCapPercent(difficultySetting);
             return cfg;
         }
 

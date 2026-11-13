@@ -45,7 +45,9 @@
     "com.unity.modules.xr": "1.0.0",
     "com.alttester.sdk": "2.3.2",
     "com.google.ads.mobile": "11.6.0",
-    "com.google.play.games": "2.3.0"
+    "com.google.play.games": "2.3.0",
+    "com.google.firebase.app": "file:../../../tools/firebase_unity/com.google.firebase.app-14.1.0.tgz",
+    "com.google.firebase.auth": "file:../../../tools/firebase_unity/com.google.firebase.auth-14.1.0.tgz"
   },
   "scopedRegistries": [
     {

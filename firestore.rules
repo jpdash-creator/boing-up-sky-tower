@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// Fluffy Climbers weekly crown leaderboard (docs: Planning/LEADERBOARD-DESIGN.md, section 4).
+// Principle: clients may READ boards and their OWN documents; clients may WRITE nothing except their own display profile.
+// Every score, total, rank, claim and config write is done by the leaderboard service (Cloud Run service account), which bypasses these rules.
+// Limits and prize rules are NOT in this file (they live in config/leaderboard and in the service), so a change of a limit never needs a rules deploy.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // a display string: present, a string, 1..32 characters (names) or at most 512 (avatar URL), no control characters needed to check here (the app escapes on display)
+    function okName(v) {
+      return v is string && v.size() >= 1 && v.size() <= 32;
+    }
+
+    function okAvatar(v) {
+      return v is string && v.size() <= 512 && (v == '' || v.matches('^https://.*'));
+    }
+
+    // ---- players/{uid}: the profile shown to others (Play Games display name and avatar URL) ----
+    match /players/{uid} {
+      allow get: if isSelf(uid);
+      allow list: if false;
+
+      // create: only the two display fields and the timestamp, nothing the service owns (pid, heroVariants, lastSubmitAt, dayKey, ticksToday, nameLocked)
+      allow create: if isSelf(uid)
+        && request.resource.data.keys().hasOnly(['displayName', 'avatarUrl', 'updatedAt'])
+        && okName(request.resource.data.displayName)
+        && okAvatar(request.resource.data.avatarUrl)
+        && request.resource.data.updatedAt == request.time;
+
+      // update: only the same fields, and not while a moderator locked the name
+      allow update: if isSelf(uid)
+        && resource.data.get('nameLocked', false) != true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'avatarUrl', 'updatedAt'])
+        && okName(request.resource.data.displayName)
+        && okAvatar(request.resource.data.avatarUrl)
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;   // deletion on request is done by the owner (admin), see POLICY.md
+    }
+
+    // ---- weeks/{weekKey}: all of it is written by the service only ----
+    match /weeks/{weekKey} {
+      // the materialised top 100 of a board: public to every signed-in player (one document read per board view)
+      match /boards/{board} {
+        allow get: if signedIn();
+        allow list: if false;
+        allow write: if false;
+      }
+
+      // a player's own weekly totals and slots (to show "my crowns" without a server call); nobody else's
+      match /totals/{uid} {
+        allow get: if isSelf(uid);
+        allow list: if false;
+        allow write: if false;
+      }
+
+      match /slots/{slotDoc} {
+        allow get: if signedIn() && resource.data.uid == request.auth.uid;
+        // a client may list ONLY its own slots (the query must carry the same uid filter)
+        allow list: if signedIn() && resource.data.uid == request.auth.uid;
+        allow write: if false;
+      }
+    }
+
+    // ---- prize claims: the owner of a claim may read it; creation and acknowledgement go through the service ----
+    match /prizeClaims/{claimId} {
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow list: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ---- config/leaderboard: limits, readable by signed-in players (the app shows the entry limits), written by the owner in the console / service only ----
+    match /config/{doc} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow write: if false;
+    }
+
+    // everything else is closed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

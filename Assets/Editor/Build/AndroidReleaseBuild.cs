@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Build;
@@ -28,6 +29,9 @@ namespace FluffyClimbers.Editor.Build
         const string ExpectedAlias = "fluffyclimbers-upload";
         const string BuildsFolder = "E:/Unity/builds";
         const string LatestAab = "E:/Unity/builds/fluffyclimbers.aab";
+        const string ProguardUserFile = "Assets/Plugins/Android/proguard-user.txt";   // Unity's default location for the custom ProGuard/R8 file
+        const string MappingEntry = "BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map";
+        const string SymbolsEntryPrefix = "BUNDLE-METADATA/com.android.tools.build.debugsymbols/";
         const string Tag = "[ReleaseBuild] ";
 
         // Same three scenes as the APK build (AndroidBuild). Nothing else ever goes into the release.
@@ -45,7 +49,8 @@ namespace FluffyClimbers.Editor.Build
         /// <summary>The settings this build changes, so they can be put back.</summary>
         sealed class SavedSettings
         {
-            public bool BuildAppBundle, Development, AllowDebugging, ConnectProfiler, UseCustomKeystore;
+            public bool BuildAppBundle, Development, AllowDebugging, ConnectProfiler, UseCustomKeystore, MinifyRelease, UseCustomProguard;
+            public AndroidCreateSymbols CreateSymbols;
             public string KeystoreName, KeyaliasName;
             public ScriptingImplementation Backend;
             public AndroidArchitecture Architectures;
@@ -60,6 +65,9 @@ namespace FluffyClimbers.Editor.Build
                     AllowDebugging = EditorUserBuildSettings.allowDebugging,
                     ConnectProfiler = EditorUserBuildSettings.connectProfiler,
                     UseCustomKeystore = PlayerSettings.Android.useCustomKeystore,
+                    MinifyRelease = PlayerSettings.Android.minifyRelease,
+                    UseCustomProguard = ReadUseCustomProguard(),
+                    CreateSymbols = EditorUserBuildSettings.androidCreateSymbols,
                     KeystoreName = PlayerSettings.Android.keystoreName,
                     KeyaliasName = PlayerSettings.Android.keyaliasName,
                     Backend = PlayerSettings.GetScriptingBackend(NamedBuildTarget.Android),
@@ -76,6 +84,9 @@ namespace FluffyClimbers.Editor.Build
                 PlayerSettings.Android.useCustomKeystore = UseCustomKeystore;
                 PlayerSettings.Android.keystoreName = KeystoreName;
                 PlayerSettings.Android.keyaliasName = KeyaliasName;
+                PlayerSettings.Android.minifyRelease = MinifyRelease;
+                WriteUseCustomProguard(UseCustomProguard);
+                EditorUserBuildSettings.androidCreateSymbols = CreateSymbols;
                 EditorUserBuildSettings.buildAppBundle = BuildAppBundle;
                 EditorUserBuildSettings.development = Development;
                 EditorUserBuildSettings.allowDebugging = AllowDebugging;
@@ -84,6 +95,33 @@ namespace FluffyClimbers.Editor.Build
                 PlayerSettings.Android.targetArchitectures = Architectures;
                 PlayerSettings.defaultInterfaceOrientation = Orientation;
             }
+        }
+
+        /// <summary>PlayerSettings has no public API for "Custom Proguard File" (serialized field useCustomProguardFile), so it goes through SerializedObject.</summary>
+        static SerializedProperty ProguardProperty(out SerializedObject so)
+        {
+            so = null;
+            UnityEngine.Object[] all = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
+            if (all == null || all.Length == 0) return null;
+            so = new SerializedObject(all[0]);
+            return so.FindProperty("useCustomProguardFile");
+        }
+
+        static bool ReadUseCustomProguard()
+        {
+            SerializedObject so;
+            SerializedProperty p = ProguardProperty(out so);
+            return p != null && p.boolValue;
+        }
+
+        static bool WriteUseCustomProguard(bool value)
+        {
+            SerializedObject so;
+            SerializedProperty p = ProguardProperty(out so);
+            if (p == null) return false;
+            p.boolValue = value;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return true;
         }
 
         static bool BuildRelease()
@@ -102,6 +140,9 @@ namespace FluffyClimbers.Editor.Build
                 if (adProblem != null) return Fail(adProblem);
                 string storeProblem = StoreConfigPreflight.Check();   // Play Games project id, Play licence key, Games SDK resolved (docs/33, docs/35)
                 if (storeProblem != null) return Fail(storeProblem);
+
+                string proguardProblem = CheckProguardFile();
+                if (proguardProblem != null) return Fail(proguardProblem);
 
                 string keystorePath, alias, storePass, keyPass;
                 if (!ReadSigning(out keystorePath, out alias, out storePass, out keyPass)) return false;
@@ -122,6 +163,10 @@ namespace FluffyClimbers.Editor.Build
                 PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
                 PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;   // as the APK build: arm64-v8a only (Google Play needs 64-bit; BT_X86 is ignored here)
                 PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+                // Owner decision 2026-11-12 (Play Console warnings): R8 minify + mapping file, native debug symbols. RELEASE path only; the APK build keeps both off.
+                PlayerSettings.Android.minifyRelease = true;
+                if (!WriteUseCustomProguard(true)) return Fail("could not switch on 'Custom Proguard File' (serialized field useCustomProguardFile not found in ProjectSettings.asset). Tick it by hand: Player Settings > Publishing Settings > Minify.");
+                EditorUserBuildSettings.androidCreateSymbols = AndroidCreateSymbols.Public;   // symbol table: small, accepted by Play Console. Use Debugging for full DWARF if Play asks for more.
                 PlayerSettings.Android.useCustomKeystore = true;
                 PlayerSettings.Android.keystoreName = keystorePath;
                 PlayerSettings.Android.keyaliasName = alias;
@@ -129,6 +174,8 @@ namespace FluffyClimbers.Editor.Build
                 PlayerSettings.Android.keyaliasPass = keyPass;
                 storePass = null; keyPass = null;
 
+                Debug.Log(Tag + "R8 minify release=" + PlayerSettings.Android.minifyRelease + ", custom proguard file=" + ReadUseCustomProguard() + " (" + ProguardUserFile
+                          + "), createSymbols=" + EditorUserBuildSettings.androidCreateSymbols + ", androidSymbolsSizeThreshold is a project setting (800).");
                 Debug.Log(Tag + "managed stripping level (unchanged project setting): " + PlayerSettings.GetManagedStrippingLevel(NamedBuildTarget.Android)
                           + ", engine code stripping: " + PlayerSettings.stripEngineCode);
 
@@ -139,6 +186,7 @@ namespace FluffyClimbers.Editor.Build
                     target = BuildTarget.Android,
                     options = BuildOptions.None   // NOT Development, no AllowDebugging, no profiler connection
                 };
+                DateTime buildStartUtc = DateTime.UtcNow.AddMinutes(-1);
                 BuildReport report = BuildPipeline.BuildPlayer(options);   // AltTesterBuildHook.Begin is never called, so its scene hook stays inactive
 
                 // ---- 4. result, log row, post-build assertion ----
@@ -155,6 +203,8 @@ namespace FluffyClimbers.Editor.Build
                 if (!EditorUserBuildSettings.buildAppBundle) return Fail("post-build assertion failed: buildAppBundle is false.");
                 if (!ok) return Fail("the Unity build failed (see the errors above). No file was copied.");
                 if (!File.Exists(versionedPath) || new FileInfo(versionedPath).Length == 0) return Fail("the build reported success but " + versionedPath + " is missing or empty.");
+                string artifactProblem = VerifyDeobfuscationAndSymbols(versionedPath, versionName, buildStartUtc);
+                if (artifactProblem != null) return Fail(artifactProblem + " Do NOT upload this file to Google Play.");
                 File.Copy(versionedPath, LatestAab, true);
                 Debug.Log(Tag + "OK: " + versionedPath + " (copy: " + LatestAab + "), " + (new FileInfo(versionedPath).Length / (1024 * 1024)) + " MB. Upload the versioned file to Google Play.");
                 return true;
@@ -168,6 +218,48 @@ namespace FluffyClimbers.Editor.Build
             {
                 if (saved != null) saved.Restore();
             }
+        }
+
+        /// <summary>The custom ProGuard file must exist and still carry the rule groups the shipped SDKs need (guards against someone emptying it).</summary>
+        static string CheckProguardFile()
+        {
+            if (!File.Exists(ProguardUserFile)) return "missing " + ProguardUserFile + " (the R8 keep rules). Restore it from git.";
+            string text = File.ReadAllText(ProguardUserFile);
+            foreach (string must in new[] { "com.google.android.gms.games", "com.android.billingclient", "com.google.unity.ads", "com.google.android.ump", "com.google.firebase" })
+                if (text.IndexOf(must, StringComparison.Ordinal) < 0) return ProguardUserFile + " has no keep rule for '" + must + "'. Restore it from git.";
+            return null;
+        }
+
+        /// <summary>
+        /// Post-build assertions for the two Play Console warnings. Opens the AAB (a zip): it must hold the R8 mapping (BUNDLE-METADATA/.../proguard.map, copied next to the AAB as
+        /// *_mapping.txt for upload) and native debug symbols, either embedded (BUNDLE-METADATA/.../debugsymbols/) or as a fresh *.symbols.zip Unity wrote beside the AAB. Returns an error or null.
+        /// </summary>
+        static string VerifyDeobfuscationAndSymbols(string aabPath, string versionName, DateTime notOlderThanUtc)
+        {
+            bool mapping = false, embeddedSymbols = false;
+            string mappingCopy = null;
+            using (ZipArchive zip = ZipFile.OpenRead(aabPath))
+            {
+                foreach (ZipArchiveEntry e in zip.Entries)
+                {
+                    if (e.FullName == MappingEntry && e.Length > 0)
+                    {
+                        mapping = true;
+                        mappingCopy = BuildsFolder + "/fluffyclimbers_v" + versionName + "_mapping.txt";
+                        e.ExtractToFile(mappingCopy, true);
+                    }
+                    else if (e.FullName.StartsWith(SymbolsEntryPrefix, StringComparison.Ordinal) && e.Length > 0) embeddedSymbols = true;
+                }
+            }
+            string symbolsZip = null;
+            foreach (string f in Directory.GetFiles(Path.GetDirectoryName(aabPath), "*.symbols.zip"))
+                if (File.GetLastWriteTimeUtc(f) >= notOlderThanUtc && (symbolsZip == null || File.GetLastWriteTimeUtc(f) > File.GetLastWriteTimeUtc(symbolsZip))) symbolsZip = f;
+            Debug.Log(Tag + "AAB check: mapping in bundle=" + mapping + (mappingCopy != null ? " (copied to " + mappingCopy + ")" : "") + ", debug symbols embedded=" + embeddedSymbols
+                      + ", symbols zip beside AAB=" + (symbolsZip ?? "none"));
+            if (!mapping) return "post-build assertion failed: the AAB has no " + MappingEntry + " (R8 did not run: check Player Settings > Minify > Release and the custom ProGuard file).";
+            if (!embeddedSymbols && symbolsZip == null) return "post-build assertion failed: no native debug symbols (neither " + SymbolsEntryPrefix + " in the AAB nor a fresh *.symbols.zip next to it). Check EditorUserBuildSettings.androidCreateSymbols.";
+            Debug.Log(Tag + "Upload to Play Console: the AAB, then (if no symbols were embedded) " + (symbolsZip ?? "-") + " as native debug symbols and " + mappingCopy + " as the deobfuscation file (see Planning/RELEASE-AAB-CHECKLIST.md).");
+            return null;
         }
 
         static bool Fail(string message)

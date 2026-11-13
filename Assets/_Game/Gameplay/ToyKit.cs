@@ -18,7 +18,7 @@ namespace FluffyClimbers.Gameplay
         // The global bar has no Chests tab any more: chests live inside the VIP page of the shop (owner issue 35, item 2).
         public static readonly string[] TabLabels = { "Shop", "PLAY", "Heroes", "Daily", "VIP" };
         public static readonly string[] TabA11y = { "Shop", "Play", "Characters", "Daily rewards", "VIP" };
-        public const int TabShop = 0, TabPlay = 1, TabHeroes = 2, TabDaily = 3, TabSubscription = 4;
+        public const int TabShop = 0, TabPlay = 1, TabHeroes = 2, TabDaily = 3, TabSubscription = 4, TabLeaderboard = 5;
 
         /// <summary>Owner issue 29: the Rewards (gift) button sits above the Heroes button, bottom right, on home AND the world map. One shared gap and size so both screens match.</summary>
         public const float RewardsButtonSize = 140f, RewardsButtonGap = 16f;
@@ -44,7 +44,7 @@ namespace FluffyClimbers.Gameplay
         {
             if (s == null) return false;
             string n = s.name;
-            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo" || n == "shop_scene" || n.StartsWith("plate_") || n.StartsWith("glyph_") || n.StartsWith("pw_");
+            return n.StartsWith("btn_") || n.StartsWith("panel_") || n == "pill_dark" || n == "tabbar" || n == "badge_red" || n == "ribbon_gold" || n == "logo" || n == "shop_scene" || n.StartsWith("plate_") || n.StartsWith("lb_") || n.StartsWith("glyph_") || n.StartsWith("pw_");
         }
 
         /// <summary>Button art by role: 0 secondary (yellow), 1 main action (green), 2 back (blue), 3 danger (red).</summary>

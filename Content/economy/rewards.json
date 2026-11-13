@@ -6,89 +6,172 @@
       "title": "Log in today",
       "stat": "login",
       "target": 1,
-      "points": 10
+      "points": 5
     },
     {
-      "id": "d_play5",
-      "title": "Play for 5 minutes",
+      "id": "d_play10",
+      "title": "Play for 10 minutes",
       "stat": "playSec",
-      "target": 300,
+      "target": 600,
+      "points": 7
+    },
+    {
+      "id": "d_play25",
+      "title": "Play for 25 minutes",
+      "stat": "playSec",
+      "target": 1500,
+      "points": 11
+    },
+    {
+      "id": "d_play60",
+      "title": "Play for 60 minutes",
+      "stat": "playSec",
+      "target": 3600,
       "points": 15
-    },
-    {
-      "id": "d_play15",
-      "title": "Play for 15 minutes",
-      "stat": "playSec",
-      "target": 900,
-      "points": 20
     },
     {
       "id": "d_level3",
       "title": "Complete 3 levels",
       "stat": "levels",
       "target": 3,
-      "points": 20
+      "points": 6
     },
     {
-      "id": "d_combo5",
-      "title": "Make 5 combos",
-      "stat": "combos",
-      "target": 5,
+      "id": "d_level6",
+      "title": "Complete 6 levels",
+      "stat": "levels",
+      "target": 6,
+      "points": 10
+    },
+    {
+      "id": "d_level10",
+      "title": "Complete 10 levels",
+      "stat": "levels",
+      "target": 10,
       "points": 15
+    },
+    {
+      "id": "d_combo10",
+      "title": "Make 10 combos",
+      "stat": "combos",
+      "target": 10,
+      "points": 8
+    },
+    {
+      "id": "d_combo30",
+      "title": "Make 30 combos",
+      "stat": "combos",
+      "target": 30,
+      "points": 14
+    },
+    {
+      "id": "d_stars9",
+      "title": "Earn 9 stars",
+      "stat": "starsEarned",
+      "target": 9,
+      "points": 12
     },
     {
       "id": "d_hard",
       "title": "Clear a hard level",
       "stat": "hardClear",
       "target": 1,
-      "points": 20
+      "points": 12
     },
     {
       "id": "d_pace2",
       "title": "2 clears at 0.6 plat/s",
       "stat": "paceClears",
       "target": 2,
-      "points": 15
+      "points": 12
+    },
+    {
+      "id": "d_endless50",
+      "title": "Reach floor 50 in Endless",
+      "stat": "endlessFloor",
+      "target": 50,
+      "points": 6
+    },
+    {
+      "id": "d_endless100",
+      "title": "Reach floor 100 in Endless",
+      "stat": "endlessFloor",
+      "target": 100,
+      "points": 10
     },
     {
       "id": "d_floor100",
       "title": "Endless floor 100 in 3:00",
       "stat": "floor100in3",
       "target": 1,
-      "points": 15
+      "points": 14
+    },
+    {
+      "id": "d_endlessruns",
+      "title": "Finish 3 Endless runs",
+      "stat": "endlessRuns",
+      "target": 3,
+      "points": 8
+    },
+    {
+      "id": "d_powerups",
+      "title": "Use 3 power-ups",
+      "stat": "powerups",
+      "target": 3,
+      "points": 8
+    },
+    {
+      "id": "d_medal",
+      "title": "Earn a medal",
+      "stat": "medals",
+      "target": 1,
+      "points": 8
+    },
+    {
+      "id": "d_coins",
+      "title": "Earn 2,500 coins",
+      "stat": "coinsEarned",
+      "target": 2500,
+      "points": 10
+    },
+    {
+      "id": "d_ta",
+      "title": "Time Attack: 60 floors",
+      "stat": "taRun",
+      "target": 60,
+      "points": 9
     }
   ],
   "dailyMilestones": [
     {
-      "id": "dp_20",
-      "title": "20 points",
-      "target": 20,
-      "coins": 300
-    },
-    {
       "id": "dp_40",
       "title": "40 points",
       "target": 40,
-      "gems": 3
-    },
-    {
-      "id": "dp_60",
-      "title": "60 points",
-      "target": 60,
       "coins": 500
     },
     {
       "id": "dp_80",
       "title": "80 points",
       "target": 80,
-      "gems": 3
+      "gems": 5
     },
     {
-      "id": "dp_100",
-      "title": "100 points",
-      "target": 100,
-      "gems": 4,
-      "coins": 700
+      "id": "dp_120",
+      "title": "120 points",
+      "target": 120,
+      "coins": 1000
+    },
+    {
+      "id": "dp_160",
+      "title": "160 points",
+      "target": 160,
+      "gems": 10
+    },
+    {
+      "id": "dp_200",
+      "title": "200 points",
+      "target": 200,
+      "heroRegion": -1
     }
   ],
   "weekly": [
@@ -97,46 +180,112 @@
       "title": "Log in on 5 days",
       "stat": "loginDays",
       "target": 5,
-      "gems": 8,
-      "coins": 400
+      "gems": 4,
+      "coins": 300
+    },
+    {
+      "id": "w_login7",
+      "title": "Log in every day",
+      "stat": "loginDays",
+      "target": 7,
+      "gems": 4,
+      "coins": 300
     },
     {
       "id": "w_play100",
       "title": "Play for 100 minutes",
       "stat": "playMin",
       "target": 100,
-      "gems": 8,
+      "gems": 5,
+      "coins": 400
+    },
+    {
+      "id": "w_play250",
+      "title": "Play for 250 minutes",
+      "stat": "playMin",
+      "target": 250,
+      "gems": 6,
       "coins": 500
+    },
+    {
+      "id": "w_jumps8000",
+      "title": "Make 8,000 jumps",
+      "stat": "jumps",
+      "target": 8000,
+      "gems": 3,
+      "coins": 300
     },
     {
       "id": "w_powerups10",
       "title": "Use 10 power-ups",
       "stat": "powerups",
       "target": 10,
+      "coins": 300,
       "powerups": 2
+    },
+    {
+      "id": "w_powerups20",
+      "title": "Use 20 power-ups",
+      "stat": "powerups",
+      "target": 20,
+      "gems": 5,
+      "coins": 300,
+      "powerups": 1
     },
     {
       "id": "w_stars20",
       "title": "Earn 20 stars",
       "stat": "starsEarned",
       "target": 20,
+      "gems": 4,
+      "coins": 500
+    },
+    {
+      "id": "w_stars40",
+      "title": "Earn 40 stars",
+      "stat": "starsEarned",
+      "target": 40,
       "gems": 6,
-      "coins": 800
+      "coins": 500
     },
     {
       "id": "w_levels20",
       "title": "Complete 20 levels",
       "stat": "levels",
       "target": 20,
-      "gems": 8,
-      "coins": 600
+      "gems": 5,
+      "coins": 400
+    },
+    {
+      "id": "w_levels40",
+      "title": "Complete 40 levels",
+      "stat": "levels",
+      "target": 40,
+      "gems": 5,
+      "coins": 500
     },
     {
       "id": "w_nowall2",
       "title": "Clear the no-wall level 2 times",
       "stat": "noWall",
       "target": 2,
-      "gems": 8,
+      "gems": 5,
+      "coins": 300
+    },
+    {
+      "id": "w_combos150",
+      "title": "Make 150 combos",
+      "stat": "combos",
+      "target": 150,
+      "gems": 5,
+      "coins": 500
+    },
+    {
+      "id": "w_combos300",
+      "title": "Make 300 combos",
+      "stat": "combos",
+      "target": 300,
+      "gems": 7,
       "coins": 500
     },
     {
@@ -144,48 +293,91 @@
       "title": "Reach floor 100 in Endless",
       "stat": "endlessFloor",
       "target": 100,
-      "gems": 8,
+      "gems": 4,
+      "coins": 300
+    },
+    {
+      "id": "w_endless150",
+      "title": "Reach floor 150 in Endless",
+      "stat": "endlessFloor",
+      "target": 150,
+      "gems": 5,
+      "coins": 400
+    },
+    {
+      "id": "w_endless200",
+      "title": "Reach floor 200 in Endless",
+      "stat": "endlessFloor",
+      "target": 200,
+      "gems": 6,
       "coins": 500
     },
     {
-      "id": "w_combos150",
-      "title": "Make 150 combos",
-      "stat": "combos",
-      "target": 150,
-      "gems": 10,
-      "coins": 800,
-      "powerups": 1
+      "id": "w_endlessruns20",
+      "title": "Finish 20 Endless runs",
+      "stat": "endlessRuns",
+      "target": 20,
+      "gems": 6,
+      "coins": 500
     },
     {
       "id": "w_pace3",
       "title": "Best pace on 3 levels",
       "stat": "bestPaceLevels",
       "target": 3,
-      "gems": 8,
-      "coins": 600
+      "gems": 5,
+      "coins": 400
+    },
+    {
+      "id": "w_medals8",
+      "title": "Earn 8 medals",
+      "stat": "medals",
+      "target": 8,
+      "gems": 4,
+      "coins": 400,
+      "powerups": 1
     },
     {
       "id": "w_gold5",
       "title": "Earn 5 gold medals",
       "stat": "goldMedals",
       "target": 5,
-      "coins": 800,
+      "gems": 4,
+      "coins": 500,
       "powerups": 1
+    },
+    {
+      "id": "w_gold10",
+      "title": "Earn 10 gold medals",
+      "stat": "goldMedals",
+      "target": 10,
+      "gems": 6,
+      "coins": 600
     },
     {
       "id": "w_ta100",
       "title": "Time Attack: 100 floors",
       "stat": "taFloors",
       "target": 100,
-      "coins": 500
+      "gems": 4,
+      "coins": 300
     },
     {
       "id": "w_hard5",
       "title": "Clear 5 hard levels",
       "stat": "hardClear",
       "target": 5,
-      "gems": 16,
-      "coins": 1000,
+      "gems": 6,
+      "coins": 500,
+      "heroRegion": -1
+    },
+    {
+      "id": "w_hard10",
+      "title": "Clear 10 hard levels",
+      "stat": "hardClear",
+      "target": 10,
+      "gems": 6,
+      "coins": 500,
       "heroRegion": -1
     }
   ]

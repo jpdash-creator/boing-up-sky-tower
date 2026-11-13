@@ -72,6 +72,7 @@ namespace FluffyClimbers.Economy
             if (o.Result != MergeResult.Ok) return o;
             Data.Copies[from.Id] = o.FromCopiesLeft;
             Data.Copies[toId] = o.ToCopies;
+            RollIfNew(toId);   // the merge result is a new hero: its stats are dealt now (a hero that already has a roll keeps it)
             Commit();
             return o;
         }

@@ -6,7 +6,7 @@ namespace FluffyClimbers.Gameplay
     /// <summary>
     /// The Gameplay setting on the level screen (Bug List 6 item 6): a centred row of five buttons (Relaxed, Easy, Normal, Hard, Insane), each an icon plus its
     /// label, directly below the region name. It replaces the Difficulty row of Settings. The choice is stored in the same PlayerPrefs key as before and decides
-    /// the size of the scroll speed-up steps (20, 22, 25, 28, 30 percent every 5 s) and the gem chance. The selected button is NOT shown by colour alone: it is
+    /// the size of the scroll speed-up steps (10, 20, 25, 40, 50 percent every 5 s) and the gem chance. The selected button is NOT shown by colour alone: it is
     /// green, has a thick ink outline (no tick mark, Bug List 8 item 2a), and its accessibility label says "selected".
     /// </summary>
     public sealed partial class MetaController

@@ -1,0 +1,120 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "totals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "overall",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "overallAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "totals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "levels",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "levelsAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "totals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "endless",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "endlessAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "totals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "overall",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "overallAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "totals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "levels",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "levelsAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "totals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "endless",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endlessAt",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "slots",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "totals",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "boards",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "tickets",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "prizeClaims",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
+}

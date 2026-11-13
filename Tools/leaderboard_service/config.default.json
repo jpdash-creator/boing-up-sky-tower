@@ -1,0 +1,22 @@
+{
+  "_comment": "Defaults of the leaderboard limits. The live values are the Firestore document config/leaderboard (written by the owner, never by clients); a missing field falls back to this file, then to the code default. Entry limits are for PRIZES only.",
+  "simVersions": [1],
+  "maxRegion": 5,
+  "overallEntryLimit": 200000,
+  "levelsEntryLimit": 150000,
+  "endlessEntryLimit": 50000,
+  "topThreeFactorPercent": 150,
+  "paidRanks": 10,
+  "boardSize": 100,
+  "maxTicks": 216000,
+  "maxInputBytes": 262144,
+  "maxRevives": 40,
+  "maxBoughtUnitsPerTypePerRun": 8,
+  "maxCrownPerRun": 20000000,
+  "minSubmitIntervalMs": 2000,
+  "maxTicksPerDay": 4000000,
+  "retentionDays": 90,
+  "claimWindowDays": 28,
+  "boardRebuildSeconds": 20,
+  "ticketMinutes": 120
+}

@@ -20,7 +20,14 @@ namespace FluffyClimbers.Economy
         /// <summary>Levels that have any data.</summary>
         public int LevelCount { get { return map.Count; } }
 
+        /// <summary>The medal target of a level and mode: the calibrated bot Pace times <see cref="TimeRecords.ModeTargetScalePercent"/> (owner 2026-11-12).</summary>
         public int TargetPaceMilli(string levelId, int mode)
+        {
+            return TimeRecords.ScaleTarget(RawPaceMilli(levelId, mode), mode);
+        }
+
+        /// <summary>The calibrated bot Pace as stored in the file (no per-mode scale), 0 = no data.</summary>
+        public int RawPaceMilli(string levelId, int mode)
         {
             int[] row;
             if (levelId == null || !TimeRecords.ValidMode(mode) || !map.TryGetValue(levelId, out row) || row == null || mode >= row.Length) return 0;

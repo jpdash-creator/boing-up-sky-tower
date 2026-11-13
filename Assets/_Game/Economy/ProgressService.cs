@@ -56,6 +56,7 @@ namespace FluffyClimbers.Economy
         {
             if (Data.EndlessBest == null) Data.EndlessBest = new System.Collections.Generic.Dictionary<string, int>();
             if (Data.EndlessDay == null) Data.EndlessDay = "";
+            if (Data.EndlessCrowns == null) Data.EndlessCrowns = new System.Collections.Generic.Dictionary<string, CrownRun[]>();
         }
 
         public int Coins { get { return Data.Coins; } }
@@ -394,6 +395,7 @@ namespace FluffyClimbers.Economy
             p.StarMask |= run.StarMask & 7;
             p.Stars = new RunOutcome { StarMask = p.StarMask }.Stars;
             if (run.Score > p.BestScore) p.BestScore = run.Score;
+            RecordCrown(p, run.Score, run.Mode, run.Floors, run.BestCombo);
             Data.Levels[levelId] = p;
 
             Data.Coins = SaturatingAdd(Data.Coins, reward.TotalCoins);
@@ -411,6 +413,98 @@ namespace FluffyClimbers.Economy
             TrackCompletedRun(level, run, reward.FirstClear, reward.TotalCoins);   // reward statistics (ProgressService.Rewards.cs), saved by the Commit below
             Commit();
             return reward;
+        }
+
+        // ---- crown (owner 2026-11-12) ----
+
+        static void RecordCrown(LevelProgress p, int baseScore, int mode, int floors = 0, int bestCombo = 0)
+        {
+            mode = TimeRecords.ClampMode(mode);
+            int crown = CrownScore.FromScore(baseScore, mode);
+            if (p.Crowns == null || p.Crowns.Length < TimeRecords.ModeCount)
+            {
+                int[] c = new int[TimeRecords.ModeCount];
+                if (p.Crowns != null) Array.Copy(p.Crowns, c, p.Crowns.Length);
+                p.Crowns = c;
+            }
+            if (crown > p.Crowns[mode])
+            {
+                p.Crowns[mode] = crown;
+                // the run behind the crown, for the calculation pop-up
+                if (p.CrownRuns == null || p.CrownRuns.Length < TimeRecords.ModeCount)
+                {
+                    var r = new CrownRun[TimeRecords.ModeCount];
+                    if (p.CrownRuns != null) Array.Copy(p.CrownRuns, r, p.CrownRuns.Length);
+                    p.CrownRuns = r;
+                }
+                p.CrownRuns[mode] = new CrownRun { Floors = floors < 0 ? 0 : floors, BestCombo = bestCombo < 0 ? 0 : bestCombo, BaseScore = baseScore };
+            }
+        }
+
+        /// <summary>
+        /// The run behind the best crown of a level in a Gameplay mode, for the calculation pop-up. Floors and BestCombo are 0 when they were not stored (an old save);
+        /// the base score is always known when a crown exists (stored, the legacy best score, or recovered exactly from the crown). Null when the level has no crown in the mode.
+        /// </summary>
+        public CrownRun BestCrownRun(string levelId, int mode)
+        {
+            int crown = BestCrown(levelId, mode);
+            if (crown <= 0) return null;
+            mode = TimeRecords.ClampMode(mode);
+            LevelProgress p = GetProgress(levelId);
+            CrownRun r = p != null && p.CrownRuns != null && mode < p.CrownRuns.Length ? p.CrownRuns[mode] : null;
+            if (r != null && r.BaseScore > 0 && CrownScore.FromScore(r.BaseScore, mode) == crown) return r;
+            if (mode == 0 && p != null && p.BestScore > 0 && CrownScore.FromScore(p.BestScore, 0) == crown) return new CrownRun { BaseScore = p.BestScore };   // legacy score: floors and combo were not stored
+            return new CrownRun { BaseScore = CrownScore.BaseFromCrown(crown, mode) };
+        }
+
+        /// <summary>Best crown of the region's endless tower in a Gameplay mode (0 = none yet). Endless runs only; Time Attack has no crown.</summary>
+        public int EndlessBestCrown(string regionId, int mode)
+        {
+            CrownRun r = EndlessCrownRun(regionId, mode);
+            return r == null ? 0 : CrownScore.FromScore(r.BaseScore, mode);
+        }
+
+        /// <summary>The run behind the best endless crown of a region and mode, or null. Do not modify.</summary>
+        public CrownRun EndlessCrownRun(string regionId, int mode)
+        {
+            CrownRun[] arr;
+            if (regionId == null || Data.EndlessCrowns == null || !TimeRecords.ValidMode(mode) || !Data.EndlessCrowns.TryGetValue(regionId, out arr) || arr == null || mode >= arr.Length) return null;
+            CrownRun r = arr[mode];
+            return r != null && r.BaseScore > 0 ? r : null;
+        }
+
+        /// <summary>Stores the run as the best endless crown of its region and mode when it beats the stored one. Returns true when the save changed (the caller commits).</summary>
+        bool RecordEndlessCrown(RunRecord run)
+        {
+            if (run == null || run.Kind != RunKind.Endless || run.RegionId == null || run.Score <= 0) return false;
+            EnsureEndlessFields();
+            int mode = TimeRecords.ClampMode(run.Mode);
+            CrownRun[] arr;
+            if (!Data.EndlessCrowns.TryGetValue(run.RegionId, out arr) || arr == null || arr.Length != TimeRecords.ModeCount)
+            {
+                var fresh = new CrownRun[TimeRecords.ModeCount];
+                if (arr != null) Array.Copy(arr, fresh, Math.Min(arr.Length, fresh.Length));
+                arr = fresh;
+                Data.EndlessCrowns[run.RegionId] = arr;
+            }
+            int before = arr[mode] != null && arr[mode].BaseScore > 0 ? CrownScore.FromScore(arr[mode].BaseScore, mode) : 0;
+            if (CrownScore.FromScore(run.Score, mode) <= before) return false;
+            arr[mode] = new CrownRun { Floors = run.Floors < 0 ? 0 : run.Floors, BestCombo = run.BestCombo < 0 ? 0 : run.BestCombo, BaseScore = run.Score };
+            return true;
+        }
+
+        /// <summary>
+        /// Best crown of a level in a Gameplay mode (0 = none). Old saves keep only a base BestScore without the setting it was played in: it counts as a
+        /// Relaxed crown (the lowest bonus, so an old score is never shown higher than it was worth) until a real run in that mode replaces it.
+        /// </summary>
+        public int BestCrown(string levelId, int mode)
+        {
+            LevelProgress p = GetProgress(levelId);
+            if (p == null) return 0;
+            mode = TimeRecords.ClampMode(mode);
+            int stored = p.Crowns != null && mode < p.Crowns.Length ? p.Crowns[mode] : 0;
+            int legacy = mode == 0 ? CrownScore.FromScore(p.BestScore, 0) : 0;
+            return stored > legacy ? stored : legacy;
         }
 
         // ---- endless ----

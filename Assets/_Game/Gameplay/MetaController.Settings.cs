@@ -64,7 +64,8 @@ namespace FluffyClimbers.Gameplay
             float rowH = Mathf.Max(126f, UiKit.MinTouchRef);   // every switch and button is at least 48 dp on this screen density
             float gap = Mathf.Ceil(UiKit.MinSpacingPx);
             bool privacyChoices = Services.PrivacyOptionsRequired;   // EEA/UK/CH players: the consent form can be reopened (owner 2026-11-10, UMP)
-            float cap = SettingsCap() + (privacyChoices ? rowH + gap : 0f);   // the extra row only exists where it is legally required
+            bool nameRow = ShowDisplayNameRow(st);   // owner 2026-11-13: own leaderboard name, only with a linked Google account and the leaderboard on
+            float cap = SettingsCap() + (privacyChoices ? rowH + gap : 0f) + (nameRow ? rowH + gap : 0f);   // the extra row only exists where it is legally required
 
             RectTransform panel = UiKit.BuildPopupFrame(screen, "Settings", art, new Vector2(SettingsW, cap), ShowMenu);
             RectTransform c = PopupBodyBegin(panel, "SettingsViewport", SettingsTop, SettingsPad, false);   // no ScrollRect: everything fits (Bug List 6 item 7)
@@ -115,6 +116,12 @@ namespace FluffyClimbers.Gameplay
                 });
                 UiKit.Place((RectTransform)g.transform, new Vector2(0f, 1f), new Vector2(0f, -y), new Vector2(contentW, googleH));
                 y += googleH + gap;
+            }
+
+            if (nameRow)
+            {
+                SettingsDisplayNameRow(c, y, contentW, rowH);
+                y += rowH + gap;
             }
 
             // ---- big button 2: Save Progress (Google Saved Games when signed in, this phone when guest) ----

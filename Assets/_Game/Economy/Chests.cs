@@ -95,6 +95,7 @@ namespace FluffyClimbers.Economy
             Data.HeroesRevealed.RemoveAll(id => CharacterDefs.Get(id) == null);
             if (Data.ChestOpens < 0) Data.ChestOpens = 0;
             EnsureCopyFields(loadedVersion);   // ProgressService.Merge.cs
+            EnsureRollFields();   // ProgressService.HeroRolls.cs
             if (Data.Version < SaveData.CurrentVersion) Data.Version = SaveData.CurrentVersion;
         }
 
@@ -151,6 +152,7 @@ namespace FluffyClimbers.Economy
         {
             if (CharacterDefs.Get(id) == null || OwnsCharacter(id)) return false;
             Data.Characters.Add(id);
+            RollIfNew(id);   // docs/44 section 11
             Commit();
             return true;
         }

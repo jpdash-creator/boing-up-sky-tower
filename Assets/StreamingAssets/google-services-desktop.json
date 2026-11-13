@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "763742589585",
+    "project_id": "fluffy-climbers-tower-jump",
+    "storage_bucket": "fluffy-climbers-tower-jump.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:763742589585:android:c0b0d0a719967acdb6e530",
+        "android_client_info": {
+          "package_name": "com.jdlabs.fluffyclimbers"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "763742589585-8r5g7f9e8mqkhi2ao65n0cjjf9rst3hk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsI1bt-XaB9IL1i7vDX5chE9gUnVS8GA8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "763742589585-8r5g7f9e8mqkhi2ao65n0cjjf9rst3hk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

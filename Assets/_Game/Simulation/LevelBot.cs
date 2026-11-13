@@ -98,6 +98,18 @@ namespace FluffyClimbers.Simulation
         /// <summary>Search cut: states with more gong hits than this are dropped (default unlimited). 0 proves a level can be won without taking damage.</summary>
         public int MaxHits = int.MaxValue;
 
+        /// <summary>
+        /// Power-up use (solvability ladder, owner 2026-11-12). The bot may activate the types of <see cref="PowerSet"/> at the start of a jump, at most
+        /// <see cref="PowerBudget"/> activations per run in total (SimState.PwUsed; this models the owned stock of a player). Power-ups are only tried AFTER every
+        /// plain jump of a landing failed, so a level the plain bot can solve is solved exactly as before and the branch only rescues stuck positions.
+        /// The bot never presses jump in the air and never hugs a wall, so Double Jump, Wall Stick and Magnet are not offered. Default: off (budget 0).
+        /// </summary>
+        public int PowerBudget;
+        public PowerUp[] PowerSet;
+        private int pendingPower;
+        private static readonly int[] PowerWaits = { 0, 20 };
+        private static readonly int[] PowerRuns = { 0, 14 };
+
         /// <summary>Legacy mode: reach <paramref name="targetRow"/> on a level without goals.</summary>
         public LevelBot(Sim sim, int targetRow, int maxNodes)
         {
@@ -361,6 +373,38 @@ namespace FluffyClimbers.Simulation
                     }
                 }
             }
+            return SearchWithPowerUps(s, sameRow, targets, tc, waits);
+        }
+
+        /// <summary>The power-up branch of <see cref="Search"/>: every activation x every target x the short wait / run variants (only when the budget allows).</summary>
+        private bool SearchWithPowerUps(SimState s, int sameRow, int[] targets, int tc, int[] waits)
+        {
+            if (PowerBudget <= 0 || PowerSet == null || s.PwUsed >= PowerBudget || !UseHoming) return false;
+            for (int pi = 0; pi < PowerSet.Length; pi++)
+            {
+                PowerUp pu = PowerSet[pi];
+                if (!PowerUps.CanActivate(in s, pu)) continue;
+                int bit = PowerUps.InputBit(pu);
+                for (int ti = 0; ti < tc; ti++)
+                {
+                    Fx tx = sim.PlatformX(targets[ti], s.Tick + 20);
+                    int tdir = tx >= s.X ? 1 : -1;
+                    for (int wi = 0; wi < PowerWaits.Length; wi++)
+                    {
+                        if (PowerWaits[wi] > 0 && System.Array.IndexOf(waits, PowerWaits[wi]) < 0) continue;   // a crumbling platform and the like keep their short waits
+                        for (int ri = 0; ri < PowerRuns.Length; ri++)
+                        {
+                            SimState c;
+                            pendingPower = bit;
+                            bool ok = TryJump(s, PowerWaits[wi], 0, tdir, PowerRuns[ri], 0, 0, targets[ti], -1, 0, out c);
+                            pendingPower = 0;
+                            if (!ok) continue;
+                            int v = Visit(s, c, sameRow);
+                            if (v != 0) return v > 0;
+                        }
+                    }
+                }
+            }
             return false;
         }
 
@@ -397,7 +441,8 @@ namespace FluffyClimbers.Simulation
                 else if (spec.Goal.Type == GoalType.FindHiddenGem) extra = c.HiddenGems;
                 else if (spec.Goal.Type == GoalType.Speedrun) extra = c.Tick / 90;
             }
-            return c.GroundId + (vb << 20) + (tb << 28) + (xb << 36) + (extra << 44);
+            long pw = PowerBudget > 0 ? (c.PwUsed > 3 ? 3 : c.PwUsed) : 0;   // a state reached with units left is not the same as one reached without
+            return c.GroundId + (vb << 20) + (tb << 28) + (xb << 36) + (extra << 44) + (pw << 54);
         }
 
         /// <summary>
@@ -448,6 +493,7 @@ namespace FluffyClimbers.Simulation
 
         private void StepScratch(int input)
         {
+            if (pendingPower != 0 && (input & SimInput.Jump) != 0) { input |= pendingPower; pendingPower = 0; }   // the activation edge goes on the jump tick only (Flight and Rocket would lift the player off during a run-up)
             sim.Step(ref scratch, input);
             if (RecordInputs)
             {

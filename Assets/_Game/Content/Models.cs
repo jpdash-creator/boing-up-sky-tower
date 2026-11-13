@@ -188,5 +188,17 @@ namespace FluffyClimbers.Content
         [JsonProperty("generator", Required = Required.Always)] public GeneratorConfigDef Generator { get; set; }
         [JsonProperty("score", Required = Required.Always)] public ScoreConfigDef Score { get; set; }
         [JsonProperty("economy", Required = Required.Always)] public EconomyConfigDef Economy { get; set; }
+        /// <summary>Optional (weekly leaderboard, Planning/LEADERBOARD-DESIGN.md). Missing = the feature is OFF.</summary>
+        [JsonProperty("leaderboard", NullValueHandling = NullValueHandling.Ignore)] public LeaderboardConfigDef Leaderboard { get; set; }
+    }
+
+    /// <summary>
+    /// Remote config of the weekly leaderboard client. <c>enabled</c> defaults to false: nothing is called, shown or queued until the owner switches it on after the service is deployed.
+    /// <c>baseUrl</c> is the Cloud Run URL of the leaderboard service (no trailing slash).
+    /// </summary>
+    public sealed class LeaderboardConfigDef
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; }
+        [JsonProperty("baseUrl")] public string BaseUrl { get; set; }
     }
 }

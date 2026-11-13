@@ -1,0 +1,69 @@
+# R8 keep rules for RELEASE AAB builds (owner decision 2026-11-12: minify on so Play Console gets a mapping file).
+# Used only when PlayerSettings "Minify > Release" and "Custom Proguard File" are on; AndroidReleaseBuild switches both on for the release path and back off afterwards.
+# Unity adds its own rules (proguard-unity.txt: com.unity3d.player.*, bitter.jnibridge, fmod, GameActivity) on top of this file; they are not repeated here.
+# Most SDK AARs carry consumer rules that R8 applies automatically; the rules below are belt and braces for classes that C# reaches by name through JNI (AndroidJavaObject / AndroidJavaProxy)
+# or by reflection, which R8 cannot see. Rules for libraries that are not in the build match nothing and are harmless.
+
+# ---- readable crash traces (the mapping file restores names; keep line numbers) ----
+-keepattributes Signature,InnerClasses,EnclosingMethod,Exceptions,*Annotation*,SourceFile,LineNumberTable
+# (-renamesourcefileattribute is a global option; Android Gradle rejects it in this consumer rules file: Gradle error on the 2026-11-12 trial build)
+
+# ---- Google Play Games Services v2 (play-services-games-v2 22.1.0 + plugin bridge); same set as the plugin's Proguard/games.txt ----
+-keep class com.google.games.bridge.** { *; }
+-keep class com.google.android.gms.games.** { *; }
+-keep class com.google.android.gms.common.api.** { *; }
+-keep class com.google.android.gms.common.ConnectionResult { *; }
+-keep class com.google.android.gms.common.GooglePlayServicesUtil { *; }
+-keep class com.google.android.gms.common.data.DataBufferUtils { *; }
+-keep class com.google.android.gms.signin.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.android.gms.dynamic.** { *; }
+-keep class com.google.android.gms.dynamite.** { *; }
+-keep class com.google.android.gms.nearby.** { *; }
+-dontwarn com.google.android.gms.**
+
+# ---- Google Play Billing + Unity IAP (billing 9.x, called through JNI by Unity IAP) ----
+-keep class com.android.billingclient.** { *; }
+-keep class com.android.vending.billing.** { *; }
+-keep class com.unity.purchasing.** { *; }
+-keep class com.unity3d.purchasing.** { *; }
+-dontwarn com.android.billingclient.**
+
+# ---- AdMob (play-services-ads 25.x) + Unity plugin (the plugin AAR ships these too) ----
+-keep class com.google.unity.ads.** { *; }
+-keep class com.google.unity.ump.** { *; }
+-keep public class com.google.android.gms.ads.** { public *; }
+-keep public class com.google.android.libraries.ads.mobile.sdk.** { public *; }
+
+# ---- UMP consent SDK (user-messaging-platform 4.x) ----
+-keep public class com.google.android.ump.** { public *; }
+
+# ---- Mediation adapters, only if LevelPlay / AdMob mediation is added later (none in Packages/manifest.json today) ----
+-keep class com.unity3d.mediation.** { *; }
+-keep class com.ironsource.** { *; }
+-keep class com.google.ads.mediation.** { *; }
+-dontwarn com.ironsource.**
+-dontwarn com.unity3d.mediation.**
+
+# ---- Firebase Auth / Firestore / Functions (planned; Firebase Unity SDK reaches these by JNI and from C++) ----
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.internal.firebase** { *; }
+-keep class com.google.firebase.app.internal.cpp.** { *; }
+-keepclassmembers class * { @com.google.firebase.firestore.PropertyName *; @com.google.firebase.firestore.DocumentId *; @com.google.firebase.firestore.ServerTimestamp *; }
+-dontwarn com.google.firebase.**
+
+# ---- protobuf-lite, gRPC and OkHttp (Firestore transport); their own consumer rules cover the rest ----
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
+-keep class * extends com.google.protobuf.GeneratedMessage { *; }
+-keep class io.grpc.internal.DnsNameResolverProvider { *; }
+-keep class io.grpc.okhttp.OkHttpChannelProvider { *; }
+-keep class io.grpc.internal.PickFirstLoadBalancerProvider { *; }
+-keepclassmembers class * extends io.grpc.ManagedChannelProvider { *; }
+-dontwarn io.grpc.**
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+-dontwarn javax.annotation.**
+-dontwarn com.google.errorprone.annotations.**

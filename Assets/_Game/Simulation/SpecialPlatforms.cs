@@ -55,6 +55,20 @@ namespace FluffyClimbers.Simulation
             return true;
         }
 
+        /// <summary>
+        /// Dizzy Spores (doc 30 section 3, risk R2): steering is ignored for the first second after landing, so the platform that follows must be reachable
+        /// by a straight jump. Pulls <paramref name="x"/> toward the Dizzy platform until the two surfaces overlap by SimConfig.DizzyNextOverlap (centre
+        /// distance at most half the summed widths minus the overlap). Integer maths, no random draw; a platform already close enough is not moved.
+        /// </summary>
+        public static Fx DizzyNextX(SimConfig cfg, Fx prevX, Fx prevW, Fx w, Fx x, Fx screen)
+        {
+            Fx maxDx = (prevW + w) / 2 - cfg.DizzyNextOverlap;
+            Fx d = x - prevX;
+            if (Fx.Abs(d) <= maxDx) return x;
+            Fx nx = d.Raw < 0 ? prevX - maxDx : prevX + maxDx;
+            return Fx.Clamp(nx, w / 2, screen - w / 2);
+        }
+
         private static bool Contains(PlatformKind[] set, PlatformKind k)
         {
             for (int i = 0; i < set.Length; i++) if (set[i] == k) return true;

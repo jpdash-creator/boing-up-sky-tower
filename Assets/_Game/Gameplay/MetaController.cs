@@ -87,6 +87,7 @@ namespace FluffyClimbers.Gameplay
             }
             else ShowMenu();
             LoginFlow.Begin(canvas.transform, ShowMenu);   // first launch: Google Play or guest; later launches sync a Google player in the background
+            StartLeaderboard();   // MetaController.Leaderboard.cs: remote config switch (default OFF), silent sign-in of a returning player, a pending consent popup
         }
 
         void OnDestroy()
@@ -349,26 +350,9 @@ namespace FluffyClimbers.Gameplay
             RegionArt meadow = art != null ? (art.ForRegion(latest) ?? art.ForRegion(1)) : null;
             Background(meadow != null ? meadow.BgFar : null, new Color(0.08f, 0.09f, 0.16f, 1f));
             // Bug List 1 B1.c/B1.d: no wallet pills, no round account button and no gear in the top row of Home any more.
-            Sprite logo = ToyKit.Get("logo");
-            if (logo != null)
-            {
-                Image lg = UiKit.AddImage(screen, "Logo", logo, Color.white);
-                UiKit.Place(lg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(860f, 352f));
-                lg.rectTransform.pivot = new Vector2(0.5f, 1f);
-                lg.raycastTarget = false;
-            }
-            {
-                // the SELECTED character, drawn from its parts like the character screen (rebuilt on every visit, so a new choice shows at once)
-                RectTransform doll = MomoDoll.Build(screen, "Momo", 540f, CharacterCatalog.Selected, art);
-                UiKit.Place(doll, new Vector2(0.5f, 0.40f), Vector2.zero, doll.sizeDelta);
-                doll.pivot = new Vector2(0.5f, 0.5f);
-                momo = doll;
-                momoBase = momo.anchoredPosition;
-                // no hero sheet entry on the home screen (owner 2026-11-02): the (i) button lives on the Heroes screen
-            }
+            // owner 2026-11-12: the title banner (with its small Momo) sits at the centre, at the same rect as on the login screen; no big hero and no version label on Home
+            LoginScreen.AddHomeLogo(screen);
             AddHomeButtons();   // Bug List 1 B1.a/B1.b: one end-to-end Play button with the Settings button above it (MetaController.Home.cs)
-            Text v = UiKit.AddText(screen, "Version", "v" + Application.version, 30, new Color(1f, 1f, 1f, 0.7f));
-            UiKit.Place((RectTransform)v.transform, new Vector2(0.5f, 0f), new Vector2(0f, HomeSettingsBottom), new Vector2(300f, 44f));   // bottom centre, between the bundle timer button (left) and Settings (right)
             BundleTimerButton.Attach(screen, progress, art, BundleHost(), RefreshWallet);   // timer bundle offer, bottom left (docs/26)
             MaybeShowHeroReveal();
             MaybeShowGooglePrompt();   // B1.c: the guest-only "connect Google in Settings" pop-up (never over a hero reveal)
@@ -441,8 +425,8 @@ namespace FluffyClimbers.Gameplay
         }
 
         /// <summary>
-        /// The persistent bottom tab bar (docs/16 section C). World Map and Level screen (<paramref name="withPlay"/> false, owner Bug List 1 B5.d): exactly three equal
-        /// items, Shop | Character | Daily Rewards (gift, red dot when claimable); the VIP crown lives in the Shop. Home: Shop | PLAY (two slots) | Heroes.
+        /// The persistent bottom tab bar (docs/16 section C). World Map and Level screen (<paramref name="withPlay"/> false, owner Bug List 1 B5.d, leaderboard 2026-11-12): four equal
+        /// items, Shop | Leaderboard (crown) | Character | Daily Rewards (gift, red dot when claimable); the VIP crown lives in the Shop. Home: Shop | PLAY (two slots) | Heroes.
         /// Heroes screen: Shop | PLAY | Character.
         /// </summary>
         void AddTabBar(int selected, bool withPlay = true, bool home = false)
@@ -450,6 +434,7 @@ namespace FluffyClimbers.Gameplay
             var items = new System.Collections.Generic.List<ToyKit.BarItem>();
             var tabOf = new System.Collections.Generic.List<int>();
             items.Add(new ToyKit.BarItem { Icon = "icon_shop", Caption = "Shop", A11y = "Shop" }); tabOf.Add(ToyKit.TabShop);
+            if (!withPlay) { items.Add(new ToyKit.BarItem { Icon = "icon_crown", Caption = "Leaderboard", A11y = "Leaderboard" }); tabOf.Add(ToyKit.TabLeaderboard); }
             if (withPlay) { items.Add(new ToyKit.BarItem { Icon = "icon_play", Caption = "PLAY", A11y = "Play", Raised = true, Span = home ? 2 : 1 }); tabOf.Add(ToyKit.TabPlay); }
             if (home) items.Add(new ToyKit.BarItem { Icon = "icon_heroes", Caption = "Heroes", A11y = "Characters" });
             else items.Add(new ToyKit.BarItem { Icon = "icon_heroes", IconSprite = ShopIcons.CharacterPower, Caption = "Character", A11y = "Characters" });
@@ -473,6 +458,7 @@ namespace FluffyClimbers.Gameplay
                 case ToyKit.TabSubscription: if (CurrentScreen != "Shop" || shop == null || shop.Tab != ShopScreen.TabVip) ShowSubscription(); break;   // VIP = the shop's crown tab
                 case ToyKit.TabHeroes: if (CurrentScreen != "Characters") ShowCharacters(); break;
                 case ToyKit.TabDaily: ShowRewards(); break;
+                case ToyKit.TabLeaderboard: if (CurrentScreen != LeaderboardScreen.ScreenName) ShowLeaderboard(); break;   // guests and signed-out players see the sign-in card there
             }
         }
 
@@ -1689,7 +1675,8 @@ namespace FluffyClimbers.Gameplay
             int mode = GameSettings.Difficulty;
             PaceValue bestPace = progress.EndlessBestPace(region.Id, mode);
             int bestAlive = progress.EndlessBestSurvived(region.Id, mode);
-            float recordTop = 535f;
+            int bestEndlessCrown = progress.EndlessBestCrown(region.Id, mode);
+            float recordTop = 440f + CrownInfoUi.RowHeight() + 14f;   // the single crown line (best crown | best floors) sits at 440, under the region name (352 to 432)
             float taLineTop = recordTop + TimedUi.RecordBlockHeight(bestPace.IsValid || bestAlive > 0) + 10f;
             TimeAttackRecord taRec = progress.TimeAttackBest(region.Id, mode);
             OpenPopup("Endless", "", taLineTop + TimeAttackLineHeight(taRec) + 8f + EndlessActionRowHeight());
@@ -1707,8 +1694,12 @@ namespace FluffyClimbers.Gameplay
             Text rname = UiKit.AddText(panel, "Region", region.Name, 52, Theme.Ink, TextAnchor.MiddleCenter, true);
             DropOutline(rname);
             UiKit.Place((RectTransform)rname.transform, new Vector2(0.5f, 1f), new Vector2(0f, -352f), new Vector2(760f, 80f));
-            RectTransform bestRow = ToyKit.PillRow(panel, "BestFloor", 425f, 96f);
-            ToyKit.InfoPill(bestRow, ToyKit.Get("icon_crown"), best > 0 ? best.ToString() : "-", new Color(1f, 0.9f, 0.4f), 300f, 96f);
+            // Owner 2026-11-13: ONE compact line without a dark backing: best crown (tap for the calculation) | best floors.
+            CrownInfoUi.BuildRow(panel, 440f,
+                bestEndlessCrown > 0 ? bestEndlessCrown.ToString() : "-",
+                (bestEndlessCrown > 0 ? "Best crown " + bestEndlessCrown : "No crown yet") + ". Tap to see how the crown is calculated.",
+                () => ShowEndlessCrownInfo(region),
+                ToyKit.Get("icon_tower"), best > 0 ? best.ToString() : "-", best > 0 ? "Best " + best + " floors" : "No floors yet");
             TimedUi.RecordBlock(panel, recordTop, mode, bestPace, bestAlive, true);
             AddTimeAttackEntry((RectTransform)panel, region, mode, taLineTop);
             AddEndlessActionRow((RectTransform)panel, region);   // START (Endless) and Time Attack: two green buttons on one row
@@ -1817,15 +1808,17 @@ namespace FluffyClimbers.Gameplay
             float playSize = Mathf.Max(150f, UiKit.MinTouchRef);
             // Doc 46: medals under the stars (only when the level has medal targets) and the best Pace and Time of the chosen Gameplay mode after the pills.
             int mode = GameSettings.Difficulty;
-            bool hasBestScore = p != null && p.BestScore > 0;
+            int bestCrown = progress.BestCrown(level.Id, mode);   // owner 2026-11-12: the crown of the chosen Gameplay setting replaces the old best score
+            bool hasBestScore = bestCrown > 0;
             bool hasMedals = MedalStrip.HasTargets(level.Id, mode);
             float medalsH = hasMedals ? MedalStrip.Height + 12f : 0f;
             PaceValue bestPace = progress.BestPace(level.Id, mode);
             int bestTicks = progress.BestTime(level.Id, mode);
             bool hasRecord = bestPace.IsValid || bestTicks > 0;
-            float yPays = 440f + medalsH;
-            float yBest = yPays + 110f;
-            float yRecord = (hasBestScore ? yBest : yPays) + 110f;
+            // Owner 2026-11-13: ONE compact crown line (crown + best crown + (i), separator, coin + percent) without a dark backing; under 3 stars a small plain line tells what a clear pays.
+            float yRow = 440f + medalsH;
+            float rowH = CrownInfoUi.RowHeight();
+            float yRecord = yRow + rowH + 14f;
             float contentEnd = yRecord + TimedUi.RecordBlockHeight(hasRecord);
             OpenPopup("Level " + level.Index, "", contentEnd + 30f + playSize + 56f);
             Transform panel = popup.Find("Panel");
@@ -1854,22 +1847,13 @@ namespace FluffyClimbers.Gameplay
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
             if (hasMedals) MedalStrip.Build(panel, 430f, level.Id, mode, progress.Medal(level.Id, mode), MedalLevel.None);
-            RectTransform pays = ToyKit.PillRow(panel, "Pays", yPays, 96f);
-            if (starsHave >= 3)
-            {
-                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "50%", new Color(1f, 0.92f, 0.5f), 250f, 96f);   // 3-star levels: replays pay 50 percent of the coins and no gems
-            }
-            else
-            {
-                ToyKit.InfoPill(pays, art != null ? art.CoinIcon : null, "70", new Color(1f, 0.92f, 0.5f), 220f, 96f);
-                ToyKit.InfoPill(pays, art != null ? art.StarFilled : null, "+60", Color.white, 220f, 96f);
-                ToyKit.InfoPill(pays, ToyKit.Get("icon_flame"), "+5", new Color(1f, 0.78f, 0.35f), 220f, 96f);
-            }
-            if (hasBestScore)
-            {
-                RectTransform best = ToyKit.PillRow(panel, "Best", yBest, 96f);
-                ToyKit.InfoPill(best, ToyKit.Get("icon_crown"), p.BestScore.ToString(), new Color(1f, 0.9f, 0.4f), 300f, 96f);
-            }
+            // 3-star levels: replays pay 50 percent of the coins and no gems; below that a clear pays in full (100 percent)
+            int paidPercent = starsHave >= 3 ? FluffyClimbers.Simulation.CoinPayoutRules.ReplayPercent : 100;
+            CrownInfoUi.BuildRow(panel, yRow,
+                hasBestScore ? bestCrown.ToString() : "-",
+                (hasBestScore ? "Best crown " + bestCrown : "No crown yet") + ". Tap to see how the crown is calculated.",
+                () => ShowLevelCrownInfo(level),
+                art != null ? art.CoinIcon : null, paidPercent + "%", "Coins paid: " + paidPercent + " percent");
             TimedUi.RecordBlock(panel, yRecord, mode, bestPace, bestTicks, false);
             ToyKit.PopupAction(popup.Find("Panel"), "PLAY", Btn(1), Color.white, 60f, () =>
             {

@@ -5,7 +5,7 @@ Source: the owner's pasted "Fluffy Climbers: full requirements for issue-list po
 ## Shared conventions
 - $1 = 95 rupees. 1 gem = 20 coins. A 1,000-coin power-up = 50 gems, a 1,500-coin one = 75 gems. Reference gem value = the 1000-pack rate, $0.01099 per gem.
 - Characters, the chest character slot and the shop Characters section are Coming Soon. Chests ship with coins and power-ups only (character code stays but is switched off).
-- Ranked play stays neutral. Power-ups roll with equal chance across the 7 types (Magnet, Shield, Wall Stick, Double Jump, Slow Time, Rocket, Flight). 10x open costs exactly 10x a single open.
+- (2026-11-12, owner: there is no neutral Ranked mode any more; the weekly boards count everything, see `Planning/LEADERBOARD-DESIGN.md`.) Power-ups roll with equal chance across the 7 types (Magnet, Shield, Wall Stick, Double Jump, Slow Time, Rocket, Flight). 10x open costs exactly 10x a single open.
 - Critical UX (docs/11, .claude/rules/ux-gameplay-critical.md): CUX-3 no overlap or clipping on 9:16, 9:19.5, 9:21, 3:4; CUX-4 targets >= 48 dp with >= 8 dp gaps; CUX-5 text >= 16 sp, contrast >= 4.5:1, survives 130% text scale; CUX-6 colour never the only cue, reduced motion honoured; pause on interruption. Progress saved immediately after every purchase/open/result.
 
 ## Owner answers that settle conflicts (2026-10-25)
@@ -137,3 +137,5 @@ Characters of locked regions never appear in chests or the shop; powers fixed, n
 30. (from helper H4) Replay farming: 1- and 2-star levels pay full coins (130 / 190) and gems on every replay until 3 stars; no daily limit yet (open item 8).
 31. (from helper H4) A pickup overflow bug in the simulation (far pairs counted as touching) was fixed; it had silently dropped many placed gems.
 32. (from helper H2) Pack icons are now plain images (touch-target rule), so tapping an icon no longer opens the pack-details popup and the INR price line in it is not reachable. Add a small info button (>= 48 dp) back?
+
+**Update 2026-11-13 (Main Bug List 2): gem inflow from rewards.** Daily rewards now pay 15 gems at 200 points (was 10 at 100 points, 130 points possible) and the Weekly tasks 120 gems (was 80), so a perfect week is 225 gems instead of 150 (+50 percent). Reaching 200 points needs 60 to 90 minutes of play a day, so a 30-minute player still gets mostly the 5-gem and coin gifts (about 125 gems a week with the weekly tasks). Details and the reachability reasoning: `39-rewards-economy.md` sections 3, 4 and 5.1.

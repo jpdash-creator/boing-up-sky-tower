@@ -107,10 +107,12 @@ The old Difficulty setting is removed from Settings. The new **Gameplay** settin
 
 | Button | Relaxed | Easy | Normal | Hard | Insane |
 |---|---|---|---|---|---|
-| Multiplier on the speed-up step | 1.00 | 1.10 | 1.25 | 1.40 | 1.50 |
-| Scroll speed-up step per 5 s (20 percent x multiplier) | 20 percent | 22 percent | 25 percent | 28 percent | 30 percent |
+| Scroll speed-up step per 5 s (owner 2026-11-12; was 20/22/25/28/30 as 20 percent x 1.00/1.10/1.25/1.40/1.50) | 10 percent | 20 percent | 25 percent | 40 percent | 50 percent |
+| Top speed-up after 8 steps (40 s), no global cap (owner 2026-11-12; was 6 steps and a 150 percent cap) | 80 percent | 160 percent | 200 percent | 320 percent | 400 percent |
+| Crown bonus (same percents, doc 46 section 6a) | +10 percent | +20 percent | +25 percent | +40 percent | +50 percent |
+| Medal target scale (doc 46 section 6) | x0.85 | x0.92 | x1.00 | x1.12 | x1.25 |
 
-- It only changes the **size of the scroll speed-up steps**. The cap on the scroll speed stays as before; start speed, layouts, goals, stars and gems are unchanged (gems are not scaled by Gameplay).
+- It only changes the **size of the scroll speed-up steps**. The campaign speed ceiling `SimConfig.ScrollMaxSpeed` (4 u/s) stays as before, while the stepped speed-up itself tops out at step x 8 per setting (row above); start speed, layouts, goals, stars and gems are unchanged (gems are not scaled by Gameplay).
 - Hard and Insane still count as **hard clears** (as the old Hard did).
 - The choice is saved at once and applies to the next run.
 - The difficulty scores of sections 2 and 3 do not depend on this setting: the score uses the scroll speed at the start of a level, which Gameplay does not change.
@@ -157,3 +159,4 @@ Region 1 builder difficulty, levels 1 to 25: .05 .202 .233 .28 .49 .375 .398 .42
 
 - 2026-11-09 (Bug List 8 item 3): level sizes fixed in rows (section 4a: 60 / 75 / 90 / 105 / 120 / 150), speedrun time 100 s for 120 rows, difficulty curve re-solved, golden hashes, medal targets and gem income re-checked; endless unchanged; Time Attack ramps from level 10 (section 6).
 - 2026-11-09: document created from owner Bug List 6 (25 levels per region, the 0..100 difficulty score, the target curve, region goal tiers, the endless tower of 25 stages, the Gameplay setting, the active hero rule).
+- 2026-11-12 (owner): Gameplay settings now speed up 10/20/25/40/50 percent per 5 s, top step x 8 (80/160/200/320/400 percent); the ceiling `ScrollMaxSpeed` 4 u/s still applies to the campaign; crown and medal target scale per setting (doc 46).

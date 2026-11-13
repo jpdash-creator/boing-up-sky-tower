@@ -29,6 +29,9 @@ namespace FluffyClimbers.Gameplay
         // Index = (int)Sfx. Same order as the enum.
         static readonly string[] SfxNames = { "tap", "jump", "land", "bounce", "coin", "gem", "star", "combo", "speedup", "fall", "win", "fail", "back", "popup", "combo", "back" };   // PowerUp reuses the combo clip, PowerEnd the back clip
         static readonly float[] SfxVolume = { 0.5f, 0.55f, 0.5f, 0.7f, 0.6f, 0.65f, 0.8f, 0.6f, 0.6f, 0.7f, 0.8f, 0.7f, 0.5f, 0.5f, 0.7f, 0.45f };
+        // Stings that dip the background music while they play (true = ducks). Plain clicks, steps and landings do not.
+        static readonly bool[] SfxDucks = { false, false, false, false, false, false, false, false, false, false, true, true, false, false, true, false };
+        const float MaxDuckHold = 3f;   // a clip longer than this still lets the music back after 3 s
         const float MinGapSeconds = 0.04f;   // the same cue never stacks inside one frame or two
 
         static AudioManager instance;
@@ -82,10 +85,11 @@ namespace FluffyClimbers.Gameplay
         AudioSource[] pool;
         int cursor;
 
+        readonly MusicDuck duck = new MusicDuck();
+        readonly MusicSelector selector = new MusicSelector();
         AudioSource[] music;
         float[] musicVol;
         float[] musicTarget;
-        int active;
         MusicTrack wanted = MusicTrack.None;
         AudioClip loopClip, runClip;
         AudioClip[] regionClips;
@@ -148,6 +152,7 @@ namespace FluffyClimbers.Gameplay
             src.clip = c;
             src.volume = SfxVolume[i];
             src.Play();
+            if (SfxDucks[i]) DuckFor(Mathf.Min(c.length, MaxDuckHold));
         }
 
         void SetTrack(MusicTrack track, int region)
@@ -180,6 +185,8 @@ namespace FluffyClimbers.Gameplay
             {
                 // Switched off: silence at once, no fade.
                 for (int i = 0; i < 2; i++) { musicVol[i] = 0f; musicTarget[i] = 0f; music[i].Stop(); }
+                selector.StopAll();
+                duck.Reset();
                 return;
             }
             if (clip == null)
@@ -190,38 +197,47 @@ namespace FluffyClimbers.Gameplay
                 return;
             }
 
-            AudioSource cur = music[active];
-            if (cur.isPlaying && cur.clip == clip)
+            // One idempotent decision (MusicSelector): the same clip never restarts, a clip still fading out is taken back
+            // without a restart, and a different clip cross-fades so two tracks never layer at full level.
+            int id = clip.GetInstanceID();
+            MusicSelector.Action act = selector.Request(id);
+            int a = selector.Active;
+            musicTarget[1 - a] = 0f;
+            musicTarget[a] = vol;
+            if (act == MusicSelector.Action.Start)
             {
-                // Same recording: only the level changes (the loop keeps playing, no restart).
-                musicTarget[active] = vol;
-                musicTarget[1 - active] = 0f;
-            }
-            else
-            {
-                musicTarget[active] = 0f;
-                active = 1 - active;
-                AudioSource next = music[active];
+                AudioSource next = music[a];
+                next.Stop();
                 next.clip = clip;
                 next.loop = true;
+                musicVol[a] = 0f;
                 next.volume = 0f;
-                musicVol[active] = 0f;
-                musicTarget[active] = vol;
                 next.Play();
             }
+            enabled = true;
+        }
+
+        /// <summary>Dips the music for a jingle of this length (see <see cref="MusicDuck"/>). No-op while music is off or nothing plays.</summary>
+        void DuckFor(float seconds)
+        {
+            if (!GameSettings.Music || selector.ActiveClip == 0) return;
+            duck.Duck(seconds);
             enabled = true;
         }
 
         void Update()
         {
             if (music == null) return;
-            float step = Time.unscaledDeltaTime / FadeSeconds;
+            float dt = Time.unscaledDeltaTime;
+            duck.Tick(dt);
+            float gain = duck.Gain;
+            float step = dt / FadeSeconds;
             for (int i = 0; i < 2; i++)
             {
-                if (musicVol[i] == musicTarget[i]) continue;
-                musicVol[i] = Mathf.MoveTowards(musicVol[i], musicTarget[i], step);
-                music[i].volume = musicVol[i];
-                if (musicVol[i] <= 0f && musicTarget[i] <= 0f) music[i].Stop();
+                if (!selector.IsPlaying(i)) continue;
+                if (musicVol[i] != musicTarget[i]) musicVol[i] = Mathf.MoveTowards(musicVol[i], musicTarget[i], step);
+                music[i].volume = musicVol[i] * gain;
+                if (musicVol[i] <= 0f && musicTarget[i] <= 0f) { music[i].Stop(); selector.Stopped(i); }
             }
         }
 

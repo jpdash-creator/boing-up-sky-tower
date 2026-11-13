@@ -8,10 +8,23 @@ namespace FluffyClimbers.Economy
     {
         [JsonProperty("stars")] public int Stars;
         [JsonProperty("starMask")] public int StarMask;
+        /// <summary>Best BASE run score over every Gameplay setting (legacy field, kept; the old saves only have this). The leaderboard number is the crown, see <see cref="Crowns"/>.</summary>
         [JsonProperty("bestScore")] public int BestScore;
+        /// <summary>Best crown per Gameplay mode 0..4 (CrownScore: base score x (1 + setting percent), owner 2026-11-12). Null on old saves; use ProgressService.BestCrown, which falls back to the legacy BestScore. Additive, no version bump.</summary>
+        [JsonProperty("crowns", NullValueHandling = NullValueHandling.Ignore)] public int[] Crowns;
+        /// <summary>The run behind each stored crown, per Gameplay mode 0..4 (floors, best combo chain, base score) for the crown calculation pop-up (owner 2026-11-13). Null on old saves and for entries written before this field existed. Additive, no version bump.</summary>
+        [JsonProperty("crownRuns", NullValueHandling = NullValueHandling.Ignore)] public CrownRun[] CrownRuns;
         [JsonProperty("clears")] public int Clears;
         /// <summary>Timed records (doc 46): index = Gameplay mode 0..4 (Relaxed .. Insane), null entries = no record. Null on old saves. Additive, no version bump. Use ProgressService.BestPace / BestTime / BestCurve / Medal.</summary>
         [JsonProperty("records", NullValueHandling = NullValueHandling.Ignore)] public ModeRecord[] Records;
+    }
+
+    /// <summary>The numbers of the run that set a best crown: floors reached, the best combo chain, and the BASE score (floors x 10 + combo points) the crown was made from.</summary>
+    public sealed class CrownRun
+    {
+        [JsonProperty("f")] public int Floors;
+        [JsonProperty("c")] public int BestCombo;
+        [JsonProperty("s")] public int BaseScore;
     }
 
     /// <summary>Owned stock (docs/15 section 8.1). Only power-ups.</summary>
@@ -38,6 +51,8 @@ namespace FluffyClimbers.Economy
         [JsonProperty("unlockedRegions")] public List<string> UnlockedRegions = new List<string>();
         /// <summary>Endless mode: best floor per region id. Added with endless mode; old saves simply have no entry (no version bump needed).</summary>
         [JsonProperty("endlessBest")] public Dictionary<string, int> EndlessBest = new Dictionary<string, int>();
+        /// <summary>Endless mode: the run behind the best crown per region id and Gameplay mode (index 0..4, null = none). Additive, no version bump; old saves load empty (best endless crown 0).</summary>
+        [JsonProperty("endlessCrowns")] public Dictionary<string, CrownRun[]> EndlessCrowns = new Dictionary<string, CrownRun[]>();
         /// <summary>Endless coin cap: the UTC day (yyyyMMdd) the counter below belongs to, and how many paying endless runs finished that day.</summary>
         [JsonProperty("endlessDay")] public string EndlessDay = "";
         [JsonProperty("endlessRunsToday")] public int EndlessRunsToday;
@@ -82,5 +97,17 @@ namespace FluffyClimbers.Economy
         [JsonProperty("timedRec")] public Dictionary<string, RegionTimedRecord> RegionTimed = new Dictionary<string, RegionTimedRecord>();
         /// <summary>Day and week counters of the timed reward goals. Additive, no version bump.</summary>
         [JsonProperty("timedCnt")] public TimedCounters TimedCounters = new TimedCounters();
+        /// <summary>Per-player hero stats (owner 2026-11-12, docs/44 section 11): hero id (an Uncommon, Rare, Elite or Legendary tier hero) to the index of the physics variant dealt when the hero was first obtained (0 = the table row, 1.. = HeroVariants). Additive, no version bump; old saves load empty and a hero owned without an entry is rolled at first use.</summary>
+        [JsonProperty("heroRolls")] public Dictionary<string, int> HeroRolls = new Dictionary<string, int>();
+        /// <summary>The roll counter value each hero was rolled with, so a server can recompute the variant from (account seed, hero id, counter). Additive.</summary>
+        [JsonProperty("heroRollNo")] public Dictionary<string, int> HeroRollNo = new Dictionary<string, int>();
+        /// <summary>Hero rolls made so far: the next roll uses this number, then it grows. Additive.</summary>
+        [JsonProperty("heroRollCount")] public int HeroRollCount;
+        /// <summary>Weekly leaderboard consent (Planning/LEADERBOARD-DESIGN.md 5.7): null until the player accepted the popup. Additive, no version bump.</summary>
+        [JsonProperty("leaderboardConsent", NullValueHandling = NullValueHandling.Ignore)] public LeaderboardConsent LeaderboardConsent;
+        /// <summary>Offline upload queue, granted prize claim ids and the consent decline day (see ProgressService.Leaderboard.cs). Additive, no version bump.</summary>
+        [JsonProperty("leaderboard")] public LeaderboardSaveData Leaderboard = new LeaderboardSaveData();
+        /// <summary>The name the player chose for the weekly leaderboard (3 to 16 characters, checked by LeaderboardNameRules). Null or empty = the Google Play Games name is shown. Additive, no version bump.</summary>
+        [JsonProperty("leaderboardName", NullValueHandling = NullValueHandling.Ignore)] public string LeaderboardDisplayName;
     }
 }

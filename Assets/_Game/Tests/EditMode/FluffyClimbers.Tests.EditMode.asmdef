@@ -7,6 +7,7 @@
     "FluffyClimbers.Economy",
     "FluffyClimbers.Gameplay",
     "FluffyClimbers.Services",
+    "FluffyClimbers.Leaderboard",
     "Unity.Nuget.Newtonsoft-Json",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

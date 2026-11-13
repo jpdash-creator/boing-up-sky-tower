@@ -155,3 +155,7 @@ CUX: all new controls at least 48 dp with 8 dp gaps, text at least 16 sp from th
 ## 11. Region 1 full ladder (2026-11-06, Bug List 5 F4.1)
 
 Region 1 (Meadow Springs) has 5 characters x 5 tiers = 25 heroes: Momo (Rare, Elite, Legendary added) and Bumble, Ribbi, Dandy, Pip (all five tiers). Rows, powers, art pipeline, ownership rules, drops and open points are in `40-region1-heroes.md`; every hero's numbers are in docs/44-power-mechanics-bible.md section 8. Impacts here: the merge chain Common x3 -> Uncommon x3 -> Rare x3 -> Elite x3 -> Legendary now runs end to end for Region 1; Legendary is the top (no merge). `CharacterSpec.RegionStarter` marks the one Common hero a region gives by itself (the other Region 1 Commons come as cards); `OwnedWithoutCopyCount` and the reveal use it. The All Heroes list puts every hero line (5 cards) on its own rows (3 + 2).
+
+## 12. Per-player stat rolls (owner 2026-11-12)
+
+A hero obtained as a tier hero (a merge result, a chest or bundle card, a reward) rolls its own physics from a pre-validated pool when first obtained (`Economy/HeroRolls.cs`, pool = `HeroTable` row + `HeroVariants.cs`). All pool entries pass the Forgiveness Index gate, so the rarity rules of section 1 hold for every roll; the merge result shows the rolled numbers of the new hero. Common heroes stay fixed. Rules and pipeline: `44-power-mechanics-bible.md` section 11. Changelog: 2026-11-12 section added.

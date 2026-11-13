@@ -116,9 +116,19 @@ namespace FluffyClimbers.Gameplay
             switch (id)
             {
                 case "d_login": slot = "task_key"; icon = "key"; kit = "icon_daily"; break;                                   // log in: key
-                case "d_play5": case "d_play15": slot = "task_hourglass"; icon = "hourglass"; kit = "icon_dial"; break;       // play minutes: hourglass
-                case "d_level3": slot = "task_flag"; icon = "flag3"; kit = "icon_flag"; break;                                  // complete levels: flag
-                case "d_combo5": slot = "task_flame"; icon = "flame"; kit = "icon_flame"; break;                                // combos: flame
+                case "d_play10": case "d_play25": case "d_play60": case "w_play250": slot = "task_hourglass"; icon = "hourglass"; kit = "icon_dial"; break;   // play minutes: hourglass
+                case "d_level3": case "d_level6": case "d_level10": slot = "task_flag"; icon = "flag3"; kit = "icon_flag"; break;   // complete levels: flag
+                case "d_combo10": case "d_combo30": case "w_combos300": slot = "task_flame"; icon = "flame"; kit = "icon_flame"; break;   // combos: flame
+                case "d_stars9": case "w_stars40": icon = "star1"; kit = "icon_star"; break;                                    // earn stars: star
+                case "d_endless50": case "d_endless100": case "d_endlessruns": case "w_endless150": case "w_endless200": case "w_endlessruns20": icon = null; kit = "icon_tower"; break;   // Endless: tower
+                case "d_powerups": case "w_powerups20": icon = "bolt"; kit = "icon_bolt"; break;                                // use power-ups: bolt
+                case "d_medal": case "w_medals8": icon = "medal"; kit = "icon_crown"; break;                                    // earn medals: medal (any colour)
+                case "d_coins": slot = "task_coins"; icon = "coinbag"; kit = "icon_coin"; break;                                // earn coins: coin
+                case "d_ta": icon = "clock"; kit = "icon_tower"; break;                                                         // Time Attack floors: clock
+                case "w_jumps8000": slot = "task_upgrade"; icon = "bolt"; kit = "icon_speed"; break;                            // jumps: up arrow
+                case "w_login7": slot = "task_calendar"; icon = "calendar"; kit = "icon_daily"; break;                          // log in every day: calendar
+                case "w_levels40": slot = "task_flag"; icon = "levels"; kit = "icon_flag"; break;
+                case "w_hard10": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;
                 case "d_hard": slot = "task_boss_skull"; icon = "helmet"; kit = "icon_bolt"; break;                             // hard levels: boss skull
                 case "w_login5": slot = "task_calendar"; icon = "calendar"; kit = "icon_daily"; break;                          // log in on days: calendar
                 case "w_play100": slot = "task_hourglass"; icon = "hourglass"; kit = "icon_dial"; break;
@@ -166,7 +176,7 @@ namespace FluffyClimbers.Gameplay
         public static bool IsGoldMedalTask(string id)
         {
             if (string.IsNullOrEmpty(id)) return false;
-            if (id == "w_gold5") return true;
+            if (id == "w_gold5" || id == "w_gold10") return true;
             if (!id.StartsWith("g_", StringComparison.Ordinal)) return false;
             string[] parts = id.Split('_');
             return parts.Length > 2 && parts[2] == "gold";

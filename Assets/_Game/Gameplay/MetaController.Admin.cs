@@ -1,6 +1,7 @@
 using System;
 using FluffyClimbers.Content;
 using FluffyClimbers.Economy;
+using FluffyClimbers.Leaderboard;
 using FluffyClimbers.Monetization;
 using UnityEngine;
 using UnityEngine.UI;
@@ -370,6 +371,14 @@ namespace FluffyClimbers.Gameplay
             AdminSwitchRow(c, ref y, AdminAccess.TestSwitchLabels[2], "icon_heroes", () => GameSettings.CharacterTest, v => GameSettings.CharacterTest = v, on);
             if (on && GameSettings.CharacterTest)
                 AdminButtons(c, ref y, true, new AdminBtn("Pick a hero...", 1, () => ShowAdmin(1), "Pick a hero and add copies"));
+
+            // LEADERBOARD TEST: forces the weekly leaderboard on (deployed service URL) so it can be reviewed any time; development builds only
+            AdminSwitchRow(c, ref y, "Leaderboard Test", "icon_crown", () => GameSettings.LeaderboardTest, v =>
+            {
+                GameSettings.LeaderboardTest = v;
+                LeaderboardHub.Init(progress, repo != null ? repo.RemoteConfig : null, v);
+                AdminSay(v ? "Leaderboard forced ON (test)" : "Leaderboard back to the shipped setting");
+            }, on);
 
             // CLOUD TEST: only while System Test is on
             if (on) BuildAdminCloud(c, ref y);

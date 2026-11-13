@@ -33,6 +33,13 @@ namespace FluffyClimbers.Economy
         public const string HardClear = "hardClear";    // levels CLEARED on difficulty 3 (Hard) or more (Bug List 5 F1.b)
         public const string EndlessFloor = "endlessFloor"; // best endless floor reached (day and week keep the maximum)
 
+        // Main Bug List 2 (2026-11-13): new period counters. They live in the day and week Stats dictionaries (reset with the period, additive in the save).
+        public const string Jumps = "jumps";                // jumps made (RunOutcome.Jumps, recorded with the run statistics)
+        public const string EndlessRuns = "endlessRuns";    // Endless runs finished with at least MinEndlessRunFloors floors (Time Attack does not count)
+        public const string CoinsEarned = "coinsEarned";    // coins paid by level clears and Endless / Time Attack runs
+        public const string Medals = "medals";              // medals earned: a level medal that is new or higher (any Gameplay setting)
+        public const string TimeAttackRun = "taRun";        // day: best floors of one counted Time Attack run today (the weekly task keeps reading taFloors)
+
         // Timed goals (doc 46 section 8). They are read from the TimedCounters of the save (ProgressService.TimedGoals.cs), which restart with the local day and week.
         public const string PaceClears = "paceClears";          // day: not revived level clears at 0.6 plat/s or more
         public const string Floor100In3 = "floor100in3";        // day: 1 when endless reached floor 100 within 3:00 today
@@ -43,8 +50,11 @@ namespace FluffyClimbers.Economy
         /// <summary>Hard starts at this difficulty setting (0 Relaxed, 1 Easy, 2 Normal, 3 Hard, 4 Insane).</summary>
         public const int HardDifficulty = 3;
 
+        /// <summary>An Endless run counts for the "finish N Endless runs" tasks from this many floors (an instant fall is not a run).</summary>
+        public const int MinEndlessRunFloors = 10;
+
         /// <summary>Owner rule: every first clear counts; replays of cleared levels count for at most this many per day in total.</summary>
-        public const int MaxCountedReplaysPerDay = 3;
+        public const int MaxCountedReplaysPerDay = 10;
     }
 
     /// <summary>
@@ -60,11 +70,14 @@ namespace FluffyClimbers.Economy
         /// <summary>Removed (Bug List 5 F1.a): "clear all levels" is now the last Levels goal of each region. Always empty.</summary>
         [System.Obsolete("Replaced by RegionGoals(region)")]
         public IReadOnlyList<RewardEntry> RegionRewards { get { return empty; } }
-        /// <summary>The eight daily actions (10 + 15 + 20 + 20 + 15 + 20 + 15 + 15 = 130 points).</summary>
+        /// <summary>The twenty daily tasks (exactly 200 points, <see cref="DailyTotalPoints"/>).</summary>
         public IReadOnlyList<RewardEntry> DailyActions { get { return dailyActions; } }
         /// <summary>The daily points milestones (Target = points).</summary>
         public IReadOnlyList<RewardEntry> DailyMilestones { get { return dailyMilestones; } }
         public IReadOnlyList<RewardEntry> WeeklyTasks { get { return weekly; } }
+
+        /// <summary>Points of a full day (the sum of the daily tasks) and the number of tasks: pinned by RewardsTests.</summary>
+        public const int DailyTotalPoints = 200, DailyTaskCount = 20, WeeklyTaskCount = 25;
 
         static readonly IReadOnlyList<RewardEntry> empty = new List<RewardEntry>();
         static readonly IReadOnlyList<RegionGoal> noGoals = new List<RegionGoal>();
@@ -113,42 +126,69 @@ namespace FluffyClimbers.Economy
             return new RewardEntry { Id = id, Title = title, Stat = stat, Target = target, Points = points, Gems = gems, Coins = coins, PowerUps = powerUps, HeroRegion = hero };
         }
 
-        // daily action: id, title, counter, target, points (6 actions, 100 points)
+        // daily action: id, title, counter, target, points (Main Bug List 2, 2026-11-13: 20 tasks, exactly 200 points, about 60 to 90 minutes of real play; docs/39 section on Daily)
         static readonly object[][] DailyRows =
         {
-            new object[] { "d_login", "Log in today", RewardStat.Login, 1, 10 },
-            new object[] { "d_play5", "Play for 5 minutes", RewardStat.PlaySeconds, 300, 15 },
-            new object[] { "d_play15", "Play for 15 minutes", RewardStat.PlaySeconds, 900, 20 },
-            new object[] { "d_level3", "Complete 3 levels", RewardStat.Levels, 3, 20 },
-            new object[] { "d_combo5", "Make 5 combos", RewardStat.Combos, 5, 15 },
-            new object[] { "d_hard", "Clear a hard level", RewardStat.HardClear, 1, 20 },
-            // timed goals (doc 46): each takes a Daily slot and pays like the existing actions (15 points); a full day is now 130 points, the milestones stay at 20..100
-            new object[] { "d_pace2", "2 clears at 0.6 plat/s", RewardStat.PaceClears, 2, 15 },
-            new object[] { "d_floor100", "Endless floor 100 in 3:00", RewardStat.Floor100In3, 1, 15 },
+            new object[] { "d_login", "Log in today", RewardStat.Login, 1, 5 },
+            new object[] { "d_play10", "Play for 10 minutes", RewardStat.PlaySeconds, 600, 7 },
+            new object[] { "d_play25", "Play for 25 minutes", RewardStat.PlaySeconds, 1500, 11 },
+            new object[] { "d_play60", "Play for 60 minutes", RewardStat.PlaySeconds, 3600, 15 },
+            new object[] { "d_level3", "Complete 3 levels", RewardStat.Levels, 3, 6 },
+            new object[] { "d_level6", "Complete 6 levels", RewardStat.Levels, 6, 10 },
+            new object[] { "d_level10", "Complete 10 levels", RewardStat.Levels, 10, 15 },
+            new object[] { "d_combo10", "Make 10 combos", RewardStat.Combos, 10, 8 },
+            new object[] { "d_combo30", "Make 30 combos", RewardStat.Combos, 30, 14 },
+            new object[] { "d_stars9", "Earn 9 stars", RewardStat.StarsEarned, 9, 12 },
+            new object[] { "d_hard", "Clear a hard level", RewardStat.HardClear, 1, 12 },
+            new object[] { "d_pace2", "2 clears at 0.6 plat/s", RewardStat.PaceClears, 2, 12 },
+            new object[] { "d_endless50", "Reach floor 50 in Endless", RewardStat.EndlessFloor, 50, 6 },
+            new object[] { "d_endless100", "Reach floor 100 in Endless", RewardStat.EndlessFloor, 100, 10 },
+            new object[] { "d_floor100", "Endless floor 100 in 3:00", RewardStat.Floor100In3, 1, 14 },
+            new object[] { "d_endlessruns", "Finish 3 Endless runs", RewardStat.EndlessRuns, 3, 8 },
+            new object[] { "d_powerups", "Use 3 power-ups", RewardStat.PowerUps, 3, 8 },
+            new object[] { "d_medal", "Earn a medal", RewardStat.Medals, 1, 8 },
+            new object[] { "d_coins", "Earn 2,500 coins", RewardStat.CoinsEarned, 2500, 10 },
+            new object[] { "d_ta", "Time Attack: 60 floors", RewardStat.TimeAttackRun, 60, 9 },
         };
 
-        // daily milestone: points, gems, coins, power-ups (a day of 100 points pays 10 gems + 1,500 coins)
+        // daily milestone: points, gems, coins, power-ups, hero (-1 = one random Common hero of an open region). A full day of 200 points pays 15 gems + 1,500 coins + 1 Common hero.
         static readonly int[][] DailyMilestoneRows =
         {
-            new[] { 20, 0, 300, 0 }, new[] { 40, 3, 0, 0 }, new[] { 60, 0, 500, 0 }, new[] { 80, 3, 0, 0 }, new[] { 100, 4, 700, 0 },
+            new[] { 40, 0, 500, 0, 0 },
+            new[] { 80, 5, 0, 0, 0 },
+            new[] { 120, 0, 1000, 0, 0 },
+            new[] { 160, 10, 0, 0, 0 },
+            new[] { 200, 0, 0, 0, -1 },
         };
 
-        // weekly task: id, title, counter, target, gems, coins, power-ups, hero (the LAST row, the hardest, gives one random Common hero of an open region)
+        // weekly task: id, title, counter, target, gems, coins, power-ups, hero (25 tasks: 120 gems, 10,500 coins, 5 power-ups, 2 random Common heroes; the two hard-clear tasks give the heroes)
         static readonly object[][] WeeklyRows =
         {
-            new object[] { "w_login5", "Log in on 5 days", RewardStat.LoginDays, 5, 8, 400, 0, 0 },
-            new object[] { "w_play100", "Play for 100 minutes", RewardStat.PlayMinutes, 100, 8, 500, 0, 0 },
-            new object[] { "w_powerups10", "Use 10 power-ups", RewardStat.PowerUps, 10, 0, 0, 2, 0 },
-            new object[] { "w_stars20", "Earn 20 stars", RewardStat.StarsEarned, 20, 6, 800, 0, 0 },
-            new object[] { "w_levels20", "Complete 20 levels", RewardStat.Levels, 20, 8, 600, 0, 0 },
-            new object[] { "w_nowall2", "Clear the no-wall level 2 times", RewardStat.NoWall, 2, 8, 500, 0, 0 },
-            new object[] { "w_endless100", "Reach floor 100 in Endless", RewardStat.EndlessFloor, 100, 8, 500, 0, 0 },
-            new object[] { "w_combos150", "Make 150 combos", RewardStat.Combos, 150, 10, 800, 1, 0 },
-            // timed goals (doc 46): rewards reuse existing weekly packages; the gems add only 8 (the gem budget of docs/39 holds)
-            new object[] { "w_pace3", "Best pace on 3 levels", RewardStat.BestPaceLevels, 3, 8, 600, 0, 0 },
-            new object[] { "w_gold5", "Earn 5 gold medals", RewardStat.GoldMedals, 5, 0, 800, 1, 0 },
-            new object[] { "w_ta100", "Time Attack: 100 floors", RewardStat.TimeAttackFloors, 100, 0, 500, 0, 0 },
-            new object[] { "w_hard5", "Clear 5 hard levels", RewardStat.HardClear, 5, 16, 1000, 0, RewardEntry.RandomOpenRegionHero },
+            new object[] { "w_login5", "Log in on 5 days", RewardStat.LoginDays, 5, 4, 300, 0, 0 },
+            new object[] { "w_login7", "Log in every day", RewardStat.LoginDays, 7, 4, 300, 0, 0 },
+            new object[] { "w_play100", "Play for 100 minutes", RewardStat.PlayMinutes, 100, 5, 400, 0, 0 },
+            new object[] { "w_play250", "Play for 250 minutes", RewardStat.PlayMinutes, 250, 6, 500, 0, 0 },
+            new object[] { "w_jumps8000", "Make 8,000 jumps", RewardStat.Jumps, 8000, 3, 300, 0, 0 },
+            new object[] { "w_powerups10", "Use 10 power-ups", RewardStat.PowerUps, 10, 0, 300, 2, 0 },
+            new object[] { "w_powerups20", "Use 20 power-ups", RewardStat.PowerUps, 20, 5, 300, 1, 0 },
+            new object[] { "w_stars20", "Earn 20 stars", RewardStat.StarsEarned, 20, 4, 500, 0, 0 },
+            new object[] { "w_stars40", "Earn 40 stars", RewardStat.StarsEarned, 40, 6, 500, 0, 0 },
+            new object[] { "w_levels20", "Complete 20 levels", RewardStat.Levels, 20, 5, 400, 0, 0 },
+            new object[] { "w_levels40", "Complete 40 levels", RewardStat.Levels, 40, 5, 500, 0, 0 },
+            new object[] { "w_nowall2", "Clear the no-wall level 2 times", RewardStat.NoWall, 2, 5, 300, 0, 0 },
+            new object[] { "w_combos150", "Make 150 combos", RewardStat.Combos, 150, 5, 500, 0, 0 },
+            new object[] { "w_combos300", "Make 300 combos", RewardStat.Combos, 300, 7, 500, 0, 0 },
+            new object[] { "w_endless100", "Reach floor 100 in Endless", RewardStat.EndlessFloor, 100, 4, 300, 0, 0 },
+            new object[] { "w_endless150", "Reach floor 150 in Endless", RewardStat.EndlessFloor, 150, 5, 400, 0, 0 },
+            new object[] { "w_endless200", "Reach floor 200 in Endless", RewardStat.EndlessFloor, 200, 6, 500, 0, 0 },
+            new object[] { "w_endlessruns20", "Finish 20 Endless runs", RewardStat.EndlessRuns, 20, 6, 500, 0, 0 },
+            new object[] { "w_pace3", "Best pace on 3 levels", RewardStat.BestPaceLevels, 3, 5, 400, 0, 0 },
+            new object[] { "w_medals8", "Earn 8 medals", RewardStat.Medals, 8, 4, 400, 1, 0 },
+            new object[] { "w_gold5", "Earn 5 gold medals", RewardStat.GoldMedals, 5, 4, 500, 1, 0 },
+            new object[] { "w_gold10", "Earn 10 gold medals", RewardStat.GoldMedals, 10, 6, 600, 0, 0 },
+            new object[] { "w_ta100", "Time Attack: 100 floors", RewardStat.TimeAttackFloors, 100, 4, 300, 0, 0 },
+            new object[] { "w_hard5", "Clear 5 hard levels", RewardStat.HardClear, 5, 6, 500, 0, RewardEntry.RandomOpenRegionHero },
+            new object[] { "w_hard10", "Clear 10 hard levels", RewardStat.HardClear, 10, 6, 500, 0, RewardEntry.RandomOpenRegionHero },
         };
 
         public static RewardCatalog BuiltIn()
@@ -156,7 +196,7 @@ namespace FluffyClimbers.Economy
             var c = new RewardCatalog();
             c.BuildRegionGoals();
             foreach (object[] r in DailyRows) c.dailyActions.Add(E((string)r[0], (string)r[1], (string)r[2], (int)r[3], (int)r[4], 0, 0, 0));
-            foreach (int[] r in DailyMilestoneRows) c.dailyMilestones.Add(E("dp_" + r[0], r[0] + " points", null, r[0], 0, r[1], r[2], r[3]));
+            foreach (int[] r in DailyMilestoneRows) c.dailyMilestones.Add(E("dp_" + r[0], r[0] + " points", null, r[0], 0, r[1], r[2], r[3], r[4]));
             foreach (object[] r in WeeklyRows) c.weekly.Add(E((string)r[0], (string)r[1], (string)r[2], (int)r[3], 0, (int)r[4], (int)r[5], (int)r[6], (int)r[7]));
             return c;
         }

@@ -439,6 +439,8 @@ namespace FluffyClimbers.Simulation
                 if (prevKind == PlatformKind.LicoriceBelt && prevDir != 0) x = SpecialPlatforms.BeltNextX(prevX, prevDir, dx, w, screen);
                 // After a bamboo flick the next platform sits where the stalk flings you (toward the middle), FlickNextDxMin..Max away.
                 if (prevKind == PlatformKind.BambooFlick && prevDir != 0) x = SpecialPlatforms.FlickNextX(cfg, ref rng, prevX, prevDir, w, screen);
+                // After Dizzy Spores steering is locked: the next platform overlaps the spores, so a straight jump reaches it.
+                if (prevKind == PlatformKind.DizzySpores) x = SpecialPlatforms.DizzyNextX(cfg, prevX, prevW, w, x, screen);
 
                 Fx amp = Fx.Zero;
                 int period = 0, phase = 0, pdir = 0;

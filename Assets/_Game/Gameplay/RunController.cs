@@ -1,5 +1,6 @@
 using FluffyClimbers.Content;
 using FluffyClimbers.Economy;
+using FluffyClimbers.Leaderboard;
 using FluffyClimbers.Monetization;
 using FluffyClimbers.Simulation;
 using UnityEngine;
@@ -30,10 +31,36 @@ namespace FluffyClimbers.Gameplay
         int lastPicked;
         float shotTimer;
 
+        /// <summary>The leaderboard seed ticket of the run that is playing (null = a local seed: the run is never uploaded). Set when the run begins, read when it ends.</summary>
+        public StartTicket CurrentTicket { get; private set; }
+        /// <summary>Longest wait for a leaderboard ticket before the first run of the scene starts with a local seed (the call usually answers in well under a second).</summary>
+        const float TicketWaitSeconds = 1.5f;
+
         void Start()
         {
             GameSession.EnsureInit();
             Input = new RunInputReader();
+            string kind, target;
+            // Signed in with consent: the first run of the scene needs a server seed. Wait briefly (the run has not started, nothing is on screen yet); a slow or failed call starts the run unranked.
+            if (LeaderboardHub.WantsTicket && SelectedTicketTarget(out kind, out target) && !LeaderboardHub.HasTicket(kind, target, GameSettings.Difficulty))
+            {
+                StartCoroutine(StartAfterTicket(kind, target));
+                return;
+            }
+            StartSelected();
+        }
+
+        System.Collections.IEnumerator StartAfterTicket(string kind, string target)
+        {
+            bool answered = false;
+            LeaderboardHub.RequestTicket(kind, target, GameSettings.Difficulty, t => answered = true);
+            float deadline = Time.unscaledTime + TicketWaitSeconds;
+            while (!answered && Time.unscaledTime < deadline) yield return null;
+            StartSelected();
+        }
+
+        void StartSelected()
+        {
             if (GameSession.EndlessMode && !string.IsNullOrEmpty(GameSession.EndlessRegionId))
             {
                 if (GameSession.TimeAttackMode) StartTimeAttackRun(GameSession.EndlessRegionId); else StartEndlessRun(GameSession.EndlessRegionId);
@@ -41,6 +68,30 @@ namespace FluffyClimbers.Gameplay
             }
             string id = string.IsNullOrEmpty(GameSession.CurrentLevelId) ? "lvl_001_01" : GameSession.CurrentLevelId;
             StartRun(id);
+        }
+
+        /// <summary>The leaderboard kind and target (level id or region id) of the run the scene is about to start.</summary>
+        static bool SelectedTicketTarget(out string kind, out string target)
+        {
+            if (GameSession.EndlessMode && !string.IsNullOrEmpty(GameSession.EndlessRegionId))
+            {
+                kind = GameSession.TimeAttackMode ? "timeattack" : "endless";
+                target = GameSession.EndlessRegionId;
+                return true;
+            }
+            kind = "level";
+            target = string.IsNullOrEmpty(GameSession.CurrentLevelId) ? "lvl_001_01" : GameSession.CurrentLevelId;
+            return true;
+        }
+
+        /// <summary>Takes the cached server ticket of this exact run (null when there is none), and asks for the next one in the background (a retry or the next level uses it).</summary>
+        StartTicket TakeTicket(string kind, string target)
+        {
+            if (!LeaderboardHub.WantsTicket) return null;
+            int mode = GameSettings.Difficulty;
+            StartTicket t = LeaderboardHub.TryTakeTicket(kind, target, mode);
+            LeaderboardHub.Prefetch(kind, target, mode);
+            return t;
         }
 
         public void StartRun(string levelId)
@@ -51,7 +102,9 @@ namespace FluffyClimbers.Gameplay
             GameSession.ApplyDifficulty();
             if (GameSession.Progress != null) GameSession.Progress.RecordLevelStarted(GameSettings.Difficulty);   // reward statistics: a hard level was played
             // Every attempt (first start, retry, next level, re-entering the Run scene) gets a new layout seed; a revive keeps the same session and layout.
-            GameSession.AttemptSeed = GameSession.NewAttemptSeed();
+            StartTicket ticket = GameSession.FixedAttemptSeed == 0 ? TakeTicket("level", levelId) : null;   // a QA seed override is never ranked
+            GameSession.AttemptSeed = ticket != null ? ticket.Seed : GameSession.NewAttemptSeed();
+            CurrentTicket = ticket;
             BeginRun(new RunSession(GameSession.Repo, GameSession.BuildRunCfg(), levelId, GameSession.Progress != null && GameSession.Progress.IsLevelCleared(levelId), GameSession.AttemptSeed));
             Debug.Log("Run layout: " + Session.LayoutInfo);
         }
@@ -62,8 +115,10 @@ namespace FluffyClimbers.Gameplay
             GameSession.EndlessMode = true;
             GameSession.TimeAttackMode = false;
             GameSession.EndlessRegionId = regionId;
-            GameSession.EndlessSeed = GameSession.NewEndlessSeed();
             GameSession.ApplyDifficulty();
+            StartTicket ticket = TakeTicket("endless", regionId);
+            GameSession.EndlessSeed = ticket != null ? ticket.Seed : GameSession.NewEndlessSeed();
+            CurrentTicket = ticket;
             BeginRun(new RunSession(GameSession.Repo, GameSession.BuildRunCfg(), GameSession.Repo.GetRegion(regionId), GameSession.EndlessSeed));
         }
 
@@ -73,8 +128,10 @@ namespace FluffyClimbers.Gameplay
             GameSession.EndlessMode = true;
             GameSession.TimeAttackMode = true;
             GameSession.EndlessRegionId = regionId;
-            GameSession.EndlessSeed = GameSession.NewEndlessSeed();
             GameSession.ApplyDifficulty();
+            StartTicket ticket = TakeTicket("timeattack", regionId);
+            GameSession.EndlessSeed = ticket != null ? ticket.Seed : GameSession.NewEndlessSeed();
+            CurrentTicket = ticket;
             BeginRun(new RunSession(GameSession.Repo, GameSession.BuildRunCfg(), GameSession.Repo.GetRegion(regionId), GameSession.EndlessSeed, true));
         }
 
@@ -204,6 +261,7 @@ namespace FluffyClimbers.Gameplay
                 // One call pays the coins (endless or Time Attack table, shared daily cap) and records the run (best Pace, survived Time, floors, splits, captures).
                 EndlessReward er = GameSession.Progress.FinishEndlessRun(endlessRecord, EndlessRewards.DayKey(System.DateTime.UtcNow), out endlessRecorded);
                 ReportRunStats();
+                LeaderboardRunGlue.Upload(endlessRecord, Session.State.Score, CurrentTicket, GameSession.Progress);   // the fresh record of the run; revived runs count too
                 GameSession.LastResult = new RunResult { Endless = true, TimeAttack = Session.IsTimeAttack, RegionId = Session.Region.Id, Floors = Session.State.Row, Score = Session.State.Score, EndlessReward = er, Ticks = endlessRecord.Ticks, PaceNumerator = endlessRecord.Floors, PaceDenominator = endlessRecord.Ticks, Revived = endlessRecord.Revived, Record = endlessRecorded };
                 Hud.ShowEndlessFailed(Session, er);
                 return;
@@ -216,6 +274,9 @@ namespace FluffyClimbers.Gameplay
                 LastReward = reward;
                 RunRecord levelRecord = Session.BuildRunRecord(Application.version);
                 RecordResult levelRecorded = GameSession.Progress.RecordRun(levelRecord);   // doc 46: best Pace and Time per level and mode, medal (a revived run sets nothing)
+                LeaderboardRunGlue.Upload(levelRecord, Session.State.Score, CurrentTicket, GameSession.Progress);   // a completed level only; the fresh record, not the stored best
+                LevelDef nextForTicket = GameSession.NextLevel(Session.Level);
+                if (nextForTicket != null && LeaderboardHub.WantsTicket) LeaderboardHub.Prefetch("level", nextForTicket.Id, GameSettings.Difficulty);   // "Next level" finds its ticket ready
                 GameSession.LastResult = new RunResult { LevelId = Session.Level.Id, Completed = true, Reward = reward, Stars = reward.Stars, Score = Session.State.Score, Floors = levelRecord.Floors, Ticks = levelRecord.Ticks, PaceNumerator = levelRecord.Floors, PaceDenominator = levelRecord.Ticks, Revived = levelRecord.Revived, Record = levelRecorded };
                 Hud.ShowResults(Session, reward, GameSession.NextLevel(Session.Level) != null && GameSession.Progress.IsLevelUnlocked(GameSession.NextLevel(Session.Level)));
             }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FluffyClimbers.Tests.EditModeTests
 {
-    /// <summary>Bug List 6 item 6: the Gameplay setting (Relaxed, Easy, Normal, Hard, Insane) now lives on the level screen; step sizes 20/22/25/28/30 percent.</summary>
+    /// <summary>Bug List 6 item 6: the Gameplay setting (Relaxed, Easy, Normal, Hard, Insane) now lives on the level screen; step sizes 10/20/25/40/50 percent.</summary>
     public class GameplaySettingTests
     {
         [TearDown]
@@ -16,9 +16,9 @@ namespace FluffyClimbers.Tests.EditModeTests
         }
 
         [Test]
-        public void StepSizesAre20_22_25_28_30()
+        public void StepSizesAre10_20_25_40_50()
         {
-            Assert.AreEqual(new[] { 20, 22, 25, 28, 30 }, GameSettings.DifficultyStepPercent);
+            Assert.AreEqual(new[] { 10, 20, 25, 40, 50 }, GameSettings.DifficultyStepPercent);
             Assert.AreEqual(new[] { "Relaxed", "Easy", "Normal", "Hard", "Insane" }, GameSettings.DifficultyNames);
         }
 
@@ -28,11 +28,11 @@ namespace FluffyClimbers.Tests.EditModeTests
             GameSettings.Difficulty = 4;
             Assert.AreEqual(4, PlayerPrefs.GetInt("settings.difficulty", -1), "same PlayerPrefs key as before, saved choices keep working");
             GameSession.ApplyDifficulty();
-            Assert.AreEqual(30, GameSession.Cfg.ScrollStepPercent);
+            Assert.AreEqual(50, GameSession.Cfg.ScrollStepPercent);
             Assert.AreEqual(GameSettings.DifficultyGemPermille[4], GameSession.Cfg.GemSpotPermille);
             GameSettings.Difficulty = 1;
             GameSession.ApplyDifficulty();
-            Assert.AreEqual(22, GameSession.Cfg.ScrollStepPercent);
+            Assert.AreEqual(20, GameSession.Cfg.ScrollStepPercent);
             PlayerPrefs.SetInt("settings.difficulty", 2);
             Assert.AreEqual(2, GameSettings.Difficulty);
             PlayerPrefs.SetInt("settings.difficulty", 99);
@@ -42,9 +42,9 @@ namespace FluffyClimbers.Tests.EditModeTests
         [Test]
         public void SpeedUpIsCappedAndHardAndInsaneStillCountAsHard()
         {
-            for (int i = 0; i < 5; i++) Assert.LessOrEqual(GameSettings.MaxSpeedUpPercent(i), GameSettings.SpeedUpCapPercent);
-            Assert.AreEqual(120, GameSettings.MaxSpeedUpPercent(0));
-            Assert.AreEqual(GameSettings.SpeedUpCapPercent, GameSettings.MaxSpeedUpPercent(4));
+            Assert.AreEqual(new[] { 80, 160, 200, 320, 400 }, new[] { GameSettings.MaxSpeedUpPercent(0), GameSettings.MaxSpeedUpPercent(1), GameSettings.MaxSpeedUpPercent(2), GameSettings.MaxSpeedUpPercent(3), GameSettings.MaxSpeedUpPercent(4) });
+            Assert.AreEqual(8, GameSession.Cfg.ScrollStepMaxSteps);
+            for (int i = 0; i < 5; i++) { GameSettings.Difficulty = i; GameSession.ApplyDifficulty(); Assert.AreEqual(GameSettings.MaxSpeedUpPercent(i), GameSession.Cfg.ScrollStepCapPercent, "per-setting cap " + i); }
             Assert.AreEqual(3, RewardStat.HardDifficulty, "Hard (3) and Insane (4) are hard clears");
             Assert.AreEqual(5, GameSettings.DifficultyGemPermille.Length);
         }

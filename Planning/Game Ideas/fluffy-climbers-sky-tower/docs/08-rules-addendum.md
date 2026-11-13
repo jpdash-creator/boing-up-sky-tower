@@ -22,6 +22,7 @@ Source: the nine additional rules from the product owner, plus the clarifying an
 | 9 | Generic jumper, no reference to any existing game | Section 9 |
 
 ## 1. Leaderboards (rule 1)
+> **Update 2026-11-12 (owner):** the leaderboard actually built is the weekly CROWN leaderboard: three boards (overall, levels, endless), crown = (floors x 10 + combo^2 x 5) x (1 + setting percent), best crown per slot per week, week = Monday 00:00 India time, Firebase + a replay-verifying Cloud Run service, prizes claimed in Rewards. Everything counts (revived runs, power-ups, the player's own rolled hero stats); there is no neutral Ranked mode. The table below (PlayFab, friends boards, Ranked-only) is the old plan and is history. Source of truth: `Planning/LEADERBOARD-DESIGN.md`.
 | Board | Scope | Ranking |
 |---|---|---|
 | Campaign - per level (30 x 15 = 450) | **Friends** board per level (+ top-100 global for levels 5, 10, 15 only) | Score, then time |
@@ -233,7 +234,8 @@ Not in the game: gear (hats, shirts, pants, boots, outfits), Bronze/Silver chest
 - Every step shows a visible **"SPEED UP +N%"** cue (with the SpeedUp sound, doc 12; the cue is its own visual twin for CUX-6).
 - Gem chance per difficulty level: 2.7, 2.7, 2.9, 3.0 and 3.2 percent of rows (2026-11-01, code values; history: 5 to 10 percent). Later in-app purchases may sell extra gem chance.
 - Campaign boss-chase levels use the endless step formula clamped by `CampaignRampCapPercent` (60 percent); endless keeps its own ramp (section 2). Endless mode (an **Endless button on each region's level screen**, owner decision 2026-10-20) is being implemented by another work stream; its final rules will be recorded here and in `Assets/_Game/Simulation/NOTES.md`.
-- Code: `SimConfig.ScrollBasePercent` (120) and `ScrollStepSeconds`; the step table `GameSettings.DifficultyStepPercent` = {20, 40, 60, 80, 100} and the cap `ScrollStepCapPercent` = 400 (set in `GameSession`; the `SimConfig` field defaults 4 and 50 are only the unit-test baseline). The bot proves every level under the scroll.
+- **Update 2026-11-12 (owner): the step table is now 10, 20, 25, 40, 50 percent per 5 s for Relaxed, Easy, Normal, Hard, Insane (`SimConfig.DifficultyStepPercent`); the lines above that name 20/40/60/80/100, 20/22/25/28/30 or +400 percent are history. Owner 2026-11-12 (second decision): there is NO global percent cap; the speed-up stops after 8 steps (`SimConfig.DefaultScrollStepMaxSteps`, 40 s), so the top speed-up is step x 8 = 80, 160, 200, 320, 400 percent for Relaxed .. Insane (`SimConfig.TopSpeedUpPercent`, set as `ScrollStepCapPercent` by `GameSession`). The separate campaign speed ceiling `ScrollMaxSpeed` (4 u/s) still applies (doc 45 section 7).**
+- Code: `SimConfig.ScrollBasePercent` (120) and `ScrollStepSeconds`; the step table `SimConfig.DifficultyStepPercent` = {10, 20, 25, 40, 50} (`GameSettings.DifficultyStepPercent` is the same array) and the cap `ScrollStepCapPercent` = `SimConfig.TopSpeedUpPercent(mode)` = step x 8 (80, 160, 200, 320, 400), set in `GameSession` (since 2026-11-12; the earlier values {20,40,60,80,100} and 400 are history; the `SimConfig` field defaults are only the unit-test baseline). The bot proves every level under the scroll.
 
 ## Jump numbers (owner retune, lists 6 and 7, 2026-10-20)
 | Value | Number |

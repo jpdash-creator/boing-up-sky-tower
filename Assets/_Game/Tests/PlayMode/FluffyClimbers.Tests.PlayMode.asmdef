@@ -7,6 +7,7 @@
     "FluffyClimbers.Economy",
     "FluffyClimbers.Gameplay",
     "FluffyClimbers.Services",
+    "FluffyClimbers.Leaderboard",
     "Unity.InputSystem",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

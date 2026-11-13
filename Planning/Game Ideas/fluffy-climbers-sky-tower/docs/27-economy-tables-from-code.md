@@ -215,7 +215,7 @@ See section 8 for what they pay. Prices: Weekly **$1.49 (Rs 149)** for 7 days, M
 
 - 7 types are sold; stock per type, no cap, no carry cap, no loadout limit in code (rework 2026-10-31); a tap while a power-up is active **adds** its full duration.
 - Bundle discount when buying several: 5 units -10 percent, 10 or more -20 percent (rounded half up).
-- Ranked runs stay neutral; the random power-ups of chests, rewards and bundles pick the 7 types with equal chance.
+- (Owner 2026-11-12: no neutral Ranked mode; power-ups, revives and rolled hero stats all count on the weekly boards.) The random power-ups of chests, rewards and bundles pick the 7 types with equal chance.
 - Not implemented (hidden): Spring Boots, Coin Doubler, Star Seeker, Safety Net.
 
 ### 7.2 Price table
@@ -342,6 +342,8 @@ When characters are switched on, doc 22 open item 1: an average character is wor
 
 ## 11. Main rewards [CODE, DOC 26]
 
+> **Update 2026-11-13 (Main Bug List 2): Daily is now 20 tasks and 200 points (15 gems + 1,500 coins + 1 Common hero a day) and Weekly 25 tasks (120 gems, 10,500 coins, 5 power-ups, 2 heroes a week); a perfect week is 225 gems (was 150). The tables are in `39-rewards-economy.md` sections 3 and 4.**
+>
 > **Superseded 2026-11-05 (Bug List 5 F1): sections 11 to 13 (Main, Daily, Weekly) describe the old star cards, the ten daily actions and the eleven weekly tasks. The current tables, totals and the economic analysis are in `39-rewards-economy.md`.**
 
 Claimed once each, on the Rewards screen, Main tab. PU = random power-up units (60.7 gems each).

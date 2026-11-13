@@ -35,7 +35,10 @@ namespace FluffyClimbers.Gameplay
                 RegionDef r = GameSession.Repo != null ? GameSession.Repo.TryGetRegionByIndex(spec.Region) : null;
                 region = r != null ? r.Name : "Region " + spec.Region;
             }
-            return From(who.Name, spec != null ? spec.Rarity : CharacterRarity.Common, region, spec != null ? spec.Stats : null, spec != null ? spec.Powers : null, spec != null ? spec.Shown : null);
+            ProgressService progress = GameSession.Progress;   // the player's own rolled numbers of a tier hero (docs/44 section 11); the table row when there is no save yet
+            CharacterStats stats = spec == null ? null : (progress != null ? progress.StatsOf(spec) : spec.Stats);
+            ShownStats shown = spec == null ? null : (progress != null ? progress.ShownOf(spec) : spec.Shown);
+            return From(who.Name, spec != null ? spec.Rarity : CharacterRarity.Common, region, stats, spec != null ? spec.Powers : null, shown);
         }
 
         /// <summary>Any hero from raw values (the test fixture builds a fake Legendary this way).</summary>

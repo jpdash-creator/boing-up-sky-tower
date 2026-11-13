@@ -160,6 +160,7 @@ namespace FluffyClimbers.Gameplay
             int cost = NextReviveCost;
             if (progress.Gems < cost) return false;
             Sim.Revive(ref State);
+            reviveRec.Add(inputRec.Ticks);   // leaderboard replay (docs/LEADERBOARD-DESIGN section 5): a revive happens between two ticks, the server puts it back at the same tick count
             // The wallet is charged only after the revive happened. The run's own gems stay in the state (a revive keeps them).
             if (!progress.TrySpendGems(cost)) { State.RevivesUsed--; return false; }
             Revive.RecordGem();
@@ -177,6 +178,7 @@ namespace FluffyClimbers.Gameplay
         {
             if (!AdRewardPending || !State.Dead || GoalReached || !AdReviveOffered) return false;
             Sim.Revive(ref State);
+            reviveRec.Add(inputRec.Ticks);   // leaderboard replay, see TryRevive
             AdRewardPending = false;
             Revive.RecordAd();
             return true;
@@ -314,6 +316,8 @@ namespace FluffyClimbers.Gameplay
 
         readonly InputRecorder inputRec = new InputRecorder();
         readonly GrowingInts curveRec = new GrowingInts();
+        /// <summary>For every revive of the run: the number of ticks recorded before it (the server replays the revive at that point; see RunRecord.ReviveAt).</summary>
+        readonly GrowingInts reviveRec = new GrowingInts();
         readonly GrowingInts splitRec = new GrowingInts();
 
         /// <summary>Gameplay mode of this run, 0..4 (GameSettings.Difficulty); set by the RunController when the run begins.</summary>
@@ -353,6 +357,8 @@ namespace FluffyClimbers.Gameplay
                 LevelId = Level != null ? Level.Id : null,
                 RegionId = Region.Id,
                 Floors = State.Row,
+                Score = State.Score,
+                BestCombo = bestComboSeen,
                 Ticks = RunTicks,
                 LayoutSeed = IsEndless ? Seed : Spec.Seed,
                 AttemptSeed = AttemptSeed,
@@ -361,6 +367,7 @@ namespace FluffyClimbers.Gameplay
                 GameVersion = gameVersion ?? "",
                 Revived = RunRevived,
                 Inputs = inputRec.ToBytes(),
+                ReviveAt = reviveRec.ToArray(),
                 Curve = curveRec.ToArray(),
                 Splits = splitRec.ToArray(),
                 Coins = State.Coins,
@@ -375,6 +382,8 @@ namespace FluffyClimbers.Gameplay
                 Completed = GoalReached,
                 StarMask = GoalReached ? StarEvaluator.Earned(Spec, State, State.RevivesUsed, State.Tick) : 0,
                 Score = State.Score,
+                Floors = State.Row,
+                Mode = Mode,
                 CoinsCollected = State.Coins,
                 GemsCollected = State.Gems,
                 HiddenGems = State.HiddenGems,

@@ -1,0 +1,801 @@
+Done Playing - 
+Issue List 1
+1. The UI looks okay, but has too many flaws - this needs to be tested hard.
+2. Buttons are needed at the bottom for jump and left and right - I was not able to understand game play
+3. The platforms appeared squished.
+4. The look and feel was not polished everywhere, look at each and every screen and correct it.
+5. Do we have a test kit or something to auto test android app - it should be used - very similar to playwright MCP
+6. If there is no platform at the bottom it does not die.
+7. The character is sitting on a gap above the squished platform. Make it feel real.
+8. but the platforms themselves have to go up, so there is always a fear that they will die.
+9. Is there a timer - i did not notice on screen. Remove the timed option, does not help.
+10. We need to make it feel real like ICY tower.
+
+Issue List 2
+1. World map - The numbers appear over the map icons and locked icons, do we need the numbers?
+2. Meadow springs - The number font, let's look at something that matches - that is for the entire game as well - I am not happy with fonts.
+3. The Level 1 is not centered looks lower positioned in ping barrier - again the fonts are not enticing for the game.
+4. The floor is not moving essentially here the screen needs to move. I see something coming up but the screen needs to go down after the first jump. The floor movement increases every 5 seconds - essentially the background and platforms keep going down, if the character does not keep jumping up they die. I do not need something coming from below. 
+5. The coins are in the middle of the platform - they should be on open space or on the platform
+6. On the top there should be a galaxy type thing where the character jumps to cross the screen.
+7. Total number of platforms are low - increase by 5 times
+
+Issue List 3
+1. The game does not look polished feel, more automated testing using AltTester Unity SDK is needed 
+2. The platform looks bad now, the stylish design created from seedance is gone, if we need correctly sized platforms, let's do it.
+3. Also the vertical barrier, there are gaps which is not good, there should be no gap, it should feel like a tower.
+4. Menu should be an icon, and coins, stars and gems should be positioned well.
+
+Issue list 4
+1. In the world map - The names have translucent black background - does not look decent any other way to represent regions?
+2. The speed of movement of the screen is slow, it should be 30% more and increases by some % every 5 seconds. Test different speed variations
+3. Test for Text overlaps with images, there are many. Test everything.
+4. The you fell pop up and every other similar pop up looks stretched. Even the X icon there is stretched - can it be regular size. X icon also does not work.
+5. Asking 20 gems to revive is high use 2 or 5 gems.
+6. Issue with platform again is that character is not standing on platform but on the green line, can you add an offset or something so that it stands on the platform. Same for the coins as well.
+
+Issue List 5
+1. If we have smaller width platform the height between them have to reduce so a single jump can work. I lost 3 times
+2. Also I was thinking that coin should not be collected, instead it is won at the end of the game. What is collected are the 3 stars and the occaisional gem with its rarity. Coins are received by completing the level. If we collect 1 star or 2 star or 3 star we get coins, if we do combos as many we do we get some coins - so the focus is on getting stars and gems so the gameplay would improve. Once they get 3 stars in any level, total number of coins gained from it reduced by 50% and no more gems in completed levels.
+3. You fell banner still looks bad and the x icon as well.
+4. The meadow sprints level screen the coin is out of place
+5. World map issues - the world map shows only 5 levels, but it should be scrollable upwards to show all 30 levels and beyond. Just showing 5 levels looks small - if we need to generate a vertical large openart we should do - but I would like to have many coming soon on it and it should be vertically scrollable. Additionally based on the regions, there will be enough space to write. The banner is taking too much space I can see the region in world map. So take your time to create vertical scrollable for 30 regions world map and make it detailed using see dance so it is impressive and the banner and icon for the name should not cover the actual region. make the world map more detailed.
+6. The map icon does not fit well in world map on meadow springs. looked out of place. Same for the other locked ones. Re do the world map with better details.
+7. The screen for level 1 is not positioned correctly and fonts can improve in the center.
+
+Issue list 6 
+1. World Map
+	a. The header of world map make it transparent or extremely translucent - it is opaque now
+	b. Meadow Sprints icon should be on the green grass place it properly
+	c. Mushroom Grove is on the right, take it to the left on the left side to larger mushroom
+	d. Bring Autumn Orchard to the left near the left tree. 
+	e. The Desert Oasis should be on the sand dune
+	f. Pirate Cove should be just on top of the pirate ship.
+	g. Toy Factory make it right side on the blue block
+	h. Rest are good.
+	g. Apart from first 5 make rest all as coming soon.
+2. I had to cross the star twice to get it on the second star some how it did not register well
+3. Is the speed increase not implemented?
+4. Single standing jump should be able to cross to next platform.
+
+Issue List 7
+1. The Desert Oasis should be on the sand dune
+2. Pirate Cove should be just on top of the pirate ship red flag slightly on top of it.
+3. In the game the single standing jump is too big - it should cross the 1 platform and slightly more, now it almost crosses 2 platform. the running jump I assume is a factor of that as well and crosses 3 to 4 platforms which should do only 2.
+
+Issue List 8
+1. When gem is taken, it shows star from the character. Wrong
+2. The speed increase of screen going down is not moving visbly - instead of 8% or 16% let's do 20% factors instead of 8% factors
+
+Issue List 9
+1. Pirate Cove move it more above the flag.
+2. In the level screen, move the levels circles slightly upwards. There is a gap between the coin star gem and level section. Next see that levels completed goes to the side within the gems and coins thing and make them 2 columns
+3. the coin in that widget is not in the same vertical line with gem and star
+
+Issue List 11
+1. Some of the panels in endless were stretched. We should not do that.
+2. Level Can we make level icons smaller, the star smaller and center between top and the first circle icon.
+3. In App Purchases - In App Store - Come up with in depth exhaustive requirements based on existing games, etc. We should make it part.
+
+Example below
+Tab 1 - Buying Chests and Gears
+ 
+Tab 2 - Buying Power Ups and Characters
+ 
+Tab 3 - Buying VIP and Battle Pass
+ 
+Tab 4 - Buying Gems and Coins
+ 
+10 Gems - $ 0.99 - promotional offer - $0.49
+20 Gems - $ 1.99 - promotional offer - $0.99
+50 Gems - $ 3.99 - promotional offer - $1.99
+100 Gems - $ 7.99 - promotional offer - $3.99
+200 Gems - $ 11.99 - promotional offer - $5.99
+500 Gems - $ 19.99 - promotional offer - $9.99
+1000 Gems - $ 29.99 - promotional offer - $14.99
+ 
+Buying Coins
+100 Coins - 10 Gems - promotional offer - 5 Gems
+200 Coins - 20 Gems - promotional offer - 10 Gems
+500 Coins - 50 Gems - promotional offer - 25 Gems
+1000 Coins - 100 Gems - promotional offer - 50 Gems
+2000 Coins - 200 Gems - promotional offer - 100 Gems
+5000 Coins - 500 Gems - promotional offer - 200 Gems
+10000 Coins - 1000 Gems - promotional offer - 500 Gems
+
+
+power ups
+1. Flight
+2. Rocket
+3. Double Jump
+4. wall sticking
+5. Many more
+
+Chests
+1. Coin Chests
+2. Gear Chests
+3. Power Up Chests
+
+Gears (Ornamental for now)
+1. Hats
+2. Shirts
+3. Pants
+4. Boots
+
+VIP
+1. 6 level of VIP provides higher % of feature - larger jump, more % of gems and coins each level
+
+Characters - Each Region provides 3 to 5 characters - 1 character is free - other characters to buy. They have additional features like - higher gem availability, higher jump power, flight are features of various characters and much more.
+Character Screen and Inventory also needed to be created to dress
+
+Issue List - 12
+1. The UI for shop is all buttons I thought I said tabs, I do not need buttons. Look at latest games and create tabs
+2. The UI look and feel is very retro, can we fix it to look better, the UX design can it use Impeccable and other design skills to make it better.
+3. Let's change everywhere to "Sky Hopper" from "Boing Tower". No more boing tower any where.
+
+
+Issue list 13
+1. Higher levels are too difficult - can the bot finish them? Let's Alttester test each level as real player.
+2. Run jump and bounce from wall seems too bouncy, reduce by 30%
+3. We need to create openart icons for the power ups
+4. Shop - we are using too much space. Make it concise and appear in 2 rows for gems and coins and same for power ups
+5. Use taste and impeccable and design skills from claude to do complete UI polish
+6. Haptic is doing more harm. Remove it.
+7. We have audio - as alttester tests it check audio
+8. We need music as well - in game music based on the region
+
+Issue List 14
+1. Front screen looks very bad, we need to change the bottom to icons the UI is very bad at the bottom.
+2. The Shop UI also does not render like the SS 1 to SS5 I gave same for front screen. too wide - make it simple and minimalistic. Use icons.
+3. Setting background is bad. We need a different background there
+4. Level screen, the background is bad, needs to replace same for gameplay. and pause icon should be checked as well. it is wrong.
+5. Replace with proper icons. the text loosk really bad.
+6. Look at SS1 to SS5 and see the finer elements are brought in.
+
+Issue 15
+1. For sunny beach level 7 I noticed that 2 platforms are together there is a image extraction issue there. check that
+2. For the powers in game the bar of finishing of power overlaps the power, better way to show it?
+3. Resume button on paused looks bigger in than restart or home.
+4. In level selection the 0/15 is going outside on top left and the coin is going on top right. make it slightly wider.
+5. In game I did test purchase of 500 but it shows 0 here, it should be overall and if we get more it gets added there.
+6. Pause menu - shop should be added
+7. World Map, Level selection at the bottom shop, character, gear and daily rewards should be there.
+8. The endless becomes an icon next to text Meadow Sprints completely on the right side.
+
+Issue 16
+1. You fell still has retry big. also add shop.
+2. What is the small icon on shop
+3. World map and level map - remove the play icon - does not make sense.
+4. play and red close should be side by side in level 5 pop up after level screen.
+5. In the slot pop up, there should be the power icons not text
+6. the green and yellow circle surrounding the power are too wide reduce it.
+7. Level clear next button is large - should be same size
+8. The text under level clear should use icons and better text why use bland text writing.
+9. You fell screen, the font for 6/90 of platforms completed, should have some icon and correct font size. review font size of all such pop up screens and use icons where it shold be.
+
+
+Issue list 17
+1. For the power ups only use coins remove the gems to buy the power ups.
+2. Power Ups - Flight and Rocket, Slow Time at 1500 each, Double Jump, Wall Stick, Shield, Magnet are 1000 coins, each
+3. Once a level is cleared with 2 or 3 stars - no gems should appear again. and coin share drops from unclear at 100% to 67%. For example I can earn 300 coins if a stage is unclear, then i can earn 200 coins if the stage is cleared with 2 or 3 stars
+4. Gems should not be common in non gem stages - make it random - levels 5, 10 and 15 have some certainty of gems and even double gem. But other levels there should not be double gem. Double gem is only for level 15. do not make it easy for people to get gems. We want them to go the shop.
+5. Winding line positioned good, but it is using dotted in above image, I want an actual line from before, no dots.
+
+Issue List 18
+1. In game music for each region should be different
+2. You fell should be a sad downward music.
+3. Level Clear music should be positive music.
+4. Standard game music seems ominous, can we make it better.
+5. Test that if the region 1 is completed with each level 2 stars or more. and player has reached level 2, than the main home page shows region 2 and so on.
+6. Shop the power ups height is too big make it minimalistic and reduce height. For each of the power ups there should be a small i with a circle like an very small info icon which explains what that power up is. order it descending of price always for power ups.
+7. The gems and coins are also too big in the shop make it 4 in first row and 3 in 2nd. Do the same for power ups. but it should take the expanse of the width of the phone.
+8. Endless there are no gems, but based on combo we can get more coins.
+9. For each of the levels, what is the mechanics of coin calculation - explain.
+10. Do T15, 17, T35 to 42 and other pending tasks in parallel.
+
+Issue List 19
+1. Main game and In game music through code is bad - Download music and based on the region - find in game music from free packs - do your best
+2. The power ups 4 in row and 3 in row looks bad. make it 3 in each row and 3rd row has 1. Order it low cost first. so that flight is the last.
+3. Flight should not shoot up green star up the character behind, it should add wings as a gear temporarily. Same for rockets as well.
+4. The info for the power up pop up is too big make it smaller and center the text on page.
+5. Do in depth testing in parallel for each of the 5 open regions. there are bugs like multiple platforms appearing in a row and touching one of them I think killed the character. I want 5 testing parallel rows for the 5 regions for functionality.
+6. World map - many places coming soon is not visible - look at the screen and keep it left right down or up so it is visible. Do not overlap with others and not with cloud. additionally, keep the icons on the road only.
+7. For gears
+	a. Gear should work on any character as wearable let me know how it works.
+	b. there are 4 types of gear - Head Gear, body, pants and boots
+	c. Gears are of different rarity - Common, Uncommon, Rare, Epic, Legendary
+	d. Gears also come with own boosts based on the type of gear and the rarity.
+		Head Gear - provides % of shield benefits or % of Slow Time benefit based on different types of Head Gear gear and rarity.
+		Body provides % of Magnet benefits or % of Flight benefit based on different types of body gear and rarity.
+		Pants provide % of Wall Stick benefits or % of Magnet benefit based on different types of Pants gear and rarity.
+		Boots provide % double jump or Rocket benefits based on different types of boot gear and rarity.
+	e. We will create gears for each type like below
+		i. Head Gear - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		ii. Body - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		iii. Pants - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		iiii. Boots - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+	f. There should be a % of gear drop at each level clear
+		Normal levels - Common - 20%, Uncommon 10%, Rare - 5%, Epic - 2%, Legendary - 1%
+		Level 5 and 10 - Common - 40%, Uncommon 20%, Rare - 10%, Epic - 5%, Legendary - 2%
+		Level 15 - Common - 80%, Uncommon 40%, Rare - 20%, Epic - 10%, Legendary - 5%
+		Randomize which type of gear appears
+
+I will talk about Character, inventory and treasure chests in next chat, start with these changes.
+		
+Ensure that you address all the issues reported. 
+
+For extreme clarity use askuserquestion as many times as you need for 100% clarity. 
+
+1. Character - 
+	a. There is only 1 character - Momo, in the character window. Have an icon which opens inventory and another icon for more characters which can replace the central character.
+	b. Right now the gear is so bad that the image sits on top of momo which is bad. Gear should be wearable. Use open art to ensure all gears are wearable with all characters.
+	c. Inventory should be based on above image and there is another screen which i gave for characters.
+2. Treasure chests 
+	a. Will have gear, power ups and coins. It can only be opened with gems - 
+	b. Iron can be opened with 100 gems, Golden open with 300 and allow to open 10 at a time as per image. 
+	c. Iron will have Common - 100%, uncommon - 50%, Rare 25% gears - total of 3 gears, total 3 power up random generator it can be any of 7 types -  and max up to a 1000 coins all together.
+	d. Golden will have Rare - 100%, Epic - 50%, Legendary - 25% - gears - total of 3 gears, total 6 power up random generator it can be any of 7 types, Coins - 3000 coins
+3. For gears
+	a. Gear should work on any character as wearable let me know how it works.
+	b. there are 4 types of gear - Head Gear, body, pants and boots
+	c. Gears are of different rarity - Common, Uncommon, Rare, Epic, Legendary
+	d. Gears also come with own boosts based on the type of gear and the rarity.
+		Head Gear - provides % of shield benefits or % of Slow Time benefit based on different types of Head Gear gear and rarity.
+		Body provides % of Magnet benefits or % of Flight benefit based on different types of body gear and rarity.
+		Pants provide % of Wall Stick benefits or % of Magnet benefit based on different types of Pants gear and rarity.
+		Boots provide % double jump or Rocket benefits based on different types of boot gear and rarity.
+	e. We will create gears for each type like below
+		i. Head Gear - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		ii. Body - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		iii. Pants - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		iiii. Boots - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+	f. There should be a % of gear drop at each level clear
+		Normal levels - Common - 20%, Uncommon 10%, Rare - 5%, Epic - 2%, Legendary - 1%
+		Level 5 and 10 - Common - 40%, Uncommon 20%, Rare - 10%, Epic - 5%, Legendary - 2%
+		Level 15 - Common - 80%, Uncommon 40%, Rare - 20%, Epic - 10%, Legendary - 5
+
+Gears, Treasure Chests and Character should be generated from OpenArt. Gears should be proper wearable for characters not image sitting on top of it.
+
+Ensure that you address all the issues reported. 
+
+For extreme clarity use askuserquestion as many times as you need for 100% clarity. 
+
+Issue List 20
+1. The changes made for Gear, Treasure and Character is pathetic. Scrap all that. Do what i have told above.		
+2. Gear - We need to have gear fitting the character not an image on top of it. It looks horrendous.
+3. Treasure Chest i am sending an image. Use that approach. need to be extremely methodical and thorough doing this.
+4. We should use inventory not dress for characters. There is only 1 character so far which is momo just changing color is not a character. We will use Open art to make more characters later.
+5. Inventory I have sent an image in the chat.
+6. Revamp character, inventory, treasure based on image. Use icons all places do not use text.
+
+This was very bad coding.
+
+Issue List 21
+1. The character in character screen should be the same size playing the game.
+2. The inventory should be the same size of character playing the game. it is too big in game.
+3. The icon for gear also should be showing the actual gear. not a placeholder icon.
+4. The character in character screen is in the sky should be standing on land create a background same as the region playing and standing on land. Go back to the images before SS1 to SS8 and fix everything.
+5. There should also be a character info screen which should say how much % improvement the gear did and it should tie back to the game.
+6. I will not play until all of the inventory and tying it back to character is sorted correctly.
+
+The gear mapping to character and entire character screen looks horrendous.
+
+Issue List 22
+
+Ensure that you address all the issues reported. Work directly on main branch, do not create more branches. Delete other existing branches, if no work is happening.
+
+1. The gears going forward should only have head gear, body gear and boots. Having 4 types makes cuts and it does not look good. Remove the pants gear completely and delete all images related to pants. Here is the update on how gear is.
+	a. Gear should work on any character as wearable let me know how it works.
+	b. there are 4 types of gear - head gear, body gear and boots
+	c. Gears are of different rarity - Common, Uncommon, Rare, Epic, Legendary
+	d. Gears also come with own boosts based on the type of gear and the rarity.
+		Head Gear - provides % of shield benefits or % of Slow Time benefit based on different types of Head Gear gear and rarity.
+		Body provides % of Magnet benefits or % of Flight benefit or % of Wall Stick benefits based on different types of body gear and rarity.
+		Boots provide % double jump or Rocket benefits based on different types of boot gear and rarity.
+	e. We will create gears for each type like below
+		i. Head Gear - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		ii. Body - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+		iii. Boots - Common - 20, Uncommon 16, Rare - 12, Epic - 8, Legendary - 4
+	f. There should be a % of gear drop at each level clear
+		Normal levels - Common - 20%, Uncommon 10%, Rare - 5%, Epic - 2%, Legendary - 1%
+		Level 5 and 10 - Common - 40%, Uncommon 20%, Rare - 10%, Epic - 5%, Legendary - 2%
+		Level 15 - Common - 80%, Uncommon 40%, Rare - 20%, Epic - 10%, Legendary - 5
+2. Character should not be in ploygon format so that the 3 types of gear in its entirety map to all characters not just momo.
+	a. Come up a standard poplygon framework for characters.
+	b. and the gear format for head gear, body gear, boot gear follows and goes over them.
+	c. Body gear should still show hands a little bit if they have them.
+	d. All characters will have hands and legs so that standard polygon format works.
+	e. Each character should have head, body, hands and legs. so work in polygon format.
+3. Inventory - we should only show the gear not where it goes on the body, same as in SS6 image. You see there it only has the gear.
+
+Delete all recent character creations apart from the main momo. Delete all inventory and gear items and start from scratch. Create 2 character polygon format one for momo and another one. then 3 gear set which should be tested on both and follow polygon format.
+
+
+Let's drop all inventory and gear ideas. It is not working out. drop everything related to all gear - remove the code from all screens including treasure chests, character - going forward - character is just character. We so far have 2 character - Momo and Sporeling. Delete all inventory related stuff - Clean up all the code and the character just opens the character sheet. where we can select other characters we have bought. 
+
+1. Remove inventory management and power management for character. We do not need to make it complex any more.
+2. Character just shows the character in a green field like now and a button to select all available characters bought or received.
+3. Treasure chest replaces all inventory related stuff and removes them.
+
+Here is the update on the character and treasure chest requirements.
+1. Character - 
+	a. Character can be of Common, Uncommon, Rare, Epic and Legendary.
+	b. Momo is the common character for region 1. Sporeling is the common character of region 2.
+	c. Every time a region is unlocked we will unlock characters.
+	d. Common character have no special powers.
+	e. Uncommon, Rare, Epic and Legendary character can only be bought through gems and get in treasure chests.
+	f. Uncommon, Rare, Epic and Legendary character can have some special powers amongst the powers - for example some will always have flight available, some will have wall stick, some will have magnet, some will have double jump. It depends on rarity what and how much. Come up with questions for 100% clarity on this.
+	g. In character screen, chracter have rectangle background. use the standard game rectangle background. Common - Light gray box with white seam on the border, Uncommon - Light green with white seam on the border, Rare - Blue with white seam on the border, Epic purple with golden seam on the border, Legendary yellow gold with golden seam on the border.
+	h. Combine buying gems and coins into one and now create a new shop section for buying characters with gems. 
+	i. Update the character screen to have a lot of characters. may be character at the top with green and list of character at the bottom with the representation similar to previous inventory.
+2. Treasure chests 
+	a. Will have Character, power ups and coins. It can only be opened with gems - 
+	b. Iron can be opened with 100 gems, Golden open with 300 and allow to open 10 at a time as per image. 
+	c. Iron will have Characters Common - 100%, uncommon - 50%, Rare 25% gears - 1 character, total 3 power up random generator it can be any of 7 types -  and between 800 to 1000 coins - all together.
+	d. Golden will have Rare - 100%, Epic - 50%, Legendary - 25% - gears - total of 3 gears, total 6 power up random generator it can be any of 7 types, Coins up to 2500 to 3000 coins - all together
+3. Shop
+	a. Should have Treasure chest, then power up, then chracters, then coins and then gems.
+	b. Reduce the font size of popular and best value and keep it centered.
+	c. Move the VIP to the home screen as a separate entity.
+	d. Character - Coming soon in shop.
+4. VIP - Coming soon 
+
+Issue list 23
+1. World map - names should have slightly wider black background looks like letter are cut. Check everywhere
+2. In main screen, world map, level screen, I want the treasure chest replaced VIP
+3. In treasure chest, if the i icon already shows details of the what the chest contains, why have common, uncommon, rare, epic and legendary on the main treasure chest screen. Also the i icon should give info about in text that chracter chances as text not as boxes both for iron and golden power ups are randomized. I do not need the icons. just the text use good font. Main treasure chest screen should just have the chest and on the right side 1 buy and just below that 10 buy. then below golden with same structure.
+4. Economics - corrections 
+Gems (Bring popular and best value just slightly down so that upper border is visible. )
+50 Gems - $ 0.79
+100 Gems - $ 1.49
+200 Gems - $ 2.49
+500 Gems - $ 5.99
+1000 Gems - $ 10.99
+2000 Gems - $ 20.99
+5000 Gems - $ 49.99
+10000 Gems - $ 89.99
+15000 Gems - $ 119.99
+ 
+Buying Coins
+1000 Coins - 50 Gems
+2000 Coins - 100 Gems
+5000 Coins - 250 Gems
+10000 Coins - 500 Gems
+20000 Coins - 900 Gems
+50000 Coins - 2200 Gems
+100000 Coins  - 4000 Gems
+
+Power Ups
+Magnet - 1000 Coins
+Shield - 1000 coins
+Wall Stick - 1000 Coins
+Double Jump - 1000 Coins
+Slow Time - 1500 Coins
+Rocket - 1500 Coins
+Flight - 1500 coins
+
+Treasure Chest - also go deep into what each treasure chest can contain (exluding character) and check economic value
+Iron Chest - 100 Gems
+Golden Chest - 300 Gems
+
+5. Gems and gem pickups
+a. In game - Cut gem pickups to about half. Move gem spots from 5 to 10% to 2.5 to 5%, and keep the rarity weights. That gives about 70 to 110 gems per region ($0.80 to $1.20) and about $4 to $6 over five regions. Free players can still afford an Iron Chest per region.
+b. Treat chests as part of free income. If L15 clears or daily logins grant a chest, count its average value (Iron 82 gems, Golden 266). Set a total free budget of about 100 gem-equivalents per region, covering pickups and earned chests together.
+c. Make the L15 milestone matter more than random pickups. Keep the guaranteed 5 gems on first L15 clear, since it rewards finishing. Random pickups are what you cut.
+
+6. Coins in game
+a. Raise the 3-star payout from about 150 to about 250 coins. That gives a 1,000+ coin power-up every 5 levels. Coins are cheap to give away and it lets free players use power-ups sometimes. Keep the 50% replay rule.
+
+7. Bundles - Create a new icon under the VIP and mark it coming soon - here are requirements below.
+	Gem packs and starter pricing
+	Add a one-time starter pack. For example $0.99 for 100 gems plus 2,000 coins. That is worth about $2.20 at the 1000-pack rate, which is 2.2x. It lowers the ₹142 barrier to a ₹94 first buy.
+	Double gems on the first purchase of each pack. It rewards buyers of all sizes without changing the ladder.
+	Add cheaper ₹ price points for India. For example a 50-gem pack, or a ₹49 to ₹79 offer. A single power-up currently costs ₹142 at minimum.
+	Power-ups
+	Offer bundles. For example 5 for the price of 4 on each power-up. It raises average spend and keeps the base price simple.
+8. Daily Rewards - Coming Soon
+	Give one free power-up per day through a rewarded ad. It builds the habit without breaking the coin economy.
+
+9. Revive
+Raise revive prices to 5 gems, then 10. Revives are the strongest in-run purchase, and 2 gems ($0.02) is almost nothing. Keep one free revive through a rewarded ad.
+
+
+Issue List 24
+Main Screen
+1. In the main screen, writing common soon is not needed, the locked icon small on top is sufficient.
+2. For the bundles, we need a bundle icon like a brown bag tied with a string.
+3. Bring the right icons closer to each other and lower as well
+4. The selected character always shows on the main screen.
+5. If I am on region 1, the background shows, if I am latest playing region 2, that shows and so on. This means latest unlocked region always shows.
+
+Shop Screen
+1. Remove the treasure Chests here.
+2. Always start from power ups, from left, then characters, coins then gems. Make them slightly wider so that takes the screen for now.
+Gems Screen
+1. The height of each is too high gem section like 50 or  100 is high, reduce it further.
+2. The popular should not be in blue it should be below the gem and font size reduced in green italic. Same for 1000 and 100. I also noticed size of gem is smaller. Also best value
+3. Keep 3 gem buys on each row.
+Treasure Chests
+1. I do not need a separate page with open treasure chests, bring the other screen here directly. This open page is waste, delete it.  Directly open it.
+2. Have Iron Chest and Gold Chest (Rename from Golden) written on center top. with Buy and Buy 10 on bottom right of each section.
+3. Make the i icon smaller and Gold Chest and Iron chest pop up make it smaller. and font and text shoudl be centered.
+Coins
+1. Height of coins each sub section is high, remove the text in between and show how many gems needed in the pop up. use green instead of yellow button and use a small gem icon with count. if the gems we have is same or higher then buy else move directly to gem screen, no pop up is needed. This makes the screen sleek.
+Power-ups
+1. The i icon should be on top right of each section.
+World Map
+1. World map section 6 - Dino region, bring slightly down along with text. The dino coming soon the name should be underneath it. The alien jungle should come down and the coming soon comes underneath it.
+The space station comes down again and the coming soon comes underneath. This provides space for rift of time to come down slightly and coming soon should show on the botton.
+
+
+Game play
+1. I see a lot more gems - why is this happening no need to fix, give me reasoning first.
+2. Actual game play - the blue arrow left and right should be same height as green and the arrow centered.
+3. Game should only be with selected character.
+4. I noticed something completely wrong, it seems the positions of platforms are not randomized in any of the levels. we need to do that. We have already set difficultly of each level from 1 to 15 and region 1 to 5 for now. Our job should be to randomize platform placement so that a new game feels different. if it repeats becomes easy. That includes all platforms, regular and special. The gap and how they are placed I will leave to you but this is critical to make the game engaging
+5. In playing candy land, level 7, touching the wall the character died. I had seen this before somewhere else as well. check all walls, we should not die touching them. I repeated it twice. Did not happen in level 6, may be a level 7 bug.
+6. Endless - Text is not center aligned on the pop up.
+
+Character Screen. 
+1. The screen looks good, but the icons are wider so left side is getting cut and resting on top as well when slide is done the top gets cut. make them slightly smaller have some margin.
+2. Remove the lock icon in each. They are slots no need to lock.
+
+General.
+1. Apart from Shop and Treasure Chest, lock everything from testing. world map, level screen, make it real test for me.
+2. The sporeling should be hidden and shown unlocked, when region 2 is unlocked. Similarly we will add character for each region after this test. Default momo is open.
+
+Issue List 25
+0. Finish open items in Docs/22 and 23
+1. In the world map as we are locking, remove coming soon, keep the actual names.
+2. Increase the time of power ups - if you click again it stacks on top of it with seconds. Remove "takes up" to section for all and in code as well. they can buy and use as many as they can.
+	Magnet - 30 seconds by default
+	Shield - 60 seconds by default.  Gongs cannot hurt.
+	Wall Stick - 30 seconds by default
+	Slow Time - 50% slower for 30 seconds
+	Rocket - covers 20 floors up to 4 seconds.  Gongs cannot hurt.
+	Fly upward for 10 seconds and allow steer left and right. Gongs cannot hurt.
+Make necessary code changes to ensure this works.
+3. World Map
+Section 1 - Candy Canyon goes slightly up and icon shows below, side, Bamboo Temple shows below icon.
+Section 2 - Frosty Peak shows below icon
+Section 4 - Arcade Realm shows below icon, The steampunk skyport icon and text comes down slightly down. and so does Cloud kingdom icon and text
+Section 6 - Only show names, Names come below in section 6. Refit of time comes down.
+4. Game difficulty - Increase the game difficulty - I was able to create multiple levels easily. Thought that is the ask, I need more special platforms starting region 1 which makes the game challenging even more. Askuserquestion to talk about types of levels and additional difficulty for each region one by one. Use OpenArt to create the platforms region by region. Let's decide everything and them build new difficult and unique platforms for region 1 first and implement, then we do each region one by one and test one by one.
+5. Gem availability - reduce by 30% in game.
+6. Implement the randomness and game difficulty in endless as well.
+
+Issue list 26
+1. All regions
+Proposed rows
+Levels 1 - Tutorial - Keep at 60 rows - Platform at 1.3 - Special Platforms 10% to 30%
+Level 2 to 5 - 90 rows - Platform at 1.3 - Special Platforms 30% to 50%
+Level 6 to 9 - 120 Rows - Platform at 1.3 - Special Platforms 40% to 60%
+Level 10 - 14 - 150 Rows - Platform at 1.3 - Special Platforms 40% to 60%
+Level 15 - Final Level - 150 Rows - Platform at 1.3 - Special Platforms 50% to 70%
+
+Rules
+Level 5, 10 - combo chain, remove gem icon (Remove Survive Wave)
+Level 7 - No Wall Touch
+Level 8 - Gem Icon - Get gems (some possibility of double gems.
+Level 15 - Get Gems - double gems
+Rest all levels reach floor and last platform.
+
+Once this is implemented use alttester to test each level from level 1 to 15
+
+Start below things.
+1. Gems, Treasure Shop, Bundles, Subscription - Give the momo shopkeeper and brownish background for them as in all images
+2. Gems - Match the look and feel of the Image SS 14, so it looks polished and the color scheme. Momo seller is fine.
+3. Treasure Shop - Match the look feel and text representation of Treasure Shop SS13, so it looks polished and the color scheme. Momo seller is fine. - See the image is small text there directly. And the color scheme looks very good. The iron is different blueish, Gold have different color also the text is direct with different color on what is given in the box and no i icon is needed.
+4. Subscription use Momo seller and same background and change VIP to Subscription. Subscription will be again weekly or monthly, and paid by money based on what you see and what we have provide what you want to add in subscription based on what we have - characters, power ups, gems and coins, there is purchase reward and daily rewards either weekly or daily. People should calculate and feel they are profiting. We need a new ticket like subscription icon from openart.
+5. Bundles, come up with at least 1000 bundles which can be sold with gems - combinations power ups, gems and coins and characters - Multiple combinations. These bundles show up any 6 directly in bundles page. And there can be a time and any of the 500 bundles come up on bottom right with a 5 minute timer to buy. These timer bundles will show 30% off. In the bundles screen, people can reset to another bundles with 100 coins or 5 gems and another 6 random bundles appear. These bundles range between 200 to 500 gems. Come up with a new bundle icon which should have good outline like a red and brown bag with gold thread loosely tied. Use SS 12 as a reference to create an icon for gem, coin, power up and characters in a bundle. Skip the ad ticket thing.
+6. Rewards - 
+	a. Add Main Rewards - Collect overall stars, 25 stars, 50 stars, 75 stars, 100 stars, 125 Stars, 150 stars, 175 stars. Complete each region by name - For now 5 regions -
+	b. Add Daily rewards - Daily rewards can include login, completing a level, completing 3 levels, doing a combo, playing different difficulty levels, completion of no wall touch, gem levels, doing combo, collecting all gems in a level and many more. We are not giving chests like it shows here. Every action completes 10 points to a total of 100 points. So there are 10 daily actions - login, play time. We can give gems or coins. At the end there is a chance we can get a power up as well. c. Weekly Rewards - login every day of week, Play for 100, 150 mins in the week. Total count of combos - 5, 10, 25, 50. and many more.
+	
+Issue List 27
+1. Shop - the bottom icons, do not need text. Only icons. The header in each of the shop should be yellow. the font should reduce and should use Pascal Case. Like Bundles and italic it. Same for all the others. Use the same color and representation. 2. Chests - For example Chest header is red. it should be yellow with Pascal and italics. height of iron and gold chest should be smaller so it shows within the same page. Just 2 items we should not scroll. 
+3. Bundles - Refresh does not need a pop up. Have direct icons of 5 gems and 100 coins. 
+4. Coins and Gems also follow the same header situation. Else they are perfect.
+5. Power Ups - Do the same yellow header "Power Ups" italics it. i icon slightly more top left reduce the height of the power ups. Center the power icon within the light blue section. Use the same color scheme from coin and gems in power up and bundles.
+6. Redo the Main, Daily, Weekly Rewards UI - Generate OpenArt as you need to match our game but the UI needs to look sleek and polished like in the images. the current just looks very bad. SS16, SS17, SS18 attached as reference. Like you generated for shop do something. Use the icons from world map to use for main rewards.
+7. 
+
+Issue List 28
+1. Bundles - Bundles again looks too big - Make it concise like treasure chest and reduce height where possibly. The buying section can come on right side so height may reduce. In the bundles remove gems as a concept. No point buying gems by paying gems. On the top looks good, but we cannot understand if it is refresh, please see you add some header and some space there. Reducing height them will make them look sleek
+2. Treasure Chest looks perfect. Power ups look perfect. Coins look perfect. Gems look perfect.
+3. Until we start any region, their character should be hidden, There should be a flash pop up (use open art) to show the character opening that region for first time and then it gets added to the heroes screen. For example Sporeling should be hidden. And shows up only when we start region 2. Momo always unlocked. In future there will be a designated character for each region - Momo - Primary designated starting region 1 - so always available, Sporeling is Region 2, Create new open art for Region 2, 3, 4, 5 based on their region name. It can be a mushroom girl for region 2, Beach type for Region 3. Candy cute design for region 4, A cute Shaolin monk or a furry shaolin monk for region 5. These are all Common Characters in rarity. 
+4. RC1 to RC 14 - check each one and match and askuserquestion very detailed questions for 100% clarity. Do not take on face value. If anything conflicts which is already coded you must ask me. read the text file.
+
+Issue List 29
+1. Home Screen - The locked bundle icon can be removed. The subscription can now replace treasure chest at the bottom and daily rewards can come down above heros with some gap. 
+2. World Map - We should see Shop, Subscription and Heroes, and again on top of heroes like on home screen, we can add daily rewards at same gap so it looks correct.
+3. Shop
+	a. Bundles
+		i. The bundle icon on the bottom should match the screen bundle icon. The screen bundle icon for each is the perfect one, use that for the bottom as well.
+		ii. The height of each bundle if 1 row or 2 row make as 2 row - so it looks consistent.
+		iii. Refresh Bundles - make it right aligned.
+		iv. Increase font size of Draw 6 new bundles slightly
+	b. Treasure Chest, power up, Coins, Gems, look good.
+4. Power Up - Flight - For the Flight create a new open art, the current drawn looks hideous. It should be same as character size and attaches behind them like now.
+5. Do end to end testing using alttester for region 1 after this.
+
+List 30
+1. Now that Region 1 is getting verified and ready, I want the same changes done in region 1 in regards to special platforms and unique platforms done in Region 2 to 5. Do it the same way of 3, 2, 2 images like we did for region 1 for each of region 2 to 5. Come up with new and unique platforms and hazard platforms which are region specific.
+2. Come up with a new character stat sheet based on attached image, I would like to see the photo of the hero like Momo, Type either Common, Uncommon, Rare, Epic, Legendary, all the standard stats in a 2 way tabular format as shown in image. But I would like to use the coloring scheme of ours. Use OpenArt to create sleek images like Shop. Come up with 4 variations. This sheet should open as new refined screen when we click the hero character on the screen top center one i icon next to it or on the hero inventory.
+3. For all the special and harzard and unique platforms, we have created some code drawn art to explain what it does like up or down or tilt. remove all those code art. let the player figure it out. Do it for all platforms. Keeps surprise.
+4. Subscription - Rename it as VIP. First section is "Subscription" underneath. Each Weekly and Monthly are extremely big and scrollable which is bad, make it crisp, concise and sleek like we see in Chests for Iron and Golden Chests. 
+
+Issue List 31
+1. The Character screen the fonts are too big. Reduce the font size and center them even reduce the icons on the top, it should look sleek, it does not right now. It looks bad. Look at both stats and Details page.
+2. I icon should not be on home screen. Remove that. It should be on hero screen next to shown hero complete right side of top hero shown in center top.
+3. Looked the game plan for region 1 and 2, do your complete testing from your side to see if there are any bugs.
+
+Issue List 32
+1. Game play
+	a. The red line is at the bottom of the playable screen, seeing a red line is not good as well. It should be at the bottom of screen.
+	b. Region 2 platforms are good to go.
+2. World map - The bottom section is still light blue The bottom should not have any blank cover. Starts from cloud
+3. Heroes - The hero list can be smaller to show a 5 by 4 grid. Clicking on the hero is only selection. The i icon opens the character stat. The state looking at common there is some vertical centering issues. Also the image also have black line above gray image and below as well. The blue back icon and red x  are very big make them smaller to ensure sleek view.
+
+4. The home screen, shop and world map, the coin, gems, star should move up, who moved it down, it should on the top of the screen. Now it is blocking momo shopkeeper face, 
+
+I think a lot of screens are messed up - make them sleek and fix these bugs.
+
+Issue List 33
+1. World Map - Bring Meadow Springs down on the pond and have the text on the right. Mushroom Grove also down slightly. Candy Canyon Text up next to it on the left.
+2. Game play initially when we see level 2, 90 then 2 blue icon and 1 green icons small ones, we do not need that.
+3. For Bundles, similar to subscription add a worth value in there for the bundles.
+4. Fell or died or game over during game play - have AD and revive with gems next to each other in a single line. and reduce the height of that pop up. AD - first time AD - 30 seconds ad, 5 Gems, If player does AD, next time 1 minute, 5 Gems, but if they use Gems it goes to 10 gems, after 2 ADs no more ads.
+5. Setup SDK for ADs and payments and create for all $ and money related items create proper ids.
+6. Heroes - in the stat sheet. the back icon and close icon comes down just below Hero on the top. Then create create 2 left and right green background instead of blue which can move the characters sheet to other characters. based on the table in hero list. left most is momo, so when it is on momo the left icon is disabled and keep going till right till the last and at the end last right is disabled.  In between those 2 is in use or select hero button.
+7. Now for the heros, keep momo main stats as is, change, Capi, Otto, Bonbon, Bao - Jump, Speed, Control, Wall Bounce randomize by 10% increase or decrease on each of them. Add + some coins for all characters (between 50 to 100 in 10s only), Add + some gems (between 1 to 5). This will allow characters to behave differently.
+8. On the hero sheet. Reduce the character display on the ground by 20% then above the chracter with some space write the name in italics in black then the character stands then the character window 5x4 starts. I icon stays where it is now. 
+9. On top of the I icon create a character merge icon (this is a new openart icon). This will eventually act like a merge for 3 characters 3 common create uncommon, 3 uncommon, create a rare, 3 rare create an elite, 3 Elite create a legendary. I have attached 2 images, From SS 20 look at the forge, but make it an icon for character merge instead of weapon forge here. SS 19 should give inspiration for character merge. We again use a Momo spell or wizard style background merging character. We need a forge button here and some screen back icon or close icon as usual. Use OpenArt to have any icons and background screen. Background screen make it sleek (similar to shop but not copy) unique for character merge creation. Once the character is craeted, we already have 
+10. Now create a uncommon Momo, Capi, Bonbon, Otto, Bao character with some minor armor with the image itself, this is not gear. Additionall it should have 10 to 20% + powers in some of the fields not all. Give new names.
+
+
+Duplicate Characters
+1. Daily Rewards - complete all and at the end you get a random character based on opened regions and available characters for the region. 
+2. Weekly Rewards Complete everything and you have 100% for 2 random common Characters and 60% of 1 uncommon Character
+3. Complete all 15 levels will give you a 100% chance at 2 uncommon character from the region or 60% chance at a rare character.
+4. Bundles, will give have characters now - Create another additional 1000 bundles with characters now. Bundles have 100% chance of Common and Uncommon Characters, 40% chance of Rare, 20% chance of Elite and 5% Chance of Legendary Character. We do not show which character, it randomly picks based on this. Prices have to match, so more common character to ensure that worth stays the same for the bundle.
+5. Treasure Chests also give you characters, Add worth to chests. Based on gems it can be 100% 3 common random characters for open regions, 50% Uncommon in Iron chests for open regions, you decide count and change how Chests are economic viable around 3x type. Then For Gold Chest 100% 2 uncommon possibility and 50% 2 Rare possibility. Do your calculations.
+6. Subscription should also add character, decide how to make it lucrative. Weekly gives Uncommon Character, Monthly gives rare character. 
+
+In future we will add more characters across all rarity and regions. For add 5 more unique characters for meadow regions at common level. Each should have a Uncommon, Rare, Elite and Legendary including Momo. Each character image the armor or clothing improves with rarity. In character screen for system_test on add a button to add 2 of selected character. This is test add so that we cna test forging.
+
+This is unique character creation tied to region, create using Open Art, 1 character at a time.
+
+Additional Input on Character Rules beyond common. Store in code and document so we can randomize.
+Uncommon - adds 10% to 25% increase any 2 - in Jump, Speed, Control, Wall Bounce and + it does Coins add (between 50 to 100 in 10s only), Add + some gems (between 1 to 5). Plus adds 1 hero power tied to their region.
+Rare - adds 25% to 50% increase any 3 - in Jump, Speed, Control, Wall Bounce and + it does Coins add (between 200 to 500 in ranges of 10s only), Add + some gems (between 5 to 10). Plus adds 2 hero power tied to their region.
+Elite - adds 50% to 75% increase any 3 - in Jump, Speed, Control, Wall Bounce and + it does Coins add (between 500 to 1000 in ranges of 10s only), Add + some gems (between 5 to 10). Plus adds 3 hero power tied to their region.
+Legendary - adds 75% to 100% increase all - in Jump, Speed, Control, Wall Bounce and + it does Coins add (between 1000 to 2000 in ranges of 10s only), Add + some gems (between 5 to 10). Plus adds 4 hero power tied to their region.
+
+Ensure that power additions and changes above keep the chracter still playable and does not make it difficult
+
+Issue List 34
+1. Login - Login with Google Play and Guest provide both. We need to create the login integrated with google and still allow guests to play casually.
+2. Character Inventory - This is a hidden inventory of all heroes that are unlocked. This is the unique list of characters. This is never shown to players.
+3. Hero Inventory - This is the player inventory of heroes that the play or the guest account contains. This is the actual list they can play with. The Hero list visible is actually hero inventory. Now this can keep copies. The hero list is essentially a hero inventory - list a list of heroes which can have copies as well. We need to maintain a separate character inventory in the game, which is hidden, and a hero inventory for every logged in user. It seems we have mixed both. Add copies can add new cards in the list. It seems the copies are hidden in the merge. How about a small number in bottom right of the card showing number with a minimum of 1 as the card is available.
+4. Bundles, will give have characters now - Create another additional 1000 bundles with characters now. Bundles have 100% chance of Common and Uncommon Characters, 40% chance of Rare, 20% chance of Elite and 5% Chance of Legendary Character. We do not show which character, it randomly picks based on this. Prices have to match, so more common character to ensure that worth stays the same for the bundle. CREATE A BRAND NEW SET OF 2000 bundles scratching all that was there and new add characters as well. This deletes all existing and create new set.
+5. Settings - Create a small admin button which on click opens another admin pop up It has Game test, System test, hero test and others as needed. System test opens everything. Settings should also have Reset Progress and Restore Purchases, we need to record everything in google account for all purchases right?
+
+Additional Input on Character Rules beyond common. Store in code and document so we can randomize.
+Uncommon - adds 10% to 25% to common character - increases any 2 - in Jump, Speed, Control, Wall Bounce and For Coins and Gems - Direct Uncommon gets - + it does Coins add (between 50 to 100 in 10s only), Add + some gems (between 1 to 5). Plus adds 1 hero power tied to their region.
+Rare - adds 10% to 25% to uncommon character increase any 3 - in Jump, Speed, Control, Wall Bounce and For Coins and Gems - Direct Rare gets -  + it does Coins add (between 200 to 500 in ranges of 10s only), Add + some gems (between 5 to 10). Plus adds 2 hero power tied to their region.
+Elite - adds 10% to 25% to rare character increase any 3 - in Jump, Speed, Control, Wall Bounce  and For Coins and Gems - Direct Elite gets  + it does Coins add (between 500 to 1000 in ranges of 10s only), Add + some gems (between 5 to 10). Plus adds 3 hero power tied to their region.
+Legendary - adds 10% to 25% to Elite Character increase all - in Jump, Speed, Control, Wall Bounce  and For Coins and Gems - Direct Legendary gets  + it does Coins add (between 1000 to 2000 in ranges of 10s only), Add + some gems (between 5 to 10). Plus adds 4 hero power tied to their region.
+
+You had increased jump for the uncommon momo by 34% and uncommon Capi Wall Bounce by 35% - These rules are important to be followed.
+
+Issue List 35
+1. The Meadow Springs icon more to the left and get meadow sprints text just to the right of it on world map.
+2. Shop - Top right I see a ticket icon remove it. On the bottom - I would like - Bundles, Crown icon (This will have chests inside it then subscriptions below it), then Heroes - coming soon, then Power up, Coins and Gems. So now the crown icon both contains Chests and then Subscription. It is called VIP - has 2 subscription first Subscription then under that Chests. Header should read vip.
+3. Home Screen - Remove the Subscription icon and make play icon width of 2 icons and of same height as others. Setup login somewhere as in other games, google login and stuff with integration.
+
+
+Bug List 1 - Create a Bug-List-1.md
+1. Home Screen -
+	a. Remove the Heros, Daily Rewards, Shop from Main Screen. Only have the Play button. Remove the Play Text from Play button. Have the play icon center vertically and horizontally and extend Play button end to end.
+	b. Make the Settings come just above Play button now blue button similar size as shop in the place of Daily Rewards.
+	c. Move the G google sign up. We will only do google sign up in Settings. Once we connect to google account and do a test run, we also want to do a pop up to the user to connect to google account as well, and they can do it in settings as well.
+	d. Remove all the coin, Gem and Stars from Home Screen.
+	e. Now the home screen is good
+2. Settings
+	a. We need to redo the settings to look like the image. But only have google play integration not everything else. Allow to save progress, if google play, it saves to google, if guest then locally on phone.
+	b. currently the UI of settings need improvement as well. use the image SS 21 as reference
+3. Settings Admin
+	a. Structure the settings admin with System Test on the top - This off is PROD ready.
+	b. Structure Jump test as GAME TEST OFF and ON. Then Have Shop Test, Character Test, etc.
+	c. Height of Settings and Settings Admin are too much make it sleek and see if you need any openart icons.
+4. Shop
+	a. Shop - Bundles - 
+		i. Bundles only between 200 to 600 gems. Not sure who told you to take till 3000 gems. 
+		ii. The worth of the bundles should stay between 2.0 to 3.5 x the gems. We do not need to mention the dollars at all. Remove it. Worth now shows on top right of the card.
+		iii. Regenerate bundles with now Coins, Power Ups and Character - we can only give regions that are open - Uncommon - 100% chance, Rare - 50% Chance, Epic - 25% Chance.
+		iv. Delete existing and Regenerate fresh 2000 new bundles with names gems with Worth Staying between 2x to 3.5x. Names have been decent, so use similar new 2000+ names. It should be within 200 to 600 gems only.
+		v. Hero Card should have icon and ? - We do not need words.
+		vi. Very similar to power-ups having an icon on top left, we need an i icon for Bundles as well on top left explaining what is in the bundles which also covers the rules of bundles listed above - but very specific to the bundle in question. Talks about the chance of character and the make up of contents how much x worth it is from the gems it was bought.
+	b. Shop - Crown - Remove the Header called VIP, instead the yellow banner should read Subscription, Then have a similar yellow Banner Banner for Chests center aligned like we hav VIP on the top. with a slight gap - so the UI looks good.
+	b. Shop - Heros and Power Ups
+		i. We are merging Heros and Power-ups into a single bottom icon. Create a new Bottom Open Art which have Momo icon and Power up together as a single icon.
+		ii. Now Heroes yellow banner stays on top and just below it with a small gap comes the card of Heroes coming soon.
+		iii. Underneath that the Power-ups Yellow Banner comes and we move the power-ups to the single page.
+		iv. The singular power up icon at bottom goes away as we have merged character and power up as single.
+	c. Shop - Gems and Coins
+		i. We are merging Gems and Coins into a single bottom icon.  Create a new Bottom icon Open Art which have Gem icon and Coin icon together as a single icon.
+		ii. Gems with its yellow banner comes on top, and after a gap Coins come up with the coins open art yellow Banner and coin follows after it.
+		iii. The singular coin icon goes away as we have merged Gems and coins.
+	d. Generic - Shop now has Bundles, Crown, Character / Power-ups, Gems / Coins - 4 icons wider in size and evenly placed.
+5. World Map -
+	a. Move Sunny beach near the beach and water and it gives space for the text to show well.
+	b. The text which is in black background increase transparency by 30%.
+	c. For all regions which are 6 to 30 - replace the actual text with placeholder text - Coming Soon.
+	d. As the crown is now in Shop, Remove the Crown button. At the bottom we have Shop, Character (Use the new Character / Power Up icon), Daily Rewards. All equal width and evenly spaced.
+	
+	
+Bug List 2
+1. World Map
+	a. Hide all the Text with a flag and mark the flag as false. True shows the text and false hide it, maintain it in code for now. If there is a coming soon there then we have to keep it. So the flag has to consider only actively availability ones. All coming soon, should have coming soon showing.
+	b. Move all the icons to the road for region 1. For example the meadow springs icon is on the pond bring to road. Sunnch beach bring to road, but bring it slightly down so it is just next to beach water. Check all 30. It should align with region.
+2. Shop
+	a. At the top, Bundles with yellow banner, Subscription with Yellow Banner, Heroes with Yellow Banner, Gems with Yellow Banner are tied to the shop header, when we scroll it stays, It should be part of the scroll, so bring it down just above the text and keep the momo shop completely visible. This way when we scroll Gems, or Subscription, or Bundles, Heroes, get hidden as well due to scroll. Now they are fixed.
+	b. Shop - Bundles - Let's redo with below rules.
+		i. Bundles only between 200 to 500 gems.
+		ii. The worth of the bundles should stay between 1.5 to 2.5 x the gems. Show like in smaller text by 30% "Worth x3.3" foor example and use the same font as the bundle name and italics. Do not use the star icon.
+		iii. Regenerate bundles from scratch with now Coins, Power Ups and Character - we can only give regions that are open - Uncommon - 70%, Rare - 20% Chance, Epic - 10% Chance.
+		iv. Delete existing and Regenerate fresh 2000 new bundles with names gems with Worth Staying between 1.5x to 2.5x. Names have been decent, so use similar new 2000+ names. It should be within 200 to 500 gems only.
+		v. Hero Card should have icon and ? - We do not need words.
+		vi. In the i icon for Bundles - This looks good. Add a small funny 1 liner for each on the pop up on what it means based on the name.
+		
+Bug List 3
+1. World Map - Move the mushroom icon slightly up and Meadow icon slightly lower on the road.
+2. Shop - Heroes and Power-ups - In that the screen starts from power-ups. and hero is hidden, start from heros. which gets hidden whenever we get in. Additionally - Shop entry point should always be Gems and Coins on the top.
+3. Shop - Bundles - The name on the bundles screen, make it at the same line as the i icon.
+4. Rewards - Main, Daily, Weekly - This looks horrendous. Make it look sleek - use the image SS16, SS17, SS18. Redesign the background the presentation of this. This current code looks horrendous. Use Open Art as needed.
+5. Create the new unique platforms for Region 4 and Region 5 - 7 each aligning to those respective regions.
+
+
+Continue all pending items  and add Bug List 4
+
+1. Shop Bundles - Like we have done in coins where the green button is wrapped in brown, can we do that in Bundles Green button for each of the bundles, we do not need to do for refresh.
+2. Shop Heroes section - I would like 4 small cards with Momo question mark like in Bundles but at the bigger size of 2 per row and 2 columns created. I would like to have Uncommon, Rare in first row, Elite and Legendary in 2nd row. We already have documented what the gem price is. Uncommon 150 Gems, Rare 300 Gems, Epic 700 Gems, Legendary - 1500 Gems. Have that with an i icon to explain the hero some properties for each level and talk about open regions heros only. Look and feel should be same as power up but 2 rows 2 columns and uncommon, rare, elite and legendary have their own background tile as decided, if you do not have it ask. All buttons should work, but ask there are no rare, elite or legendary, so they just give a short pop up.
+3. In settings admin - create a button also for main rewards unlock to review all regions. I might have to make some changes.
+4. Main, Daily, Weekly - Main Rewards needs some sort of a background on the top, repeat what you have for daily. In any of the main or weekly rewards, if we complete something and have not claimed, the button becomes green so I can press on it apart from claim all. Next here is apart from the header, the main, weekly, daily rewards are too widely spaced vertically, can we some reduce height of each card and the gap so it looks sleek.
+
+First write to Bug-List-4.md
+
+Bug List 5
+1. Rewards
+	a. The main rewards need complete revamp and it should be based on region, now everything is in a single place and unlocking a region, does not unlock the main rewards for that region. Also it should be a slider for all 30 regions, 6 to 30 marked coming soon. Redo completely and mapping the region goals and tasks with rewards. Redo the rewards as well and do a complete economic analysis as well. Do not give away too many gems. Every time a region is clicked it has its own goals and tasks. Not a static set of tasks - Stars, clear levels, Jumps, total combos in the region, etc. clear all levels also at the same level the purple clear all levels should just be part. Look at daily rewards, weekly rewards. We need to do it at region level. The 1, 2, 3 from main rewards should be remove them. Use the UI from Daily or weekly, but use the jumps, levels, combos, stars, etc. Play time for the region.
+	
+	b. Redo the rewards of daily and weekly - Login, play time, combo, total, clearing hard levels, no walls, using power up (probably in weekly rather than daily) - 
+	
+	c. Rewards can also give common characters for open region either in main or weekly rewards depending on economics.
+	
+	Rewards should be achievable without buying using real money.
+So redo rewards UI for Main, and redo the tasks for all main, daily, weekly
+
+	
+	For extreme clarity use askuserquestion as many times as you need for 100% clarity and continue asking to understand what I want.
+2. Hero Screen - We need to revamp your view of character screen
+	a. Bottom row should be removed. "Add 2 copies" is only for test mode.
+	b. We need to create a row just below I icon and above the card. One should be for "All Heroes", other move the Merge button to the row and write Merge text next to it.
+	c. All Heroes - This opens up another card list entire screen which shows list of all characters. Anything that is not available with the player is locked like the common ones, even in test mode. This includes also Rare, Elite and Legendary characters showing up here. This will have 3 cards per row and as many rows. This is essentially a Hero inventory, if they unlock a character, it shows up and there is an i icon which shows their details. Heroes also are here divided by regions.
+	d. Main Hero Screen - This is the list of heros the player really has access to or has bought or merged. This should not show all characters. In test mode when regions are unlocked only common should show not uncommon as well. Uncommon are still locked as they are neither merged nor bought, so they stay in all heros as locked. Heroes do not have count next to them any more, instead, if we get more heroes of the same level like Momo Common, another card comes, so this is the entire list the player owns not entire available list which is a mistake I see now.
+	e. In the Merge Screen, instead of showing count, show the list of characters which can be merged. if there are other characters that cannot be merged, do not bring here. If there are 2 momos, no, 3 momos 2 Capi then get 3 momos, 4 momos, 3 capi and 2 Bonbon, then show 3 momos and 3 capi. So this is the list of heros that can be merged. After merge is completed, clean from the bottom the unmerged heros, essentially, if 3 momo are merged, remove them from bottom list and uncommon momo gets added to main hero screen. after that we have merged 3 capi, then remove here and main hero screen gets added. Do not show numbers on hero card at all.
+	
+	I have given SS19 - which shows tick mark when a hero is selected. if we select wrong heros the merge button will not be enabled.
+3. Shop Treasure Chest - Add Heros into the mix - same as Bundles - Make all changes necessary and ensure that we add worth for each chest like in Bundles
+	Iron Chest - 70% Common, 20% Uncommon, 10% Rare
+	Gold Chest - 50% Uncommon, 40% Rare, 10% Elite
+4. Heroes
+	Region 1 - meadow Springs - Momo - currently we have common and uncommon, Add Rare, Elite and Legendary
+		4 More new characters aligning with region 1, once we finalize Common, we need to add uncommon, Rare, Elite and Legendary
+	Region 2 - Mushroom Grove - Capi - currently we have common and uncommon, Add Rare, Elite and Legendary
+		4 More new characters aligning with region 2, once we finalize Common, we need to add uncommon, Rare, Elite and Legendary
+	Region 3 - Mushroom Grove - Otto - currently we have common and uncommon, Add Rare, Elite and Legendary
+		4 More new characters aligning with region 3, once we finalize Common, we need to add uncommon, Rare, Elite and Legendary
+	Region 4 - Mushroom Grove - Bonbon - currently we have common and uncommon, Add Rare, Elite and Legendary
+		4 More new characters aligning with region 4, once we finalize Common, we need to add uncommon, Rare, Elite and Legendary
+	Region 5 - Mushroom Grove - Bao - currently we have common and uncommon, Add Rare, Elite and Legendary
+		4 More new characters aligning with region 5, once we finalize Common, we need to add uncommon, Rare, Elite and Legendary
+
+	We will do this 1 region, 1 character at a time.
+
+	We will do this at the end after point 1 to and 3 are done. Also In shop all the heros should be tied to Bundles, Chests, Rewards to ensure that open regions we can get characters.
+
+	First write to Bug-List-5.md
+	
+Bug List 6
+1. Now I feel there are too many heroes. Apart from Primary region heroes and their rarity (Common, Uncommon, Rare, Elite, Legendary) counterparts who should be marked by default ACTIVE. Mark all other heroes and their rarity (Common, Uncommon, Rare, Elite, Legendary) counterparts as INACTIVE. Primary Heroes are Momo, Capi, Otto, Bonbon and Bao. The other heroes will remain INACTIVE in CODE ALWAYS and not become part of download or APK. Do not show in ALL Heroes as well.
+2. With these heroes, update all shops (Bundles, Chests, Hero Shop) and rewards (Main, Daily, Weekly) to grant heroes based on rules from these ACTIVE heroes only, not everything.
+3. Heroes
+	a. All heroes why has yellow background. Looks do not match with merge. In this row there are 3 icons now - Momo Icon with All heroes text, Merge icon with Merge text and Power up icon with Powers bought from shop. This is a screen similar to all heroes screen where we list all power ups with a counter bottom right.
+	b. Bottom of Heroes, we see power ups, Play and Character - remove those and extend the hero grid height.
+4. If you had to numerically assign difficulty of Level 1 to 15 how would you do it? Now after than I would like to change from level 1 to 15 to Level 1 to 25. Apart from level 1 which is at difficulty 5, Have Level 2 to 5 between Difficulty 20 to 40 increasing difficulty, 6 to 10 from 40 to 60 increasing difficulty, level 10 to 15 from 60 to 75 difficulty, 15 to 25 from 75 to 100 difficulty. This should be done from all regions from Region 1 to 5 and all future regions. This is now the new rule paradigm.
+5. The powers of a character should not be handled separately, it should be merged on the right with the power-ups and mark them as free and make them as 50% 
+6. Move the Gameplay (change into icons with text - icons should be open art new icons) - It should be moved from Admin to Level Screen just below the region name and centered. The level screen starts after that. Relaxed - 0% more than current, Easy - 10% more than current, Normal  - 25% more than current, Hard - 40% more than current, Insane - 50% more than current. Now UI wise - Have Flight, Rocket and Double jump on left and rest 4 on right.
+7. The Settings main screen should not be scrolling. 
+8. Shop - When I Bought the number changed in the shop - it should always show x1. why it's number changed? This is just a shop. This actual list of power ups bought is in heroes screen as mentioned above.
+
+Bug List 7
+1. For every gameplay, we need to record a time as well. The time also covers for main, daily and weekly rewards as well as leaderboard in the future. Come up with best way to record time. Every level shows while starting best time done and also records best time. Like in many mobile games, we need to have faster clearance for timing.
+
+
+Bug List 8
+1. Heroes - All the screens
+	a. All Heroes, Merge and Powers - In the main hero screen, there is a number icon on top right, it is not needed.
+	b. In the All Heroes, Merge, Powers Pop up Screen as well top right there is numbers, it is not needed for each of them.
+	c. In All heroes, It seemse the i icon gives a new pop up, it should redirect to existing hero sheet already built, why a new pop up? it is not needed. When we go from main hero screen, back button from hero stat sheet takes from main sheet, when it is from all heroes, it comes back to all heroes.
+	d. In the Powers screen, the number increase the width to the card and have it centered aligned, now it is bottom left. number should remain center aligned as well.
+	e. back button from heroes, should take to World map if it originates from world map, if from level screen then goes to level screen.
+2. Level Screen
+	a. We do not need a tick mark on the green selection of relaxed, easy, normal, hard, insane. Increase the icon size and reduce the text size
+	b. Endless - Time Attack also should be green button but come up with a new icon for Time attack Play and keep play and time attack play at the same row.
+	c. Game pop up Time Attack or Endless in game run is not centered vertically.
+3. Game Play - Level 1 is 60 platforms, Level 2 to 5 are 75 platforms, 6 to 10 are 90 Platforms - 11 to 15 are 105 platforms, 16 to 20 are 120 platforms and 21 to 25 are 150 platforms. Review endless and timed attack as well in this way in terms of complexity. This should happen for all 5 open regions.
+4. Rewards - Looks like winning an award - overlaps music 2 times. have a look. Back icon is at bottom left, it should be at same place as all other screens like shop, world map, heroes, etc. And back from rewards should take to World map if it originates from world map, if from level screen then goes to level screen. In rewards, some of the text is going double lines which makes UI look bad, reduce font size. Pop up is too small for winning a chest make is 50% bigger.
+5. In the level select pop up before play - Look at each text it should be center aligned. Looked like Level 1 was not center aligned, check all screens. Then there is Circle, diamond, Star with numbers which I do not understand - what are they ask proper questions to explain me so i can decide.
+6. We had vX.Y.Z.B - We do not use Z at all - vX.Y.B can be used going forward.
+
+
+I would like to change the game name to "Fluffy Climbers: Tower Jump" officially - Apart from changing repository name and folder name. Change everything including the game name it should be com.fluffyclimberstowerjump everywhere or suggest something better. also the openart for the home screen that needs to be change as well. Change all places apart from the folder name and repository name. Use Open Art to also create a Game icon which can be used for mobile, app store, play store.
+
+Latest Bugs 1:
+1. Rewards - Main, Daily, Weekly
+	a. Play time is calculated based on actual in game play time not how long the app is open.
+	b. Gold Medal on 25 levels can you make it a single line - it is double line.
+	c. For all done items which are already claimed, create a small completed section at the bottom and move them, once they are claimed - especially for main rewards and weekly rewards. For Daily rewards, move them directly as we click on the chest for rewards.
+	d. Main rewards - The header region section text is not vertically aligned - it is aligned to the icon to the top.
+2. Shop
+	a. In Heroes and Power-ups - We should only allow coins and not gems at all. Use conversion ration of 1 Gem to 20 coins and have the Heroes button use Coins only. In the power ups remove the Gem options, only have coins.
+3. Heroes
+	a. Heroes Main Screen - The background where Mono is standing - can we use a new Open Art Image for that half section - it should be sleek and cute and beautiful. The text Momo and the character is not properly center aligned. Check that
+	b. All Heroes - Only active Heroes have i icon, Locked Heroes - there should not no I icon and the text should be "Locked" in italics. In unlocked and active state, we should give their name directly. For example - Momo it should not be Momo Common, it should be Momo vertical and horizontally centered. For Momo Uncommon in active and unlocked state it should be "Cloudguard Momo" and "Locked" in italics in locked state, same for all other heroes.
+	c. Powers - The height of numbers for each power is slightly mroe than the text like rocket and there is no gap. Have same gape between icon and text then text to number. the card size should be adjusted accordingly.
+3. Settings - 
+	a. Admin mode button should be off by default in release mode with all testing flags as off. In debug mode - the admin button should show with system_test as off and rest all as off as well.
+	b. Restore - Should restore all purchases done so far once a game is deleted and freshly installed. 
+	c. Sign in with google with use the Play games and allow install in 
+4. Game Play
+	a. Ads button is missing once the hero dies. In that button as well Just show "Watch Ad" we do not need 30 secs or 1 min in there.
+	b. There should be a central timer which records overall timer for each game played which ads up to provide the rewards. We see only the game played during this instance which works well. But we need a central timer which calculates all game played - that should be obviously hidden not shown in UI.
+	
+Latest Bugs 2
+1. Heroes
+	a. Hero main screen - If you look at the image, the platform should be slightly below and the hero should stand on it. instead we have a brown area where hero stands, we do not need the brown layer, remove and the character stands on the platform. Look at SS 30 image.
+2. Rewards - The completed section the up arrow position is correct when it shows completed items, but the down arrow is outside which is wrong. This is issue with main, daily and weekly rewards
+3. The music issue which I had mentioned early in rewards also exists in merge, when we do multiple merges in quick succession.
+
+Latest Bugs 3
+1. While playing multiple levels across regions, I found issue in SS 31, SS 32, SS 33, SS 34. I completed with higher platform / second, but bronze, Silver and Gold did not arrive.
+2. Additionally, whatever is implemented for region 1 from rules and logic, is it good for all other regions - run a code level rules comparison and ensure that there is nothing static done for specific regions. Ask me questions if there is something static that is region specific. Let's review and after your review ask questions for 100% clarity.
+
+
+Store Listing Tasks - Place them in directory called Store Assets under Assets or a better directory of your choosing.
+1. give me the details and at the same time - app icon, feature graphic that are already ready give their links 
+2. Game play video  - I would like a 60 second video generated from 2 different game play - Cloudknight Momo play Level 5 for 30 seconds and see that momo has at least 3 of each power along with the free ones and momo should be using them. Next 30 seconds would be for Grove Queen Capi Playing Level 21 in Mushroom Grove video using all powers for 30 seconds and playing the game. 
+3. Game Play Assets - Take 8 Screen shots 
+	1. Momo playing level 3 Meadows - between platform 30 to 40 - show some gems and coins
+	2. Cloudknight Momo Playing Level 5 Meadows - between platform 30 to 40 - show some gems and coins
+	3. Sunlord Momo playing level 25 Meadows - between platform 90 to 100 - show lots gems and coins
+	4. Capi Playing level 5 Mushroom Grove - between platform 40 to 50 - show some gems and coins
+	5. Grovequeen Capi playing level 21 Mushroom Grove - between platform 70 to 80 - show some gems and coins
+	6. Otto Playing Level 3 in Sunny Beach - between platform 30 to 40 - show lots gems and coins
+	7. Bonbon playing level 6 Candy Canyon - between platform 30 to 40 - show some gems and coins
+	8. Bao playing level 8 Bamboo Temple - between platform 30 to 40 - show some gems and coins
+	
+	
+Latest Items 1
+1. When uploading the aab. here were 2 warnings we need to fix that.
+Warning
+There is no deobfuscation file associated with this App Bundle. If you use obfuscated code (R8/proguard), uploading a deobfuscation file will make crashes and ANRs easier to analyze and debug. Using R8/proguard can help reduce app size. Learn More
+
+Warning
+This App Bundle contains native code, and you've not uploaded debug symbols. We recommend you upload a symbol file to make your crashes and ANRs easier to analyze and debug. 
+
+2. Base Game music - 
+	
+For extreme clarity use askuserquestion as many times as you need for 100% clarity and continue asking to understand what I want. Run these in parallel sub-agents and background workers to execute faster.

@@ -465,6 +465,7 @@ namespace FluffyClimbers.Simulation
             if (prevKind == PlatformKind.Dandelion && prevDir != 0) x = SpecialPlatforms.DandelionNextX(cfg, ref specRng, prevX, prevDir, w, screen);
             if (prevKind == PlatformKind.LicoriceBelt && prevDir != 0) x = SpecialPlatforms.BeltNextX(prevX, prevDir, dx, w, screen);
             if (prevKind == PlatformKind.BambooFlick && prevDir != 0) x = SpecialPlatforms.FlickNextX(cfg, ref specRng, prevX, prevDir, w, screen);
+            if (prevKind == PlatformKind.DizzySpores) x = SpecialPlatforms.DizzyNextX(cfg, prevX, prevW, w, x, screen);
 
             Fx amp = Fx.Zero;
             int period = 0, phase = 0, pdir = 0;

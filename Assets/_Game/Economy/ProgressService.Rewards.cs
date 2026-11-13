@@ -303,6 +303,7 @@ namespace FluffyClimbers.Economy
                 if (run.BestCombo > r.BestCombo) { r.BestCombo = run.BestCombo; any = true; }
             }
             if (run.PowerUpsUsed > 0) { AddBoth(RewardStat.PowerUps, run.PowerUpsUsed); any = true; }
+            if (run.Jumps > 0) { AddBoth(RewardStat.Jumps, run.Jumps); any = true; }   // Main Bug List 2: the weekly jumps task
             return any;
         }
 
@@ -312,6 +313,7 @@ namespace FluffyClimbers.Economy
             RolloverRewards();
             int regionIndex = repo.GetRegion(level.Region).Index;   // a completed run always counts for the level's own region
             ApplyRunDelta(run, regionIndex);
+            if (coinsPaid > 0) AddBoth(RewardStat.CoinsEarned, coinsPaid);   // Main Bug List 2: the daily "earn coins" task (replays too, they pay half)
             if (coinsPaid > 0 && regionIndex > 0) { RegionStats rs = RegionStatsFor(regionIndex, true); if (rs != null) rs.Coins = SaturatingAdd(rs.Coins, coinsPaid); }
             if (!firstClear)
             {
@@ -352,6 +354,20 @@ namespace FluffyClimbers.Economy
             int timed;
             if (TryTimedGoalStat(stat, out timed)) return timed;
             return StatOf(p, stat);
+        }
+
+        /// <summary>Main Bug List 2: a counted Time Attack run (called by RecordTimeAttack before its save): the best floors of one run today, for the daily Time Attack task.</summary>
+        void TrackTimeAttackReward(int floors)
+        {
+            RolloverRewards();
+            MaxStat(Rw.Day, RewardStat.TimeAttackRun, floors);
+        }
+
+        /// <summary>Main Bug List 2: a level medal that is new or higher was earned (called by TrackTimedLevel before its save): the daily and weekly "earn medals" tasks.</summary>
+        void TrackMedalEarned()
+        {
+            RolloverRewards();
+            AddBoth(RewardStat.Medals, 1);
         }
 
         /// <summary>Best combo chain ever reached.</summary>

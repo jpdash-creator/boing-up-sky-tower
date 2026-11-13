@@ -118,6 +118,20 @@ namespace FluffyClimbers.Economy
         /// <summary>The medal table (owner can change it): percent of the target Pace for Bronze, Silver, Gold.</summary>
         public static readonly int[] MedalPercents = { 55, 70, 85 };
 
+        /// <summary>
+        /// Per Gameplay mode (Relaxed, Easy, Normal, Hard, Insane) the percent of the calibrated bot Pace that the medal target uses (owner 2026-11-12): harder settings ask for more plat/s.
+        /// The data file holds the raw bot Pace; FileMedalTargets applies this table when it answers a lookup, so there is exactly ONE place for the scale.
+        /// </summary>
+        public static readonly int[] ModeTargetScalePercent = { 85, 92, 100, 112, 125 };
+
+        /// <summary>A raw calibrated Pace (milli plat/s) scaled for a Gameplay mode, rounded half up; 0 stays 0 (no data).</summary>
+        public static int ScaleTarget(int rawMilli, int mode)
+        {
+            if (rawMilli <= 0) return 0;
+            long v = ((long)rawMilli * ModeTargetScalePercent[ClampMode(mode)] + 50) / 100;
+            return v > int.MaxValue ? int.MaxValue : (int)v;
+        }
+
         public static bool ValidMode(int mode) { return mode >= 0 && mode < ModeCount; }
 
         public static int ClampMode(int mode) { return mode < 0 ? 0 : (mode >= ModeCount ? ModeCount - 1 : mode); }
@@ -442,12 +456,16 @@ namespace FluffyClimbers.Economy
         public bool Revived;
         /// <summary>Run-length encoded per-tick inputs (<see cref="InputCodec"/>), about 1 to 3 KB. Empty when not recorded.</summary>
         public byte[] Inputs = new byte[0];
+        /// <summary>For every revive of the run, the number of recorded ticks before it (a revive happens between two ticks and is not part of <see cref="Inputs"/>). The leaderboard server replays each revive at that tick count. Empty for a run without revive.</summary>
+        public int[] ReviveAt = new int[0];
         /// <summary>Floors reached at the end of each second of the clock.</summary>
         public int[] Curve = new int[0];
         /// <summary>Endless: ticks to reach floor 100, 200, ... (split i = floor (i + 1) x 100); only the stages the run reached.</summary>
         public int[] Splits = new int[0];
         /// <summary>Endless captures (set by the caller after the payout): coins and gems collected in the run, for the per-minute records.</summary>
         public int Coins, Gems;
+        /// <summary>The run's BASE score (SimState.Score) and best combo chain, for the best endless crown (CrownScore). 0 when a caller does not fill them (then no endless crown is stored).</summary>
+        public int Score, BestCombo;
 
         public PaceValue Pace { get { return new PaceValue(Floors, Ticks); } }
         public int PaceHundredths { get { return TimeRecords.PaceHundredths(Floors, Ticks); } }

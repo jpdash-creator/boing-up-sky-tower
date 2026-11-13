@@ -29,9 +29,10 @@ Read, click **Next**.
 
 ## Step 3 - Data types (tick exactly these)
 - Location > **Approximate location**
-- Personal info > **User IDs**
+- Personal info > **User IDs**, **Name** (leaderboard only, see the 2026-11-12 section below)
+- Photos and videos > **Photos** (leaderboard profile picture link only)
 - Financial info > **Purchase history**
-- App activity > **App interactions**, **Other actions**
+- App activity > **App interactions** (now also the leaderboard scores and run inputs), **Other actions**
 - App info and performance > **Crash logs**, **Diagnostics**, **Other app performance data**
 - Device or other IDs > **Device or other IDs**
 
@@ -44,7 +45,7 @@ Columns: C = collected, S = shared. "Required" = "Data collection is required (u
 | Data type | C / S | Ephemeral? | Required or optional | Why collected | Why shared | Source |
 |---|---|---|---|---|---|---|
 | Approximate location | C + S | No | Required | App functionality, Analytics, Advertising or marketing, Fraud prevention, security, and compliance | Advertising or marketing, Analytics, Fraud prevention, security, and compliance | AdMob (IP address at every ad request, from app start); Unity IAP (country from IP) |
-| User IDs | C | No | Optional | App functionality, Account management, Analytics | - | Play Games player id (in the save that is cloud-saved); Unity IAP player / installation id |
+| User IDs | C + S | No | Optional | App functionality, Account management, Analytics, Fraud prevention, security, and compliance | App functionality (Google / Firebase as service provider) | Play Games player id (in the cloud save); Firebase uid (leaderboard sign-in); Unity IAP player / installation id |
 | Purchase history | C | No | Optional | App functionality, Analytics, Fraud prevention, security, and compliance | - | Unity IAP transaction data to Unity's IAP service; product and transaction ids in the cloud save |
 | App interactions | C + S | No | Required | Advertising or marketing, Analytics, Fraud prevention, security, and compliance | Advertising or marketing, Analytics, Fraud prevention, security, and compliance | AdMob (app launch, taps, video views) |
 | Other actions | C | No | Optional | App functionality, Account management | - | Game progress, wallet, items and records in the Saved Games file (only when signed in) |
@@ -80,3 +81,33 @@ the same collected / shared / required answers as Step 4 above. Keep the two in 
 - Unity IAP privacy overview (default data collected): https://docs.unity.com/en-us/iap/privacy-and-consent/overview
 - Play Games Services, prepare for Google Play's data disclosure requirements: https://developer.android.com/games/pgs/data-collection
 - Google Play Help, provide information for the Data safety section: https://support.google.com/googleplay/android-developer/answer/10787469
+
+
+## Leaderboard and Firebase: answers to enter (owner decision 2026-11-12)
+
+Added when the weekly leaderboard (`Planning/LEADERBOARD-DESIGN.md`) and Firebase Authentication were built. The feature is OFF in the app until the owner switches it on, but the data safety form must be right BEFORE a build that contains the code is released (the SDKs are in the build either way). Source text: `POLICY.md` section 4a (what is sent), `TERMS.md` section 12a (public name and picture), `POLICY.md` section 18 (the mirror table, aligned 2026-11-12).
+
+Enter or change these items. Everything else in Steps 2 to 4 above stays as it is.
+
+| Play Console item | Data type | Collected | Shared | Ephemeral | Required / optional | Purposes (collected) | Purposes (shared) | Source in the build |
+|---|---|---|---|---|---|---|---|---|
+| Personal info > User IDs | Google Play Games player id and Firebase uid | Yes | Yes: with a service provider (Google / Firebase; the uid is also shown only as a short public id, never the uid) | No | Optional (only when signed in and the player joins the boards) | App functionality, Account management, Fraud prevention, security, and compliance | App functionality | Play Games Services; Firebase Authentication; Cloud Run token check |
+| Personal info > Name | Play Games display name | Yes | Yes: shown publicly to other players on the boards and held by Google as service provider | No | Optional (only if the player accepts the one-time consent popup and plays the boards) | App functionality | App functionality | Cloud Firestore `players/{uid}.displayName`, boards top 100 |
+| Photos and videos > Photos | Link to the Play Games profile picture (no file is read or uploaded) | Yes | Yes: shown publicly to other players | No | Optional (same as Name) | App functionality | App functionality | Cloud Firestore `players/{uid}.avatarUrl` |
+| App activity > App interactions | Weekly scores (crowns), the recorded run inputs by game tick, hero and power-ups used, prize claims | Yes | Yes: with a service provider (Google / Firebase); scores are public on the boards | No | Optional | App functionality, Fraud prevention, security, and compliance | App functionality | Cloud Run `/submit-run`, Cloud Firestore `weeks/...` |
+| Device or other IDs | Firebase installation id (Firebase Authentication) in addition to the ad IDs | Yes | Yes: with a service provider (Google / Firebase) | No | Required once the SDK runs | App functionality, Fraud prevention, security, and compliance | App functionality | Firebase Installations (inside Firebase Auth); already ticked for AdMob |
+| Approximate location | IP address in Cloud Run request logs | Yes | Yes: with a service provider (Google) | No | Optional | Fraud prevention, security, and compliance | Fraud prevention, security, and compliance | already ticked for AdMob; no change |
+
+Fixed answers for the same section:
+- Data NOT sold: **No** data is sold.
+- **Firebase Analytics is disabled.** No analytics events, no advertising ID collection, no SSAID, all consent-mode defaults denied: manifest flags in `Assets/Plugins/Android/FluffyPrivacyDefaults.androidlib` (`firebase_analytics_collection_deactivated=true`, `firebase_analytics_collection_enabled=false`, `google_analytics_adid_collection_enabled=false`, `google_analytics_ssaid_collection_enabled=false`, four `google_analytics_default_allow_*=false`) and the install-referrer permission is removed (`tools:node="remove"`). So Firebase adds NO Analytics purpose and no new "Analytics" tick for itself; do not tick Crash logs or Diagnostics because of Firebase.
+- Encrypted in transit: **Yes** (HTTPS to Cloud Run and Firebase).
+- Users can request deletion: **Yes**. E-mail jpdash.creator@gmail.com (`POLICY.md` section 4a and 13): profile, weekly rows and claims are deleted within one month; weekly rows also expire 90 days after the week ends (Firestore TTL).
+- Account creation question: stays **No** (the game has no own account; the Firebase uid is created silently from the Play Games sign-in). If Play review objects, answer Yes and give the policy URL as the deletion-request URL.
+- After saving, export the CSV (`Planning/play-data-safety.csv`) as before.
+
+Notes and mismatches found 2026-11-12:
+1. Play's own help says that sending data to a service provider that processes it on your behalf is not "sharing". The owner decision is to declare it as shared with a service provider (the cautious answer; it is also the label the public boards need for Name, Photos and scores). Keep it unless Play review asks to change it.
+2. `POLICY.md` section 18 used the label "Other actions" for the leaderboard scores; changed to App interactions to match this table. Its User IDs row now names the Firebase uid.
+3. `docs/policy.html` is generated from `POLICY.md` (`python Tools/legal_html.py`) and was NOT regenerated in this documentation pass: regenerate it before publishing.
+4. Section 4a says other players see the top 100 of each board; no mismatch with this table. `TERMS.md` section 12a says the same about name and picture.

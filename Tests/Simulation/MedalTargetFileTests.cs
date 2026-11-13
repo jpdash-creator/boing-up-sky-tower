@@ -21,15 +21,15 @@ namespace FluffyClimbers.Simulation.Tests
             string json = "{ \"version\": 1, \"percents\": [55, 70, 85], \"targets\": { \"lvl_001_01\": [2684, 2680, 2600, 2500, 2400], \"lvl_001_02\": [0, 1500] } }";
             FileMedalTargets t = FileMedalTargets.FromJson(json);
             Assert.Equal(2, t.LevelCount);
-            Assert.Equal(2684, t.TargetPaceMilli("lvl_001_01", 0));
-            Assert.Equal(2400, t.TargetPaceMilli("lvl_001_01", 4));
-            Assert.Equal(1500, t.TargetPaceMilli("lvl_001_02", 1));
-            Assert.Equal(0, t.TargetPaceMilli("lvl_001_02", 0));    // 0 = no data
-            Assert.Equal(0, t.TargetPaceMilli("lvl_001_02", 3));    // the row is shorter than five entries
-            Assert.Equal(0, t.TargetPaceMilli("lvl_009_09", 0));    // unknown level
-            Assert.Equal(0, t.TargetPaceMilli("lvl_001_01", 5));    // invalid mode
-            Assert.Equal(0, t.TargetPaceMilli("lvl_001_01", -1));
-            Assert.Equal(0, t.TargetPaceMilli(null, 0));
+            Assert.Equal(2684, t.RawPaceMilli("lvl_001_01", 0));
+            Assert.Equal(2400, t.RawPaceMilli("lvl_001_01", 4));
+            Assert.Equal(1500, t.RawPaceMilli("lvl_001_02", 1));
+            Assert.Equal(0, t.RawPaceMilli("lvl_001_02", 0));    // 0 = no data
+            Assert.Equal(0, t.RawPaceMilli("lvl_001_02", 3));    // the row is shorter than five entries
+            Assert.Equal(0, t.RawPaceMilli("lvl_009_09", 0));    // unknown level
+            Assert.Equal(0, t.RawPaceMilli("lvl_001_01", 5));    // invalid mode
+            Assert.Equal(0, t.RawPaceMilli("lvl_001_01", -1));
+            Assert.Equal(0, t.RawPaceMilli(null, 0));
             Assert.True(t.Has("lvl_001_01"));
             Assert.False(t.Has("nope"));
         }
@@ -57,7 +57,7 @@ namespace FluffyClimbers.Simulation.Tests
             FileMedalTargets back = FileMedalTargets.FromJson(text);
             Assert.Equal(2, back.LevelCount);
             foreach (var kv in table)
-                for (int m = 0; m < 5; m++) Assert.Equal(kv.Value[m], back.TargetPaceMilli(kv.Key, m));
+                for (int m = 0; m < 5; m++) Assert.Equal(kv.Value[m], back.RawPaceMilli(kv.Key, m));
             Assert.Equal(text, FileMedalTargets.ToJson(table, 5, "a \"quoted\" note"));   // deterministic
         }
 
@@ -82,6 +82,38 @@ namespace FluffyClimbers.Simulation.Tests
         }
 
         [Fact]
+        public void TheModeScaleTableIsRelaxed85Easy92Normal100Hard112Insane125()
+        {
+            Assert.Equal(new[] { 85, 92, 100, 112, 125 }, TimeRecords.ModeTargetScalePercent);
+            Assert.Equal(TimeRecords.ModeCount, TimeRecords.ModeTargetScalePercent.Length);
+            Assert.Equal(850, TimeRecords.ScaleTarget(1000, 0));
+            Assert.Equal(920, TimeRecords.ScaleTarget(1000, 1));
+            Assert.Equal(1000, TimeRecords.ScaleTarget(1000, 2));
+            Assert.Equal(1120, TimeRecords.ScaleTarget(1000, 3));
+            Assert.Equal(1250, TimeRecords.ScaleTarget(1000, 4));
+            Assert.Equal(1, TimeRecords.ScaleTarget(1, 2));
+            Assert.Equal(1, TimeRecords.ScaleTarget(1, 3));   // 1.12 rounds half up to 1
+            Assert.Equal(1, TimeRecords.ScaleTarget(1, 4));   // 1.25 rounds to 1
+            Assert.Equal(0, TimeRecords.ScaleTarget(0, 4));   // no data stays no data
+            Assert.Equal(1250, TimeRecords.ScaleTarget(1000, 99));   // a bad mode clamps to Insane
+        }
+
+        [Fact]
+        public void TheFileLookupAppliesTheScaleAndTheRawValueStaysInTheFile()
+        {
+            FileMedalTargets f = FileMedalTargets.FromJson("{ \"version\": 1, \"targets\": { \"lvl_001_01\": [1000, 1000, 1000, 1000, 1000], \"lvl_001_02\": [0, 0, 0, 0, 0] } }");
+            for (int m = 0; m < 5; m++)
+            {
+                Assert.Equal(1000, f.RawPaceMilli("lvl_001_01", m));
+                Assert.Equal(TimeRecords.ModeTargetScalePercent[m] * 10, f.TargetPaceMilli("lvl_001_01", m));
+                Assert.Equal(0, f.TargetPaceMilli("lvl_001_02", m));
+            }
+            // a harder setting needs more plat/s for the same medal: 0.55 plat/s is Bronze on Relaxed (bronze line 0.468, silver 0.595) but nothing on Insane (bronze line 0.6875)
+            Assert.Equal(MedalLevel.Bronze, TimeRecords.MedalFor(new PaceValue(33, 3600), f.TargetPaceMilli("lvl_001_01", 0)));
+            Assert.Equal(MedalLevel.None, TimeRecords.MedalFor(new PaceValue(33, 3600), f.TargetPaceMilli("lvl_001_01", 4)));
+        }
+
+        [Fact]
         public void TheShippedTargetFileCoversEveryLevelAndAllFiveModes()
         {
             string root = ContentLoader.FindRoot();
@@ -98,7 +130,7 @@ namespace FluffyClimbers.Simulation.Tests
                 Assert.True(t.Has(l.Id), l.Id + " has no target row");
                 for (int m = 0; m < TimeRecords.ModeCount; m++)
                 {
-                    int v = t.TargetPaceMilli(l.Id, m);
+                    int v = t.RawPaceMilli(l.Id, m);
                     Assert.True(v > 0, l.Id + " mode " + m + ": the bot solved no layout, so nobody could earn a medal here");
                     Assert.InRange(v, 300, 4000);   // 0.3 to 4 plat/s: a sane band for a bot on 60 to 100 rows
                 }
@@ -132,7 +164,7 @@ namespace FluffyClimbers.Simulation.Tests
             {
                 var samples = new List<MedalCalibrationTests.PaceSample>();
                 for (int k = 0; k < MedalCalibrationTests.Layouts; k++) samples.Add(MedalCalibrationTests.Measure(l, m, k, MedalCalibrationTests.FullBudget));
-                Assert.Equal(t.TargetPaceMilli(l.Id, m), MedalCalibrationTests.MeanPaceMilli(samples));
+                Assert.Equal(t.RawPaceMilli(l.Id, m), MedalCalibrationTests.MeanPaceMilli(samples));
             }
         }
     }

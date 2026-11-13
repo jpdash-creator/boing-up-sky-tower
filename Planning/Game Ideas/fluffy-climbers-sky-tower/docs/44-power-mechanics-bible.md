@@ -20,7 +20,7 @@ Every hero must feel different but no hero may make a level easier or harder to 
 
 **The probe.** Test code (`HeroFi.OkLayout`) puts the hero on the main route platforms of a level layout, one platform per row, and lets the level bot (`LevelBot.MeasureOptions`) try the homing jump options: the next 3 rows, a range of back-off distances and a range of run-up lengths. An option counts as safe when the hero lands alive on a higher row. It is a probe only (no search), so it is fast.
 
-| Part | Fast probe (generator, 75-level reference) | Full probe (first ladder tests, approved values) |
+| Part | Fast probe (generator, all-shipped-levels reference) | Full probe (first ladder tests, approved values) |
 |---|---|---|
 | Platforms probed | every 3rd row of the main route | every row |
 | Clock offsets (moving platform phase) | 1 (tick 101) | 3 (ticks 0, 101, 233) |
@@ -94,12 +94,12 @@ The band edges touch (10, 15 and 20 percent belong to both neighbours; the tier 
 
 **The FI band:** every tier stays inside 0.97 to 1.10 (physics only).
 
-**The gates** (a drawn hero is accepted only when all three hold, measured with the fast probe, 75 levels = 5 regions x 15 levels, 24 layouts each):
+**The gates** (a drawn hero is accepted only when all three hold, measured with the fast probe over ALL shipped levels (since 2026-11-12: 125 = 5 regions x 25 levels; before the levels grew it was 75 = 5 x 15), 24 layouts each; the roster table of section 8 was measured on the first 75 levels on 2026-11-07):
 
 | Gate | Tolerance |
 |---|---|
 | Level 15 of Region 1 | FI within 0.02 of the approved FI of the tier (1.000 / 1.002 / 1.040 / 1.012 / 1.048) |
-| 75-level mean | within 0.02 of Momo's mean FI of the same tier |
+| Mean over all shipped levels (125; was the 75-level mean) | within 0.02 of Momo's mean FI of the same tier |
 | Worst single level | no level more than 0.08 from Momo's FI of the same tier on that level |
 
 ## 5. What the measurements taught
@@ -129,8 +129,8 @@ All numbers are FI on level 15 of Region 1 unless stated.
 | Stage | Measures | Passes when |
 |---|---|---|
 | 1 screen | level 15 of Region 1, 8 layouts | FI within 0.04 of the target of the tier |
-| 2 screen | all 75 levels, 4 layouts | mean FI within 0.03 of Momo's mean of the tier |
-| 3 final | all 75 levels, 24 layouts | the three gates of section 4 |
+| 2 screen | all shipped levels, 4 layouts | mean FI within 0.03 of Momo's mean of the tier |
+| 3 final | all shipped levels, 24 layouts | the three gates of section 4 |
 
 5. **Store.** The accepted physics (launch in tenths, speed, control, wall) go into the constants file `HeroTable.cs`, together with the measured FI at level 15, the 75-level mean and the worst level deviation. Nothing is random at run time. A hero that fails 40 attempts is reported as FAILED and needs a different seed (more attempts) or a decision.
 
@@ -304,8 +304,8 @@ All 125 heroes (Momo's five tiers are fixed from Ladder Final; the other 120 wer
 
 ## 9. Test plan
 
-1. **Bot proof of every hero.** Every hero of the roster (125) is played by the level bot on all 75 levels (5 regions x 15 levels) and must clear each one (the existing solvability proof, run with the hero's physics instead of the baseline).
-2. **FI measurement.** Every hero is measured with the fast probe, 24 layouts per level, on all 75 levels: FI on level 15 of Region 1, the 75-level mean, the worst level deviation from Momo's tier, and the FI band 0.97 to 1.10.
+1. **Bot proof of every hero.** Every hero of the roster (125) is played by the level bot on every shipped level (the 2026-11-07 run: 75 levels, 5 regions x 15; the levels are now 125, so rerun with `HERO_BOT=1` before a release) and must clear each one (the existing solvability proof, run with the hero's physics instead of the baseline).
+2. **FI measurement.** Every hero is measured with the fast probe, 24 layouts per level, on all shipped levels: FI on level 15 of Region 1, the all-level mean (`mean75` in the files), the worst level deviation from Momo's tier, and the FI band 0.97 to 1.10.
 3. **Regression.** Golden hashes and bot proofs of the baseline Momo stay unchanged; the Ladder Final rows in `HeroIndex` and in the harness stay identical.
 4. Fast probe run commands: `HERO_REF=1` builds the Momo reference (`Tests/Simulation/FI_REFERENCE_FAST.csv`); `HERO_GEN=1` runs the generator.
 
@@ -334,3 +334,13 @@ The level 15 target is Momo's own value of the tier measured with the same fast 
 ## 10. Changelog
 
 - 2026-11-07: document created from `HeroIndex.cs`, `CharacterStats.cs`, `HeroFiHarness.cs` and `HeroGeneratorTests.cs`. Replaces docs 29 and 34 section 2b for hero physics and tier rules (the old +10 to +25 percent chain is retired). Ladder Final (Momo, five tiers) fixed; HeroTable and the roster table follow the generator run.
+
+- 2026-11-12 (owner): per-player hero rolls added (section 11); the gate is measured over all 125 shipped levels (was 75); "Ranked runs stay neutral" is gone, everything counts on the boards.
+
+## 11. Per-player hero rolls (owner 2026-11-12)
+
+**Rule.** Every upper-tier hero (Uncommon, Rare, Elite, Legendary; Momo's four upper tiers included) has a POOL of physics variants. Pool entry 0 is the hero's row in `HeroTable.cs`; entries 1.. are `HeroVariants.cs`. When a player first obtains the hero (merge, chest, bundle, reward), `HeroRolls.Pick(accountSeed, heroId, counter)` deals ONE entry (pure integer function, splitmix64 over the seed, the FNV hash of the hero id and the roll counter, so a server can recompute it). The stats are shown on the hero stats sheet and used in every run of that player. Common heroes (and Momo Common, the 19.0 reference) are NOT rolled: one fixed row.
+
+**Validity.** Every pool entry passed the same measured Forgiveness Index gate as a table row (section 4), over all shipped levels (125). So two players with the same hero see slightly different numbers, never a stronger or weaker hero. Everything counts on the boards: the leaderboard service replays a run with the variant the player holds (the first variant used per hero is stored in `players/{uid}.heroVariants`, `Planning/LEADERBOARD-DESIGN.md` section 5.6).
+
+**Pipeline.** `Tests/Simulation/hero_gen/variants.csv` (columns id,variant,launchTenths,speed,control,wall,fi15,mean75,maxdev,attempt) is written by `HeroVariantGeneratorTests` (`HERO_VAR=1`, engine `HeroVariantEngine.cs`, Momo's per-layout reference cached in `FI_REFERENCE_VAR.csv` with a fingerprint of the levels); `python Tools/hero_table_gen.py` turns it into `Assets/_Game/Economy/HeroVariants.cs` (never hand-edit; `--check` covers both generated files). Checked again by `HeroVariantTests`. Roll storage: `Economy/ProgressService.HeroRolls.cs`.

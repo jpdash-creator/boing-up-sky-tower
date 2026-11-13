@@ -406,6 +406,44 @@ namespace FluffyClimbers.Simulation.Tests
 
         // ------------------------------------------------------------------ 2.6 Dizzy Spores
 
+        // Owner decision 2026-11-12: a platform that follows Dizzy Spores is always reachable by a straight jump (no steering needed).
+        [Fact]
+        public void DizzySpores_TheNextRowsSpinePlatformOverlapsTheSporesSoAStraightJumpReachesIt()
+        {
+            string root = ContentLoader.FindRoot();
+            if (root == null) { output.WriteLine("Content not found; skipped"); return; }
+            SimConfig cfg = new SimConfig();
+            var levels = ContentLoader.LoadRegions(root, 2, 2);
+            Assert.Equal(25, levels.Count);
+            int checkedPairs = 0;
+            var bad = new List<string>();
+            foreach (LoadedLevel ll in levels)
+            {
+                for (int i = -1; i < 20; i++)
+                {
+                    LevelSpec s = i < 0 ? ll.Spec.WithAttemptSeed(0) : ll.Spec.WithAttemptSeed(RandomLayoutTests.AttemptSeed(i));
+                    LevelData d = LevelBuilder.Build(cfg, s);
+                    for (int a = 0; a < d.Platforms.Length; a++)
+                    {
+                        Platform dz = d.Platforms[a];
+                        if (dz.Kind != PlatformKind.DizzySpores) continue;
+                        // the spine platform of the next row is the first one listed for it
+                        int b = -1;
+                        for (int j = a + 1; j < d.Platforms.Length; j++) if (d.Platforms[j].Row == dz.Row + 1) { b = j; break; }
+                        if (b < 0) continue;
+                        Platform nx = d.Platforms[b];
+                        checkedPairs++;
+                        Fx overlap = (dz.Width + nx.Width) / 2 - Fx.Abs(nx.X - dz.X);
+                        Fx gap = nx.Y - dz.Y;
+                        if (overlap < cfg.DizzyNextOverlap - F(2, 100) || gap > cfg.NormalGapMax) bad.Add(ll.Id + " seed " + i + " row " + dz.Row + " overlap " + overlap.Raw + " gap " + gap.Raw);
+                    }
+                }
+            }
+            output.WriteLine("dizzy -> next pairs checked: " + checkedPairs);
+            Assert.True(checkedPairs > 50, "pairs " + checkedPairs);
+            Assert.True(bad.Count == 0, bad.Count + " pairs without the overlap, first: " + (bad.Count > 0 ? bad[0] : ""));
+        }
+
         [Fact]
         public void DizzySpores_IgnoresLeftRightFor1SecondAfterLandingButNeverInvertsAndJumpStaysPossible()
         {

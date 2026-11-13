@@ -161,6 +161,8 @@ namespace FluffyClimbers.Economy
             RewardsData r = Rw;
             MaxStat(r.Day, RewardStat.EndlessFloor, floors);
             MaxStat(r.Week, RewardStat.EndlessFloor, floors);
+            if (floors >= RewardStat.MinEndlessRunFloors) AddBoth(RewardStat.EndlessRuns, 1);   // Main Bug List 2: "finish N Endless runs" (Time Attack passes 0 floors and never counts)
+            if (coinsPaid > 0) AddBoth(RewardStat.CoinsEarned, coinsPaid);
             if (coinsPaid > 0)
             {
                 RegionStats s = RegionStatsFor(region.Index, true);

@@ -15,7 +15,7 @@ namespace FluffyClimbers.Simulation.Tests
 {
     /// <summary>
     /// Medal calibration (doc 46 section 6 and 12 point 2). For every level of regions 1 to 5 and every Gameplay mode (Relaxed..Insane = scroll step table
-    /// 20/22/25/28/30 percent, cap 150 like GameSession.ApplyDifficulty) the default hero Momo (default SimConfig) is played by the solvability bot on
+    /// 10/20/25/40/50 percent, top speed-up step x 8 like GameSession.ApplyDifficulty) the default hero Momo (default SimConfig) is played by the solvability bot on
     /// <see cref="Layouts"/> random layouts (attempt seeds RandomLayoutTests.AttemptSeed(0..4), the same layouts as the random layout tests): the bot searches the
     /// fastest line to the top row (speedrun best-first search, goal replaced like the Region 1 audit does). Pace = rows / seconds from the first jump, averaged over the layouts
     /// the bot solved. That Pace is written to Content/config/medal_targets.json (milli plat/s, 0 = the bot solved no layout); the medal lines are
@@ -23,6 +23,8 @@ namespace FluffyClimbers.Simulation.Tests
     ///
     /// Env: MEDAL_CAL=1 runs the full calibration and (re)writes the data file and Tests/Simulation/MEDAL_CALIBRATION.md. MEDAL_BUDGET = bot node budget per 60 rows
     /// (default 20000 = the solvability budget; the probe uses 2000). MEDAL_THREADS = parallel bot runs (default: processors minus one).
+    /// MEDAL_REGIONS = comma list of region numbers (for example "2"): only those regions are calibrated and their rows are merged into the existing
+    /// data files and MEDAL_CALIBRATION.md; every other row stays byte for byte as it was.
     /// MEDAL_PROBE=1 runs a timed sample (levels 1, 13 and 25 of every region, modes Relaxed and Insane, one layout) and prints how long the full run will take.
     /// </summary>
     [Trait("Category", "MedalCalibration")]
@@ -31,7 +33,7 @@ namespace FluffyClimbers.Simulation.Tests
         public const int Layouts = 5;
         public const int ProbeBudget = 2000;
         public const int FullBudget = 20000;
-        public const int CapPercent = 150;
+        public static int CapPercent(int mode) { return SimConfig.TopSpeedUpPercent(mode); }   // owner 2026-11-12: step x 8, no global cap
 
         private readonly ITestOutputHelper output;
         public MedalCalibrationTests(ITestOutputHelper output) { this.output = output; }
@@ -51,7 +53,7 @@ namespace FluffyClimbers.Simulation.Tests
             SimConfig c = new SimConfig();
             c.ScrollStepPercent = SimConfig.DifficultyStepPercent[mode];
             c.GemSpotPermille = SimConfig.DifficultyGemPermille[mode];
-            c.ScrollStepCapPercent = CapPercent;
+            c.ScrollStepCapPercent = CapPercent(mode);
             return c;
         }
 
@@ -99,6 +101,49 @@ namespace FluffyClimbers.Simulation.Tests
         static int Threads() { return EnvInt("MEDAL_THREADS", Math.Max(1, Environment.ProcessorCount - 1)); }
 
         static string Plat(long milli) { return (milli / 1000.0).ToString("0.000", CultureInfo.InvariantCulture); }
+
+        static int RegionOf(string levelId) { int r; return levelId != null && levelId.Length >= 7 && int.TryParse(levelId.Substring(4, 3), out r) ? r : 0; }
+
+        /// <summary>MEDAL_REGIONS="2" or "2,3": the regions to calibrate (null = all).</summary>
+        static HashSet<int> RegionFilter()
+        {
+            string v = Environment.GetEnvironmentVariable("MEDAL_REGIONS");
+            if (string.IsNullOrWhiteSpace(v)) return null;
+            var set = new HashSet<int>();
+            foreach (string part in v.Split(',')) { int r; if (int.TryParse(part.Trim(), out r)) set.Add(r); }
+            return set.Count == 0 ? null : set;
+        }
+
+        /// <summary>Partial run: replaces only the table rows of the calibrated regions in MEDAL_CALIBRATION.md and notes the partial run under the header.</summary>
+        static void WritePartialMarkdown(string root, Dictionary<string, int[]> solvedCounts, IDictionary<string, int[]> targets, HashSet<int> only, int budget, double minutes)
+        {
+            string path = Path.Combine(root, "Tests", "Simulation", "MEDAL_CALIBRATION.md");
+            string[] lines = File.ReadAllText(path).Replace("\r\n", "\n").Split('\n');
+            var outLines = new List<string>();
+            bool noted = false;
+            string regions = string.Join(", ", only.OrderBy(x => x));
+            string note = "Region " + regions + " rows recalibrated on their own (MEDAL_REGIONS=" + string.Join(",", only.OrderBy(x => x)) + ") after the Dizzy Spores layout rule changed their layouts (the next platform overlaps the spores); node budget " + budget + " per 60 rows, " + Layouts + " layouts, " + minutes.ToString("0.0", CultureInfo.InvariantCulture) + " min. All other rows are from the full run above.";
+            foreach (string line in lines)
+            {
+                if (line.StartsWith("Region ") && line.Contains("recalibrated on their own")) continue;   // an older partial note
+                if (line.StartsWith("| lvl_"))
+                {
+                    string id = line.Substring(2, line.IndexOf(' ', 2) - 2);
+                    if (solvedCounts.ContainsKey(id))
+                    {
+                        var sb = new StringBuilder("| " + id);
+                        int[] row = targets[id];
+                        for (int m = 0; m < TimeRecords.ModeCount; m++) sb.Append(" | ").Append(row[m] > 0 ? Plat(row[m]) : "none").Append(" (").Append(solvedCounts[id][m]).Append(")");
+                        sb.Append(" |");
+                        outLines.Add(sb.ToString());
+                        continue;
+                    }
+                }
+                outLines.Add(line);
+                if (!noted && line.StartsWith("Generated by")) { outLines.Add(""); outLines.Add(note); noted = true; }
+            }
+            File.WriteAllText(path, string.Join(Environment.NewLine, outLines));
+        }
 
         // ---------------------------------------------------------------- always-on checks (fast)
 
@@ -173,6 +218,9 @@ namespace FluffyClimbers.Simulation.Tests
             int budget = EnvInt("MEDAL_BUDGET", FullBudget);
             List<LoadedLevel> levels = ContentLoader.LoadRegions(root, 1, 5);
             Assert.Equal(125, levels.Count);
+            HashSet<int> only = RegionFilter();
+            if (only != null) levels = levels.Where(l => only.Contains(RegionOf(l.Id))).ToList();
+            Assert.NotEmpty(levels);
 
             var jobs = new List<Tuple<LoadedLevel, int, int>>();
             foreach (LoadedLevel l in levels)
@@ -207,18 +255,37 @@ namespace FluffyClimbers.Simulation.Tests
 
             string note = "Medal reference Pace per level and Gameplay mode (Relaxed, Easy, Normal, Hard, Insane) in milli plat/s (830 = 0.83): the default hero Momo, the solvability bot's fastest line to the top row, averaged over the layouts it solved. "
                 + "Written by Tests/Simulation/MedalCalibrationTests.cs (MEDAL_CAL=1); never hand-edit. Bronze, silver and gold are the percents below of it. 0 = the bot solved no layout (no medal).";
-            string json = FileMedalTargets.ToJson(targets, Layouts, note);
             string dir = Path.Combine(root, "Content", "config");
+            if (only != null)
+            {
+                // partial run: keep every other region's row from the existing file, replace only the calibrated rows
+                var merged = new SortedDictionary<string, int[]>(StringComparer.Ordinal);
+                Newtonsoft.Json.Linq.JObject old = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(Path.Combine(dir, "medal_targets.json")));
+                foreach (var kv in (Newtonsoft.Json.Linq.JObject)old["targets"])
+                {
+                    var arr = (Newtonsoft.Json.Linq.JArray)kv.Value;
+                    int[] r = new int[TimeRecords.ModeCount];
+                    for (int m = 0; m < r.Length && m < arr.Count; m++) r[m] = (int)arr[m];
+                    merged[kv.Key] = r;
+                }
+                foreach (var kv in targets) merged[kv.Key] = kv.Value;
+                note = (string)old["_doc"];   // keep the existing note text
+                targets = merged;
+            }
+            string json = FileMedalTargets.ToJson(targets, Layouts, note);
             File.WriteAllText(Path.Combine(dir, "medal_targets.json"), json, new UTF8Encoding(false));
             string resources = Path.Combine(root, "Assets", "Resources", "Content");
             if (Directory.Exists(resources)) File.WriteAllText(Path.Combine(resources, "medal_targets.json"), json, new UTF8Encoding(false));
 
+            if (only != null) { WritePartialMarkdown(root, solvedCounts, targets, only, budget, sw.Elapsed.TotalMinutes); Console.WriteLine("medal calibration of regions " + string.Join(",", only) + " done in " + sw.Elapsed.TotalMinutes.ToString("0.0", CultureInfo.InvariantCulture) + " min"); return; }
             var md = new StringBuilder();
             md.AppendLine("# Medal calibration (doc 46)");
             md.AppendLine();
-            md.AppendLine("Generated by `MedalCalibrationTests.Calibrate` (`MEDAL_CAL=1`). Hero: Momo (default stats). Bot: fastest line to the top row (speedrun best-first search), node budget " + budget + " per 60 rows, " + Layouts + " random layouts per level and mode (attempt seeds 0 to 4 of RandomLayoutTests), the game's scroll step table (" + string.Join("/", SimConfig.DifficultyStepPercent) + " percent, cap " + CapPercent + "). Total run time " + sw.Elapsed.TotalMinutes.ToString("0.0", CultureInfo.InvariantCulture) + " min on " + Threads() + " threads.");
+            md.AppendLine("Generated by `MedalCalibrationTests.Calibrate` (`MEDAL_CAL=1`). Hero: Momo (default stats). Bot: fastest line to the top row (speedrun best-first search), node budget " + budget + " per 60 rows, " + Layouts + " random layouts per level and mode (attempt seeds 0 to 4 of RandomLayoutTests), the game's scroll step table (" + string.Join("/", SimConfig.DifficultyStepPercent) + " percent, cap per setting " + string.Join("/", Enumerable.Range(0, TimeRecords.ModeCount).Select(CapPercent)) + "). Total run time " + sw.Elapsed.TotalMinutes.ToString("0.0", CultureInfo.InvariantCulture) + " min on " + Threads() + " threads.");
             md.AppendLine();
             md.AppendLine("Gold reference Pace in plat/s (layouts the bot solved, of " + Layouts + ", in brackets). Bronze, silver and gold lines = " + TimeRecords.MedalPercents[0] + ", " + TimeRecords.MedalPercents[1] + ", " + TimeRecords.MedalPercents[2] + " percent of it.");
+            md.AppendLine();
+            md.AppendLine("The table below is the RAW bot Pace stored in the file. At run time the medal target of a mode is the raw Pace times TimeRecords.ModeTargetScalePercent (" + string.Join("/", TimeRecords.ModeTargetScalePercent) + " percent for Relaxed/Easy/Normal/Hard/Insane, owner 2026-11-12), so the harder settings ask for more plat/s. Scaled gold-line example (x " + TimeRecords.ModeTargetScalePercent[4] + " percent on Insane) is applied by FileMedalTargets, not written here.");
             md.AppendLine();
             md.AppendLine("| level | Relaxed | Easy | Normal | Hard | Insane |");
             md.AppendLine("|---|---|---|---|---|---|");

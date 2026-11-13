@@ -168,6 +168,7 @@ namespace FluffyClimbers.Economy
                 arr[run.Mode] = rec;
                 TimedCounters c = TimedNow();
                 if (run.Floors > c.TimeAttackFloorsWeek) c.TimeAttackFloorsWeek = run.Floors;
+                TrackTimeAttackReward(run.Floors);   // the daily Time Attack task (ProgressService.Rewards.cs)
                 RegionTimedRecord t;   // coins and gems per minute count in Time Attack too (best single run of the region)
                 if (!Data.RegionTimed.TryGetValue(region.Id, out t) || t == null) t = new RegionTimedRecord();
                 RecordRules.ApplyCaptures(t, run, res);
@@ -192,6 +193,7 @@ namespace FluffyClimbers.Economy
                 : ApplyEndlessRun(run.RegionId, floors, dayKey, comboCoins);
             run.Coins = er.FullRateCoins;
             recorded = RecordRun(run);
+            if (RecordEndlessCrown(run)) Commit();   // owner 2026-11-13: the best endless crown (with its floors and combo) for the Endless pop-up
             return er;
         }
 
@@ -346,6 +348,7 @@ namespace FluffyClimbers.Economy
             if (res.PaceClear) c.PaceClearsToday = SaturatingAdd(c.PaceClearsToday, 1);
             if (res.NewBestPace && !c.BestPaceLevelsWeek.Contains(levelId)) c.BestPaceLevelsWeek.Add(levelId);
             if (res.NewGold) c.GoldWeek = SaturatingAdd(c.GoldWeek, 1);
+            if (res.MedalImproved && res.Medal > MedalLevel.None) TrackMedalEarned();   // the daily and weekly "earn medals" tasks
         }
     }
 }

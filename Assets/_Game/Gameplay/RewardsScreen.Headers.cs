@@ -112,7 +112,7 @@ namespace FluffyClimbers.Gameplay
             bar.offsetMax = new Vector2(-24f, BarH * 0.5f);
         }
 
-        /// <summary>Daily: points n/100 and a row of milestone chests with the thresholds under them (20 40 60 80 100); a tap on a ready chest claims it.</summary>
+        /// <summary>Daily: points n/200 and a row of five milestone chests with the thresholds under them (40 80 120 160 200; the last one is a hero); a tap on a ready chest claims it.</summary>
         void BuildDailyTrack(RectTransform panel)
         {
             IReadOnlyList<RewardEntry> ms = progress.RewardDefs.DailyMilestones;
@@ -249,6 +249,7 @@ namespace FluffyClimbers.Gameplay
         {
             if (e.Gems > 0) { pic = GemSprite; count = Compact(e.Gems); }
             else if (e.Coins > 0) { pic = CoinSprite; count = Compact(e.Coins); }
+            else if (e.GivesHero) { pic = ToyKit.Get("icon_heroes") ?? BoltSprite; count = "Hero"; }   // the 200-point chest: one random Common hero (the face is only known after the claim)
             else { pic = BoltSprite; count = "x" + e.PowerUps; }
         }
 

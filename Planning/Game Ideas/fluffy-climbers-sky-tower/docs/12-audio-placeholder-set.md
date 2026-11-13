@@ -23,7 +23,7 @@ Total imported audio about 1.9 MB (music 1.77 MB, 14 SFX about 128 KB). Checked 
 | Fail | sfx/fail.ogg | Digital Audio | lowThreeTone.ogg | RunHud.ShowFailed |
 | Back | sfx/back.ogg | Interface Sounds | back_002.ogg | popup close X (BuildPopupFrame) |
 | Popup | sfx/popup.ogg | Interface Sounds | open_001.ogg | UiKit.BuildPopupFrame |
-| Music | music/loop.ogg | OpenGameArt, by yd | Insistent.ogg | meta screens (volume 0.45) and runs (0.28) |
+| Music | music/loop.wav | Original (Tools/music_gen, theme 1 Sunny Skip, 2026-11-12; replaced loop.ogg; lowered 5 semitones, softer timbre, 2026-11-13) | compose_menu_themes.py | meta screens (volume 0.45) and runs (0.28) |
 
 Clips were picked by name and category, not by ear: audition them in the editor and swap files freely (same file name = no code change).
 To use a separate run track, drop `Resources/Audio/music/run.ogg`; without it the run reuses the loop quieter.
@@ -31,6 +31,7 @@ To use a separate run track, drop `Resources/Audio/music/run.ogg`; without it th
 ## Behaviour
 - Settings: Sound effects and Music toggles apply at once (GameSettings setters call `AudioManager.Refresh()`); music off stops instantly, on fades in.
 - Music cross-fades (0.8 s) between the meta and run beds; the same recording just changes level.
+- Ducking (owner 2026-11-13, bug list 2 item 3): the music never restarts or stops for a jingle. Win, Fail and PowerUp (rewards, merge, chests, heroes, results) dip the music to 30 percent in 120 ms, hold for the clip length (max 3 s, overlapping jingles only extend the hold), and return in 400 ms (`MusicDuck`, `MusicSelector` in `MusicDuck.cs`; tests `MusicDuckTests`). Asking for the track that already plays does nothing, and a track still fading out is taken back without a restart. Plain clicks do not duck.
 - 8 pooled AudioSources for SFX, no allocation per play; the same cue cannot retrigger within 40 ms.
 - `AudioListener.pause` follows app pause and focus loss.
 - The simulation does not know about audio: events are derived in the view layer from state changes. Every cue has a visual twin (squash and dust, pickup pops,

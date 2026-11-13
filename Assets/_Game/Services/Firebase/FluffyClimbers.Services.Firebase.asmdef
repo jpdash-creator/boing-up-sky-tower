@@ -1,0 +1,32 @@
+{
+  "name": "FluffyClimbers.Services.Firebase",
+  "rootNamespace": "FluffyClimbers.Leaderboard",
+  "references": [
+    "FluffyClimbers.Leaderboard",
+    "FluffyClimbers.Services",
+    "Google.Play.Games"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Firebase.App.dll",
+    "Firebase.Platform.dll",
+    "Firebase.TaskExtension.dll",
+    "Firebase.Auth.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "FLUFFY_GPGS",
+    "FLUFFY_FIREBASE"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.google.firebase.auth",
+      "expression": "",
+      "define": "FLUFFY_FIREBASE"
+    }
+  ],
+  "noEngineReferences": false
+}

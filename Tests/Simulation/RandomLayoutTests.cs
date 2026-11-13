@@ -333,13 +333,60 @@ namespace FluffyClimbers.Simulation.Tests
             Assert.True(bad.Count == 0, bad.Count + " bounce platforms below the goal row, first: " + (bad.Count > 0 ? bad[0] : ""));
         }
 
+        /// <summary>Regression (owner decision 2026-11-12): lvl_002_25 with this attempt seed put a Dizzy Spores platform at row 52 and the next row on the far side
+        /// (no steering for a second, so unreachable on the fast late scroll). The Dizzy Spores layout rule (next platform overlaps the spores) fixed it.</summary>
+        [Fact]
+        public void TheFormerDizzySporesDeadEndOfLvl002_25IsSolvable()
+        {
+            SimConfig cfg = new SimConfig();
+            LoadedLevel ll = Levels().First(l => l.Id == "lvl_002_25");
+            LevelSpec s = ll.Spec.WithAttemptSeed(522908187);
+            LevelData d = LevelBuilder.Build(cfg, s);
+            BotResult r = new LevelBot(new Sim(cfg, d, s), s, d, Budget(s)).Solve();
+            output.WriteLine("solved " + r.Solved + ", best row " + r.BestRow + "/" + d.Rows);
+            Assert.True(r.Solved);
+            Assert.True(GoalEvaluator.IsComplete(s, r.Final));
+        }
+
+        /// <summary>RANDOM_THREADS caps the parallel bot runs of the long random layout tests (default: all processors).</summary>
+        private static int RandomThreads() { int v; return int.TryParse(Environment.GetEnvironmentVariable("RANDOM_THREADS"), out v) && v > 0 ? v : Environment.ProcessorCount; }
+
+        /// <summary>
+        /// Extra attempt seeds beyond the 20 of the main proof (RANDOM_SWEEP=1): RANDOM_REGIONS (default 2,3,4,5), RANDOM_LEVEL_MIN (default 20, the fast late levels),
+        /// RANDOM_SEEDS (default 40, seeds 20..20+N-1), RANDOM_THREADS. Reports every unsolved layout.
+        /// </summary>
+        [Fact]
+        public void ExtraSeedSweepOfTheLateLevels()
+        {
+            if (Environment.GetEnvironmentVariable("RANDOM_SWEEP") != "1") return;
+            SimConfig cfg = new SimConfig();
+            string regionsEnv = Environment.GetEnvironmentVariable("RANDOM_REGIONS");
+            HashSet<int> regions = new HashSet<int>((string.IsNullOrWhiteSpace(regionsEnv) ? "2,3,4,5" : regionsEnv).Split(',').Select(x => int.Parse(x.Trim())));
+            int levelMin; if (!int.TryParse(Environment.GetEnvironmentVariable("RANDOM_LEVEL_MIN"), out levelMin)) levelMin = 20;
+            int seeds; if (!int.TryParse(Environment.GetEnvironmentVariable("RANDOM_SEEDS"), out seeds)) seeds = 40;
+            List<LoadedLevel> levels = Levels().Where(l => regions.Contains(int.Parse(l.Id.Substring(4, 3))) && l.Spec.LevelIndex >= levelMin).ToList();
+            var jobs = new List<Tuple<LoadedLevel, int>>();
+            foreach (LoadedLevel l in levels) for (int i = 0; i < seeds; i++) jobs.Add(Tuple.Create(l, SeedsPerLevel + i));
+            var fails = new System.Collections.Concurrent.ConcurrentBag<string>();
+            Parallel.ForEach(jobs, new ParallelOptions { MaxDegreeOfParallelism = RandomThreads() }, j =>
+            {
+                LevelSpec s = j.Item1.Spec.WithAttemptSeed(AttemptSeed(j.Item2));
+                LevelData d = LevelBuilder.Build(cfg, s);
+                BotResult r = new LevelBot(new Sim(cfg, d, s), s, d, Budget(s)).Solve();
+                if (!r.Solved) fails.Add(j.Item1.Id + " attempt seed " + AttemptSeed(j.Item2) + " best row " + r.BestRow + "/" + d.Rows);
+            });
+            foreach (string f in fails.OrderBy(x => x, StringComparer.Ordinal)) output.WriteLine(f);
+            output.WriteLine("sweep: " + jobs.Count + " layouts, unsolved: " + fails.Count);
+            Assert.True(fails.IsEmpty, fails.Count + " unsolved, first: " + (fails.IsEmpty ? "" : fails.OrderBy(x => x, StringComparer.Ordinal).First()));
+        }
+
         [Fact]
         public void BotSolvesEveryRandomLayoutOfAll75Levels()
         {
             SimConfig cfg = new SimConfig();
             List<LoadedLevel> levels = Levels();
             string[][] failures = new string[levels.Count][];
-            Parallel.For(0, levels.Count, li =>
+            Parallel.For(0, levels.Count, new ParallelOptions { MaxDegreeOfParallelism = RandomThreads() }, li =>
             {
                 LoadedLevel ll = levels[li];
                 List<string> f = new List<string>();

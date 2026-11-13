@@ -6,6 +6,7 @@
     "FluffyClimbers.Content",
     "FluffyClimbers.Economy",
     "FluffyClimbers.Services",
+    "FluffyClimbers.Leaderboard",
     "Unity.InputSystem",
     "UnityEngine.UI"
   ],

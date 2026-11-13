@@ -52,7 +52,7 @@ namespace FluffyClimbers.Gameplay
             int d = GameSettings.Difficulty;
             Cfg.ScrollStepPercent = GameSettings.DifficultyStepPercent[d];
             Cfg.GemSpotPermille = GameSettings.DifficultyGemPermille[d];
-            Cfg.ScrollStepCapPercent = GameSettings.SpeedUpCapPercent;   // the stepped speed-up stops at +150 percent: beyond it no player can out-climb the screen (level audit 2026-10-20)
+            Cfg.ScrollStepCapPercent = SimConfig.TopSpeedUpPercent(d);   // owner 2026-11-12: the top speed-up of a setting is step x 8 (80/160/200/320/400 percent), no global cap
         }
 
         /// <summary>The config a run uses: a copy of the shared <see cref="Cfg"/> with the chosen character's stats applied (docs/44).</summary>
@@ -60,7 +60,9 @@ namespace FluffyClimbers.Gameplay
         {
             SimConfig run = Cfg.Clone();
             CharacterSpec info = CharacterCatalog.Selected.Info;
-            (info != null && info.Stats != null ? info.Stats : CharacterStats.Default).ApplyTo(run);
+            // docs/44 section 11: the player's own rolled copy of a tier hero (Common heroes and the default are fixed)
+            CharacterStats stats = info == null ? null : (Progress != null ? Progress.StatsOf(info) : info.Stats);
+            (stats ?? CharacterStats.Default).ApplyTo(run);
             return run;
         }
 

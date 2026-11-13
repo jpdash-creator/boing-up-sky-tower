@@ -20,7 +20,7 @@ namespace FluffyClimbers.Tests
     /// The canvas follows the camera's target texture, so each aspect is simulated by rendering to a texture of that size.
     /// </summary>
     [Category("CriticalUX")]
-    public class CriticalUxLayoutTests
+    public partial class CriticalUxLayoutTests
     {
         struct Aspect
         {
@@ -737,13 +737,58 @@ namespace FluffyClimbers.Tests
                 if (sb.Overlaps(pb)) problems.Add(a.Name + ": Settings overlaps Play");
                 if (settings.Find("Icon") == null) problems.Add(a.Name + ": Settings needs its icon image named Icon");
                 if (settings.GetComponent<A11yLabel>() == null || settings.GetComponent<A11yLabel>().Text != "Settings") problems.Add(a.Name + ": Settings needs the label Settings");
-                if (FindRt("Momo") == null || FindRt("Version") == null || FindRt("Logo") == null) problems.Add(a.Name + ": Home keeps the logo, Momo and the version label");
-                if (FindRt("Version") != null && CanvasBox(FindRt("Version")).Overlaps(sb)) problems.Add(a.Name + ": the version label overlaps Settings");
+                if (FindRt("Logo") == null) problems.Add(a.Name + ": Home keeps the logo");
+                if (FindRt("Momo") != null || FindRt("Hero") != null) problems.Add(a.Name + ": Home has no big hero any more (owner 2026-11-12)");
+                if (FindRt("Version") != null) problems.Add(a.Name + ": Home has no version label any more (owner 2026-11-12)");
+                if (FindRt("Logo") != null && CanvasBox(FindRt("Logo")).Overlaps(sb)) problems.Add(a.Name + ": the logo overlaps Settings");
 
                 // the heroes bar has no crown any more (Bug List 1, B5.d)
                 meta.ShowCharacters();
                 yield return null;
                 if (FindRt("TabVIP") != null) problems.Add(a.Name + ": the crown is in the Shop now, not on the heroes bar");
+            }
+            Restore(holder);
+            Report(problems);
+        }
+
+        /// <summary>Owner 2026-11-12: the title banner sits at exactly the same rect on Home and on the login screen (centre or just above), neither screen has a big hero, Home has no version label.</summary>
+        [UnityTest]
+        public IEnumerator HomeAndLoginShareTheBannerAndHaveNoHeroOrVersion()
+        {
+            yield return Load("Meta");
+            var meta = Object.FindFirstObjectByType<MetaController>();
+            var problems = new List<string>();
+            var holder = new RenderTexture[1];
+            foreach (Aspect a in Aspects)
+            {
+                UiKit.SafeAreaNormalized = () => FullSafe;
+                MetaUiActive(true);
+                DropLoginCanvas();
+                meta.ShowMenu();
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                RectTransform homeLogo = FindRt("Logo");
+                if (homeLogo == null) { problems.Add(a.Name + ": Home needs the logo"); continue; }
+                Rect homeBox = CanvasBox(homeLogo);
+                if (FindRt("Momo") != null || FindRt("Hero") != null) problems.Add(a.Name + ": Home must not show a big hero");
+                if (FindRt("Version") != null) problems.Add(a.Name + ": Home must not show the version label");
+
+                ShowLoginTest(false, true);   // hides the Meta UI, so only the login's Logo is active
+                yield return ApplyAspect(a, holder);
+                yield return null;
+                RectTransform loginLogo = FindRt("Logo");
+                if (loginLogo == null) problems.Add(a.Name + ": Login needs the logo");
+                else
+                {
+                    Rect loginBox = CanvasBox(loginLogo);
+                    if (Mathf.Abs(loginBox.x - homeBox.x) > 1f || Mathf.Abs(loginBox.y - homeBox.y) > 1f || Mathf.Abs(loginBox.width - homeBox.width) > 1f || Mathf.Abs(loginBox.height - homeBox.height) > 1f)
+                        problems.Add(a.Name + ": the banner differs between Home " + homeBox + " and Login " + loginBox);
+                }
+                if (FindRt("Hero") != null || FindRt("Momo") != null) problems.Add(a.Name + ": Login must not show a hero");
+                if (FindRt("Version") != null) problems.Add(a.Name + ": Login must not show the version label");
+                if (FindRt("Bg") == null) problems.Add(a.Name + ": Login needs the same meadow background as Home");
+                DropLoginCanvas();
+                MetaUiActive(true);
             }
             Restore(holder);
             Report(problems);
@@ -877,7 +922,7 @@ namespace FluffyClimbers.Tests
                 float lowestContent = float.MaxValue;
                 foreach (Transform t in panel)
                 {
-                    if (t.name == "Pays" || t.name == "Best" || t.name.StartsWith("Star")) lowestContent = Mathf.Min(lowestContent, CanvasBox((RectTransform)t).yMin);
+                    if (t.name == CrownInfoUi.RowName || t.name == "PaysLine" || t.name.StartsWith("Star")) lowestContent = Mathf.Min(lowestContent, CanvasBox((RectTransform)t).yMin);
                 }
                 float gapToPlay = lowestContent - playBox.yMax;
                 if (gapToPlay > 160f) problems.Add(a.Name + ": empty middle of " + gapToPlay.ToString("F0") + " between the content and PLAY");
@@ -984,7 +1029,7 @@ namespace FluffyClimbers.Tests
                     FindRt("GameplayHard", row).GetComponent<Button>().onClick.Invoke();
                     if (GameSettings.Difficulty != 3) problems.Add(tag + "tapping Hard did not store the setting");
                     if (!FindRt("GameplayHard", row).GetComponent<Outline>().enabled || FindRt("GameplayRelaxed", row).GetComponent<Outline>().enabled) problems.Add(tag + "the selected mark did not move to Hard");
-                    if (GameSession.Cfg.ScrollStepPercent != 28) problems.Add(tag + "Hard must set a speed-up step of 28 percent, got " + GameSession.Cfg.ScrollStepPercent);
+                    if (GameSession.Cfg.ScrollStepPercent != 40) problems.Add(tag + "Hard must set a speed-up step of 40 percent, got " + GameSession.Cfg.ScrollStepPercent);
                 }
                 GameSettings.Difficulty = 0;
                 GameSession.ApplyDifficulty();
@@ -1990,7 +2035,7 @@ namespace FluffyClimbers.Tests
             yield return CheckScreen("rewards-main-ready", () => { meta.ShowRewards(RewardTab.Main); meta.CurrentRewards.SelectRegion(1); }, problems);
             yield return CheckScreen("rewards-weekly-ready", () => meta.ShowRewards(RewardTab.Weekly), problems);
             yield return CheckScreen("rewards-daily-ready", () => meta.ShowRewards(RewardTab.Daily), problems);
-            yield return CheckScreen("rewards-daily-claimed", () => { meta.ShowRewards(RewardTab.Daily); GameSession.Progress.TryClaimReward(RewardTab.Daily, "dp_20"); meta.ShowRewards(RewardTab.Daily); }, problems);
+            yield return CheckScreen("rewards-daily-claimed", () => { meta.ShowRewards(RewardTab.Daily); GameSession.Progress.TryClaimReward(RewardTab.Daily, "dp_40"); meta.ShowRewards(RewardTab.Daily); }, problems);
             yield return CheckScreen("rewards-main-claimed", () =>
             {
                 // region 1: the first goals of two groups claimed (green check cards), the rest still ready or open; the circle keeps its dot while something is left

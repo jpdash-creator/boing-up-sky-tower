@@ -89,27 +89,27 @@ namespace FluffyClimbers.Simulation
         /// Owner Bug List 8 item 3 (2026-11-09): the shorter levels (2,685 rows per region instead of 3,240) cost about 17 percent of the gems, so the shares went up two per mille steps to 1.6, 1.6, 1.7, 1.7 and 1.7 percent (measured: 55 to 75 placed gem value per region on every mode).
         /// </summary>
         public static readonly int[] DifficultyGemPermille = { 16, 16, 17, 17, 17 };
-        /// <summary>Base size of one scroll speed-up step in percent: the old Relaxed step (Bug List 6 item 6). Every difficulty multiplies it.</summary>
-        public const int ScrollStepBasePercent = 20;
-        /// <summary>Step size multiplier per difficulty in percent of the base (Relaxed x1.00, Easy x1.10, Normal x1.25, Hard x1.40, Insane x1.50).</summary>
-        public static readonly int[] DifficultyStepMultiplierPercent = { 100, 110, 125, 140, 150 };
-        /// <summary>Scroll step size in percent per difficulty (integer maths): 20, 22, 25, 28, 30 percent every ScrollStepSeconds.</summary>
-        public static readonly int[] DifficultyStepPercent = BuildDifficultyStepPercent();
-        static int[] BuildDifficultyStepPercent()
+        /// <summary>
+        /// Scroll speed-up step in percent per Gameplay setting (Relaxed, Easy, Normal, Hard, Insane) every ScrollStepSeconds: 10, 20, 25, 40, 50.
+        /// Owner decision 2026-11-12 (was 20/22/25/28/30). The same percents are the crown bonus of <c>CrownScore</c> (Economy), so a harder setting pays more crown.
+        /// </summary>
+        public static readonly int[] DifficultyStepPercent = { 10, 20, 25, 40, 50 };
+        /// <summary>Speed-up steps that are applied at most (owner 2026-11-12: 8, so the top speed-up is step x 8 = 80, 160, 200, 320, 400 percent for Relaxed .. Insane, 40 s after the first jump). There is NO global percent cap any more; the cap of a setting is <see cref="TopSpeedUpPercent"/>.</summary>
+        public const int DefaultScrollStepMaxSteps = 8;
+        /// <summary>Highest stepped speed-up of a Gameplay setting in percent: DifficultyStepPercent x DefaultScrollStepMaxSteps (80, 160, 200, 320, 400). GameSession sets ScrollStepCapPercent to it.</summary>
+        public static int TopSpeedUpPercent(int mode)
         {
-            int[] r = new int[DifficultyStepMultiplierPercent.Length];
-            for (int i = 0; i < r.Length; i++) r[i] = ScrollStepBasePercent * DifficultyStepMultiplierPercent[i] / 100;
-            return r;
+            int m = mode < 0 ? 0 : (mode >= DifficultyStepPercent.Length ? DifficultyStepPercent.Length - 1 : mode);
+            return DifficultyStepPercent[m] * DefaultScrollStepMaxSteps;
         }
         public int ScrollStepSeconds = 5;
         public int ScrollStepPercent = 4;
         public int ScrollStepCapPercent = 50;
         /// <summary>
         /// Number of speed steps that are applied; later steps are skipped, so the speed flattens after ScrollStepMaxSteps x ScrollStepSeconds
-        /// (30 s). Owner list 2026-10-20: the 20/40/60/80/100 percent steps stay clearly visible for the first 30 s. Without a limit the
-        /// screen outruns the best possible climb (about 6.6 to 8 u/s for the bot) after 30 to 40 s and every level ends in a game over.
+        /// (40 s with 8 steps, owner 2026-11-12; it was 6 steps = 30 s). Without a limit the screen outruns the best possible climb after 30 to 40 s.
         /// </summary>
-        public int ScrollStepMaxSteps = 6;
+        public int ScrollStepMaxSteps = DefaultScrollStepMaxSteps;
         /// <summary>
         /// Hard ceiling of the campaign scroll speed in u/s (not applied to endless). 4.0 u/s is about 60 percent of the fastest bot climb
         /// on the hardest region 1 level (6.6 u/s), the most a good human can sustain; the base speed of the hardest level is 2.4 u/s.
@@ -281,6 +281,13 @@ namespace FluffyClimbers.Simulation
         public Fx OrbitGapMin = Fx.FromRatio(20, 10);
         /// <summary>Dizzy Spores: left/right input is ignored for this long after landing (1.0 s). Never inverted.</summary>
         public int DizzyLockTicks = 60;
+        /// <summary>
+        /// Dizzy Spores layout rule: the next row's spine platform overlaps the Dizzy platform by at least this much (u), so a straight jump from the spores
+        /// reaches it with NO steering (a player who lands dizzy keeps only his momentum for the whole flight, and waiting costs height on a fast scroll).
+        /// The landing test is the platform half width + PlayerHalfWidth + LandingMargin (0.75 u each side), so 1.0 u of surface overlap leaves a landing
+        /// window of 2.5 u on the lower platform that reaches the upper one by a vertical jump (a standing jump peaks 4.51 u, gaps are capped at 4.2 u).
+        /// </summary>
+        public Fx DizzyNextOverlap = Fx.One;
         /// <summary>Spore Pop: swells for SporePopTicks (1.2 s) after the landing, then flings the player (2.0 u up, about 3 u toward Platform.Dir) if still on it; flat for SporePopFlatTicks (2.0 s).</summary>
         public int SporePopTicks = 72;
         public int SporePopFlatTicks = 120;

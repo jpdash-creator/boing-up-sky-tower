@@ -1,0 +1,39 @@
+# Cloud Build / gcloud run deploy --source upload filter. Run the deploy from the REPO ROOT with
+#   gcloud run deploy leaderboard --source . --region asia-south1   (and --project fluffy-climbers-tower-jump)
+# only after the owner approved a cloud change. This file keeps the upload to what the service needs.
+# The service links Assets/_Game/{Simulation,Content,Economy} sources and Assets/Resources/Content/content_manifest.json: keep those.
+.git/
+.gitignore
+Library/
+Logs/
+Temp/
+UserSettings/
+Art/
+Content/assets/
+Content/golden/
+Planning/
+Item List to do/
+docs/
+Packages/
+ProjectSettings/
+Tests/
+Tools/*
+!Tools/leaderboard_service/
+Tools/leaderboard_service/bin/
+Tools/leaderboard_service/obj/
+Assets/Art/
+Assets/Plugins/
+Assets/Editor/
+Assets/StreamingAssets/
+Assets/_Game/Gameplay/
+Assets/_Game/UI/
+Assets/_Game/Audio/
+Assets/_Game/Tests/
+Assets/Resources/Art/
+Assets/Resources/Audio/
+Assets/Resources/Fonts/
+*.whl
+*.tar.gz
+*.apk
+*.aab
+*.md

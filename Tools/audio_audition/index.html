@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Music audition</title><style>
+:root{--bg:#fff8ee;--fg:#2b2233;--card:#fff;--bd:#e5d6c0;--ac:#c2410c}
+@media(prefers-color-scheme:dark){:root{--bg:#1d1824;--fg:#f3ecf8;--card:#2a2335;--bd:#463b57;--ac:#fdba74}}
+body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:18px/1.5 system-ui,sans-serif;max-width:760px;margin:auto}
+a{color:var(--ac);word-break:break-all}.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:14px 0}
+h2{font-size:1.15rem;margin:0 0 10px}.t{display:block;font-weight:400;font-size:1rem}
+audio{width:100%;height:56px}dl{margin:10px 0 0}dt{font-weight:700;margin-top:6px}dd{margin:0}.note{background:var(--card);border-left:5px solid var(--ac);padding:10px 14px;border-radius:8px}
+</style></head><body><h1>Music audition</h1>
+<p class="note">Open this file from disk (file://). Players loop. Moods are from titles and metadata only, not from listening. Regions 6 to 30 (region_6..30.ogg) are not listed: they are real, wired tracks (AudioManager loads Audio/music/region_N for any region 1 to 30) but those regions are Coming soon and cannot be played yet; credits are in Content/assets/audio_music_credits.md.</p>
+<section class="card"><h2>loop.ogg <span class="t">Quaint Town (per audio_music_credits.md; audio_credits.md still says &quot;Insistent&quot; by yd, the two files disagree)</span></h2>
+<audio controls loop preload="none" src="../../Assets/Resources/Audio/music/loop.ogg"></audio>
+<dl><dt>Author</dt><dd>? (unknown)</dd><dt>Source</dt><dd><a href="https://opengameart.org/content/quaint-town">https://opengameart.org/content/quaint-town</a></dd><dt>Licence</dt><dd>CC0</dd>
+<dt>File</dt><dd>781 KB, 1:40.0 (100.0 s), 44100 Hz mono Vorbis (processed: max 100 s, a 100.0 s length means it was trimmed)</dd>
+<dt>Plays</dt><dd>Menu, world map, level screens, shop and every other meta screen (MusicTrack.Meta, volume 0.45). Also the fallback for any run whose region file is missing.</dd><dt>Mood</dt><dd><em>Title suggests a quiet small-town piece. Metadata only, not heard.</em></dd></dl></section>
+<section class="card"><h2>region_1.ogg <span class="t">Green Hills</span></h2>
+<audio controls loop preload="none" src="../../Assets/Resources/Audio/music/region_1.ogg"></audio>
+<dl><dt>Author</dt><dd>looneybits</dd><dt>Source</dt><dd><a href="https://opengameart.org/content/green-hills">https://opengameart.org/content/green-hills</a></dd><dt>Licence</dt><dd>CC0</dd>
+<dt>File</dt><dd>0.99 MB, 1:40.0 (100.0 s), 44100 Hz mono Vorbis (processed: max 100 s, a 100.0 s length means it was trimmed)</dd>
+<dt>Plays</dt><dd>Run only, Region 1 (Meadow Springs) at volume 0.28 (RunView calls SetMusic(Run, region)).</dd><dt>Mood</dt><dd><em>Title suggests rolling, pastoral. Metadata only.</em></dd></dl></section>
+<section class="card"><h2>region_2.ogg <span class="t">Magic Town</span></h2>
+<audio controls loop preload="none" src="../../Assets/Resources/Audio/music/region_2.ogg"></audio>
+<dl><dt>Author</dt><dd>53jxrl</dd><dt>Source</dt><dd><a href="https://opengameart.org/content/magic-town">https://opengameart.org/content/magic-town</a></dd><dt>Licence</dt><dd>CC0</dd>
+<dt>File</dt><dd>488 KB, 0:55.7 (55.7 s), 44100 Hz mono Vorbis (processed: max 100 s, a 100.0 s length means it was trimmed)</dd>
+<dt>Plays</dt><dd>Run only, Region 2 (Mushroom Grove) at volume 0.28 (RunView calls SetMusic(Run, region)).</dd><dt>Mood</dt><dd><em>Title suggests magical, whimsical. Metadata only.</em></dd></dl></section>
+<section class="card"><h2>region_3.ogg <span class="t">Summer Park - 8bit tune (loop)</span></h2>
+<audio controls loop preload="none" src="../../Assets/Resources/Audio/music/region_3.ogg"></audio>
+<dl><dt>Author</dt><dd>qubodup</dd><dt>Source</dt><dd><a href="https://opengameart.org/content/summer-park-8bit-tune-loop">https://opengameart.org/content/summer-park-8bit-tune-loop</a></dd><dt>Licence</dt><dd>CC0</dd>
+<dt>File</dt><dd>376 KB, 0:44.0 (44.0 s), 44100 Hz mono Vorbis (processed: max 100 s, a 100.0 s length means it was trimmed)</dd>
+<dt>Plays</dt><dd>Run only, Region 3 (Sunny Beach) at volume 0.28 (RunView calls SetMusic(Run, region)).</dd><dt>Mood</dt><dd><em>Title says 8-bit chiptune, summery. Metadata only.</em></dd></dl></section>
+<section class="card"><h2>region_4.ogg <span class="t">Bouncy Tune</span></h2>
+<audio controls loop preload="none" src="../../Assets/Resources/Audio/music/region_4.ogg"></audio>
+<dl><dt>Author</dt><dd>puti (not verified)</dd><dt>Source</dt><dd><a href="https://opengameart.org/content/bouncy-tune">https://opengameart.org/content/bouncy-tune</a></dd><dt>Licence</dt><dd>CC0</dd>
+<dt>File</dt><dd>392 KB, 0:56.6 (56.6 s), 44100 Hz mono Vorbis (processed: max 100 s, a 100.0 s length means it was trimmed)</dd>
+<dt>Plays</dt><dd>Run only, Region 4 (Candy Canyon) at volume 0.28 (RunView calls SetMusic(Run, region)).</dd><dt>Mood</dt><dd><em>Title says bouncy, likely playful. Metadata only.</em></dd></dl></section>
+<section class="card"><h2>region_5.ogg <span class="t">Asianoriental2</span></h2>
+<audio controls loop preload="none" src="../../Assets/Resources/Audio/music/region_5.ogg"></audio>
+<dl><dt>Author</dt><dd>? (unknown)</dd><dt>Source</dt><dd><a href="https://opengameart.org/content/asianoriental2">https://opengameart.org/content/asianoriental2</a></dd><dt>Licence</dt><dd>CC0</dd>
+<dt>File</dt><dd>877 KB, 1:40.0 (100.0 s), 44100 Hz mono Vorbis (processed: max 100 s, a 100.0 s length means it was trimmed)</dd>
+<dt>Plays</dt><dd>Run only, Region 5 (Bamboo Temple) at volume 0.28 (RunView calls SetMusic(Run, region)).</dd><dt>Mood</dt><dd><em>Title suggests East-Asian flavour. Metadata only.</em></dd></dl></section>
+</body></html>

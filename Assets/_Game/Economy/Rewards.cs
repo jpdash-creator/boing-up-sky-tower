@@ -30,6 +30,8 @@ namespace FluffyClimbers.Economy
         /// <summary>Bits earned: bit 0 = star 1 (clear), bit 1 = star 2, bit 2 = star 3 (StarEvaluator.Earned).</summary>
         public int StarMask;
         public int Score;
+        /// <summary>Gameplay setting 0..4 the run was played in (Relaxed..Insane); the crown (CrownScore) is the base Score with its bonus. 0 when a caller does not fill it.</summary>
+        public int Mode;
         /// <summary>Coins picked up and earned by landing rules during the run (SimState.Coins).</summary>
         public int CoinsCollected;
         /// <summary>Normal gem pickups collected in the run (SimState.Gems).</summary>
@@ -45,6 +47,8 @@ namespace FluffyClimbers.Economy
         public int PowerUpsUsed;
         /// <summary>Per-region statistics (Bug List 5 F1.a): the region index the run was played in (0 = unknown, the level's own region is used for a completed run) and the jumps made since the last report.</summary>
         public int Region, Jumps;
+        /// <summary>Floors reached (the platform row counter). Stored with the best crown for the crown calculation pop-up; 0 when a caller does not fill it.</summary>
+        public int Floors;
 
         public int Stars
         {

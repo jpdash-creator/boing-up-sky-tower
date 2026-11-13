@@ -34,35 +34,19 @@ namespace FluffyClimbers.Gameplay
             RectTransform root = UiKit.Rect(canvas, RootName);
             UiKit.Stretch(root);
             view.Root = root;
-            Theme.SkyBackground(root);
+            AddMeadow(root, MeadowSprite(art, GameSession.Progress));   // the same painted meadow as the home screen (owner 2026-11-12)
             RectTransform safe = UiKit.SafeArea(root);
 
-            Sprite logo = ToyKit.Get("logo");
-            if (logo != null)
-            {
-                Image lg = UiKit.AddImage(safe, "Logo", logo, Color.white);
-                UiKit.Place(lg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(800f, 327f));
-                lg.rectTransform.pivot = new Vector2(0.5f, 1f);
-                lg.raycastTarget = false;
-            }
-            else
-            {
-                Text title = UiKit.AddText(safe, "Title", "FLUFFY CLIMBERS\nTOWER JUMP", 90, Color.white, TextAnchor.MiddleCenter, true);
-                UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(840f, 260f));
-            }
-            if (art != null)
-            {
-                RectTransform doll = MomoDoll.Build(safe, "Hero", 400f, CharacterCatalog.Selected, art);
-                doll.anchorMin = doll.anchorMax = new Vector2(0.5f, 1f);
-                doll.pivot = new Vector2(0.5f, 1f);
-                doll.anchoredPosition = new Vector2(0f, -430f);
-            }
+            AddHomeLogo(safe);   // same rect as on Home; no hero on the login screen
 
             // bottom stack, from the bottom: note, guest, Google, status
             float y = 20f;
-            Text note = UiKit.AddText(safe, "Note", GuestNote, 40, Theme.Ink, TextAnchor.MiddleCenter);
+            RectTransform noteBox = UiKit.Rect(safe, "NoteBox");   // cream backing: the note must stay readable on the painted meadow
+            Theme.CardBacking(noteBox);
+            UiKit.Place(noteBox, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(840f, 140f));
+            Text note = UiKit.AddText(noteBox, "Note", GuestNote, 40, Theme.Ink, TextAnchor.MiddleCenter);
             DisableOutline(note);
-            UiKit.Place((RectTransform)note.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(840f, 140f));
+            UiKit.Stretch((RectTransform)note.transform);
             y += 140f + Gap;
 
             view.Guest = UiKit.AddButton(safe, "Guest", "Play as guest", ToyKit.Button(0), Color.white, new Vector2(ButtonW, GuestH), onGuest, 46);
@@ -76,10 +60,60 @@ namespace FluffyClimbers.Gameplay
                 y += GoogleH + Gap;
             }
 
-            view.Status = UiKit.AddText(safe, "Status", "", 40, Theme.Ink, TextAnchor.MiddleCenter);
-            DisableOutline(view.Status);
+            view.Status = UiKit.AddText(safe, "Status", "", 40, Color.white, TextAnchor.MiddleCenter);   // white with the default outline: readable on the meadow
             UiKit.Place((RectTransform)view.Status.transform, new Vector2(0.5f, 0f), new Vector2(0f, y), new Vector2(840f, 120f));
             return view;
+        }
+
+        // ---------------- shared look of Home and Login (owner 2026-11-12) ----------------
+
+        /// <summary>Logo size, reference px. Login and Home use exactly this size and <see cref="LogoAnchorY"/> so the banner never jumps between the two screens.</summary>
+        public static readonly Vector2 LogoSize = new Vector2(860f, 352f);
+        /// <summary>Vertical anchor of the logo centre inside the safe area (0 bottom, 1 top): slightly above the screen centre, clear of the bottom button stack at 3:4.</summary>
+        public const float LogoAnchorY = 0.62f;
+
+        /// <summary>The painted meadow of the latest unlocked region (the Home background); null when there is no art, the caller then gets the dark fallback.</summary>
+        public static Sprite MeadowSprite(ArtCatalog art, ProgressService progress)
+        {
+            if (art == null) return null;
+            int latest = progress != null ? Mathf.Clamp(progress.HighestUnlockedRegionIndex(), 1, Mathf.Max(1, GameSession.PlayableRegions)) : 1;
+            RegionArt meadow = art.ForRegion(latest) ?? art.ForRegion(1);
+            return meadow != null ? meadow.BgFar : null;
+        }
+
+        /// <summary>Full-screen cover-fit background (first sibling of <paramref name="root"/>), named "Bg" like on Home.</summary>
+        public static Image AddMeadow(RectTransform root, Sprite sprite)
+        {
+            Image bg = UiKit.AddImage(root, "Bg", sprite, sprite != null ? Color.white : new Color(0.08f, 0.09f, 0.16f, 1f));
+            bg.preserveAspect = false;
+            UiKit.Stretch(bg.rectTransform);
+            bg.transform.SetAsFirstSibling();
+            bg.raycastTarget = false;
+            if (sprite != null)
+            {
+                var fit = bg.gameObject.AddComponent<AspectRatioFitter>();
+                fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fit.aspectRatio = sprite.rect.width / sprite.rect.height;
+            }
+            return bg;
+        }
+
+        /// <summary>The title banner (logo art with the small Momo on it) at the shared position and size; parent must be a safe-area rect. Falls back to a text title without art.</summary>
+        public static RectTransform AddHomeLogo(Transform safeParent)
+        {
+            Sprite logo = ToyKit.Get("logo");
+            if (logo != null)
+            {
+                Image lg = UiKit.AddImage(safeParent, "Logo", logo, Color.white);
+                UiKit.Place(lg.rectTransform, new Vector2(0.5f, LogoAnchorY), Vector2.zero, LogoSize);
+                lg.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                lg.raycastTarget = false;
+                return lg.rectTransform;
+            }
+            Text title = UiKit.AddText(safeParent, "Logo", "FLUFFY CLIMBERS\nTOWER JUMP", 90, Color.white, TextAnchor.MiddleCenter, true);
+            UiKit.Place((RectTransform)title.transform, new Vector2(0.5f, LogoAnchorY), Vector2.zero, LogoSize);
+            ((RectTransform)title.transform).pivot = new Vector2(0.5f, 0.5f);
+            return (RectTransform)title.transform;
         }
 
         /// <summary>The Google-style button: white pill, a coloured G badge and dark text (the label wraps on two lines at 130 percent text).</summary>

@@ -1,0 +1,14 @@
+start 2026-11-12T19:58:55 pairs 125 threads 3
+10/125 unsolved so far 0 elapsed 0.0 min
+20/125 unsolved so far 0 elapsed 0.0 min
+30/125 unsolved so far 0 elapsed 0.0 min
+40/125 unsolved so far 0 elapsed 0.1 min
+50/125 unsolved so far 0 elapsed 0.1 min
+60/125 unsolved so far 0 elapsed 0.1 min
+70/125 unsolved so far 0 elapsed 0.1 min
+80/125 unsolved so far 0 elapsed 0.1 min
+90/125 unsolved so far 0 elapsed 0.1 min
+100/125 unsolved so far 0 elapsed 0.1 min
+110/125 unsolved so far 0 elapsed 0.2 min
+120/125 unsolved so far 0 elapsed 0.4 min
+125/125 unsolved so far 0 elapsed 0.4 min

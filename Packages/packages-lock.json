@@ -28,11 +28,27 @@
       "url": "https://package.openupm.com"
     },
     "com.google.external-dependency-manager": {
-      "version": "1.2.182",
+      "version": "1.2.190",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://package.openupm.com"
+    },
+    "com.google.firebase.app": {
+      "version": "file:../../../tools/firebase_unity/com.google.firebase.app-14.1.0.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.external-dependency-manager": "1.2.190"
+      }
+    },
+    "com.google.firebase.auth": {
+      "version": "file:../../../tools/firebase_unity/com.google.firebase.auth-14.1.0.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.firebase.app": "14.1.0"
+      }
     },
     "com.google.play.games": {
       "version": "2.3.0",

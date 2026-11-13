@@ -34,6 +34,7 @@ namespace FluffyClimbers.Economy
             if (!CharacterInventory.Exists(id) || count < 1) return Copies(id);
             int now = Math.Min(MergeRules.MaxCopies, Copies(id) + count);
             p.Data.Copies[id] = now;
+            p.RollIfNew(id);   // docs/44 section 11: the stats of a tier hero are dealt when it is first obtained; further copies keep the first roll
             p.SaveNow();
             return now;
         }

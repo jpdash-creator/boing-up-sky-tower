@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_web_client_id">
+  <string name="gcm_defaultSenderId" translatable="false">763742589585</string>
+  <string name="google_storage_bucket" translatable="false">fluffy-climbers-tower-jump.firebasestorage.app</string>
+  <string name="project_id" translatable="false">fluffy-climbers-tower-jump</string>
+  <string name="google_api_key" translatable="false">AIzaSyDsI1bt-XaB9IL1i7vDX5chE9gUnVS8GA8</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDsI1bt-XaB9IL1i7vDX5chE9gUnVS8GA8</string>
+  <string name="google_app_id" translatable="false">1:763742589585:android:c0b0d0a719967acdb6e530</string>
+  <string name="default_web_client_id" translatable="false">763742589585-8r5g7f9e8mqkhi2ao65n0cjjf9rst3hk.apps.googleusercontent.com</string>
+</resources>

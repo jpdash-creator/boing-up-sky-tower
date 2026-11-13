@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Local proof of the leaderboard service: replay of real runs (RunSession itself is compiled from Assets/_Game/Gameplay), tamper checks, slot rules, prizes, token validation.
+       No Firestore, no network: the in-memory store has the same semantics. Run: dotnet test Tests/LeaderboardService (pass an artifacts path option to keep output out of the repo). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FluffyClimbers.LeaderboardService.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- the REAL run session and its revive schedule: the test drives them like the game does and uploads what they record -->
+    <Compile Include="../../Assets/_Game/Gameplay/RunSession.cs" Link="Linked/RunSession.cs" />
+    <Compile Include="../../Assets/_Game/Gameplay/RevivePolicy.cs" Link="Linked/RevivePolicy.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Tools/leaderboard_service/LeaderboardService.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>

@@ -29,7 +29,7 @@ namespace FluffyClimbers.Simulation.Tests
         static string TierSuffix(int tier) { return tier == 0 ? "" : tier == 1 ? "_u" : tier == 2 ? "_r" : tier == 3 ? "_e" : "_l"; }
         static PhysicsKey Key(HeroPhysics p) { return new PhysicsKey(p.LaunchTenths, p.Speed, p.Control, p.Wall); }
 
-        sealed class Reference
+        internal sealed class Reference
         {
             public double[][] Ok24;   // [tier][level]
             public double[][] Ok4;    // [tier][level]
@@ -38,7 +38,7 @@ namespace FluffyClimbers.Simulation.Tests
             public double[] Mean24 = new double[5], Mean4 = new double[5], Target15 = new double[5];
         }
 
-        static Reference LoadOrBuildReference(ITestOutputHelper output)
+        internal static Reference LoadOrBuildReference(ITestOutputHelper output)
         {
             var r = new Reference();
             List<LoadedLevel> ls = HeroFi.Levels();

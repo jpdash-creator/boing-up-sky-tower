@@ -143,6 +143,7 @@ namespace FluffyClimbers.Gameplay
             ticker = root.gameObject.AddComponent<RewardsTicker>();
             ticker.OnTick = Tick;
             Render();
+            StartPrizeRefresh();   // RewardsScreen.LeaderboardPrizes.cs: weekly leaderboard prizes (nothing happens for guests or while the feature is off)
         }
 
         /// <summary>Switches to a tab (rebuilds the body).</summary>
@@ -277,6 +278,7 @@ namespace FluffyClimbers.Gameplay
             else
             {
                 BuildSceneHeader(content, false);
+                BuildLeaderboardPrizeCards(content);   // a Weekly Prize card per board the closed week paid (none when there is nothing to claim)
                 AddCardsWithCompleted(content, defs.WeeklyTasks, true);
             }
         }

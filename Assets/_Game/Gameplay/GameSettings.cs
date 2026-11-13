@@ -16,6 +16,7 @@ namespace FluffyClimbers.Gameplay
         const string SystemTestKey = "settings.systemtest";
         const string ShopTestKey = "settings.shoptest";
         const string CharacterTestKey = "settings.charactertest";
+        const string LeaderboardTestKey = "settings.leaderboardtest";
         const string PromoKey = "settings.launchpromo";
         const string FirstPurchaseKey = "settings.firstpurchasedouble";
         const string PaceGhostKey = "settings.paceghost";
@@ -83,6 +84,16 @@ namespace FluffyClimbers.Gameplay
             set { PlayerPrefs.SetInt(CharacterTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
         }
 
+        /// <summary>
+        /// Admin switch LEADERBOARD TEST (owner 2026-11-13): forces the weekly leaderboard ON in a development build, with the deployed service URL, whatever the shipped remote
+        /// config says. Only counts while SYSTEM_TEST is on, and never in a release build (DevBuild is false there), so the store build keeps the config switch.
+        /// </summary>
+        public static bool LeaderboardTest
+        {
+            get { return SystemTest && PlayerPrefs.GetInt(LeaderboardTestKey, 0) == 1; }
+            set { PlayerPrefs.SetInt(LeaderboardTestKey, value ? 1 : 0); PlayerPrefs.Save(); ApplyFlags(); }
+        }
+
         /// <summary>True when no test switch is on: the build behaves exactly like production (the admin pill says PROD READY).</summary>
         public static bool ProdReady { get { return !SystemTest; } }
 
@@ -92,6 +103,7 @@ namespace FluffyClimbers.Gameplay
             PlayerPrefs.SetInt(GameJumpKey, 0);
             PlayerPrefs.SetInt(ShopTestKey, 0);
             PlayerPrefs.SetInt(CharacterTestKey, 0);
+            PlayerPrefs.SetInt(LeaderboardTestKey, 0);
         }
 
         /// <summary>The effective "every level and region open" state: SYSTEM_TEST and GAME_JUMP_TEST both on (the single value ProgressService.TestUnlockAll is driven from).</summary>
@@ -131,7 +143,7 @@ namespace FluffyClimbers.Gameplay
             set { PlayerPrefs.SetInt(FirstPurchaseKey, value ? 1 : 0); PlayerPrefs.Save(); }
         }
 
-        /// <summary>Game difficulty (owner, Bug List 6 item 6): scroll speed grows by this percent every 5 seconds: 20, 22, 25, 28, 30 (SimConfig holds the integer table; chosen on the level screen).</summary>
+        /// <summary>Game difficulty (owner, Bug List 6 item 6): scroll speed grows by this percent every 5 seconds: 10, 20, 25, 40, 50 (SimConfig holds the integer table; chosen on the level screen).</summary>
         public static readonly int[] DifficultyStepPercent = FluffyClimbers.Simulation.SimConfig.DifficultyStepPercent;
         /// <summary>Chance in per mille that a gem spot (one per level row) holds a gem (owner 2026-10-25: halved; tuned values live in SimConfig).</summary>
         public static readonly int[] DifficultyGemPermille = FluffyClimbers.Simulation.SimConfig.DifficultyGemPermille;
@@ -143,14 +155,11 @@ namespace FluffyClimbers.Gameplay
             set { PlayerPrefs.SetInt(DifficultyKey, Mathf.Clamp(value, 0, DifficultyNames.Length - 1)); PlayerPrefs.Save(); }
         }
 
-        /// <summary>Cap of the stepped speed-up in percent (GameSession.ApplyDifficulty uses the same value).</summary>
-        public const int SpeedUpCapPercent = 150;
 
-        /// <summary>Highest speed-up the steps can reach on a difficulty: ScrollStepMaxSteps steps of DifficultyStepPercent, limited by the cap.</summary>
+        /// <summary>Highest speed-up the steps can reach on a difficulty: ScrollStepMaxSteps (8) steps of DifficultyStepPercent: 80, 160, 200, 320, 400 percent.</summary>
         public static int MaxSpeedUpPercent(int level)
         {
-            int p = DifficultyStepPercent[level] * new FluffyClimbers.Simulation.SimConfig().ScrollStepMaxSteps;
-            return p > SpeedUpCapPercent ? SpeedUpCapPercent : p;
+            return FluffyClimbers.Simulation.SimConfig.TopSpeedUpPercent(level);   // owner 2026-11-12: step x 8 = 80, 160, 200, 320, 400; no global cap
         }
 
         public static string DifficultyLabel(int level)

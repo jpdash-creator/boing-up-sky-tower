@@ -86,7 +86,7 @@ namespace FluffyClimbers.Gameplay
         public static bool TestToolsEnabled(bool systemTest) { return systemTest; }
 
         /// <summary>True when any test switch (System, Game, Shop or Character) is on.</summary>
-        public static bool AnyTestOn { get { return GameSettings.SystemTest || GameSettings.GameJumpTest || GameSettings.ShopTest || GameSettings.CharacterTest; } }
+        public static bool AnyTestOn { get { return GameSettings.SystemTest || GameSettings.GameJumpTest || GameSettings.ShopTest || GameSettings.CharacterTest || GameSettings.LeaderboardTest; } }
 
         /// <summary>Turns the code-unlocked admin mode off again (release builds hide the button; the test flags go back to real behaviour).</summary>
         public static void Lock()
