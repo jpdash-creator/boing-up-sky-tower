@@ -1,16 +1,38 @@
 [
   {
-    "id": "weekly", "order": 1, "name": "Weekly Subscription",
+    "id": "weekly", "order": 1, "name": "Weekly Starter",
     "priceUsd": 1.49, "days": 7,
     "instantGems": 100,
     "daily": { "gems": 10, "coins": 500 },
-    "powerUpEveryClaims": 0, "powerUpCount": 0
+    "powerUpEveryClaims": 0, "powerUpCount": 1, "powerUpOnClaims": [4],
+    "chests": [],
+    "featured": false
   },
   {
-    "id": "monthly", "order": 2, "name": "Monthly Subscription",
+    "id": "weekly_plus", "order": 2, "name": "Weekly Plus",
+    "priceUsd": 2.99, "days": 7,
+    "instantGems": 250,
+    "daily": { "gems": 20, "coins": 1000 },
+    "powerUpEveryClaims": 2, "powerUpCount": 1, "powerUpOnClaims": [],
+    "chests": [ { "kind": "iron", "claims": [1] } ],
+    "featured": true
+  },
+  {
+    "id": "monthly", "order": 3, "name": "Monthly Standard",
     "priceUsd": 4.99, "days": 30,
     "instantGems": 200,
     "daily": { "gems": 10, "coins": 600 },
-    "powerUpEveryClaims": 5, "powerUpCount": 1
+    "powerUpEveryClaims": 5, "powerUpCount": 1, "powerUpOnClaims": [],
+    "chests": [],
+    "featured": false
+  },
+  {
+    "id": "monthly_premium", "order": 4, "name": "Monthly Premium",
+    "priceUsd": 9.99, "days": 30,
+    "instantGems": 300,
+    "daily": { "gems": 20, "coins": 1000 },
+    "powerUpEveryClaims": 5, "powerUpCount": 1, "powerUpOnClaims": [],
+    "chests": [ { "kind": "gold", "claims": [1, 11, 21] } ],
+    "featured": true
   }
 ]

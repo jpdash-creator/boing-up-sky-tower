@@ -137,54 +137,75 @@ namespace FluffyClimbers.Simulation.Tests
         }
 
         [Fact]
-        public void EveryRegionStaysInsideTheTightGemBudget()
+        public void EveryRegionPaysExactlyFiftyGemsOnTheEightMilestoneGoals()
         {
-            // owner: about 80 gems per region from the Main goals, the endless tiers (and top goals) may pay slightly more; coins and power-ups carry the value
+            // owner 2026-11-13: gems ONLY on the milestone goals, 50 per region (250 in all); coins and power-ups carry the rest
+            var gemGoals = new Dictionary<string, int>
+            {
+                { "levels_5", 10 }, { "stars3_3", 10 }, { "gold_5", 10 }, { "stars_5", 8 }, { "hard_3", 4 }, { "endless_3", 3 }, { "endless_4", 3 }, { "nowall_2", 2 }
+            };
+            int total = 0;
             for (int r = 1; r <= 5; r++)
             {
                 List<RegionGoal> goals = RegionGoalTable.Build(r);
-                // the gold medal tiers (doc 46) pay the star tiers again by owner decision and are checked on their own (GoldMedalTiersPayLikeTheStarTiers)
-                Sum core = Total(goals, g => !g.IsEndless && !g.IsMedal), endless = Total(goals, g => g.IsEndless), all = Total(goals, g => !g.IsMedal);
-                Assert.InRange(core.Gems, 65, 85);
-                Assert.True(endless.Gems <= 30, "endless gems " + endless.Gems);
-                Assert.True(all.Gems <= 105, "region " + r + " gems " + all.Gems);
+                var seen = new HashSet<string>();
+                foreach (RegionGoal g in goals)
+                {
+                    string key = g.Stat + "_" + g.Tier;
+                    if (gemGoals.ContainsKey(key)) { Assert.Equal(gemGoals[key], g.Gems); seen.Add(key); }
+                    else Assert.Equal(0, g.Gems);
+                }
+                Assert.Equal(gemGoals.Count, seen.Count);
+                Sum core = Total(goals, g => !g.IsEndless && !g.IsMedal), endless = Total(goals, g => g.IsEndless), all = Total(goals, g => true);
+                Assert.Equal(50, all.Gems);
+                Assert.Equal(6, endless.Gems);
+                total += all.Gems;
                 Assert.Equal(2, core.PowerUps);
                 Assert.True(endless.PowerUps <= 4);
-                Assert.True(core.Coins <= 5600, "region " + r + " core coins " + core.Coins);
-                Assert.True(core.GeValue <= 560, "region " + r + " core value " + core.GeValue);
-                Assert.True(all.GeValue <= 1300, "region " + r + " total value " + all.GeValue);
-                Assert.True(endless.Gems > core.Gems * 0.2 && endless.Gems < core.Gems * 0.5, "endless pays slightly more than a pure tight policy, not a lot more");
+                Assert.True(core.Coins >= 3300 && core.Coins <= 4000, "region " + r + " core coins " + core.Coins);
+                Assert.True(endless.Coins <= 6600, "region " + r + " endless coins " + endless.Coins);
+                Assert.True(all.GeValue <= 1100, "region " + r + " total value " + all.GeValue);
             }
+            Assert.Equal(250, total);
         }
 
         [Fact]
-        public void GoldMedalTiersPayLikeTheStarTiersAndTargetFiveToTwentyFiveLevels()
+        public void GoldMedalTiersTargetFiveToTwentyFiveLevelsAndOnlyTheLastPaysGemsAndAHero()
         {
-            // doc 46 section 8: "each medal tier pays the same as the star tier at the same position"; no new economy numbers; tier 5 gives the same random Common hero as the star tier 5 (owner 2026-11-09)
-            Assert.Equal(RegionGoalTable.StarsTiers.Length, RegionGoalTable.GoldMedalTiers.Length);
-            for (int i = 0; i < RegionGoalTable.StarsTiers.Length; i++)
-            {
-                Assert.Equal(RegionGoalTable.StarsTiers[i].Gems, RegionGoalTable.GoldMedalTiers[i].Gems);
-                Assert.Equal(RegionGoalTable.StarsTiers[i].Coins, RegionGoalTable.GoldMedalTiers[i].Coins);
-                Assert.Equal(RegionGoalTable.StarsTiers[i].PowerUps, RegionGoalTable.GoldMedalTiers[i].PowerUps);
-            }
+            // doc 46 section 8 + owner 2026-11-13: tier 5 (gold on 25 levels) = 10 gems + 1 power-up + one random Common hero; tiers 1 to 4 pay coins only
             for (int r = 1; r <= 5; r++)
             {
-                List<RegionGoal> stars = RegionGoalTable.Build(r).FindAll(g => g.Type == RegionGoalType.Stars);
                 List<RegionGoal> gold = RegionGoalTable.Build(r).FindAll(g => g.IsMedal);
                 Assert.Equal(new[] { 5, 10, 15, 20, 25 }, gold.ConvertAll(g => g.Target).ToArray());
                 Assert.Equal(5, gold.Count);
                 for (int i = 0; i < 5; i++)
                 {
-                    Assert.Equal(stars[i].Gems, gold[i].Gems);
-                    Assert.Equal(stars[i].Coins, gold[i].Coins);
-                    Assert.Equal(stars[i].PowerUps, gold[i].PowerUps);
-                    Assert.Equal(stars[i].HeroRegion, gold[i].HeroRegion);   // 0, except tier 5: a random Common hero like the star tier 5
+                    Assert.Equal(i == 4 ? 10 : 0, gold[i].Gems);
+                    Assert.Equal(i == 4 ? 1 : 0, gold[i].PowerUps);
+                    if (i < 4) Assert.True(gold[i].Coins > 0, gold[i].Id);
                     Assert.Equal(i == 4 ? RewardEntry.RandomOpenRegionHero : 0, gold[i].HeroRegion);
                     Assert.Equal("g_" + r + "_gold_" + (i + 1), gold[i].Id);
                     Assert.Equal("gold", gold[i].Stat);
                     Assert.True(gold[i].Target <= RegionGoalTable.LevelsPerRegion);
                 }
+            }
+        }
+
+        [Fact]
+        public void OnlyTwoHeroGiftsPerRegionClearAllLevelsAndGoldOnAllLevels()
+        {
+            for (int r = 1; r <= 5; r++)
+            {
+                int named = 0, random = 0;
+                foreach (RegionGoal g in RegionGoalTable.Build(r))
+                {
+                    if (g.HeroRegion > 0) { named++; Assert.Equal("g_" + r + "_levels_5", g.Id); }
+                    if (g.HeroRegion == RewardEntry.RandomOpenRegionHero) { random++; Assert.Equal("g_" + r + "_gold_5", g.Id); }
+                    if (g.Stat == "levels" && g.Tier >= 2 && g.Tier <= 4) Assert.True(g.Coins >= 150 && g.Coins <= 250, g.Id + " pays small coins instead of a hero");
+                    if (g.Stat == "stars" && g.Tier == 5) Assert.True(g.Coins >= 150 && g.Coins <= 250, g.Id + " pays small coins instead of a hero");
+                }
+                Assert.Equal(1, named);
+                Assert.Equal(1, random);
             }
         }
 
@@ -195,7 +216,7 @@ namespace FluffyClimbers.Simulation.Tests
                 foreach (RegionGoal g in RegionGoalTable.Build(r))
                 {
                     Assert.True(g.Gems > 0 || g.Coins > 0 || g.PowerUps > 0, g.Id);
-                    Assert.True(g.Gems <= 8, g.Id + " gems");
+                    Assert.True(g.Gems <= 10, g.Id + " gems");
                     Assert.True(g.Coins <= 6000, g.Id + " coins");
                     Assert.True(g.PowerUps <= 2, g.Id + " power-ups");
                 }

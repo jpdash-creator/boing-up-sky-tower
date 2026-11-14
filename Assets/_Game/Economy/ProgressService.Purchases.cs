@@ -69,13 +69,15 @@ namespace FluffyClimbers.Economy
             return res;
         }
 
-        /// <summary>"weekly" / "monthly" for a subscription product id ("...sub.weekly"), else null.</summary>
+        /// <summary>The plan id ("weekly", "weekly_plus", "monthly", "monthly_premium") for a subscription product id ("...sub.weekly_plus"), else null.</summary>
         public static string PlanOfProduct(string productId)
         {
             if (productId == null) return null;
-            if (productId.EndsWith(".sub.weekly", StringComparison.Ordinal)) return "weekly";
-            if (productId.EndsWith(".sub.monthly", StringComparison.Ordinal)) return "monthly";
-            return null;
+            const string marker = ".sub.";
+            int at = productId.LastIndexOf(marker, StringComparison.Ordinal);
+            if (at < 0) return null;
+            string plan = productId.Substring(at + marker.Length);
+            return plan == SubscriptionCatalog.Weekly || plan == SubscriptionCatalog.WeeklyPlus || plan == SubscriptionCatalog.Monthly || plan == SubscriptionCatalog.MonthlyPremium ? plan : null;
         }
 
         /// <summary>

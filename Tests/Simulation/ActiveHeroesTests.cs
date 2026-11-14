@@ -130,7 +130,7 @@ namespace FluffyClimbers.Simulation.Tests
         [Fact]
         public void TheRarityIsRolledFirstThenAnActiveHeroOfThatRarity()
         {
-            // the odds of the rarity are unchanged (Iron 70/20/10, Golden 50/40/10, bundles 70/20/10); every region open, so no fallback happens
+            // the odds of the rarity are unchanged (Iron 50/30/20 since 2026-11-13, bundles 70/20/10); every region open, so no fallback happens
             ulong s = 99;
             const int N = 60000;
             var iron = new Dictionary<CharacterRarity, int>();
@@ -139,9 +139,9 @@ namespace FluffyClimbers.Simulation.Tests
                 CharacterSpec c = ChestRolls.DrawHero(ChestKind.Iron, Mix(ref s), Mix(ref s), CharacterDefs.All, null);
                 int n; iron.TryGetValue(c.Rarity, out n); iron[c.Rarity] = n + 1;
             }
-            Assert.InRange(iron[CharacterRarity.Common] / (double)N, 0.68, 0.72);
-            Assert.InRange(iron[CharacterRarity.Uncommon] / (double)N, 0.18, 0.22);
-            Assert.InRange(iron[CharacterRarity.Rare] / (double)N, 0.08, 0.12);
+            Assert.InRange(iron[CharacterRarity.Common] / (double)N, 0.48, 0.52);
+            Assert.InRange(iron[CharacterRarity.Uncommon] / (double)N, 0.28, 0.32);
+            Assert.InRange(iron[CharacterRarity.Rare] / (double)N, 0.18, 0.22);
             var bundle = new Dictionary<CharacterRarity, int>();
             for (int i = 0; i < N; i++)
             {
@@ -153,7 +153,7 @@ namespace FluffyClimbers.Simulation.Tests
             Assert.InRange(bundle[CharacterRarity.Epic] / (double)N, 0.08, 0.12);
             // each pool of a rarity holds the five active lines at that rarity
             foreach (CharacterRarity r in HeroPurchase.Tiers)
-                Assert.Equal(ActiveLines.OrderBy(x => x, StringComparer.Ordinal).ToArray(), BundleCards.Pool(r, CharacterDefs.All, null).Select(c => c.LineId).OrderBy(x => x, StringComparer.Ordinal).ToArray());
+                Assert.Equal(ActiveLines.OrderBy(x => x, StringComparer.Ordinal).ToArray(), ChestRolls.Pool(r, CharacterDefs.All, null).Select(c => c.LineId).OrderBy(x => x, StringComparer.Ordinal).ToArray());
         }
 
         [Fact]
@@ -168,7 +168,7 @@ namespace FluffyClimbers.Simulation.Tests
                     if (g.HeroRegion == RewardEntry.RandomOpenRegionHero) random++;
                     else if (g.HeroRegion != 0) { Assert.Equal(region, g.HeroRegion); starter++; }
                 }
-                Assert.Equal(5, random);    // clear 6, 9 and 12 levels, earn 45 stars, 25 gold medal levels: each one random ACTIVE Common hero of an open region
+                Assert.Equal(1, random);    // owner 2026-11-13: only gold medals on 25 levels gives a random ACTIVE Common hero of an open region
                 Assert.Equal(1, starter);   // clear all levels: the region's starter (active)
             }
         }

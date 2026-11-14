@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_002_mushroom_grove",
-    "gemSkip": 116
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_003",

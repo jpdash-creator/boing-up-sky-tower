@@ -6,7 +6,7 @@ Every bundle holds coins, 1 to 4 power-up types and **exactly one hidden hero ca
 
 ## Rules (owner Bug List 1 B4.a.i to vi)
 - **Price:** every bundle costs 200 to 500 gems (steps of 10), nothing else (Bug List 2 C2.b.i; the v0.46 pool was 200 to 600).
-- **Worth:** 1.5x to 2.5x the gems paid (Bug List 2 C2.b.ii; v0.46 was 2.0 to 3.5), **shown as a multiplier only**: the text "Worth x2.1" (format "Worth x" + one decimal) at the TOP RIGHT of the card, plain **italic**, in the **same font as the bundle name**, **no star and no pill/background**. Size = name size x 0.7 but never below the 16 sp minimum: the card name is 42 px, which IS the minimum (16 sp), so the worth text is as large as the name (0.7 x 42 = 29 px would be below the minimum). **No dollars anywhere** (data, generator, schema, UI text, tests, this doc). Worth is measured in gems of value: coins at the shop rate (coins / 20), power-ups at their gem prices (50 or 75), the hero card at its expected gem value (below).
+- **Worth:** 1.85x to 3.6x the gems paid since 2026-11-13 (was 1.5 to 2.5 by Bug List 2 C2.b.ii; see "Economy review 2026-11-13" below), **shown as a multiplier only**: the text "Worth x2.1" (format "Worth x" + one decimal) at the TOP RIGHT of the card, plain **italic**, in the **same font as the bundle name**, **no star and no pill/background**. Size = name size x 0.7 but never below the 16 sp minimum: the card name is 42 px, which IS the minimum (16 sp), so the worth text is as large as the name (0.7 x 42 = 29 px would be below the minimum). **No dollars anywhere** (data, generator, schema, UI text, tests, this doc). Worth is measured in gems of value: coins at the shop rate (coins / 20), power-ups at their gem prices (50 or 75), the hero card at its expected gem value (below).
 - **Hidden card:** one per bundle, drawn when the bundle is BOUGHT. Odds (weights = percent): Uncommon 70, Rare 20, Epic 10 ("Elite" in the UI). Only characters of regions the player has OPEN. Common is never a card.
 - **Icons over text:** the card is shown as the `HeroCardIcon` image with a big white "?" on it, no words.
 
@@ -17,7 +17,15 @@ Every bundle holds coins, 1 to 4 power-up types and **exactly one hidden hero ca
 - The card is added with `ProgressService.AddCopies(id, 1)` (capped at `MergeRules.MaxCopies`); the wallet, contents and card go out in **one save**. The draw is repeatable from the per-account bundle seed plus `BundleSaveData.CardDraws` (no `UnityEngine.Random`); a failed purchase draws nothing. The tier roll and the character roll are two separate rolls.
 - Code: `Economy/BundleCards.cs` (pure: odds, tier gems, region rule, pools, fallback), `ProgressService.Bundles.cs` (`TryBuyBundle(def, out card)`, `TryBuyTimerOffer(now, out card)`, `BundleOpenRegionCount`, `BundleCardPool`), `BundlesScreen.ShowReveal`.
 
+## Economy review 2026-11-13 (owner): coins minus 30 percent, new card values
+- Ids, names, prices (200 to 500 gems), power-ups and the hidden card odds (70/20/10) are unchanged. The coin part of every bundle is **cut by 30 percent** (steps of 50; two bundles that collide after rounding get one more step). Total coins 14.27 million to 10.02 million, average 4,996 per bundle, range 1,100 to 12,100.
+- The hidden card is worth its hero card coin price / 20 (`HeroPurchase.Prices`: Uncommon 5,000, Rare 12,000, Elite 32,000), so `TierGems` = 250 / 600 / 1,600 and the expected card value is **455 gems** (was 180).
+- **Worth is therefore x1.85 to x3.6, average x2.56** (was 1.5 to 2.5). Reason: the pool was sized for 1.5 to 2.5 with the old card value; the card now adds 275 gems of worth and the coin cut removes about 30 percent of the coin share. Cheap bundles gain most (the card dominates). Nothing was loosened silently: the tests pin the new range (1.8 to 3.7 per bundle, min about 1.85, max about 3.59, mean about 2.56).
+- The generator (`gen_bundles.py`) still sizes with the old card value (`LEGACY_CARD_EXPECTED_GEMS = 180`) so the same bundles come out, then applies `COIN_CUT_PERCENT = 30`; its docstring and `statistics()` report the real worth.
+- Pool version is now 4 (`BundleCatalog.PoolVersion`): saved offers and the timer offer are redrawn once so no player keeps the old coin amounts.
+
 ## Worth: the ONE table (`BundleCards.TierGems`)
+(Table and numbers below are the v0.47 pool, 100 / 250 / 600 and worth 1.5 to 2.5; current values are in the section above.)
 Gem value of one hero card per tier. Change it here only (and in `Tools/content_cli/gen_bundles.py`; a content test compares both):
 
 | Tier | Weight (percent) | Card value in gems |

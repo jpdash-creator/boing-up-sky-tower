@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_003_sunny_beach",
-    "gemSkip": 133
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_004",

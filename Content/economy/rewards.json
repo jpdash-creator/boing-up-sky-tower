@@ -1,5 +1,5 @@
 {
-  "_doc": "docs/26 section 4 and docs/39. Kept identical to RewardCatalog.BuiltIn() by RewardsTests (Daily and Weekly). Rewards: gems, coins, powerups (random units), heroRegion (0 none, N = the Common hero of region N, -1 = random Common hero of an open region). The Main tab region goals are NOT here: they come from RegionGoalTable (Economy/RegionGoals.cs).",
+  "_doc": "docs/26 section 4 and docs/39. Kept identical to RewardCatalog.BuiltIn() by RewardsTests (Daily and Weekly). Rewards: gems, coins, powerups (random units), heroRegion (0 none, N = the Common hero of region N, -1 = random Common hero of an open region), heroOrCoins (with heroRegion -1: 50 percent the hero, otherwise these coins; the roll is deterministic and stored in the save). The Main tab region goals are NOT here: they come from RegionGoalTable (Economy/RegionGoals.cs).",
   "dailyActions": [
     {
       "id": "d_login",
@@ -147,31 +147,32 @@
       "id": "dp_40",
       "title": "40 points",
       "target": 40,
-      "coins": 500
+      "coins": 200
     },
     {
       "id": "dp_80",
       "title": "80 points",
       "target": 80,
-      "gems": 5
+      "coins": 400
     },
     {
       "id": "dp_120",
       "title": "120 points",
       "target": 120,
-      "coins": 1000
+      "coins": 600
     },
     {
       "id": "dp_160",
       "title": "160 points",
       "target": 160,
-      "gems": 10
+      "coins": 800
     },
     {
       "id": "dp_200",
       "title": "200 points",
       "target": 200,
-      "heroRegion": -1
+      "heroRegion": -1,
+      "heroOrCoins": 1000
     }
   ],
   "weekly": [
@@ -180,47 +181,42 @@
       "title": "Log in on 5 days",
       "stat": "loginDays",
       "target": 5,
-      "gems": 4,
-      "coins": 300
+      "coins": 150
     },
     {
       "id": "w_login7",
       "title": "Log in every day",
       "stat": "loginDays",
       "target": 7,
-      "gems": 4,
-      "coins": 300
+      "coins": 150
     },
     {
       "id": "w_play100",
       "title": "Play for 100 minutes",
       "stat": "playMin",
       "target": 100,
-      "gems": 5,
-      "coins": 400
+      "coins": 250
     },
     {
       "id": "w_play250",
       "title": "Play for 250 minutes",
       "stat": "playMin",
       "target": 250,
-      "gems": 6,
-      "coins": 500
+      "coins": 300
     },
     {
       "id": "w_jumps8000",
       "title": "Make 8,000 jumps",
       "stat": "jumps",
       "target": 8000,
-      "gems": 3,
-      "coins": 300
+      "coins": 150
     },
     {
       "id": "w_powerups10",
       "title": "Use 10 power-ups",
       "stat": "powerups",
       "target": 10,
-      "coins": 300,
+      "coins": 150,
       "powerups": 2
     },
     {
@@ -228,8 +224,7 @@
       "title": "Use 20 power-ups",
       "stat": "powerups",
       "target": 20,
-      "gems": 5,
-      "coins": 300,
+      "coins": 150,
       "powerups": 1
     },
     {
@@ -237,72 +232,66 @@
       "title": "Earn 20 stars",
       "stat": "starsEarned",
       "target": 20,
-      "gems": 4,
-      "coins": 500
+      "coins": 250
     },
     {
       "id": "w_stars40",
       "title": "Earn 40 stars",
       "stat": "starsEarned",
       "target": 40,
-      "gems": 6,
-      "coins": 500
+      "gems": 4,
+      "coins": 200
     },
     {
       "id": "w_levels20",
       "title": "Complete 20 levels",
       "stat": "levels",
       "target": 20,
-      "gems": 5,
-      "coins": 400
+      "coins": 250
     },
     {
       "id": "w_levels40",
       "title": "Complete 40 levels",
       "stat": "levels",
       "target": 40,
-      "gems": 5,
-      "coins": 500
+      "coins": 300
     },
     {
       "id": "w_nowall2",
       "title": "Clear the no-wall level 2 times",
       "stat": "noWall",
       "target": 2,
-      "gems": 5,
-      "coins": 300
+      "coins": 200
     },
     {
       "id": "w_combos150",
       "title": "Make 150 combos",
       "stat": "combos",
       "target": 150,
-      "gems": 5,
-      "coins": 500
+      "coins": 300
     },
     {
       "id": "w_combos300",
       "title": "Make 300 combos",
       "stat": "combos",
       "target": 300,
-      "gems": 7,
-      "coins": 500
+      "gems": 5,
+      "coins": 250
     },
     {
       "id": "w_endless100",
       "title": "Reach floor 100 in Endless",
       "stat": "endlessFloor",
       "target": 100,
-      "gems": 4,
-      "coins": 300
+      "coins": 200
     },
     {
       "id": "w_endless150",
       "title": "Reach floor 150 in Endless",
       "stat": "endlessFloor",
       "target": 150,
-      "gems": 5,
-      "coins": 400
+      "gems": 4,
+      "coins": 200
     },
     {
       "id": "w_endless200",
@@ -310,31 +299,30 @@
       "stat": "endlessFloor",
       "target": 200,
       "gems": 6,
-      "coins": 500
+      "coins": 250
     },
     {
       "id": "w_endlessruns20",
       "title": "Finish 20 Endless runs",
       "stat": "endlessRuns",
       "target": 20,
-      "gems": 6,
-      "coins": 500
+      "gems": 5,
+      "coins": 250
     },
     {
       "id": "w_pace3",
       "title": "Best pace on 3 levels",
       "stat": "bestPaceLevels",
       "target": 3,
-      "gems": 5,
-      "coins": 400
+      "gems": 4,
+      "coins": 200
     },
     {
       "id": "w_medals8",
       "title": "Earn 8 medals",
       "stat": "medals",
       "target": 8,
-      "gems": 4,
-      "coins": 400,
+      "coins": 250,
       "powerups": 1
     },
     {
@@ -342,8 +330,8 @@
       "title": "Earn 5 gold medals",
       "stat": "goldMedals",
       "target": 5,
-      "gems": 4,
-      "coins": 500,
+      "gems": 5,
+      "coins": 250,
       "powerups": 1
     },
     {
@@ -351,25 +339,25 @@
       "title": "Earn 10 gold medals",
       "stat": "goldMedals",
       "target": 10,
-      "gems": 6,
-      "coins": 600
+      "gems": 7,
+      "coins": 250
     },
     {
       "id": "w_ta100",
       "title": "Time Attack: 100 floors",
       "stat": "taFloors",
       "target": 100,
-      "gems": 4,
-      "coins": 300
+      "coins": 200
     },
     {
       "id": "w_hard5",
       "title": "Clear 5 hard levels",
       "stat": "hardClear",
       "target": 5,
-      "gems": 6,
-      "coins": 500,
-      "heroRegion": -1
+      "gems": 4,
+      "coins": 200,
+      "heroRegion": -1,
+      "heroOrCoins": 1000
     },
     {
       "id": "w_hard10",
@@ -377,8 +365,9 @@
       "stat": "hardClear",
       "target": 10,
       "gems": 6,
-      "coins": 500,
-      "heroRegion": -1
+      "coins": 200,
+      "heroRegion": -1,
+      "heroOrCoins": 1000
     }
   ]
 }

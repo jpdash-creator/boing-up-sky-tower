@@ -5,8 +5,8 @@ using NUnit.Framework;
 namespace FluffyClimbers.Tests
 {
     /// <summary>
-    /// Treasure chest rules of docs/22 point 3 as reworked by Bug List 5 F3: loot ranges, equal power-up chances, exactly one hero card per chest (odds 70/20/10 and 50/40/10, open regions only,
-    /// tier fallback), no refunds for duplicates, the worth band 1.5 to 2.5, Buy 10 and spending. The odds themselves are also tested in Tests/Simulation/ChestCardTests.cs.
+    /// Treasure chest rules of docs/22 point 3 as reworked by Bug List 5 F3: loot ranges, equal power-up chances, exactly one hero card per chest (odds 50/30/20 and 60/30/10, open regions only,
+    /// tier fallback), no refunds for duplicates, the worth band 2 to 6 (owner 2026-11-13), Buy 10 and spending. The odds themselves are also tested in Tests/Simulation/ChestCardTests.cs.
     /// </summary>
     public class ChestTests
     {
@@ -42,8 +42,8 @@ namespace FluffyClimbers.Tests
             Assert.AreEqual(1, ChestRolls.PowerUpCount(ChestKind.Iron));
             Assert.AreEqual(3, ChestRolls.PowerUpCount(ChestKind.Golden));
             Assert.AreEqual(7, Types().Count, "the seven implemented power-up types");
-            Assert.AreEqual(new[] { 70, 20, 10 }, ChestRolls.IronWeights);
-            Assert.AreEqual(new[] { 50, 40, 10 }, ChestRolls.GoldenWeights);
+            Assert.AreEqual(new[] { 50, 30, 20 }, ChestRolls.IronWeights);
+            Assert.AreEqual(new[] { 60, 30, 10 }, ChestRolls.GoldenWeights);
         }
 
         [Test]
@@ -58,32 +58,37 @@ namespace FluffyClimbers.Tests
             Simulate(ChestKind.Golden, 3000, 4200, 3);
         }
 
-        /// <summary>Bug List 5 F3: every chest is worth 1.5 to 2.5 times its Open 1 gems INCLUDING the expected hero card, at the average and at the extremes.</summary>
+        /// <summary>Every chest is worth 2 to 6 times its Open 1 gems INCLUDING the expected hero card, at the average and at the extremes (was 1.5 to 2.5; the owner accepts richer chests, 2026-11-13: about x3.6 Iron, x5.3 Gold).</summary>
         [Test]
-        public void WorthIsBetween1Point5And2Point5ForEveryChest()
+        public void WorthIsBetween2And6ForEveryChest()
         {
             PowerUpCatalog catalog = PowerUpCatalog.BuiltIn();
             Assert.AreEqual(60.71, ChestRolls.AveragePowerUpGems(catalog), 0.01, "average gem price of one random power-up");
             foreach (ChestKind kind in new[] { ChestKind.Iron, ChestKind.Golden })
             {
-                Assert.That(ChestRolls.Worth(kind, catalog), Is.InRange(1.5, 2.5), kind + " worth at the average");
+                Assert.That(ChestRolls.Worth(kind, catalog), Is.InRange(2.0, 6.0), kind + " worth at the average");
                 double cards = ChestRolls.ExpectedCardGems(kind), price = ChestRolls.Price(kind, 1), n = ChestRolls.PowerUpCount(kind);
                 double low = (ChestRolls.MinCoins(kind) / 20.0 + n * 50.0 + cards) / price, high = (ChestRolls.MaxCoins(kind) / 20.0 + n * 75.0 + cards) / price;
-                Assert.That(low, Is.InRange(1.5, 2.5), kind + " worst coins and cheapest power-ups");
-                Assert.That(high, Is.InRange(1.5, 2.5), kind + " best coins and dearest power-ups");
+                Assert.That(low, Is.InRange(2.0, 6.0), kind + " worst coins and cheapest power-ups");
+                Assert.That(high, Is.InRange(2.0, 6.0), kind + " best coins and dearest power-ups");
             }
-            Assert.AreEqual("Worth x1.8", ChestRolls.WorthLabel(ChestKind.Iron, catalog));
-            Assert.AreEqual("Worth x1.9", ChestRolls.WorthLabel(ChestKind.Golden, catalog));
+            Assert.AreEqual(3.56, ChestRolls.Worth(ChestKind.Iron, catalog), 0.02);
+            Assert.AreEqual(5.34, ChestRolls.Worth(ChestKind.Golden, catalog), 0.02);
+            Assert.AreEqual("Worth x3.6", ChestRolls.WorthLabel(ChestKind.Iron, catalog));
+            Assert.AreEqual("Worth x5.3", ChestRolls.WorthLabel(ChestKind.Golden, catalog));
         }
 
         [Test]
-        public void TheHeroCardTableIsTheBundleTable()
+        public void TheHeroCardTableIsTheHeroCoinPriceOver20()
         {
+            Assert.AreEqual(100, ChestRolls.CardGems(CharacterRarity.Common));
+            Assert.AreEqual(1600, ChestRolls.CardGems(CharacterRarity.Epic));
+            Assert.AreEqual(4000, ChestRolls.CardGems(CharacterRarity.Legendary));
             Assert.AreEqual(BundleCards.TierGems[0], ChestRolls.CardGems(CharacterRarity.Uncommon));
             Assert.AreEqual(BundleCards.TierGems[1], ChestRolls.CardGems(CharacterRarity.Rare));
             Assert.AreEqual(BundleCards.TierGems[2], ChestRolls.CardGems(CharacterRarity.Epic));
-            Assert.AreEqual(73.0, ChestRolls.ExpectedCardGems(ChestKind.Iron), 1e-9);
-            Assert.AreEqual(210.0, ChestRolls.ExpectedCardGems(ChestKind.Golden), 1e-9);
+            Assert.AreEqual(245.0, ChestRolls.ExpectedCardGems(ChestKind.Iron), 1e-9);
+            Assert.AreEqual(1240.0, ChestRolls.ExpectedCardGems(ChestKind.Golden), 1e-9);
         }
 
         static void Simulate(ChestKind kind, int minCoins, int maxCoins, int units)
@@ -108,21 +113,20 @@ namespace FluffyClimbers.Tests
             foreach (PowerUpDef d in types)
                 Assert.AreEqual(expectedShare, perType[d.Id] / (double)totalUnits, 0.007, d.Id + " should drop about 14.3 percent of the time");
             // Region 1 has Common to Legendary heroes, so every drawn tier exists and is used as drawn (the fallback only matters for closed regions; the pure odds are in ChestCardTests)
-            foreach (CharacterRarity r in rarities.Keys)
-                Assert.That(r != CharacterRarity.Legendary, "a chest never gives a Legendary hero: " + r);
             if (kind == ChestKind.Iron)
             {
-                Assert.AreEqual(0.70, rarities[CharacterRarity.Common] / (double)Runs, 0.01, "Iron: 70 percent Common");
-                Assert.AreEqual(0.20, rarities[CharacterRarity.Uncommon] / (double)Runs, 0.01, "Iron: 20 percent Uncommon");
-                Assert.AreEqual(0.10, rarities[CharacterRarity.Rare] / (double)Runs, 0.01, "Iron: 10 percent Rare");
+                Assert.AreEqual(0.50, rarities[CharacterRarity.Common] / (double)Runs, 0.01, "Iron: 50 percent Common");
+                Assert.AreEqual(0.30, rarities[CharacterRarity.Uncommon] / (double)Runs, 0.01, "Iron: 30 percent Uncommon");
+                Assert.AreEqual(0.20, rarities[CharacterRarity.Rare] / (double)Runs, 0.01, "Iron: 20 percent Rare");
                 Assert.IsFalse(rarities.ContainsKey(CharacterRarity.Epic), "Iron never gives Elite");
             }
             else
             {
                 Assert.IsFalse(rarities.ContainsKey(CharacterRarity.Common), "Gold never gives a Common hero");
-                Assert.AreEqual(0.50, rarities[CharacterRarity.Uncommon] / (double)Runs, 0.01, "Gold: 50 percent Uncommon");
-                Assert.AreEqual(0.40, rarities[CharacterRarity.Rare] / (double)Runs, 0.01, "Gold: 40 percent Rare");
-                Assert.AreEqual(0.10, rarities[CharacterRarity.Epic] / (double)Runs, 0.01, "Gold: 10 percent Elite");
+                Assert.IsFalse(rarities.ContainsKey(CharacterRarity.Uncommon), "Gold never gives an Uncommon hero");
+                Assert.AreEqual(0.60, rarities[CharacterRarity.Rare] / (double)Runs, 0.01, "Gold: 60 percent Rare");
+                Assert.AreEqual(0.30, rarities[CharacterRarity.Epic] / (double)Runs, 0.01, "Gold: 30 percent Elite");
+                Assert.AreEqual(0.10, rarities[CharacterRarity.Legendary] / (double)Runs, 0.01, "Gold: 10 percent Legendary");
             }
         }
 

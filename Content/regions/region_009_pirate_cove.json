@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_008_desert_oasis",
-    "gemSkip": 216
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_009",

@@ -85,7 +85,7 @@ def rel(path):
 
 
 def expected_gem_skip(n):
-    return None if n == 1 else 100 + (n - 2) * 300 // 18
+    return None if n == 1 else 500   # owner 2026-11-13: 500 gems per region
 
 
 # doc 08 section 6 template
@@ -99,6 +99,7 @@ D_BY_LEVEL = {1: 0.05, 2: 0.10, 3: 0.15, 4: 0.22, 5: 0.40, 6: 0.35, 7: 0.42, 8: 
 MIGRATED_REGIONS = 5
 TARGET_SCORE = [5, 20, 26.7, 33.3, 40, 44, 48, 52, 56, 60, 63, 66, 69, 72, 75, 77.5, 80, 82.5, 85, 87.5, 90, 92.5, 95, 97.5, 100]
 SPECIAL_LEVELS_25 = (5, 10, 15, 20)
+MILESTONE_GEMS = {5: 1, 10: 1, 15: 2, 20: 2, 25: 3}   # owner 2026-11-13, see migrate_levels_25.py
 
 
 def class_25(i):
@@ -233,8 +234,14 @@ def validate():
             specials = (5, 10)
         if lv["rewards"]["gems"]["min"] > lv["rewards"]["gems"]["max"]:
             errors.append("%s: gems min > max" % lid)
-        if i == top and lv["rewards"]["gems"].get("firstClearGuaranteed") != 5:
-            errors.append("%s: the last level must guarantee 5 gems on first clear" % lid)
+        # Economy review 2026-11-13: gems only on levels 5, 10, 15, 20, 25 (1, 1, 2, 2, 3), fixed and first clear only; every other level pays none.
+        gg = lv["rewards"]["gems"]
+        want_gems = MILESTONE_GEMS.get(i, 0) if i % 5 == 0 else 0
+        if want_gems:
+            if (gg.get("firstClearGuaranteed"), gg["min"], gg["max"], gg["chance"]) != (want_gems, want_gems, want_gems, 1.0):
+                errors.append("%s: milestone level %d must pay exactly %d gems on the first clear (chance 1, min = max = firstClearGuaranteed)" % (lid, i, want_gems))
+        elif gg["max"] != 0 or gg["min"] != 0 or gg["chance"] != 0 or gg.get("firstClearGuaranteed", 0) != 0:
+            errors.append("%s: only levels 5, 10, 15, 20, 25 pay gems" % lid)
         if lv["goal"]["type"] == "speedrun":
             g = lv["goal"]
             speedrun_times.add(g.get("timeSec"))

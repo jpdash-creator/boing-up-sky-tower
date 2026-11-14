@@ -1696,7 +1696,7 @@ namespace FluffyClimbers.Gameplay
             UiKit.Place((RectTransform)rname.transform, new Vector2(0.5f, 1f), new Vector2(0f, -352f), new Vector2(760f, 80f));
             // Owner 2026-11-13: ONE compact line without a dark backing: best crown (tap for the calculation) | best floors.
             CrownInfoUi.BuildRow(panel, 440f,
-                bestEndlessCrown > 0 ? bestEndlessCrown.ToString() : "-",
+                bestEndlessCrown > 0 ? bestEndlessCrown.ToString() : "0",
                 (bestEndlessCrown > 0 ? "Best crown " + bestEndlessCrown : "No crown yet") + ". Tap to see how the crown is calculated.",
                 () => ShowEndlessCrownInfo(region),
                 ToyKit.Get("icon_tower"), best > 0 ? best.ToString() : "-", best > 0 ? "Best " + best + " floors" : "No floors yet");
@@ -1772,16 +1772,9 @@ namespace FluffyClimbers.Gameplay
                 DropOutline(num);
                 UiKit.Stretch((RectTransform)num.transform);
             }
-            // Doc 25: the gem icon marks the levels that hold gems to collect on the way (8 and the top level, 25); the combo level (5) has none.
-            bool gemLevel = GemLevels.IsGemLevel(level.Index, level.Goal == null ? null : level.Goal.Type) || level.LevelClass == LevelDef.ClassHighlyComplex;
-            if (unlocked && gemLevel && art != null && art.GemIcon != null)
-            {
-                Image gem = UiKit.AddImage(rt, "GemBadge", art.GemIcon, Color.white);
-                gem.rectTransform.anchorMin = gem.rectTransform.anchorMax = new Vector2(1f, 1f);
-                gem.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                gem.rectTransform.anchoredPosition = new Vector2(-14f, -14f);
-                gem.rectTransform.sizeDelta = new Vector2(64f, 64f);
-            }
+            // Economy review 2026-11-13: the gem icon with its amount marks the milestone levels 5, 10, 15, 20, 25 (1, 1, 2, 2, 3 gems on the first clear); a tick says it was claimed.
+            int milestoneGems = RewardCalculator.MilestoneGemsOf(level);
+            if (unlocked && milestoneGems > 0 && art != null && art.GemIcon != null) AddGemBadge(rt, milestoneGems, cleared);
             ApplyMedalBadge(rt, level, unlocked);
             LevelProgress p = progress.GetProgress(level.Id);
             int stars = p != null ? p.Stars : 0;
@@ -1796,6 +1789,39 @@ namespace FluffyClimbers.Gameplay
                 srt.sizeDelta = new Vector2(46f, 46f);
             }
             return rt;
+        }
+
+        /// <summary>Names of the milestone gem badge parts on a level tile.</summary>
+        public const string GemBadgeName = "GemBadge", GemAmountName = "GemAmount", GemClaimedName = "GemClaimed";
+
+        /// <summary>
+        /// The milestone gem badge in the top right corner of a level tile: the gem icon, its amount to the left of it (outlined, one line, inside the tile) and, once the gems were claimed,
+        /// the icon dimmed with a small green tick (shape and colour both say "done"). The top row is medal (left), amount, gem (right); the level number sits lower in the middle.
+        /// </summary>
+        void AddGemBadge(RectTransform node, int gems, bool claimed)
+        {
+            Image gem = UiKit.AddImage(node, GemBadgeName, art.GemIcon, claimed ? new Color(1f, 1f, 1f, 0.6f) : Color.white);
+            gem.rectTransform.anchorMin = gem.rectTransform.anchorMax = new Vector2(1f, 1f);
+            gem.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            gem.rectTransform.anchoredPosition = new Vector2(-14f, -14f);
+            gem.rectTransform.sizeDelta = new Vector2(64f, 64f);
+            gem.gameObject.AddComponent<A11yLabel>().Text = gems + (gems == 1 ? " gem" : " gems") + " for the first clear" + (claimed ? ", claimed" : "");
+            Text amount = UiKit.AddText(node, GemAmountName, gems.ToString(), 44, UiKit.ButtonInk, TextAnchor.MiddleCenter, true);
+            DropOutline(amount);
+            amount.horizontalOverflow = HorizontalWrapMode.Overflow;
+            amount.verticalOverflow = VerticalWrapMode.Overflow;
+            amount.rectTransform.anchorMin = amount.rectTransform.anchorMax = new Vector2(1f, 1f);
+            amount.rectTransform.pivot = new Vector2(1f, 0.5f);
+            amount.rectTransform.anchoredPosition = new Vector2(-50f, -14f);
+            amount.rectTransform.sizeDelta = new Vector2(46f, 56f);
+            if (claimed)
+            {
+                Image tick = UiKit.AddImage(node, GemClaimedName, Glyphs.Check, new Color(0.18f, 0.7f, 0.3f, 1f));
+                tick.rectTransform.anchorMin = tick.rectTransform.anchorMax = new Vector2(1f, 1f);
+                tick.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                tick.rectTransform.anchoredPosition = new Vector2(-6f, -36f);
+                tick.rectTransform.sizeDelta = new Vector2(32f, 32f);
+            }
         }
 
         public void OnLevelTapped(LevelDef level)
@@ -1847,13 +1873,18 @@ namespace FluffyClimbers.Gameplay
                 star.rectTransform.pivot = new Vector2(0.5f, 1f);
             }
             if (hasMedals) MedalStrip.Build(panel, 430f, level.Id, mode, progress.Medal(level.Id, mode), MedalLevel.None);
-            // 3-star levels: replays pay 50 percent of the coins and no gems; below that a clear pays in full (100 percent)
+            // 3-star levels: replays pay 25 percent of the coins and no gems; below that a clear pays in full (100 percent)
             int paidPercent = starsHave >= 3 ? FluffyClimbers.Simulation.CoinPayoutRules.ReplayPercent : 100;
+            // Economy review 2026-11-13: milestone levels (5/10/15/20/25) add a third group, the first-clear gems (gem icon, amount, a tick once claimed) after the coin percent.
+            int milestoneGems = RewardCalculator.MilestoneGemsOf(level);
+            bool gemsClaimed = progress.IsLevelCleared(level.Id);
             CrownInfoUi.BuildRow(panel, yRow,
-                hasBestScore ? bestCrown.ToString() : "-",
+                hasBestScore ? bestCrown.ToString() : "0",
                 (hasBestScore ? "Best crown " + bestCrown : "No crown yet") + ". Tap to see how the crown is calculated.",
                 () => ShowLevelCrownInfo(level),
-                art != null ? art.CoinIcon : null, paidPercent + "%", "Coins paid: " + paidPercent + " percent");
+                art != null ? art.CoinIcon : null, paidPercent + "%", "Coins paid: " + paidPercent + " percent",
+                milestoneGems > 0 && art != null ? art.GemIcon : null, milestoneGems > 0 ? milestoneGems.ToString() : null,
+                milestoneGems > 0 ? milestoneGems + (milestoneGems == 1 ? " gem" : " gems") + " for the first clear" + (gemsClaimed ? ", claimed" : "") : null, gemsClaimed);
             TimedUi.RecordBlock(panel, yRecord, mode, bestPace, bestTicks, false);
             ToyKit.PopupAction(popup.Find("Panel"), "PLAY", Btn(1), Color.white, 60f, () =>
             {

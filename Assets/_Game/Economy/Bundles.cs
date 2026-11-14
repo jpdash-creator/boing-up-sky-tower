@@ -54,7 +54,7 @@ namespace FluffyClimbers.Economy
 
     /// <summary>
     /// How many times its price a bundle is worth (owner Bug List 1 B4.a.ii): total value in GEMS (coins at the shop rate coins / 20, power-ups at their gem prices,
-    /// the hidden card at its expected gem value from <see cref="BundleCards.TierGems"/>) divided by the gems paid. Shown as "Worth x2.1" (Bug List 2 C2.b.ii: 1.5 to 2.5). No currency amounts anywhere. Pure.
+    /// the hidden card at its expected gem value from <see cref="BundleCards.TierGems"/>) divided by the gems paid. Shown as "Worth x2.1" (1.85 to 3.6 since 2026-11-13, see docs/37). No currency amounts anywhere. Pure.
     /// </summary>
     public static class BundleWorth
     {
@@ -70,7 +70,7 @@ namespace FluffyClimbers.Economy
             return bundle.TotalValueGems(powerUps ?? Defs()) / paid;
         }
 
-        /// <summary>"Worth x2.1" (one decimal, invariant culture), always at the LIST price (so 1.5 to 2.5).</summary>
+        /// <summary>"Worth x2.1" (one decimal, invariant culture), always at the LIST price.</summary>
         public static string Text(BundleDef bundle) { return Text(bundle, 0); }
 
         /// <summary>
@@ -104,10 +104,10 @@ namespace FluffyClimbers.Economy
         public const string ResourcePath = "Content/bundles";
 
         /// <summary>
-        /// Version of the bundle pool (3 = the Bug List 2 C2.b pool: 200 to 500 gems, worth 1.5 to 2.5, with jokes; 2 = the 200 to 600 gem pool). A save that holds offers or a timer offer from an older pool
+        /// Version of the bundle pool (4 = the 2026-11-13 pool: coin part cut 30 percent, same ids, prices and power-ups, worth 1.85 to 3.6 with the new card values; 3 = the Bug List 2 C2.b pool: 200 to 500 gems, worth 1.5 to 2.5, with jokes; 2 = the 200 to 600 gem pool). A save that holds offers or a timer offer from an older pool
         /// is reset once (the offers are drawn again), because ids bnd_0001 to bnd_2000 now mean different bundles.
         /// </summary>
-        public const int PoolVersion = 3;
+        public const int PoolVersion = 4;
 
         readonly List<BundleDef> all = new List<BundleDef>();
         readonly Dictionary<string, BundleDef> byId = new Dictionary<string, BundleDef>();

@@ -38,8 +38,9 @@ namespace FluffyClimbers.Simulation.Tests
             Assert.Equal(100, BundleCards.WeightTotal);
             Assert.Equal(new[] { CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic }, BundleCards.Tiers);
             Assert.Equal(new[] { 70, 20, 10 }, new[] { BundleCards.ChancePercent(0), BundleCards.ChancePercent(1), BundleCards.ChancePercent(2) });
-            Assert.Equal(new[] { 100, 250, 600 }, BundleCards.TierGems);
-            Assert.Equal(180.0, BundleCards.ExpectedGems, 6);   // (70 x 100 + 20 x 250 + 10 x 600) / 100
+            Assert.Equal(new[] { 250, 600, 1600 }, BundleCards.TierGems);   // hero card coin price / 20: 5,000 / 12,000 / 32,000 (owner 2026-11-13)
+            Assert.Equal(BundleCards.Tiers.Select(t => HeroPurchase.CoinPrice(t) / 20).ToArray(), BundleCards.TierGems);
+            Assert.Equal(455.0, BundleCards.ExpectedGems, 6);   // (70 x 250 + 20 x 600 + 10 x 1,600) / 100
         }
 
         [Fact]
@@ -212,7 +213,7 @@ namespace FluffyClimbers.Simulation.Tests
         };
 
         [Fact]
-        public void TwoThousandBundlesAllCost200To500AndAreWorth1_5To2_5TimesWithNoDollars()
+        public void TwoThousandBundlesAllCost200To500AndAreWorth1_85To3_6TimesWithNoDollars()
         {
             string path = Path.Combine(ContentLoader.FindRoot(), "Content", "economy", "bundles.json");
             Assert.DoesNotContain("$", File.ReadAllText(path));
@@ -234,9 +235,11 @@ namespace FluffyClimbers.Simulation.Tests
                 double worth = b.GetProperty("coins").GetInt32() / 20.0 + BundleCards.ExpectedGems;
                 foreach (JsonElement p in b.GetProperty("powerups").EnumerateArray()) worth += PowerGems[p.GetProperty("id").GetString()] * p.GetProperty("count").GetInt32();
                 double ratio = worth / price;
-                Assert.InRange(ratio, 1.5, 2.5);
+                Assert.InRange(ratio, 1.8, 3.7);   // sized for 1.5 to 2.5 with the old card value (180), then 30 percent fewer coins and the card worth 455 (owner 2026-11-13)
                 ratios.Add(ratio);
             }
+            Assert.InRange(ratios.Min(), 1.80, 1.90);
+            Assert.InRange(ratios.Max(), 3.50, 3.65);
             Assert.True(ratios.Max() - ratios.Min() > 0.8, "the multiplier is varied, not constant: " + ratios.Min() + ".." + ratios.Max());
             Assert.True(ratios.Select(r => Math.Round(r, 1)).Distinct().Count() > 8);
         }

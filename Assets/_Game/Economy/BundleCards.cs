@@ -18,18 +18,18 @@ namespace FluffyClimbers.Economy
         public static readonly int[] Weights = { 70, 20, 10 };
 
         /// <summary>
-        /// THE ONE TABLE: gem value of one hero card per tier (Uncommon, Rare, Epic). The owner may change the numbers here only; the generator reads the same numbers
+        /// THE ONE TABLE: gem value of one hero card per tier (Uncommon, Rare, Epic) = the coin price of the card / 20 (<see cref="HeroPurchase.Prices"/>, owner 2026-11-13: 5,000 / 12,000 / 32,000 coins). The owner may change the numbers here only; the generator reads the same numbers
         /// from Tools/content_cli/gen_bundles.py (keep both in step: a test compares them). The EXPECTED value of the card (<see cref="ExpectedGems"/>) is part of every
-        /// bundle's worth, so worth stays inside 2.0 to 3.5 times the gems paid whichever tier is drawn.
+        /// bundle's worth, so a bundle shows its worth with the card at its expected value.
         /// </summary>
-        public static readonly int[] TierGems = { 100, 250, 600 };
+        public static readonly int[] TierGems = { 250, 600, 1600 };
 
         public static int WeightTotal
         {
             get { int t = 0; for (int i = 0; i < Weights.Length; i++) t += Weights[i]; return t; }
         }
 
-        /// <summary>Expected gem value of the hidden card: sum of weight x tier gems / total weight (180 with the table above). The same for every bundle.</summary>
+        /// <summary>Expected gem value of the hidden card: sum of weight x tier gems / total weight (455 with the table above). The same for every bundle.</summary>
         public static double ExpectedGems
         {
             get

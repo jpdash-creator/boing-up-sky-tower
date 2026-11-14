@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_004_candy_canyon",
-    "gemSkip": 150
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_005",

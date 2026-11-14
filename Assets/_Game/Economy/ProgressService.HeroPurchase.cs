@@ -8,7 +8,7 @@ namespace FluffyClimbers.Economy
         /// <summary>The heroes of exactly this rarity that a buy can give right now (open regions only). Count 0 means "No heroes yet".</summary>
         public List<CharacterSpec> HeroBuyPool(CharacterRarity rarity)
         {
-            return BundleCards.Pool(rarity, CharacterDefs.All, IsBundleRegionOpen);
+            return ChestRolls.Pool(rarity, CharacterDefs.All, IsBundleRegionOpen);   // Common = region base heroes
         }
 
         /// <summary>

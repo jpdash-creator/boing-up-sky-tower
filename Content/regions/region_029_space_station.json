@@ -6,7 +6,7 @@
   "status": "teaser",
   "unlock": {
     "requires": "region_028_alien_jungle",
-    "gemSkip": 550
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_029",

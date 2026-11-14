@@ -6,7 +6,7 @@
   "status": "teaser",
   "unlock": {
     "requires": "region_022_samurai_dojo",
-    "gemSkip": 450
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_023",

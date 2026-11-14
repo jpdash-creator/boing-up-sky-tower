@@ -11,9 +11,11 @@ Rules (docs/37):
   - Contents: coins (steps of 50) + 1 to 4 distinct power-up types (counts 1 to 10 each) + ONE hidden hero card ("hiddenCard": true).
     Which hero is drawn when the bundle is bought (odds Uncommon 70, Rare 20, Epic 10; only heroes of open regions) is decided by the game
     (BundleCards.cs); the file never names a hero.
-  - Worth in gems = coins / 20 + power-ups at their gem prices (50 or 75) + the EXPECTED gem value of the card (CARD_TIER_GEMS below, equal to
-    BundleCards.TierGems = 100 / 250 / 600, unchanged: expected 180). The worth multiplier = worth / price is drawn per bundle between 1.5 and 2.5
-    (varied, not constant) and the coins are sized so the real ratio lands within 0.02 of the drawn one, always inside 1.5 to 2.5 (Bug List 2 C2.b.ii).
+  - Worth in gems = coins / 20 + power-ups at their gem prices (50 or 75) + the EXPECTED gem value of the card (CARD_TIERS below, equal to
+    BundleCards.TierGems = 250 / 600 / 1,600 since 2026-11-13: expected 455). SIZING (unchanged since 2026-11-08): a multiplier is drawn per bundle
+    between 1.5 and 2.5 against the OLD card value (180) and coins and power-ups are sized to it. Then (owner 2026-11-13) the coin part is cut by
+    COIN_CUT_PERCENT = 30 percent. The REAL worth (new card value, cut coins) is therefore NOT 1.5 to 2.5 any more: it is reported by statistics()
+    (about 1.9 to 3.6) and shown on the card by BundleWorth; the card is worth more because hero cards are priced higher in coins.
   - The card table below must equal BundleCards.TierGems / Weights in Assets/_Game/Economy/BundleCards.cs (a unit test compares them).
   - no two bundles share a content signature (coins, power-up counts); no two share a name; names are at most 24 characters (adjective + noun
     from the lists below; reusing the v0.46 words is allowed, the shuffle order is new).
@@ -37,12 +39,15 @@ COIN_STEP = 50
 COINS_PER_GEM = 20                       # 1 gem = 20 coins (docs/22)
 MAX_DISTINCT_POWERUPS = 4
 MAX_COUNT = 10
-MIN_COINS = 1000
+MIN_COINS = 1000                         # floor of the SIZING coins (before the cut)
+COIN_CUT_PERCENT = 30                    # owner 2026-11-13: the COIN part of every bundle is cut by 30 percent after sizing
+LEGACY_CARD_EXPECTED_GEMS = 180.0        # card value (100 / 250 / 600) the pool was sized with; the sizing keeps it, so power-ups and prices stay as they were
 SEED_SALT = 20261108                     # new seed (the previous pools used 20261103 and 20261105)
 NAME_SEED = 8112026                      # new name shuffle (the previous pools used 31102026 and 5112026)
 
 # hidden card: tier -> (draw weight, gem value). Order = Uncommon, Rare, Elite (CharacterRarity.Epic). Equal to BundleCards.Weights / TierGems.
-CARD_TIERS = [("Uncommon", 70, 100), ("Rare", 20, 250), ("Elite", 10, 600)]
+# Gem value = coin price of the card / 20 (owner 2026-11-13: Uncommon 5,000, Rare 12,000, Elite 32,000 coins), so 250 / 600 / 1,600.
+CARD_TIERS = [("Uncommon", 70, 250), ("Rare", 20, 600), ("Elite", 10, 1600)]
 CARD_WEIGHT_TOTAL = sum(w for _, w, _ in CARD_TIERS)
 CARD_EXPECTED_GEMS = sum(w * g for _, w, g in CARD_TIERS) / float(CARD_WEIGHT_TOTAL)
 
@@ -217,7 +222,7 @@ def build_one(index, attempt):
     price = PRICE_MIN + PRICE_STEP * int(steps * (r.unit() ** 1.1) + 0.5)       # a few more small and middle bundles than big ones
     lo, hi = WORTH_MIN + WORTH_MARGIN, WORTH_MAX - WORTH_MARGIN
     target = lo + (hi - lo) * r.unit()                                           # drawn worth multiplier, uniform over the whole 1.5 to 2.5 span
-    content = price * target - CARD_EXPECTED_GEMS                                # coins + power-ups share of the worth, in gems
+    content = price * target - LEGACY_CARD_EXPECTED_GEMS                         # coins + power-ups share of the worth, in gems
     ntypes = 1 + r.pick_weighted([30, 35, 22, 13])                               # 1..4 distinct types
     pool = list(range(len(POWERUPS)))
     chosen = []
@@ -239,10 +244,12 @@ def build_one(index, attempt):
     if coins < MIN_COINS:
         return None
     powerups = [(POWERUPS[i][0], counts[i]) for i in chosen]
-    ratio = worth_ratio(price, coins, powerups)
-    if abs(ratio - target) > RATIO_TOL or not (WORTH_MIN <= ratio <= WORTH_MAX):
+    legacy = (coins / float(COINS_PER_GEM) + sum(POWERUP_VALUE[pid] * n for pid, n in powerups) + LEGACY_CARD_EXPECTED_GEMS) / float(price)
+    if abs(legacy - target) > RATIO_TOL or not (WORTH_MIN <= legacy <= WORTH_MAX):
         return None
-    return price, coins, powerups
+    sizing_coins = coins
+    coins = int(round(coins * (100 - COIN_CUT_PERCENT) / 100.0 / COIN_STEP)) * COIN_STEP   # the 30 percent coin cut
+    return price, coins, powerups, sizing_coins
 
 
 def signature(coins, powerups):
@@ -270,19 +277,21 @@ def joke_for(name):
 
 def generate():
     names = make_names()
-    bundles, seen = [], set()
+    bundles, seen, seen_sizing = [], set(), set()
     for index in range(COUNT):
         built = None
         for attempt in range(500):
             cand = build_one(index, attempt)
             if cand is None:
                 continue
-            price, coins, powerups = cand
-            sig = signature(coins, powerups)
-            if sig in seen:
+            price, coins, powerups, sizing_coins = cand
+            if signature(sizing_coins, powerups) in seen_sizing:                 # same retry rule as before the cut, so the same bundles survive
                 continue
-            built = cand
-            seen.add(sig)
+            seen_sizing.add(signature(sizing_coins, powerups))
+            while signature(coins, powerups) in seen:                            # the cut can make two signatures equal: add one coin step
+                coins += COIN_STEP
+            seen.add(signature(coins, powerups))
+            built = (price, coins, powerups)
             break
         if built is None:
             raise RuntimeError("could not build bundle %d" % index)

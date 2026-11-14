@@ -113,15 +113,19 @@ def coin_packs():
     return [{"id": "coinpack_%d" % c, "coins": c, "gemsList": gl, "gemsPromo": gp} for c, gl, gp in COIN_PACKS]
 
 
+# Economy review 2026-11-13: gems only on levels 5, 10, 15 (the 15-level teaser regions; regions 1-5 use 5, 10, 15, 20, 25 = 1, 1, 2, 2, 3 in migrate_levels_25.py).
+MILESTONE_GEMS = {5: 1, 10: 1, 15: 2, 20: 2, 25: 3}
+# Region skip price (owner 2026-11-13): 500 gems for every region 2 and up.
+GEM_SKIP = 500
+
+
 def gem_rewards(index):
-    if index == 15:
-        return {"chance": 1.0, "min": 5, "max": 5, "firstClearGuaranteed": 5,
-                "starBonusMax": 5, "replayChance": 0.5, "replayAmount": 2}
-    if index == 10:
-        return {"chance": 0.25, "min": 1, "max": 3, "firstClearGuaranteed": 1}
-    if index == 5:
-        return {"chance": 0.25, "min": 1, "max": 3}
-    return {"chance": 0.03, "min": 1, "max": 1}
+    """Economy review 2026-11-13: gems ONLY on levels 5, 10, 15, 20, 25 (1, 1, 2, 2, 3), fixed, first clear only; no other level pays gems.
+    Level 15 is the hidden-gem level: its 2 gems are this fixed reward (the hidden gem pickup is only the goal object)."""
+    g = MILESTONE_GEMS.get(index, 0)
+    if g:
+        return {"chance": 1.0, "min": g, "max": g, "firstClearGuaranteed": g}
+    return {"chance": 0.0, "min": 0, "max": 0}
 
 
 def make_level(r, region_id, i):
@@ -157,7 +161,7 @@ def main():
             "status": "live" if n <= 20 else "teaser",
             "unlock": {
                 "requires": None if n == 1 else region_ids[n - 2],
-                "gemSkip": None if n == 1 else 100 + (n - 2) * 300 // 18,
+                "gemSkip": None if n == 1 else GEM_SKIP,
             },
             "theme": {"bundle": "region_%03d" % n, "palette": palette, "music": None},
             "rules": {"signatureModule": mod_id,
@@ -183,7 +187,7 @@ def main():
         "ramp": {"rampFloors": 25, "rampPercent": 4, "rampCap": 150, "playerSpeedShare": 0.5},
         "generator": {"endlessDifficultyFloors": 400, "screenWidthUnits": 10},
         "score": {"floorPoints": 10, "comboPointsMultiplier": 5, "coinPoints": 1},
-        "economy": {"coinsPerGem": 20, "replayCoinPercent": 50,
+        "economy": {"coinsPerGem": 20, "replayCoinPercent": 25,
                     "endlessCoinDailyFullRateRuns": 3,
                     "endlessCoinOverCapMultiplier": 0.5},
     })

@@ -91,10 +91,10 @@ namespace FluffyClimbers.Tests
             Assert.AreEqual(RewardStat.BestPaceLevels, p3.Stat);
             Assert.AreEqual(RewardStat.GoldMedals, g5.Stat);
             Assert.AreEqual(RewardStat.TimeAttackFloors, ta.Stat);
-            // Main Bug List 2 (2026-11-13): the weekly table has 25 tasks, retuned rewards (about 1.5 times the old totals)
-            Assert.AreEqual(5, p3.Gems); Assert.AreEqual(400, p3.Coins);
-            Assert.AreEqual(4, g5.Gems); Assert.AreEqual(500, g5.Coins); Assert.AreEqual(1, g5.PowerUps);
-            Assert.AreEqual(4, ta.Gems); Assert.AreEqual(300, ta.Coins);
+            // economy review 2026-11-13: the weekly table has 25 tasks, gems only on the hard-skill tasks (50 a week), 5,500 task coins
+            Assert.AreEqual(4, p3.Gems); Assert.AreEqual(200, p3.Coins);
+            Assert.AreEqual(5, g5.Gems); Assert.AreEqual(250, g5.Coins); Assert.AreEqual(1, g5.PowerUps);
+            Assert.AreEqual(0, ta.Gems); Assert.AreEqual(200, ta.Coins);
             Assert.AreEqual(25, c.WeeklyTasks.Count);
             Assert.AreEqual("w_hard10", c.WeeklyTasks[c.WeeklyTasks.Count - 1].Id, "the hardest task, with a hero, stays last");
         }
@@ -166,8 +166,8 @@ namespace FluffyClimbers.Tests
             int gems = svc.Gems, coins = svc.Coins;
             RewardClaimOutcome o = svc.TryClaimReward(RewardTab.Weekly, "w_pace3");
             Assert.AreEqual(RewardClaimResult.Ok, o.Result);
-            Assert.AreEqual(5, svc.Gems - gems);
-            Assert.AreEqual(400, svc.Coins - coins);
+            Assert.AreEqual(4, svc.Gems - gems);
+            Assert.AreEqual(200, svc.Coins - coins);
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimReward(RewardTab.Weekly, "w_pace3").Result);
         }
 
@@ -189,7 +189,7 @@ namespace FluffyClimbers.Tests
             Assert.IsTrue(svc.IsRewardReady(RewardTab.Weekly, WeeklyTask("w_gold5")));
             int coins = svc.Coins;
             Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_gold5").Result);
-            Assert.AreEqual(500, svc.Coins - coins);
+            Assert.AreEqual(250, svc.Coins - coins);
         }
 
         [Test]
@@ -203,7 +203,7 @@ namespace FluffyClimbers.Tests
             Assert.IsTrue(svc.IsRewardReady(RewardTab.Weekly, task));
             int coins = svc.Coins;
             Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimReward(RewardTab.Weekly, "w_ta100").Result);
-            Assert.AreEqual(300, svc.Coins - coins);
+            Assert.AreEqual(200, svc.Coins - coins);
         }
 
         [Test]
@@ -249,7 +249,7 @@ namespace FluffyClimbers.Tests
 
             int coins = svc.Coins;
             Assert.AreEqual(RewardClaimResult.Ok, svc.TryClaimRegionGoal("g_1_gold_1").Result);
-            Assert.AreEqual(RegionGoalTable.ScaledCoins(200, 1), svc.Coins - coins, "tier 1 pays like the star tier 1: 200 coins");
+            Assert.AreEqual(RegionGoalTable.ScaledCoins(100, 1), svc.Coins - coins, "gold tier 1 pays 100 coins");
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimRegionGoal("g_1_gold_1").Result);
             Assert.IsFalse(svc.IsRegionGoalReady(svc.RewardDefs.FindGoal("g_1_gold_2")));
             Assert.AreEqual(5 * 49, svc.RewardDefs.AllRegionGoals.Count);

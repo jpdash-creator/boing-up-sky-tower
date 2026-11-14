@@ -223,7 +223,7 @@ namespace FluffyClimbers.Tests
                 {
                     CharacterSpec c = ChestRolls.DrawHero(kind, Mix(ref s), Mix(ref s), CharacterDefs.All, region => false);   // only region 1 is open
                     Assert.IsTrue(region1Lines.Contains(c.LineId), c.Id + " is from a closed region");
-                    Assert.IsTrue(c.Rarity < CharacterRarity.Legendary, "a chest never gives Legendary");
+                    Assert.IsTrue(kind == ChestKind.Golden || c.Rarity < CharacterRarity.Legendary, "only a Gold chest gives Legendary (owner 2026-11-13: Gold 60/30/10 Rare/Elite/Legendary)");
                     seen.Add(c.Id);
                 }
                 CharacterRarity[] tiers = ChestRolls.Tiers(kind);

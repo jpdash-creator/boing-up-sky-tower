@@ -27,7 +27,19 @@ namespace FluffyClimbers.Economy
         /// <summary>Hero reward of ONE named hero (1 copy), for example the Region 1 goals that hand out Bumble, Ribbi, Dandy and Pip (docs/39 section 1 rule 7). Null = none. Wins over <see cref="HeroRegion"/>.</summary>
         public string HeroId;
 
+        /// <summary>
+        /// Hero-or-coins gift (owner 2026-11-13): with <see cref="HeroRegion"/> = <see cref="RandomOpenRegionHero"/> and a value above 0, the claim rolls
+        /// <see cref="HeroOrCoinsPercent"/> percent for the random Common hero and otherwise pays these coins instead. The roll is deterministic and stored in the save
+        /// (ProgressService.HeroOrCoinsWins). 0 = the hero is certain (or there is no hero).
+        /// </summary>
+        public int HeroOrCoins;
+
         public const int RandomOpenRegionHero = -1;
+        /// <summary>Chance (percent) of the hero in a hero-or-coins gift.</summary>
+        public const int HeroOrCoinsPercent = 50;
+
+        /// <summary>True for the 50 percent hero, otherwise coins gifts.</summary>
+        public bool IsHeroOrCoins { get { return HeroRegion == RandomOpenRegionHero && HeroOrCoins > 0; } }
 
         public bool GivesHero { get { return HeroRegion != 0 || !string.IsNullOrEmpty(HeroId); } }
 

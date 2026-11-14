@@ -387,6 +387,7 @@ namespace FluffyClimbers.Gameplay
                 CoinsCollected = State.Coins,
                 GemsCollected = State.Gems,
                 HiddenGems = State.HiddenGems,
+                HeroId = HeroId ?? "",
                 GemPickupsTotal = CountGemPickups(false),
                 GemPickupsTaken = CountGemPickups(true),
                 ComboChains = comboChains - reportedChains,
@@ -437,7 +438,7 @@ namespace FluffyClimbers.Gameplay
             GoalSpec g = spec.Goal;
             switch (g.Type)
             {
-                case GoalType.ReachFloor: return GemLevels.IsGemLevel(spec.LevelIndex, spec.Goal.Type) || spec.IsTopLevel ? "Reach floor " + g.Value + " and grab the gems" : "Reach floor " + g.Value;
+                case GoalType.ReachFloor: return "Reach floor " + g.Value;   // economy review 2026-11-13: no gem pickups on the rows, so no "grab the gems" line
                 case GoalType.CollectCoins: return "Collect " + g.Count + " coins";
                 case GoalType.ComboChain: return "Chain " + g.Count + " jump" + (g.Count == 1 ? "" : "s") + " of " + g.Value + "+ floors";
                 case GoalType.NoWallBounce: return "Reach floor " + g.Value;

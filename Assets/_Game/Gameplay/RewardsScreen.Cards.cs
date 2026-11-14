@@ -211,6 +211,8 @@ namespace FluffyClimbers.Gameplay
             if (e.PowerUps > 0) l.Add(new RItem { Icon = BoltSprite, Text = "x" + e.PowerUps });
             // a hero reward shows the hero's face; the random weekly hero (HeroRegion -1) is not known before the claim and shows the generic heroes icon
             if (e.GivesHero) l.Add(new RItem { IsHero = true, HeroId = !string.IsNullOrEmpty(e.HeroId) ? e.HeroId : e.HeroRegion > 0 ? RegionHeroId(e.HeroRegion) : null, Icon = ToyKit.Get("icon_heroes"), Text = "" });
+            // hero-or-coins gift (Daily 200 points, weekly hard-clear tasks): the hero face, then "or" + the coins paid when the 50 percent roll misses
+            if (e.IsHeroOrCoins) l.Add(new RItem { Icon = CoinSprite, Text = "or " + Compact(e.HeroOrCoins) });
             return l;
         }
 

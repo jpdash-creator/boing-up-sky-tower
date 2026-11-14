@@ -45,10 +45,10 @@ class ShippedContent(unittest.TestCase):
         self.assertEqual(coins, [(1000, 50), (2000, 100), (5000, 250), (10000, 500), (20000, 900), (50000, 2200), (100000, 4000)])
 
     def test_gem_skip_formula(self):
+        # owner 2026-11-13: 500 gems for every region from 2 on
         self.assertIsNone(content.expected_gem_skip(1))
-        self.assertEqual(content.expected_gem_skip(2), 100)
-        self.assertEqual(content.expected_gem_skip(20), 400)
-        self.assertEqual(content.expected_gem_skip(21), 416)
+        for n in (2, 5, 20, 21, 30):
+            self.assertEqual(content.expected_gem_skip(n), 500)
 
 
 if __name__ == "__main__":

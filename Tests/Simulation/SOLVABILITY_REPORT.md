@@ -19,7 +19,7 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_001_05 | medium | 0.540 | comboChain 3x3 | 75 | yes | 67 | 3113 | 10 | 0 | n/a | yes (solved without a revive) |
 | lvl_001_06 | medium | 0.395 | reachFloor 90 | 90 | yes | 98 | 4944 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_001_07 | medium | 0.423 | reachFloor 90 | 90 | yes | 90 | 4540 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_001_08 | medium | 0.442 | reachFloor 90 | 90 | yes | 93 | 4683 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_001_08 | medium | 0.442 | reachFloor 90 | 90 | yes | 108 | 5525 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_001_09 | hard | 0.471 | reachFloor 90 | 90 | yes | 90 | 4528 | 5 | 0 | n/a | yes (solved without a revive) |
 | lvl_001_10 | hard | 0.511 | noWallBounce 90 | 90 | yes | 99 | 4922 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_001_11 | hard | 0.541 | reachFloor 105 | 105 | yes | 110 | 5584 | 0 | 0 | n/a | yes (solved without a revive) |
@@ -40,28 +40,28 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_002_01 | simple | 0.086 | reachFloor 60 | 60 | yes | 55 | 2693 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_002_02 | simple | 0.226 | reachFloor 75 | 75 | yes | 75 | 3685 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_002_03 | simple | 0.250 | reachFloor 75 | 75 | yes | 89 | 4605 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_04 | medium | 0.319 | reachFloor 75 | 75 | yes | 87 | 4294 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_04 | medium | 0.319 | reachFloor 75 | 75 | yes | 86 | 4165 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_002_05 | medium | 0.533 | comboChain 3x3 | 75 | yes | 75 | 3667 | 10 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_06 | medium | 0.369 | reachFloor 90 | 90 | yes | 94 | 4858 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_07 | medium | 0.441 | reachFloor 90 | 90 | yes | 95 | 4662 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_08 | medium | 0.496 | reachFloor 90 | 90 | yes | 99 | 5234 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_09 | hard | 0.514 | reachFloor 90 | 90 | yes | 105 | 5279 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_10 | hard | 0.518 | noWallBounce 90 | 90 | yes | 89 | 4512 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_11 | hard | 0.608 | reachFloor 105 | 105 | yes | 114 | 5945 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_12 | hard | 0.611 | reachFloor 105 | 105 | yes | 118 | 6247 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_13 | hard | 0.614 | reachFloor 105 | 105 | yes | 112 | 5726 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_14 | hard | 0.676 | reachFloor 105 | 105 | yes | 132 | 5439 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_15 | complex | 0.689 | findHiddenGem | 105 | yes | 64 | 3246 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_16 | complex | 0.741 | reachFloor 120 | 120 | yes | 125 | 6229 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_17 | complex | 0.780 | reachFloor 120 | 120 | yes | 138 | 7147 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_18 | complex | 0.784 | reachFloor 120 | 120 | yes | 126 | 6577 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_19 | complex | 0.787 | reachFloor 120 | 120 | yes | 137 | 7027 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_20 | complex | 0.865 | speedrun 120 in 100s | 120 | yes | 241 | 4440 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_21 | complex | 0.845 | reachFloor 150 | 150 | yes | 170 | 8027 | 5 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_22 | complex | 0.915 | reachFloor 150 | 150 | yes | 163 | 7939 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_23 | complex | 0.935 | reachFloor 150 | 150 | yes | 163 | 8133 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_24 | complex | 0.961 | reachFloor 150 | 150 | yes | 150 | 7966 | 5 | 0 | n/a | yes (solved without a revive) |
-| lvl_002_25 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 148 | 8135 | 5 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_06 | medium | 0.369 | reachFloor 90 | 90 | yes | 94 | 4812 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_07 | medium | 0.441 | reachFloor 90 | 90 | yes | 95 | 4652 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_08 | medium | 0.496 | reachFloor 90 | 90 | yes | 104 | 5379 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_09 | hard | 0.514 | reachFloor 90 | 90 | yes | 108 | 5354 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_10 | hard | 0.518 | noWallBounce 90 | 90 | yes | 87 | 4365 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_11 | hard | 0.608 | reachFloor 105 | 105 | yes | 112 | 5669 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_12 | hard | 0.611 | reachFloor 105 | 105 | yes | 113 | 5811 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_13 | hard | 0.614 | reachFloor 105 | 105 | yes | 110 | 5526 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_14 | hard | 0.676 | reachFloor 105 | 105 | yes | 105 | 5246 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_15 | complex | 0.689 | findHiddenGem | 105 | yes | 65 | 3309 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_16 | complex | 0.741 | reachFloor 120 | 120 | yes | 123 | 5986 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_17 | complex | 0.780 | reachFloor 120 | 120 | yes | 133 | 6814 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_18 | complex | 0.784 | reachFloor 120 | 120 | yes | 123 | 6295 | 5 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_19 | complex | 0.787 | reachFloor 120 | 120 | yes | 132 | 6812 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_20 | complex | 0.865 | speedrun 120 in 100s | 120 | yes | 349 | 4523 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_21 | complex | 0.845 | reachFloor 150 | 150 | yes | 154 | 7698 | 5 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_22 | complex | 0.915 | reachFloor 150 | 150 | yes | 152 | 7860 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_23 | complex | 0.935 | reachFloor 150 | 150 | yes | 152 | 7833 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_24 | complex | 0.961 | reachFloor 150 | 150 | yes | 161 | 8404 | 5 | 0 | n/a | yes (solved without a revive) |
+| lvl_002_25 | highly complex | 1.000 | reachFloor 150 | 150 | yes | 141 | 7476 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_01 | simple | 0.071 | reachFloor 60 | 60 | yes | 61 | 2950 | 5 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_02 | simple | 0.222 | reachFloor 75 | 75 | yes | 75 | 3617 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_03 | simple | 0.228 | reachFloor 75 | 75 | yes | 80 | 3901 | 0 | 0 | n/a | yes (solved without a revive) |
@@ -69,7 +69,7 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_003_05 | medium | 0.552 | comboChain 3x3 | 75 | yes | 72 | 3411 | 15 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_06 | medium | 0.381 | reachFloor 90 | 90 | yes | 108 | 5430 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_07 | medium | 0.440 | reachFloor 90 | 90 | yes | 99 | 4793 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_003_08 | medium | 0.499 | reachFloor 90 | 90 | yes | 109 | 5540 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_003_08 | medium | 0.499 | reachFloor 90 | 90 | yes | 106 | 5313 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_09 | hard | 0.506 | reachFloor 90 | 90 | yes | 104 | 5061 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_10 | hard | 0.547 | noWallBounce 90 | 90 | yes | 110 | 5500 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_003_11 | hard | 0.584 | reachFloor 105 | 105 | yes | 118 | 5794 | 0 | 0 | n/a | yes (solved without a revive) |
@@ -94,7 +94,7 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_004_05 | medium | 0.605 | comboChain 3x3 | 75 | yes | 72 | 3291 | 10 | 0 | n/a | yes (solved without a revive) |
 | lvl_004_06 | medium | 0.412 | reachFloor 90 | 90 | yes | 104 | 5072 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_004_07 | medium | 0.483 | reachFloor 90 | 90 | yes | 103 | 4870 | 0 | 0 | n/a | yes (solved without a revive) |
-| lvl_004_08 | medium | 0.486 | reachFloor 90 | 90 | yes | 96 | 4545 | 0 | 0 | n/a | yes (solved without a revive) |
+| lvl_004_08 | medium | 0.486 | reachFloor 90 | 90 | yes | 107 | 5271 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_004_09 | hard | 0.532 | reachFloor 90 | 90 | yes | 105 | 5118 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_004_10 | hard | 0.579 | noWallBounce 90 | 90 | yes | 115 | 5590 | 0 | 0 | n/a | yes (solved without a revive) |
 | lvl_004_11 | hard | 0.603 | reachFloor 105 | 105 | yes | 130 | 6257 | 0 | 0 | n/a | yes (solved without a revive) |
@@ -119,7 +119,7 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_005_05 | medium | 0.521 | comboChain 3x3 | 75 | yes | 82 | 3918 | 10 | 3 | n/a | yes (solved without a revive) |
 | lvl_005_06 | medium | 0.338 | reachFloor 90 | 90 | yes | 104 | 5069 | 0 | 2 | n/a | yes (solved without a revive) |
 | lvl_005_07 | medium | 0.409 | reachFloor 90 | 90 | yes | 104 | 5041 | 0 | 3 | n/a | yes (solved without a revive) |
-| lvl_005_08 | medium | 0.428 | reachFloor 90 | 90 | yes | 112 | 5620 | 0 | 4 | n/a | yes (solved without a revive) |
+| lvl_005_08 | medium | 0.428 | reachFloor 90 | 90 | yes | 108 | 5124 | 0 | 4 | n/a | yes (solved without a revive) |
 | lvl_005_09 | hard | 0.431 | reachFloor 90 | 90 | yes | 107 | 5288 | 0 | 6 | n/a | yes (solved without a revive) |
 | lvl_005_10 | hard | 0.505 | noWallBounce 90 | 90 | yes | 105 | 5052 | 0 | 6 | n/a | yes (solved without a revive) |
 | lvl_005_11 | hard | 0.538 | reachFloor 105 | 105 | yes | 120 | 5758 | 0 | 9 | n/a | yes (solved without a revive) |
@@ -127,13 +127,13 @@ Columns: `d` = effective difficulty; `rows` = platform rows; `nodes` = search no
 | lvl_005_13 | hard | 0.564 | reachFloor 105 | 105 | yes | 126 | 5934 | 0 | 4 | n/a | yes (solved without a revive) |
 | lvl_005_14 | hard | 0.621 | reachFloor 105 | 105 | yes | 138 | 6571 | 0 | 6 | n/a | yes (solved without a revive) |
 | lvl_005_15 | complex | 0.655 | findHiddenGem | 105 | yes | 60 | 2729 | 0 | 2 | n/a | yes (solved without a revive) |
-| lvl_005_16 | complex | 0.691 | reachFloor 120 | 120 | yes | 154 | 7099 | 0 | 13 | n/a | yes (solved without a revive) |
+| lvl_005_16 | complex | 0.691 | reachFloor 120 | 120 | yes | 154 | 7421 | 0 | 11 | n/a | yes (solved without a revive) |
 | lvl_005_17 | complex | 0.707 | reachFloor 120 | 120 | yes | 140 | 6830 | 0 | 6 | n/a | yes (solved without a revive) |
 | lvl_005_18 | complex | 0.723 | reachFloor 120 | 120 | yes | 139 | 6368 | 0 | 12 | n/a | yes (solved without a revive) |
 | lvl_005_19 | complex | 0.755 | reachFloor 120 | 120 | yes | 144 | 7164 | 0 | 7 | n/a | yes (solved without a revive) |
 | lvl_005_20 | complex | 0.789 | speedrun 120 in 100s | 120 | yes | 922 | 4869 | 5 | 13 | n/a | yes (solved without a revive) |
 | lvl_005_21 | complex | 0.829 | reachFloor 150 | 150 | yes | 183 | 8741 | 0 | 16 | n/a | yes (solved without a revive) |
-| lvl_005_22 | complex | 0.862 | reachFloor 150 | 150 | yes | 180 | 8823 | 0 | 10 | n/a | yes (solved without a revive) |
+| lvl_005_22 | complex | 0.862 | reachFloor 150 | 150 | yes | 187 | 9025 | 0 | 12 | n/a | yes (solved without a revive) |
 | lvl_005_23 | complex | 0.899 | reachFloor 150 | 150 | yes | 185 | 9177 | 0 | 19 | n/a | yes (solved without a revive) |
 | lvl_005_24 | complex | 0.902 | reachFloor 150 | 150 | yes | 187 | 9414 | 0 | 13 | n/a | yes (solved without a revive) |
 | lvl_005_25 | highly complex | 0.977 | reachFloor 150 | 150 | yes | 171 | 8501 | 0 | 13 | n/a | yes (solved without a revive) |
@@ -147,7 +147,7 @@ Slowest = the longest best-first bot time over the regions; margin = timeSec / b
 | level | goal timeSec | bot time (s) | margin |
 |---|---|---|---|
 | lvl_001_20 | 100 | 75.5 | 1.32 |
-| lvl_002_20 | 100 | 74.0 | 1.35 |
+| lvl_002_20 | 100 | 75.4 | 1.33 |
 | lvl_003_20 | 100 | 86.8 | 1.15 |
 | lvl_004_20 | 100 | 77.0 | 1.30 |
 | lvl_005_20 | 100 | 81.2 | 1.23 |

@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_017_moon_carnival",
-    "gemSkip": 366
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_018",

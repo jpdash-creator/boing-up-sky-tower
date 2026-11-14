@@ -50,6 +50,8 @@ namespace FluffyClimbers.Economy
         [JsonProperty("playTotalSec", DefaultValueHandling = DefaultValueHandling.Ignore)] public long PlayTotalSeconds;
         /// <summary>Admin "Main rewards" test switch (docs/38): every Main reward counts as complete (not claimed, nothing paid). Cleared when System Test goes off.</summary>
         [JsonProperty("testMainReady", DefaultValueHandling = DefaultValueHandling.Ignore)] public bool TestMainReady;
+        /// <summary>Stored outcomes of the hero-or-coins gifts (Daily 200 points, weekly hard-clear tasks): key "d:&lt;dayKey&gt;:&lt;id&gt;" or "w:&lt;weekKey&gt;:&lt;id&gt;", 1 = hero, 0 = coins. Written when the gift is claimed, so a reload can never roll it again. Only the current day and week are kept. Additive field, no version bump.</summary>
+        [JsonProperty("heroRolls", DefaultValueHandling = DefaultValueHandling.Ignore)] public Dictionary<string, int> HeroRolls = new Dictionary<string, int>();
     }
 
     public enum RewardClaimResult
@@ -139,6 +141,7 @@ namespace FluffyClimbers.Economy
                 if (r.MainClaimed == null) r.MainClaimed = new List<string>();
                 if (r.GoalsClaimed == null) r.GoalsClaimed = new List<string>();
                 if (r.Regions == null) r.Regions = new Dictionary<string, RegionStats>();
+                if (r.HeroRolls == null) r.HeroRolls = new Dictionary<string, int>();
                 return r;
             }
         }
@@ -535,14 +538,48 @@ namespace FluffyClimbers.Economy
             return open[(int)(roll % (ulong)open.Count)];
         }
 
+        /// <summary>
+        /// The deterministic 50 percent roll of a hero-or-coins gift: a pure function of the per-account seed (the bundle seed), the period key (day for Daily, Monday for Weekly) and the entry id
+        /// (integer mixing like ChestRolls, never UnityEngine.Random). The outcome is stored in the save the first time it is decided, so it never changes and cannot be re-rolled by reloading.
+        /// </summary>
+        public bool HeroOrCoinsWins(RewardTab tab, RewardEntry e)
+        {
+            RewardsData r = Rw;
+            string period = tab == RewardTab.Daily ? r.Day.Key : r.Week.Key;
+            string key = (tab == RewardTab.Daily ? "d:" : "w:") + period + ":" + e.Id;
+            int stored;
+            if (r.HeroRolls.TryGetValue(key, out stored)) return stored != 0;
+            BundleSaveData b = Data.Bundles ?? (Data.Bundles = new BundleSaveData());
+            EnsureBundleSeed(b);
+            ulong roll = BundleMix(BundleMix(((ulong)(uint)b.Seed << 32) ^ (ulong)(uint)StableHash(period + "|" + e.Id)) ^ 0x484F43UL);
+            bool win = (int)(roll % 100UL) < RewardEntry.HeroOrCoinsPercent;
+            // keep only the current day and week, then store this outcome
+            var stale = new List<string>();
+            foreach (KeyValuePair<string, int> kv in r.HeroRolls)
+                if (!kv.Key.StartsWith("d:" + r.Day.Key + ":", StringComparison.Ordinal) && !kv.Key.StartsWith("w:" + r.Week.Key + ":", StringComparison.Ordinal)) stale.Add(kv.Key);
+            for (int i = 0; i < stale.Count; i++) r.HeroRolls.Remove(stale[i]);
+            r.HeroRolls[key] = win ? 1 : 0;
+            return win;
+        }
+
         /// <summary>Pays one reward into the wallet and the power-up stock and marks it claimed, without saving (the caller saves once).</summary>
         void PayReward(RewardTab tab, RewardEntry e, RewardClaimOutcome outcome)
         {
             RewardsData r = Rw;
+            int coins = Math.Max(0, e.Coins);
+            bool heroOrCoins = e.IsHeroOrCoins && tab != RewardTab.Main;
+            bool heroWon = !heroOrCoins || HeroOrCoinsWins(tab, e);
+            CharacterSpec rolledHero = null;
+            if (heroOrCoins && heroWon)
+            {
+                rolledHero = RandomOpenCommonHero();
+                if (rolledHero == null) heroWon = false;   // no open Common hero exists: the coins are paid instead
+            }
+            if (heroOrCoins && !heroWon) coins = SaturatingAdd(coins, e.HeroOrCoins);
             Data.Gems = SaturatingAdd(Data.Gems, Math.Max(0, e.Gems));
-            Data.Coins = SaturatingAdd(Data.Coins, Math.Max(0, e.Coins));
+            Data.Coins = SaturatingAdd(Data.Coins, coins);
             outcome.Gems = SaturatingAdd(outcome.Gems, Math.Max(0, e.Gems));
-            outcome.Coins = SaturatingAdd(outcome.Coins, Math.Max(0, e.Coins));
+            outcome.Coins = SaturatingAdd(outcome.Coins, coins);
             if (e.PowerUps > 0)
             {
                 var types = new List<PowerUpDef>(PowerUpDefs.Implemented);
@@ -560,7 +597,11 @@ namespace FluffyClimbers.Economy
                     }
                 }
             }
-            if (e.HeroRegion != 0 || !string.IsNullOrEmpty(e.HeroId))
+            if (heroOrCoins)
+            {
+                if (rolledHero != null) outcome.HeroIds.Add(rolledHero.Id);   // granted by FinishClaim
+            }
+            else if (e.HeroRegion != 0 || !string.IsNullOrEmpty(e.HeroId))
             {
                 CharacterSpec hero = !string.IsNullOrEmpty(e.HeroId) ? CharacterDefs.Get(e.HeroId) : e.HeroRegion > 0 ? CommonHeroOf(e.HeroRegion) : RandomOpenCommonHero();
                 if (hero != null) outcome.HeroIds.Add(hero.Id);   // granted by FinishClaim

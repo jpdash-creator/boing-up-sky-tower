@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_010_toy_factory",
-    "gemSkip": 250
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_011",

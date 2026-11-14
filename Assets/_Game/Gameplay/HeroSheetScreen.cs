@@ -59,7 +59,8 @@ namespace FluffyClimbers.Gameplay
             d.Derived[0, 0] = "Full-speed jump"; d.Derived[0, 1] = F(s.FullSpeedJump);
             d.Derived[1, 0] = "Stopping distance"; d.Derived[1, 1] = F(s.StopDistance);
             d.Derived[2, 0] = "Time to top speed"; d.Derived[2, 1] = F(s.TimeToTopSpeed) + " s";
-            d.RunBonusCoins = s.RunBonusCoins; d.RunBonusGems = s.RunBonusGems;
+            d.RunBonusCoins = FluffyClimbers.Simulation.CoinPayoutRules.HeroBonusCoins((int)rarity);   // owner 2026-11-13: the hero bonus is paid on the first clear of levels 5/10/15/20/25 by rarity (no per-run bonus any more)
+            d.RunBonusGems = FluffyClimbers.Simulation.CoinPayoutRules.HeroBonusGemsByRarity[System.Math.Max(0, System.Math.Min((int)rarity, FluffyClimbers.Simulation.CoinPayoutRules.HeroBonusGemsByRarity.Length - 1))];
             d.PowerText = PowerLine(rarity, powers);
             return d;
         }
@@ -512,23 +513,23 @@ namespace FluffyClimbers.Gameplay
             }
             y += 3f * cellH + 2f * rowGap + gap;
 
-            // run bonus: a full-width plate "Run bonus" + coin icon and amount + gem icon and amount (paid at the end of every run)
+            // milestone bonus: a full-width plate + coin icon and amount + gem icon and amount (paid on the first clear of levels 5, 10, 15, 20, 25)
             Image rb = UiKit.AddImage(content, "RunBonusPlate", null, Color.white);
             HeroSheetArt.Skin(rb, "stat_value", HeroSheetArt.Cream, RunBonusH);
             Put(rb.rectTransform, 0f, y, w, RunBonusH);
             const float rbPad = 34f;
             float iconS = 64f, numW = 140f;
             float labW = w - 2f * rbPad - 2f * (iconS + 8f + numW) - 24f;
-            Text rl = UiKit.OnPanel(UiKit.AddText(rb.transform, "Label", "Run bonus", FloorPx, UiKit.PanelInk, TextAnchor.MiddleLeft));
+            Text rl = UiKit.OnPanel(UiKit.AddText(rb.transform, "Label", "Milestone bonus", FloorPx, UiKit.PanelInk, TextAnchor.MiddleLeft));
             Put(rl.rectTransform, rbPad, 10f, labW, RunBonusH - 20f);
-            Fit(rl, "Run bonus", 40, FloorPx, labW, RunBonusH - 20f, false);
+            Fit(rl, "Milestone bonus", 40, FloorPx, labW, RunBonusH - 20f, false);
             Sprite coinSp = (art != null ? art.CoinIcon : null) ?? RewardArt.Icon("coinbag");
             Sprite gemSp = (art != null ? art.GemIcon : null) ?? RewardArt.Icon("gem");
             float gx = w - rbPad - (iconS + 8f + numW);          // gem group (right)
             float cx = gx - 24f - (iconS + 8f + numW);           // coin group
             AddBonusPair(rb.transform, "Coin", coinSp, "+" + data.RunBonusCoins, cx, iconS, numW, RunBonusH);
             AddBonusPair(rb.transform, "Gem", gemSp, "+" + data.RunBonusGems, gx, iconS, numW, RunBonusH);
-            rb.gameObject.AddComponent<A11yLabel>().Text = "Run bonus, paid at the end of every run: " + data.RunBonusCoins + " coins and " + data.RunBonusGems + " gems";
+            rb.gameObject.AddComponent<A11yLabel>().Text = "Milestone bonus, paid on the first clear of levels 5, 10, 15, 20 and 25: " + data.RunBonusCoins + " coins and " + data.RunBonusGems + " gems" + (data.RunBonusGems > 0 ? ", with a 50 percent chance of one more gem" : "");
             y += RunBonusH + gap;
 
             // previous hero (green arrow), use this hero in between, next hero (green arrow); the arrows step through the owned heroes only

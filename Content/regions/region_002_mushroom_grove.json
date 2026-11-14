@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_001_meadow_springs",
-    "gemSkip": 100
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_002",

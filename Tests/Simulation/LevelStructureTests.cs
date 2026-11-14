@@ -149,7 +149,7 @@ namespace FluffyClimbers.Simulation.Tests
         }
 
         [Fact]
-        public void GemsComboLevelsHaveNoneGemLevelsHaveDoublesAndLevel8HasTheBonusGem()
+        public void NoGemPickupsAnywhereAndOnlyTheFindHiddenGemLevelHoldsTheHiddenGem()
         {
             SimConfig cfg = new SimConfig();
             foreach (LoadedLevel ll in All())
@@ -164,14 +164,13 @@ namespace FluffyClimbers.Simulation.Tests
                         if (p.Kind == PickupKind.Gem) { gems++; if (p.Tag == SimConfig.DoubleGemTag) doubles++; }
                         if (p.Kind == PickupKind.HiddenGem) { hidden++; if (p.Tag == 1) hiddenDouble++; }
                     }
-                    Assert.Equal(idx == 8 || ll.Spec.Goal.Type == GoalType.FindHiddenGem ? 1 : 0, d.Pickups.Count(p => p.Kind == PickupKind.HiddenGem));
+                    Assert.Equal(ll.Spec.Goal.Type == GoalType.FindHiddenGem ? 1 : 0, d.Pickups.Count(p => p.Kind == PickupKind.HiddenGem));
                     Assert.Equal(3, d.Pickups.Count(p => p.Kind == PickupKind.Star));
                 }
-                if (ll.Spec.Goal.Type == GoalType.ComboChain) Assert.Equal(0, gems);
-                else Assert.True(gems > 0, ll.Id + " has no gems");
-                if (idx == 8 || idx == 25) Assert.True(doubles > 0 && doubles < gems, ll.Id + " double gems " + doubles + " of " + gems);
-                else Assert.Equal(0, doubles);
-                if (idx == 8 || ll.Spec.Goal.Type == GoalType.FindHiddenGem) Assert.True(hiddenDouble >= 0 && hidden == 10);
+                Assert.True(gems == 0, ll.Id + " has " + gems + " gem pickups (economy review 2026-11-13: none on the rows)");
+                Assert.Equal(0, doubles);
+                Assert.Equal(0, hiddenDouble);
+                if (ll.Spec.Goal.Type == GoalType.FindHiddenGem) Assert.True(hidden == 10);
             }
         }
 

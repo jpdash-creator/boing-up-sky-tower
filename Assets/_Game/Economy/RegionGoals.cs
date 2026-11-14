@@ -41,7 +41,7 @@ namespace FluffyClimbers.Economy
         public int Tier;
         /// <summary>True for the endless tiers (they may pay slightly more, see docs/39).</summary>
         public bool IsEndless { get { return Type == RegionGoalType.EndlessFloors; } }
-        /// <summary>True for the gold medal tiers (doc 46): they pay like the star tiers and are kept apart from the core gem budget.</summary>
+        /// <summary>True for the gold medal tiers (doc 46): same coins as the star tiers; their last tier is one of the eight gem goals.</summary>
         public bool IsMedal { get { return Type == RegionGoalType.GoldMedalLevels; } }
     }
 
@@ -75,41 +75,43 @@ namespace FluffyClimbers.Economy
             public Tier(int target, int gems, int coins, int powerUps) { Target = target; Gems = gems; Coins = coins; PowerUps = powerUps; }
         }
 
+        // Owner 2026-11-13 (economy review, docs/39): gems ONLY on the eight milestone goals of a region (50 per region, 250 in all): clear all 25 levels 10, 3 stars on 25 levels 10, gold medals on
+        // 25 levels 10, 75 stars 8, 6 hard levels 4, Endless floor 500 3, Endless floor 1000 3, no-wall level 3 times 2. Every other goal pays coins (and power-ups) only. All coin rewards are 20 percent
+        // below the old table (these are the base values; ScaledCoins applies the region factor). Common hero gifts: only "clear all 25 levels" and "gold medals on 25 levels".
+        // Total claim coins per region are about 80 percent of the old table (rebalanced 2026-11-13). Former hero tiers pay 150 to 220 coins and gem-only goals 50 to 100 coins.
         public static readonly Tier[] StarsTiers =
         {
-            new Tier(15, 0, 200, 0), new Tier(30, 3, 0, 0), new Tier(45, 0, 400, 0), new Tier(60, 4, 0, 0), new Tier(75, 6, 0, 1)
+            new Tier(15, 0, 100, 0), new Tier(30, 0, 60, 0), new Tier(45, 0, 200, 0), new Tier(60, 0, 60, 0), new Tier(75, 8, 150, 1)
         };
-        /// <summary>The last tier (clear all 25 levels) also gives the region's Common hero (1 copy): there is NO separate "region cleared" bonus any more.</summary>
+        /// <summary>The last tier (clear all 25 levels) also gives the region's Common hero (1 copy): there is NO separate "region cleared" bonus any more. Tiers 2 to 4 pay coins instead of a hero (owner 2026-11-13).</summary>
         public static readonly Tier[] LevelsTiers =
         {
-            new Tier(5, 0, 150, 0), new Tier(10, 2, 0, 0), new Tier(15, 0, 300, 0), new Tier(20, 4, 0, 0), new Tier(25, 8, 500, 0)
+            new Tier(5, 0, 60, 0), new Tier(10, 0, 150, 0), new Tier(15, 0, 180, 0), new Tier(20, 0, 220, 0), new Tier(25, 10, 400, 0)
         };
         /// <summary>
-        /// Gold medal levels (doc 46 section 8, owner 2026-11-09): 5 / 10 / 15 / 20 / 25 levels; each tier pays the SAME as the star tier at the same position
-        /// (<see cref="StarsTiers"/>: 200 coins, 3 gems, 400 coins, 4 gems, 6 gems + 1 power-up). No new economy numbers. The star tier 5 also hands out a random
-        /// Common hero and so does the medal tier 5 (owner 2026-11-09: same as the star tier, see <see cref="GivesRandomHero"/>).
+        /// Gold medal levels (doc 46 section 8): 5 / 10 / 15 / 20 / 25 levels. Coins about 20 percent below the old table; the last tier (gold medals on 25 levels) pays 10 gems, 1 power-up and one random
+        /// Common hero (see <see cref="GivesRandomHero"/>).
         /// </summary>
         public static readonly Tier[] GoldMedalTiers =
         {
-            new Tier(5, 0, 200, 0), new Tier(10, 3, 0, 0), new Tier(15, 0, 400, 0), new Tier(20, 4, 0, 0), new Tier(25, 6, 0, 1)
+            new Tier(5, 0, 100, 0), new Tier(10, 0, 60, 0), new Tier(15, 0, 120, 0), new Tier(20, 0, 60, 0), new Tier(25, 10, 0, 1)
         };
-        public static readonly Tier[] ThreeStarTiers = { new Tier(5, 0, 200, 0), new Tier(13, 4, 0, 0), new Tier(25, 8, 300, 0) };
-        public static readonly Tier[] JumpsTiers = { new Tier(400, 0, 150, 0), new Tier(1200, 2, 200, 0), new Tier(3000, 4, 0, 0) };
-        public static readonly Tier[] CombosTiers = { new Tier(10, 0, 150, 0), new Tier(40, 2, 200, 0), new Tier(100, 4, 0, 0) };
-        public static readonly Tier[] PlayMinutesTiers = { new Tier(15, 0, 150, 0), new Tier(45, 2, 200, 0), new Tier(120, 4, 0, 0) };
-        public static readonly Tier[] CoinsTiers = { new Tier(1000, 0, 100, 0), new Tier(3500, 1, 150, 0), new Tier(8000, 3, 0, 0) };
-        public static readonly Tier[] PowerUpsTiers = { new Tier(3, 0, 150, 0), new Tier(10, 2, 0, 0), new Tier(25, 0, 300, 1) };
-        public static readonly Tier[] HardClearsTiers = { new Tier(1, 0, 200, 0), new Tier(3, 2, 0, 0), new Tier(6, 4, 0, 0) };
-        public static readonly Tier[] NoWallTiers = { new Tier(1, 2, 100, 0), new Tier(3, 3, 0, 0) };
+        public static readonly Tier[] ThreeStarTiers = { new Tier(5, 0, 140, 0), new Tier(13, 0, 60, 0), new Tier(25, 10, 180, 0) };
+        public static readonly Tier[] JumpsTiers = { new Tier(400, 0, 90, 0), new Tier(1200, 0, 110, 0), new Tier(3000, 0, 50, 0) };
+        public static readonly Tier[] CombosTiers = { new Tier(10, 0, 90, 0), new Tier(40, 0, 110, 0), new Tier(100, 0, 50, 0) };
+        public static readonly Tier[] PlayMinutesTiers = { new Tier(15, 0, 90, 0), new Tier(45, 0, 110, 0), new Tier(120, 0, 50, 0) };
+        public static readonly Tier[] CoinsTiers = { new Tier(1000, 0, 60, 0), new Tier(3500, 0, 80, 0), new Tier(8000, 0, 50, 0) };
+        public static readonly Tier[] PowerUpsTiers = { new Tier(3, 0, 90, 0), new Tier(10, 0, 60, 0), new Tier(25, 0, 180, 1) };
+        public static readonly Tier[] HardClearsTiers = { new Tier(1, 0, 100, 0), new Tier(3, 0, 70, 0), new Tier(6, 4, 0, 0) };
+        public static readonly Tier[] NoWallTiers = { new Tier(1, 0, 70, 0), new Tier(3, 2, 0, 0) };
         /// <summary>
-        /// Endless floors (owner list 100 ... 10,000; targets are floors, never scaled). Difficult achievements, so they pay slightly more than the tight
-        /// gem policy would for the same effort.
+        /// Endless floors (owner list 100 ... 10,000; targets are floors, never scaled). Gems only on floor 500 and floor 1000 (3 each, 6 per region); the coins are the old values minus 20 percent.
         /// </summary>
         public static readonly Tier[] EndlessTiers =
         {
-            new Tier(100, 1, 100, 0), new Tier(200, 1, 150, 0), new Tier(500, 2, 250, 0), new Tier(1000, 2, 350, 0), new Tier(1500, 2, 450, 1),
-            new Tier(2000, 2, 550, 0), new Tier(3000, 2, 700, 0), new Tier(4000, 2, 850, 0), new Tier(5000, 2, 1000, 1), new Tier(7500, 3, 1300, 0),
-            new Tier(10000, 4, 1600, 2)
+            new Tier(100, 0, 80, 0), new Tier(200, 0, 120, 0), new Tier(500, 3, 200, 0), new Tier(1000, 3, 280, 0), new Tier(1500, 0, 360, 1),
+            new Tier(2000, 0, 440, 0), new Tier(3000, 0, 560, 0), new Tier(4000, 0, 680, 0), new Tier(5000, 0, 800, 1), new Tier(7500, 0, 1040, 0),
+            new Tier(10000, 0, 1280, 2)
         };
 
         /// <summary>Short stable token of a type, used in goal ids: g_&lt;region&gt;_&lt;token&gt;_&lt;tier&gt;.</summary>
@@ -212,14 +214,12 @@ namespace FluffyClimbers.Economy
         }
 
         /// <summary>
-        /// The five "extra hero" goals of every region (clear 10, 15 and 20 levels, earn 75 stars, gold medals on 25 levels) used to hand out one NAMED extra Common hero (Bumble, Ribbi, Dandy, Pip and the Region 2 to 5 extras).
-        /// Those heroes are inactive ALWAYS (owner 2026-11-09, Bug List 6), so these goals now hand out one random ACTIVE Common hero of an open region (<see cref="RewardEntry.RandomOpenRegionHero"/>,
-        /// deterministic from the per-account seed). Nothing in RegionGoals names a hero id any more.
+        /// Hero gifts of the Main goals (owner 2026-11-13): only two per region. "Clear all 25 levels" hands over the region's own Common hero (see Build); "gold medals on 25 levels" hands out one random ACTIVE
+        /// Common hero of an open region (<see cref="RewardEntry.RandomOpenRegionHero"/>, deterministic from the per-account seed). Nothing in RegionGoals names a hero id.
         /// </summary>
         public static bool GivesRandomHero(RegionGoalType type, int tier)
         {
-            if (type == RegionGoalType.Levels) return tier >= 2 && tier <= 4;
-            return (type == RegionGoalType.Stars || type == RegionGoalType.GoldMedalLevels) && tier == 5;
+            return type == RegionGoalType.GoldMedalLevels && tier == 5;
         }
 
         /// <summary>The goals of a region in listing order (empty for a Coming Soon region or an invalid index).</summary>

@@ -180,8 +180,8 @@ namespace FluffyClimbers.Tests
         public void TheSheetCarriesTheRunBonus()
         {
             HeroSheetData d = HeroSheetData.For(CharacterCatalog.Momo);
-            Assert.AreEqual(CharacterDefs.Momo.Stats.RunBonusCoins, d.RunBonusCoins);
-            Assert.AreEqual(CharacterDefs.Momo.Stats.RunBonusGems, d.RunBonusGems);
+            Assert.AreEqual(FluffyClimbers.Simulation.CoinPayoutRules.HeroBonusCoins((int)CharacterDefs.Momo.Rarity), d.RunBonusCoins, "the sheet shows the milestone bonus of the hero's rarity (owner 2026-11-13)");
+            Assert.AreEqual(FluffyClimbers.Simulation.CoinPayoutRules.HeroBonusGemsByRarity[(int)CharacterDefs.Momo.Rarity], d.RunBonusGems);
             var go = new GameObject("Canvas", typeof(RectTransform));
             try
             {
@@ -191,17 +191,17 @@ namespace FluffyClimbers.Tests
                 bool label = false, coin = false, gem = false;
                 foreach (Text t in screen.Root.GetComponentsInChildren<Text>(true))
                 {
-                    if (t.text == "Run bonus") label = true;
+                    if (t.text == "Milestone bonus") label = true;
                     if (t.name == "CoinAmount" && t.text == "+" + d.RunBonusCoins) coin = true;
                     if (t.name == "GemAmount" && t.text == "+" + d.RunBonusGems) gem = true;
                 }
-                Assert.IsTrue(label && coin && gem, "Run bonus row (label, coin and gem amounts)");
+                Assert.IsTrue(label && coin && gem, "Milestone bonus row (label, coin and gem amounts)");
             }
             finally { Object.DestroyImmediate(go); }
         }
 
         [Test]
-        public void TheRunBonusIsPaidWithTheLevelReward()
+        public void TheOldPerRunHeroBonusIsGoneAndOnlyMilestoneLevelsPayTheHeroBonus()
         {
             // the chosen hero's stats come from CharacterDefs.ActiveStats; use a fake with a known bonus
             var old = CharacterDefs.ActiveStats;
@@ -217,8 +217,8 @@ namespace FluffyClimbers.Tests
                 CharacterDefs.ActiveStats = () => new CharacterStats { RunBonusCoins = 70, RunBonusGems = 4 };
                 c0 = GameSession.Progress.Coins; g0 = GameSession.Progress.Gems;
                 GameSession.Progress.ApplyRun(level, new RunOutcome { Completed = true, StarMask = 1 });
-                Assert.AreEqual(plainCoins + 70, GameSession.Progress.Coins - c0);
-                Assert.AreEqual(plainGems + 4, GameSession.Progress.Gems - g0);
+                Assert.AreEqual(plainCoins, GameSession.Progress.Coins - c0, "owner 2026-11-13: no per-run hero bonus any more; the hero bonus is paid on the first clear of levels 5/10/15/20/25 by rarity");
+                Assert.AreEqual(plainGems, GameSession.Progress.Gems - g0);
             }
             finally { CharacterDefs.ActiveStats = old; }
         }

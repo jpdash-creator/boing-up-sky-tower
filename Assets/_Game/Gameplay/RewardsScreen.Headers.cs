@@ -249,6 +249,7 @@ namespace FluffyClimbers.Gameplay
         {
             if (e.Gems > 0) { pic = GemSprite; count = Compact(e.Gems); }
             else if (e.Coins > 0) { pic = CoinSprite; count = Compact(e.Coins); }
+            else if (e.IsHeroOrCoins) { pic = ToyKit.Get("icon_heroes") ?? BoltSprite; count = "or " + Compact(e.HeroOrCoins); }   // 50 percent a random Common hero, otherwise these coins (a11y text says the whole gift)
             else if (e.GivesHero) { pic = ToyKit.Get("icon_heroes") ?? BoltSprite; count = "Hero"; }   // the 200-point chest: one random Common hero (the face is only known after the claim)
             else { pic = BoltSprite; count = "x" + e.PowerUps; }
         }

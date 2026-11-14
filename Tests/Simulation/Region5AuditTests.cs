@@ -80,7 +80,7 @@ namespace FluffyClimbers.Simulation.Tests
                 foreach (string s in sweeps) output.WriteLine("    " + s);
                 totalSweeps += sweeps.Count; totalGongs += d.Hazards.Length;
                 Assert.Equal(3, stars);
-                Assert.Equal(0, inPlat - (ll.Spec.Goal.Type == GoalType.FindHiddenGem || ll.Spec.LevelIndex == 8 ? 1 : 0));   // the hidden (bonus) gem floats over its side platform
+                Assert.Equal(0, inPlat - (ll.Spec.Goal.Type == GoalType.FindHiddenGem ? 1 : 0));   // the hidden gem (goal object of level 15) floats over its side platform
                 Assert.Equal(0, outside);
             }
             Assert.True(totalSweeps == 0, totalSweeps + " gong/platform standing-spot sweeps");

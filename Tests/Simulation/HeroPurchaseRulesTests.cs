@@ -13,11 +13,10 @@ namespace FluffyClimbers.Simulation.Tests
         static CharacterSpec Tier(string id, string line, CharacterRarity r) { return new CharacterSpec { Id = id, Name = id, Rarity = r, Line = line, IsMergeTier = true }; }
 
         [Fact]
-        public void PriceTableIsUncommon3000Rare6000Elite14000Legendary30000Coins()
+        public void PriceTableIsCommon2000Uncommon5000Rare12000Elite32000Legendary80000Coins()
         {
-            Assert.Equal(new[] { 3000, 6000, 14000, 30000 }, HeroPurchase.Tiers.Select(HeroPurchase.CoinPrice).ToArray());
-            Assert.Equal(0, HeroPurchase.CoinPrice(CharacterRarity.Common));
-            Assert.Equal(new[] { "Uncommon", "Rare", "Elite", "Legendary" }, HeroPurchase.Tiers.Select(HeroPurchase.RarityName).ToArray());
+            Assert.Equal(new[] { 2000, 5000, 12000, 32000, 80000 }, HeroPurchase.Tiers.Select(HeroPurchase.CoinPrice).ToArray());
+            Assert.Equal(new[] { "Common", "Uncommon", "Rare", "Elite", "Legendary" }, HeroPurchase.Tiers.Select(HeroPurchase.RarityName).ToArray());
         }
 
         [Fact]
@@ -43,6 +42,16 @@ namespace FluffyClimbers.Simulation.Tests
         }
 
         [Fact]
+        public void ACommonCardIsTheBaseHeroOfAnOpenRegion()
+        {
+            var all = new List<CharacterSpec> { Base("b1", 1), Base("b2", 2), Base("b3", 3), Tier("u2", "b2", CharacterRarity.Uncommon) };
+            var seen = new HashSet<string>();
+            for (ulong roll = 0; roll < 200; roll++) seen.Add(HeroPurchase.Pick(CharacterRarity.Common, all, region => region == 2, roll).Id);
+            Assert.True(seen.SetEquals(new[] { "b1", "b2" }));   // region 1 always, region 2 open, region 3 closed, a merge tier is never a Common card
+            Assert.Equal("b1", HeroPurchase.Pick(CharacterRarity.Common, all, region => false, 99).Id);
+        }
+
+        [Fact]
         public void RollIsRepeatableAndVaries()
         {
             Assert.Equal(HeroPurchase.Roll(9, 2, CharacterRarity.Rare), HeroPurchase.Roll(9, 2, CharacterRarity.Rare));
@@ -56,13 +65,13 @@ namespace FluffyClimbers.Simulation.Tests
         {
             // owner 2026-11-09: only the five active lines exist; Region 1 is Momo's line at every tier (closed regions never count, inactive heroes never exist)
             foreach (CharacterRarity r in HeroPurchase.Tiers)
-                Assert.Equal(new[] { "momo" }, BundleCards.Pool(r, CharacterDefs.All, region => region <= 1).Select(c => c.LineId).OrderBy(x => x, System.StringComparer.Ordinal).ToArray());
+                Assert.Equal(new[] { "momo" }, ChestRolls.Pool(r, CharacterDefs.All, region => region <= 1).Select(c => c.LineId).OrderBy(x => x, System.StringComparer.Ordinal).ToArray());
         }
 
         [Fact]
         public void InfoLinesReadTheTierRules()
         {
-            foreach (CharacterRarity r in HeroPurchase.Tiers)
+            foreach (CharacterRarity r in HeroPurchase.Tiers.Where(t => t != CharacterRarity.Common))
             {
                 TierRule rule = TierRules.RuleFor(r);
                 List<string> lines = HeroPurchase.InfoLines(r);
@@ -72,7 +81,8 @@ namespace FluffyClimbers.Simulation.Tests
                 Assert.Contains(TierRules.JumpBandText(r), lines[1]);
                 Assert.Contains(rule.RunCoinsMin + " to " + rule.RunCoinsMax + " coins", lines[2]);
             }
-            Assert.Empty(HeroPurchase.InfoLines(CharacterRarity.Common));
+            Assert.Equal(2, HeroPurchase.InfoLines(CharacterRarity.Common).Count);   // Common has no tier rule: two short lines
+            Assert.Empty(HeroPurchase.InfoLines((CharacterRarity)99));
         }
     }
 }

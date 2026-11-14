@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_009_pirate_cove",
-    "gemSkip": 233
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_010",

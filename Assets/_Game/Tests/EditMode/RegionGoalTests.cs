@@ -121,12 +121,13 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void TheLastLevelsGoalGivesTheRegionsStarterHeroAndFiveExtraGoalsGiveARandomActiveCommonAndThereIsNoSeparateRegionBonus()
+        public void TheLastLevelsGoalGivesTheRegionsStarterHeroAndTheGoldOnAllLevelsGoalGivesARandomActiveCommonAndThereIsNoSeparateRegionBonus()
         {
             ProgressService svc = NewService();
-            // owner 2026-11-09: the four extra Common heroes of every region are inactive always, so these goals give one random ACTIVE Common hero of an open region
+            // owner 2026-11-13: only two hero gifts per region: clear all 25 levels (the region's starter) and gold medals on 25 levels (one random ACTIVE Common hero of an open region);
+            // levels 10/15/20 and 75 stars pay coins instead
             var randomHeroGoals = new HashSet<string>();
-            for (int rr = 1; rr <= 5; rr++) { randomHeroGoals.Add("g_" + rr + "_levels_2"); randomHeroGoals.Add("g_" + rr + "_levels_3"); randomHeroGoals.Add("g_" + rr + "_levels_4"); randomHeroGoals.Add("g_" + rr + "_stars_5"); randomHeroGoals.Add("g_" + rr + "_gold_5"); }
+            for (int rr = 1; rr <= 5; rr++) randomHeroGoals.Add("g_" + rr + "_gold_5");
             for (int r = 1; r <= 5; r++)
             {
                 int heroes = 0;
@@ -138,7 +139,7 @@ namespace FluffyClimbers.Tests
                     if (g.HeroRegion == RewardEntry.RandomOpenRegionHero) { Assert.IsTrue(randomHeroGoals.Contains(g.Id), g.Id); }
                     else { Assert.AreEqual("g_" + r + "_levels_5", g.Id); Assert.AreEqual(r, g.HeroRegion); Assert.AreEqual(25, g.Target); }
                 }
-                Assert.AreEqual(6, heroes, "region " + r);   // levels 2-4 and 5 (starter), stars 5, gold medals 5
+                Assert.AreEqual(2, heroes, "region " + r);   // levels 5 (starter) and gold medals 5
             }
             Assert.AreEqual(0, svc.RewardDefs.RegionRewards.Count);
         }
@@ -263,12 +264,14 @@ namespace FluffyClimbers.Tests
         {
             ProgressService svc = SeededService();
             int gems = svc.Gems, coins = svc.Coins;
-            RegionGoal g = Goal(svc, "g_1_stars_2");   // 30 stars: 3 gems
+            RegionGoal g = Goal(svc, "g_1_stars_5");   // 75 stars: 8 gems + 150 coins + 1 power-up
             RewardClaimOutcome ok = svc.TryClaimRegionGoal(g.Id);
             Assert.AreEqual(RewardClaimResult.Ok, ok.Result);
-            Assert.AreEqual(3, ok.Gems);
-            Assert.AreEqual(gems + 3, svc.Gems);
-            Assert.AreEqual(coins, svc.Coins);
+            Assert.AreEqual(8, ok.Gems);
+            Assert.AreEqual(gems + 8, svc.Gems);
+            Assert.AreEqual(coins + RegionGoalTable.ScaledCoins(150, 1), svc.Coins);
+            Assert.AreEqual(1, ok.PowerUpIds.Count);
+            Assert.AreEqual(0, ok.HeroIds.Count, "75 stars pays coins, not a hero (owner 2026-11-13)");
             Assert.IsTrue(svc.IsRegionGoalClaimed(g));
             Assert.IsFalse(svc.IsRegionGoalReady(g), "a claimed goal is no longer ready, its progress stays");
             Assert.AreEqual(75, svc.RegionGoalProgress(g));
@@ -277,7 +280,7 @@ namespace FluffyClimbers.Tests
             Assert.AreEqual(RewardClaimResult.AlreadyClaimed, svc.TryClaimRegionGoal(g.Id).Result);
             Assert.AreEqual(RewardClaimResult.NotReady, svc.TryClaimRegionGoal("g_1_endless_4").Result);
             Assert.AreEqual(RewardClaimResult.Invalid, svc.TryClaimRegionGoal("nope").Result);
-            Assert.AreEqual(gems + 3, svc.Gems);
+            Assert.AreEqual(gems + 8, svc.Gems);
         }
 
         [Test]
@@ -327,18 +330,31 @@ namespace FluffyClimbers.Tests
             RewardClaimOutcome low = svc.TryClaimRegionGoal("g_1_levels_1");
             Assert.AreEqual(0, low.HeroIds.Count);
             Assert.AreEqual(momo + 1, svc.Copies("momo"));
-            // the four extra goals of Region 1 hand out ONE random ACTIVE Common hero of an open region each (never a named or inactive hero)
+            // levels 10, 15 and 20 pay coins instead of a hero (owner 2026-11-13)
             foreach (string goal in new[] { "g_1_levels_2", "g_1_levels_3", "g_1_levels_4", "g_1_stars_5" })
             {
                 RewardClaimOutcome got = svc.TryClaimRegionGoal(goal);
                 Assert.AreEqual(RewardClaimResult.Ok, got.Result, goal);
-                Assert.AreEqual(1, got.HeroIds.Count, goal);
-                CharacterSpec hero = CharacterDefs.Get(got.HeroIds[0]);
-                Assert.IsNotNull(hero, goal + " gave an inactive or unknown hero");
-                Assert.IsTrue(hero.IsRegionHero, goal);
-                Assert.IsTrue(svc.OwnsCharacter(hero.Id), goal);
-                Assert.AreEqual(0, svc.TryClaimRegionGoal(goal).HeroIds.Count, goal + " claimed once");
+                Assert.AreEqual(0, got.HeroIds.Count, goal);
+                Assert.GreaterOrEqual(got.Coins, 150, goal);
             }
+            // gold medals on all 25 levels hand out ONE random ACTIVE Common hero of an open region (never a named or inactive hero); the admin switch makes the goal ready
+            bool allowed = ProgressService.TestMainRewardsAllowed;
+            ProgressService.TestMainRewardsAllowed = true;
+            try
+            {
+                Assert.IsTrue(svc.AdminSetMainRewardsReady(true));
+                RewardClaimOutcome gold = svc.TryClaimRegionGoal("g_1_gold_5");
+                Assert.AreEqual(RewardClaimResult.Ok, gold.Result);
+                Assert.AreEqual(10, gold.Gems);
+                Assert.AreEqual(1, gold.HeroIds.Count);
+                CharacterSpec hero = CharacterDefs.Get(gold.HeroIds[0]);
+                Assert.IsNotNull(hero, "gold_5 gave an inactive or unknown hero");
+                Assert.IsTrue(hero.IsRegionHero);
+                Assert.IsTrue(svc.OwnsCharacter(hero.Id));
+                Assert.AreEqual(0, svc.TryClaimRegionGoal("g_1_gold_5").HeroIds.Count, "claimed once");
+            }
+            finally { svc.AdminSetMainRewardsReady(false); ProgressService.TestMainRewardsAllowed = allowed; }
         }
 
         [Test]

@@ -12,10 +12,11 @@ namespace FluffyClimbers.Gameplay
     /// <summary>
     /// The VIP page (docs/26 section 2; the owner renamed the Subscription screen to VIP, issue list 30 item 4). A full page in the shop look
     /// (ShopChrome: Momo scene, wood background, yellow italic ribbon "VIP") whose body is a LIST OF SECTIONS, each a header plus content (add a section by
-    /// calling BuildSection in BuildSections). The first section is "Subscription": ONE compact card per plan (WEEKLY blue, MONTHLY gold) built like the
-    /// Iron and Gold chest cards: ticket icon on the left, plan name, two or three colour-coded benefit lines, and on the right the price button (an active
-    /// plan shows the days left and a Claim button, or the countdown to local midnight, instead). The page never scrolls: the cards shrink between a minimum
-    /// and a preferred height, and the text inside best-fits down to the 16 sp floor. Purchases are TEST purchases in development builds
+    /// calling BuildSection in BuildSections). The first section is "Subscription": ONE card per plan, four in all (owner 2026-11-13: Weekly Starter and Weekly Plus in blue,
+    /// Monthly Standard and Monthly Premium in gold; Plus and Premium carry a BEST VALUE line): ticket icon top left, plan name and Worth badge, colour-coded benefit lines
+    /// that say how many days each repeats, two totals lines and, as the last row, the PAY button with the price (an active plan shows the days left and a Claim button,
+    /// or the countdown to local midnight, instead). Every text is one line at the 16 sp floor and the card height follows the line count, so the four cards are taller than
+    /// a phone screen: the VIP page scrolls (ShopChrome.ScrollArea end padding keeps the last button clear of the bottom bar). Purchases are TEST purchases in development builds
     /// (ShopScreen.TestPurchasesEnabled), "Not available yet" in release builds. Menu screen only.
     /// Ticket art: Resources/Art/Ui/icon_ticket_weekly.png and icon_ticket_monthly.png; the crown icon until they exist.
     /// </summary>
@@ -234,19 +235,25 @@ namespace FluffyClimbers.Gameplay
             r.offsetMin = r.offsetMax = Vector2.zero;
         }
 
-        /// <summary>One plan: a card like the chest cards. Ticket left, name and benefit lines in the middle, price (or days left + Claim) right.</summary>
+        /// <summary>
+        /// One plan: a tall card. Left: the ticket. Right, ONE vertical stack of single-line texts at the 16 sp floor (name and worth, an optional BEST VALUE line, the benefit lines
+        /// with how many days each repeats, two totals lines) and, as its last row, the action row: the Pay button (or days left + Claim) at least as tall as UiKit.MinTouchRef.
+        /// The card height is computed from the line count, so there is no overlap by construction; the VIP page scrolls (ShopChrome.ScrollArea end padding).
+        /// </summary>
         void BuildCard(RectTransform section, SubscriptionDef def)
         {
-            bool weekly = def.Id == SubscriptionCatalog.Weekly;
-            bool gold = !weekly;
+            bool monthly = def.IsMonthly;
+            bool gold = monthly;
             DateTime now = progress.SubscriptionClock();
             bool active = progress.IsActive(def.Id, now);
-            string word = weekly ? "Weekly" : "Monthly";
+
+            string puLine = SubscriptionCatalog.PowerUpLine(def);
+            string totals2 = SubscriptionCatalog.TotalsLine2(def);
+            int lineCount = 3 + (puLine != null ? 1 : 0) + def.Chests.Count + 1 + (totals2 != null ? 1 : 0) + (def.Featured ? 1 : 0);   // now, gems, coins, [power-up], [chests], total 1, [total 2], [badge]
+            float buttonH = Mathf.Max(ShopChrome.PriceButtonH, UiKit.MinTouchRef);
+            float cardH = Mathf.Max(CardMinH, CardPad * 2f + NameRowH + lineCount * (LineH + LineGap) + LineGap + buttonH);
 
             RectTransform card = ShopChrome.Card(section, "Card_" + def.Id, gold ? ShopChrome.FrameColor.Gold : ShopChrome.FrameColor.Blue);
-            bool power5 = def.PowerUpEveryClaims > 0;
-            int lineCount = power5 ? 3 : 2;
-            float cardH = Mathf.Max(CardMinH, CardPad * 2f + NameRowH + lineCount * (LineH + LineGap));
             var le = card.gameObject.AddComponent<LayoutElement>();
             le.minHeight = cardH;
             le.preferredHeight = cardH;
@@ -256,31 +263,31 @@ namespace FluffyClimbers.Gameplay
             Color gems = gold ? new Color(0.05f, 0.25f, 0.75f) : new Color(0.62f, 0.88f, 1f);
             Color coins = gold ? new Color(0.45f, 0.24f, 0.0f) : new Color(1f, 0.86f, 0.30f);
             Color power = gold ? new Color(0.02f, 0.36f, 0.12f) : new Color(0.45f, 0.98f, 0.50f);
+            Color chestCol = gold ? new Color(0.50f, 0.10f, 0.05f) : new Color(1f, 0.74f, 0.45f);
 
-            // ticket icon (left)
-            Sprite ticket = ToyKit.Get(weekly ? "icon_ticket_weekly" : "icon_ticket_monthly");
+            // ticket icon (top left): weekly plans use the weekly ticket, monthly plans the monthly one
+            Sprite ticket = ToyKit.Get(monthly ? "icon_ticket_monthly" : "icon_ticket_weekly");
             bool fallback = ticket == null;
             if (fallback) ticket = ToyKit.Get("icon_crown");
-            Image ti = UiKit.AddImage(card, "Ticket", ticket, fallback && weekly ? new Color(0.78f, 0.9f, 1f, 1f) : Color.white);
+            Image ti = UiKit.AddImage(card, "Ticket", ticket, fallback && !monthly ? new Color(0.78f, 0.9f, 1f, 1f) : Color.white);
             ti.preserveAspect = true;
             ti.raycastTarget = false;
-            ti.rectTransform.anchorMin = new Vector2(0.015f, 0.12f);
-            ti.rectTransform.anchorMax = new Vector2(0.185f, 0.88f);
+            ti.rectTransform.anchorMin = new Vector2(0.015f, 0.55f);
+            ti.rectTransform.anchorMax = new Vector2(0.15f, 0.95f);
             ti.rectTransform.offsetMin = ti.rectTransform.offsetMax = Vector2.zero;
 
-            // middle: ONE vertical stack (name + value row, then the benefit lines), single-line texts at the 16 sp floor: no overlap by construction
-            const float cx0 = 0.19f, cx1 = 0.735f;
             RectTransform stack = UiKit.Rect(card, "Lines");
-            stack.anchorMin = new Vector2(cx0, 0f);
-            stack.anchorMax = new Vector2(cx1, 1f);
+            stack.anchorMin = new Vector2(0.16f, 0f);
+            stack.anchorMax = new Vector2(0.985f, 1f);
             stack.offsetMin = new Vector2(0f, CardPad);
             stack.offsetMax = new Vector2(0f, -CardPad);
             var vg = stack.gameObject.AddComponent<VerticalLayoutGroup>();
             vg.spacing = LineGap;
-            vg.childAlignment = TextAnchor.MiddleLeft;
+            vg.childAlignment = TextAnchor.UpperLeft;
             vg.childControlWidth = vg.childControlHeight = true;
             vg.childForceExpandWidth = true;
             vg.childForceExpandHeight = false;
+
             RectTransform head = UiKit.Rect(stack, "NameRow");
             var hg = head.gameObject.AddComponent<HorizontalLayoutGroup>();
             hg.spacing = 8f;
@@ -288,86 +295,95 @@ namespace FluffyClimbers.Gameplay
             hg.childControlWidth = hg.childControlHeight = true;
             hg.childForceExpandWidth = hg.childForceExpandHeight = false;
             Row(head.gameObject, NameRowH);
-            Text name = Plain(UiKit.AddText(head, "Name", word.ToUpperInvariant(), 48, nameCol, TextAnchor.MiddleLeft, true), TextAnchor.MiddleLeft, NameFs);
+            Text name = Plain(UiKit.AddText(head, "Name", def.Name.ToUpperInvariant(), 48, nameCol, TextAnchor.MiddleLeft, true), TextAnchor.MiddleLeft, NameFs);
             name.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
             Plain(UiKit.AddText(head, "Worth", SubscriptionCatalog.WorthText(def).Replace("about ", ""), 42, gold ? new Color(0.02f, 0.36f, 0.19f) : power, TextAnchor.MiddleRight, true), TextAnchor.MiddleRight, Fs);
 
-            string l1 = "+" + Colored(Num(def.InstantGems) + " gems", gems) + " now";
-            string l2 = "Daily " + Colored(Num(def.DailyGems) + " gems", gems) + " + " + Colored(Num(def.DailyCoins) + " coins", coins);
-            string l3 = power5 ? Colored("Power-up", power) + " every " + def.PowerUpEveryClaims + "th claim" : null;
-            for (int r = 0; r < lineCount; r++)
-            {
-                string txt = r == 0 ? l1 : r == 1 ? l2 : l3;
-                Text line = Plain(UiKit.AddText(stack, "Benefit" + (r + 1), txt, 42, baseCol, TextAnchor.MiddleLeft), TextAnchor.MiddleLeft, Fs);
-                line.supportRichText = true;
-                Row(line.gameObject, LineH);
-            }
+            if (def.Featured) AddLine(stack, "Badge", Colored("BEST VALUE", gold ? new Color(0.60f, 0.10f, 0.05f) : new Color(1f, 0.86f, 0.30f)), baseCol, true);
+            AddLine(stack, "Now", Colored(SubscriptionCatalog.NowLine(def), gems), baseCol, false);
+            AddLine(stack, "DailyGems", Colored(SubscriptionCatalog.DailyGemsLine(def), gems), baseCol, false);
+            AddLine(stack, "DailyCoins", Colored(SubscriptionCatalog.DailyCoinsLine(def), coins), baseCol, false);
+            if (puLine != null) AddLine(stack, "PowerUps", Colored(puLine, power), baseCol, false);
+            for (int c = 0; c < def.Chests.Count; c++) AddLine(stack, "Chest" + (c + 1), Colored(SubscriptionCatalog.ChestLine(def.Chests[c]), chestCol), baseCol, false);
+            AddLine(stack, "Total1", SubscriptionCatalog.TotalsLine1(def), baseCol, true);
+            if (totals2 != null) AddLine(stack, "Total2", totals2, baseCol, true);
 
-            string benefits = Num(def.InstantGems) + " gems now. Daily " + Num(def.DailyGems) + " gems and " + Num(def.DailyCoins) + " coins." + (power5 ? " A free power-up every " + def.PowerUpEveryClaims + "th claim." : "");
-            card.gameObject.AddComponent<A11yLabel>().Text = def.Name + ", " + def.Days + " days. " + benefits + " " + SubscriptionCatalog.WorthText(def) + ".";
+            card.gameObject.AddComponent<A11yLabel>().Text = SubscriptionCatalog.Describe(def);
 
-            // right: price button, or days left + Claim
-            const float bx0 = 0.755f, bx1 = 0.985f;
+            // action row (last row of the stack): left days left, right the Pay or Claim button
+            RectTransform act = UiKit.Rect(stack, "ActionRow");
+            var ag = act.gameObject.AddComponent<HorizontalLayoutGroup>();
+            ag.spacing = 8f;
+            ag.childAlignment = TextAnchor.MiddleRight;
+            ag.childControlWidth = ag.childControlHeight = true;
+            ag.childForceExpandWidth = ag.childForceExpandHeight = false;
+            Row(act.gameObject, buttonH);
+            Button b;
             if (active)
             {
                 int days = progress.DaysLeft(now);
-                Text left = Plain(UiKit.AddText(card, "DaysLeft", days + (days == 1 ? " day left" : " days left"), 44, baseCol, TextAnchor.MiddleCenter, true), TextAnchor.MiddleCenter, Fs);
-                Rows(left, bx0 - 0.03f, 1f, 0.62f, 0.97f);
-                BuildClaim(card, bx0, bx1);
-                return;
+                Text left = Plain(UiKit.AddText(act, "DaysLeft", days + (days == 1 ? " day left" : " days left"), 44, baseCol, TextAnchor.MiddleLeft, true), TextAnchor.MiddleLeft, Fs);
+                left.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+                b = BuildClaim(act);
             }
-            string planId = def.Id;
-            bool otherActive = progress.IsActive(now);
-            string amount = StoreLink.StorePrice(ProductCatalog.ForSubscription(def.Id)) ?? SubscriptionCatalog.AmountText(def);   // the store localised price once loaded
-            string a11y = "Buy " + def.Name + " for " + amount + ", " + def.Days + " days" + (ShopScreen.TestPurchasesEnabled ? ", test purchase" : "");
-            string price = amount + "\n/ " + def.Days + " Days";
-            Button buy = ShopChrome.PriceButton(card, "Buy", 1, null, price, a11y, () => TapBuy(planId), 40);
-            FixLabel(buy);
-            if (otherActive) buy.GetComponent<Image>().color = DisabledTint;
-            Anchor(buy, bx0, bx1);
+            else
+            {
+                Text pad = Plain(UiKit.AddText(act, "Spacer", " ", 42, baseCol, TextAnchor.MiddleLeft), TextAnchor.MiddleLeft, Fs);
+                pad.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+                string planId = def.Id;
+                bool otherActive = progress.IsActive(now);
+                string amount = StoreLink.StorePrice(ProductCatalog.ForSubscription(def.Id)) ?? SubscriptionCatalog.AmountText(def);   // the store localised price once loaded
+                string a11y = "Pay " + amount + " for " + def.Name + ", " + def.Days + " days" + (ShopScreen.TestPurchasesEnabled ? ", test purchase" : "");
+                b = ShopChrome.PriceButton(act, "Buy", 1, null, PayLabel(amount), a11y, () => TapBuy(planId), 40);
+                FixLabel(b);
+                if (otherActive) b.GetComponent<Image>().color = DisabledTint;
+            }
+            var ble = b.gameObject.AddComponent<LayoutElement>();
+            ble.minWidth = ble.preferredWidth = ButtonW;
+            ble.minHeight = ble.preferredHeight = buttonH;
         }
 
-        /// <summary>The button column: vertically centred, as tall as the shared price buttons (at least the 48 dp target).</summary>
-        static void Anchor(Button b, float x0, float x1)
+        const float ButtonW = 360f;
+
+        /// <summary>The owner wording: the button says Pay and the price ("PAY $4.99"); the days are on the card text.</summary>
+        public static string PayLabel(string amount) { return "PAY " + amount; }
+
+        /// <summary>One single-line card text (rich text for the colour runs).</summary>
+        static void AddLine(RectTransform stack, string name, string txt, Color baseCol, bool bold)
         {
-            var rt = (RectTransform)b.transform;
-            rt.anchorMin = new Vector2(x0, 0.5f);
-            rt.anchorMax = new Vector2(x1, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.offsetMin = new Vector2(0f, -ShopChrome.PriceButtonH * 0.5f);
-            rt.offsetMax = new Vector2(0f, ShopChrome.PriceButtonH * 0.5f);
+            Text line = Plain(UiKit.AddText(stack, name, txt, 42, baseCol, TextAnchor.MiddleLeft), TextAnchor.MiddleLeft, Fs);
+            line.supportRichText = true;
+            if (bold) line.fontStyle = FontStyle.Bold;
+            Row(line.gameObject, LineH);
         }
 
         /// <summary>Today's reward: a green Claim button, or a disabled button showing the countdown to local midnight.</summary>
-        void BuildClaim(RectTransform card, float x0, float x1)
+        Button BuildClaim(RectTransform parent)
         {
             Button b;
             if (progress.CanClaimToday())
             {
-                b = ShopChrome.PriceButton(card, "Claim", 1, null, "Claim", "Claim today's VIP subscription reward", TapClaim, 44);
+                b = ShopChrome.PriceButton(parent, "Claim", 1, null, "Claim", "Claim today's VIP subscription reward", TapClaim, 44);
             }
             else
             {
                 string time = Countdown(progress.TimeToNextClaim(progress.SubscriptionClock()));
-                b = ShopChrome.PriceButton(card, "ComeBack", 0, null, time, "Today's reward is claimed. Come back tomorrow.", null, 40);
+                b = ShopChrome.PriceButton(parent, "ComeBack", 0, null, time, "Today's reward is claimed. Come back tomorrow.", null, 40);
                 b.interactable = false;
                 b.GetComponent<Image>().color = DisabledTint;
                 countdowns.Add(b.transform.Find("Label").GetComponent<Text>());
             }
             FixLabel(b);
-            var rt = (RectTransform)b.transform;
-            rt.anchorMin = new Vector2(x0, 0.05f);
-            rt.anchorMax = new Vector2(x1, 0.05f);
-            rt.pivot = new Vector2(0.5f, 0f);
-            rt.offsetMin = new Vector2(0f, 0f);
-            rt.offsetMax = new Vector2(0f, ShopChrome.PriceButtonH);
+            return b;
         }
 
         // ---------------- actions ----------------
 
         void Info(string title, string text)
         {
-            host.OpenPopup(title, text, 900f);
+            int lines = 1;
+            for (int i = 0; i < text.Length; i++) if (text[i] == '\n') lines++;
+            host.OpenPopup(title, text, Mathf.Max(900f, 520f + 62f * lines));   // a claim that opened chests lists their contents: the popup grows with the lines
             host.PopupButton("OK", false, 40f, host.ClosePopup);
         }
 
@@ -385,7 +401,7 @@ namespace FluffyClimbers.Gameplay
             }
             if (!ShopScreen.TestPurchasesEnabled) { BuyWithStore(def); return; }   // the real store (Services.Payments); the Google sheet is the confirmation
             string extend = running != null ? "\nThis adds " + def.Days + " days to your current time." : "";
-            host.OpenPopup("Confirm test buy", "TEST PURCHASE\n" + def.Name + " for " + SubscriptionCatalog.AmountText(def) + ".\nYou get " + Num(def.InstantGems) + " gems now and a daily reward for " + def.Days + " days." + extend + "\nNo money is charged.", 1180f);
+            host.OpenPopup("Confirm test buy", "TEST PURCHASE\n" + def.Name + " for " + SubscriptionCatalog.AmountText(def) + ".\nYou get " + Num(def.InstantGems) + " gems now and a daily reward for " + def.Days + " days." + (def.Chests.Count > 0 ? "\nIncludes chests on set days." : "") + extend + "\nNo money is charged.", 1180f);
             host.PopupButton("Confirm", true, 230f, () => CompleteBuy(def));
             host.PopupButton("Cancel", false, 60f, host.ClosePopup);
         }
@@ -444,6 +460,20 @@ namespace FluffyClimbers.Gameplay
             }
         }
 
+        /// <summary>What a chest of the claim gave: "Gold chest opened: 3,512 coins, 3 power-ups (...), hero card Name".</summary>
+        string ChestText(SubscriptionChestResult r)
+        {
+            ChestContents c = r.Contents;
+            string text = (r.Kind == ChestKind.Golden ? "Gold" : "Iron") + " chest opened:\n+" + Num(c.Coins) + " coins";
+            for (int i = 0; i < c.PowerUps.Count; i++)
+            {
+                PowerUpDef pw = progress.PowerUpDefs.Get(c.PowerUps[i]);
+                text += "\n+1 " + (pw != null ? pw.Name : "power-up");
+            }
+            if (c.Hero != null) text += "\n+1 hero card: " + c.Hero.Name;
+            return text;
+        }
+
         /// <summary>Tap on Claim: pays today's reward (once per local day) and tells what was added.</summary>
         public void TapClaim()
         {
@@ -459,6 +489,7 @@ namespace FluffyClimbers.Gameplay
                         PowerUpDef pw = progress.PowerUpDefs.Get(claim.PowerUpId);
                         text += "\n+" + claim.PowerUpCount + " " + (pw != null ? pw.Name : "power-up") + " (free power-up)";
                     }
+                    for (int i = 0; i < claim.Chests.Count; i++) text += "\n" + ChestText(claim.Chests[i]);
                     Info("Reward claimed", text + "\nCome back tomorrow for the next one.");
                     break;
                 case SubscriptionClaimResult.AlreadyClaimedToday:

@@ -6,7 +6,7 @@ using Xunit;
 
 namespace FluffyClimbers.Simulation.Tests
 {
-    /// <summary>The hero card of a Treasure Chest (Bug List 5 F3): odds 70/20/10 and 50/40/10, the open-regions rule, the tier fallback, determinism and the worth band.</summary>
+    /// <summary>The hero card of a Treasure Chest (Bug List 5 F3): odds 50/30/20 and 60/30/10 (owner 2026-11-13), the open-regions rule, the tier fallback, determinism and the worth band 2 to 6.</summary>
     public class ChestCardTests
     {
         static ulong Mix(ref ulong s)
@@ -23,13 +23,14 @@ namespace FluffyClimbers.Simulation.Tests
 
         static CharacterSpec Hero(string id, CharacterRarity r, int region = 0, string line = null) { return new CharacterSpec { Id = id, Name = id, Rarity = r, Region = region, Line = line }; }
 
-        // three regions, every tier up to Elite exists in each
+        // three regions, every tier up to Legendary exists in each
         static readonly CharacterSpec[] Full =
         {
             Hero("base1", CharacterRarity.Common, 1), Hero("base2", CharacterRarity.Common, 2), Hero("base3", CharacterRarity.Common, 3),
             Hero("u1", CharacterRarity.Uncommon, 0, "base1"), Hero("u2", CharacterRarity.Uncommon, 0, "base2"), Hero("u3", CharacterRarity.Uncommon, 0, "base3"),
             Hero("r1", CharacterRarity.Rare, 0, "base1"), Hero("r2", CharacterRarity.Rare, 0, "base2"), Hero("r3", CharacterRarity.Rare, 0, "base3"),
             Hero("e1", CharacterRarity.Epic, 0, "base1"), Hero("e2", CharacterRarity.Epic, 0, "base2"), Hero("e3", CharacterRarity.Epic, 0, "base3"),
+            Hero("l1", CharacterRarity.Legendary, 0, "base1"), Hero("l2", CharacterRarity.Legendary, 0, "base2"), Hero("l3", CharacterRarity.Legendary, 0, "base3"),
         };
 
         const double AvgPowerUpGems = 425.0 / 7.0;   // 3 x 75 + 4 x 50 over the seven implemented types
@@ -37,13 +38,13 @@ namespace FluffyClimbers.Simulation.Tests
         [Fact]
         public void TheOddsAreTheOwnersNumbers()
         {
-            Assert.Equal(new[] { 70, 20, 10 }, ChestRolls.IronWeights);
-            Assert.Equal(new[] { 50, 40, 10 }, ChestRolls.GoldenWeights);
+            Assert.Equal(new[] { 50, 30, 20 }, ChestRolls.IronWeights);
+            Assert.Equal(new[] { 60, 30, 10 }, ChestRolls.GoldenWeights);
             Assert.Equal(new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare }, ChestRolls.IronTiers);
-            Assert.Equal(new[] { CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic }, ChestRolls.GoldenTiers);
+            Assert.Equal(new[] { CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary }, ChestRolls.GoldenTiers);
             Assert.Equal(100, ChestRolls.IronWeights.Sum());
             Assert.Equal(100, ChestRolls.GoldenWeights.Sum());
-            Assert.Equal(70, ChestRolls.ChancePercent(ChestKind.Iron, 0));
+            Assert.Equal(50, ChestRolls.ChancePercent(ChestKind.Iron, 0));
             Assert.Equal(10, ChestRolls.ChancePercent(ChestKind.Golden, 2));
         }
 
@@ -98,7 +99,7 @@ namespace FluffyClimbers.Simulation.Tests
         public void AnEmptyTierFallsBackToTheNextLowerTierThatHasAHero()
         {
             // today's real game: Region 1 (Momo) has Common to Legendary heroes, so a drawn tier is used as it is while region 1 is the only open region
-            foreach (CharacterRarity drawn in new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic })
+            foreach (CharacterRarity drawn in new[] { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary })
             {
                 CharacterRarity got;
                 Assert.True(ChestRolls.TryResolveTier(drawn, CharacterDefs.All, r => false, out got));
@@ -147,22 +148,23 @@ namespace FluffyClimbers.Simulation.Tests
         // ---- the one gem table and the worth ----
 
         [Fact]
-        public void TheCardGemTableIsTheBundleTableAndExpectedValuesFollow()
+        public void TheCardGemTableIsTheHeroCoinPriceOver20AndExpectedValuesFollow()
         {
+            Assert.Equal(new[] { 100, 250, 600, 1600, 4000 }, HeroPurchase.Tiers.Select(r => ChestRolls.CardGems(r)).ToArray());   // 2,000 / 5,000 / 12,000 / 32,000 / 80,000 coins over 20
+            foreach (CharacterRarity r in HeroPurchase.Tiers) Assert.Equal(HeroPurchase.CoinPrice(r) / ChestRolls.CoinsPerGem, ChestRolls.CardGems(r));
             Assert.Equal(BundleCards.TierGems[0], ChestRolls.CardGems(CharacterRarity.Uncommon));
             Assert.Equal(BundleCards.TierGems[1], ChestRolls.CardGems(CharacterRarity.Rare));
             Assert.Equal(BundleCards.TierGems[2], ChestRolls.CardGems(CharacterRarity.Epic));
             Assert.Equal(ChestRolls.CommonCardGems, ChestRolls.CardGems(CharacterRarity.Common));
             Assert.True(ChestRolls.CardGems(CharacterRarity.Common) < ChestRolls.CardGems(CharacterRarity.Uncommon));
-            Assert.Equal(0, ChestRolls.CardGems(CharacterRarity.Legendary));
-            Assert.Equal(73.0, ChestRolls.ExpectedCardGems(ChestKind.Iron), 6);    // 0.7 x 40 + 0.2 x 100 + 0.1 x 250
-            Assert.Equal(210.0, ChestRolls.ExpectedCardGems(ChestKind.Golden), 6); // 0.5 x 100 + 0.4 x 250 + 0.1 x 600
+            Assert.Equal(245.0, ChestRolls.ExpectedCardGems(ChestKind.Iron), 6);    // 0.5 x 100 + 0.3 x 250 + 0.2 x 600
+            Assert.Equal(1240.0, ChestRolls.ExpectedCardGems(ChestKind.Golden), 6); // 0.6 x 600 + 0.3 x 1,600 + 0.1 x 4,000
         }
 
         [Theory]
         [InlineData(ChestKind.Iron)]
         [InlineData(ChestKind.Golden)]
-        public void WorthIsBetween1Point5And2Point5EvenAtTheExtremes(ChestKind kind)
+        public void WorthIsBetween2And6EvenAtTheExtremes(ChestKind kind)
         {
             double w = ChestRolls.WorthMultiplier(kind, AvgPowerUpGems);
             Assert.InRange(w, ChestRolls.WorthMin, ChestRolls.WorthMax);
@@ -175,10 +177,12 @@ namespace FluffyClimbers.Simulation.Tests
         }
 
         [Fact]
-        public void WorthTagsAre1Point8And1Point9()
+        public void WorthTagsAre3Point6And5Point3()
         {
-            Assert.Equal("Worth x1.8", ChestRolls.WorthText(ChestKind.Iron, AvgPowerUpGems));
-            Assert.Equal("Worth x1.9", ChestRolls.WorthText(ChestKind.Golden, AvgPowerUpGems));
+            Assert.Equal("Worth x3.6", ChestRolls.WorthText(ChestKind.Iron, AvgPowerUpGems));   // (50 + 60.7 + 245) / 100 = 3.557
+            Assert.Equal("Worth x5.3", ChestRolls.WorthText(ChestKind.Golden, AvgPowerUpGems)); // (180 + 182.1 + 1,240) / 300 = 5.34
+            Assert.InRange(ChestRolls.WorthMultiplier(ChestKind.Iron, AvgPowerUpGems), 3.50, 3.62);
+            Assert.InRange(ChestRolls.WorthMultiplier(ChestKind.Golden, AvgPowerUpGems), 5.30, 5.38);
         }
 
         [Fact]

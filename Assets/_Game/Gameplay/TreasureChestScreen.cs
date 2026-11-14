@@ -307,8 +307,8 @@ namespace FluffyClimbers.Gameplay
         // ---------------- the info popup ("i") ----------------
 
         /// <summary>
-        /// The "i" popup of one chest: icon chips (coins, power-ups, the "?" hero card), a short hero line ("Only heroes of your open regions") with the chance per rarity (Iron 70/20/10,
-        /// Gold 50/40/10) and "Worth x1.8 for 100 gems". Icons first, short text, all at least 16 sp.
+        /// The "i" popup of one chest: icon chips (coins, power-ups, the "?" hero card), a short hero line ("Only heroes of your open regions") with the chance per rarity (Iron 50/30/20,
+        /// Gold 60/30/10) and "Worth x1.8 for 100 gems". Icons first, short text, all at least 16 sp.
         /// </summary>
         public void ShowInfo(ChestKind kind)
         {

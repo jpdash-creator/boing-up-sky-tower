@@ -386,9 +386,8 @@ namespace FluffyClimbers.Economy
             FluffyClimbers.Simulation.CharacterStats finds = CharacterDefs.ActiveStats();   // docs/44: flat per cleared level, 0 for every current hero
             if (finds.CoinFind > 0) reward.PayoutCoins += finds.CoinFind;
             if (finds.GemFind > 0) reward.RewardGems += finds.GemFind;
-            // docs/44: the hero's "Run bonus", paid at the end of every completed run (meta reward only, the sim never sees it)
-            if (finds.RunBonusCoins > 0) reward.PayoutCoins += finds.RunBonusCoins;
-            if (finds.RunBonusGems > 0) reward.RewardGems += finds.RunBonusGems;
+            // Economy review 2026-11-13: the old per-run "Run bonus" (finds.RunBonusCoins / RunBonusGems on every completed run) is no longer paid. The selected hero pays its
+            // rarity bonus on the first clear of levels 5/10/15/20/25 only; RewardCalculator.Compute adds it (RewardResult.HeroBonusCoins / HeroBonusGems, run.HeroId).
 
             LevelProgress p = before ?? new LevelProgress();
             p.Clears++;
@@ -453,7 +452,6 @@ namespace FluffyClimbers.Economy
             LevelProgress p = GetProgress(levelId);
             CrownRun r = p != null && p.CrownRuns != null && mode < p.CrownRuns.Length ? p.CrownRuns[mode] : null;
             if (r != null && r.BaseScore > 0 && CrownScore.FromScore(r.BaseScore, mode) == crown) return r;
-            if (mode == 0 && p != null && p.BestScore > 0 && CrownScore.FromScore(p.BestScore, 0) == crown) return new CrownRun { BaseScore = p.BestScore };   // legacy score: floors and combo were not stored
             return new CrownRun { BaseScore = CrownScore.BaseFromCrown(crown, mode) };
         }
 
@@ -494,17 +492,15 @@ namespace FluffyClimbers.Economy
         }
 
         /// <summary>
-        /// Best crown of a level in a Gameplay mode (0 = none). Old saves keep only a base BestScore without the setting it was played in: it counts as a
-        /// Relaxed crown (the lowest bonus, so an old score is never shown higher than it was worth) until a real run in that mode replaces it.
+        /// Best crown of a level in ONE Gameplay mode (0 = none, also when that setting was never played). Stored per level and per setting; there is no fallback to the
+        /// mode-less <see cref="LevelProgress.BestScore"/> (owner 2026-11-13: a run in one setting must never show up as a crown in another one).
         /// </summary>
         public int BestCrown(string levelId, int mode)
         {
             LevelProgress p = GetProgress(levelId);
             if (p == null) return 0;
             mode = TimeRecords.ClampMode(mode);
-            int stored = p.Crowns != null && mode < p.Crowns.Length ? p.Crowns[mode] : 0;
-            int legacy = mode == 0 ? CrownScore.FromScore(p.BestScore, 0) : 0;
-            return stored > legacy ? stored : legacy;
+            return p.Crowns != null && mode < p.Crowns.Length ? p.Crowns[mode] : 0;
         }
 
         // ---- endless ----

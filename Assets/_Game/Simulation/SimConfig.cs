@@ -74,7 +74,7 @@ namespace FluffyClimbers.Simulation
         /// <summary>Base scroll speed as a percent of the difficulty-blended speed (owner, 2026-10-19: +20 percent).</summary>
         public int ScrollBasePercent = 120;
         /// <summary>Chance, in per mille, that a gem spot (one per row of a campaign level) holds a gem. See <see cref="DifficultyGemPermille"/>.</summary>
-        public int GemSpotPermille = 16;
+        public int GemSpotPermille = 0;
         /// <summary>
         /// GemSpotPermille per difficulty (Relaxed, Easy, Normal, Hard, Insane). The owner asked for 2.5, 2.5, 3.5, 4.5, 5 percent (issue list 24 point 5).
         /// Measured with one spot per row: 2.5 percent places only about 62 gems per region (target 70 to 110) and 4.5 / 5 percent place 112 / 130,
@@ -88,7 +88,11 @@ namespace FluffyClimbers.Simulation
         /// (59 to 70 placed gem value per region on every difficulty, the old 55 to 75 band; the band cannot hold more spread than that).
         /// Owner Bug List 8 item 3 (2026-11-09): the shorter levels (2,685 rows per region instead of 3,240) cost about 17 percent of the gems, so the shares went up two per mille steps to 1.6, 1.6, 1.7, 1.7 and 1.7 percent (measured: 55 to 75 placed gem value per region on every mode).
         /// </summary>
-        public static readonly int[] DifficultyGemPermille = { 16, 16, 17, 17, 17 };
+        /// <summary>
+        /// ECONOMY REVIEW 2026-11-13 (owner): NO gem pickups on the rows of any level or of Endless any more, so every share is 0 (the array stays: the per-mode length and the
+        /// hosts that copy it keep working). Gems in play are the fixed milestone gems of levels 5, 10, 15, 20, 25 (CoinPayoutRules.MilestoneGemTable). The history above is kept for the record.
+        /// </summary>
+        public static readonly int[] DifficultyGemPermille = { 0, 0, 0, 0, 0 };
         /// <summary>
         /// Scroll speed-up step in percent per Gameplay setting (Relaxed, Easy, Normal, Hard, Insane) every ScrollStepSeconds: 10, 20, 25, 40, 50.
         /// Owner decision 2026-11-12 (was 20/22/25/28/30). The same percents are the crown bonus of <c>CrownScore</c> (Economy), so a harder setting pays more crown.
@@ -431,8 +435,8 @@ namespace FluffyClimbers.Simulation
         public int DoubleGemValue = 2;
         /// <summary>Gem pickup Tag of a double gem (tiers 0 to 3 are the rarities 1/2/5/10).</summary>
         public const int DoubleGemTag = 4;
-        /// <summary>Level 8 only: the hidden bonus gem is a double gem with this percent chance.</summary>
-        public int HiddenBonusDoublePercent = 30;
+        /// <summary>Chance that the hidden gem is a double one (Tag 1). 0 since 2026-11-13: no level 8 hidden gem, the level 15 hidden gem pays no gem of its own.</summary>
+        public int HiddenBonusDoublePercent = 0;   // economy review 2026-11-13: the hidden gem is only the goal object of level 15 (its 2 gems are the milestone reward), never a double
         /// <summary>Hazard-type specials (Thorn Bush, Snap Daisy) are rare early: at most one per this many rows up to level HazardEarlyLastLevel (owner decision).</summary>
         public int HazardEarlyRowsPerHazard = 6;
         public int HazardEarlyLastLevel = 6;

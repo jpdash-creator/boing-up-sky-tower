@@ -7,8 +7,8 @@ using FluffyClimbers.Simulation;
 namespace FluffyClimbers.Gameplay
 {
     /// <summary>
-    /// The Heroes section of the Shop "Character / Power-ups" page (Bug List 4 E2, docs/26 section 8b): a 2 x 2 grid of hero cards, row 1 Uncommon and Rare, row 2 Elite
-    /// (code tier Epic) and Legendary. Each card has the same build as a Power-up card (the (i) at the top left, an icon, a brown strip with a green price button) but its plate is a
+    /// The Heroes section of the Shop "Character / Power-ups" page (Bug List 4 E2, docs/26 section 8b): a grid of five hero cards, 2 per row: Common and Uncommon, Rare and Elite
+    /// (code tier Epic), Legendary alone and centred (Common added 2026-11-13). Each card has the same build as a Power-up card (the (i) at the top left, an icon, a brown strip with a green price button) but its plate is a
     /// light tint of the tier colour (<see cref="BundlesScreen.RarityInk"/>), the icon is the bundle's "?" hero card and the price is the coin price of
     /// <see cref="HeroPurchase"/>. The (i) opens the tier popup; the green button asks to confirm, pays and gives ONE random hero of that rarity from the player's open regions
     /// (<see cref="ProgressService.TryBuyHero"/>), then shows the hero reveal. A tier with no hero in an open region charges nothing and says "No Rare heroes yet".
@@ -34,17 +34,22 @@ namespace FluffyClimbers.Gameplay
         {
             RectTransform grid = UiKit.Rect(pageList, "HeroGrid");
             var le = grid.gameObject.AddComponent<LayoutElement>();
-            le.minHeight = le.preferredHeight = 2f * HeroCardH + CardGap;
-            for (int i = 0; i < HeroPurchase.Tiers.Length; i++)
-                BuildHeroCard(grid, (i / 2) * (HeroCardH + CardGap), i % 2, HeroPurchase.Tiers[i]);
+            int n = HeroPurchase.Tiers.Length;
+            int rows = (n + 1) / 2;   // five cards: Common, Uncommon / Rare, Elite / Legendary alone and centred
+            le.minHeight = le.preferredHeight = rows * HeroCardH + (rows - 1) * CardGap;
+            for (int i = 0; i < n; i++)
+            {
+                bool lone = i == n - 1 && n % 2 == 1;
+                BuildHeroCard(grid, (i / 2) * (HeroCardH + CardGap), lone ? 0 : i % 2, HeroPurchase.Tiers[i], lone ? 0.5f : 0f);
+            }
         }
 
-        void BuildHeroCard(RectTransform grid, float y, int col, CharacterRarity rarity)
+        void BuildHeroCard(RectTransform grid, float y, int col, CharacterRarity rarity, float offsetCols)
         {
             string rname = HeroPurchase.RarityName(rarity);
             int price = HeroPurchase.CoinPrice(rarity);
             RectTransform crt = ShopChrome.Card(grid, "HeroCard_" + rname, ShopChrome.FrameColor.Gold);
-            PlaceCell(crt, y, col, 2, HeroCardH);
+            PlaceCell(crt, y, col, 2, HeroCardH, offsetCols);
             // the tier's own plate: tint the card's border and fill (children 0 and 1 of the shared card builder)
             crt.GetChild(0).GetComponent<Image>().color = HeroEdgeColor(rarity);
             crt.GetChild(1).GetComponent<Image>().color = HeroPlateColor(rarity);
@@ -225,7 +230,7 @@ namespace FluffyClimbers.Gameplay
             }
             const float dollH = 480f, dollTop = 190f, gap = 12f, panelW = 860f;
             float nameY = dollTop + dollH + gap, nameH = BundlesScreen.TextHeight(plain, 50f, 780f);
-            float paidY = nameY + nameH + gap, paidH = BundlesScreen.TextHeight("Paid 30,000 coins", 40f, 780f);
+            float paidY = nameY + nameH + gap, paidH = BundlesScreen.TextHeight("Paid 80,000 coins", 40f, 780f);
             float buttonReserve = 50f + Mathf.Max(170f, UiKit.MinTouchRef) + gap;
             float panelH = Mathf.Max(1300f, paidY + paidH + buttonReserve);
             RectTransform overlay = host.NewOverlay();

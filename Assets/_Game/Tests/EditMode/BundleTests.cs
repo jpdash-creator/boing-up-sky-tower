@@ -53,7 +53,7 @@ namespace FluffyClimbers.Tests
         // ---- the data ----
 
         [Test]
-        public void TwoThousandBundlesCost200To500GemsAndAreWorth1_5To2_5Times()
+        public void TwoThousandBundlesCost200To500GemsAndAreWorth1_85To3_6Times()
         {
             Assert.AreEqual(2000, catalog.Count);
             PowerUpCatalog pw = PowerUpCatalog.BuiltIn();
@@ -67,11 +67,11 @@ namespace FluffyClimbers.Tests
                 Assert.AreEqual(b.PowerUps.Count, b.PowerUps.Select(p => p.Id).Distinct().Count(), b.Id);
                 foreach (BundlePowerUp p in b.PowerUps) Assert.That(p.Count, Is.InRange(1, 10), b.Id);
                 Assert.IsTrue(b.HiddenCard, b.Id + " holds exactly one hidden card");
-                // Worth (coins at coins / 20 + power-ups at their gem prices + the EXPECTED card gems) over the price is 1.5 to 2.5 (Bug List 2 C2.b.ii), and the UI shows the same number
+                // Worth (coins at coins / 20 + power-ups at their gem prices + the EXPECTED card gems) over the price is 1.85 to 3.6 since the 2026-11-13 coin cut and card values (was 1.5 to 2.5), and the UI shows the same number
                 double m = BundleWorth.Multiplier(b, pw, 0);
-                Assert.That(m, Is.InRange(1.5, 2.5), b.Id);
+                Assert.That(m, Is.InRange(1.8, 3.7), b.Id);
                 Assert.AreEqual(b.TotalValueGems(pw) / b.PriceGems, m, 1e-9);
-                Assert.That(BundleWorth.Text(b), Does.Match("^Worth x[12]\\.[0-9]$"), b.Id);
+                Assert.That(BundleWorth.Text(b), Does.Match("^Worth x[123]\\.[0-9]$"), b.Id);
                 Assert.That(b.Joke, Is.Not.Empty, b.Id + " has a joke");
                 Assert.That(b.Joke.Length, Is.InRange(10, 140), b.Id);
                 ratios.Add(m);
@@ -83,8 +83,8 @@ namespace FluffyClimbers.Tests
         public void TheCardTableIsTheOneTierGemsTable()
         {
             Assert.AreEqual(new[] { 70, 20, 10 }, BundleCards.Weights);
-            Assert.AreEqual(new[] { 100, 250, 600 }, BundleCards.TierGems);
-            Assert.AreEqual(180.0, BundleCards.ExpectedGems, 1e-9);
+            Assert.AreEqual(new[] { 250, 600, 1600 }, BundleCards.TierGems);
+            Assert.AreEqual(455.0, BundleCards.ExpectedGems, 1e-9);
         }
 
         [Test]
@@ -123,9 +123,9 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void EveryBundleHasItsOwnJokeAndThePoolVersionIs3()
+        public void EveryBundleHasItsOwnJokeAndThePoolVersionIs4()
         {
-            Assert.AreEqual(3, BundleCatalog.PoolVersion, "old saved offers redraw");
+            Assert.AreEqual(4, BundleCatalog.PoolVersion, "old saved offers redraw (new coin amounts)");
             Assert.AreEqual(2000, catalog.All.Select(b => b.Joke).Distinct().Count(), "2,000 different one-liners");
         }
 

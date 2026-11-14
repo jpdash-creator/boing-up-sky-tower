@@ -94,7 +94,7 @@ The Game has three weekly leaderboards: Overall, Levels and Endless. They rank t
 
 ## 5. Purchases and payments
 
-The Game sells gem packs and two subscriptions (weekly and monthly) through the store's in-app purchase system: Google Play Billing on Android (through the Unity In-App Purchasing library on your device) and, where the Game is offered there, Apple's in-app purchase system.
+The Game sells gem packs and four subscription plans (two weekly and two monthly plans) through the store's in-app purchase system: Google Play Billing on Android (through the Unity In-App Purchasing library on your device) and, where the Game is offered there, Apple's in-app purchase system.
 
 - **Payment data.** Payment is processed entirely by Google or Apple. We never receive card, bank, billing-address or payment-account details. Subscriptions renew automatically through Google Play until you cancel them in the Play Store (see the Terms of Use, section 7).
 - **What the Game receives on your device.** For a completed purchase the store software gives the Game the product id, the store order or transaction id, and a purchase token or receipt that the Game uses to verify the purchase before it grants the gems or subscription. The Game stores the product id, kind, transaction id and time in your save (section 3). The receipt itself is not kept by the Game beyond the purchase. The Game also reads the store's localised price text so that prices can be shown in your currency.

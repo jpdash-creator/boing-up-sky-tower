@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_006_frosty_peaks",
-    "gemSkip": 183
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_007",

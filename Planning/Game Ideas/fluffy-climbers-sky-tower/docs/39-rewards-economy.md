@@ -6,6 +6,8 @@ Where the numbers live (one place each, retune there only):
 - Main goals: `RegionGoalTable` in `Assets/_Game/Economy/RegionGoals.cs` (tiers per type, scaling per region). Generated report: `Tests/Simulation/REWARDS_TABLES.md` (written by `RewardTablesTests`).
 - Daily and Weekly: `RewardCatalog.BuiltIn()` rows in `Assets/_Game/Economy/RewardCatalog.cs`, mirrored by `Content/economy/rewards.json` (a test keeps them identical).
 
+**Economy review 2026-11-13 (owner, `.claude/pendingdecisions/economy-review-2026-11-13.md`): Main, Daily and Weekly were re-priced to make gems scarce.** Gems now come only from the 8 milestone goals of each region (50 per region, 250 in all), Weekly (50 a week) and the level milestones (L5/10/15/20/25); Daily pays zero gems. Common hero gifts are 2 per region (Main) and a 50-percent roll (Daily 200 points, Weekly hard-clear tasks). The tables in sections 2 to 4 below carry the NEW numbers in the "2026-11-13" blocks; older tables and totals further down (section 5) are the previous pass and are kept only as history.
+
 ---
 
 ## 1. Rules
@@ -18,7 +20,11 @@ Where the numbers live (one place each, retune there only):
 6. **No separate "region cleared" bonus.** "Clear all 15 levels" is simply the last tier of the Levels goal (`g_<r>_levels_5`) and also gives that region's Common hero (1 copy).
 7. **Hero rewards.** `g_<r>_levels_5` = 1 copy of the region's starter Common hero (Momo, Capi, Otto, Bonbon, Bao for regions 1 to 5, via `progress.AddCopies`). **Regions 1 and 2 also hand out their four other Common heroes** (F4.1 and F4.2, docs/40): `g_1_levels_2` (clear 6 levels) = Bumble, `g_1_levels_3` (9) = Ribbi, `g_1_levels_4` (12) = Dandy, `g_1_stars_5` (45 stars) = Pip; Region 2: `g_2_levels_2` = Nib, `g_2_levels_3` = Spike, `g_2_levels_4` = Moss, `g_2_stars_5` = Fenn; one copy each (`RewardEntry.HeroId`, `RegionGoalTable.HeroGoalId`). The **top Weekly task** (clear 5 hard levels) = 1 copy of a **random Common hero of an open region** (in Region 1 any of the five), drawn from the per-account bundle seed and the claim counter (repeatable, never `UnityEngine.Random`). Each copy is a new hero card on the Hero screen.
 
-## 2. Main goals per region (all 5 playable regions, 44 goals each)
+## 2. Main goals per region (all 5 playable regions, 49 goals each)
+
+**2026-11-13 (current numbers; the table further below shows the older structure and targets, its rewards are superseded).** Gems ONLY on these 8 goals per region (50 gems, 250 over five regions): `levels_5` (clear all 25 levels) 10, `stars3_3` (3 stars on 25 levels) 10, `gold_5` (gold medals on 25 levels) 10, `stars_5` (75 stars) 8, `hard_3` (6 hard levels) 4, `endless_3` (floor 500) 3, `endless_4` (floor 1,000) 3, `nowall_2` (no-wall level 3 times) 2. Every other goal pays coins (and power-ups) only. Common hero gifts: only `levels_5` (the region's own Common hero) and `gold_5` (one random Common hero of an open region); `levels_2`, `levels_3`, `levels_4` and `stars_5` pay coins instead. Claim coins are about 80 percent of the old table per region (rebalanced 2026-11-13; `ScaledCoins` applies the region factor 1.00 to 1.12). Former hero tiers pay small coins (150 to 220 base) and gem-only goals 50 to 100. Base coin table (region 1, power-ups in brackets): stars 100 / 60 / 200 / 60 / 150 (+1 PU, 8 gems); levels 60 / 150 / 180 / 220 / 400 (10 gems, hero); gold medals 100 / 60 / 120 / 60 / 0 (10 gems, 1 PU, random hero); 3-star levels 140 / 60 / 180 (10 gems); jumps, combos and play time 90 / 110 / 50; coins earned 60 / 80 / 50; power-ups used 90 / 60 / 180 (+1 PU); hard clears 100 / 70 / 0 (4 gems); no-wall 70 / 0 (2 gems); Endless floors 80, 120, 200 (3 g), 280 (3 g), 360 (+1 PU), 440, 560, 680, 800 (+1 PU), 1,040, 1,280 (+2 PU). Totals per region (generated, `Tests/Simulation/REWARDS_TABLES.md`): 50 gems (34 core excluding gold medals + 10 gold + 6 endless); core coins 3,470 (R1) / 3,530 / 3,660 / 3,820 / 3,910 (R5); Endless coins 5,840 / 6,010 / 6,190 / 6,370 / 6,520; gold medal goals 340 (R1) to 380 (R5); all 49 goals 9,650 (R1) to 10,810 (R5), about 80 to 85 percent of the old 11,400 to 12,000; 7 power-ups, 1 named hero + 1 random hero. Gem budget pinned by `RewardTablesTests.EveryRegionPaysExactlyFiftyGemsOnTheEightMilestoneGoals`.
+
+Older structure (rewards superseded):
 
 Goal id: `g_<region>_<type>_<tier>` (permanent), for example `g_2_jumps_3`. Rewards: gems / coins / random power-up units. Targets that scale by region use the percent rows below the table; coin rewards scale with the coin percent row; gems and power-ups never scale.
 
@@ -66,6 +72,8 @@ Comparison with the old Main tab (docs/27 section 11): old 580 gems, 14,500 coin
 
 ## 3. Daily (resets at local midnight)
 
+**2026-11-13 (owner): ZERO gems in Daily.** The 20 tasks and 200 points stay; the five gifts are now 40 points = 200 coins, 80 = 400 coins, 120 = 600 coins, 160 = 800 coins, 200 = 50 percent one random Common hero of an open region, otherwise 1,000 coins (`heroRegion -1` + `heroOrCoins 1000`). A full day pays 2,000 coins + (a hero or 1,000 coins). The 50 percent roll is deterministic (`ProgressService.HeroOrCoinsWins`: integer mix of the per-account seed, the day key and the gift id, like the chest rolls), is decided when the gift is claimed and its outcome is stored in the save (`RewardsData.HeroRolls`, additive, current day and week only), so a reload cannot re-roll it. The track cell shows the hero icon with "or 1K"; the claim card shows what was actually paid. Where the older text below says 15 gems and 1,500 coins a day, read 0 gems and 2,000 coins.
+
 **Main Bug List 2 (owner, 2026-11-13): the Daily tab was too easy (8 tasks, 130 points, done in 10 to 20 minutes).** It is now **20 tasks, exactly 200 points** (pinned by `RewardsTests.TablesFollowTheDocument`), tuned so that all 200 points need roughly **60 to 90 minutes of real play** (the play-time tiers alone ask for 60 live minutes, the rest runs in parallel). The points track (n/200) has five gifts every 40 points. Tasks mix the old counters in tiers (login, play time, levels, combos, stars, hard clear, pace, Endless floors, floor 100 in 3:00, power-ups) with five new counters (NEW below). Points are 5 to 15 per task, harder = more.
 
 | Task id | Task | Counter | Target | Points |
@@ -94,12 +102,12 @@ Comparison with the old Main tab (docs/27 section 11): old 580 gems, 14,500 coin
 
 | Chest | Points | Reward |
 |---|---|---|
-| `dp_40` | 40 | 500 coins |
-| `dp_80` | 80 | 5 gems |
-| `dp_120` | 120 | 1,000 coins |
-| `dp_160` | 160 | 10 gems |
-| `dp_200` | 200 | 1 random Common hero of an open region (a duplicate is another copy, no refund) |
-| **Full day** | | **15 gems, 1,500 coins, 1 Common hero** |
+| `dp_40` | 40 | 200 coins |
+| `dp_80` | 80 | 400 coins |
+| `dp_120` | 120 | 600 coins |
+| `dp_160` | 160 | 800 coins |
+| `dp_200` | 200 | 50 percent 1 random Common hero of an open region (a duplicate is another copy, no refund), otherwise 1,000 coins |
+| **Full day** | | **0 gems, 2,000 coins, then a hero or 1,000 coins** |
 
 Gifts: 40 points = 500 coins; 80 = 5 gems; 120 = 1,000 coins; 160 = 10 gems; 200 = one Common hero (reward kind `heroRegion = -1`, drawn like the weekly hero from the per-account seed and the claim counter; on a fresh account with only region 1 open it is Momo, another copy). Gems per full day 15 (was 10), coins 1,500 (unchanged); the daily power-up stays gone. A day of about 30 minutes reaches roughly 80 to 120 points (5 gems, 1,500 coins at most); 200 points are for players who sit down for an hour or more.
 
@@ -109,36 +117,38 @@ Gifts: 40 points = 500 coins; 80 = 5 gems; 120 = 1,000 coins; 160 = 10 gems; 200
 
 ## 4. Weekly (resets Monday local time)
 
+**2026-11-13 (owner): a perfect week is 50 gems (was 120), 5,500 task coins (was 10,500), 5 power-ups.** Gems only on ten hard-skill tasks; the two hard-clear tasks also pay 50 percent a random Common hero, otherwise 1,000 coins (same stored deterministic roll as the Daily 200-point gift, seeded per week key and task id; up to 2,000 more coins a week). The 25 tasks and ids are unchanged. The Reward column below is the current one.
+
 **Main Bug List 2 (2026-11-13): 25 tasks instead of 12, total payout 1.5 times the old one** (old 12 tasks: 80 gems, 7,000 coins, 4 PU, 1 hero). Many tasks pay little, the big ones pay more. The two hard-clear tasks give a random Common hero each. All old ids stay; 13 are new; rewards of the old ones were retuned.
 
 | Task id | Task | Counter | Target | Reward |
 |---|---|---|---|---|
-| `w_login5` | Log in on 5 days | login days | 5 | 4g + 300c |
-| `w_login7` | Log in every day | login days | 7 | 4g + 300c |
-| `w_play100` | Play for 100 minutes | play minutes | 100 | 5g + 400c |
-| `w_play250` | Play for 250 minutes | play minutes | 250 | 6g + 500c |
-| `w_jumps8000` | Make 8,000 jumps | jumps NEW | 8,000 | 3g + 300c |
-| `w_powerups10` | Use 10 power-ups | power-ups used | 10 | 300c + 2 PU |
-| `w_powerups20` | Use 20 power-ups | power-ups used | 20 | 5g + 300c + 1 PU |
-| `w_stars20` | Earn 20 stars | stars earned | 20 | 4g + 500c |
-| `w_stars40` | Earn 40 stars | stars earned | 40 | 6g + 500c |
-| `w_levels20` | Complete 20 levels | levels | 20 | 5g + 400c |
-| `w_levels40` | Complete 40 levels | levels | 40 | 5g + 500c |
-| `w_nowall2` | Clear the no-wall level 2 times | no-wall clears | 2 | 5g + 300c |
-| `w_combos150` | Make 150 combos | combo chains | 150 | 5g + 500c |
-| `w_combos300` | Make 300 combos | combo chains | 300 | 7g + 500c |
-| `w_endless100` | Reach floor 100 in Endless | best endless floor | 100 | 4g + 300c |
-| `w_endless150` | Reach floor 150 in Endless | best endless floor | 150 | 5g + 400c |
-| `w_endless200` | Reach floor 200 in Endless | best endless floor | 200 | 6g + 500c |
-| `w_endlessruns20` | Finish 20 Endless runs | Endless runs (10+ floors) NEW | 20 | 6g + 500c |
-| `w_pace3` | Best pace on 3 levels | levels with a best Pace | 3 | 5g + 400c |
-| `w_medals8` | Earn 8 medals | medals earned NEW | 8 | 4g + 400c + 1 PU |
-| `w_gold5` | Earn 5 gold medals | gold medals | 5 | 4g + 500c + 1 PU |
-| `w_gold10` | Earn 10 gold medals | gold medals | 10 | 6g + 600c |
-| `w_ta100` | Time Attack: 100 floors | best Time Attack floors | 100 | 4g + 300c |
-| `w_hard5` | Clear 5 hard levels | hard clears | 5 | 6g + 500c + 1 random Common hero (open region) |
-| `w_hard10` | Clear 10 hard levels | hard clears | 10 | 6g + 500c + 1 random Common hero (open region) |
-| **Full week** | 25 tasks | | | **120 gems, 10,500 coins, 5 PU, 2 heroes** |
+| `w_login5` | Log in on 5 days | login days | 5 | 150c |
+| `w_login7` | Log in every day | login days | 7 | 150c |
+| `w_play100` | Play for 100 minutes | play minutes | 100 | 250c |
+| `w_play250` | Play for 250 minutes | play minutes | 250 | 300c |
+| `w_jumps8000` | Make 8,000 jumps | jumps NEW | 8,000 | 150c |
+| `w_powerups10` | Use 10 power-ups | power-ups used | 10 | 150c + 2 PU |
+| `w_powerups20` | Use 20 power-ups | power-ups used | 20 | 150c + 1 PU |
+| `w_stars20` | Earn 20 stars | stars earned | 20 | 250c |
+| `w_stars40` | Earn 40 stars | stars earned | 40 | 4g + 200c |
+| `w_levels20` | Complete 20 levels | levels | 20 | 250c |
+| `w_levels40` | Complete 40 levels | levels | 40 | 300c |
+| `w_nowall2` | Clear the no-wall level 2 times | no-wall clears | 2 | 200c |
+| `w_combos150` | Make 150 combos | combo chains | 150 | 300c |
+| `w_combos300` | Make 300 combos | combo chains | 300 | 5g + 250c |
+| `w_endless100` | Reach floor 100 in Endless | best endless floor | 100 | 200c |
+| `w_endless150` | Reach floor 150 in Endless | best endless floor | 150 | 4g + 200c |
+| `w_endless200` | Reach floor 200 in Endless | best endless floor | 200 | 6g + 250c |
+| `w_endlessruns20` | Finish 20 Endless runs | Endless runs (10+ floors) NEW | 20 | 5g + 250c |
+| `w_pace3` | Best pace on 3 levels | levels with a best Pace | 3 | 4g + 200c |
+| `w_medals8` | Earn 8 medals | medals earned NEW | 8 | 250c + 1 PU |
+| `w_gold5` | Earn 5 gold medals | gold medals | 5 | 5g + 250c + 1 PU |
+| `w_gold10` | Earn 10 gold medals | gold medals | 10 | 7g + 250c |
+| `w_ta100` | Time Attack: 100 floors | best Time Attack floors | 100 | 200c |
+| `w_hard5` | Clear 5 hard levels | hard clears | 5 | 4g + 200c + (50% random Common hero, else 1,000c) |
+| `w_hard10` | Clear 10 hard levels | hard clears | 10 | 6g + 200c + (50% random Common hero, else 1,000c) |
+| **Full week** | 25 tasks | | | **50 gems, 5,500 coins, 5 PU, 2 hero-or-1,000-coins gifts** |
 
 Replays of cleared levels keep the existing rule (at most 3 per day count for level counters). The endless counter is the best floor of the week (`endlessFloor`). Gold and level medals count each level and Gameplay setting once.
 

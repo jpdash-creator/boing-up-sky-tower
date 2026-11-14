@@ -62,6 +62,8 @@ namespace FluffyClimbers.Monetization
         public const string Gems15000 = Prefix + "gems.pack_15000";
         public const string SubWeekly = Prefix + "sub.weekly";
         public const string SubMonthly = Prefix + "sub.monthly";
+        public const string SubWeeklyPlus = Prefix + "sub.weekly_plus";
+        public const string SubMonthlyPremium = Prefix + "sub.monthly_premium";
         /// <summary>Planned (doc 22 point 7: $0.99 = 100 gems + 2,000 coins). Not live: do not create it in the store yet.</summary>
         public const string StarterPack = Prefix + "bundle.starter";
 
@@ -82,10 +84,14 @@ namespace FluffyClimbers.Monetization
             Gem(Gems5000, 5000, 49.99, 24.99),
             Gem(Gems10000, 10000, 89.99, 44.99),
             Gem(Gems15000, 15000, 119.99, 59.99),
-            new ProductDef(SubWeekly, ProductKind.Subscription, "Weekly Subscription", 1.49, 0.0, 100, 0, 7, true,
-                "100 gems now, then each day 10 gems + 500 coins for 7 days"),
-            new ProductDef(SubMonthly, ProductKind.Subscription, "Monthly Subscription", 4.99, 0.0, 200, 0, 30, true,
+            new ProductDef(SubWeekly, ProductKind.Subscription, "Weekly Starter", 1.49, 0.0, 100, 0, 7, true,
+                "100 gems now, then each day 10 gems + 500 coins for 7 days, a power-up on claim 4"),
+            new ProductDef(SubWeeklyPlus, ProductKind.Subscription, "Weekly Plus", 2.99, 0.0, 250, 0, 7, true,
+                "250 gems now, then each day 20 gems + 1,000 coins for 7 days, a power-up every 2nd claim, an Iron chest on claim 1"),
+            new ProductDef(SubMonthly, ProductKind.Subscription, "Monthly Standard", 4.99, 0.0, 200, 0, 30, true,
                 "200 gems now, then each day 10 gems + 600 coins for 30 days, a power-up every 5th claim"),
+            new ProductDef(SubMonthlyPremium, ProductKind.Subscription, "Monthly Premium", 9.99, 0.0, 300, 0, 30, true,
+                "300 gems now, then each day 20 gems + 1,000 coins for 30 days, a power-up every 5th claim, a Gold chest on claims 1, 11 and 21"),
             new ProductDef(StarterPack, ProductKind.Consumable, "Starter Pack", 0.99, 0.0, 100, 2000, 0, false,
                 "100 gems + 2,000 coins (planned, once per account)"),
         };
@@ -105,10 +111,17 @@ namespace FluffyClimbers.Monetization
             return null;
         }
 
-        /// <summary>Product id of a subscription plan id ("weekly" or "monthly"), or null.</summary>
+        /// <summary>Product id of a subscription plan id ("weekly", "weekly_plus", "monthly", "monthly_premium"), or null.</summary>
         public static string ForSubscription(string planId)
         {
-            return planId == "weekly" ? SubWeekly : planId == "monthly" ? SubMonthly : null;
+            switch (planId)
+            {
+                case "weekly": return SubWeekly;
+                case "weekly_plus": return SubWeeklyPlus;
+                case "monthly": return SubMonthly;
+                case "monthly_premium": return SubMonthlyPremium;
+                default: return null;
+            }
         }
     }
 }

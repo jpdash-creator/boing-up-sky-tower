@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_019_steampunk_skyport",
-    "gemSkip": 400
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_020",

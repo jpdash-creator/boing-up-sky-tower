@@ -8,9 +8,9 @@ namespace FluffyClimbers.Economy
     {
         [JsonProperty("stars")] public int Stars;
         [JsonProperty("starMask")] public int StarMask;
-        /// <summary>Best BASE run score over every Gameplay setting (legacy field, kept; the old saves only have this). The leaderboard number is the crown, see <see cref="Crowns"/>.</summary>
+        /// <summary>Best BASE run score over every Gameplay setting (legacy field, kept, NOT used for crowns). The leaderboard number is the crown, see <see cref="Crowns"/>.</summary>
         [JsonProperty("bestScore")] public int BestScore;
-        /// <summary>Best crown per Gameplay mode 0..4 (CrownScore: base score x (1 + setting percent), owner 2026-11-12). Null on old saves; use ProgressService.BestCrown, which falls back to the legacy BestScore. Additive, no version bump.</summary>
+        /// <summary>Best crown per Gameplay mode 0..4 (CrownScore: base score x (1 + setting percent), owner 2026-11-12). Null on old saves; use ProgressService.BestCrown (no fallback to BestScore since 2026-11-13). Additive, no version bump.</summary>
         [JsonProperty("crowns", NullValueHandling = NullValueHandling.Ignore)] public int[] Crowns;
         /// <summary>The run behind each stored crown, per Gameplay mode 0..4 (floors, best combo chain, base score) for the crown calculation pop-up (owner 2026-11-13). Null on old saves and for entries written before this field existed. Additive, no version bump.</summary>
         [JsonProperty("crownRuns", NullValueHandling = NullValueHandling.Ignore)] public CrownRun[] CrownRuns;

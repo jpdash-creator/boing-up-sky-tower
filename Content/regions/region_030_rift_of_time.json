@@ -6,7 +6,7 @@
   "status": "teaser",
   "unlock": {
     "requires": "region_029_space_station",
-    "gemSkip": 566
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_030",

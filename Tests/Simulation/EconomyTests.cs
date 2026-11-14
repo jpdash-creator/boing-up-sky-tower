@@ -17,7 +17,7 @@ namespace FluffyClimbers.Simulation.Tests
     public class EconomyTests
     {
         public const int Regions = 5;
-        // Economy v3 constants (Rewards.cs EconomyRules, issue list 24 point 6).
+        // Level payout constants (Rewards.cs EconomyRules; economy review 2026-11-13: 56 + 48 per star + 4 per combo step).
         const int ClearCoins = CoinPayoutRules.ClearCoins, StarCoins = CoinPayoutRules.StarCoins;
         // Revive prices (RunSession.ReviveCostFor): 5 then 10, max 2 per run.
         const int Revive1 = 5, Revive2 = 10;
@@ -55,7 +55,7 @@ namespace FluffyClimbers.Simulation.Tests
         {
             JsonElement v;
             int guaranteed = gems.TryGetProperty("firstClearGuaranteed", out v) ? v.GetInt32() : 0;
-            return CoinPayoutRules.MilestoneGems(seed, gems.GetProperty("chance").GetDouble(), gems.GetProperty("min").GetInt32(), gems.GetProperty("max").GetInt32(), guaranteed);
+            return CoinPayoutRules.MilestoneGems(guaranteed);   // fixed since 2026-11-13: 1, 1, 2, 2, 3 on levels 5, 10, 15, 20, 25
         }
 
         static string Build()
@@ -127,7 +127,7 @@ namespace FluffyClimbers.Simulation.Tests
 
                     long factor = (long)Math.Round(lr.CoinFactor * 10000);
                     lr.Coins3Star = (int)(((long)(ClearCoins + StarCoins * 3) * factor + 5000) / 10000);
-                    lr.CoinsCombo = (int)(((long)lr.BotCombo * factor + 5000) / 10000);   // SimState.Coins already counts coins (5 per combo step)
+                    lr.CoinsCombo = (int)(((long)CoinPayoutRules.ComboCoins(lr.BotCombo) * factor + 5000) / 10000);   // SimState.Coins counts 5 per combo step, a level pays 4
                     rows.Add(lr);
                 }
 
@@ -135,7 +135,7 @@ namespace FluffyClimbers.Simulation.Tests
                 sb.AppendLine();
                 sb.AppendLine("Gem value per tier " + string.Join("/", cfg.GemValues) + ", tier odds % " + string.Join("/", cfg.GemRarityPercent) +
                     ", gem spot chance per row " + cfg.GemSpotPermille + "per mille. coinsPerGem " + coinsPerGem +
-                    ", remote_config replayCoinPercent " + replayPctCfg + " (code EconomyRules: 50, applies once the level has 3 stars).");
+                    ", remote_config replayCoinPercent " + replayPctCfg + " (code EconomyRules: 25, applies once the level has 3 stars).");
                 sb.AppendLine("Expected gem value per pickup = " + ExpectedTier(cfg).ToString("F2") + ".");
                 sb.AppendLine();
                 sb.AppendLine("## Per level (gems placed = value of every gem pickup; tiers C/R/E/L = common/rare/epic/legendary counts)");

@@ -6,13 +6,13 @@ using Xunit;
 
 namespace FluffyClimbers.Simulation.Tests
 {
-    /// <summary>Owner 2026-11-10: the hidden gem lives on level 8 AND on the FindHiddenGem level (15) in all regions, and the main-goal coin rewards use the region coin factor of the level payout.</summary>
+    /// <summary>Economy review 2026-11-13: the hidden gem lives ONLY on the FindHiddenGem level (15) in all regions (the level 8 bonus gem is gone) and is a plain goal object; the main-goal coin rewards use the region coin factor of the level payout.</summary>
     public class GemLevelAndRegionFactorTests
     {
         [Fact]
-        public void GemLevelsAreLevel8AndEveryFindHiddenGemLevel()
+        public void GemLevelsAreOnlyTheFindHiddenGemLevels()
         {
-            Assert.True(GemLevels.IsGemLevel(8, GoalType.ReachFloor));
+            Assert.False(GemLevels.IsGemLevel(8, GoalType.ReachFloor));
             Assert.True(GemLevels.IsGemLevel(15, GoalType.FindHiddenGem));
             Assert.True(GemLevels.IsGemLevel(15, "findHiddenGem"));
             Assert.False(GemLevels.IsGemLevel(15, GoalType.ReachFloor));
@@ -20,7 +20,7 @@ namespace FluffyClimbers.Simulation.Tests
         }
 
         [Fact]
-        public void HiddenGemOfLevel15CanBeADoubleGemLikeLevel8InEveryRegion()
+        public void HiddenGemOfLevel15IsAPlainGoalObjectInEveryRegionAndLevel8HasNone()
         {
             string root = ContentLoader.FindRoot();
             Assert.NotNull(root);
@@ -28,20 +28,20 @@ namespace FluffyClimbers.Simulation.Tests
             for (int region = 1; region <= 5; region++)
             {
                 var levels = ContentLoader.LoadRegions(root, region, region);
-                foreach (int idx in new[] { 8, 15 })
+                LoadedLevel l8 = levels.First(l => l.Spec.LevelIndex == 8);
+                Assert.False(GemLevels.IsGemLevel(8, l8.Spec.Goal.Type), l8.Id);
+                Assert.DoesNotContain(LevelBuilder.Build(cfg, l8.Spec).Pickups, p => p.Kind == PickupKind.HiddenGem);
+                LoadedLevel ll = levels.First(l => l.Spec.LevelIndex == 15);
+                Assert.True(GemLevels.IsGemLevel(15, ll.Spec.Goal.Type), ll.Id);
+                int hidden = 0, doubles = 0;
+                for (int i = 0; i < 60; i++)
                 {
-                    LoadedLevel ll = levels.First(l => l.Spec.LevelIndex == idx);
-                    Assert.True(GemLevels.IsGemLevel(idx, ll.Spec.Goal.Type), ll.Id);
-                    int hidden = 0, doubles = 0;
-                    for (int i = 0; i < 60; i++)
-                    {
-                        LevelData d = LevelBuilder.Build(cfg, ll.Spec.WithAttemptSeed(RandomLayoutTests.AttemptSeed(i)));
-                        foreach (Pickup p in d.Pickups)
-                            if (p.Kind == PickupKind.HiddenGem) { hidden++; if (p.Tag == 1) doubles++; }
-                    }
-                    Assert.Equal(60, hidden);
-                    Assert.True(doubles > 0 && doubles < hidden, ll.Id + " double hidden gems " + doubles + " of " + hidden);
+                    LevelData d = LevelBuilder.Build(cfg, ll.Spec.WithAttemptSeed(RandomLayoutTests.AttemptSeed(i)));
+                    foreach (Pickup p in d.Pickups)
+                        if (p.Kind == PickupKind.HiddenGem) { hidden++; if (p.Tag == 1) doubles++; }
                 }
+                Assert.Equal(60, hidden);
+                Assert.Equal(0, doubles);   // never a double: its 2 gems are the milestone reward, the pickup pays none
             }
         }
 

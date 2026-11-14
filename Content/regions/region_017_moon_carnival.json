@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_016_deep_sea_reef",
-    "gemSkip": 350
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_017",

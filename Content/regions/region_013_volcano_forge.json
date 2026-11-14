@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_012_crystal_caverns",
-    "gemSkip": 283
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_013",

@@ -1,5 +1,7 @@
 # 22. Issue list 24: name tags, chest screen, economics, gems, coins, bundles, daily rewards, revive (owner, 2026-10-25)
 
+> **Update 2026-11-13 (owner economy review):** hero card coin prices Common 2,000 / Uncommon 5,000 / Rare 12,000 / Elite 32,000 / Legendary 80,000 (Common now buyable); chests carry one hero card: Iron 50 Common / 30 Uncommon / 20 Rare, Gold 60 Rare / 30 Elite / 10 Legendary, worth about x3.6 and x5.3 (owner accepts richer chests); bundle coins -30 percent, worth x1.85 to x3.6. Loot and prices of the chests are unchanged. Numbers: docs 27 sections 9 and 10, doc 37.
+
 Source: the owner's pasted "Fluffy Climbers: full requirements for issue-list points 1 to 9". This file is the working copy with the owner's answers (Q&A) applied. Where it differs from docs/21 (characters, chests, shop of 2026-10-24) THIS file wins.
 
 ## Shared conventions
@@ -87,6 +89,7 @@ Source: the owner's pasted "Fluffy Climbers: full requirements for issue-list po
 - Future: Starter pack once per account $0.99 = 100 gems + 2,000 coins (separate product, hidden after purchase); first-purchase doubling (4.1); India entry bundle (example Rs 49 = 40 gems + 500 coins, to confirm); power-up bundles 5 for the price of 4 (1,000-coin types 4,000 coins / 200 gems; 1,500-coin types 6,000 coins / 300 gems; stock cap 99 blocks with a message); all prices are config; age gate applies.
 
 ## Point 8: Daily Rewards (Coming Soon icon now; future spec)
+- Note 2026-11-13: the Daily points track now exists on the Rewards screen and pays coins only (no gems); the reward numbers of Daily, Weekly and Main are in doc 39 (sections 2 to 4).
 - Icon "Daily Rewards" under Bundles, Coming Soon, no action.
 - Future: one free power-up per day after a rewarded ad; reset at the day boundary (local vs UTC open); random of the 7 types equal chance, added to stock up to the cap of 99; ad failure or early close grants nothing and allows a retry; ad-free VIP gets it without the ad; "Come back tomorrow" text with a countdown.
 
@@ -139,3 +142,11 @@ Characters of locked regions never appear in chests or the shop; powers fixed, n
 32. (from helper H2) Pack icons are now plain images (touch-target rule), so tapping an icon no longer opens the pack-details popup and the INR price line in it is not reachable. Add a small info button (>= 48 dp) back?
 
 **Update 2026-11-13 (Main Bug List 2): gem inflow from rewards.** Daily rewards now pay 15 gems at 200 points (was 10 at 100 points, 130 points possible) and the Weekly tasks 120 gems (was 80), so a perfect week is 225 gems instead of 150 (+50 percent). Reaching 200 points needs 60 to 90 minutes of play a day, so a 30-minute player still gets mostly the 5-gem and coin gifts (about 125 gems a week with the weekly tasks). Details and the reachability reasoning: `39-rewards-economy.md` sections 3, 4 and 5.1.
+
+**Update 2026-11-13 (economy review, levels; `.claude/pendingdecisions/economy-review-2026-11-13.md`).** Supersedes the level payout, gem and replay rules above.
+- Level coins are 20 percent lower: clear 56 + 48 per star + 4 per combo step (was 70 + 60 + 5), times the region factor 1.00 to 1.12. A 3-star replay pays 25 percent (was 50) and drops no gems. Endless and Time Attack payouts are unchanged and pay no gems.
+- Gems in play: only the first clear of levels 5, 10, 15, 20, 25 of regions 1 to 5, fixed 1, 1, 2, 2, 3 (9 per region, 45 over the campaign; was about 260). No gem pickups on the rows, no level 8 hidden gem, no +2 level 15/25 bonus, no chance roll. Level 15 keeps the find-the-hidden-gem goal; its hidden gem is the goal object and the level's 2 gems are the fixed reward.
+- Hero milestone bonus (selected hero, first clear of the same five levels only): Common +50 coins; Uncommon +100 coins +1 gem; Rare +200 +2; Elite +300 +3; Legendary +500 +5; each upper tier has a 50 percent chance of one more gem, seeded from the level seed and the hero id. Fixed coins (no region factor). The old per-run hero "Run bonus" is not paid any more.
+- Region skip costs 500 gems for every region from 2 on (was 100, 116, 133, 150).
+- The level tiles and the level pop-up show the gem icon with the amount on the milestone levels (tick once claimed).
+- Code: `Simulation/CoinPayoutRules.cs`, `Economy/Rewards.cs`; content: `Tools/content_cli/migrate_levels_25.py` (regions 1 to 5), `gen_content.py` (teasers), `content.py` validator.

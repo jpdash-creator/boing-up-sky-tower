@@ -6,7 +6,7 @@
   "status": "teaser",
   "unlock": {
     "requires": "region_024_viking_fjord",
-    "gemSkip": 483
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_025",

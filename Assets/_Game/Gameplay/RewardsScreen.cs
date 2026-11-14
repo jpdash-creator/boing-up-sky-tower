@@ -527,7 +527,8 @@ namespace FluffyClimbers.Gameplay
             if (e.Gems > 0) parts.Add(Num(e.Gems) + " gems");
             if (e.Coins > 0) parts.Add(Num(e.Coins) + " coins");
             if (e.PowerUps > 0) parts.Add(e.PowerUps + (e.PowerUps == 1 ? " power-up" : " power-ups"));
-            if (e.GivesHero) parts.Add("a hero");
+            if (e.IsHeroOrCoins) parts.Add("a 50 percent chance of a Common hero, otherwise " + Num(e.HeroOrCoins) + " coins");
+            else if (e.GivesHero) parts.Add("a hero");
             return string.Join(" and ", parts.ToArray());
         }
     }

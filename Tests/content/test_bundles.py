@@ -68,19 +68,23 @@ class BundleData(unittest.TestCase):
         self.assertGreater(max(prices), 480, "large bundles exist")
         self.assertGreater(len(set(prices)), 25, "many price points")
 
-    def test_every_worth_multiplier_is_1_5_to_2_5_and_they_vary(self):
-        """Bug List 2 C2.b.ii: worth (coins at coins/20, power-ups at gem prices, card at its expected gem value) is 1.5x to 2.5x the gems paid."""
+    def test_worth_multiplier_after_the_coin_cut_and_the_new_card_prices(self):
+        """Owner 2026-11-13: the coin part is cut 30 percent (power-ups, prices, hidden card unchanged) and the hidden card is valued at the new hero card
+        coin prices (250 / 600 / 1,600 gems, expected 455). The pool was sized for worth 1.5 to 2.5 with the OLD card value (180); the REAL worth is now
+        about 1.85 to 3.6 (mean 2.56): the card is worth 275 gems more, the coins 30 percent less. Pinned here on purpose, not loosened silently."""
         ratios = [worth_gems(b) / b["priceGems"] for b in self.bundles]
         for b, r in zip(self.bundles, ratios):
-            self.assertTrue(1.5 <= r <= 2.5, "%s ratio %.4f" % (b["id"], r))
-            self.assertTrue(1.5 <= round(r, 1) <= 2.5, "%s shown as %.1f" % (b["id"], r))
-        self.assertGreater(len(set(round(r, 1) for r in ratios)), 8, "the multiplier is varied, not constant")
-        self.assertLess(min(ratios), 1.6)
-        self.assertGreater(max(ratios), 2.4)
-        low = sum(1 for r in ratios if r < 1.9)
-        high = sum(1 for r in ratios if r >= 2.1)
-        self.assertGreater(low, 300)
-        self.assertGreater(high, 300)
+            self.assertTrue(1.8 <= r <= 3.7, "%s ratio %.4f" % (b["id"], r))
+        self.assertGreater(len(set(round(r, 1) for r in ratios)), 12, "the multiplier is varied, not constant")
+        self.assertAlmostEqual(min(ratios), 1.85, delta=0.05)
+        self.assertAlmostEqual(max(ratios), 3.59, delta=0.05)
+        self.assertAlmostEqual(sum(ratios) / len(ratios), 2.56, delta=0.05)
+
+    def test_coin_part_is_cut_by_30_percent(self):
+        """The coins are 70 percent of what the sizing gave (steps of 50), so the whole pool holds about 70 percent of the old 14.27 million coins."""
+        total = sum(b["coins"] for b in self.bundles)
+        self.assertAlmostEqual(total / 14270550.0, 0.70, delta=0.01)
+        self.assertEqual(gen_bundles.COIN_CUT_PERCENT, 30)
 
     def test_card_table_matches_the_csharp_source(self):
         weights, gems = card_table_from_csharp()
@@ -97,7 +101,7 @@ class BundleData(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)), "%s repeats a power-up" % b["id"])
             for p in b["powerups"]:
                 self.assertTrue(1 <= p["count"] <= 10, b["id"])
-            self.assertGreaterEqual(b["coins"], 1000, b["id"])
+            self.assertGreaterEqual(b["coins"], 700, b["id"])   # sizing floor 1,000 minus the 30 percent cut
             self.assertEqual(b["coins"] % 50, 0, b["id"])
             self.assertNotIn("gems", b, "%s: bundles contain no gems" % b["id"])
             self.assertIs(b["hiddenCard"], True, "%s: exactly one hidden card" % b["id"])
@@ -118,7 +122,7 @@ class BundleData(unittest.TestCase):
         self.assertEqual(used, set(GEM_VALUE))
 
     def test_variety(self):
-        self.assertGreater(len(set(b["coins"] for b in self.bundles)), 200)
+        self.assertGreater(len(set(b["coins"] for b in self.bundles)), 150)   # 188 after the 30 percent cut (was above 200)
         self.assertEqual(set(len(b["powerups"]) for b in self.bundles), {1, 2, 3, 4})
         self.assertEqual(set(b["tier"] for b in self.bundles), {1, 2, 3})
 

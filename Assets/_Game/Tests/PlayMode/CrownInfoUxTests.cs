@@ -237,14 +237,14 @@ namespace FluffyClimbers.Tests
                 RectTransform popup = FindRt("Popup");
                 RectTransform panel = popup != null ? popup.Find("Panel") as RectTransform : null;
                 if (panel == null) { problems.Add(tag + "popup missing"); continue; }
-                CrownCheckRow(tag, panel, "-", "100%", problems);
+                CrownCheckRow(tag, panel, "0", "100%", problems);
                 meta.ShowLevelCrownInfo(levels[0]);
                 yield return null;
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 RectTransform calc = FindRt(CrownInfoUi.CalcName);
                 if (calc == null) { problems.Add(tag + "calculation pop-up missing"); continue; }
-                if (CrownTextIn(calc, "RowCrownValue") != "?" || CrownTextIn(calc, "RowFloorsValue") != "?" || CrownTextIn(calc, "RowComboValue") != "?") problems.Add(tag + "placeholders missing");
+                if (CrownTextIn(calc, "RowCrownValue") != "0" || CrownTextIn(calc, "RowFloorsValue") != "0" || CrownTextIn(calc, "RowComboValue") != "0") problems.Add(tag + "zeros missing");
                 if (CrownTextIn(calc, "RowBonusValue") != "+" + SimConfig.DifficultyStepPercent[2] + "%") problems.Add(tag + "the setting bonus must show without a run");
                 string hint = CrownTextIn(calc, "Hint");
                 if (hint == null || !hint.Contains("Play this level")) problems.Add(tag + "the 'Play this level' hint is missing");

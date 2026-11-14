@@ -21,7 +21,7 @@ namespace FluffyClimbers.Gameplay
     /// </summary>
     public static class CrownInfoUi
     {
-        public const string RowName = "CrownRow", CrownButtonName = "CrownInfo", CrownValueName = "CrownValue", SecondName = "CrownRowSecond", SecondValueName = "SecondValue", CalcName = "CrownCalc", ViewportName = "CalcViewport";
+        public const string RowName = "CrownRow", CrownButtonName = "CrownInfo", CrownValueName = "CrownValue", SecondName = "CrownRowSecond", SecondValueName = "SecondValue", ThirdName = "CrownRowGems", ThirdValueName = "GemsValue", ThirdTickName = "GemsClaimed", CalcName = "CrownCalc", ViewportName = "CalcViewport";
 
         /// <summary>Width of the content on the 860 wide popup panels (40 px each side).</summary>
         public const float ContentW = 780f;
@@ -35,10 +35,14 @@ namespace FluffyClimbers.Gameplay
 
         /// <summary>
         /// Builds the single crown line <paramref name="y"/> below the top of <paramref name="panel"/>, centred. The crown part (icon, number, (i) ring) is one button calling
-        /// <paramref name="onCrownTap"/>; after a separator comes the second group (icon and value, plain). Returns the row.
+        /// <paramref name="onCrownTap"/>; after a separator comes the second group (icon and value, plain). Milestone levels (5/10/15/20/25) add a THIRD group after a second separator
+        /// (economy review 2026-11-13): the first-clear gems (gem icon, amount and, once claimed, a green tick). The third group is left out when <paramref name="thirdText"/> is null.
+        /// The whole line is measured and shrinks toward the 16 sp floor to stay inside <see cref="ContentW"/>. Returns the row.
         /// </summary>
-        public static RectTransform BuildRow(Transform panel, float y, string crownText, string crownA11y, Action onCrownTap, Sprite secondIcon, string secondText, string secondA11y)
+        public static RectTransform BuildRow(Transform panel, float y, string crownText, string crownA11y, Action onCrownTap, Sprite secondIcon, string secondText, string secondA11y,
+            Sprite thirdIcon = null, string thirdText = null, string thirdA11y = null, bool thirdClaimed = false)
         {
+            bool hasThird = thirdText != null;
             float h = RowHeight();
             RectTransform row = UiKit.Rect(panel, RowName);
             row.anchorMin = new Vector2(0f, 1f);
@@ -73,10 +77,27 @@ namespace FluffyClimbers.Gameplay
 
             Image sep = UiKit.AddImage(row, "Separator", null, new Color(Theme.InkSoft.r, Theme.InkSoft.g, Theme.InkSoft.b, 0.55f));
 
+            // third group (milestone gems): icon, amount, optional tick
+            RectTransform third = null;
+            Image thirdIconImg = null, thirdTick = null, sep2 = null;
+            Text tv = null;
+            if (hasThird)
+            {
+                third = UiKit.Rect(row, ThirdName);
+                third.gameObject.AddComponent<A11yLabel>().Text = thirdA11y ?? thirdText;
+                thirdIconImg = UiKit.AddImage(third, "GemsIcon", thirdIcon, thirdClaimed ? new Color(1f, 1f, 1f, 0.6f) : Color.white);
+                tv = UiKit.AddText(third, ThirdValueName, thirdText, 56, Theme.Ink, TextAnchor.MiddleCenter, true);
+                UiKit.OnPanel(tv);
+                tv.horizontalOverflow = HorizontalWrapMode.Overflow;
+                tv.verticalOverflow = VerticalWrapMode.Truncate;
+                if (thirdClaimed) thirdTick = UiKit.AddImage(third, ThirdTickName, Glyphs.Check, new Color(0.18f, 0.62f, 0.28f, 1f));
+                sep2 = UiKit.AddImage(row, "Separator2", null, new Color(Theme.InkSoft.r, Theme.InkSoft.g, Theme.InkSoft.b, 0.55f));
+            }
+
             cv.horizontalOverflow = sv.horizontalOverflow = HorizontalWrapMode.Overflow;
             cv.verticalOverflow = sv.verticalOverflow = VerticalWrapMode.Truncate;
             int minFs = Mathf.RoundToInt(UiKit.MinBodyTextPx);
-            float cvW, svW, crownW, secW, total;
+            float cvW, svW, tvW = 0f, crownW, secW, thirdW = 0f, tickW = Mathf.Round(icon * 0.5f), total;
             int guard = 0;
             while (true)
             {
@@ -85,9 +106,16 @@ namespace FluffyClimbers.Gameplay
                 crownW = pad + icon + gap + cvW + gap + ring + pad;
                 secW = icon + gap + svW;
                 total = crownW + sepGap * 2f + sepW + secW;
+                if (hasThird)
+                {
+                    tvW = Mathf.Ceil(tv.preferredWidth) + 6f;
+                    thirdW = icon + gap + tvW + (thirdClaimed ? gap + tickW : 0f);
+                    total += sepGap * 2f + sepW + thirdW;
+                }
                 if (total <= ContentW || cv.fontSize <= minFs || ++guard > 40) break;
                 cv.fontSize = Mathf.Max(minFs, cv.fontSize - 2);   // one line, never wrapped: shrink toward the 16 sp floor
                 sv.fontSize = cv.fontSize;
+                if (hasThird) tv.fontSize = cv.fontSize;
             }
 
             float x0 = -total * 0.5f;
@@ -100,6 +128,15 @@ namespace FluffyClimbers.Gameplay
             SetRect(sec, mid, left, new Vector2(x0 + crownW + sepGap * 2f + sepW, 0f), new Vector2(secW, h));
             SetRect(secIcon.rectTransform, left, left, Vector2.zero, new Vector2(icon, icon));
             SetRect(sv.rectTransform, left, left, new Vector2(icon + gap, 0f), new Vector2(svW, h));
+            if (hasThird)
+            {
+                float x1 = x0 + crownW + sepGap * 2f + sepW + secW;   // end of the second group
+                SetRect(sep2.rectTransform, mid, left, new Vector2(x1 + sepGap, 0f), new Vector2(sepW, h * 0.6f));
+                SetRect(third, mid, left, new Vector2(x1 + sepGap * 2f + sepW, 0f), new Vector2(thirdW, h));
+                SetRect(thirdIconImg.rectTransform, left, left, Vector2.zero, new Vector2(icon, icon));
+                SetRect(tv.rectTransform, left, left, new Vector2(icon + gap, 0f), new Vector2(tvW, h));
+                if (thirdTick != null) SetRect(thirdTick.rectTransform, left, left, new Vector2(icon + gap + tvW + gap, 0f), new Vector2(tickW, tickW));
+            }
             return row;
         }
 
@@ -167,11 +204,11 @@ namespace FluffyClimbers.Gameplay
             string bonus = "+" + b.BonusPercent + "%", bonusLabel = modeName + " bonus";
             if (!b.HasRun)
             {
-                y += Row(parent, "RowFloors", "floors x " + CrownScore.FloorPoints, "?", y, false, null);
-                y += Row(parent, "RowCombo", "Combo points", "?", y, false, null);
+                y += Row(parent, "RowFloors", "floors x " + CrownScore.FloorPoints, "0", y, false, null);   // never played in this setting: all zero, no other calculation (owner 2026-11-13)
+                y += Row(parent, "RowCombo", "Combo points", "0", y, false, null);
                 y += Row(parent, "RowBonus", bonusLabel, bonus, y, false, null);
                 y += Rule(parent, y);
-                y += Row(parent, "RowCrown", "Crown", "?", y, true, null);
+                y += Row(parent, "RowCrown", "Crown", "0", y, true, null);
                 Txt(parent, "Hint", endless ? "Play Endless to set your crown." : "Play this level to set your crown.", 42, soft, 0.5f, 0f, y + 2f, ContentW, false, true, out h);
                 y += h + 8f;
             }

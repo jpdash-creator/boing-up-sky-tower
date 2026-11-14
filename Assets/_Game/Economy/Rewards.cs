@@ -10,17 +10,11 @@ namespace FluffyClimbers.Economy
         /// <summary>Extra coin payout percent per star beyond the first (doc 08: "base + star bonus", amount unspecified).</summary>
         public const int StarBonusPercentPerExtraStar = 10;
 
-        // Economy v3 (owner, issue list 24 point 6, 2026-10-25): clear 70 + 60 per star + 5 per combo step, times the region coin factor.
+        // Economy review 2026-11-13 (owner): clear 56 + 48 per star + 4 per combo step (20 percent below economy v3), times the region coin factor.
         public const int ClearCoins = CoinPayoutRules.ClearCoins;
         public const int StarCoins = CoinPayoutRules.StarCoins;
-        /// <summary>Once a level has 3 stars, replays pay this percent of the coins and drop no gems; below 3 stars a replay pays in full.</summary>
+        /// <summary>Once a level has 3 stars, replays pay this percent (25) of the coins and drop no gems; below 3 stars a replay pays in full.</summary>
         public const int ReplayPercent = CoinPayoutRules.ReplayPercent;
-        /// <summary>Anti-tamper ceiling on pickup gems one run can report (a level holds far fewer: about 15 on the longest at the highest difficulty).</summary>
-        public const int MaxPickupGemsPerRun = 400;
-        /// <summary>Doc 25: the first clear of level 15 pays this extra bonus (one double gem, worth 2) on top of the milestone gems.</summary>
-        public const int Level15DoubleGemBonus = 2;
-        /// <summary>Doc 25: the hidden bonus gem of level 8 pays its value (1, or 2 for a double one) on the first clear only.</summary>
-        public const int Level8HiddenGemMax = 2;
     }
 
     /// <summary>What a finished run reports to the economy. Build it from SimState and StarEvaluator.</summary>
@@ -34,10 +28,12 @@ namespace FluffyClimbers.Economy
         public int Mode;
         /// <summary>Coins picked up and earned by landing rules during the run (SimState.Coins).</summary>
         public int CoinsCollected;
-        /// <summary>Normal gem pickups collected in the run (SimState.Gems).</summary>
+        /// <summary>Normal gem pickups collected in the run (SimState.Gems). Always 0 since 2026-11-13 (no gems on the rows); the reward calculator ignores it.</summary>
         public int GemsCollected;
-        /// <summary>Hidden gems collected in the run (SimState.HiddenGems). Pays +1 gem on the first clear of the level only (owner decision 2026-10-19).</summary>
+        /// <summary>Hidden gems collected in the run (SimState.HiddenGems): the goal object of level 15. It pays no gem of its own (level 15's 2 gems are the fixed milestone reward).</summary>
         public int HiddenGems;
+        /// <summary>Id of the hero SELECTED for the run (RunSession.HeroId). It pays the hero milestone bonus on a first clear of levels 5/10/15/20/25; empty or unknown = a Common hero.</summary>
+        public string HeroId;
         // Reward statistics (docs/26 section 4); zero when a caller does not fill them. The combo and power-up numbers are the NEW ones since the last report.
         /// <summary>Gem pickups the level holds (after a replay strips them) and how many of them the run collected: all taken = "collect all gems".</summary>
         public int GemPickupsTotal, GemPickupsTaken;
@@ -70,20 +66,22 @@ namespace FluffyClimbers.Economy
         public int ComboCoins;       // part of PayoutCoins that came from combo steps (5 each, region factor applied)
         public int PickupCoins;      // always 0 in economy v2 (kept for old callers)
         public int RewardGems;       // milestone gem rewards (L5/L10/L15)
-        public int PickupGems;       // gems picked up during the run
-        public int HiddenGemReward;  // +1 gem for a hidden gem, first clear only
+        public int PickupGems;       // always 0 since 2026-11-13 (no gem pickups on the rows)
+        public int HiddenGemReward;  // always 0 since 2026-11-13 (the level 15 hidden gem is the goal object, its 2 gems are RewardGems)
+        public int HeroBonusCoins;   // the selected hero's milestone bonus (levels 5/10/15/20/25, first clear), fixed coins by rarity
+        public int HeroBonusGems;    // the selected hero's milestone bonus gems (sure gems plus the seeded 50 percent extra one)
         public string UnlockedRegionId;
 
-        public int TotalCoins { get { return PayoutCoins + PickupCoins; } }
-        public int TotalGems { get { return RewardGems + PickupGems + HiddenGemReward; } }
+        public int TotalCoins { get { return PayoutCoins + PickupCoins + HeroBonusCoins; } }
+        public int TotalGems { get { return RewardGems + PickupGems + HiddenGemReward + HeroBonusGems; } }
     }
 
     /// <summary>
     /// Doc 08 section 7 reward rules, deterministic (rolls use the Simulation Rng seeded from the level seed and clear count,
     /// so a server can recompute them).
-    /// Assumptions (open for the owner): a failed run pays nothing; in-run pickups always pay in full (only the end-of-level payout
-    /// is reduced on replays); normal levels get gems only from in-run pickups (the 3 percent chance in the content is the pickup);
-    /// milestone gem rewards (L5, L10, L15) follow the doc 08 table; a hidden gem pays +1 gem on the first clear only.
+    /// Economy review 2026-11-13: a failed run pays nothing; the only gems in a level are the FIXED milestone gems of levels 5, 10, 15, 20 and 25 (1, 1, 2, 2, 3, from the level JSON
+    /// <c>rewards.gems.firstClearGuaranteed</c>), first clear only; there are no gem pickups on the rows and no gem for the hidden gem; the selected hero adds its milestone bonus on those
+    /// first clears (<see cref="CoinPayoutRules.HeroBonusCoins"/>, <see cref="CoinPayoutRules.HeroBonusGems"/>).
     /// </summary>
     public static class RewardCalculator
     {
@@ -91,6 +89,13 @@ namespace FluffyClimbers.Economy
         {
             // Bug List 6 item 4: the class follows the difficulty score now (complex = 75+), so the gem milestones are the special levels 5, 10, 15, 20 and 25 (levels 5, 10, 15 in the 15-level regions).
             return level.Index > 0 && level.Index % 5 == 0;
+        }
+
+        /// <summary>The fixed gems a first clear of this level pays (1, 1, 2, 2, 3 on levels 5, 10, 15, 20, 25 of regions 1 to 5), 0 for every other level. The level tiles and the level pop-up show it.</summary>
+        public static int MilestoneGemsOf(LevelDef level)
+        {
+            if (level == null || !IsMilestone(level) || level.Rewards == null || level.Rewards.Gems == null) return 0;
+            return CoinPayoutRules.MilestoneGems(level.Rewards.Gems.FirstClearGuaranteed ?? 0);
         }
 
         static int Percent(double chance)
@@ -109,13 +114,13 @@ namespace FluffyClimbers.Economy
             result.FirstClear = firstClear;
             result.Stars = stars;
 
-            // Economy v3 payout: (clear 70 + 60 per star + 5 per combo step) x region factor. Once the level already has 3 stars, replays pay half and
-            // drop no gems (owner rule); levels with fewer stars keep full coins and gems.
+            // Payout: (clear 56 + 48 per star + 4 per combo step) x region factor. Once the level already has 3 stars, replays pay 25 percent and
+            // drop no gems (owner rule); levels with fewer stars keep full coins.
             int prevStars = before == null ? 0 : before.Stars;
             bool reducedReplay = CoinPayoutRules.IsReducedReplay(prevStars);
             int comboRaw = run.CoinsCollected < 0 ? 0 : run.CoinsCollected;
             long gross = CoinPayoutRules.Scale(CoinPayoutRules.BaseCoins(stars), region.CoinFactor);
-            long combo = CoinPayoutRules.Scale(comboRaw, region.CoinFactor);
+            long combo = CoinPayoutRules.Scale(CoinPayoutRules.ComboCoins(comboRaw), region.CoinFactor);
             long starPart = CoinPayoutRules.Scale((long)EconomyRules.StarCoins * stars, region.CoinFactor);
             if (reducedReplay)
             {
@@ -127,18 +132,19 @@ namespace FluffyClimbers.Economy
             result.StarBonusCoins = (int)starPart;
             result.ComboCoins = (int)combo;
             result.PickupCoins = 0;
-            // Gems (issue list 24 point 5): the gems the player picked up in the run (kept as reported, up to an anti-tamper ceiling), none on a
-            // replay of a 3-star level, plus the milestone gems of a first clear of level 5, 10 and 15 (L15 guarantees 5).
-            result.PickupGems = reducedReplay || run.GemsCollected < 0 ? 0 : Math.Min(run.GemsCollected, EconomyRules.MaxPickupGemsPerRun);
+            // Gems: none from pickups or the hidden gem. A first clear of a milestone level (5, 10, 15, 20, 25) pays its fixed gems from the level JSON.
+            result.PickupGems = 0;
             result.HiddenGemReward = 0;
             result.RewardGems = 0;
-            if (firstClear && IsMilestone(level) && level.Rewards != null && level.Rewards.Gems != null)
+            if (firstClear && IsMilestone(level))
             {
-                GemRewardDef g = level.Rewards.Gems;
-                result.RewardGems = CoinPayoutRules.MilestoneGems(level.Seed, g.Chance, g.Min, g.Max, g.FirstClearGuaranteed ?? 0);
+                if (level.Rewards != null && level.Rewards.Gems != null) result.RewardGems = CoinPayoutRules.MilestoneGems(level.Rewards.Gems.FirstClearGuaranteed ?? 0);
+                // The hero selected for the run adds its rarity bonus on the same first clears: fixed coins (no region factor) and gems with a seeded 50 percent extra one.
+                CharacterSpec hero = CharacterDefs.Get(run.HeroId);
+                int rarity = hero == null ? (int)CharacterRarity.Common : (int)hero.Rarity;
+                result.HeroBonusCoins = CoinPayoutRules.HeroBonusCoins(rarity);
+                result.HeroBonusGems = CoinPayoutRules.HeroBonusGems(rarity, level.Seed, hero == null ? "" : hero.Id);
             }
-            if (firstClear && level.LevelClass == LevelDef.ClassHighlyComplex) result.RewardGems += EconomyRules.Level15DoubleGemBonus;
-            if (firstClear && GemLevels.IsGemLevel(level.Index, level.Goal == null ? null : level.Goal.Type)) result.HiddenGemReward = Math.Min(Math.Max(run.HiddenGems, 0), EconomyRules.Level8HiddenGemMax);
             return result;
         }
     }

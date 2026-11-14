@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace FluffyClimbers.Tests
 {
-    /// <summary>The crown per level and Gameplay setting (owner 2026-11-12): stored per mode on a run, old saves keep their legacy best score as a Relaxed crown.</summary>
+    /// <summary>The crown per level and Gameplay setting (owner 2026-11-12): stored per mode on a run, a setting that was never played has crown 0 (the mode-less legacy best score is never used).</summary>
     public class CrownEditTests
     {
         ContentRepository repo;
@@ -32,16 +32,27 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void AnOldSaveShowsItsBestScoreAsARelaxedCrownOnly()
+        public void AnOldBestScoreIsNeverShownAsACrownInAnySetting()
         {
             var data = new SaveData();
             data.Levels["lvl_001_01"] = new LevelProgress { Stars = 1, StarMask = 1, BestScore = 1000, Clears = 1 };
             var store = new MemorySaveStore();
             store.Save(data);
             var svc = new ProgressService(repo, store, 5);
-            Assert.AreEqual(1100, svc.BestCrown("lvl_001_01", 0), "1000 x 1.10");
-            Assert.AreEqual(0, svc.BestCrown("lvl_001_01", 4), "an old score is not credited to a harder setting");
-            Assert.AreEqual(0, svc.BestCrown("lvl_001_02", 0));
+            for (int mode = 0; mode < TimeRecords.ModeCount; mode++) Assert.AreEqual(0, svc.BestCrown("lvl_001_01", mode), "mode " + mode);
+        }
+
+        [Test]
+        public void ARunInOneSettingNeverCreatesACrownInAnother()
+        {
+            var svc = NewService();
+            svc.ApplyRun("lvl_001_01", Run(1945, 4));   // Insane only
+            Assert.AreEqual(2918, svc.BestCrown("lvl_001_01", 4));
+            for (int mode = 0; mode < 4; mode++) Assert.AreEqual(0, svc.BestCrown("lvl_001_01", mode), "mode " + mode + " was not played");
+            Assert.IsNull(svc.BestCrownRun("lvl_001_01", 0));
+            svc.ApplyRun("lvl_001_01", Run(1020, 0));   // then Relaxed with a lower base
+            Assert.AreEqual(1122, svc.BestCrown("lvl_001_01", 0));
+            Assert.AreEqual(2918, svc.BestCrown("lvl_001_01", 4));
         }
 
         [Test]

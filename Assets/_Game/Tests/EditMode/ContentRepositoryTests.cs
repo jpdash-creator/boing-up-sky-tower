@@ -84,8 +84,9 @@ namespace FluffyClimbers.Tests
         [Test]
         public void GemSkipValues()
         {
-            Assert.AreEqual(100, Repo.GetRegionByIndex(2).Unlock.GemSkip);
-            Assert.AreEqual(400, Repo.GetRegionByIndex(20).Unlock.GemSkip);
+            // owner 2026-11-13: 500 gems per region from region 2 on
+            Assert.IsNull(Repo.GetRegionByIndex(1).Unlock.GemSkip);
+            for (int i = 2; i <= 30; i++) Assert.AreEqual(500, Repo.GetRegionByIndex(i).Unlock.GemSkip, "region " + i);
         }
 
         [Test]

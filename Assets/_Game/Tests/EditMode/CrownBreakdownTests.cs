@@ -82,7 +82,7 @@ namespace FluffyClimbers.Tests
         }
 
         [Test]
-        public void AnOldSaveShowsItsScoreAndItsCrownWithoutFloorsAndCombo()
+        public void AnOldSaveShowsNoCrownFromItsModelessScoreAndAStoredCrownWithoutItsRun()
         {
             var data = new SaveData();
             data.Levels["lvl_001_01"] = new LevelProgress { Stars = 1, StarMask = 1, BestScore = 1000, Clears = 1 };   // legacy: no crowns, no run
@@ -91,11 +91,9 @@ namespace FluffyClimbers.Tests
             store.Save(data);
             var svc = new ProgressService(repo, store, 5);
 
-            CrownBreakdown legacy = CrownBreakdown.From(svc.BestCrownRun("lvl_001_01", 0), 0);
-            Assert.IsTrue(legacy.HasRun);
-            Assert.IsFalse(legacy.PartsKnown, "floors and combo were never stored");
-            Assert.AreEqual(1000, legacy.BaseScore);
-            Assert.AreEqual(svc.BestCrown("lvl_001_01", 0), legacy.Crown);
+            CrownBreakdown legacy = CrownBreakdown.From(svc.BestCrownRun("lvl_001_01", 0), 0, svc.BestCrown("lvl_001_01", 0));
+            Assert.IsFalse(legacy.HasRun, "a mode-less old best score is not a crown in any setting");
+            Assert.AreEqual(0, legacy.Crown);
 
             CrownBreakdown noRun = CrownBreakdown.From(svc.BestCrownRun("lvl_001_02", 3), 3, svc.BestCrown("lvl_001_02", 3));
             Assert.IsTrue(noRun.HasRun);

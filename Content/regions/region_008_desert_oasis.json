@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_007_autumn_orchard",
-    "gemSkip": 200
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_008",

@@ -1,12 +1,12 @@
 # Fluffy Climbers: Tower Jump Terms of Use
 
-Last updated: 2026-11-12
+Last updated: 2026-11-13
 
 > **In short**
 >
 > - Fluffy Climbers: Tower Jump is a free arcade game with optional purchases and optional rewarded ads (shown by Google AdMob). You never need to watch an ad or buy anything to play. You get a personal licence to play it. Do not copy, resell, modify, cheat in or reverse engineer it.
 > - Gems, coins, power-ups, heroes, chests and subscription benefits are virtual items licensed to you, not property. They have no money value, cannot be transferred and are not refunded by us.
-> - Gem packs and the weekly and monthly subscriptions are billed by Google Play (or the Apple App Store). Subscriptions renew automatically until you cancel them in the Play Store. Manage, cancel and request refunds through your store account.
+> - Gem packs and the weekly and monthly subscription plans are billed by Google Play (or the Apple App Store). Subscriptions renew automatically until you cancel them in the Play Store. Manage, cancel and request refunds through your store account.
 > - Chests and bundles contain random rewards. The odds are shown in the Game and in section 5.
 > - Guests save on their device only; sign in with Google Play to keep a cloud copy. We are not responsible for lost or overwritten progress.
 > - You must be at least 13 to play. Under 18, a parent or guardian must agree to these terms for you and is responsible for purchases.
@@ -90,7 +90,7 @@ Hero cards come only from regions you have unlocked. A hero you already own is g
 
 ## 6. Purchases
 
-- **What is sold for money.** Gem packs (consumable) and the weekly and monthly subscriptions (section 7). Everything else in the Game is paid with gems or coins or earned by playing. From time to time we may offer other real-money items (for example a starter pack) under the same rules.
+- **What is sold for money.** Gem packs (consumable) and the weekly and monthly subscription plans (section 7). Everything else in the Game is paid with gems or coins or earned by playing. From time to time we may offer other real-money items (for example a starter pack) under the same rules.
 - **Stores and prices.** Purchases are made through Google Play (or the Apple App Store, where the Game is offered there). The price, in your local currency, is shown by the store before you confirm. Prices differ by country and may change at any time; a change does not affect a purchase you have already completed. Taxes may be added or included by the store according to your country.
 - **Payment.** Payment is charged to your store account when you confirm. We do not process payments and never receive card or bank details. Purchases are tied to the store account used to make them.
 - **Delivery.** Gems are added to the save on the device where you bought them once the store confirms the purchase and the Game has verified it. A purchase that the store reports as **pending** (for example awaiting a parent's approval or a slow payment method) is delivered only when the store completes it. If the Game closes before delivery, the store re-delivers the purchase the next time you open the Game. If something you paid for does not arrive, contact us with the store order number (section 28) and we will put it right.
@@ -101,7 +101,7 @@ Hero cards come only from regions you have unlocked. A hero you already own is g
 
 ## 7. Subscriptions
 
-- **Plans.** The Game offers a **Weekly Subscription** (7-day periods) and a **Monthly Subscription** (30-day periods). Each plan gives an instant gem grant when first purchased and a **daily claim** of gems and coins (and, on the Monthly plan, a free random power-up on every fifth claim). The exact amounts and the price are shown in the Game and in the store before you buy.
+- **Plans.** The Game offers four plans: **Weekly Starter** and **Weekly Plus** (7-day periods) and **Monthly Standard** and **Monthly Premium** (30-day periods). Only one plan runs at a time. Each plan gives an instant gem grant when first purchased and a **daily claim** of gems and coins, free random power-ups on some claim days and, on Weekly Plus and Monthly Premium, treasure chests opened for you on set claim days. The exact amounts and the price are shown in the Game and in the store before you buy.
 - **Auto-renewal.** Subscriptions are auto-renewing and are billed by Google Play (or the Apple App Store). Your store account is charged for each new period unless you cancel at least 24 hours before the current period ends. Renewal is charged within 24 hours before the period ends, at the price shown by the store.
 - **Daily claims.** One claim per local calendar day, made by opening the Game and tapping Claim while the plan is active. **Missed days are not stacked, carried over or refunded.** Claims not used by the time the paid period ends are forfeited. Buying the same plan again while it is active adds its days to the days you already have.
 - **Managing and cancelling.** Manage or cancel at any time in the Play Store (Google Play > Payments & subscriptions > Subscriptions) or in your App Store subscription settings. We cannot cancel a subscription for you, because it is held by your store account. Cancellation takes effect at the end of the current paid period; you keep the benefits until then and are not refunded for the remaining days. **Uninstalling the Game, resetting progress, unlinking your Google account or deleting the cloud save does not cancel a subscription.**

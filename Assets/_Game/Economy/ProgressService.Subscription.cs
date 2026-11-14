@@ -8,13 +8,13 @@ namespace FluffyClimbers.Economy
     /// <summary>Subscription state in the save (docs/26 section 2). Additive field of SaveData, no version bump.</summary>
     public sealed class SubscriptionData
     {
-        /// <summary>"" (none), "weekly" or "monthly".</summary>
+        /// <summary>"" (none) or a plan id: "weekly", "weekly_plus", "monthly" or "monthly_premium".</summary>
         [JsonProperty("type")] public string Type = "";
         /// <summary>End of the paid time, UTC ticks (0 = never bought).</summary>
         [JsonProperty("expiryUtcTicks")] public long ExpiryUtcTicks;
         /// <summary>Local calendar day (yyyyMMdd) of the last daily claim.</summary>
         [JsonProperty("lastClaimDay")] public string LastClaimDay = "";
-        /// <summary>Daily claims paid so far on the monthly plan: every 5th one adds the free power-up.</summary>
+        /// <summary>Daily claims paid so far in the running purchase (all four plans; the name is historic): the claim number that decides the free power-up and the chest days. Reset by a fresh purchase, continued by an extension.</summary>
         [JsonProperty("monthlyClaims")] public int MonthlyClaims;
         /// <summary>Daily claims still owed by the purchases made (one per paid day), so a purchase pays exactly its number of days.</summary>
         [JsonProperty("claimsLeft")] public int ClaimsLeft;
@@ -46,12 +46,21 @@ namespace FluffyClimbers.Economy
         /// <summary>Power-up id (pw_...) when this claim included the free power-up, else null.</summary>
         public string PowerUpId;
         public int PowerUpCount;
+        /// <summary>Chests this claim opened (empty on most days). Their coins, power-ups and hero card are already in the save.</summary>
+        public readonly List<SubscriptionChestResult> Chests = new List<SubscriptionChestResult>();
+    }
+
+    /// <summary>One chest a daily claim opened for the player.</summary>
+    public sealed class SubscriptionChestResult
+    {
+        public ChestKind Kind;
+        public ChestContents Contents;
     }
 
     /// <summary>
-    /// Subscription (docs/26 section 2): weekly Rs 149 / 7 days and monthly Rs 449 / 30 days. Buying pays the instant gems and starts or extends the
-    /// period; one daily claim per LOCAL day pays gems + coins (missed days are not stacked) and, on the monthly plan, a free random power-up on
-    /// every 5th claim. Every mutation is atomic and saves once. The clock is injectable (tests).
+    /// Subscription (docs/26 section 2, four plans since 2026-11-13: Weekly Starter, Weekly Plus, Monthly Standard, Monthly Premium). Buying pays the instant gems and
+    /// starts or extends the period (one plan at a time); one daily claim per LOCAL day pays gems + coins (missed days are not stacked), a free random power-up on
+    /// the plan's claim days and the plan's chests on their claim days (opened at once through the normal chest roll). Every mutation is atomic and saves once. The clock is injectable (tests).
     /// </summary>
     public sealed partial class ProgressService
     {
@@ -180,6 +189,7 @@ namespace FluffyClimbers.Economy
             long add = TimeSpan.TicksPerDay * (long)def.Days;
             s.ExpiryUtcTicks = from > DateTime.MaxValue.Ticks - add ? DateTime.MaxValue.Ticks : from + add;
             s.ClaimsLeft = active ? SaturatingAdd(s.ClaimsLeft, def.Days) : def.Days;   // a lapsed plan forfeits the claims it never used
+            if (!active) s.MonthlyClaims = 0;   // a fresh purchase starts the claim numbering again; an extension continues it (the schedule repeats every Days claims)
             s.Type = planId;
             if (payInstantGems) Data.Gems = SaturatingAdd(Data.Gems, def.InstantGems);   // false: a renewal the store reports (no new instant gems)
             Commit();
@@ -204,15 +214,31 @@ namespace FluffyClimbers.Economy
 
             claim.Gems = def.DailyGems;
             claim.Coins = def.DailyCoins;
-            int monthlyClaims = s.MonthlyClaims;
-            if (def.PowerUpEveryClaims > 0)
+            int monthlyClaims = Math.Max(0, s.MonthlyClaims) + 1;   // this claim's number in the running purchase (1 = first claim)
+            int position = def.Position(monthlyClaims);             // 1..Days; an extension repeats the schedule
+            int units = def.PowerUpsAt(position);
+            if (units > 0)
             {
-                monthlyClaims++;
-                if (monthlyClaims % def.PowerUpEveryClaims == 0 && def.PowerUpCount > 0)
+                PowerUpDef pw = PickFreePowerUp();
+                if (pw != null) { claim.PowerUpId = pw.Id; claim.PowerUpCount = units; }
+            }
+
+            // Chests of this claim: the normal chest roll (seeded by the save's chest counter and the account seed), nothing is paid in gems.
+            List<PowerUpDef> types = null;
+            BundleSaveData bundleState = null;
+            for (int i = 0; i < def.Chests.Count; i++)
+            {
+                SubscriptionChestGrant g = def.Chests[i];
+                if (Array.IndexOf(g.Claims, position) < 0) continue;
+                if (types == null)
                 {
-                    PowerUpDef pw = PickFreePowerUp();
-                    if (pw != null) { claim.PowerUpId = pw.Id; claim.PowerUpCount = def.PowerUpCount; }
+                    types = new List<PowerUpDef>(PowerUpDefs.Implemented);
+                    if (types.Count == 0) break;
+                    bundleState = BundleState;
+                    EnsureBundleSeed(bundleState);
                 }
+                ChestContents c = ChestRolls.Roll(g.ChestKind, Data.ChestOpens++, types, CharacterDefs.All, IsBundleRegionOpen, bundleState.Seed);
+                claim.Chests.Add(new SubscriptionChestResult { Kind = g.ChestKind, Contents = c });
             }
 
             Data.Gems = SaturatingAdd(Data.Gems, claim.Gems);
@@ -222,11 +248,23 @@ namespace FluffyClimbers.Economy
                 int have = PowerUpCount(claim.PowerUpId);
                 Data.Inventory.Powerups[claim.PowerUpId] = (int)Math.Min((long)have + claim.PowerUpCount, int.MaxValue);
             }
+            for (int i = 0; i < claim.Chests.Count; i++)
+            {
+                ChestContents c = claim.Chests[i].Contents;
+                foreach (string pid in c.PowerUps) Data.Inventory.Powerups[pid] = SaturatingAdd(PowerUpCount(pid), 1);   // like a bought chest: no stock cap
+                Data.Coins = SaturatingAdd(Data.Coins, c.Coins);
+            }
             s.MonthlyClaims = monthlyClaims;
             s.ClaimsLeft--;
             s.LastClaimDay = today;
             claim.Result = SubscriptionClaimResult.Ok;
-            Commit();
+            bool saved = false;
+            for (int i = 0; i < claim.Chests.Count; i++)
+            {
+                CharacterSpec hero = claim.Chests[i].Contents.Hero;
+                if (hero != null && CharacterInventory.Exists(hero.Id)) { AddCopies(hero.Id, 1); saved = true; }   // its first save also holds everything above
+            }
+            if (!saved) Commit();
             return claim;
         }
 

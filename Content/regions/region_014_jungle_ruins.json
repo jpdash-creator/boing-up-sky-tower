@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_013_volcano_forge",
-    "gemSkip": 300
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_014",

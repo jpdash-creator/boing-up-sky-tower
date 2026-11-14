@@ -48,14 +48,19 @@ def cls(i):
 
 
 
+# Economy review 2026-11-13: gems only on levels 5, 10, 15, 20, 25, fixed 1, 1, 2, 2, 3 (first clear only, nothing on replays, no gem pickups on the rows).
+MILESTONE_GEMS = {5: 1, 10: 1, 15: 2, 20: 2, 25: 3}
+# Region skip price (owner 2026-11-13): 500 gems for every region 2 and up.
+GEM_SKIP = 500
+
+
 def gem_rewards(i):
-    if i == LEVELS:
-        return {"chance": 1.0, "min": 5, "max": 5, "firstClearGuaranteed": 5, "starBonusMax": 5, "replayChance": 0.5, "replayAmount": 2}
-    if i in (10, 20):
-        return {"chance": 0.25, "min": 1, "max": 3, "firstClearGuaranteed": 1}
-    if i in SPECIAL:
-        return {"chance": 0.25, "min": 1, "max": 3}
-    return {"chance": 0.03, "min": 1, "max": 1}
+    """Economy review 2026-11-13: gems ONLY on levels 5, 10, 15, 20, 25 (1, 1, 2, 2, 3), fixed, first clear only; no other level pays gems.
+    Level 15 is the hidden-gem level: its 2 gems are this fixed reward (the hidden gem pickup is only the goal object)."""
+    g = MILESTONE_GEMS.get(i, 0)
+    if g:
+        return {"chance": 1.0, "min": g, "max": g, "firstClearGuaranteed": g}
+    return {"chance": 0.0, "min": 0, "max": 0}
 
 
 def provisional_d(i):
@@ -96,6 +101,8 @@ def main():
                 "rewards": {"gems": gem_rewards(i)},
             })
         region["levels"] = [lv["id"] for lv in out]
+        if n >= 2:
+            region["unlock"]["gemSkip"] = GEM_SKIP
         write(lf, out)
         write(rf, region)
         print("region %d: %d levels" % (n, len(out)))

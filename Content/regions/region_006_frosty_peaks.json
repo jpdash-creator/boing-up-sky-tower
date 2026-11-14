@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_005_bamboo_temple",
-    "gemSkip": 166
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_006",

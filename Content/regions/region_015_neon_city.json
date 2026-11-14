@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_014_jungle_ruins",
-    "gemSkip": 316
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_015",

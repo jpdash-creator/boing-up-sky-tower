@@ -115,8 +115,8 @@ namespace FluffyClimbers.Simulation.Tests
             LevelSpec b = T3.Spec(777, 700, 10, SignatureKind.SwingingGongs, GoalType.SurviveWave);
             b.FixedChunks = new string[] { "chunk_complex_a" };
             b.Class = 3;
-            Assert.Equal(-3181476168520851783L, LevelBuilder.Build(cfg, a).ComputeHash());   // re-rolled 2026-11-10: region 1 got the generics Crumble and Moving (was -7839884808577442138, re-rolled 2026-10-31 for doc 24)
-            Assert.Equal(-9118401508389237609L, LevelBuilder.Build(cfg, b).ComputeHash());   // re-rolled 2026-11-04: SwingingGongs (region 5) now draws from its 7 new kinds (Bug List 3 D5); was -5175047465905895765
+            Assert.Equal(-1274289823304530343L, LevelBuilder.Build(cfg, a).ComputeHash());   // re-rolled 2026-11-13 (economy review: no gem pickups; was -3181476168520851783); re-rolled 2026-11-10: region 1 got the generics Crumble and Moving (was -7839884808577442138, re-rolled 2026-10-31 for doc 24)
+            Assert.Equal(5136200250945043513L, LevelBuilder.Build(cfg, b).ComputeHash());   // re-rolled 2026-11-13 (economy review: no gem pickups; was -9118401508389237609); re-rolled 2026-11-04: SwingingGongs (region 5) now draws from its 7 new kinds (Bug List 3 D5); was -5175047465905895765
         }
 
         [Fact]

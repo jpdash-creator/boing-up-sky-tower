@@ -132,12 +132,13 @@ namespace FluffyClimbers.Tests
         {
             var svc = new ProgressService(ContentRepository.LoadFromResources(), new MemorySaveStore(), 5);
             foreach (string id in Inactive) Assert.IsFalse(svc.OwnsCharacter(id), id);
+            // owner 2026-11-13: only the gold-on-25-levels goal gives a random ACTIVE Common hero; levels 10/15/20 and 75 stars pay coins
             foreach (string goal in new[] { "g_5_levels_2", "g_5_levels_3", "g_5_levels_4", "g_5_stars_5", "g_5_gold_5" })
             {
                 RegionGoal g = svc.RewardDefs.FindGoal(goal);
                 Assert.IsNotNull(g, goal);
                 Assert.IsTrue(string.IsNullOrEmpty(g.HeroId), goal + " names no hero any more");
-                Assert.AreEqual(RewardEntry.RandomOpenRegionHero, g.HeroRegion, goal + " gives one random ACTIVE Common hero of an open region");
+                Assert.AreEqual(goal.EndsWith("gold_5") ? RewardEntry.RandomOpenRegionHero : 0, g.HeroRegion, goal);
             }
         }
 

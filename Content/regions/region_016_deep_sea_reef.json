@@ -6,7 +6,7 @@
   "status": "live",
   "unlock": {
     "requires": "region_015_neon_city",
-    "gemSkip": 333
+    "gemSkip": 500
   },
   "theme": {
     "bundle": "region_016",

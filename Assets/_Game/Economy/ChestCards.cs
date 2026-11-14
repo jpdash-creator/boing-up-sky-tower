@@ -12,43 +12,41 @@ namespace FluffyClimbers.Economy
     /// The pure rules of the Treasure Chests (owner Bug List 5 F3, docs/26 section on chests, docs/37). No Unity types, so the simulation test project compiles this file too.
     /// A chest holds coins, power-ups and exactly ONE hero card, drawn the same way as the hidden card of a bundle (<see cref="BundleCards"/>): a tier by the chest's odds,
     /// then a hero uniformly among the heroes of that tier whose REGION IS OPEN for the player. A tier with no hero in an open region falls back to the next lower tier that has one.
-    /// Iron: 70 Common, 20 Uncommon, 10 Rare. Gold: 50 Uncommon, 40 Rare, 10 Elite (code tier Epic). Common heroes are the base hero of each open region (Momo is region 1).
+    /// Iron: 50 Common, 30 Uncommon, 20 Rare. Gold: 60 Rare, 30 Elite (code tier Epic), 10 Legendary (owner 2026-11-13; before 70/20/10 and 50/40/10). Common heroes are the base hero of each open region (Momo is region 1).
     /// A duplicate hero is simply another copy (a new card); nothing is refunded.
     /// </summary>
     public static partial class ChestRolls
     {
         public const int IronPowerUps = 1, GoldenPowerUps = 3;
-        /// <summary>Retuned for Bug List 5 F3 so the worth lands in 1.5 to 2.5 including the expected hero card (was 400 to 600 and 1,000 to 1,400).</summary>
+        /// <summary>Coin ranges and power-up counts are unchanged since Bug List 5 F3. With the 2026-11-13 odds and card values the worth is about x3.6 (Iron) and x5.3 (Gold); the owner accepts richer chests.</summary>
         public const int IronMinCoins = 800, IronMaxCoins = 1200, GoldenMinCoins = 3000, GoldenMaxCoins = 4200;
         public const int IronPrice = 100, IronPriceTen = 1000, GoldenPrice = 300, GoldenPriceTen = 3000;
         /// <summary>The shop rate used in every worth number: 20 coins are worth 1 gem (same as bundles).</summary>
         public const int CoinsPerGem = 20;
-        /// <summary>The worth must stay inside this band (Bug List 2 C2.b.ii, same as bundles).</summary>
-        public const double WorthMin = 1.5, WorthMax = 2.5;
+        /// <summary>The worth must stay inside this band (was 1.5 to 2.5; raised by the owner 2026-11-13 with the richer odds and the new hero card prices).</summary>
+        public const double WorthMin = 2.0, WorthMax = 6.0;
 
-        /// <summary>Tiers of the hero card, lowest first. Iron: Common, Uncommon, Rare. Gold: Uncommon, Rare, Epic (shown as "Elite").</summary>
+        /// <summary>Tiers of the hero card, lowest first. Iron: Common, Uncommon, Rare. Gold: Rare, Epic (shown as "Elite"), Legendary.</summary>
         public static readonly CharacterRarity[] IronTiers = { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare };
-        public static readonly CharacterRarity[] GoldenTiers = { CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic };
+        public static readonly CharacterRarity[] GoldenTiers = { CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary };
         /// <summary>Draw weights per tier (they add up to 100, so they are also the percentages).</summary>
-        public static readonly int[] IronWeights = { 70, 20, 10 };
-        public static readonly int[] GoldenWeights = { 50, 40, 10 };
+        public static readonly int[] IronWeights = { 50, 30, 20 };
+        public static readonly int[] GoldenWeights = { 60, 30, 10 };
 
         /// <summary>
-        /// THE ONE TABLE for the gem value of a hero card in a worth number: Uncommon, Rare, Epic come from <see cref="BundleCards.TierGems"/> (100, 250, 600), so chests and bundles
-        /// value a card identically; a Common card is worth <see cref="CommonCardGems"/>. These are WORTH values (what the card counts for in "Worth x..."), deliberately below the
-        /// retail prices of the Heroes shop (<see cref="HeroPurchase.Prices"/>: gem equivalents 150, 300, 700, 1,500; coin prices are 20x), because a card from a chest or bundle is random.
+        /// THE ONE TABLE for the gem value of a hero card in a worth number = its Heroes shop coin price / 20 (<see cref="HeroPurchase.Prices"/>, owner 2026-11-13): Common 100,
+        /// Uncommon 250, Rare 600, Elite 1,600, Legendary 4,000 gems. Uncommon, Rare, Elite are also <see cref="BundleCards.TierGems"/>, so chests and bundles value a card identically.
         /// </summary>
-        public const int CommonCardGems = 40;
+        public const int CommonCardGems = 100;
 
         public static CharacterRarity[] Tiers(ChestKind kind) { return kind == ChestKind.Iron ? IronTiers : GoldenTiers; }
         public static int[] Weights(ChestKind kind) { return kind == ChestKind.Iron ? IronWeights : GoldenWeights; }
 
-        /// <summary>Gem value of one hero card of this rarity in a worth number (0 for a rarity a chest never gives).</summary>
+        /// <summary>Gem value of one hero card of this rarity in a worth number (0 for an unknown rarity).</summary>
         public static int CardGems(CharacterRarity rarity)
         {
             if (rarity == CharacterRarity.Common) return CommonCardGems;
-            int i = System.Array.IndexOf(BundleCards.Tiers, rarity);
-            return i >= 0 ? BundleCards.TierGems[i] : 0;
+            return HeroPurchase.CoinPrice(rarity) / CoinsPerGem;
         }
 
         /// <summary>Chance in whole percent of tier index <paramref name="tierIndex"/> of the chest (the numbers the info popup shows).</summary>
@@ -58,7 +56,7 @@ namespace FluffyClimbers.Economy
             return tierIndex >= 0 && tierIndex < w.Length ? w[tierIndex] : 0;
         }
 
-        /// <summary>Expected gem value of the hero card of one chest: sum of chance x card gems. Iron 73, Gold 210.</summary>
+        /// <summary>Expected gem value of the hero card of one chest: sum of chance x card gems. Iron 245, Gold 1,240.</summary>
         public static double ExpectedCardGems(ChestKind kind)
         {
             CharacterRarity[] t = Tiers(kind);
@@ -133,11 +131,11 @@ namespace FluffyClimbers.Economy
             return list;
         }
 
-        static readonly CharacterRarity[] Ladder = { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic };
+        static readonly CharacterRarity[] Ladder = { CharacterRarity.Common, CharacterRarity.Uncommon, CharacterRarity.Rare, CharacterRarity.Epic, CharacterRarity.Legendary };
 
         /// <summary>
-        /// The tier really used for a drawn tier: the drawn one when it has a hero in an open region, else the HIGHEST lower tier that has one (Elite with nothing open at Elite or Rare
-        /// gives Uncommon). If nothing exists at or below, the lowest tier above it. False when no hero of Common..Elite exists in an open region at all.
+        /// The tier really used for a drawn tier: the drawn one when it has a hero in an open region, else the HIGHEST lower tier that has one (Legendary with nothing open at Legendary or Elite
+        /// gives Rare). If nothing exists at or below, the lowest tier above it. False when no hero of Common..Legendary exists in an open region at all.
         /// </summary>
         public static bool TryResolveTier(CharacterRarity drawn, IList<CharacterSpec> all, System.Func<int, bool> regionOpen, out CharacterRarity resolved)
         {
